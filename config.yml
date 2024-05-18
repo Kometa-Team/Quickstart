@@ -1,0 +1,50 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json
+
+########################################
+#  _  _____  __  __ _____ _____  _     #
+# | |/ / _ \|  \/  | ____|_   _|/ \    #
+# | ' / | | | |\/| |  _|   | | / _ \   #
+# | . \ |_| | |  | | |___  | |/ ___ \  #
+# |_|\_\___/|_|  |_|_____| |_/_/   \_\ #
+#                                      #
+#                                      #
+########################################
+
+### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension and YAML by Red Hat extension. VSC will also leverage the above link to enhance Kometa yml edits.
+
+libraries: 
+
+#######################
+#  ____  _            #
+# |  _ \| | _____  __ #
+# | |_) | |/ _ \ \/ / #
+# |  __/| |  __/>  <  #
+# |_|   |_|\___/_/\_\ #
+#                     #
+#                     #
+#######################
+plex:
+  url: Http://192.168.2.242:32400
+  token: (redacted)
+  timeout: 5
+  clean_bundles: true
+  empty_trash: true
+  optimize: true
+  db_cache: 40
+  verify_ssl: true
+
+
+##############################
+#  _____ __  __ ____  _      #
+# |_   _|  \/  |  _ \| |__   #
+#   | | | |\/| | | | | '_ \  #
+#   | | | |  | | |_| | |_) | #
+#   |_| |_|  |_|____/|_.__/  #
+#                            #
+#                            #
+##############################
+tmdb:
+  apikey: Djjdjdjxhx
+  language: en
+  region: CA
+  cache_expiration: 60

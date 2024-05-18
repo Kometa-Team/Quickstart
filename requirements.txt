@@ -1,0 +1,7 @@
+Flask
+PyYAML
+pyfiglet
+python-dotenv
+plexapi
+iso-639
+iso3166
