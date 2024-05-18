@@ -15,25 +15,25 @@
         <!-- Plex Section -->
         <h2>Plex Settings</h2>
         <label for="plex_url">Plex URL:</label>
-        <input type="text" id="plex_url" name="plex_url" required>
+        <input type="text" id="plex_url" name="plex_url" placeholder="http://127.0.0.1:32400" required>
         
         <label for="plex_token">Plex Token:</label>
-        <input type="text" id="plex_token" name="plex_token" required>
+        <input type="text" id="plex_token" name="plex_token" placeholder="XtUjT8LjPyH5kccS4Cjf" required>
         
-        <label for="plex_dbcache">DB Cache (>= 40):</label>
-        <input type="number" id="plex_dbcache" name="plex_dbcache" min="40" required>
+        <label for="plex_dbcache">DB Cache:</label>
+        <input type="number" id="plex_dbcache" name="plex_dbcache" min="40" value="40"  placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40 if not specified" required>
         
-        <label for="plex_timeout">Timeout (>= 5):</label>
-        <input type="number" id="plex_timeout" name="plex_timeout" min="5" required>
+        <label for="plex_timeout">Timeout:</label>
+        <input type="number" id="plex_timeout" name="plex_timeout" min="60" value="60"  placeholder="Amount of seconds to wait for Plex to respond, default is 60 if not specified" required>
         
         <div class="checkbox-container">
             <label for="plex_verify_ssl">Verify SSL:</label>
-            <input type="checkbox" id="plex_verify_ssl" name="plex_verify_ssl">
+            <input type="checkbox" id="plex_verify_ssl" name="plex_verify_ssl" checked>
         </div>
         
         <div class="checkbox-container">
             <label for="plex_clean_bundles">Clean Bundles:</label>
-            <input type="checkbox" id="plex_clean_bundles" name="plex_clean_bundles">
+            <input type="checkbox" id="plex_clean_bundles" name="plex_clean_bundles" checked>
         </div>
         
         <div class="checkbox-container">
@@ -51,14 +51,14 @@
         <label for="tmdb_apikey">TMDb API Key:</label>
         <input type="text" id="tmdb_apikey" name="tmdb_apikey" required>
         
-        <label for="tmdb_language">Language (ISO 639-1 Code):</label>
-        <input type="text" id="tmdb_language" name="tmdb_language" required>
+        <label for="tmdb_language">Language:</label>
+        <input type="text" id="tmdb_language" name="tmdb_language" value="en">
         
-        <label for="tmdb_region">Region (ISO 3166-1 Code):</label>
-        <input type="text" id="tmdb_region" name="tmdb_region" required>
+        <label for="tmdb_region">Region:</label>
+        <input type="text" id="tmdb_region" name="tmdb_region">
         
         <label for="tmdb_cache_expiration">Cache Expiration (days):</label>
-        <input type="number" id="tmdb_cache_expiration" name="tmdb_cache_expiration" required>
+        <input type="number" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" required>
         
         <input type="submit" value="Submit">
     </form>
