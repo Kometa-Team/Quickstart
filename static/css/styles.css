@@ -13,8 +13,12 @@ body {
 }
 
 .header-image {
-    max-width: 100%;
+    max-width: 50%;
     height: auto;
+}
+
+h1 {
+    text-align: center;
 }
 
 form {
@@ -71,6 +75,60 @@ input[type="submit"]:hover {
     background-color: #0056b3;
 }
 
+
+
+/* Style the dropdown arrow */
+select::-ms-expand {
+    display: none;
+}
+
+/* Style the dropdown when active */
+select:focus {
+    outline: none;
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+
+
+
+
+
+select {
+    width: calc(75%);
+    position: relative;
+    padding-right: 30px; /* Adjust as needed */
+    background-color: #454d55; /* Added background color to better blend with select */
+    color: #ffffff; /* Text color */
+    border: 1px solid #ced4da; /* Border color */
+    border-radius: 4px;
+}
+
+/* Create a container for the icon */
+.select-icon-container {
+    position: absolute;
+    top: 50%;
+    right: 10px; /* Adjust as needed */
+    transform: translateY(-50%);
+}
+
+/* Style the icon */
+.select-icon {
+    position: relative;
+    width: 15px;
+    height: 15px;
+    fill: #ffffff; /* Icon color */
+    cursor: pointer;
+}
+
+/* SVG for dropdown icon */
+.select-icon::after {
+    content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+}
+
+
+
+
 .messages {
     max-width: 600px;
     margin: 20px auto;
@@ -101,4 +159,25 @@ input[type="submit"]:hover {
     background-color: #28a745;
     color: #ffffff;
     border: 1px solid #28a745;
+}
+
+.button-container {
+    display: flex;
+    align-items: center;
+}
+.button-container button {
+    margin-left: 10px;
+}
+.status-message {
+    margin-top: 10px;
+    color: red;
+    display: none;
+}
+.btn {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
 }

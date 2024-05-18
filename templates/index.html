@@ -5,6 +5,44 @@
     <title>Plex Config</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        .header-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .header-image {
+            max-width: 50%;
+            height: auto;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        .button-container {
+            display: flex;
+            align-items: center;
+        }
+        .button-container button {
+            margin-left: 10px;
+        }
+        .status-message {
+            margin-top: 10px;
+            color: red;
+            display: none;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <div class="header-container">
@@ -16,31 +54,31 @@
         <h2>Plex Settings</h2>
         <label for="plex_url">Plex URL:</label>
         <input type="text" id="plex_url" name="plex_url" placeholder="http://127.0.0.1:32400" required>
-        
+
         <label for="plex_token">Plex Token:</label>
         <input type="text" id="plex_token" name="plex_token" placeholder="XtUjT8LjPyH5kccS4Cjf" required>
-        
+
         <label for="plex_dbcache">DB Cache:</label>
         <input type="number" id="plex_dbcache" name="plex_dbcache" min="40" value="40"  placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40 if not specified" required>
-        
+
         <label for="plex_timeout">Timeout:</label>
         <input type="number" id="plex_timeout" name="plex_timeout" min="60" value="60"  placeholder="Amount of seconds to wait for Plex to respond, default is 60 if not specified" required>
-        
+
         <div class="checkbox-container">
             <label for="plex_verify_ssl">Verify SSL:</label>
             <input type="checkbox" id="plex_verify_ssl" name="plex_verify_ssl" checked>
         </div>
-        
+
         <div class="checkbox-container">
             <label for="plex_clean_bundles">Clean Bundles:</label>
             <input type="checkbox" id="plex_clean_bundles" name="plex_clean_bundles" checked>
         </div>
-        
+
         <div class="checkbox-container">
             <label for="plex_empty_trash">Empty Trash:</label>
             <input type="checkbox" id="plex_empty_trash" name="plex_empty_trash">
         </div>
-        
+
         <div class="checkbox-container">
             <label for="plex_optimize">Optimize:</label>
             <input type="checkbox" id="plex_optimize" name="plex_optimize">
@@ -49,18 +87,27 @@
         <!-- TMDb Section -->
         <h2>TMDb Settings</h2>
         <label for="tmdb_apikey">TMDb API Key:</label>
-        <input type="text" id="tmdb_apikey" name="tmdb_apikey" required>
-        
+        <div class="button-container">
+            <input type="text" id="tmdb_apikey" name="tmdb_apikey" required>
+            <button type="button" id="validateButton" class="btn">Validate</button>
+        </div>
+        <div id="statusMessage" class="status-message"></div>
+
         <label for="tmdb_language">Language:</label>
-        <input type="text" id="tmdb_language" name="tmdb_language" value="en">
-        
-        <label for="tmdb_region">Region:</label>
-        <input type="text" id="tmdb_region" name="tmdb_region">
-        
+        <select id="tmdb_language" name="tmdb_language">
+            <option value="en">Please validate your TMDB API Key</option>
+        </select>
+
+    <label for="tmdb_region">Region:</label>
+    <select id="tmdb_region" name="tmdb_region">
+        <option value="en">Please validate your TMDB API Key</option>
+    </select>
+
         <label for="tmdb_cache_expiration">Cache Expiration (days):</label>
         <input type="number" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" required>
-        
+
         <input type="submit" value="Submit">
+
     </form>
     <div class="messages">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -74,6 +121,7 @@
         {% endwith %}
     </div>
     <script>
+        // Form submission script
         document.getElementById('configForm').onsubmit = function(event) {
             event.preventDefault();
             if (confirm('Are you sure you want to submit the form?')) {
@@ -96,6 +144,81 @@
                 });
             }
         };
+
+        // API key validation script
+    document.getElementById('validateButton').addEventListener('click', function() {
+        const apiKey = document.getElementById('tmdb_apikey').value;
+        const statusMessage = document.getElementById('statusMessage');
+        const languageSelect = document.getElementById('tmdb_language');
+        const regionSelect = document.getElementById('tmdb_region');
+
+        if (!apiKey) {
+            statusMessage.textContent = 'Please enter an API key.';
+            statusMessage.style.display = 'block';
+            return;
+        }
+
+        fetch(`https://api.themoviedb.org/3/movie/550?api_key=${apiKey}`)
+            .then(response => {
+                if (response.ok) {
+                    statusMessage.textContent = 'API key is valid!';
+                    statusMessage.style.color = 'green';
+                    return Promise.all([
+                        fetch(`https://api.themoviedb.org/3/configuration/languages?api_key=${apiKey}`),
+                        fetch(`https://api.themoviedb.org/3/watch/providers/regions?api_key=${apiKey}`)
+                    ]);
+                } else {
+                    throw new Error('Invalid API key');
+                }
+            })
+            .then(responses => Promise.all(responses.map(response => response.json())))
+            .then(data => {
+                const [languagesData, regionsData] = data;
+
+                // Clear previous options
+                languageSelect.innerHTML = '';
+                regionSelect.innerHTML = '';
+
+                // Populate the language dropdown
+                languagesData.forEach(language => {
+                    const option = document.createElement('option');
+                    option.value = language.iso_639_1;
+                    if (language.name) {
+                        if (language.name.startsWith("?")) {
+                            option.textContent = language.english_name;
+                        } else {
+                            option.textContent = language.name;
+                        }
+                    } else {
+                        option.textContent = language.english_name;
+                    }
+                    languageSelect.appendChild(option);
+                });
+
+                // Populate the region dropdown
+                regionsData.results.forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region.iso_3166_1;
+                    if (region.native_name && region.native_name !== "?????") {
+                        option.textContent = region.native_name;
+                    } else {
+                        option.textContent = region.english_name;
+                    }
+                    regionSelect.appendChild(option);
+                });
+
+                // Set default language and region to English
+                languageSelect.value = 'en';
+                regionSelect.value = 'US';
+            })
+            .catch(error => {
+                statusMessage.textContent = error.message;
+                statusMessage.style.color = 'red';
+            })
+            .finally(() => {
+                statusMessage.style.display = 'block';
+            });
+        });
     </script>
 </body>
 </html>
