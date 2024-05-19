@@ -217,3 +217,7 @@ select:focus {
     border-radius: 4px;
     cursor: pointer;
 }
+
+.btn:hover {
+    background-color: #0056b3;
+}
