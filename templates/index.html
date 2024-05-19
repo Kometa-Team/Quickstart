@@ -5,49 +5,27 @@
     <title>Plex Config</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <style>
-        .header-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        h1 {
-            text-align: center;
-        }
-        .header-image {
-            max-width: 50%;
-            height: auto;
-        }
-        label {
-            display: block;
-            margin-top: 10px;
-        }
-        .button-container {
-            display: flex;
-            align-items: center;
-        }
-        .button-container button {
-            margin-left: 10px;
-        }
-        .status-message {
-            margin-top: 10px;
-            color: red;
-            display: none;
-        }
-        .btn {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: #ffffff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    </style>
 </head>
 <body>
     <div class="header-container">
         <img src="{{ url_for('static', filename='images/header.png') }}" alt="Header Image" class="header-image">
     </div>
     <h1>Enter Configuration Information</h1>
+    <div class="form-container"> <nav id="configNav">
+        <a href="#" data-section="plexSection">Plex Settings</a>
+        <a href="#" data-section="tmdbSection">TMDb Settings</a>
+        <a href="#" data-section="tautulliSection">Tautulli Settings</a>
+        <a href="#" data-section="githubSection">GitHub Settings</a>
+        <a href="#" data-section="omdbSection">OMDb Settings</a>
+        <a href="#" data-section="mdblistSection">MDBList Settings</a>
+        <a href="#" data-section="notifiarrSection">Notifiarr Settings</a>
+        <a href="#" data-section="gotifySection">Gotify Settings</a>
+        <a href="#" data-section="anidbSection">AniDB Settings</a>
+        <a href="#" data-section="radarrSection">Radarr Settings</a>
+        <a href="#" data-section="sonarrSection">Sonarr Settings</a>
+        <a href="#" data-section="traktSection">Trakt Settings</a>
+        <a href="#" data-section="malSection">MAL Settings</a>
+    </nav>
     <form id="configForm">
         <!-- Plex Section -->
         <div id="plexSection">
@@ -310,18 +288,22 @@
 <br><br><br><br><br>
         <input type="submit" value="Submit">
     </form>
-    <div class="messages">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <ul>
-              {% for category, message in messages %}
-                <li class="{{ category }}">{{ message }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        {% endwith %}
-    </div>
     <script>
+        document.getElementById('configNav').addEventListener('click', (event) => {
+            if (event.target.tagName === 'A') {
+                const sectionId = event.target.dataset.section;
+
+                // Hide all sections
+                document.querySelectorAll('#configForm > div').forEach(div => div.classList.remove('active'));
+
+                // Show the selected section
+                document.getElementById(sectionId).classList.add('active');
+            }
+        });
+
+        // Optionally, show the first section by default
+        document.getElementById('plexSection').classList.add('active');
+
         // Form submission script
         document.getElementById('configForm').onsubmit = function(event) {
             event.preventDefault();

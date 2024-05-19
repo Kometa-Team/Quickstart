@@ -23,6 +23,31 @@ h1 {
     height: auto;
 }
 
+/* Navigation  Styles */
+.form-container {
+    display: flex; /* Use flexbox for layout */
+    max-width: 800px; /* Adjust the maximum width as needed */
+    margin: auto;
+}
+
+#configNav {
+    background-color: #343a40; /* Match form background */
+    padding: 20px;
+    border-right: 1px solid #ced4da; /* Add a subtle border */
+    min-height: 400px;
+}
+
+#configNav a {
+    display: block;
+    margin-bottom: 10px;
+    color: #ffffff; /* White text */
+    text-decoration: none;
+}
+
+#configNav a:hover {
+    text-decoration: underline; /* Underline on hover */
+}
+
 /* Form Styles */
 
 form {
@@ -32,6 +57,18 @@ form {
     border: 1px solid #343a40;
     border-radius: 5px;
     background-color: #343a40;
+}
+
+#configForm {
+    flex: 1; /* Take up remaining space */
+    padding: 20px;
+    min-height: 400px;
+}
+#configForm > div {
+    display: none; /* Hide all sections by default */
+}
+#configForm > div.active {
+    display: block; /* Show the active section */
 }
 
 label {
