@@ -370,6 +370,17 @@
             });
         });
 
+        function sortDataByISO (data){
+            let sortedData;
+            sortedData = data.sort(function(a,b){
+            let x = a.iso_639_1.toLowerCase();
+            let y = b.iso_639_1.toLowerCase();
+            if(x>y){return 1;}
+            if(x<y){return -1;}
+            return 0;
+            });
+            return sortedData;
+            }
         // API key validation script
     document.getElementById('validateButton').addEventListener('click', function() {
         const apiKey = document.getElementById('tmdb_apikey').value;
@@ -404,8 +415,10 @@
                 languageSelect.innerHTML = '';
                 regionSelect.innerHTML = '';
 
+                sortedData = sortDataByISO(languagesData)
+                
                 // Populate the language dropdown
-                languagesData.forEach(language => {
+                sortedData.forEach(language => {
                     const option = document.createElement('option');
                     option.value = language.iso_639_1;
                     if (language.name) {

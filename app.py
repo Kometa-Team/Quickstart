@@ -4,14 +4,14 @@ import os
 from dotenv import load_dotenv
 from plexapi.server import PlexServer
 import pyfiglet
-import iso639
-import iso3166
+
+from modules.validations import validate_iso3166_1, validate_iso639_1
+from modules.output import add_border_to_ascii_art
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
-
 
 def add_border_to_ascii_art(art):
     lines = art.split('\n')
@@ -20,28 +20,13 @@ def add_border_to_ascii_art(art):
     bordered_art = [border_line] + [f"# {line.ljust(width)} #" for line in lines] + [border_line]
     return '\n'.join(bordered_art)
 
-
-def validate_iso3166_1(code):
-    try:
-        country = iso3166.countries.get(code.upper())
-        if country:
-            return country.alpha2
-        else:
-            return None
-    except KeyError:
-        return None
-
-
-def validate_iso639_1(code):
-    if len(code) == 2 and iso639.languages.get(alpha2=code.lower()):
-        return code.lower()
-    return None
-
-
 @app.route('/')
+def start():
+    return render_template('start.html')
+
+@app.route('/step-1')
 def index():
     return render_template('index.html')
-
 
 @app.route('/validate_plex', methods=['POST'])
 def validate_plex():

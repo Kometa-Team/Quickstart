@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Plex Config</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="header-container">
+        <img src="{{ url_for('static', filename='images/header.png') }}" alt="Header Image" class="header-image">
+    </div>
+    <h1>Kometa Configuration Builder</h1>
+
+    <form>
+        <p>
+            This wizard will step you through creating a config file for Kometa.
+        </p>
+        <p>    
+            Blah blah it's super cool.
+        </p>
+        <p>    
+            Here's a thing etc etc.
+        </p>
+        <p>    
+            You will need some stuff.
+        </p>
+        <p>    
+            Once you have gathered that stuff, click "Begin".
+        </p>
+    
+        <button type="submit" formaction="/step-1">Begin</button>
+    </form>
+</body>
+</html>
