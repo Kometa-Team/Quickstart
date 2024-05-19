@@ -43,6 +43,43 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/validate_plex', methods=['POST'])
+def validate_plex():
+    data = request.json
+    plex_url = data.get('plex_url')
+    plex_token = data.get('plex_token')
+
+    # Validate Plex URL and Token
+    try:
+        plex = PlexServer(plex_url, plex_token)
+
+        # Fetch Plex settings
+        srv_settings = plex.settings
+
+        # Retrieve db_cache from Plex settings
+        db_cache_setting = srv_settings.get("DatabaseCacheSize")
+
+        # Get the value of db_cache
+        db_cache = db_cache_setting.value
+
+        # Log db_cache value
+        app.logger.info(f"db_cache returned from Plex: {db_cache}")
+
+        # If db_cache is None, treat it as invalid
+        if db_cache is None:
+            raise Exception("Unable to retrieve db_cache from Plex settings.")
+
+    except Exception as e:
+        app.logger.error(f'Error validating Plex server: {str(e)}')
+        flash(f'Invalid Plex URL or Token: {str(e)}', 'error')
+        return jsonify({'valid': False, 'error': f'Invalid Plex URL or Token: {str(e)}'})
+
+    # If PlexServer instance is successfully created and db_cache is retrieved, return success response
+    return jsonify({
+        'valid': True,
+        'db_cache': db_cache  # Send back the integer value of db_cache
+    })
+
 @app.route('/submit', methods=['POST'])
 def submit():
     try:

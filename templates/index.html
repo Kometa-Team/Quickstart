@@ -17,7 +17,6 @@
             max-width: 50%;
             height: auto;
         }
-
         label {
             display: block;
             margin-top: 10px;
@@ -56,13 +55,17 @@
         <input type="text" id="plex_url" name="plex_url" placeholder="http://127.0.0.1:32400" required>
 
         <label for="plex_token">Plex Token:</label>
+        <div class="button-container">
         <input type="text" id="plex_token" name="plex_token" placeholder="XtUjT8LjPyH5kccS4Cjf" required>
+            <button type="button" id="validatePlexButton" class="btn">Validate Plex</button>
+        </div>
+        <div id="plexStatusMessage" class="status-message"></div>
 
         <label for="plex_dbcache">DB Cache:</label>
-        <input type="number" id="plex_dbcache" name="plex_dbcache" min="40" value="40"  placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40 if not specified" required>
+        <input type="number" id="plex_dbcache" name="plex_dbcache" min="40" value="40" placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40 if not specified" required>
 
         <label for="plex_timeout">Timeout:</label>
-        <input type="number" id="plex_timeout" name="plex_timeout" min="60" value="60"  placeholder="Amount of seconds to wait for Plex to respond, default is 60 if not specified" required>
+        <input type="number" id="plex_timeout" name="plex_timeout" min="60" value="60" placeholder="Amount of seconds to wait for Plex to respond, default is 60 if not specified" required>
 
         <div class="checkbox-container">
             <label for="plex_verify_ssl">Verify SSL:</label>
@@ -80,7 +83,7 @@
         </div>
 
         <div class="checkbox-container">
-            <label for="plex_optimize">Optimize:</label>
+            <label for="plex_optimize">Optimize Database:</label>
             <input type="checkbox" id="plex_optimize" name="plex_optimize">
         </div>
 
@@ -107,7 +110,6 @@
         <input type="number" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" required>
 
         <input type="submit" value="Submit">
-
     </form>
     <div class="messages">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -144,6 +146,48 @@
                 });
             }
         };
+
+        // Plex validation script
+        document.getElementById('validatePlexButton').addEventListener('click', function() {
+            const plexUrl = document.getElementById('plex_url').value;
+            const plexToken = document.getElementById('plex_token').value;
+            const plexStatusMessage = document.getElementById('plexStatusMessage');
+
+            if (!plexUrl || !plexToken) {
+                plexStatusMessage.textContent = 'Please enter both Plex URL and Token.';
+                plexStatusMessage.style.display = 'block';
+                return;
+            }
+
+            fetch('/validate_plex', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    plex_url: plexUrl,
+                    plex_token: plexToken
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    document.getElementById('plex_dbcache').value = data.db_cache;
+                    plexStatusMessage.textContent = 'Plex server validated successfully!';
+                    plexStatusMessage.style.color = 'green';
+                } else {
+                    plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
+                    plexStatusMessage.style.color = 'red';
+                }
+                plexStatusMessage.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error validating Plex server:', error);
+                plexStatusMessage.textContent = 'An error occurred while validating Plex server.';
+                plexStatusMessage.style.color = 'red';
+                plexStatusMessage.style.display = 'block';
+            });
+        });
 
         // API key validation script
     document.getElementById('validateButton').addEventListener('click', function() {
