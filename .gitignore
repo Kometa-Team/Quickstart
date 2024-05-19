@@ -18,6 +18,9 @@ config.yml
 .vscode/
 .idea/
 
+# Ignore direnv venv files
+.direnv/
+
 # Ignore logs
 logs/
 
