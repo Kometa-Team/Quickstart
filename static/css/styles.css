@@ -1,4 +1,4 @@
-/* styles.css */
+/* General Styles */
 
 body {
     font-family: Arial, sans-serif;
@@ -6,6 +6,12 @@ body {
     background-color: #212529;
     color: #ffffff;
 }
+
+h1 {
+    text-align: center;
+}
+
+/* Header Styles */
 
 .header-container {
     text-align: center;
@@ -17,9 +23,7 @@ body {
     height: auto;
 }
 
-h1 {
-    text-align: center;
-}
+/* Form Styles */
 
 form {
     max-width: 600px;
@@ -38,7 +42,8 @@ label {
 }
 
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+input[type="password"] {
     width: calc(100% - 20px);
     padding: 8px;
     margin-bottom: 10px;
@@ -75,59 +80,48 @@ input[type="submit"]:hover {
     background-color: #0056b3;
 }
 
+/* Dropdown Styles */
 
+select {
+    width: calc(75%);
+    position: relative;
+    padding-right: 30px;
+    background-color: #454d55;
+    color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
 
-/* Style the dropdown arrow */
+.select-icon-container {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+}
+
+.select-icon {
+    position: relative;
+    width: 15px;
+    height: 15px;
+    fill: #ffffff;
+    cursor: pointer;
+}
+
+.select-icon::after {
+    content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
+}
+
 select::-ms-expand {
     display: none;
 }
 
-/* Style the dropdown when active */
 select:focus {
     outline: none;
     border-color: #80bdff;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
-
-
-
-
-
-select {
-    width: calc(75%);
-    position: relative;
-    padding-right: 30px; /* Adjust as needed */
-    background-color: #454d55; /* Added background color to better blend with select */
-    color: #ffffff; /* Text color */
-    border: 1px solid #ced4da; /* Border color */
-    border-radius: 4px;
-}
-
-/* Create a container for the icon */
-.select-icon-container {
-    position: absolute;
-    top: 50%;
-    right: 10px; /* Adjust as needed */
-    transform: translateY(-50%);
-}
-
-/* Style the icon */
-.select-icon {
-    position: relative;
-    width: 15px;
-    height: 15px;
-    fill: #ffffff; /* Icon color */
-    cursor: pointer;
-}
-
-/* SVG for dropdown icon */
-.select-icon::after {
-    content: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5H7z'/%3E%3C/svg%3E");
-}
-
-
-
+/* Message Styles */
 
 .messages {
     max-width: 600px;
@@ -161,18 +155,23 @@ select {
     border: 1px solid #28a745;
 }
 
+/* Button Styles */
+
 .button-container {
     display: flex;
     align-items: center;
 }
+
 .button-container button {
     margin-left: 10px;
 }
+
 .status-message {
     margin-top: 10px;
     color: red;
     display: none;
 }
+
 .btn {
     padding: 10px 20px;
     background-color: #007bff;
