@@ -15,7 +15,6 @@ env/
 config.yml
 
 # Ignore IDE files
-.vscode/
 .idea/
 
 # Ignore direnv venv files
