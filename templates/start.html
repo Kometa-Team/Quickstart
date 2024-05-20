@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Plex Config</title>
+    <title>Start Config Wizard</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
@@ -11,8 +11,10 @@
         <img src="{{ url_for('static', filename='images/header.png') }}" alt="Header Image" class="header-image">
     </div>
     <h1>Kometa Configuration Builder</h1>
-
-    <form>
+    <form action="/step/010-plex" method="post" id="configForm">
+        <div class="header-container">
+            <img src="{{ url_for('static', filename='images/wizard.webp') }}" alt="Header Image" class="header-image">
+        </div>
         <p>
             This wizard will step you through creating a config file for Kometa.
         </p>
@@ -28,8 +30,7 @@
         <p>    
             Once you have gathered that stuff, click "Begin".
         </p>
-    
-        <button type="submit" formaction="/step/010-plex">Begin</button>
+            <input type="submit" value="Begin">
     </form>
 </body>
 </html>
