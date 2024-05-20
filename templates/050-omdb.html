@@ -8,7 +8,8 @@
             <h2>OMDb Settings</h2>
             <label for="omdb_apikey">OMDb API Key:</label>
             <div class="button-container">
-                <input type="text" id="omdb_apikey" name="omdb_apikey" placeholder="################">
+                <input type="password" id="omdb_apikey" name="omdb_apikey" placeholder="################">
+                <button type="button" id="toggleApikeyVisibility" class="btn">Show</button>
                 <button type="button" id="validateOmdbButton" class="btn">Validate OMDb</button>
             </div>
             <label for="omdb_cache_expiration">Cache Expiration (days):</label>
@@ -21,6 +22,12 @@
     </form>
 
     <script>
+        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+            const apikeyInput = document.getElementById('omdb_apikey');
+            const currentType = apikeyInput.getAttribute('type');
+            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+        });
         async function validateOmdbapikey(apikey) {
             const apiUrl = `http://www.omdbapi.com/?apikey=${apikey}&s=test`;
             try {
