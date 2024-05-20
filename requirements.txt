@@ -6,3 +6,4 @@ plexapi
 iso-639
 iso3166
 requests
+jsonschema

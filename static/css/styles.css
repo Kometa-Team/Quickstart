@@ -64,11 +64,10 @@ form {
     padding: 20px;
     min-height: 400px;
 }
-#configForm > div {
-    display: none; /* Hide all sections by default */
-}
-#configForm > div.active {
-    display: block; /* Show the active section */
+
+#final-yaml {
+    width: 100%; /* Take up remaining space */
+    min-height: 400px;
 }
 
 label {

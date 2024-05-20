@@ -1,12 +1,21 @@
-from flask import Flask, render_template, request, flash, jsonify
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session, send_file
+import jsonschema
+import yaml
+import requests
+import io
 import yaml
 import os
 from dotenv import load_dotenv
 from plexapi.server import PlexServer
 import pyfiglet
 
-from modules.validations import validate_iso3166_1, validate_iso639_1
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server
 from modules.output import add_border_to_ascii_art
+
+# Load JSON Schema
+# probably ought to load this from github
+with open('json-schema/config-schema.json', 'r') as file:
+    schema = yaml.safe_load(file)
 
 load_dotenv()
 
@@ -28,42 +37,97 @@ def start():
 def index():
     return render_template('index.html')
 
+@app.route('/step/<name>', methods=['GET', 'POST'])
+def step(name):
+    if request.method == 'POST':
+        # get source from referrer
+        source = request.referrer.split("/")[-1]
+        source = source.split("?")[0]
+        source = source.split('-')[-1]
+
+        data = {
+            source : {}
+        }
+
+        for key in request.form:
+            final_key = key.replace(source + '_', '')
+            try:
+                value = request.form[key]
+            except:
+                value = 'place-holder-value'
+            try:
+                value = int(value)
+            except ValueError:
+                try:
+                    if value.lower() == 'on':
+                        value = bool(value)
+                except ValueError:
+                    value = value
+
+            data[source][final_key] = value
+
+            # if value != "":
+            #     data[source][final_key] = value
+
+        session[source] = data[source]
+
+    template = name + '.html'
+
+    return render_template(template)
+
+@app.route('/999-final', methods=['GET', 'POST'])
+def final_step():
+    # Combine data from all steps (retrieve from session or other storage)
+    config_data = {
+        'plex': session.get('plex'),
+        'tmdb': session.get('tmdb'),
+        # 'tautulli': session.get('tautulli'),
+        # 'github': session.get('github'),
+        # 'omdb': session.get('omdb'),
+        # 'mdblist': session.get('mdblist'),
+        # 'notifiarr': session.get('notifarr'),
+        # 'gotify': session.get('gotify'),
+        # 'anidb': session.get('anidb'),
+        # 'radarr': session.get('radarr'),
+        # 'sonarr': session.get('sonarr'),
+        # 'trakt': session.get('trakt'),
+        # 'mal': session.get('mal'),
+        # Add other sections as needed
+    }
+    try:
+        jsonschema.validate(instance=config_data, schema=schema)
+        yaml_content = yaml.dump(config_data)
+        session['yaml_content'] = yaml_content
+        flash('Configuration is valid and ready to download!', 'success')
+    except jsonschema.exceptions.ValidationError as e:
+        flash(f'Validation error: {e.message}', 'danger')
+        return redirect(url_for('step1'))
+    
+    yaml_content = session.get('yaml_content', '')
+    return render_template('999-final.html', yaml_content=yaml_content)
+
+@app.route('/download')
+def download():
+    yaml_content = session.get('yaml_content', '')
+    if yaml_content:
+        return send_file(
+            io.BytesIO(yaml_content.encode('utf-8')),
+            mimetype='text/yaml',
+            as_attachment=True,
+            download_name='config.yaml'
+        )
+    flash('No configuration to download', 'danger')
+    return redirect(url_for('final_step'))
+
 @app.route('/validate_plex', methods=['POST'])
 def validate_plex():
     data = request.json
-    plex_url = data.get('plex_url')
-    plex_token = data.get('plex_token')
+    return validate_plex_server(data)
 
-    # Validate Plex URL and Token
-    try:
-        plex = PlexServer(plex_url, plex_token)
-
-        # Fetch Plex settings
-        srv_settings = plex.settings
-
-        # Retrieve db_cache from Plex settings
-        db_cache_setting = srv_settings.get("DatabaseCacheSize")
-
-        # Get the value of db_cache
-        db_cache = db_cache_setting.value
-
-        # Log db_cache value
-        app.logger.info(f"db_cache returned from Plex: {db_cache}")
-
-        # If db_cache is None, treat it as invalid
-        if db_cache is None:
-            raise Exception("Unable to retrieve db_cache from Plex settings.")
-
-    except Exception as e:
-        app.logger.error(f'Error validating Plex server: {str(e)}')
-        flash(f'Invalid Plex URL or Token: {str(e)}', 'error')
-        return jsonify({'valid': False, 'error': f'Invalid Plex URL or Token: {str(e)}'})
-
-    # If PlexServer instance is successfully created and db_cache is retrieved, return success response
-    return jsonify({
-        'valid': True,
-        'db_cache': db_cache  # Send back the integer value of db_cache
-    })
+@app.route('/validate_tautulli', methods=['POST'])
+def validate_tautulli():
+    data = request.json
+    return validate_tautulli_server(data)
 
 @app.route('/submit', methods=['POST'])
 def submit():

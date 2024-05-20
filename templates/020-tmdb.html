@@ -1,0 +1,121 @@
+{% extends "000-base.html" %}
+
+{% block content %}
+    <h1>TMDB Configuration Information</h1>
+    <form action="/step/030-tautulli" method="post" id="configForm">
+        <!-- TMDb Section -->
+        <div id="tmdbSection">
+            <h2>TMDb Settings</h2>
+            <label for="tmdb_apikey">TMDb API Key:</label>
+            <div class="button-container">
+                <input type="text" id="tmdb_apikey" name="tmdb_apikey" required>
+                <button type="button" id="validateButton" class="btn">Validate</button>
+            </div>
+            <div id="statusMessage" class="status-message"></div>
+
+            <label for="tmdb_language">Language:</label>
+            <select id="tmdb_language" name="tmdb_language">
+                <option value="en">Please validate your TMDB API Key</option>
+            </select>
+
+        <label for="tmdb_region">Region:</label>
+        <select id="tmdb_region" name="tmdb_region">
+            <option value="en">Please validate your TMDB API Key</option>
+        </select>
+
+            <label for="tmdb_cache_expiration">Cache Expiration (days):</label>
+            <input type="number" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" required>
+        </div>
+<br><br>
+        <input type="submit" value="Next">
+    </form>
+    <script>
+        function sortDataByISO (data){
+            let sortedData;
+            sortedData = data.sort(function(a,b){
+            let x = a.iso_639_1.toLowerCase();
+            let y = b.iso_639_1.toLowerCase();
+            if(x>y){return 1;}
+            if(x<y){return -1;}
+            return 0;
+            });
+            return sortedData;
+            }
+        // API key validation script
+    document.getElementById('validateButton').addEventListener('click', function() {
+        const apiKey = document.getElementById('tmdb_apikey').value;
+        const statusMessage = document.getElementById('statusMessage');
+        const languageSelect = document.getElementById('tmdb_language');
+        const regionSelect = document.getElementById('tmdb_region');
+
+        if (!apiKey) {
+            statusMessage.textContent = 'Please enter an API key.';
+            statusMessage.style.display = 'block';
+            return;
+        }
+
+        fetch(`https://api.themoviedb.org/3/movie/550?api_key=${apiKey}`)
+            .then(response => {
+                if (response.ok) {
+                    statusMessage.textContent = 'API key is valid!';
+                    statusMessage.style.color = 'green';
+                    return Promise.all([
+                        fetch(`https://api.themoviedb.org/3/configuration/languages?api_key=${apiKey}`),
+                        fetch(`https://api.themoviedb.org/3/watch/providers/regions?api_key=${apiKey}`)
+                    ]);
+                } else {
+                    throw new Error('Invalid API key');
+                }
+            })
+            .then(responses => Promise.all(responses.map(response => response.json())))
+            .then(data => {
+                const [languagesData, regionsData] = data;
+
+                // Clear previous options
+                languageSelect.innerHTML = '';
+                regionSelect.innerHTML = '';
+
+                sortedData = sortDataByISO(languagesData)
+                
+                // Populate the language dropdown
+                sortedData.forEach(language => {
+                    const option = document.createElement('option');
+                    option.value = language.iso_639_1;
+                    if (language.name) {
+                        if (language.name.startsWith("?")) {
+                            option.textContent = language.english_name;
+                        } else {
+                            option.textContent = language.name;
+                        }
+                    } else {
+                        option.textContent = language.english_name;
+                    }
+                    languageSelect.appendChild(option);
+                });
+
+                // Populate the region dropdown
+                regionsData.results.forEach(region => {
+                    const option = document.createElement('option');
+                    option.value = region.iso_3166_1;
+                    if (region.native_name && region.native_name !== "?????") {
+                        option.textContent = region.native_name;
+                    } else {
+                        option.textContent = region.english_name;
+                    }
+                    regionSelect.appendChild(option);
+                });
+
+                // Set default language and region to English
+                languageSelect.value = 'en';
+                regionSelect.value = 'US';
+            })
+            .catch(error => {
+                statusMessage.textContent = error.message;
+                statusMessage.style.color = 'red';
+            })
+            .finally(() => {
+                statusMessage.style.display = 'block';
+            });
+        });
+    </script>
+{% endblock %}

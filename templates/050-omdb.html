@@ -1,0 +1,21 @@
+{% extends "000-base.html" %}
+
+{% block content %}
+    <h1>OMDB Configuration Information</h1>
+    <form action="/step/060-mdblist" method="post" id="configForm">
+    <!-- OMDb Section -->
+    <div id="omdbSection">
+        <h2>OMDb Settings</h2>
+        <label for="omdb_apikey">OMDb API Key:</label>
+        <input type="text" id="omdb_apikey" name="omdb_apikey" placeholder="########">
+
+        <label for="omdb_cache_expiration">Cache Expiration (days):</label>
+        <input type="number" id="omdb_cache_expiration" name="omdb_cache_expiration" value="60">
+    </div>
+
+<br><br>
+        <input type="submit" value="Submit">
+    </form>
+    <script>
+    </script>
+{% endblock %}
