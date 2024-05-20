@@ -7,11 +7,65 @@
     <div id="githubSection">
         <h2>GitHub Settings</h2>
         <label for="github_token">GitHub Token:</label>
-        <input type="text" id="github_token" name="github_token" placeholder="################################">
+         <div class="button-container">
+            <input type="text" id="github_token" name="github_token" placeholder="################################">
+            <button type="button" id="validateGithubButton" class="btn">Validate Github</button>
+        </div>
+        <div id="githubStatusMessage" class="status-message"></div>
     </div>
 <br><br>
-        <input type="submit" value="Submit">
+        <input type="submit" value="Next">
     </form>
     <script>
+        async function validateGitHubToken(token) {
+  const apiUrl = "https://api.github.com/user";
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        "Authorization": `token ${token}`,
+        "Accept": "application/vnd.github.v3+json"
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log("GitHub token is valid. User: " + data.login);
+      return true;
+    } else {
+      console.log("Invalid GitHub token. Status:", response.status);
+      return false;
+    }
+  } catch (error) {
+    console.error("Error validating GitHub token:", error);
+    return false;
+  }
+}
+
+    document.getElementById('validateGithubButton').addEventListener('click', function() {
+        const apiKey = document.getElementById('github_token').value;
+        const githubStatusMessage = document.getElementById('githubStatusMessage');
+
+        const token = "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";
+
+        if (!apiKey) {
+            githubStatusMessage.textContent = 'Please enter an Github Personal Access Token.';
+            githubStatusMessage.style.display = 'block';
+            return;
+        }
+
+        validateGitHubToken(apiKey).then(isValid => {
+          if (isValid) {
+            githubStatusMessage.textContent = "GitHub token is valid.";
+            githubStatusMessage.style.color = 'green';
+          } else {
+            githubStatusMessage.textContent = "GitHub token is invalid.";
+            githubStatusMessage.style.color = 'red';
+          }
+        });
+        githubStatusMessage.style.display = 'block';
+
+        });
     </script>
 {% endblock %}
