@@ -24,6 +24,7 @@ app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 
 def add_border_to_ascii_art(art):
     lines = art.split('\n')
+    lines = lines[:-1]
     width = max(len(line) for line in lines)
     border_line = "#" * (width + 4)
     bordered_art = [border_line] + [f"# {line.ljust(width)} #" for line in lines] + [border_line]
@@ -94,17 +95,48 @@ def final_step():
         # 'mal': session.get('mal'),
         # Add other sections as needed
     }
+
     try:
         jsonschema.validate(instance=config_data, schema=schema)
-        yaml_content = yaml.dump(config_data)
-        session['yaml_content'] = yaml_content
-        flash('Configuration is valid and ready to download!', 'success')
     except jsonschema.exceptions.ValidationError as e:
         flash(f'Validation error: {e.message}', 'danger')
         return redirect(url_for('step1'))
-    
-    yaml_content = session.get('yaml_content', '')
+
+    # Generate ASCII art
+    kometa_art = add_border_to_ascii_art(pyfiglet.figlet_format('KOMETA'))
+    plex_art = add_border_to_ascii_art(pyfiglet.figlet_format('Plex'))
+    tmdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('TMDb'))
+    tautulli_art = add_border_to_ascii_art(pyfiglet.figlet_format('Tautulli'))
+    github_art = add_border_to_ascii_art(pyfiglet.figlet_format('Github'))
+
+    header_comment = (
+        "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
+        "and YAML by Red Hat extension. VSC will also leverage the above link to enhance Kometa yml edits."
+    )
+
+    # Prepare the final YAML content
+    yaml_content = (
+        '# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n'
+        f"{kometa_art}\n\n"
+        f"{header_comment}\n\n"
+        "libraries:\n\n"
+        f"{plex_art}\n"
+        f"{yaml.dump({'plex': config_data['plex']}, default_flow_style=False, sort_keys=False)}\n\n"
+        f"{tmdb_art}\n"
+        f"{yaml.dump({'tmdb': config_data['tmdb']}, default_flow_style=False, sort_keys=False)}\n\n"
+        f"{tautulli_art}\n"
+        f"{yaml.dump({'tautulli': config_data['tautulli']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{github_art}\n"
+        f"{yaml.dump({'github': config_data['github']}, default_flow_style=False, sort_keys=False)}\n"
+    )
+
+    # Store the final YAML content in the session
+    session['yaml_content'] = yaml_content
+
+    # Render the final step template with the YAML content
     return render_template('999-final.html', yaml_content=yaml_content)
+
+
 
 @app.route('/download')
 def download():
