@@ -12,6 +12,7 @@
         <label for="tautulli_apikey">Tautulli API Key:</label>
         <div class="button-container">
             <input type="text" id="tautulli_apikey" name="tautulli_apikey" placeholder="################################">
+            <button type="button" id="toggleApikeyVisibility" class="btn">Hide</button>
             <button type="button" id="validateTautulliButton" class="btn">Validate Tautulli</button>
         </div>
         <div id="tautulliStatusMessage" class="status-message"></div>
@@ -20,6 +21,12 @@
         <input type="submit" value="Next">
     </form>
     <script>
+        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+            const apikeyInput = document.getElementById('tautulli_apikey');
+            const currentType = apikeyInput.getAttribute('type');
+            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+        });
         // Tautulli validation script
         document.getElementById('validateTautulliButton').addEventListener('click', function() {
             const tautulliUrl = document.getElementById('tautulli_url').value;

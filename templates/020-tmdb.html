@@ -9,6 +9,7 @@
             <label for="tmdb_apikey">TMDb API Key:</label>
             <div class="button-container">
                 <input type="text" id="tmdb_apikey" name="tmdb_apikey" required>
+                <button type="button" id="toggleApikeyVisibility" class="btn">Hide</button>
                 <button type="button" id="validateButton" class="btn">Validate TMDb</button>
             </div>
             <div id="statusMessage" class="status-message"></div>
@@ -30,6 +31,12 @@
         <input type="submit" value="Next">
     </form>
     <script>
+        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+            const apikeyInput = document.getElementById('tmdb_apikey');
+            const currentType = apikeyInput.getAttribute('type');
+            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+        });
         function sortDataByISO (data){
             let sortedData;
             sortedData = data.sort(function(a,b){

@@ -12,6 +12,7 @@
             <label for="plex_token">Plex Token:</label>
             <div class="button-container">
                 <input type="text" id="plex_token" name="plex_token" placeholder="################################" required>
+                <button type="button" id="toggleApikeyVisibility" class="btn">Hide</button>
                 <button type="button" id="validatePlexButton" class="btn">Validate Plex</button>
             </div>
             <div id="plexStatusMessage" class="status-message"></div>
@@ -46,6 +47,12 @@
         <input type="submit" value="Next">
     </form>
     <script>
+        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+            const apikeyInput = document.getElementById('plex_token');
+            const currentType = apikeyInput.getAttribute('type');
+            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+        });
         // Plex validation script
         document.getElementById('validatePlexButton').addEventListener('click', function() {
             const plexUrl = document.getElementById('plex_url').value;

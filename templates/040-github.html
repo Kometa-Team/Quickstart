@@ -9,6 +9,7 @@
         <label for="github_token">GitHub Token:</label>
         <div class="button-container">
             <input type="text" id="github_token" name="github_token" placeholder="################################">
+            <button type="button" id="toggleApikeyVisibility" class="btn">Hide</button>
             <button type="button" id="validateGithubButton" class="btn">Validate Github</button>
         </div>
         <div id="githubStatusMessage" class="status-message"></div>
@@ -17,6 +18,12 @@
         <input type="submit" value="Next">
     </form>
     <script>
+      document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+        const apikeyInput = document.getElementById('github_token');
+        const currentType = apikeyInput.getAttribute('type');
+        apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+        this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+    });
         async function validateGitHubToken(token) {
   const apiUrl = "https://api.github.com/user";
 
