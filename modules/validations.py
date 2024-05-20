@@ -59,6 +59,7 @@ def validate_plex_server(data):
         'db_cache': db_cache  # Send back the integer value of db_cache
     })
 
+
 def validate_tautulli_server(data):
     tautulli_url = data.get('tautulli_url')
     tautulli_token = data.get('tautulli_token')

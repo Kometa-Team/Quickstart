@@ -81,8 +81,8 @@ def final_step():
     config_data = {
         'plex': session.get('plex'),
         'tmdb': session.get('tmdb'),
-        # 'tautulli': session.get('tautulli'),
-        # 'github': session.get('github'),
+        'tautulli': session.get('tautulli'),
+        'github': session.get('github'),
         # 'omdb': session.get('omdb'),
         # 'mdblist': session.get('mdblist'),
         # 'notifiarr': session.get('notifarr'),
@@ -114,7 +114,7 @@ def download():
             io.BytesIO(yaml_content.encode('utf-8')),
             mimetype='text/yaml',
             as_attachment=True,
-            download_name='config.yaml'
+            download_name='config.yml'
         )
     flash('No configuration to download', 'danger')
     return redirect(url_for('final_step'))
