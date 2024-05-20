@@ -84,7 +84,7 @@ def final_step():
         'tmdb': session.get('tmdb'),
         'tautulli': session.get('tautulli'),
         'github': session.get('github'),
-        # 'omdb': session.get('omdb'),
+        'omdb': session.get('omdb'),
         # 'mdblist': session.get('mdblist'),
         # 'notifiarr': session.get('notifarr'),
         # 'gotify': session.get('gotify'),
@@ -108,6 +108,7 @@ def final_step():
     tmdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('TMDb'))
     tautulli_art = add_border_to_ascii_art(pyfiglet.figlet_format('Tautulli'))
     github_art = add_border_to_ascii_art(pyfiglet.figlet_format('Github'))
+    omdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('OMDb'))
 
     header_comment = (
         "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
@@ -128,6 +129,8 @@ def final_step():
         f"{yaml.dump({'tautulli': config_data['tautulli']}, default_flow_style=False, sort_keys=False)}\n"
         f"{github_art}\n"
         f"{yaml.dump({'github': config_data['github']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{omdb_art}\n"
+        f"{yaml.dump({'omdb': config_data['omdb']}, default_flow_style=False, sort_keys=False)}\n"
     )
 
     # Store the final YAML content in the session

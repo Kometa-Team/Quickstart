@@ -1,21 +1,65 @@
 {% extends "000-base.html" %}
 
 {% block content %}
-    <h1>OMDB Configuration Information</h1>
+    <h1>OMDb Configuration Information</h1>
     <form action="/step/060-mdblist" method="post" id="configForm">
-    <!-- OMDb Section -->
-    <div id="omdbSection">
-        <h2>OMDb Settings</h2>
-        <label for="omdb_apikey">OMDb API Key:</label>
-        <input type="text" id="omdb_apikey" name="omdb_apikey" placeholder="########">
+        <!-- OMDb Section -->
+        <div id="omdbSection">
+            <h2>OMDb Settings</h2>
+            <label for="omdb_apikey">OMDb API Key:</label>
+            <div class="button-container">
+                <input type="text" id="omdb_apikey" name="omdb_apikey" placeholder="################">
+                <button type="button" id="validateOmdbButton" class="btn">Validate OMDb</button>
+            </div>
+            <label for="omdb_cache_expiration">Cache Expiration (days):</label>
+            <input type="number" id="omdb_cache_expiration" name="omdb_cache_expiration" value="60" min="0">
+            <div id="omdbStatusMessage" class="status-message" style="display: none;"></div>
+        </div>
 
-        <label for="omdb_cache_expiration">Cache Expiration (days):</label>
-        <input type="number" id="omdb_cache_expiration" name="omdb_cache_expiration" value="60">
-    </div>
-
-<br><br>
+        <br><br>
         <input type="submit" value="Next">
     </form>
+
     <script>
+        async function validateOmdbapikey(apikey) {
+            const apiUrl = `http://www.omdbapi.com/?apikey=${apikey}&s=test`;
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                if (data.Response === "True" || data.Error === "Movie not found!") {
+                    console.log("OMDb apikey is valid.");
+                    return true;
+                } else {
+                    console.log("Invalid OMDb apikey. Error:", data.Error);
+                    return false;
+                }
+            } catch (error) {
+                console.error("Error validating OMDb apikey:", error);
+                return false;
+            }
+        }
+
+        document.getElementById('validateOmdbButton').addEventListener('click', function() {
+            const apiKey = document.getElementById('omdb_apikey').value;
+            const omdbStatusMessage = document.getElementById('omdbStatusMessage');
+
+            if (!apiKey) {
+                omdbStatusMessage.textContent = 'Please enter an OMDb API key.';
+                omdbStatusMessage.style.color = 'red';
+                omdbStatusMessage.style.display = 'block';
+                return;
+            }
+
+            validateOmdbapikey(apiKey).then(isValid => {
+                if (isValid) {
+                    omdbStatusMessage.textContent = "OMDb API key is valid.";
+                    omdbStatusMessage.style.color = 'green';
+                } else {
+                    omdbStatusMessage.textContent = "OMDb API key is invalid.";
+                    omdbStatusMessage.style.color = 'red';
+                }
+                omdbStatusMessage.style.display = 'block';
+            });
+        });
     </script>
 {% endblock %}
