@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from plexapi.server import PlexServer
 import pyfiglet
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_notifiarr
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server
 from modules.output import add_border_to_ascii_art
 
 # Load JSON Schema
