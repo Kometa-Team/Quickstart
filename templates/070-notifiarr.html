@@ -3,15 +3,71 @@
 {% block content %}
     <h1>Notifiarr Configuration Information</h1>
     <form action="/step/080-gotify" method="post" id="configForm">
-    <!-- Notifiarr Section -->
-    <div id="notifiarrSection">
-        <h2>Notifiarr Settings</h2>
-        <label for="notifiarr_apikey">Notifiarr API Key:</label>
-        <input type="text" id="notifiarr_apikey" name="notifiarr_apikey" placeholder="####################################">
-    </div>
-<br><br>
+        <!-- Notifiarr Section -->
+        <div id="notifiarrSection">
+            <h2>Notifiarr Settings</h2>
+            <label for="notifiarr_apikey">Notifiarr API Key:</label>
+            <div class="button-container">
+                <input type="password" id="notifiarr_apikey" name="notifiarr_apikey" placeholder="################">
+                <button type="button" id="toggleApikeyVisibility" class="btn">Show</button>
+                <button type="button" id="validateNotifiarrButton" class="btn">Validate Notifiarr</button>
+            </div>
+            <div id="notifiarrStatusMessage" class="status-message" style="display: none;"></div>
+        </div>
+
+        <br><br>
         <input type="submit" value="Next">
     </form>
+
     <script>
+        async function validateNotifiarrApikey(apikey) {
+            const apiUrl = `https://notifiarr.com/api/v1/user/validate/${apikey}`;
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                console.log("API Response:", data);
+
+                if (data.result == 'success') {
+                    console.log("Notifiarr API key is valid.");
+                    return true;
+                } else {
+                    console.log("Invalid Notifiarr API key. Error:", data.Error);
+                    return false;
+                }
+            } catch (error) {
+                console.error("Error validating Notifiarr apikey:", error);
+                return false;
+            }
+        }
+
+        document.getElementById('validateNotifiarrButton').addEventListener('click', function() {
+            const apiKey = document.getElementById('notifiarr_apikey').value;
+            const notifiarrStatusMessage = document.getElementById('notifiarrStatusMessage');
+
+            if (!apiKey) {
+                notifiarrStatusMessage.textContent = 'Please enter a Notifiarr API key.';
+                notifiarrStatusMessage.style.color = 'red';
+                notifiarrStatusMessage.style.display = 'block';
+                return;
+            }
+
+            validateNotifiarrApikey(apiKey).then(isValid => {
+                if (isValid) {
+                    notifiarrStatusMessage.textContent = "Notifiarr API key is valid.";
+                    notifiarrStatusMessage.style.color = 'green';
+                } else {
+                    notifiarrStatusMessage.textContent = "Notifiarr API key is invalid.";
+                    notifiarrStatusMessage.style.color = 'red';
+                }
+                notifiarrStatusMessage.style.display = 'block';
+            });
+        });
+
+        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+            const apikeyInput = document.getElementById('notifiarr_apikey');
+            const currentType = apikeyInput.getAttribute('type');
+            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+        });
     </script>
 {% endblock %}
