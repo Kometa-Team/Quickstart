@@ -202,6 +202,7 @@ select:focus {
     margin-left: 10px;
 }
 
+
 .status-message {
     margin-top: 10px;
     color: red;
@@ -220,3 +221,10 @@ select:focus {
 .btn:hover {
     background-color: #0056b3;
 }
+
+.btn:disabled,
+    btn[disabled] {
+        background-color: grey;
+        color: white;
+        cursor: not-allowed;
+    }

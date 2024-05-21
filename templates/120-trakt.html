@@ -8,32 +8,127 @@
             <h2>Trakt Settings</h2>
             <div class="form-group">
                 <label for="trakt_client_id">Trakt Client ID:</label>
-                <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id">
+                <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" oninput="updateTraktURL(this)">
             </div>
             <div class="form-group">
                 <label for="trakt_client_secret">Trakt Client Secret:</label>
-                <input type="text" class="form-control" id="trakt_client_secret" name="trakt_client_secret">
+                <input type="text" class="form-control" id="trakt_client_secret" name="trakt_client_secret" oninput="updateTraktURL(this)">
             </div>
 
             <div class="form-group" id="urlField">
                 When you click "Retrieve PIN" below, you will be taken to a Trakt web page. Log in and allow your application access to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br><br>
                 If you have a PIN you generated in the last few minutes, enter it below.<br><br>
                 <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
-                <button type="button" class="btn btn-primary mt-2" id="trakt_open_url" onclick="openUrl()">Retrieve PIN</button>
-            </div>
-
-            <div class="form-group">
+                <button type="button" class="btn btn-primary mt-2" id="trakt_open_url" onclick="openTraktUrl()">Retrieve PIN</button>
                 <label for="trakt_pin">Trakt PIN:</label>
-                <input type="text" class="form-control" id="trakt_pin" name="trakt_pin">
+                <input type="text" class="form-control" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)">
             </div>
+            <div id="traktStatusMessage" class="status-message"></div>
 
-            <div class="button-container">
-                <button type="button" id="validateTraktPin" class="btn btn-primary mt-2">Validate PIN</button>
+            <div class="form-group" id="hidden_stuff">
+                <input type="hidden" class="form-control" id="access_token" name="access_token" readonly>
+                <input type="hidden" class="form-control" id="token_type" name="token_type" readonly>
+                <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly>
+                <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly>
+                <input type="hidden" class="form-control" id="scope" name="scope" readonly>
+                <input type="hidden" class="form-control" id="created_at" name="created_at" readonly>
+                <button type="button" class="btn btn-primary mt-2" id="validate_trakt_pin">Validate PIN</button>
             </div>
         </div>
 <br><br>
         <input type="submit" value="Next">
     </form>
     <script>
+        function updateTraktURL() {
+            var trakt_client_id = document.getElementById('trakt_client_id').value;
+            var myURL = "";
+            if (trakt_client_id.length == 64)
+            {
+                myURL = "https://trakt.tv/oauth/authorize?response_type=code&client_id=" + trakt_client_id + "&redirect_uri=urn:ietf:wg:oauth:2.0:oob";
+            }
+            console.log("updateTraktURL: " + myURL)
+            document.getElementById('trakt_url').value = myURL;
+            checkURLStart()
+        }
+
+        function openTraktUrl() {
+            var url = document.getElementById('trakt_url').value;
+            if(url) {
+                window.open(url, '_blank').focus();
+            }
+        }
+
+        function checkPinField() {
+            var pin = document.getElementById('trakt_pin').value;
+            var pinButton = document.getElementById('validate_trakt_pin');
+            pinButton.disabled = (pin == '');
+        }
+
+        function checkURLStart() {
+            var url = document.getElementById('trakt_url').value;
+            var urlButton = document.getElementById('trakt_open_url');
+            urlButton.disabled = url == '';
+        }
+
+        window.onload = function() {
+            var trakt_url_text = document.getElementById('trakt_url');
+            document.getElementById("trakt_open_url").disabled = true
+            document.getElementById("validate_trakt_pin").disabled = true
+            checkURLStart(trakt_url_text);
+        };
+
+        // Plex validation script
+        document.getElementById('validate_trakt_pin').addEventListener('click', function() {
+            const traktClient = document.getElementById('trakt_client_id').value;
+            const traktSecret = document.getElementById('trakt_client_secret').value;
+            const traktPin = document.getElementById('trakt_pin').value;
+            const traktStatusMessage = document.getElementById('traktStatusMessage');
+
+            if (!traktClient || !traktSecret || !traktPin) {
+                traktStatusMessage.textContent = 'ID, secret, and PIN and all required.';
+                traktStatusMessage.style.display = 'block';
+                return;
+            }
+
+            fetch('/validate_trakt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    trakt_client_id: traktClient,
+                    trakt_client_secret: traktSecret,
+                    trakt_pin: traktPin
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
+                    traktStatusMessage.style.color = 'green';
+                    document.getElementById('access_token').value = data.trakt_authorization_access_token;
+                    document.getElementById('token_type').value = data.trakt_authorization_token_type;
+                    document.getElementById('expires_in').value = data.trakt_authorization_expires_in;
+                    document.getElementById('refresh_token').value = data.trakt_authorization_refresh_token;
+                    document.getElementById('scope').value = data.trakt_authorization_scope;
+                    document.getElementById('created_at').value = data.trakt_authorization_created_at;
+                    document.getElementById('trakt_pin').value = "";
+                    document.getElementById('trakt_url').value = "";
+                    document.getElementById("trakt_open_url").disabled = true
+                    document.getElementById("validate_trakt_pin").disabled = true
+                } else {
+                    traktStatusMessage.textContent = data.error;
+                    traktStatusMessage.style.color = 'red';
+                }
+                traktStatusMessage.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error validating Trakt credentials:', error);
+                traktStatusMessage.textContent = 'An error occurred while validating Trakt credentials.';
+                traktStatusMessage.style.color = 'red';
+                traktStatusMessage.style.display = 'block';
+            });
+        });
+
     </script>
 {% endblock %}
