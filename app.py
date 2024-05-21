@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 from plexapi.server import PlexServer
 import pyfiglet
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server
 from modules.output import add_border_to_ascii_art
+from modules.helpers import build_config_dict
 
 # Load JSON Schema
 # probably ought to load this from github
@@ -21,14 +22,6 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
-
-def add_border_to_ascii_art(art):
-    lines = art.split('\n')
-    lines = lines[:-1]
-    width = max(len(line) for line in lines)
-    border_line = "#" * (width + 4)
-    bordered_art = [border_line] + [f"# {line.ljust(width)} #" for line in lines] + [border_line]
-    return '\n'.join(bordered_art)
 
 @app.route('/')
 def start():
@@ -46,29 +39,7 @@ def step(name):
         source = source.split("?")[0]
         source = source.split('-')[-1]
 
-        data = {
-            source : {}
-        }
-
-        for key in request.form:
-            final_key = key.replace(source + '_', '')
-            try:
-                value = request.form[key]
-            except:
-                value = 'place-holder-value'
-            try:
-                value = int(value)
-            except ValueError:
-                try:
-                    if value.lower() == 'on':
-                        value = bool(value)
-                except ValueError:
-                    value = value
-
-            data[source][final_key] = value
-
-            # if value != "":
-            #     data[source][final_key] = value
+        data = build_config_dict(source, request.form)
 
         session[source] = data[source]
 
@@ -145,8 +116,6 @@ def final_step():
     # Render the final step template with the YAML content
     return render_template('999-final.html', yaml_content=yaml_content)
 
-
-
 @app.route('/download')
 def download():
     yaml_content = session.get('yaml_content', '')
@@ -169,6 +138,11 @@ def validate_plex():
 def validate_tautulli():
     data = request.json
     return validate_tautulli_server(data)
+
+@app.route('/validate_trakt', methods=['POST'])
+def validate_trakt():
+    data = request.json
+    return validate_trakt_server(data)
 
 @app.route('/submit', methods=['POST'])
 def submit():

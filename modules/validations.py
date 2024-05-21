@@ -96,23 +96,70 @@ def validate_tautulli_server(data):
     })
 
 
-    apikey = request.json.get('apikey')
-    if not apikey:
-        return jsonify({"error": "API key is required"}), 400
-    
-    apiUrl = f"https://notifiarr.com/api/v1/user/validate/{apikey}"
-    
-    headers = {
-        "Content-Type": "application/json"
+def validate_trakt_server(data):
+    trakt_client_id = data.get('trakt_client_id')
+    trakt_client_secret = data.get('trakt_client_secret')
+    trakt_pin = data.get('trakt_pin')
+
+    redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+    base_url = "https://api.trakt.tv"
+
+    error = ""
+    isValid = False
+    trakt_authorization_access_token = ""
+    trakt_authorization_token_type = ""
+    trakt_authorization_expires_in = ""
+    trakt_authorization_refresh_token = ""
+    trakt_authorization_scope = ""
+    trakt_authorization_created_at = ""
+
+    json = {
+        "code": trakt_pin,
+        "client_id": trakt_client_id,
+        "client_secret": trakt_client_secret,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code"
     }
-    
     try:
-        response = requests.get(apiUrl, headers=headers)
-        data = response.json()
-        
-        if response.status_code == 200 and data.get('result') == 'success':
-            return jsonify({"valid": True})
+        response = requests.post(f"{base_url}/oauth/token", json=json, headers={"Content-Type": "application/json"})
+
+        if response.status_code != 200:
+            error = "Trakt Error: Invalid trakt pin, client_id, or client_secret."
         else:
-            return jsonify({"valid": False}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {response.json()['access_token']}",
+                "trakt-api-version": "2",
+                "trakt-api-key": trakt_client_id,
+            }
+        
+            validation_response = requests.get(f"{base_url}/users/settings", headers=headers)
+
+
+            if validation_response.status_code == 423:
+                error = "Account is locked; please contact Trakt Support"
+            else:
+                trakt_authorization_access_token = response.json()['access_token']
+                trakt_authorization_token_type = response.json()['token_type']
+                trakt_authorization_expires_in = response.json()['expires_in']
+                trakt_authorization_refresh_token = response.json()['refresh_token']
+                trakt_authorization_scope = response.json()['scope']
+                trakt_authorization_created_at = response.json()['created_at']
+                isValid = True
+            
+    except requests.exceptions.RequestException as e:
+        print(f"Error validating Trakt connection: {e}")
+        flash(f'Invalid Trakt ID, Secret, or PIN: {str(e)}', 'error')
+        return jsonify({'valid': False, 'error': f'Invalid Trakt ID, Secret, or PIN: {str(e)}'})
+
+    # return success response
+    return jsonify({
+        'valid': isValid,
+        'error': error,
+        'trakt_authorization_access_token': trakt_authorization_access_token,
+        'trakt_authorization_token_type': trakt_authorization_token_type,
+        'trakt_authorization_expires_in': trakt_authorization_expires_in,
+        'trakt_authorization_refresh_token': trakt_authorization_refresh_token,
+        'trakt_authorization_scope': trakt_authorization_scope,
+        'trakt_authorization_created_at': trakt_authorization_created_at
+    })
