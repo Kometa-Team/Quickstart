@@ -60,9 +60,9 @@ def final_step():
         'notifiarr': session.get('notifiarr'),
         # 'gotify': session.get('gotify'),
         # 'anidb': session.get('anidb'),
-        # 'radarr': session.get('radarr'),
+        'radarr': session.get('radarr'),
         # 'sonarr': session.get('sonarr'),
-        # 'trakt': session.get('trakt'),
+        'trakt': session.get('trakt'),
         # 'mal': session.get('mal'),
         # Add other sections as needed
     }
@@ -82,6 +82,8 @@ def final_step():
     omdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('OMDb'))
     mdblist_art = add_border_to_ascii_art(pyfiglet.figlet_format('MDBList'))
     notifiarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Notifiarr'))
+    radarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Radarr'))
+    trakt_art = add_border_to_ascii_art(pyfiglet.figlet_format('Trakt'))
 
     header_comment = (
         "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
@@ -108,6 +110,10 @@ def final_step():
         f"{yaml.dump({'mdblist': config_data['mdblist']}, default_flow_style=False, sort_keys=False)}\n"
         f"{notifiarr_art}\n"
         f"{yaml.dump({'notifiarr': config_data['notifiarr']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{radarr_art}\n"
+        f"{yaml.dump({'radarr': config_data['radarr']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{trakt_art}\n"
+        f"{yaml.dump({'trakt': config_data['trakt']}, default_flow_style=False, sort_keys=False)}\n"
     )
 
     # Store the final YAML content in the session
