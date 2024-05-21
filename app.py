@@ -86,7 +86,7 @@ def final_step():
         'github': session.get('github'),
         'omdb': session.get('omdb'),
         'mdblist': session.get('mdblist'),
-        'notifiarr': session.get('notifarr'),
+        'notifiarr': session.get('notifiarr'),
         # 'gotify': session.get('gotify'),
         # 'anidb': session.get('anidb'),
         # 'radarr': session.get('radarr'),
