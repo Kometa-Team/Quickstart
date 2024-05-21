@@ -68,6 +68,7 @@ def final_step():
     }
 
     try:
+        print(config_data)
         jsonschema.validate(instance=config_data, schema=schema)
     except jsonschema.exceptions.ValidationError as e:
         flash(f'Validation error: {e.message}', 'danger')
@@ -83,6 +84,7 @@ def final_step():
     mdblist_art = add_border_to_ascii_art(pyfiglet.figlet_format('MDBList'))
     notifiarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Notifiarr'))
     radarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Radarr'))
+    sonarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Sonarr'))
     trakt_art = add_border_to_ascii_art(pyfiglet.figlet_format('Trakt'))
 
     header_comment = (
@@ -112,6 +114,8 @@ def final_step():
         f"{yaml.dump({'notifiarr': config_data['notifiarr']}, default_flow_style=False, sort_keys=False)}\n"
         f"{radarr_art}\n"
         f"{yaml.dump({'radarr': config_data['radarr']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{sonarr_art}\n"
+        f"{yaml.dump({'sonarr': config_data['sonarr']}, default_flow_style=False, sort_keys=False)}\n"
         f"{trakt_art}\n"
         f"{yaml.dump({'trakt': config_data['trakt']}, default_flow_style=False, sort_keys=False)}\n"
     )
