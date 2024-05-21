@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from plexapi.server import PlexServer
 import pyfiglet
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_notifiarr
 from modules.output import add_border_to_ascii_art
 
 # Load JSON Schema
@@ -169,29 +169,6 @@ def validate_plex():
 def validate_tautulli():
     data = request.json
     return validate_tautulli_server(data)
-
-@app.route('/validate-notifiarr', methods=['POST'])
-def validate_notifiarr():
-    apikey = request.json.get('apikey')
-    if not apikey:
-        return jsonify({"error": "API key is required"}), 400
-    
-    apiUrl = f"https://notifiarr.com/api/v1/user/validate/{apikey}"
-    
-    headers = {
-        "Content-Type": "application/json"
-    }
-    
-    try:
-        response = requests.get(apiUrl, headers=headers)
-        data = response.json()
-        
-        if response.status_code == 200 and data.get('result') == 'success':
-            return jsonify({"valid": True})
-        else:
-            return jsonify({"valid": False}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/submit', methods=['POST'])
 def submit():

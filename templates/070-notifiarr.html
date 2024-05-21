@@ -21,22 +21,17 @@
 
     <script>
         async function validateNotifiarrApikey(apikey) {
-            const apiUrl = '/validate-notifiarr';
+            const apiUrl = `https://notifiarr.com/api/v1/user/validate/${apikey}`;
             try {
-                const response = await fetch(apiUrl, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ apikey })
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.valid;
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                console.log("API Response:", data);
+
+                if (data.result == 'success') {
+                    console.log("Notifiarr API key is valid.");
+                    return true;
                 } else {
-                    const errorData = await response.json();
-                    console.error("Invalid Notifiarr apikey. Error:", errorData);
+                    console.log("Invalid Notifiarr API key. Error:", data.Error);
                     return false;
                 }
             } catch (error) {
