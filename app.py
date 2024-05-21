@@ -86,7 +86,7 @@ def final_step():
         'github': session.get('github'),
         'omdb': session.get('omdb'),
         'mdblist': session.get('mdblist'),
-        # 'notifiarr': session.get('notifarr'),
+        'notifiarr': session.get('notifarr'),
         # 'gotify': session.get('gotify'),
         # 'anidb': session.get('anidb'),
         # 'radarr': session.get('radarr'),
@@ -110,6 +110,7 @@ def final_step():
     github_art = add_border_to_ascii_art(pyfiglet.figlet_format('Github'))
     omdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('OMDb'))
     mdblist_art = add_border_to_ascii_art(pyfiglet.figlet_format('MDBList'))
+    notifiarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Notifiarr'))
 
     header_comment = (
         "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
@@ -134,6 +135,8 @@ def final_step():
         f"{yaml.dump({'omdb': config_data['omdb']}, default_flow_style=False, sort_keys=False)}\n"
         f"{mdblist_art}\n"
         f"{yaml.dump({'mdblist': config_data['mdblist']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{notifiarr_art}\n"
+        f"{yaml.dump({'notifiarr': config_data['notifiarr']}, default_flow_style=False, sort_keys=False)}\n"
     )
 
     # Store the final YAML content in the session
@@ -167,7 +170,6 @@ def validate_tautulli():
     data = request.json
     return validate_tautulli_server(data)
 
-
 @app.route('/validate-notifiarr', methods=['POST'])
 def validate_notifiarr():
     apikey = request.json.get('apikey')
@@ -190,8 +192,7 @@ def validate_notifiarr():
             return jsonify({"valid": False}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-    
+
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
