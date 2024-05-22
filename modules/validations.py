@@ -62,11 +62,11 @@ def validate_plex_server(data):
 
 def validate_tautulli_server(data):
     tautulli_url = data.get('tautulli_url')
-    tautulli_token = data.get('tautulli_token')
+    tautulli_apikey = data.get('tautulli_apikey')
 
     api_url = f"{tautulli_url}/api/v2"
     params = {
-        'apikey': tautulli_token,
+        'apikey': tautulli_apikey,
         'cmd': 'get_tautulli_info'
     }
 
@@ -88,7 +88,7 @@ def validate_tautulli_server(data):
     except requests.exceptions.RequestException as e:
         print(f"Error validating Tautulli connection: {e}")
         flash(f'Invalid Tautulli URL or API Key: {str(e)}', 'error')
-        return jsonify({'valid': False, 'error': f'Invalid Tautulli URL or Token: {str(e)}'})
+        return jsonify({'valid': False, 'error': f'Invalid Tautulli URL or Apikey: {str(e)}'})
 
     # return success response
     return jsonify({
