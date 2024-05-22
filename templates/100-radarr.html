@@ -117,7 +117,7 @@
                     qualityProfileSelect.innerHTML = '<option value="">Select Quality Profile</option>';
                     qualityProfiles.forEach(profile => {
                         const option = document.createElement('option');
-                        option.value = profile.id;
+                        option.value = profile.name;
                         option.textContent = profile.name;
                         qualityProfileSelect.appendChild(option);
                     });

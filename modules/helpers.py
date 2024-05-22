@@ -5,14 +5,14 @@ def build_oauth_dict(source, form_data):
         }
     }
     for key in form_data:
-        final_key = key.replace(source + '_', '')
+        final_key = key.replace(source + '_', '', 1)
         value = form_data[key]
 
         if (final_key == 'client_id') or (final_key == 'client_secret') or (final_key == 'pin'):
             data[source][final_key] = value
         else:
             if (final_key != 'url'):
-              data[source]['authentication'][final_key] = value
+                data[source]['authentication'][final_key] = value
 
     return(data)
 
@@ -21,7 +21,7 @@ def build_simple_dict(source, form_data):
         source : {}
     }
     for key in form_data:
-        final_key = key.replace(source + '_', '')
+        final_key = key.replace(source + '_', '', 1)
         value = form_data[key]
 
         try:

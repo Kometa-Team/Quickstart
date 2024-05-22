@@ -144,7 +144,7 @@
                     qualityProfileSelect.innerHTML = '<option value="">Select Quality Profile</option>';
                     qualityProfiles.forEach(profile => {
                         const option = document.createElement('option');
-                        option.value = profile.id;
+                        option.value = profile.name;
                         option.textContent = profile.name;
                         qualityProfileSelect.appendChild(option);
                     });
@@ -158,7 +158,7 @@
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .forEach(profile => {
                             const option = document.createElement('option');
-                            option.value = profile.id;
+                            option.value = profile.name;
                             option.textContent = profile.name;
                             if (profile.name === 'English') {
                                 option.selected = true;

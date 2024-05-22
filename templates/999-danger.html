@@ -1,0 +1,11 @@
+{% extends "000-base.html" %}
+
+{% block content %}
+    <h1>DANGER - YAML SCHEMA VALIDATION FAILED!</h1>
+    <form method="post">
+        <div class="form-group">
+            <textarea readonly id="final-yaml" class="form-control" rows="20">{{ yaml_content }}</textarea>
+        </div>
+    </form>
+
+{% endblock %}

@@ -61,18 +61,11 @@ def final_step():
         # 'gotify': session.get('gotify'),
         # 'anidb': session.get('anidb'),
         'radarr': session.get('radarr'),
-        # 'sonarr': session.get('sonarr'),
+        'sonarr': session.get('sonarr'),
         'trakt': session.get('trakt'),
         # 'mal': session.get('mal'),
         # Add other sections as needed
     }
-
-    try:
-        print(config_data)
-        jsonschema.validate(instance=config_data, schema=schema)
-    except jsonschema.exceptions.ValidationError as e:
-        flash(f'Validation error: {e.message}', 'danger')
-        return redirect(url_for('step1'))
 
     # Generate ASCII art
     kometa_art = add_border_to_ascii_art(pyfiglet.figlet_format('KOMETA'))
@@ -122,7 +115,13 @@ def final_step():
 
     # Store the final YAML content in the session
     session['yaml_content'] = yaml_content
-
+    try:
+        jsonschema.validate(instance=config_data, schema=schema)
+    except jsonschema.exceptions.ValidationError as e:
+        print(config_data)
+        flash(f'Validation error: {e.message}', 'danger')
+        return render_template('999-danger.html', yaml_content=yaml_content)
+        
     # Render the final step template with the YAML content
     return render_template('999-final.html', yaml_content=yaml_content)
 
