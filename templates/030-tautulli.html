@@ -30,10 +30,10 @@
         // Tautulli validation script
         document.getElementById('validateTautulliButton').addEventListener('click', function() {
             const tautulliUrl = document.getElementById('tautulli_url').value;
-            const tautulliToken = document.getElementById('tautulli_apikey').value;
+            const tautulliApikey = document.getElementById('tautulli_apikey').value;
             const tautulliStatusMessage = document.getElementById('tautulliStatusMessage');
 
-            if (!tautulliUrl || !tautulliToken) {
+            if (!tautulliUrl || !tautulliApikey) {
                 tautulliStatusMessage.textContent = 'Please enter both Tautulli URL and API Key.';
                 tautulliStatusMessage.style.display = 'block';
                 return;
@@ -46,7 +46,7 @@
                 },
                 body: JSON.stringify({
                     tautulli_url: tautulliUrl,
-                    tautulli_token: tautulliToken
+                    tautulli_apikey: tautulliApikey
                 })
             })
             .then(response => response.json())
@@ -66,6 +66,15 @@
                 tautulliStatusMessage.style.color = 'red';
                 tautulliStatusMessage.style.display = 'block';
             });
+        });
+
+        document.getElementById('configForm').addEventListener('submit', function(event) {
+            const apiKeyInput = document.getElementById('tautulli_apikey');
+            const urlInput = document.getElementById('tautulli_url');
+            if (!apiKeyInput.value) {
+                apiKeyInput.value = '';
+                urlInput.value = 'http://';
+            }
         });
     </script>
 {% endblock %}
