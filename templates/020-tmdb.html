@@ -33,7 +33,7 @@
       <div class="row align-items-start">
         <div class="col">
           <select class="form-select form-select-lg mb-3" aria-label="TMDB Region Selector" id="tmdb_region" name="tmdb_region">
-            <option value="en">
+            <option value="EN">
               Region - Please validate your TMDB API Key
             </option>
             <script>
@@ -142,9 +142,12 @@
         <div class="form-floating">
           <input type="text" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">TMDb Cache Expiration (in days)</label>
         </div>
+      </div><br>
+      <br>
+      <div class="d-grid gap-2 d-md-block">
+        <a class="btn btn-primary" role="button" href="/step/010-plex"> ⏪ Previous</a>
+        <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
       </div>
     </div>
-  </div><br>
-  <br>
-  <input type="submit" value="Next">
+  </div>
 </form>{% endblock %}
