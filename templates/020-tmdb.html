@@ -1,48 +1,40 @@
-{% extends "000-base.html" %}
-
-{% block content %}
-
+{% extends "000-base.html" %} {% block content %}
 <form action="/step/030-tautulli" method="post" id="configForm" name="configForm">
   <div id="tmdbSection">
     <h2>TMDb Settings</h2>
     <div class="form-divider"></div>
     <div class="container text-center">
       <div class="row align-items-start">
-        <div class="col">
-          <div class="form-floating">
-            <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="################################" required=""> <label for="tmdb_apikey">API Key</label>
+        <div class="row">
+          <div class="col-8">
+            <div class="form-floating">
+              <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="################################" required=""> <label for="tmdb_apikey">API Key</label>
+            </div>
+          </div>
+          <div class="col-4">
+            <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateButton" class="btn btn-success btn-sm">Validate</button>
           </div>
         </div>
-        <div class="col"></div>
       </div>
-    </div>
-    <div class="row align-items-start">
-      <div class="col">
-        <div class="form-floating">
-          <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateButton" class="btn btn-success btn-sm">Validate</button>
-        </div>
-      </div>
-      <div class="col"></div>
     </div>
     <div id="statusMessage" class="status-message"></div>
     <div class="container text-center">
       <div class="row align-items-start">
         <div class="col">
-          <select class="form-select" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
+          <select class="form-select form-select-lg mb-3" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
             <option value="en">
-              Please validate your TMDB API Key
+              Language - Please validate your TMDB API Key
             </option>
           </select>
         </div>
-        <div class="col"></div>
       </div>
     </div>
     <div class="container text-center">
       <div class="row align-items-start">
         <div class="col">
-          <select class="form-select" aria-label="TMDB Region Selector" id="tmdb_region" name="tmdb_region">
+          <select class="form-select form-select-lg mb-3" aria-label="TMDB Region Selector" id="tmdb_region" name="tmdb_region">
             <option value="en">
-              Please validate your TMDB API Key
+              Region - Please validate your TMDB API Key
             </option>
             <script>
             document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
@@ -141,7 +133,6 @@
             </script>
           </select>
         </div>
-        <div class="col"></div>
       </div>
     </div>
   </div>
@@ -152,11 +143,8 @@
           <input type="text" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">TMDb Cache Expiration (in days)</label>
         </div>
       </div>
-      <div class="col"></div>
     </div>
   </div><br>
   <br>
   <input type="submit" value="Next">
-</form>
-
-{% endblock %}
+</form>{% endblock %}

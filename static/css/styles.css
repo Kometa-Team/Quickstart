@@ -19,23 +19,32 @@ body {
     height: auto;
 }
 
-/* Navigation  Styles */
+/* Form Styles */
+
 .form-container {
     display: flex; /* Use flexbox for layout */
     max-width: 800px; /* Adjust the maximum width as needed */
     margin: auto;
 }
 
-/* Form Styles */
+.form-floating {
+    position: relative;
+    margin: 0.3rem;
+}
 
 form {
-    max-width: 80%;
+    max-width: 600px;
     margin: auto;
     padding: 20px;
     border: 1px solid #343a40;
     border-radius: 5px;
 }
 
+.form-container {
+    display: flex; /* Use flexbox for layout */
+    max-width: 800px; /* Adjust the maximum width as needed */
+    margin: auto;
+}
 
 #final-yaml {
     width: 100%; /* Take up remaining space */
@@ -50,8 +59,20 @@ label {
 }
 
 .form-divider {
-    margin: 20px;
+    margin: 15px;
     border-bottom: 1px solid #3a3a3a;
+}
+
+/* Input Styles */
+
+input {
+    width: calc(100% - 20px);
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #454d55;
+    color: #ffffff;
 }
 
 /* Message Styles */
@@ -94,3 +115,18 @@ label {
     display: none;
 }
 
+.btn {
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    border: 1px solid transparent;
+    padding: .375rem .75rem;
+    line-height: 1.5;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}

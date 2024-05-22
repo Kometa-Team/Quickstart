@@ -1,43 +1,35 @@
-{% extends "000-base.html" %}
-
-{% block content %}
-
+{% extends "000-base.html" %} {% block content %}
 <form action="/step/060-mdblist" method="post" id="configForm" name="configForm">
   <div id="omdbSection">
     <h2>OMDb Settings</h2>
     <div class="form-divider"></div>
     <div class="container text-center">
       <div class="row align-items-start">
-        <div class="col">
-          <div class="form-floating">
-            <input type="password" class="form-control" id="omdb_apikey" name="omdb_apikey" placeholder="####################"> <label for="omdb_apikey">API Key</label>
+        <div class="row">
+          <div class="col-8">
+            <div class="form-floating">
+              <input type="password" class="form-control" id="omdb_apikey" name="omdb_apikey" placeholder="####################"> <label for="omdb_apikey">API Key</label>
+            </div>
+          </div>
+          <div class="col-4">
+            <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateOmdbButton" class="btn btn-success btn-sm">Validate</button>
           </div>
         </div>
-        <div class="col"></div>
-      </div>
-    </div>
-    <div class="container text-center">
-      <div class="row align-items-start">
-        <div class="col">
-          <div class="form-floating">
-            <input type="text" class="form-control" id="omdb_cache_expiration" name="omdb_cache_expiration" value="60" min="0"> <label for="omdb_cache_expiration">OMDb Cache Expiration (in days)</label>
+        <div id="omdbStatusMessage" class="status-message"></div>
+        <div class="container text-center">
+          <div class="row align-items-start">
+            <div class="col">
+              <div class="form-floating">
+                <input type="text" class="form-control" id="omdb_cache_expiration" name="omdb_cache_expiration" value="60" min="0"> <label for="omdb_cache_expiration">OMDb Cache Expiration (in days)</label>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="col"></div>
+        </div><br>
+        <br>
+        <input type="submit" value="Next">
       </div>
     </div>
-    <div id="omdbStatusMessage" class="status-message"></div>
-    <div class="row align-items-start">
-      <div class="col">
-        <div class="form-floating">
-          <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateOmdbButton" class="btn btn-success btn-sm">Validate</button>
-        </div>
-      </div>
-      <div class="col"></div>
-    </div>
-  </div><br>
-  <br>
-  <input type="submit" value="Next">
+  </div>
 </form>
 <script>
         document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
@@ -95,5 +87,4 @@
                 cacheExpiration.value = '1';
             }
         });
-    </script>
-{% endblock %}
+</script> {% endblock %}

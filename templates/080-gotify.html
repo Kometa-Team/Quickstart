@@ -1,8 +1,5 @@
-{% extends "000-base.html" %}
-
-{% block content %}
-<form action="/step/090-anidb" method="post" id="configForm">
-    <!-- Gotify Section -->
+{% extends "000-base.html" %} {% block content %}
+<form action="/step/090-anidb" method="post" id="configForm" name="configForm">
   <div id="gotifySection">
     <h2>Gotify Settings</h2>
     <div class="form-divider"></div>
@@ -13,39 +10,32 @@
             <input type="text" class="form-control" id="gotify_url" name="gotify_url" placeholder="http://192.168.1.12:8181"> <label for="gotify_url">Gotify URL</label>
           </div>
         </div>
-        <div class="col"></div>
       </div>
     </div>
     <div class="container text-center">
       <div class="row align-items-start">
-        <div class="col">
-          <div class="form-floating">
-            <input type="password" class="form-control" id="gotify_apikey" name="gotify_apikey" placeholder="####################"> <label for="gotify_apikey">Token</label>
+        <div class="row">
+          <div class="col-8">
+            <div class="form-floating">
+              <input type="password" class="form-control" id="gotify_apikey" name="gotify_apikey" placeholder="####################"> <label for="gotify_apikey">Token</label>
+            </div>
+          </div>
+          <div class="col-4">
+            <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateGotifyButton" class="btn btn-success btn-sm">Validate</button>
           </div>
         </div>
-        <div class="col"></div>
+        <div id="gotifyStatusMessage" class="status-message"></div>
       </div>
-    </div>
-    <div id="gotifyStatusMessage" class="status-message"></div>
-    <div class="row align-items-start">
-      <div class="col">
-        <div class="form-floating">
-          <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateGotifyButton" class="btn btn-success btn-sm">Validate</button>
-        </div>
-      </div>
-      <div class="col"></div>
-    </div>
-  </div><br>
-  <br>
-  <input type="submit" value="Next">
+    </div><br>
+    <br>
+    <input type="submit" value="Next">
+  </div>
 </form>
-    <script>
+<script>
         document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
             const apikeyInput = document.getElementById('gotify_apikey');
             const currentType = apikeyInput.getAttribute('type');
             apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
             this.textContent = currentType === 'password' ? 'Hide' : 'Show';
         });
-    </script>
-{% endblock %}
-
+</script> {% endblock %}
