@@ -3,37 +3,26 @@
   <div id="omdbSection">
     <h2>OMDb Settings</h2>
     <div class="form-divider"></div>
-    <div class="container text-center">
-      <div class="row align-items-start">
-        <div class="row">
-          <div class="col-8">
-            <div class="form-floating">
-              <input type="password" class="form-control" id="omdb_apikey" name="omdb_apikey" placeholder="####################"> <label for="omdb_apikey">API Key</label>
-            </div>
-          </div>
-          <div class="col-4">
-            <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateOmdbButton" class="btn btn-success btn-sm">Validate</button>
-          </div>
-        </div>
-        <div id="omdbStatusMessage" class="status-message"></div>
-        <div class="container text-center">
-          <div class="row align-items-start">
-            <div class="col">
-              <div class="form-floating">
-                <input type="text" class="form-control" id="omdb_cache_expiration" name="omdb_cache_expiration" value="60" min="0"> <label for="omdb_cache_expiration">OMDb Cache Expiration (in days)</label>
-              </div>
-            </div>
-          </div>
-      </div><br>
-      <br>
-      <div class="d-grid gap-2 d-md-block">
-        <a class="btn btn-primary" role="button" href="/step/040-github"> ⏪ Previous</a>
-        <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
-      </div>
+    <div class="hstack gap-3" style="width: 536px;">
+      <div class="form-floating">
+        <input type="password" class="form-control" id="omdb_apikey" name="omdb_apikey" placeholder="####################"> <label for="omdb_apikey">API Key</label>
+      </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
+      <div class="vr"></div><button type="button" id="validateOmdbButton" class="btn btn-success btn-sm">Validate</button>
     </div>
-  </div>
+    <div id="omdbStatusMessage" class="status-message"></div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="omdb_cache_expiration" name="omdb_cache_expiration" value="60" min="0"> <label for="omdb_cache_expiration">OMDb Cache Expiration (in days)</label>
+    </div>
+  </div><br>
+  <br>
+  <nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center">
+      <div class="d-grid gap-2 d-md-block">
+        <a class="btn btn-primary" role="button" href="/step/040-github">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
+      </div>
+    </ul>
+  </nav>
 </form>
-<script>
 <script>
         document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
             const apikeyInput = document.getElementById('omdb_apikey');

@@ -3,40 +3,23 @@
   <div id="tmdbSection">
     <h2>TMDb Settings</h2>
     <div class="form-divider"></div>
-    <div class="container text-center">
-      <div class="row align-items-start">
-        <div class="row">
-          <div class="col-8">
-            <div class="form-floating">
-              <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="################################" required=""> <label for="tmdb_apikey">API Key</label>
-            </div>
-          </div>
-          <div class="col-4">
-            <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateButton" class="btn btn-success btn-sm">Validate</button>
-          </div>
-        </div>
+    <div class="hstack gap-3" style="width: 536px;">
+      <div class="form-floating">
+        <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="################################" required=""> <label for="tmdb_apikey">API Key</label>
       </div>
+      <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
+      <div class="vr"></div>
+      <button type="button" id="validateButton" class="btn btn-success btn-sm">Validate</button>
     </div>
-    <div id="statusMessage" class="status-message"></div>
-    <div class="container text-center">
-      <div class="row align-items-start">
-        <div class="col">
-          <select class="form-select form-select-lg mb-3" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
-            <option value="en">
-              Language - Please validate your TMDB API Key
-            </option>
-          </select>
-        </div>
-      </div>
-    </div>
-    <div class="container text-center">
-      <div class="row align-items-start">
-        <div class="col">
-          <select class="form-select form-select-lg mb-3" aria-label="TMDB Region Selector" id="tmdb_region" name="tmdb_region">
-            <option value="EN">
-              Region - Please validate your TMDB API Key
-            </option>
-            <script>
+    <div id="statusMessage" class="status-message"></div><select class="form-select form-select-lg mb-3" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
+      <option value="en">
+        Language - Please validate your TMDB API Key
+      </option>
+    </select> <select class="form-select form-select-lg mb-3" aria-label="TMDB Region Selector" id="tmdb_region" name="tmdb_region">
+      <option value="EN">
+        Region - Please validate your TMDB API Key
+      </option>
+      <script>
             document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
             const apikeyInput = document.getElementById('tmdb_apikey');
             const currentType = apikeyInput.getAttribute('type');
@@ -130,24 +113,18 @@
                 statusMessage.style.display = 'block';
             });
             });
-            </script>
-          </select>
-        </div>
-      </div>
-    </div>
+      </script>
+    </select>
   </div>
-  <div class="container text-center">
-    <div class="row align-items-start">
-      <div class="col">
-        <div class="form-floating">
-          <input type="text" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">TMDb Cache Expiration (in days)</label>
-        </div>
-      </div><br>
-      <br>
-      <div class="d-grid gap-2 d-md-block">
-        <a class="btn btn-primary" role="button" href="/step/010-plex"> ⏪ Previous</a>
-        <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
-      </div>
-    </div>
+  <div class="form-floating">
+    <input type="text" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">TMDb Cache Expiration (in days)</label>
+  </div><br>
+  <br>
+<nav aria-label="Page navigation example">
+  <ul class="pagination justify-content-center">
+  <div class="d-grid gap-2 d-md-block">
+    <a class="btn btn-primary" role="button" href="/step/010-plex">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
   </div>
+  </ul>
+</nav>
 </form>{% endblock %}

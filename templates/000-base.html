@@ -16,6 +16,7 @@
     <img src="{{ url_for('static', filename='images/header.png') }}" alt="Header Image" class="header-image">
   </div>
     <div class="container">
+        <div class="content-wrapper">
         <!-- {% with messages = get_flashed_messages() %}
             {% if messages %}
                 <ul class="flashes">
@@ -26,6 +27,7 @@
             {% endif %}
         {% endwith %} -->
         {% block content %}{% endblock %}
+        </div>
     </div>
 </body>
 </html>
