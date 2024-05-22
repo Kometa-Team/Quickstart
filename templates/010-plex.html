@@ -1,98 +1,143 @@
 {% extends "000-base.html" %}
 
 {% block content %}
-    <h1>Plex Server Configuration</h1>
-    <form action="/step/020-tmdb" method="post" id="configForm">
-        <!-- Plex Section -->
-        <div id="plexSection">
-            <h2>Plex Settings</h2>
-            <label for="plex_url">Plex URL:</label>
-            <input type="text" id="plex_url" name="plex_url" placeholder="http://127.0.0.1:32400" required>
 
-            <label for="plex_token">Plex Token:</label>
-            <div class="button-container">
-                <input type="password" id="plex_token" name="plex_token" placeholder="################################" required>
-                <button type="button" id="toggleApikeyVisibility" class="btn">Show</button>
-                <button type="button" id="validatePlexButton" class="btn">Validate Plex</button>
-            </div>
-            <div id="plexStatusMessage" class="status-message"></div>
-
-            <label for="plex_db_cache">DB Cache:</label>
-            <input type="number" id="plex_db_cache" name="plex_db_cache" min="40" value="40" placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40 if not specified" required>
-
-            <label for="plex_timeout">Timeout(in seconds):</label>
-            <input type="number" id="plex_timeout" name="plex_timeout" min="60" value="60" placeholder="Amount of seconds to wait for Plex to respond, default is 60 if not specified" required>
-
-            <div class="checkbox-container">
-                <label for="plex_verify_ssl">Verify SSL:</label>
-                <input type="checkbox" id="plex_verify_ssl" name="plex_verify_ssl" checked>
-            </div>
-
-            <div class="checkbox-container">
-                <label for="plex_clean_bundles">Clean Bundles:</label>
-                <input type="checkbox" id="plex_clean_bundles" name="plex_clean_bundles" checked>
-            </div>
-
-            <div class="checkbox-container">
-                <label for="plex_empty_trash">Empty Trash:</label>
-                <input type="checkbox" id="plex_empty_trash" name="plex_empty_trash">
-            </div>
-
-            <div class="checkbox-container">
-                <label for="plex_optimize">Optimize Database:</label>
-                <input type="checkbox" id="plex_optimize" name="plex_optimize">
-            </div>
+<form action="/step/020-tmdb" method="post" id="configForm" name="configForm">
+  <div id="plexSection">
+    <h2>Plex Settings</h2>
+    <div class="form-divider"></div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="text" class="form-control" id="plex_url" name="plex_url" placeholder="http://127.0.0.1:32400" required=""> <label for="plex_url">Plex URL</label>
+          </div>
         </div>
-<br><br>
-        <input type="submit" value="Next">
-    </form>
-    <script>
-        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-            const apikeyInput = document.getElementById('plex_token');
-            const currentType = apikeyInput.getAttribute('type');
-            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-        });
-        // Plex validation script
-        document.getElementById('validatePlexButton').addEventListener('click', function() {
-            const plexUrl = document.getElementById('plex_url').value;
-            const plexToken = document.getElementById('plex_token').value;
-            const plexStatusMessage = document.getElementById('plexStatusMessage');
+        <div class="col"></div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="password" class="form-control" id="plex_token" name="plex_token" placeholder="################################" required=""> <label for="plex_token">Plex Token</label>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div class="row align-items-start">
+      <div class="col">
+        <div class="form-floating">
+          <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validatePlexButton" class="btn btn-success btn-sm">Validate</button>
+        </div>
+      </div>
+      <div class="col"></div>
+    </div>
+    <div id="plexStatusMessage" class="status-message"></div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="text" class="form-control" id="plex_db_cache" name="plex_db_cache" placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40" value="40" required=""> <label for="plex_db_cache">Database Cache Size (in mb)</label>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="text" class="form-control" id="plex_timeout" name="plex_timeout" placeholder="Amount of seconds to wait for Plex to respond, default is 60" value="60" required=""> <label for="plex_timeout">Timeout (in seconds)</label>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row row-cols-4">
+        <div class="col">
+          <div class="checkbox-container">
+            <label for="plex_verify_ssl">Verify SSL:</label> <input type="checkbox" id="plex_verify_ssl" name="plex_verify_ssl" checked>
+          </div>
+        </div>
+        <div class="col">
+          <div class="checkbox-container">
+            <label for="plex_clean_bundles">Clean Bundles:</label> <input type="checkbox" id="plex_clean_bundles" name="plex_clean_bundles" checked>
+          </div>
+        </div>
+        <div class="col"></div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row row-cols-4">
+        <div class="col">
+          <div class="checkbox-container">
+            <label for="plex_empty_trash">Empty Trash:</label> <input type="checkbox" id="plex_empty_trash" name="plex_empty_trash">
+          </div>
+        </div>
+        <div class="col">
+          <div class="checkbox-container">
+            <label for="plex_optimize">Optimize Database:</label> <input type="checkbox" id="plex_optimize" name="plex_optimize">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><br>
+  <br>
+  <input type="submit" value="Next">
+</form>
+<script>
 
-            if (!plexUrl || !plexToken) {
-                plexStatusMessage.textContent = 'Please enter both Plex URL and Token.';
-                plexStatusMessage.style.display = 'block';
-                return;
-            }
+   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+       const apikeyInput = document.getElementById('plex_token');
+       const currentType = apikeyInput.getAttribute('type');
+       apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+       this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+   });
+   // Plex validation script
+   document.getElementById('validatePlexButton').addEventListener('click', function() {
+       const plexUrl = document.getElementById('plex_url').value;
+       const plexToken = document.getElementById('plex_token').value;
+       const plexStatusMessage = document.getElementById('plexStatusMessage');
 
-            fetch('/validate_plex', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    plex_url: plexUrl,
-                    plex_token: plexToken
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.valid) {
-                    document.getElementById('plex_db_cache').value = data.db_cache;
-                    plexStatusMessage.textContent = 'Plex server validated successfully!';
-                    plexStatusMessage.style.color = 'green';
-                } else {
-                    plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
-                    plexStatusMessage.style.color = 'red';
-                }
-                plexStatusMessage.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error validating Plex server:', error);
-                plexStatusMessage.textContent = 'An error occurred while validating Plex server.';
-                plexStatusMessage.style.color = 'red';
-                plexStatusMessage.style.display = 'block';
-            });
-        });
-    </script>
+       if (!plexUrl || !plexToken) {
+           plexStatusMessage.textContent = 'Please enter both Plex URL and Token.';
+           plexStatusMessage.style.display = 'block';
+           return;
+       }
+
+       fetch('/validate_plex', {
+           method: 'POST',
+           headers: {
+               'Content-Type': 'application/json'
+           },
+           body: JSON.stringify({
+               plex_url: plexUrl,
+               plex_token: plexToken
+           })
+       })
+       .then(response => response.json())
+       .then(data => {
+           if (data.valid) {
+               document.getElementById('plex_db_cache').value = data.db_cache;
+               plexStatusMessage.textContent = 'Plex server validated successfully!';
+               plexStatusMessage.style.color = 'green';
+           } else {
+               plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
+               plexStatusMessage.style.color = 'red';
+           }
+           plexStatusMessage.style.display = 'block';
+       })
+       .catch(error => {
+           console.error('Error validating Plex server:', error);
+           plexStatusMessage.textContent = 'An error occurred while validating Plex server.';
+           plexStatusMessage.style.color = 'red';
+           plexStatusMessage.style.display = 'block';
+       });
+   });
+</script>
+
 {% endblock %}

@@ -1,26 +1,45 @@
 {% extends "000-base.html" %}
 
 {% block content %}
-    <h1>Tautulli Configuration Information</h1>
-    <form action="040-github" method="post" id="configForm">
-    <!-- Tautulli Section -->
-    <div id="tautulliSection">
-        <h2>Tautulli Settings</h2>
-        <label for="tautulli_url">Tautulli URL:</label>
-        <input type="text" id="tautulli_url" name="tautulli_url" placeholder="http://192.168.1.12:8181">
 
-        <label for="tautulli_apikey">Tautulli API Key:</label>
-        <div class="button-container">
-            <input type="password" id="tautulli_apikey" name="tautulli_apikey" placeholder="################################">
-            <button type="button" id="toggleApikeyVisibility" class="btn">Show</button>
-            <button type="button" id="validateTautulliButton" class="btn">Validate Tautulli</button>
+<form action="040-github" method="post" id="configForm" name="configForm">
+  <div id="tautulliSection">
+    <h2>Tautulli Settings</h2>
+    <div class="form-divider"></div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="text" class="form-control" id="tautulli_url" name="tautulli_url" placeholder="http://192.168.1.12:8181"> <label for="tautulli_url">Tautulli URL</label>
+          </div>
         </div>
-        <div id="tautulliStatusMessage" class="status-message"></div>
-</div>
-<br><br>
-        <input type="submit" value="Next">
-    </form>
-    <script>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" placeholder="####################"> <label for="tautulli_apikey">API Key</label>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div id="tautulliStatusMessage" class="status-message"></div>
+    <div class="row align-items-start">
+      <div class="col">
+        <div class="form-floating">
+          <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateTautulliButton" class="btn btn-success btn-sm">Validate</button>
+        </div>
+      </div>
+      <div class="col"></div>
+    </div>
+  </div><br>
+  <br>
+  <input type="submit" value="Next">
+</form>
+<script>
         document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
             const apikeyInput = document.getElementById('tautulli_apikey');
             const currentType = apikeyInput.getAttribute('type');
@@ -67,5 +86,6 @@
                 tautulliStatusMessage.style.display = 'block';
             });
         });
-    </script>
+</script>
+
 {% endblock %}
