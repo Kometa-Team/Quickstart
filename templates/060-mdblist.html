@@ -1,26 +1,44 @@
 {% extends "000-base.html" %}
 
 {% block content %}
-    <h1>MDBList Configuration Information</h1>
-    <form action="/step/070-notifiarr" method="post" id="configForm">
-        <!-- MDBList Section -->
-        <div id="mdblistSection">
-            <h2>MDBList Settings</h2>
-            <label for="mdblist_apikey">MDBList API Key:</label>
-            <div class="button-container">
-                <input type="password" id="mdblist_apikey" name="mdblist_apikey" placeholder="################">
-                <button type="button" id="toggleApikeyVisibility" class="btn">Show</button>
-                <button type="button" id="validateMdblistButton" class="btn">Validate MDBlist</button>
-            </div>
-            <label for="mdblist_cache_expiration">Cache Expiration (days):</label>
-            <input type="number" id="mdblist_cache_expiration" name="mdblist_cache_expiration" value="60" min="0">
-            <div id="mdblistStatusMessage" class="status-message" style="display: none;"></div>
+
+<form action="/step/070-notifiarr" method="post" id="configForm" name="configForm">
+  <div id="mdblistSection">
+    <h2>MDBList Settings</h2>
+    <div class="form-divider"></div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="password" class="form-control" id="mdblist_apikey" name="mdblist_apikey" placeholder="####################"> <label for="mdblist_apikey">API Key</label>
+          </div>
         </div>
-
-        <br><br>
-        <input type="submit" value="Next">
-    </form>
-
+        <div class="col"></div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="text" class="form-control" id="mdblist_cache_expiration" name="mdblist_cache_expiration" value="60" min="0"> <label for="mdblist_cache_expiration">MDBList Cache Expiration (in days)</label>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div id="mdblistStatusMessage" class="status-message"></div>
+    <div class="row align-items-start">
+      <div class="col">
+        <div class="form-floating">
+          <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateMdblistButton" class="btn btn-success btn-sm">Validate</button>
+        </div>
+      </div>
+      <div class="col"></div>
+    </div>
+  </div><br>
+  <br>
+  <input type="submit" value="Next">
+</form>
     <script>
         async function validateMdblistApikey(apikey) {
             const apiUrl = `https://mdblist.com/api/?apikey=${apikey}&s=test`; // wildcArd search for test

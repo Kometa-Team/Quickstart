@@ -1,23 +1,35 @@
 {% extends "000-base.html" %}
 
 {% block content %}
-    <h1>Notifiarr Configuration Information</h1>
-    <form action="/step/080-gotify" method="post" id="configForm">
-        <!-- Notifiarr Section -->
-        <div id="notifiarrSection">
-            <h2>Notifiarr Settings</h2>
-            <label for="notifiarr_apikey">Notifiarr API Key:</label>
-            <div class="button-container">
-                <input type="password" id="notifiarr_apikey" name="notifiarr_apikey" placeholder="################">
-                <button type="button" id="toggleApikeyVisibility" class="btn">Show</button>
-                <button type="button" id="validateNotifiarrButton" class="btn">Validate Notifiarr</button>
-            </div>
-            <div id="notifiarrStatusMessage" class="status-message" style="display: none;"></div>
-        </div>
 
-        <br><br>
-        <input type="submit" value="Next">
-    </form>
+<form action="/step/080-gotify" method="post" id="configForm">
+        <!-- Notifiarr Section -->
+  <div id="notifiarrSection">
+    <h2>Notifiarr Settings</h2>
+    <div class="form-divider"></div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="password" class="form-control" id="notifiarr_apikey" name="notifiarr_apikey" placeholder="####################"> <label for="notifiarr_apikey">API Key</label>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div id="notifiarrStatusMessage" class="status-message"></div>
+    <div class="row align-items-start">
+      <div class="col">
+        <div class="form-floating">
+          <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateNotifiarrButton" class="btn btn-success btn-sm">Validate</button>
+        </div>
+      </div>
+      <div class="col"></div>
+    </div>
+  </div><br>
+  <br>
+  <input type="submit" value="Next">
+</form>
 
     <script>
         async function validateNotifiarrApikey(apikey) {

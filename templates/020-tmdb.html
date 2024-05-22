@@ -1,43 +1,57 @@
 {% extends "000-base.html" %}
 
 {% block content %}
-    <h1>TMDB Configuration Information</h1>
-    <form action="/step/030-tautulli" method="post" id="configForm">
-        <!-- TMDb Section -->
-        <div id="tmdbSection">
-            <h2>TMDb Settings</h2>
-            <label for="tmdb_apikey">TMDb API Key:</label>
-            <div class="button-container">
-                <input type="password" id="tmdb_apikey" name="tmdb_apikey" required>
-                <button type="button" id="toggleApikeyVisibility" class="btn">Show</button>
-                <button type="button" id="validateButton" class="btn">Validate TMDb</button>
-            </div>
-            <div id="statusMessage" class="status-message"></div>
 
-            <label for="tmdb_language">Language:</label>
-            <select id="tmdb_language" name="tmdb_language">
-                <option value="en">Please validate your TMDB API Key</option>
-            </select>
-
-        <label for="tmdb_region">Region:</label>
-        <select id="tmdb_region" name="tmdb_region">
-            <option value="en">Please validate your TMDB API Key</option>
-        </select>
-
-            <label for="tmdb_cache_expiration">Cache Expiration (days):</label>
-            <input type="number" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0" required>
+<form action="/step/030-tautulli" method="post" id="configForm" name="configForm">
+  <div id="tmdbSection">
+    <h2>TMDb Settings</h2>
+    <div class="form-divider"></div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="################################" required=""> <label for="tmdb_apikey">API Key</label>
+          </div>
         </div>
-<br><br>
-        <input type="submit" value="Next">
-    </form>
-    <script>
-        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+        <div class="col"></div>
+      </div>
+    </div>
+    <div class="row align-items-start">
+      <div class="col">
+        <div class="form-floating">
+          <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateButton" class="btn btn-success btn-sm">Validate</button>
+        </div>
+      </div>
+      <div class="col"></div>
+    </div>
+    <div id="statusMessage" class="status-message"></div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <select class="form-select" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
+            <option value="en">
+              Please validate your TMDB API Key
+            </option>
+          </select>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <select class="form-select" aria-label="TMDB Region Selector" id="tmdb_region" name="tmdb_region">
+            <option value="en">
+              Please validate your TMDB API Key
+            </option>
+            <script>
+            document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
             const apikeyInput = document.getElementById('tmdb_apikey');
             const currentType = apikeyInput.getAttribute('type');
             apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
             this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-        });
-        function sortDataByISO (data){
+            });
+            function sortDataByISO (data){
             let sortedData;
             sortedData = data.sort(function(a,b){
             let x = a.iso_639_1.toLowerCase();
@@ -48,20 +62,20 @@
             });
             return sortedData;
             }
-        // API key validation script
-    document.getElementById('validateButton').addEventListener('click', function() {
-        const apiKey = document.getElementById('tmdb_apikey').value;
-        const statusMessage = document.getElementById('statusMessage');
-        const languageSelect = document.getElementById('tmdb_language');
-        const regionSelect = document.getElementById('tmdb_region');
+            // API key validation script
+            document.getElementById('validateButton').addEventListener('click', function() {
+            const apiKey = document.getElementById('tmdb_apikey').value;
+            const statusMessage = document.getElementById('statusMessage');
+            const languageSelect = document.getElementById('tmdb_language');
+            const regionSelect = document.getElementById('tmdb_region');
 
-        if (!apiKey) {
+            if (!apiKey) {
             statusMessage.textContent = 'Please enter an API key.';
             statusMessage.style.display = 'block';
             return;
-        }
+            }
 
-        fetch(`https://api.themoviedb.org/3/movie/550?api_key=${apiKey}`)
+            fetch(`https://api.themoviedb.org/3/movie/550?api_key=${apiKey}`)
             .then(response => {
                 if (response.ok) {
                     statusMessage.textContent = 'API key is valid!';
@@ -83,7 +97,7 @@
                 regionSelect.innerHTML = '';
 
                 sortedData = sortDataByISO(languagesData)
-                
+
                 // Populate the language dropdown
                 sortedData.forEach(language => {
                     const option = document.createElement('option');
@@ -123,6 +137,26 @@
             .finally(() => {
                 statusMessage.style.display = 'block';
             });
-        });
-    </script>
+            });
+            </script>
+          </select>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+  </div>
+  <div class="container text-center">
+    <div class="row align-items-start">
+      <div class="col">
+        <div class="form-floating">
+          <input type="text" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">TMDb Cache Expiration (in days)</label>
+        </div>
+      </div>
+      <div class="col"></div>
+    </div>
+  </div><br>
+  <br>
+  <input type="submit" value="Next">
+</form>
+
 {% endblock %}

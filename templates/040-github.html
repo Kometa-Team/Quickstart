@@ -1,23 +1,32 @@
-{% extends "000-base.html" %}
-
-{% block content %}
-    <h1>Github Configuration Information</h1>
-    <form action="/step/050-omdb" method="post" id="configForm">
-    <!-- GitHub Section -->
-    <div id="githubSection">
-        <h2>GitHub Settings</h2>
-        <label for="github_token">GitHub Token:</label>
-        <div class="button-container">
-            <input type="password" id="github_token" name="github_token" placeholder="################################">
-            <button type="button" id="toggleApikeyVisibility" class="btn">Show</button>
-            <button type="button" id="validateGithubButton" class="btn">Validate Github</button>
+{% extends "000-base.html" %} {% block content %}
+<form action="/step/050-omdb" method="post" id="configForm" name="configForm">
+  <div id="githubSection">
+    <h2>GitHub Settings</h2>
+    <div class="form-divider"></div>
+    <div class="container text-center">
+      <div class="row align-items-start">
+        <div class="col">
+          <div class="form-floating">
+            <input type="password" class="form-control" id="github_token" name="github_token" placeholder="####################"> <label for="github_token">GitHub Token</label>
+          </div>
         </div>
-        <div id="githubStatusMessage" class="status-message"></div>
+        <div class="col"></div>
+      </div>
     </div>
-<br><br>
-        <input type="submit" value="Next">
-    </form>
-    <script>
+    <div class="row align-items-start">
+      <div class="col">
+        <div class="form-floating">
+          <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateGithubButton" class="btn btn-success btn-sm">Validate</button>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <div id="githubStatusMessage" class="status-message"></div>
+  </div><br>
+  <br>
+  <input type="submit" value="Next">
+</form>
+<script>
       document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
         const apikeyInput = document.getElementById('github_token');
         const currentType = apikeyInput.getAttribute('type');
