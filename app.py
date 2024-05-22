@@ -120,7 +120,7 @@ def final_step():
     except jsonschema.exceptions.ValidationError as e:
         print(config_data)
         flash(f'Validation error: {e.message}', 'danger')
-        return render_template('999-danger.html', yaml_content=yaml_content)
+        return render_template('999-danger.html', yaml_content=yaml_content, validation_error=e)
         
     # Render the final step template with the YAML content
     return render_template('999-final.html', yaml_content=yaml_content)
