@@ -69,5 +69,12 @@
             apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
             this.textContent = currentType === 'password' ? 'Hide' : 'Show';
         });
+
+        document.getElementById('configForm').addEventListener('submit', function(event) {
+            const apiKeyInput = document.getElementById('notifiarr_apikey');
+            if (!apiKeyInput.value) {
+                apiKeyInput.value = '';
+            }
+        });
     </script>
 {% endblock %}

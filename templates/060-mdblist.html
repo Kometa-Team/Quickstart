@@ -71,5 +71,14 @@
             apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
             this.textContent = currentType === 'password' ? 'Hide' : 'Show';
         });
+
+        document.getElementById('configForm').addEventListener('submit', function(event) {
+            const apiKeyInput = document.getElementById('mdblist_apikey');
+            const cacheExpiration = document.getElementById('mdblist_cache_expiration');
+            if (!apiKeyInput.value) {
+                apiKeyInput.value = '';
+                cacheExpiration.value = '';
+            }
+        });
     </script>
 {% endblock %}

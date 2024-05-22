@@ -74,5 +74,12 @@
         githubStatusMessage.style.display = 'block';
 
         });
+
+        document.getElementById('configForm').addEventListener('submit', function(event) {
+          const apiKeyInput = document.getElementById('github_token');
+          if (!apiKeyInput.value) {
+              apiKeyInput.value = '';
+          }
+      });
     </script>
 {% endblock %}
