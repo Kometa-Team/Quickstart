@@ -29,7 +29,8 @@ body {
 
 .form-floating {
     position: relative;
-    margin: 0.3rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
 form {
@@ -65,14 +66,11 @@ label {
 
 /* Input Styles */
 
-input {
-    width: calc(100% - 20px);
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    background-color: #454d55;
-    color: #ffffff;
+.status-message {
+    display: none;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
 }
 
 /* Message Styles */
@@ -109,24 +107,6 @@ input {
     border: 1px solid #28a745;
 }
 
-.status-message {
-    margin-top: 10px;
-    color: red;
-    display: none;
-}
-
-.btn {
-    display: inline-block;
-    text-align: center;
-    white-space: nowrap;
-    vertical-align: middle;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    border: 1px solid transparent;
-    padding: .375rem .75rem;
-    line-height: 1.5;
-    border-radius: .25rem;
-    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+.me-md-2 {
+    margin-right: 0rem !important;
 }
