@@ -2,7 +2,7 @@
 <form action="/step/120-trakt" method="post" id="configForm" name="configForm">
   <div id="sonarrSection">
     <h2>Sonarr Settings</h2>
-    <div class="form-divider"></div>
+    <hr class="hr" />
     <div class="form-floating">
       <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" placeholder="http://127.0.0.1:32400"> <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
     </div>
@@ -103,7 +103,7 @@
     <nav aria-label="Page navigation example">
       <ul class="pagination justify-content-center">
         <div class="d-grid gap-2 d-md-block">
-          <a class="btn btn-primary" role="button" href="/step/100-sonarr">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
+          <a class="btn btn-primary" role="button" href="/step/100-radarr">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
         </div>
       </ul>
     </nav>
@@ -127,7 +127,7 @@
                 if (response.ok && 'version' in data) {
                     console.log("Sonarr API key is valid.");
                     sonarrStatusMessage.textContent = "Sonarr API key is valid.";
-                    sonarrStatusMessage.style.color = 'green';
+                    sonarrStatusMessage.style.color = '#75b798';
                     sonarrStatusMessage.style.display = 'block';
 
                     // Fetch and populate root folders
@@ -175,14 +175,14 @@
                 } else {
                     console.log("Invalid Sonarr API key. Error:", data.message);
                     sonarrStatusMessage.textContent = "Sonarr API key is invalid.";
-                    sonarrStatusMessage.style.color = 'red';
+                    sonarrStatusMessage.style.color = '#ea868f';
                     sonarrStatusMessage.style.display = 'block';
                     return false;
                 }
             } catch (error) {
                 console.error("Error validating Sonarr apikey:", error);
                 sonarrStatusMessage.textContent = 'Error validating Sonarr API key.';
-                sonarrStatusMessage.style.color = 'red';
+                sonarrStatusMessage.style.color = '#ea868f';
                 sonarrStatusMessage.style.display = 'block';
                 return false;
             }
@@ -195,7 +195,7 @@
 
             if (!apiKey || !url) {
                 sonarrStatusMessage.textContent = 'Please enter the Sonarr API key and URL.';
-                sonarrStatusMessage.style.color = 'red';
+                sonarrStatusMessage.style.color = '#ea868f';
                 sonarrStatusMessage.style.display = 'block';
                 return;
             }

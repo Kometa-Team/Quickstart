@@ -2,7 +2,7 @@
 <form action="/step/090-anidb" method="post" id="configForm" name="configForm">
   <div id="gotifySection">
     <h2>Gotify Settings</h2>
-    <div class="form-divider"></div>
+    <hr class="hr" />
     <div class="container text-center">
       <div class="row align-items-start">
         <div class="col">
@@ -74,7 +74,7 @@
 
             if (!url || !apiKey) {
                 gotifyStatusMessage.textContent = 'Please enter both Gotify URL and Token.';
-                gotifyStatusMessage.style.color = 'red';
+                gotifyStatusMessage.style.color = '#ea868f';
                 gotifyStatusMessage.style.display = 'block';
                 return;
             }
@@ -82,10 +82,10 @@
             validateGotifyApikey(url, apiKey).then(isValid => {
                 if (isValid) {
                     gotifyStatusMessage.textContent = "Gotify API key is valid.";
-                    gotifyStatusMessage.style.color = 'green';
+                    gotifyStatusMessage.style.color = '#75b798';
                 } else {
                     gotifyStatusMessage.textContent = "Gotify API key is invalid.";
-                    gotifyStatusMessage.style.color = 'red';
+                    gotifyStatusMessage.style.color = '#ea868f';
                 }
                 gotifyStatusMessage.style.display = 'block';
             });

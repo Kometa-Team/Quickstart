@@ -2,7 +2,7 @@
 <form action="/step/110-sonarr" method="post" id="configForm" name="configForm">
   <div id="radarrSection">
     <h2>Radarr Settings</h2>
-    <div class="form-divider"></div>
+    <hr class="hr" />
     <div class="form-floating">
       <input type="text" class="form-control" id="radarr_url" name="radarr_url" placeholder="http://127.0.0.1:32400"> <label for="radarr_url">Radarr URL (including URL Base if set)</label>
     </div>
@@ -190,7 +190,7 @@
         
                 if (response.ok && 'version' in data) {
                     radarrStatusMessage.textContent = "Radarr API key is valid.";
-                    radarrStatusMessage.style.color = 'green';
+                    radarrStatusMessage.style.color = '#75b798';
                     radarrStatusMessage.style.display = 'block';
         
                     // Save valid API key to sessionStorage
@@ -228,14 +228,14 @@
                 } else {
                     console.log("Invalid Radarr API key. Error:", data.message);
                     radarrStatusMessage.textContent = "Radarr API key is invalid.";
-                    radarrStatusMessage.style.color = 'red';
+                    radarrStatusMessage.style.color = '#ea868f';
                     radarrStatusMessage.style.display = 'block';
                     return false;
                 }
             } catch (error) {
                 console.error("Error validating Radarr API key:", error);
                 radarrStatusMessage.textContent = 'Error validating Radarr API key.';
-                radarrStatusMessage.style.color = 'red';
+                radarrStatusMessage.style.color = '#ea868f';
                 radarrStatusMessage.style.display = 'block';
                 return false;
             }
@@ -248,7 +248,7 @@
 
             if (!apiKey || !url) {
                 radarrStatusMessage.textContent = 'Please enter the Radarr API key and URL.';
-                radarrStatusMessage.style.color = 'red';
+                radarrStatusMessage.style.color = '#ea868f';
                 radarrStatusMessage.style.display = 'block';
                 return;
             }

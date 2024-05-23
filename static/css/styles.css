@@ -64,6 +64,10 @@ label {
     border-bottom: 1px solid #3a3a3a;
 }
 
+.form-floating > .form-select {
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+}
 /* Input Styles */
 
 .status-message {

@@ -2,26 +2,49 @@
 <form action="040-github" method="post" id="configForm" name="configForm">
   <div id="tautulliSection">
     <h2>Tautulli Settings</h2>
-    <div class="form-divider"></div>
+    <hr class="hr" />
+<div class="alert alert-info" role="alert">
+  <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+</div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Tautulli Section</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        This is some dummy text<br><br>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
     <div class="form-floating">
       <input type="text" class="form-control" id="tautulli_url" name="tautulli_url" placeholder="http://192.168.1.12:8181"> <label for="tautulli_url">Tautulli URL</label>
     </div>
-    <div class="hstack gap-3" style="width: 536px;">
-      <div class="form-floating">
-        <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" placeholder="####################"> <label for="tautulli_apikey">API Key</label>
-      </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
-      <div class="vr"></div><button type="button" id="validateTautulliButton" class="btn btn-success btn-sm">Validate</button>
+
+
+    <div class="input-group input-group-lg">
+      <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey"  placeholder="API Key" aria-label="Tautull API Key" requi#ea868f="">
+      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
+      <button class="btn btn-success" id="validateTautulliButton" type="button">Validate</button>
+    </div>
+      <div id="tautulliStatusMessage" class="status-message"></div><br>
+  </div>
+      <hr class="hr" />
+  <div class="row">
+    <div class="col">
+      <a class="btn btn-secondary" role="button" href="/step/020-tmdb">Previous</a>
+    </div>
+    <div class="col-6">
+    </div>
+  <div class="col d-flex justify-content-end align-items-center">
+    <button class="btn btn-primary me-md-2" type="submit">Next</button>
     </div>
   </div>
-  <div id="tautulliStatusMessage" class="status-message"></div><br>
-  <br>
-  <nav aria-label="Page navigation example">
-    <ul class="pagination justify-content-center">
-      <div class="d-grid gap-2 d-md-block">
-        <a class="btn btn-primary" role="button" href="/step/020-tmdb">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
-      </div>
-    </ul>
-  </nav>
 </form>
 <script>
   // Save input values to sessionStorage on change
@@ -77,17 +100,17 @@
     .then(data => {
       if (data.valid) {
         tautulliStatusMessage.textContent = 'Tautulli server validated successfully!';
-        tautulliStatusMessage.style.color = 'green';
+        tautulliStatusMessage.style.color = '#75b798';
       } else {
         tautulliStatusMessage.textContent = 'Failed to validate Tautulli server. Please check your URL and API Key.';
-        tautulliStatusMessage.style.color = 'red';
+        tautulliStatusMessage.style.color = '#ea868f';
       }
       tautulliStatusMessage.style.display = 'block';
     })
     .catch(error => {
       console.error('Error validating Tautulli server:', error);
       tautulliStatusMessage.textContent = 'An error occurred while validating Tautulli server.';
-      tautulliStatusMessage.style.color = 'red';
+      tautulliStatusMessage.style.color = '#ea868f';
       tautulliStatusMessage.style.display = 'block';
     });
   });

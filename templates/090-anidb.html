@@ -2,7 +2,7 @@
 <form action="/step/100-radarr" method="post" id="configForm" name="configForm">
   <div id="aniDbSection">
     <h2>AniDb Settings</h2>
-    <div class="form-divider"></div>
+    <hr class="hr" />
     <div class="form-floating">
       <input type="text" class="form-control" id="anidb_client" name="anidb_client" placeholder=""> <label for="anidb_client">AniDb Client</label>
     </div>
@@ -606,7 +606,7 @@
 
             if (!username || !password || !client || !clientver) {
                 anidbStatusMessage.textContent = 'Please enter all required fields.';
-                anidbStatusMessage.style.color = 'red';
+                anidbStatusMessage.style.color = '#ea868f';
                 anidbStatusMessage.style.display = 'block';
                 return;
             }
@@ -622,17 +622,17 @@
             .then(data => {
                 if (data.valid) {
                     anidbStatusMessage.textContent = "AniDb credentials are valid.";
-                    anidbStatusMessage.style.color = 'green';
+                    anidbStatusMessage.style.color = '#75b798';
                 } else {
                     anidbStatusMessage.textContent = `Error: ${data.error}`;
-                    anidbStatusMessage.style.color = 'red';
+                    anidbStatusMessage.style.color = '#ea868f';
                 }
                 anidbStatusMessage.style.display = 'block';
             })
             .catch(error => {
                 console.error('Error:', error);
                 anidbStatusMessage.textContent = "Error validating AniDb credentials.";
-                anidbStatusMessage.style.color = 'red';
+                anidbStatusMessage.style.color = '#ea868f';
                 anidbStatusMessage.style.display = 'block';
             });
         });

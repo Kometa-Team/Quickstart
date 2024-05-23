@@ -3,7 +3,7 @@
         <!-- Trakt Section -->
         <div id="traktSection" class="section">
             <h2>Trakt Settings</h2>
-    <div class="form-divider"></div>
+    <hr class="hr" />
     <div class="form-floating">
       <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" oninput="updateTraktURL(this)"> <label for="trakt_client_id">Client ID</label>
     </div>
@@ -119,7 +119,7 @@
             .then(data => {
                 if (data.valid) {
                     traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
-                    traktStatusMessage.style.color = 'green';
+                    traktStatusMessage.style.color = '#75b798';
                     document.getElementById('access_token').value = data.trakt_authorization_access_token;
                     document.getElementById('token_type').value = data.trakt_authorization_token_type;
                     document.getElementById('expires_in').value = data.trakt_authorization_expires_in;
@@ -132,14 +132,14 @@
                     document.getElementById("validate_trakt_pin").disabled = true
                 } else {
                     traktStatusMessage.textContent = data.error;
-                    traktStatusMessage.style.color = 'red';
+                    traktStatusMessage.style.color = '#ea868f';
                 }
                 traktStatusMessage.style.display = 'block';
             })
             .catch(error => {
                 console.error('Error validating Trakt credentials:', error);
                 traktStatusMessage.textContent = 'An error occurred while validating Trakt credentials.';
-                traktStatusMessage.style.color = 'red';
+                traktStatusMessage.style.color = '#ea868f';
                 traktStatusMessage.style.display = 'block';
             });
         });
