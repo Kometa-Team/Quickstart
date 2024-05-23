@@ -39,10 +39,86 @@
   </div>
 </form>
 <script>
+        // Function to toggle API key visibility
         document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
             const apikeyInput = document.getElementById('gotify_apikey');
             const currentType = apikeyInput.getAttribute('type');
             apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
             this.textContent = currentType === 'password' ? 'Hide' : 'Show';
         });
+
+        // Function to validate Gotify API key
+        async function validateGotifyApikey(url, apikey) {
+            const apiUrl = `${url}/version?token=${apikey}`;
+            try {
+                const response = await fetch(apiUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log("API Response:", data);
+                    return true;
+                } else {
+                    const error = await response.json();
+                    console.log("Invalid Gotify API key. Error:", error);
+                    return false;
+                }
+            } catch (error) {
+                console.error("Error validating Gotify apikey:", error);
+                return false;
+            }
+        }
+
+        // Event listener for the validate button
+        document.getElementById('validateGotifyButton').addEventListener('click', function() {
+            const url = document.getElementById('gotify_url').value;
+            const apiKey = document.getElementById('gotify_apikey').value;
+            const gotifyStatusMessage = document.getElementById('gotifyStatusMessage');
+
+            if (!url || !apiKey) {
+                gotifyStatusMessage.textContent = 'Please enter both Gotify URL and Token.';
+                gotifyStatusMessage.style.color = 'red';
+                gotifyStatusMessage.style.display = 'block';
+                return;
+            }
+
+            validateGotifyApikey(url, apiKey).then(isValid => {
+                if (isValid) {
+                    gotifyStatusMessage.textContent = "Gotify API key is valid.";
+                    gotifyStatusMessage.style.color = 'green';
+                } else {
+                    gotifyStatusMessage.textContent = "Gotify API key is invalid.";
+                    gotifyStatusMessage.style.color = 'red';
+                }
+                gotifyStatusMessage.style.display = 'block';
+            });
+        });
+
+        // Function to save form data to sessionStorage
+        function saveFormData() {
+            const gotifyUrl = document.getElementById('gotify_url').value;
+            const gotifyApikey = document.getElementById('gotify_apikey').value;
+            sessionStorage.setItem('gotify_url', gotifyUrl);
+            sessionStorage.setItem('gotify_apikey', gotifyApikey);
+        }
+
+        // Function to load form data from sessionStorage
+        function loadFormData() {
+            const gotifyUrl = sessionStorage.getItem('gotify_url');
+            const gotifyApikey = sessionStorage.getItem('gotify_apikey');
+            if (gotifyUrl) {
+                document.getElementById('gotify_url').value = gotifyUrl;
+            }
+            if (gotifyApikey) {
+                document.getElementById('gotify_apikey').value = gotifyApikey;
+            }
+        }
+
+        // Event listener to save form data on submit
+        document.getElementById('configForm').addEventListener('submit', function(event) {
+            saveFormData();
+        });
+
+        // Load form data on page load
+        window.onload = function() {
+            loadFormData();
+        };
 </script> {% endblock %}

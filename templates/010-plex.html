@@ -54,52 +54,116 @@
   </nav>
 </form>
 <script>
+  // Save input values to sessionStorage on change
+  document.getElementById('plex_url').addEventListener('input', function() {
+    sessionStorage.setItem('plex_url', this.value);
+  });
+  document.getElementById('plex_token').addEventListener('input', function() {
+    sessionStorage.setItem('plex_token', this.value);
+  });
+  document.getElementById('plex_db_cache').addEventListener('input', function() {
+    sessionStorage.setItem('plex_db_cache', this.value);
+  });
+  document.getElementById('plex_timeout').addEventListener('input', function() {
+    sessionStorage.setItem('plex_timeout', this.value);
+  });
+  document.getElementById('plex_verify_ssl').addEventListener('change', function() {
+    sessionStorage.setItem('plex_verify_ssl', this.checked);
+  });
+  document.getElementById('plex_clean_bundles').addEventListener('change', function() {
+    sessionStorage.setItem('plex_clean_bundles', this.checked);
+  });
+  document.getElementById('plex_empty_trash').addEventListener('change', function() {
+    sessionStorage.setItem('plex_empty_trash', this.checked);
+  });
+  document.getElementById('plex_optimize').addEventListener('change', function() {
+    sessionStorage.setItem('plex_optimize', this.checked);
+  });
 
-   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-       const apikeyInput = document.getElementById('plex_token');
-       const currentType = apikeyInput.getAttribute('type');
-       apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-       this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-   });
-   // Plex validation script
-   document.getElementById('validatePlexButton').addEventListener('click', function() {
-       const plexUrl = document.getElementById('plex_url').value;
-       const plexToken = document.getElementById('plex_token').value;
-       const plexStatusMessage = document.getElementById('plexStatusMessage');
+  // Load saved values from sessionStorage on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedPlexUrl = sessionStorage.getItem('plex_url');
+    const savedPlexToken = sessionStorage.getItem('plex_token');
+    const savedDbCache = sessionStorage.getItem('plex_db_cache');
+    const savedTimeout = sessionStorage.getItem('plex_timeout');
+    const savedVerifySsl = sessionStorage.getItem('plex_verify_ssl');
+    const savedCleanBundles = sessionStorage.getItem('plex_clean_bundles');
+    const savedEmptyTrash = sessionStorage.getItem('plex_empty_trash');
+    const savedOptimize = sessionStorage.getItem('plex_optimize');
 
-       if (!plexUrl || !plexToken) {
-           plexStatusMessage.textContent = 'Please enter both Plex URL and Token.';
-           plexStatusMessage.style.display = 'block';
-           return;
-       }
+    if (savedPlexUrl) {
+      document.getElementById('plex_url').value = savedPlexUrl;
+    }
+    if (savedPlexToken) {
+      document.getElementById('plex_token').value = savedPlexToken;
+    }
+    if (savedDbCache) {
+      document.getElementById('plex_db_cache').value = savedDbCache;
+    }
+    if (savedTimeout) {
+      document.getElementById('plex_timeout').value = savedTimeout;
+    }
+    if (savedVerifySsl !== null) {
+      document.getElementById('plex_verify_ssl').checked = JSON.parse(savedVerifySsl);
+    }
+    if (savedCleanBundles !== null) {
+      document.getElementById('plex_clean_bundles').checked = JSON.parse(savedCleanBundles);
+    }
+    if (savedEmptyTrash !== null) {
+      document.getElementById('plex_empty_trash').checked = JSON.parse(savedEmptyTrash);
+    }
+    if (savedOptimize !== null) {
+      document.getElementById('plex_optimize').checked = JSON.parse(savedOptimize);
+    }
+  });
 
-       fetch('/validate_plex', {
-           method: 'POST',
-           headers: {
-               'Content-Type': 'application/json'
-           },
-           body: JSON.stringify({
-               plex_url: plexUrl,
-               plex_token: plexToken
-           })
-       })
-       .then(response => response.json())
-       .then(data => {
-           if (data.valid) {
-               document.getElementById('plex_db_cache').value = data.db_cache;
-               plexStatusMessage.textContent = 'Plex server validated successfully!';
-               plexStatusMessage.style.color = 'green';
-           } else {
-               plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
-               plexStatusMessage.style.color = 'red';
-           }
-           plexStatusMessage.style.display = 'block';
-       })
-       .catch(error => {
-           console.error('Error validating Plex server:', error);
-           plexStatusMessage.textContent = 'An error occurred while validating Plex server.';
-           plexStatusMessage.style.color = 'red';
-           plexStatusMessage.style.display = 'block';
-       });
-   });
-</script> {% endblock %}
+  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+    const apikeyInput = document.getElementById('plex_token');
+    const currentType = apikeyInput.getAttribute('type');
+    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+  });
+
+  // Plex validation script
+  document.getElementById('validatePlexButton').addEventListener('click', function() {
+    const plexUrl = document.getElementById('plex_url').value;
+    const plexToken = document.getElementById('plex_token').value;
+    const plexStatusMessage = document.getElementById('plexStatusMessage');
+
+    if (!plexUrl || !plexToken) {
+      plexStatusMessage.textContent = 'Please enter both Plex URL and Token.';
+      plexStatusMessage.style.display = 'block';
+      return;
+    }
+
+    fetch('/validate_plex', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        plex_url: plexUrl,
+        plex_token: plexToken
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.valid) {
+        document.getElementById('plex_db_cache').value = data.db_cache;
+        plexStatusMessage.textContent = 'Plex server validated successfully!';
+        plexStatusMessage.style.color = 'green';
+      } else {
+        plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
+        plexStatusMessage.style.color = 'red';
+      }
+      plexStatusMessage.style.display = 'block';
+    })
+    .catch(error => {
+      console.error('Error validating Plex server:', error);
+      plexStatusMessage.textContent = 'An error occurred while validating Plex server.';
+      plexStatusMessage.style.color = 'red';
+      plexStatusMessage.style.display = 'block';
+    });
+  });
+</script>
+{% endblock %}

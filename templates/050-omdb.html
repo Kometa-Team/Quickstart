@@ -24,59 +24,82 @@
   </nav>
 </form>
 <script>
-        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-            const apikeyInput = document.getElementById('omdb_apikey');
-            const currentType = apikeyInput.getAttribute('type');
-            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-        });
-        async function validateOmdbapikey(apikey) {
-            const apiUrl = `http://www.omdbapi.com/?apikey=${apikey}&s=test`;
-            try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                if (data.Response === "True" || data.Error === "Movie not found!") {
-                    console.log("OMDb apikey is valid.");
-                    return true;
-                } else {
-                    console.log("Invalid OMDb apikey. Error:", data.Error);
-                    return false;
-                }
-            } catch (error) {
-                console.error("Error validating OMDb apikey:", error);
+    // Save input values to sessionStorage on change
+    document.getElementById('omdb_apikey').addEventListener('input', function() {
+        sessionStorage.setItem('omdb_apikey', this.value);
+    });
+    document.getElementById('omdb_cache_expiration').addEventListener('input', function() {
+        sessionStorage.setItem('omdb_cache_expiration', this.value);
+    });
+
+    // Load saved values from sessionStorage on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedOmdbApikey = sessionStorage.getItem('omdb_apikey');
+        const savedCacheExpiration = sessionStorage.getItem('omdb_cache_expiration');
+
+        if (savedOmdbApikey) {
+            document.getElementById('omdb_apikey').value = savedOmdbApikey;
+        }
+        if (savedCacheExpiration) {
+            document.getElementById('omdb_cache_expiration').value = savedCacheExpiration;
+        }
+    });
+
+    document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+        const apikeyInput = document.getElementById('omdb_apikey');
+        const currentType = apikeyInput.getAttribute('type');
+        apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+        this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+    });
+
+    async function validateOmdbapikey(apikey) {
+        const apiUrl = `http://www.omdbapi.com/?apikey=${apikey}&s=test`;
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            if (data.Response === "True" || data.Error === "Movie not found!") {
+                console.log("OMDb apikey is valid.");
+                return true;
+            } else {
+                console.log("Invalid OMDb apikey. Error:", data.Error);
                 return false;
             }
+        } catch (error) {
+            console.error("Error validating OMDb apikey:", error);
+            return false;
+        }
+    }
+
+    document.getElementById('validateOmdbButton').addEventListener('click', function() {
+        const apiKey = document.getElementById('omdb_apikey').value;
+        const omdbStatusMessage = document.getElementById('omdbStatusMessage');
+
+        if (!apiKey) {
+            omdbStatusMessage.textContent = 'Please enter an OMDb API key.';
+            omdbStatusMessage.style.color = 'red';
+            omdbStatusMessage.style.display = 'block';
+            return;
         }
 
-        document.getElementById('validateOmdbButton').addEventListener('click', function() {
-            const apiKey = document.getElementById('omdb_apikey').value;
-            const omdbStatusMessage = document.getElementById('omdbStatusMessage');
-
-            if (!apiKey) {
-                omdbStatusMessage.textContent = 'Please enter an OMDb API key.';
+        validateOmdbapikey(apiKey).then(isValid => {
+            if (isValid) {
+                omdbStatusMessage.textContent = "OMDb API key is valid.";
+                omdbStatusMessage.style.color = 'green';
+            } else {
+                omdbStatusMessage.textContent = "OMDb API key is invalid.";
                 omdbStatusMessage.style.color = 'red';
-                omdbStatusMessage.style.display = 'block';
-                return;
             }
-
-            validateOmdbapikey(apiKey).then(isValid => {
-                if (isValid) {
-                    omdbStatusMessage.textContent = "OMDb API key is valid.";
-                    omdbStatusMessage.style.color = 'green';
-                } else {
-                    omdbStatusMessage.textContent = "OMDb API key is invalid.";
-                    omdbStatusMessage.style.color = 'red';
-                }
-                omdbStatusMessage.style.display = 'block';
-            });
+            omdbStatusMessage.style.display = 'block';
         });
+    });
 
-        document.getElementById('configForm').addEventListener('submit', function(event) {
-            const apiKeyInput = document.getElementById('omdb_apikey');
-            const cacheExpiration = document.getElementById('omdb_cache_expiration');
-            if (!apiKeyInput.value) {
-                apiKeyInput.value = '';
-                cacheExpiration.value = '1';
-            }
-        });
-</script> {% endblock %}
+    document.getElementById('configForm').addEventListener('submit', function(event) {
+        const apiKeyInput = document.getElementById('omdb_apikey');
+        const cacheExpiration = document.getElementById('omdb_cache_expiration');
+        if (!apiKeyInput.value) {
+            apiKeyInput.value = '';
+            cacheExpiration.value = '1';
+        }
+    });
+</script>
+{% endblock %}

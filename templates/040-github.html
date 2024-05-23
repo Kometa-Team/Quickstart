@@ -11,9 +11,9 @@
       <div class="vr"></div>
       <button type="button" id="validateGithubButton" class="btn btn-success btn-sm">Validate</button>
     </div>
-        <div id="githubStatusMessage" class="status-message"></div>
-      </div><br>
-      <br>
+    <div id="githubStatusMessage" class="status-message"></div>
+  </div><br>
+  <br>
   <nav aria-label="Page navigation example">
     <ul class="pagination justify-content-center">
       <div class="d-grid gap-2 d-md-block">
@@ -21,71 +21,81 @@
       </div>
     </ul>
   </nav>
-    </div>
-  </div>
 </form>
+
 <script>
-      document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-        const apikeyInput = document.getElementById('github_token');
-        const currentType = apikeyInput.getAttribute('type');
-        apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-        this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-    });
-        async function validateGitHubToken(token) {
-  const apiUrl = "https://api.github.com/user";
+  // Save input value to sessionStorage on change
+  document.getElementById('github_token').addEventListener('input', function() {
+    sessionStorage.setItem('github_token', this.value);
+  });
 
-  try {
-    const response = await fetch(apiUrl, {
-      method: "GET",
-      headers: {
-        "Authorization": `token ${token}`,
-        "Accept": "application/vnd.github.v3+json"
+  // Load saved values from sessionStorage on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedGithubToken = sessionStorage.getItem('github_token');
+    if (savedGithubToken) {
+      document.getElementById('github_token').value = savedGithubToken;
+    }
+  });
+
+  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+    const apikeyInput = document.getElementById('github_token');
+    const currentType = apikeyInput.getAttribute('type');
+    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+  });
+
+  async function validateGitHubToken(token) {
+    const apiUrl = "https://api.github.com/user";
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Authorization": `token ${token}`,
+          "Accept": "application/vnd.github.v3+json"
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("GitHub token is valid. User: " + data.login);
+        return true;
+      } else {
+        console.log("Invalid GitHub token. Status:", response.status);
+        return false;
       }
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log("GitHub token is valid. User: " + data.login);
-      return true;
-    } else {
-      console.log("Invalid GitHub token. Status:", response.status);
+    } catch (error) {
+      console.error("Error validating GitHub token:", error);
       return false;
     }
-  } catch (error) {
-    console.error("Error validating GitHub token:", error);
-    return false;
   }
-}
 
-    document.getElementById('validateGithubButton').addEventListener('click', function() {
-        const apiKey = document.getElementById('github_token').value;
-        const githubStatusMessage = document.getElementById('githubStatusMessage');
+  document.getElementById('validateGithubButton').addEventListener('click', function() {
+    const apiKey = document.getElementById('github_token').value;
+    const githubStatusMessage = document.getElementById('githubStatusMessage');
 
-        const token = "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";
+    if (!apiKey) {
+      githubStatusMessage.textContent = 'Please enter an GitHub Personal Access Token.';
+      githubStatusMessage.style.display = 'block';
+      return;
+    }
 
-        if (!apiKey) {
-            githubStatusMessage.textContent = 'Please enter an Github Personal Access Token.';
-            githubStatusMessage.style.display = 'block';
-            return;
-        }
+    validateGitHubToken(apiKey).then(isValid => {
+      if (isValid) {
+        githubStatusMessage.textContent = "GitHub token is valid.";
+        githubStatusMessage.style.color = 'green';
+      } else {
+        githubStatusMessage.textContent = "GitHub token is invalid.";
+        githubStatusMessage.style.color = 'red';
+      }
+    });
+    githubStatusMessage.style.display = 'block';
+  });
 
-        validateGitHubToken(apiKey).then(isValid => {
-          if (isValid) {
-            githubStatusMessage.textContent = "GitHub token is valid.";
-            githubStatusMessage.style.color = 'green';
-          } else {
-            githubStatusMessage.textContent = "GitHub token is invalid.";
-            githubStatusMessage.style.color = 'red';
-          }
-        });
-        githubStatusMessage.style.display = 'block';
-
-        });
-
-        document.getElementById('configForm').addEventListener('submit', function(event) {
-          const apiKeyInput = document.getElementById('github_token');
-          if (!apiKeyInput.value) {
-              apiKeyInput.value = '';
-          }
-      });
+  document.getElementById('configForm').addEventListener('submit', function(event) {
+    const apiKeyInput = document.getElementById('github_token');
+    if (!apiKeyInput.value) {
+      apiKeyInput.value = '';
+    }
+  });
 </script> {% endblock %}

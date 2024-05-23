@@ -37,62 +37,84 @@
   </div>
 </form>
 <script>
-        async function validateMdblistApikey(apikey) {
-            const apiUrl = `https://mdblist.com/api/?apikey=${apikey}&s=test`; // wildcArd search for test
-            try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-                console.log("API Response:", data);  // Log the entire response
+    // Save input values to sessionStorage on change
+    document.getElementById('mdblist_apikey').addEventListener('input', function() {
+        sessionStorage.setItem('mdblist_apikey', this.value);
+    });
+    document.getElementById('mdblist_cache_expiration').addEventListener('input', function() {
+        sessionStorage.setItem('mdblist_cache_expiration', this.value);
+    });
 
-                if (data.response === true) {
-                    console.log("MDBList API key is valid.");
-                    return true;
-                } else {
-                    console.log("Invalid MDBList API key. Error:", data.Error);
-                    return false;
-                }
-            } catch (error) {
-                console.error("Error validating MDBList apikey:", error);
+    // Load saved values from sessionStorage on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedMdblistApikey = sessionStorage.getItem('mdblist_apikey');
+        const savedCacheExpiration = sessionStorage.getItem('mdblist_cache_expiration');
+
+        if (savedMdblistApikey) {
+            document.getElementById('mdblist_apikey').value = savedMdblistApikey;
+        }
+        if (savedCacheExpiration) {
+            document.getElementById('mdblist_cache_expiration').value = savedCacheExpiration;
+        }
+    });
+
+    async function validateMdblistApikey(apikey) {
+        const apiUrl = `https://mdblist.com/api/?apikey=${apikey}&s=test`;
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            console.log("API Response:", data);  // Log the entire response
+
+            if (data.response === true) {
+                console.log("MDBList API key is valid.");
+                return true;
+            } else {
+                console.log("Invalid MDBList API key. Error:", data.Error);
                 return false;
             }
+        } catch (error) {
+            console.error("Error validating MDBList apikey:", error);
+            return false;
+        }
+    }
+
+    document.getElementById('validateMdblistButton').addEventListener('click', function() {
+        const apiKey = document.getElementById('mdblist_apikey').value;
+        const mdblistStatusMessage = document.getElementById('mdblistStatusMessage');
+
+        if (!apiKey) {
+            mdblistStatusMessage.textContent = 'Please enter an MDBList API key.';
+            mdblistStatusMessage.style.color = 'red';
+            mdblistStatusMessage.style.display = 'block';
+            return;
         }
 
-        document.getElementById('validateMdblistButton').addEventListener('click', function() {
-            const apiKey = document.getElementById('mdblist_apikey').value;
-            const mdblistStatusMessage = document.getElementById('mdblistStatusMessage');
-
-            if (!apiKey) {
-                mdblistStatusMessage.textContent = 'Please enter an MDBList API key.';
+        validateMdblistApikey(apiKey).then(isValid => {
+            if (isValid) {
+                mdblistStatusMessage.textContent = "MDBList API key is valid.";
+                mdblistStatusMessage.style.color = 'green';
+            } else {
+                mdblistStatusMessage.textContent = "MDBList API key is invalid.";
                 mdblistStatusMessage.style.color = 'red';
-                mdblistStatusMessage.style.display = 'block';
-                return;
             }
-
-            validateMdblistApikey(apiKey).then(isValid => {
-                if (isValid) {
-                    mdblistStatusMessage.textContent = "MDBList API key is valid.";
-                    mdblistStatusMessage.style.color = 'green';
-                } else {
-                    mdblistStatusMessage.textContent = "MDBList API key is invalid.";
-                    mdblistStatusMessage.style.color = 'red';
-                }
-                mdblistStatusMessage.style.display = 'block';
-            });
+            mdblistStatusMessage.style.display = 'block';
         });
+    });
 
-        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-            const apikeyInput = document.getElementById('mdblist_apikey');
-            const currentType = apikeyInput.getAttribute('type');
-            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-        });
+    document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+        const apikeyInput = document.getElementById('mdblist_apikey');
+        const currentType = apikeyInput.getAttribute('type');
+        apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+        this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+    });
 
-        document.getElementById('configForm').addEventListener('submit', function(event) {
-            const apiKeyInput = document.getElementById('mdblist_apikey');
-            const cacheExpiration = document.getElementById('mdblist_cache_expiration');
-            if (!apiKeyInput.value) {
-                apiKeyInput.value = '';
-                cacheExpiration.value = '1';
-            }
-        });
-</script> {% endblock %}
+    document.getElementById('configForm').addEventListener('submit', function(event) {
+        const apiKeyInput = document.getElementById('mdblist_apikey');
+        const cacheExpiration = document.getElementById('mdblist_cache_expiration');
+        if (!apiKeyInput.value) {
+            apiKeyInput.value = '';
+            cacheExpiration.value = '1';
+        }
+    });
+</script>
+{% endblock %}

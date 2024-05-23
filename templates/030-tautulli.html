@@ -9,8 +9,10 @@
     <div class="hstack gap-3" style="width: 536px;">
       <div class="form-floating">
         <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" placeholder="####################"> <label for="tautulli_apikey">API Key</label>
-      </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
-      <div class="vr"></div><button type="button" id="validateTautulliButton" class="btn btn-success btn-sm">Validate</button>
+      </div>
+      <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
+      <div class="vr"></div>
+      <button type="button" id="validateTautulliButton" class="btn btn-success btn-sm">Validate</button>
     </div>
   </div>
   <div id="tautulliStatusMessage" class="status-message"></div><br>
@@ -24,59 +26,82 @@
   </nav>
 </form>
 <script>
-        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-            const apikeyInput = document.getElementById('tautulli_apikey');
-            const currentType = apikeyInput.getAttribute('type');
-            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-        });
-        // Tautulli validation script
-        document.getElementById('validateTautulliButton').addEventListener('click', function() {
-            const tautulliUrl = document.getElementById('tautulli_url').value;
-            const tautulliApikey = document.getElementById('tautulli_apikey').value;
-            const tautulliStatusMessage = document.getElementById('tautulliStatusMessage');
+  // Save input values to sessionStorage on change
+  document.getElementById('tautulli_url').addEventListener('input', function() {
+    sessionStorage.setItem('tautulli_url', this.value);
+  });
+  document.getElementById('tautulli_apikey').addEventListener('input', function() {
+    sessionStorage.setItem('tautulli_apikey', this.value);
+  });
 
-            if (!tautulliUrl || !tautulliApikey) {
-                tautulliStatusMessage.textContent = 'Please enter both Tautulli URL and API Key.';
-                tautulliStatusMessage.style.display = 'block';
-                return;
-            }
+  // Load saved values from sessionStorage on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedTautulliUrl = sessionStorage.getItem('tautulli_url');
+    const savedTautulliApikey = sessionStorage.getItem('tautulli_apikey');
+    if (savedTautulliUrl) {
+      document.getElementById('tautulli_url').value = savedTautulliUrl;
+    }
+    if (savedTautulliApikey) {
+      document.getElementById('tautulli_apikey').value = savedTautulliApikey;
+    }
+  });
 
-            fetch('/validate_tautulli', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    tautulli_url: tautulliUrl,
-                    tautulli_apikey: tautulliApikey
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.valid) {
-                    tautulliStatusMessage.textContent = 'Tautulli server validated successfully!';
-                    tautulliStatusMessage.style.color = 'green';
-                } else {
-                    tautulliStatusMessage.textContent = 'Failed to validate Tautulli server. Please check your URL and API Key.';
-                    tautulliStatusMessage.style.color = 'red';
-                }
-                tautulliStatusMessage.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error validating Tautulli server:', error);
-                tautulliStatusMessage.textContent = 'An error occurred while validating Tautulli server.';
-                tautulliStatusMessage.style.color = 'red';
-                tautulliStatusMessage.style.display = 'block';
-            });
-        });
+  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+    const apikeyInput = document.getElementById('tautulli_apikey');
+    const currentType = apikeyInput.getAttribute('type');
+    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+  });
 
-        document.getElementById('configForm').addEventListener('submit', function(event) {
-            const apiKeyInput = document.getElementById('tautulli_apikey');
-            const urlInput = document.getElementById('tautulli_url');
-            if (!apiKeyInput.value) {
-                apiKeyInput.value = '';
-                urlInput.value = 'http://';
-            }
-        });
+  // Tautulli validation script
+  document.getElementById('validateTautulliButton').addEventListener('click', function() {
+    const tautulliUrl = document.getElementById('tautulli_url').value;
+    const tautulliApikey = document.getElementById('tautulli_apikey').value;
+    const tautulliStatusMessage = document.getElementById('tautulliStatusMessage');
+
+    if (!tautulliUrl || !tautulliApikey) {
+      tautulliStatusMessage.textContent = 'Please enter both Tautulli URL and API Key.';
+      tautulliStatusMessage.style.display = 'block';
+      return;
+    }
+
+    fetch('/validate_tautulli', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tautulli_url: tautulliUrl,
+        tautulli_apikey: tautulliApikey
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.valid) {
+        tautulliStatusMessage.textContent = 'Tautulli server validated successfully!';
+        tautulliStatusMessage.style.color = 'green';
+      } else {
+        tautulliStatusMessage.textContent = 'Failed to validate Tautulli server. Please check your URL and API Key.';
+        tautulliStatusMessage.style.color = 'red';
+      }
+      tautulliStatusMessage.style.display = 'block';
+    })
+    .catch(error => {
+      console.error('Error validating Tautulli server:', error);
+      tautulliStatusMessage.textContent = 'An error occurred while validating Tautulli server.';
+      tautulliStatusMessage.style.color = 'red';
+      tautulliStatusMessage.style.display = 'block';
+    });
+  });
+
+  document.getElementById('configForm').addEventListener('submit', function(event) {
+    const apiKeyInput = document.getElementById('tautulli_apikey');
+    const urlInput = document.getElementById('tautulli_url');
+    if (!apiKeyInput.value) {
+      apiKeyInput.value = '';
+    }
+    if (!urlInput.value) {
+      urlInput.value = 'http://';
+    }
+  });
 </script> {% endblock %}
