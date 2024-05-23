@@ -3,36 +3,25 @@
   <div id="tautulliSection">
     <h2>Tautulli Settings</h2>
     <div class="form-divider"></div>
-    <div class="container text-center">
-      <div class="row align-items-start">
-        <div class="col">
-          <div class="form-floating">
-            <input type="text" class="form-control" id="tautulli_url" name="tautulli_url" placeholder="http://192.168.1.12:8181"> <label for="tautulli_url">Tautulli URL</label>
-          </div>
-        </div>
-      </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="tautulli_url" name="tautulli_url" placeholder="http://192.168.1.12:8181"> <label for="tautulli_url">Tautulli URL</label>
     </div>
-    <div class="container text-center">
-      <div class="row align-items-start">
-        <div class="row">
-          <div class="col-8">
-            <div class="form-floating">
-              <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" placeholder="####################"> <label for="tautulli_apikey">API Key</label>
-            </div>
-          </div>
-          <div class="col-4">
-            <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button> <button type="button" id="validateTautulliButton" class="btn btn-success btn-sm">Validate</button>
-          </div>
-        </div>
-        <div id="tautulliStatusMessage" class="status-message"></div>
-      </div><br>
-      <br>
-      <div class="d-grid gap-2 d-md-block">
-        <a class="btn btn-primary" role="button" href="/step/020-tmdb"> ⏪ Previous</a>
-        <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
-      </div>
+    <div class="hstack gap-3" style="width: 536px;">
+      <div class="form-floating">
+        <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" placeholder="####################"> <label for="tautulli_apikey">API Key</label>
+      </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
+      <div class="vr"></div><button type="button" id="validateTautulliButton" class="btn btn-success btn-sm">Validate</button>
     </div>
   </div>
+  <div id="tautulliStatusMessage" class="status-message"></div><br>
+  <br>
+  <nav aria-label="Page navigation example">
+    <ul class="pagination justify-content-center">
+      <div class="d-grid gap-2 d-md-block">
+        <a class="btn btn-primary" role="button" href="/step/020-tmdb">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
+      </div>
+    </ul>
+  </nav>
 </form>
 <script>
         document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
