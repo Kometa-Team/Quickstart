@@ -1,14 +1,19 @@
-{% extends "000-base.html" %} {% block content %}
-<form action="/step/100-radarr" method="post" id="configForm" name="configForm">
-  <div id="anidbSection">
-    <h2>Plex Settings</h2>
-    <div class="form-divider"></div>
-    <div class="form-floating">
-      <input type="text" class="form-control" id="anidb_client" name="anidb_client" placeholder="################################" required=""> <label for="anidb_client">Client Name</label>
-    </div>
-    <div class="form-floating">
-      <input type="text" class="form-control" id="anidb_client" name="anidb_client" placeholder="AniDB Client Version" value="1" required=""> <label for="anidb_client">Client Version</label>
-    </div><select class="form-select form-select-lg mb-3" aria-label="Language">
+{% extends "000-base.html" %}
+
+{% block content %}
+    <h1>AniDb Configuration Information</h1>
+    <form action="/step/100-radarr" method="post" id="configForm">
+        <!-- AniDb Section -->
+        <div id="aniDbSection">
+            <h2>AniDb Settings</h2>
+            
+            <label for="anidb_client">AniDb Client:</label>
+            <input type="text" id="anidb_client" name="anidb_client" placeholder="AniDb Client">
+            
+            <label for="anidb_version">AniDb Version:</label>
+            <input type="number" id="anidb_version" name="anidb_version" placeholder="1">
+            
+            <select class="form-select form-select-lg mb-3" aria-label="Language">
       <option selected value="en">
         Language - English (default)
       </option>
@@ -565,25 +570,72 @@
         Zulu
       </option>
     </select>
-    <div class="form-floating">
-      <input type="text" class="form-control" id="anidb_cache_expiration" name="anidb_cache_expiration" placeholder="Cache Expiration (in days)" value="60" min="1" required=""> <label for="anidb_cache_expiration">Cache Expiration (in days)</label>
-    </div>
-    <div class="form-floating">
-      <input type="text" class="form-control" id="anidb_username" name="anidb_username" placeholder="################################" required=""> <label for="anidb_username">AniDB Username</label>
-    </div>
-    <div class="hstack gap-3">
-      <div class="form-floating">
-        <input type="password" class="form-control" id="anidb_password" name="anidb_password" placeholder="################################" required=""> <label for="anidb_password">Password</label>
-      </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
-      <div class="vr"></div><button type="button" id="validatePlexButton" class="btn btn-success btn-sm">Validate</button>
-    </div><br>
-    <br>
-    <nav aria-label="Page navigation example">
-      <ul class="pagination justify-content-center">
-        <div class="d-grid gap-2 d-md-block">
-          <a class="btn btn-primary" role="button" href="/step/018-gotify">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
+            
+            <label for="anidb_cache_expiration">Cache Expiration (days):</label>
+            <input type="number" id="anidb_cache_expiration" name="anidb_cache_expiration" placeholder="60">
+            
+            <label for="anidb_username">AniDb Username:</label>
+            <input type="text" id="anidb_username" name="anidb_username" placeholder="AniDb Username">
+            
+            <label for="anidb_password">AniDb Password:</label>
+            <div class="button-container">
+                <input type="password" id="anidb_password" name="anidb_password" placeholder="AniDb Password">
+                <button type="button" id="togglePasswordVisibility" class="btn">Show</button>
+                <button type="button" id="validateAnidbButton" class="btn">Validate AniDb</button>
+            </div>
+            <div id="anidbStatusMessage" class="status-message" style="display: none;"></div>
         </div>
-      </ul>
-    </nav>
-  </div>
-</form>{% endblock %}
+
+        <br><br>
+        <input type="submit" value="Next">
+    </form>
+
+    <script>
+        document.getElementById('togglePasswordVisibility').addEventListener('click', function() {
+            const passwordInput = document.getElementById('anidb_password');
+            const currentType = passwordInput.getAttribute('type');
+            passwordInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+        });
+
+        document.getElementById('validateAnidbButton').addEventListener('click', function() {
+            const username = document.getElementById('anidb_username').value;
+            const password = document.getElementById('anidb_password').value;
+            const client = document.getElementById('anidb_client').value;
+            const clientver = document.getElementById('anidb_version').value;
+            const anidbStatusMessage = document.getElementById('anidbStatusMessage');
+
+            if (!username || !password || !client || !clientver) {
+                anidbStatusMessage.textContent = 'Please enter all required fields.';
+                anidbStatusMessage.style.color = 'red';
+                anidbStatusMessage.style.display = 'block';
+                return;
+            }
+
+            fetch('/validate_anidb', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password, client, clientver }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    anidbStatusMessage.textContent = "AniDb credentials are valid.";
+                    anidbStatusMessage.style.color = 'green';
+                } else {
+                    anidbStatusMessage.textContent = `Error: ${data.error}`;
+                    anidbStatusMessage.style.color = 'red';
+                }
+                anidbStatusMessage.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                anidbStatusMessage.textContent = "Error validating AniDb credentials.";
+                anidbStatusMessage.style.color = 'red';
+                anidbStatusMessage.style.display = 'block';
+            });
+        });
+    </script>
+{% endblock %}

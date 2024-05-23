@@ -19,101 +19,94 @@
       <option value="EN">
         Region - Please validate your TMDB API Key
       </option>
-      <script>
-            document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+          <script>
+        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
             const apikeyInput = document.getElementById('tmdb_apikey');
             const currentType = apikeyInput.getAttribute('type');
             apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
             this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-            });
-            function sortDataByISO (data){
-            let sortedData;
-            sortedData = data.sort(function(a,b){
-            let x = a.iso_639_1.toLowerCase();
-            let y = b.iso_639_1.toLowerCase();
-            if(x>y){return 1;}
-            if(x<y){return -1;}
-            return 0;
-            });
-            return sortedData;
-            }
-            // API key validation script
-            document.getElementById('validateButton').addEventListener('click', function() {
+        });
+
+        function sortByEnglishName(data) {
+            return data.sort((a, b) => a.english_name.localeCompare(b.english_name));
+        }
+
+        document.getElementById('validateButton').addEventListener('click', function() {
             const apiKey = document.getElementById('tmdb_apikey').value;
             const statusMessage = document.getElementById('statusMessage');
             const languageSelect = document.getElementById('tmdb_language');
             const regionSelect = document.getElementById('tmdb_region');
 
             if (!apiKey) {
-            statusMessage.textContent = 'Please enter an API key.';
-            statusMessage.style.display = 'block';
-            return;
+                statusMessage.textContent = 'Please enter an API key.';
+                statusMessage.style.display = 'block';
+                return;
             }
 
             fetch(`https://api.themoviedb.org/3/movie/550?api_key=${apiKey}`)
-            .then(response => {
-                if (response.ok) {
-                    statusMessage.textContent = 'API key is valid!';
-                    statusMessage.style.color = 'green';
-                    return Promise.all([
-                        fetch(`https://api.themoviedb.org/3/configuration/languages?api_key=${apiKey}`),
-                        fetch(`https://api.themoviedb.org/3/watch/providers/regions?api_key=${apiKey}`)
-                    ]);
-                } else {
-                    throw new Error('Invalid API key');
-                }
-            })
-            .then(responses => Promise.all(responses.map(response => response.json())))
-            .then(data => {
-                const [languagesData, regionsData] = data;
+                .then(response => {
+                    if (response.ok) {
+                        statusMessage.textContent = 'API key is valid!';
+                        statusMessage.style.color = 'green';
+                        return Promise.all([
+                            fetch(`https://api.themoviedb.org/3/configuration/languages?api_key=${apiKey}`),
+                            fetch(`https://api.themoviedb.org/3/watch/providers/regions?api_key=${apiKey}`)
+                        ]);
+                    } else {
+                        throw new Error('Invalid API key');
+                    }
+                })
+                .then(responses => Promise.all(responses.map(response => response.json())))
+                .then(data => {
+                    const [languagesData, regionsData] = data;
 
-                // Clear previous options
-                languageSelect.innerHTML = '';
-                regionSelect.innerHTML = '';
+                    // Clear previous options
+                    languageSelect.innerHTML = '';
+                    regionSelect.innerHTML = '';
 
-                sortedData = sortDataByISO(languagesData)
+                    const sortedLanguages = sortByEnglishName(languagesData);
+                    const sortedRegions = sortByEnglishName(regionsData.results);
 
-                // Populate the language dropdown
-                sortedData.forEach(language => {
-                    const option = document.createElement('option');
-                    option.value = language.iso_639_1;
-                    if (language.name) {
-                        if (language.name.startsWith("?")) {
+                    // Populate the language dropdown
+                    sortedLanguages.forEach(language => {
+                        if (language.english_name) {
+                            const option = document.createElement('option');
+                            option.value = language.iso_639_1;
                             option.textContent = language.english_name;
-                        } else {
-                            option.textContent = language.name;
+                            languageSelect.appendChild(option);
                         }
-                    } else {
-                        option.textContent = language.english_name;
-                    }
-                    languageSelect.appendChild(option);
-                });
+                    });
 
-                // Populate the region dropdown
-                regionsData.results.forEach(region => {
-                    const option = document.createElement('option');
-                    option.value = region.iso_3166_1;
-                    if (region.native_name && region.native_name !== "?????") {
-                        option.textContent = region.native_name;
-                    } else {
-                        option.textContent = region.english_name;
-                    }
-                    regionSelect.appendChild(option);
-                });
+                    // Populate the region dropdown
+                    sortedRegions.forEach(region => {
+                        if (region.english_name) {
+                            const option = document.createElement('option');
+                            option.value = region.iso_3166_1;
+                            option.textContent = region.english_name;
+                            regionSelect.appendChild(option);
+                        }
+                    });
 
-                // Set default language and region to English
-                languageSelect.value = 'en';
-                regionSelect.value = 'US';
-            })
-            .catch(error => {
-                statusMessage.textContent = error.message;
-                statusMessage.style.color = 'red';
-            })
-            .finally(() => {
-                statusMessage.style.display = 'block';
-            });
-            });
-      </script>
+                    // Set default language and region to English
+                    languageSelect.value = 'en';
+                    regionSelect.value = 'US';
+                })
+                .catch(error => {
+                    statusMessage.textContent = error.message;
+                    statusMessage.style.color = 'red';
+                })
+                .finally(() => {
+                    statusMessage.style.display = 'block';
+                });
+        });
+
+        document.getElementById('configForm').addEventListener('submit', function(event) {
+            const apiKeyInput = document.getElementById('tmdb_apikey');
+            if (!apiKeyInput.value) {
+                apiKeyInput.value = '';
+            }
+        });
+    </script>
     </select>
   </div>
   <div class="form-floating">
@@ -127,4 +120,5 @@
   </div>
   </ul>
 </nav>
-</form>{% endblock %}
+</form>
+{% endblock %}

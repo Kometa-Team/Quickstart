@@ -153,6 +153,64 @@ def validate_trakt():
     data = request.json
     return validate_trakt_server(data)
 
+@app.route('/validate_anidb', methods=['POST'])
+def validate_anidb():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    client = data.get('client')
+    clientver = data.get('clientver')
+
+    # AniDB API endpoint
+    api_url = "http://api.anidb.net:9001/httpapi"
+    
+    # Prepare the request parameters
+    params = {
+        'request': 'hints',
+        'user': username,
+        'pass': password,
+        'protover': '1',
+        'client': client,
+        'clientver': clientver,
+        'type': '1',
+    }
+
+    try:
+        # Construct the full URL with query parameters
+        full_url = f"{api_url}?request=hints&user={username}&pass={password}&protover=1&client={client}&clientver={clientver}&type=1"
+        print(f"Full URL: {full_url}")
+        
+        # Make a GET request to AniDB API
+        response = requests.get(api_url, params=params)
+        response_text = response.text
+        print(f"Response text: {response_text}")
+        print(f"Status code: {response.status_code}")
+
+        # Check if the response contains 'hints'
+        if 'hints' in response_text:
+            print("Response contains 'hints'")
+            print("Authentication successful")
+            return jsonify({'valid': True})
+        elif '<error code="302">' in response_text:
+            print("Error: client version missing or invalid")
+            return jsonify({'valid': False, 'error': 'Client version missing or invalid'})
+        elif '<error code="303">' in response_text:
+            print("Error: invalid username or password")
+            return jsonify({'valid': False, 'error': 'Invalid username or password'})
+        elif '<error code="500">' in response_text:
+            print("Error: You have been banned")
+            return jsonify({'valid': False, 'error': 'You have been banned(likely for 24 hours)'})
+        else:
+            print("Authentication failed")
+            return jsonify({'valid': False, 'error': 'Authentication failed'})
+    
+    except requests.exceptions.RequestException as e:
+        # Handle request exceptions (e.g., connection error)
+        print(f"RequestException: {str(e)}")
+        return jsonify({'valid': False, 'error': str(e)})
+
+    return jsonify({'valid': False, 'error': 'Unknown error'})
+
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
