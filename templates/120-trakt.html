@@ -1,23 +1,26 @@
 {% extends "000-base.html" %} {% block content %}
-    <h1>Trakt Configuration Information</h1>
     <form action="/step/130-mal" method="post" id="configForm">
         <!-- Trakt Section -->
         <div id="traktSection" class="section">
             <h2>Trakt Settings</h2>
-            <div class="form-group">
-                <label for="trakt_client_id">Trakt Client ID:</label>
-                <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" oninput="updateTraktURL(this)">
-            </div>
-            <div class="form-group">
-                <label for="trakt_client_secret">Trakt Client Secret:</label>
-                <input type="text" class="form-control" id="trakt_client_secret" name="trakt_client_secret" oninput="updateTraktURL(this)">
-            </div>
+    <div class="form-divider"></div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" oninput="updateTraktURL(this)"> <label for="trakt_client_id">Client ID</label>
+    </div>
+    <div class="hstack gap-3">
+      <div class="form-floating">
+        <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" oninput="updateTraktURL(this)"> <label for="trakt_client_secret">Client Secret</label>
+      </div><button type="button" id="toggleClientSecretVisibility" class="btn btn-primary btn-sm">Show</button>
+        <button type="button" class="btn btn-primary btn-sm" id="trakt_open_url" onclick="openTraktUrl()">Retrieve PIN</button>
+    </div>
+
+
 
             <div class="form-group" id="urlField">
-                When you click "Retrieve PIN" below, you will be taken to a Trakt web page. Log in and allow your application access to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br><br>
+                When you click "Retrieve PIN" above, you will be taken to a Trakt web page. Log in and allow your application access to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br><br>
                 If you have a PIN you generated in the last few minutes, enter it below.<br><br>
                 <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
-                <button type="button" class="btn btn-primary mt-2" id="trakt_open_url" onclick="openTraktUrl()">Retrieve PIN</button>
+
                 <label for="trakt_pin">Trakt PIN:</label>
                 <input type="text" class="form-control" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)">
             </div>
@@ -30,19 +33,26 @@
                 <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly>
                 <input type="hidden" class="form-control" id="scope" name="scope" readonly>
                 <input type="hidden" class="form-control" id="created_at" name="created_at" readonly>
-                <button type="button" class="btn btn-primary mt-2" id="validate_trakt_pin">Validate PIN</button>
+                <button type="button" class="btn btn-primary btn-sm" id="validate_trakt_pin">Validate PIN</button>
             </div>
         </div>
 <br><br>
     <nav aria-label="Page navigation example">
       <ul class="pagination justify-content-center">
         <div class="d-grid gap-2 d-md-block">
-          <a class="btn btn-primary" role="button" href="/step/110-radarr">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
+          <a class="btn btn-primary" role="button" href="/step/110-sonarr">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
         </div>
       </ul>
     </nav>
     </form>
     <script>
+
+          document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
+            const apikeyInput = document.getElementById('trakt_client_secret');
+            const currentType = apikeyInput.getAttribute('type');
+            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+          });
         function updateTraktURL() {
             var trakt_client_id = document.getElementById('trakt_client_id').value;
             var myURL = "";
