@@ -14,10 +14,10 @@
     </div>
     <div id="plexStatusMessage" class="status-message"></div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="plex_db_cache" name="plex_db_cache" placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40" value="40" required=""> <label for="plex_db_cache">Database Cache Size (in mb)</label>
+      <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40" value="40" min="40" required=""> <label for="plex_db_cache">Database Cache Size (in mb)</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="plex_timeout" name="plex_timeout" placeholder="Amount of seconds to wait for Plex to respond, default is 60" value="60" required=""> <label for="plex_timeout">Timeout (in seconds)</label>
+      <input type="number" class="form-control" id="plex_timeout" name="plex_timeout" placeholder="Amount of seconds to wait for Plex to respond, default is 60" value="60" min="60" required=""> <label for="plex_timeout">Timeout (in seconds)</label>
     </div>
     <div class="container text-center">
       <div class="row row-cols-4">

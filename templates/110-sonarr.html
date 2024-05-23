@@ -1,107 +1,114 @@
 {% extends "000-base.html" %} {% block content %}
-    <h1>Sonarr Configuration Information</h1>
-    <form action="/step/120-trakt" method="post" id="configForm">
-        <!-- Sonarr Section -->
-        <div id="sonarrSection">
-            <h2>Sonarr Settings</h2>
-            
-            <label for="sonarr_url">Sonarr URL:</label>
-            <input type="text" id="sonarr_url" name="sonarr_url" placeholder="http://192.168.1.12:8989">
-
-            <label for="sonarr_token">Sonarr Token:</label>
-            <div class="button-container">
-                <input type="password" id="sonarr_token" name="sonarr_token" placeholder="################################">
-                <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
-                <button type="button" id="validateSonarrButton" class="btn btn-success btn-sm">Validate</button>
-            </div>
-            <div id="sonarrStatusMessage" class="status-message" style="display: none;"></div>
-            
-            <label for="sonarr_root_folder_path">Root Folder Path:</label>
-            <select id="sonarr_root_folder_path" name="sonarr_root_folder_path">
-                <option value="">Select Root Folder</option>
-            </select>
-            
-            <label for="sonarr_monitor">Monitor:</label>
-            <select id="sonarr_monitor" name="sonarr_monitor">
-                <option value="unknown">unknown</option>
-                <option value="all" selected>all</option>
-                <option value="future">future</option>
-                <option value="missing">missing</option>
-                <option value="existing">existing</option>
-                <option value="firstSeason">firstSeason</option>
-                <option value="lastSeason">lastSeason</option>
-                <option value="latestSeason">latestSeason</option>
-                <option value="pilot">pilot</option>
-                <option value="recent">recent</option>
-                <option value="monitorSpecials">monitorSpecials</option>
-                <option value="unmonitorSpecials">unmonitorSpecials</option>
-                <option value="none">none</option>
-                <option value="skip">skip</option>
-            </select>
-
-            <label for="sonarr_quality_profile">Quality Profile:</label>
-            <select id="sonarr_quality_profile" name="sonarr_quality_profile">
-                <option value="">Select Quality Profile</option>
-            </select>
-
-            <label for="sonarr_language_profile">Language Profile:</label>
-            <select id="sonarr_language_profile" name="sonarr_language_profile">
-                <option value="">Select Language Profile</option>
-            </select>
-            
-            <label for="sonarr_series_type">Series Type:</label>
-            <select id="sonarr_series_type" name="sonarr_series_type">
-                <option value="standard">Standard</option>
-                <option value="daily">Daily</option>
-                <option value="anime">Anime</option>
-            </select>
-
-            <label for="sonarr_tag">Tag:</label>
-            <input type="text" id="sonarr_tag" name="sonarr_tag">
-
-            <label for="sonarr_sonarr_path">Sonarr Path:</label>
-            <input type="text" id="sonarr_sonarr_path" name="sonarr_sonarr_path">
-
-            <label for="sonarr_plex_path">Plex Path:</label>
-            <input type="text" id="sonarr_plex_path" name="sonarr_plex_path">
-            
-            <div class="checkbox-container">
-                <label for="sonarr_add_missing">Add Missing:</label>
-                <input type="checkbox" id="sonarr_add_missing" name="sonarr_add_missing">
-            </div>
-            <div class="checkbox-container">
-                <label for="sonarr_add_existing">Add Existing:</label>
-                <input type="checkbox" id="sonarr_add_existing" name="sonarr_add_existing">
-            </div>
-            <div class="checkbox-container">
-                <label for="sonarr_upgrade_existing">Upgrade Existing:</label>
-                <input type="checkbox" id="sonarr_upgrade_existing" name="sonarr_upgrade_existing">
-            </div>
-            <div class="checkbox-container">
-                <label for="sonarr_monitor_existing">Monitor Existing:</label>
-                <input type="checkbox" id="sonarr_monitor_existing" name="sonarr_monitor_existing">
-            </div>
-            <div class="checkbox-container">
-                <label for="sonarr_season_folder">Season Folder:</label>
-                <input type="checkbox" id="sonarr_season_folder" name="sonarr_season_folder" checked>
-            </div>
-            <div class="checkbox-container">
-                <label for="sonarr_search">Search:</label>
-                <input type="checkbox" id="sonarr_search" name="sonarr_search">
-            </div>
-            <div class="checkbox-container">
-                <label for="sonarr_cutoff_search">Cutoff Search:</label>
-                <input type="checkbox" id="sonarr_cutoff_search" name="sonarr_cutoff_search">
-            </div>
-            <div class="checkbox-container">
-                <label for="sonarr_ignore_cache">Ignore Cache:</label>
-                <input type="checkbox" id="sonarr_ignore_cache" name="sonarr_ignore_cache">
-            </div>
+<form action="/step/120-trakt" method="post" id="configForm" name="configForm">
+  <div id="sonarrSection">
+    <h2>Sonarr Settings</h2>
+    <div class="form-divider"></div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" placeholder="http://127.0.0.1:32400"> <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
+    </div>
+    <div class="hstack gap-3">
+      <div class="form-floating">
+        <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" placeholder="################################"> <label for="sonarr_token">Token</label>
+      </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
+      <div class="vr"></div><button type="button" id="validateSonarrButton" class="btn btn-success btn-sm">Validate</button>
+    </div>
+    <div id="sonarrStatusMessage" class="status-message" style="display: none;"></div><select class="form-select form-select-lg mb-3" aria-label="Root Folder Path" id="sonarr_root_folder_path" name="sonarr_root_folder_path">
+      <option value="">
+        Select Root Folder Path
+      </option>
+    </select> <select class="form-select form-select-lg mb-3" aria-label="Monitor" id="sonarr_monitor" name="sonarr_monitor">
+      <option value="all" selected>
+        Select Monitor Preference
+      </option>
+      <option value="all">
+        all (default) - monitor all episodes except specials
+      </option>
+      <option value="none">
+        none - Do not monitor any episodes
+      </option>
+      <option value="future">
+        future - monitor episodes that have not aired yet
+      </option>
+      <option value="missing">
+        missing - monitor episodes that do not have files or have not aired yet
+      </option>
+      <option value="existing">
+        existing - monitor episodes that have files or have not aired yet
+      </option>
+      <option value="pilot">
+        pilot - monitor the first episode, all others will be ignored
+      </option>
+      <option value="first">
+        first - monitor all episodes of the first season only
+      </option>
+      <option value="latest">
+        latest - monitor all episodes of the latest season and future seasons
+      </option>
+    </select> <select class="form-select form-select-lg mb-3" aria-label="Quality Profile" id="sonarr_quality_profile" name="sonarr_quality_profile">
+      <option value="">
+        Select Quality Profile
+      </option>
+    </select> <select class="form-select form-select-lg mb-3" aria-label="Language Profile" id="sonarr_language_profile" name="sonarr_language_profile">
+      <option value="">
+        Select Language Profile
+      </option>
+    </select> <select class="form-select form-select-lg mb-3" aria-label="Series Type" id="sonarr_series_type" name="sonarr_series_type">
+      <option value="standard" selected>
+        Select Series Type
+      </option>
+      <option value="standard">
+        Standard (default)
+      </option>
+      <option value="daily">
+        Daily
+      </option>
+      <option value="anime">
+        Anime
+      </option>
+    </select>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag" placeholder=""> <label for="sonarr_tag">Tag to apply to added media</label>
+    </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="sonarr_sonarr_path" name="sonarr_sonarr_path" placeholder=""> <label for="sonarr_sonarr_path">Sonarr Path</label>
+    </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path" placeholder=""> <label for="sonarr_plex_path">Plex Path</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="sonarr_search" checked> <label class="form-check-label" for="sonarr_search">Search for media when added</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="sonarr_season_folder" checked> <label class="form-check-label" for="sonarr_season_folder">Use the Season Folder option when adding new media</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="sonarr_add_missing"> <label class="form-check-label" for="sonarr_add_missing">Add missing media from collections</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="sonarr_add_existing"> <label class="form-check-label" for="sonarr_add_existing">Add existing media from collections</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="sonarr_upgrade_existing"> <label class="form-check-label" for="sonarr_upgrade_existing">Upgrade existing media from collections to the Quality Profile</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="sonarr_monitor_existing"> <label class="form-check-label" for="sonarr_monitor_existing">Set existing media from collections to monitored</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="sonarr_cutoff_search"> <label class="form-check-label" for="sonarr_cutoff_search">Start search for cutoff unmet episodes when adding new media</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="sonarr_ignore_cache"> <label class="form-check-label" for="sonarr_ignore_cache">Ignore Kometa's cache when adding media</label>
+    </div><br>
+    <br>
+    <nav aria-label="Page navigation example">
+      <ul class="pagination justify-content-center">
+        <div class="d-grid gap-2 d-md-block">
+          <a class="btn btn-primary" role="button" href="/step/100-sonarr">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
         </div>
-
-        <br><br>
-        <input type="submit" value="Next">
-    </form>
+      </ul>
+    </nav>
+  </div>
+</form>
 
     <script>
         async function validateSonarrApikey(apikey, url) {

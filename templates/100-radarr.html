@@ -1,82 +1,82 @@
-{% extends "000-base.html" %}
-{% block content %}
-    <h1>Radarr Configuration Information</h1>
-    <form action="/step/110-sonarr" method="post" id="configForm">
-        <!-- Radarr Section -->
-        <div id="radarrSection">
-            <h2>Radarr Settings</h2>
-            
-            <label for="radarr_url">Radarr URL:</label>
-            <input type="text" id="radarr_url" name="radarr_url" placeholder="http://192.168.1.12:7878">
-
-            <div class="button-container">
-                <label for="radarr_token">Radarr Token:</label>
-                <input type="password" id="radarr_token" name="radarr_token" placeholder="################################">
-                <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
-                <button type="button" id="validateRadarrButton" class="btn btn-success btn-sm">Validate</button>
-            </div>
-            <div id="radarrStatusMessage" class="status-message" style="display: none;"></div>
-            
-            <label for="radarr_root_folder_path">Root Folder Path:</label>
-            <select id="radarr_root_folder_path" name="radarr_root_folder_path">
-                <option value="">Select Root Folder</option>
-            </select>
-            
-            <label for="radarr_quality_profile">Quality Profile:</label>
-            <select id="radarr_quality_profile" name="radarr_quality_profile">
-                <option value="">Select Quality Profile</option>
-            </select>
-            
-            <label for="radarr_availability">Availability:</label>
-            <select id="radarr_availability" name="radarr_availability">
-                <option value="announced">Announced</option>
-                <option value="cinemas">Cinemas</option>
-                <option value="released">Released</option>
-                <option value="db">DB</option>
-            </select>
-            
-            <label for="radarr_tag">Tag:</label>
-            <input type="text" id="radarr_tag" name="radarr_tag">
-
-            <label for="radarr_radarr_path">Radarr Path:</label>
-            <input type="text" id="radarr_radarr_path" name="radarr_radarr_path">
-
-            <label for="radarr_plex_path">Plex Path:</label>
-            <input type="text" id="radarr_plex_path" name="radarr_plex_path">
-            
-            <div class="checkbox-container">
-                <label for="radarr_monitor">Monitor:</label>
-                <input type="checkbox" id="radarr_monitor" name="radarr_monitor" checked>
-            </div>
-            <div class="checkbox-container">
-                <label for="radarr_search">Search:</label>
-                <input type="checkbox" id="radarr_search" name="radarr_search">
-            </div>
-            <div class="checkbox-container">
-                <label for="radarr_add_missing">Add Missing:</label>
-                <input type="checkbox" id="radarr_add_missing" name="radarr_add_missing">
-            </div>
-            <div class="checkbox-container">
-                <label for="radarr_add_existing">Add Existing:</label>
-                <input type="checkbox" id="radarr_add_existing" name="radarr_add_existing">
-            </div>
-            <div class="checkbox-container">
-                <label for="radarr_upgrade_existing">Upgrade Existing:</label>
-                <input type="checkbox" id="radarr_upgrade_existing" name="radarr_upgrade_existing">
-            </div>
-            <div class="checkbox-container">
-                <label for="radarr_monitor_existing">Monitor Existing:</label>
-                <input type="checkbox" id="radarr_monitor_existing" name="radarr_monitor_existing">
-            </div>
-            <div class="checkbox-container">
-                <label for="radarr_ignore_cache">Ignore Cache:</label>
-                <input type="checkbox" id="radarr_ignore_cache" name="radarr_ignore_cache">
-            </div>
+{% extends "000-base.html" %}{% block content %}
+<form action="/step/110-sonarr" method="post" id="configForm" name="configForm">
+  <div id="radarrSection">
+    <h2>Radarr Settings</h2>
+    <div class="form-divider"></div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="radarr_url" name="radarr_url" placeholder="http://127.0.0.1:32400"> <label for="radarr_url">Radarr URL (including URL Base if set)</label>
+    </div>
+    <div class="hstack gap-3">
+      <div class="form-floating">
+        <input type="password" class="form-control" id="radarr_token" name="radarr_token" placeholder="################################"> <label for="radarr_token">Token</label>
+      </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
+      <div class="vr"></div><button type="button" id="validateRadarrButton" class="btn btn-success btn-sm">Validate</button>
+    </div>
+    <div id="radarrStatusMessage" class="status-message" style="display: none;"></div><select class="form-select form-select-lg mb-3" aria-label="Root Folder Path" id="radarr_root_folder_path" name="radarr_root_folder_path">
+      <option value="">
+        Select Root Folder Path
+      </option>
+    </select> <select class="form-select form-select-lg mb-3" aria-label="Quality Profile" id="radarr_quality_profile" name="radarr_quality_profile">
+      <option value="">
+        Select Quality Profile
+      </option>
+    </select> <select class="form-select form-select-lg mb-3" aria-label="Quality Profile" id="radarr_availability" name="radarr_availability">
+      <option value="announced">
+        Select Availibility
+      </option>
+      <option value="announced">
+        Announced (default)
+      </option>
+      <option value="cinemas">
+        Cinemas
+      </option>
+      <option value="released">
+        Released
+      </option>
+      <option value="db">
+        DB
+      </option>
+    </select>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" placeholder=""> <label for="radarr_tag">Tag to apply to added media</label>
+    </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path" placeholder=""> <label for="radarr_radarr_path">Radarr Path</label>
+    </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path" placeholder=""> <label for="radarr_plex_path">Plex Path</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="radarr_monitor" checked> <label class="form-check-label" for="radarr_monitor">Monitor media when added</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="radarr_search" checked> <label class="form-check-label" for="radarr_search">Search media when added</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="radarr_add_missing"> <label class="form-check-label" for="radarr_add_missing">Add missing media from collections</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="radarr_add_existing"> <label class="form-check-label" for="radarr_add_existing">Add existing media from collections</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="radarr_upgrade_existing"> <label class="form-check-label" for="radarr_upgrade_existing">Upgrade existing media from collections to the Quality Profile</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="radarr_monitor_existing"> <label class="form-check-label" for="radarr_monitor_existing">Set existing media from collections to monitored</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="radarr_ignore_cache"> <label class="form-check-label" for="radarr_ignore_cache">Ignore Kometa's cache when adding media</label>
+    </div><br>
+    <br>
+    <nav aria-label="Page navigation example">
+      <ul class="pagination justify-content-center">
+        <div class="d-grid gap-2 d-md-block">
+          <a class="btn btn-primary" role="button" href="/step/090-anidb">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
         </div>
-
-        <br><br>
-        <input type="submit" value="Next">
-    </form>
+      </ul>
+    </nav>
+  </div>
+</form>
 
     <script>
         // Save input values to sessionStorage on change
