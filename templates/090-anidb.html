@@ -8,9 +8,14 @@
     </div>
     <div class="form-floating">
       <input type="number" class="form-control" id="anidb_version" name="anidb_version" value="1" min="1" max="1"> <label for="anidb_version">Client Version</label>
-    </div><select class="form-select form-select-lg mb-3" aria-label="Language">
-      <option selected value="en">
-        Language - English (default)
+    </div>
+    <div class="form-floating">
+    <select class="form-select" aria-label="Language">
+      <option selected value="">
+        Select Language
+      </option>
+      <option value="en">
+        English
       </option>
       <option value="aa">
         Afar
@@ -122,9 +127,6 @@
       </option>
       <option value="el">
         Greek, Modern (1453-)
-      </option>
-      <option value="en">
-        English
       </option>
       <option value="eo">
         Esperanto
@@ -565,6 +567,7 @@
         Zulu
       </option>
     </select>
+    </div>
     <div class="form-floating">
       <input type="number" class="form-control" id="anidb_cache_expiration" name="anidb_cache_expiration" value="60" min="0"> <label for="anidb_cache_expiration">Cache Expiration (in days)</label>
     </div>

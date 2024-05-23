@@ -1,10 +1,7 @@
 /* General Styles */
 
 body {
-    font-family: Arial, sans-serif;
     margin: 20px;
-
-
 }
 
 /* Header Styles */
@@ -64,9 +61,10 @@ label {
     border-bottom: 1px solid #3a3a3a;
 }
 
-.form-floating > .form-select {
+.form-select, .form-floating > .form-select {
     padding-top: 0rem;
     padding-bottom: 0rem;
+    margin-top: 1rem;
 }
 /* Input Styles */
 

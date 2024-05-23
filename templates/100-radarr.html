@@ -12,15 +12,16 @@
       </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
       <div class="vr"></div><button type="button" id="validateRadarrButton" class="btn btn-success btn-sm">Validate</button>
     </div>
-    <div id="radarrStatusMessage" class="status-message" style="display: none;"></div><select class="form-select form-select-lg mb-3" aria-label="Root Folder Path" id="radarr_root_folder_path" name="radarr_root_folder_path">
+    <div class="form-floating">
+    <div id="radarrStatusMessage" class="status-message" style="display: none;"></div><select class="form-select" aria-label="Root Folder Path" id="radarr_root_folder_path" name="radarr_root_folder_path">
       <option value="">
         Select Root Folder Path
       </option>
-    </select> <select class="form-select form-select-lg mb-3" aria-label="Quality Profile" id="radarr_quality_profile" name="radarr_quality_profile">
+    </select> <select class="form-select" aria-label="Quality Profile" id="radarr_quality_profile" name="radarr_quality_profile">
       <option value="">
         Select Quality Profile
       </option>
-    </select> <select class="form-select form-select-lg mb-3" aria-label="Quality Profile" id="radarr_availability" name="radarr_availability">
+    </select> <select class="form-select" aria-label="Quality Profile" id="radarr_availability" name="radarr_availability">
       <option value="announced">
         Select Availibility
       </option>
@@ -37,6 +38,7 @@
         DB
       </option>
     </select>
+    </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" placeholder=""> <label for="radarr_tag">Tag to apply to added media</label>
     </div>

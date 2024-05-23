@@ -12,11 +12,12 @@
       </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
       <div class="vr"></div><button type="button" id="validateSonarrButton" class="btn btn-success btn-sm">Validate</button>
     </div>
-    <div id="sonarrStatusMessage" class="status-message" style="display: none;"></div><select class="form-select form-select-lg mb-3" aria-label="Root Folder Path" id="sonarr_root_folder_path" name="sonarr_root_folder_path">
+    <div class="form-floating">
+    <div id="sonarrStatusMessage" class="status-message" style="display: none;"></div><select class="form-select" aria-label="Root Folder Path" id="sonarr_root_folder_path" name="sonarr_root_folder_path">
       <option value="">
         Select Root Folder Path
       </option>
-    </select> <select class="form-select form-select-lg mb-3" aria-label="Monitor" id="sonarr_monitor" name="sonarr_monitor">
+    </select> <select class="form-select" aria-label="Monitor" id="sonarr_monitor" name="sonarr_monitor">
       <option value="all" selected>
         Select Monitor Preference
       </option>
@@ -44,15 +45,15 @@
       <option value="latest">
         latest - monitor all episodes of the latest season and future seasons
       </option>
-    </select> <select class="form-select form-select-lg mb-3" aria-label="Quality Profile" id="sonarr_quality_profile" name="sonarr_quality_profile">
+    </select> <select class="form-select" aria-label="Quality Profile" id="sonarr_quality_profile" name="sonarr_quality_profile">
       <option value="">
         Select Quality Profile
       </option>
-    </select> <select class="form-select form-select-lg mb-3" aria-label="Language Profile" id="sonarr_language_profile" name="sonarr_language_profile">
+    </select> <select class="form-select" aria-label="Language Profile" id="sonarr_language_profile" name="sonarr_language_profile">
       <option value="">
         Select Language Profile
       </option>
-    </select> <select class="form-select form-select-lg mb-3" aria-label="Series Type" id="sonarr_series_type" name="sonarr_series_type">
+    </select> <select class="form-select" aria-label="Series Type" id="sonarr_series_type" name="sonarr_series_type">
       <option value="standard" selected>
         Select Series Type
       </option>
@@ -66,6 +67,7 @@
         Anime
       </option>
     </select>
+    </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag" placeholder=""> <label for="sonarr_tag">Tag to apply to added media</label>
     </div>
