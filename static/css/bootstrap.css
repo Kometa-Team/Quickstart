@@ -458,7 +458,7 @@ select,
 optgroup,
 textarea {
   margin: 0;
-  font-family: inherit;
+  font-family: monospace;
   font-size: inherit;
   line-height: inherit;
 }
