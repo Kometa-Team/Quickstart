@@ -66,7 +66,7 @@ def build_config():
         'omdb': session.get('omdb'),
         'mdblist': session.get('mdblist'),
         'notifiarr': session.get('notifiarr'),
-        # 'gotify': session.get('gotify'),
+        'gotify': session.get('gotify'),
         'anidb': session.get('anidb'),
         'radarr': session.get('radarr'),
         'sonarr': session.get('sonarr'),
@@ -84,10 +84,12 @@ def build_config():
     omdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('OMDb'))
     mdblist_art = add_border_to_ascii_art(pyfiglet.figlet_format('MDBList'))
     notifiarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Notifiarr'))
+    gotify_art = add_border_to_ascii_art(pyfiglet.figlet_format('Gotify'))
+    anidb_art = add_border_to_ascii_art(pyfiglet.figlet_format('AniDb'))
     radarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Radarr'))
     sonarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Sonarr'))
     trakt_art = add_border_to_ascii_art(pyfiglet.figlet_format('Trakt'))
-
+    mal_art = add_border_to_ascii_art(pyfiglet.figlet_format('MyAnimeList'))
     header_comment = (
         "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
         "and YAML by Red Hat extension. VSC will also leverage the above link to enhance Kometa yml edits."
@@ -113,12 +115,18 @@ def build_config():
         f"{yaml.dump({'mdblist': config_data['mdblist']}, default_flow_style=False, sort_keys=False)}\n"
         f"{notifiarr_art}\n"
         f"{yaml.dump({'notifiarr': config_data['notifiarr']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{gotify_art}\n"
+        f"{yaml.dump({'gotify': config_data['gotify']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{anidb_art}\n"
+        f"{yaml.dump({'anidb': config_data['anidb']}, default_flow_style=False, sort_keys=False)}\n"
         f"{radarr_art}\n"
         f"{yaml.dump({'radarr': config_data['radarr']}, default_flow_style=False, sort_keys=False)}\n"
         f"{sonarr_art}\n"
         f"{yaml.dump({'sonarr': config_data['sonarr']}, default_flow_style=False, sort_keys=False)}\n"
         f"{trakt_art}\n"
         f"{yaml.dump({'trakt': config_data['trakt']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{mal_art}\n"
+        f"{yaml.dump({'mal': config_data['mal']}, default_flow_style=False, sort_keys=False)}\n"
     )
 
     # Store the final YAML content in the session
