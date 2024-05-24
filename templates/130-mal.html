@@ -1,31 +1,175 @@
 {% extends "000-base.html" %} {% block content %}
-    <h1>MyAnimeList Configuration Information</h1>
-    <form action="/999-final" method="post" id="configForm">
-    <!-- MAL Section -->
-    <div id="malSection">
-        <h2>MAL Settings</h2>
-        <label for="mal_client_id">Client ID:</label>
-        <input type="text" id="mal_client_id" name="mal_client_id" placeholder="####################">
-        <label for="mal_client_secret">Client Secret:</label>
-        <input type="text" id="mal_client_secret" name="mal_client_secret" placeholder="####################">
-        <h3>Authorization</h3>
-        <label for="mal_access_token">Access Token:</label>
-        <input type="text" id="mal_access_token" name="mal_access_token">
-        <label for="mal_token_type">Token Type:</label>
-        <input type="text" id="mal_token_type" name="mal_token_type">
-        <label for="mal_expires_in">Expires In:</label>
-        <input type="text" id="mal_expires_in" name="mal_expires_in">
-        <label for="mal_refresh_token">Refresh Token:</label>
-        <input type="text" id="mal_refresh_token" name="mal_refresh_token">
+    <form action="/step/999-final" method="post" id="configForm">
+        <!-- MyAnimeList Section -->
+        <div id="malSection" class="section">
+            <h2>MyAnimeList Settings</h2>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
     </div>
-<br><br>
-    <nav aria-label="Page navigation example">
-      <ul class="pagination justify-content-center">
-        <div class="d-grid gap-2 d-md-block">
-          <a class="btn btn-primary" role="button" href="/step/120-trakt">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
         </div>
-      </ul>
-    </nav>
+      </div>
+    </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" oninput="updateMALTargetURL(this)"> <label for="mal_client_id">Client ID</label>
+    </div>
+    <div class="form-floating">
+        <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{code_verifier}}">
+    </div>
+
+    <div class="input-group input-group-lg">
+      <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" placeholder="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button class="btn btn-success" id="mal_get_localhost_url" type="button">Authenticate</button>
+    </div>
+    <input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
+
+
+    <div class="form-text" id="auth-info">
+      When you click "Authenticate" above, you will be taken to a MyAnimeList web page.  Log in and click the Allow option.  You will be redirected to a localhost URL that will not load. Copy that localhost URL and paste it into the "Localhost URL" field below.<br><br>
+    </div>
+
+    <div class="form-group" id="localhost_url">
+      <div class="form-floating">
+        <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" oninput="checkURLField(this)"> <label for="mal_localhost_url">Localhost URL</label>
+      </div>
+      <button type="button" class="btn btn-primary btn-sm" id="validate_mal_url">Complete Authentication</button>
+    </div>
+    <div id="malStatusMessage" class="status-message"></div>
+            <div class="form-group" id="hidden_stuff">
+                <input type="hidden" class="form-control" id="access_token" name="access_token" readonly>
+                <input type="hidden" class="form-control" id="token_type" name="token_type" readonly>
+                <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly>
+                <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly>
+            </div>
+        </div>
+<br><br>
+    <hr class="hr">
+    <div class="row">
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/120-trakt">Previous</a>
+      </div>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-success me-md-2" type="submit">Finish</button>
+      </div>
+    </div>
     </form>
     <script>
+
+          document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
+            const apikeyInput = document.getElementById('mal_client_secret');
+            const currentType = apikeyInput.getAttribute('type');
+            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+          });
+
+          document.getElementById('mal_get_localhost_url').addEventListener('click', function() {
+            var url = document.getElementById('mal_url').value;
+            if(url) {
+                window.open(url, '_blank').focus();
+            }
+          });
+
+        function updateMALTargetURL() {
+          var mal_client_id = document.getElementById('mal_client_id').value;
+          var code_verifier = document.getElementById('mal_code_verifier').value;
+          var myURL = "";
+          if (mal_client_id.length == 32)
+          {
+            myURL = "https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=" + mal_client_id + "&code_challenge=" + code_verifier;
+          }
+          document.getElementById('mal_url').value = myURL;
+          enableLocalURLButton()
+        }
+
+        function openMALUrl() {
+            var url = document.getElementById('mal_url').value;
+            if(url) {
+                window.open(url, '_blank').focus();
+            }
+        }
+
+        function checkURLField() {
+            var localURL = document.getElementById('mal_localhost_url').value;
+            var localURLButton = document.getElementById('validate_mal_url');
+            localURLButton.disabled = (localURL == '');
+        }
+
+        function enableLocalURLButton() {
+            var url = document.getElementById('mal_url').value;
+            var urlButton = document.getElementById('mal_get_localhost_url');
+            urlButton.disabled = url == '';
+        }
+
+        window.onload = function() {
+            var mal_url_text = document.getElementById('mal_url');
+            document.getElementById("validate_mal_url").disabled = true
+            document.getElementById("validate_mal_url").disabled = true
+            enableLocalURLButton(mal_url_text);
+        };
+
+        // Plex validation script
+        document.getElementById('validate_mal_url').addEventListener('click', function() {
+            const malClient = document.getElementById('mal_client_id').value;
+            const malSecret = document.getElementById('mal_client_secret').value;
+            const malVerifier = document.getElementById('mal_code_verifier').value;
+            const malLocalhostURL = document.getElementById('mal_localhost_url').value;
+
+            const malStatusMessage = document.getElementById('malStatusMessage');
+
+            if (!malClient || !malSecret || !malVerifier || !malLocalhostURL) {
+                malStatusMessage.textContent = 'ID, secret, and localhost URL are all required.';
+                malStatusMessage.style.display = 'block';
+                return;
+            }
+
+            fetch('/validate_mal', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    mal_client_id: malClient,
+                    mal_client_secret: malSecret,
+                    mal_code_verifier: malVerifier,
+                    mal_localhost_url: malLocalhostURL
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    malStatusMessage.textContent = 'MyAnimeList credentials validated successfully!';
+                    malStatusMessage.style.color = 'green';
+                    document.getElementById('access_token').value = data.mal_authorization_access_token;
+                    document.getElementById('token_type').value = data.mal_authorization_token_type;
+                    document.getElementById('expires_in').value = data.mal_authorization_expires_in;
+                    document.getElementById('refresh_token').value = data.mal_authorization_refresh_token;
+                    document.getElementById("mal_get_localhost_url").disabled = true
+                    document.getElementById("validate_mal_url").disabled = true
+                } else {
+                    malStatusMessage.textContent = data.error;
+                    malStatusMessage.style.color = 'red';
+                }
+                malStatusMessage.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error validating MAL credentials:', error);
+                malStatusMessage.textContent = 'An error occurred while validating MAL credentials.';
+                malStatusMessage.style.color = 'red';
+                malStatusMessage.style.display = 'block';
+            });
+        });
+
     </script> {% endblock %}

@@ -8,8 +8,10 @@ import os
 from dotenv import load_dotenv
 from plexapi.server import PlexServer
 import pyfiglet
+import secrets
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, \
+    validate_trakt_server, validate_mal_server, validate_anidb_server
 from modules.output import add_border_to_ascii_art
 from modules.helpers import build_config_dict
 
@@ -23,13 +25,16 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 
+
 @app.route('/')
 def start():
     return render_template('start.html')
 
+
 @app.route('/step-1')
 def index():
     return render_template('index.html')
+
 
 @app.route('/step/<name>', methods=['GET', 'POST'])
 def step(name):
@@ -43,12 +48,15 @@ def step(name):
 
         session[source] = data[source]
 
-    template = name + '.html'
+    code_verifier = secrets.token_urlsafe(100)[:128]
 
-    return render_template(template)
+    if name == '999-final':
+        return build_config()
+    else:
+        return render_template(name + '.html', code_verifier=code_verifier)
 
-@app.route('/999-final', methods=['GET', 'POST'])
-def final_step():
+
+def build_config():
     # Combine data from all steps (retrieve from session or other storage)
     config_data = {
         'plex': session.get('plex'),
@@ -59,11 +67,11 @@ def final_step():
         'mdblist': session.get('mdblist'),
         'notifiarr': session.get('notifiarr'),
         # 'gotify': session.get('gotify'),
-        # 'anidb': session.get('anidb'),
+        'anidb': session.get('anidb'),
         'radarr': session.get('radarr'),
         'sonarr': session.get('sonarr'),
         'trakt': session.get('trakt'),
-        # 'mal': session.get('mal'),
+        'mal': session.get('mal'),
         # Add other sections as needed
     }
 
@@ -121,9 +129,10 @@ def final_step():
         print(config_data)
         flash(f'Validation error: {e.message}', 'danger')
         return render_template('999-danger.html', yaml_content=yaml_content, validation_error=e)
-        
+
     # Render the final step template with the YAML content
     return render_template('999-final.html', yaml_content=yaml_content)
+
 
 @app.route('/download')
 def download():
@@ -138,78 +147,36 @@ def download():
     flash('No configuration to download', 'danger')
     return redirect(url_for('final_step'))
 
+
 @app.route('/validate_plex', methods=['POST'])
 def validate_plex():
     data = request.json
     return validate_plex_server(data)
+
 
 @app.route('/validate_tautulli', methods=['POST'])
 def validate_tautulli():
     data = request.json
     return validate_tautulli_server(data)
 
+
 @app.route('/validate_trakt', methods=['POST'])
 def validate_trakt():
     data = request.json
     return validate_trakt_server(data)
 
+
+@app.route('/validate_mal', methods=['POST'])
+def validate_mal():
+    data = request.json
+    return validate_mal_server(data)
+
+
 @app.route('/validate_anidb', methods=['POST'])
 def validate_anidb():
     data = request.json
-    username = data.get('username')
-    password = data.get('password')
-    client = data.get('client')
-    clientver = data.get('clientver')
+    return validate_anidb_server(data)
 
-    # AniDB API endpoint
-    api_url = "http://api.anidb.net:9001/httpapi"
-    
-    # Prepare the request parameters
-    params = {
-        'request': 'hints',
-        'user': username,
-        'pass': password,
-        'protover': '1',
-        'client': client,
-        'clientver': clientver,
-        'type': '1',
-    }
-
-    try:
-        # Construct the full URL with query parameters
-        full_url = f"{api_url}?request=hints&user={username}&pass={password}&protover=1&client={client}&clientver={clientver}&type=1"
-        print(f"Full URL: {full_url}")
-        
-        # Make a GET request to AniDB API
-        response = requests.get(api_url, params=params)
-        response_text = response.text
-        print(f"Response text: {response_text}")
-        print(f"Status code: {response.status_code}")
-
-        # Check if the response contains 'hints'
-        if 'hints' in response_text:
-            print("Response contains 'hints'")
-            print("Authentication successful")
-            return jsonify({'valid': True})
-        elif '<error code="302">' in response_text:
-            print("Error: client version missing or invalid")
-            return jsonify({'valid': False, 'error': 'Client version missing or invalid'})
-        elif '<error code="303">' in response_text:
-            print("Error: invalid username or password")
-            return jsonify({'valid': False, 'error': 'Invalid username or password'})
-        elif '<error code="500">' in response_text:
-            print("Error: You have been banned")
-            return jsonify({'valid': False, 'error': 'You have been banned(likely for 24 hours)'})
-        else:
-            print("Authentication failed")
-            return jsonify({'valid': False, 'error': 'Authentication failed'})
-    
-    except requests.exceptions.RequestException as e:
-        # Handle request exceptions (e.g., connection error)
-        print(f"RequestException: {str(e)}")
-        return jsonify({'valid': False, 'error': str(e)})
-
-    return jsonify({'valid': False, 'error': 'Unknown error'})
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -243,11 +210,13 @@ def submit():
 
         if not valid_language:
             flash('Invalid language code. Must be a valid ISO 639-1 code.', 'error')
-            return jsonify({'messages': [{'category': 'error', 'text': 'Invalid language code. Must be a valid ISO 639-1 code.'}]})
+            return jsonify(
+                {'messages': [{'category': 'error', 'text': 'Invalid language code. Must be a valid ISO 639-1 code.'}]})
 
         if not valid_region:
             flash('Invalid region code. Must be a valid ISO 3166-1 code.', 'error')
-            return jsonify({'messages': [{'category': 'error', 'text': 'Invalid region code. Must be a valid ISO 3166-1 code.'}]})
+            return jsonify(
+                {'messages': [{'category': 'error', 'text': 'Invalid region code. Must be a valid ISO 3166-1 code.'}]})
 
         # Prepare configuration dictionary
         config = {
@@ -277,7 +246,8 @@ def submit():
 
         # Write to config.yml
         with open('config.yml', 'w') as file:
-            file.write('# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n')
+            file.write(
+                '# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n')
             file.write(f"{kometa_art}\n\n")
             file.write(f"{header_comment}\n\n")
             file.write(f"libraries: \n\n")
@@ -297,4 +267,3 @@ def submit():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
-    

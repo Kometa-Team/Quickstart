@@ -26,9 +26,9 @@
       <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" oninput="updateTraktURL(this)"> <label for="trakt_client_id">Client ID</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" placeholder="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button> <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
+      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" placeholder="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
     </div>
-    <div id="sonarrStatusMessage" class="status-message"></div><br>
+<input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
     <div class="form-text" id="pin-info">
       When you click "Retrieve PIN" above, you will be taken to a Trakt web page. Log in and allow your application access to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br>
       <br>
@@ -36,8 +36,9 @@
       <br>
     </div>
     <div class="input-group input-group-lg" id="urlField">
-      <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)"> <button class="btn btn-success" type="button" id="validate_trakt_pin">Validate PIN</button> <input type="hidden" class="form-control" id="access_token" name="access_token" readonly> <input type="hidden" class="form-control" id="token_type" name="token_type" readonly> <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly> <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly> <input type="hidden" class="form-control" id="scope" name="scope" readonly> <input type="hidden" class="form-control" id="created_at" name="created_at" readonly>
+      <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)"> <button class="btn btn-success" type="button" id="validate_trakt_pin">Validate PIN</button>
     </div>
+    <input type="hidden" class="form-control" id="access_token" name="access_token" readonly> <input type="hidden" class="form-control" id="token_type" name="token_type" readonly> <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly> <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly> <input type="hidden" class="form-control" id="scope" name="scope" readonly> <input type="hidden" class="form-control" id="created_at" name="created_at" readonly>
     <div id="traktStatusMessage" class="status-message"></div><br>
     <br>
     <hr class="hr">
