@@ -2,41 +2,60 @@
 <form action="/step/110-sonarr" method="post" id="configForm" name="configForm">
   <div id="radarrSection">
     <h2>Radarr Settings</h2>
-    <div class="form-divider"></div>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Radarr Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="radarr_url" name="radarr_url" placeholder="http://127.0.0.1:32400"> <label for="radarr_url">Radarr URL (including URL Base if set)</label>
     </div>
-    <div class="hstack gap-3">
-      <div class="form-floating">
-        <input type="password" class="form-control" id="radarr_token" name="radarr_token" placeholder="################################"> <label for="radarr_token">Token</label>
-      </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
-      <div class="vr"></div><button type="button" id="validateRadarrButton" class="btn btn-success btn-sm">Validate</button>
+    <div class="input-group input-group-lg">
+      <input type="password" class="form-control" id="radarr_token" name="radarr_token" placeholder="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateRadarrButton" type="button">Validate</button>
     </div>
-    <div id="radarrStatusMessage" class="status-message" style="display: none;"></div><select class="form-select form-select-lg mb-3" aria-label="Root Folder Path" id="radarr_root_folder_path" name="radarr_root_folder_path">
-      <option value="">
-        Select Root Folder Path
-      </option>
-    </select> <select class="form-select form-select-lg mb-3" aria-label="Quality Profile" id="radarr_quality_profile" name="radarr_quality_profile">
-      <option value="">
-        Select Quality Profile
-      </option>
-    </select> <select class="form-select form-select-lg mb-3" aria-label="Quality Profile" id="radarr_availability" name="radarr_availability">
-      <option value="announced">
-        Select Availibility
-      </option>
-      <option value="announced">
-        Announced (default)
-      </option>
-      <option value="cinemas">
-        Cinemas
-      </option>
-      <option value="released">
-        Released
-      </option>
-      <option value="db">
-        DB
-      </option>
-    </select>
+    <div id="radarrStatusMessage" class="status-message"></div><br>
+    <div class="form-floating">
+      <select class="form-select" aria-label="Root Folder Path" id="radarr_root_folder_path" name="radarr_root_folder_path">
+        <option value="">
+          Select Root Folder Path
+        </option>
+      </select> <select class="form-select" aria-label="Quality Profile" id="radarr_quality_profile" name="radarr_quality_profile">
+        <option value="">
+          Select Quality Profile
+        </option>
+      </select> <select class="form-select" aria-label="Quality Profile" id="radarr_availability" name="radarr_availability">
+        <option value="announced">
+          Select Availibility
+        </option>
+        <option value="announced">
+          Announced (default)
+        </option>
+        <option value="cinemas">
+          Cinemas
+        </option>
+        <option value="released">
+          Released
+        </option>
+        <option value="db">
+          DB
+        </option>
+      </select>
+    </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" placeholder=""> <label for="radarr_tag">Tag to apply to added media</label>
     </div>
@@ -68,13 +87,16 @@
       <input class="form-check-input" type="checkbox" value="" id="radarr_ignore_cache"> <label class="form-check-label" for="radarr_ignore_cache">Ignore Kometa's cache when adding media</label>
     </div><br>
     <br>
-    <nav aria-label="Page navigation example">
-      <ul class="pagination justify-content-center">
-        <div class="d-grid gap-2 d-md-block">
-          <a class="btn btn-primary" role="button" href="/step/090-anidb">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
-        </div>
-      </ul>
-    </nav>
+    <hr class="hr">
+    <div class="row">
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/090-anidb">Previous</a>
+      </div>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-primary me-md-2" type="submit">Next</button>
+      </div>
+    </div>
   </div>
 </form>
 
@@ -190,7 +212,7 @@
         
                 if (response.ok && 'version' in data) {
                     radarrStatusMessage.textContent = "Radarr API key is valid.";
-                    radarrStatusMessage.style.color = 'green';
+                    radarrStatusMessage.style.color = '#75b798';
                     radarrStatusMessage.style.display = 'block';
         
                     // Save valid API key to sessionStorage
@@ -228,14 +250,14 @@
                 } else {
                     console.log("Invalid Radarr API key. Error:", data.message);
                     radarrStatusMessage.textContent = "Radarr API key is invalid.";
-                    radarrStatusMessage.style.color = 'red';
+                    radarrStatusMessage.style.color = '#ea868f';
                     radarrStatusMessage.style.display = 'block';
                     return false;
                 }
             } catch (error) {
                 console.error("Error validating Radarr API key:", error);
                 radarrStatusMessage.textContent = 'Error validating Radarr API key.';
-                radarrStatusMessage.style.color = 'red';
+                radarrStatusMessage.style.color = '#ea868f';
                 radarrStatusMessage.style.display = 'block';
                 return false;
             }
@@ -248,7 +270,7 @@
 
             if (!apiKey || !url) {
                 radarrStatusMessage.textContent = 'Please enter the Radarr API key and URL.';
-                radarrStatusMessage.style.color = 'red';
+                radarrStatusMessage.style.color = '#ea868f';
                 radarrStatusMessage.style.display = 'block';
                 return;
             }

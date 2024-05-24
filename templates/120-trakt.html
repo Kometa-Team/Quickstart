@@ -1,9 +1,27 @@
 {% extends "000-base.html" %} {% block content %}
-    <form action="/step/130-mal" method="post" id="configForm">
-        <!-- Trakt Section -->
-        <div id="traktSection" class="section">
-            <h2>Trakt Settings</h2>
-    <div class="form-divider"></div>
+<form action="/step/130-mal" method="post" id="configForm" name="configForm">
+  <div id="traktSection" class="section">
+    <h2>Trakt Settings</h2>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="form-floating">
         <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" oninput="updateTraktURL(this)"> <label for="trakt_client_id">Client ID</label>
     </div>
@@ -120,7 +138,7 @@
             .then(data => {
                 if (data.valid) {
                     traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
-                    traktStatusMessage.style.color = 'green';
+                    traktStatusMessage.style.color = '#75b798';
                     document.getElementById('access_token').value = data.trakt_authorization_access_token;
                     document.getElementById('token_type').value = data.trakt_authorization_token_type;
                     document.getElementById('expires_in').value = data.trakt_authorization_expires_in;
@@ -133,14 +151,14 @@
                     document.getElementById("validate_trakt_pin").disabled = true
                 } else {
                     traktStatusMessage.textContent = data.error;
-                    traktStatusMessage.style.color = 'red';
+                    traktStatusMessage.style.color = '#ea868f';
                 }
                 traktStatusMessage.style.display = 'block';
             })
             .catch(error => {
                 console.error('Error validating Trakt credentials:', error);
                 traktStatusMessage.textContent = 'An error occurred while validating Trakt credentials.';
-                traktStatusMessage.style.color = 'red';
+                traktStatusMessage.style.color = '#ea868f';
                 traktStatusMessage.style.display = 'block';
             });
         });

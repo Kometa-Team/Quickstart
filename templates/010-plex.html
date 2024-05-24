@@ -2,15 +2,41 @@
 <form action="/step/020-tmdb" method="post" id="configForm" name="configForm">
   <div id="plexSection">
     <h2>Plex Settings</h2>
-    <div class="form-divider"></div>
+    <hr class="hr">
+    <div class="alert alert-danger" role="alert">
+      This section is mandatory and must be completed<br>
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Plex Section</h1>
+          </div>
+          <div class="modal-body">
+            <a href="https://kometa.wiki/en/latest/config/plex/">Click Here</a> to visit the wiki for this connector<br>
+            <br>
+            Filling in your Plex URL and Token is mandatory as Kometa cannot run without access to a Plex Media Server.<br>
+            <br>
+            You cannot use <code>https://app.plex.tv</code> as your URL as that is invalid, you must provide the direct address you use to access your server.<br>
+            <br>
+            If you need help finding your Plex Authentication Token, please see Plex's <a href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">support article</a>. Do not use the Plex Token found in Plex's <code>Preferences.xml</code> file and do not use the token that you get via <code>https://app.plex.tv</code>.<br>
+            <br>
+            You should press the <code>Validate</code> button to ensure that your URL and Token combination is valid and reachable. Once successfully connected, the wizard will fetch the Database Cache size and update the field in the form.<br>
+            <br>
+            Please note that using the <code>Optimize Database</code> option can make Plex unresponsive, as it is generally not contactable whilst it performs its optimizations. This is expected behavior.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="plex_url" name="plex_url" placeholder="http://127.0.0.1:32400" required=""> <label for="plex_url">Plex URL</label>
     </div>
-    <div class="hstack gap-3">
-      <div class="form-floating">
-        <input type="password" class="form-control" id="plex_token" name="plex_token" placeholder="################################" required=""> <label for="plex_token">Plex Token</label>
-      </div><button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
-      <div class="vr"></div><button type="button" id="validatePlexButton" class="btn btn-success btn-sm">Validate</button>
+    <div class="input-group input-group-lg">
+      <input type="password" class="form-control" id="plex_token" name="plex_token" placeholder="Token" aria-label="Plex Token" required=""> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
     </div>
     <div id="plexStatusMessage" class="status-message"></div>
     <div class="form-floating">
@@ -19,39 +45,29 @@
     <div class="form-floating">
       <input type="number" class="form-control" id="plex_timeout" name="plex_timeout" placeholder="Amount of seconds to wait for Plex to respond, default is 60" value="60" min="60" required=""> <label for="plex_timeout">Timeout (in seconds)</label>
     </div>
-    <div class="container text-center">
-      <div class="row row-cols-4">
-        <div class="col">
-          <div class="checkbox-container">
-            <label for="plex_verify_ssl">Verify SSL:</label> <input type="checkbox" id="plex_verify_ssl" name="plex_verify_ssl" checked>
-          </div>
-        </div>
-        <div class="col">
-          <div class="checkbox-container">
-            <label for="plex_clean_bundles">Clean Bundles:</label> <input type="checkbox" id="plex_clean_bundles" name="plex_clean_bundles" checked>
-          </div>
-        </div>
-        <div class="col">
-          <div class="checkbox-container">
-            <label for="plex_empty_trash">Empty Trash:</label> <input type="checkbox" id="plex_empty_trash" name="plex_empty_trash">
-          </div>
-        </div>
-        <div class="col">
-          <div class="checkbox-container">
-            <label for="plex_optimize">Optimize Database:</label> <input type="checkbox" id="plex_optimize" name="plex_optimize">
-          </div>
-        </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="plex_verify_ssl" checked> <label class="form-check-label" for="plex_verify_ssl">Verify SSL</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="plex_clean_bundles" checked> <label class="form-check-label" for="plex_clean_bundles">Clean bundles</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="plex_empty_trash"> <label class="form-check-label" for="plex_empty_trash">Empty trash</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" value="" id="plex_optimize"> <label class="form-check-label" for="plex_optimize">Optimize database</label>
+    </div>
+    <hr class="hr">
+    <div class="row">
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
+      </div>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-primary me-md-2" type="submit">Next</button>
       </div>
     </div>
-  </div><br>
-  <br>
-  <nav aria-label="Page navigation example">
-    <ul class="pagination justify-content-center">
-      <div class="d-grid gap-2 d-md-block">
-        <a class="btn btn-primary" role="button" href="/step/start">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
-      </div>
-    </ul>
-  </nav>
+  </div>
 </form>
 <script>
   // Save input values to sessionStorage on change
@@ -151,17 +167,17 @@
       if (data.valid) {
         document.getElementById('plex_db_cache').value = data.db_cache;
         plexStatusMessage.textContent = 'Plex server validated successfully!';
-        plexStatusMessage.style.color = 'green';
+        plexStatusMessage.style.color = '#75b798';
       } else {
         plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
-        plexStatusMessage.style.color = 'red';
+        plexStatusMessage.style.color = '#ea868f';
       }
       plexStatusMessage.style.display = 'block';
     })
     .catch(error => {
       console.error('Error validating Plex server:', error);
       plexStatusMessage.textContent = 'An error occurred while validating Plex server.';
-      plexStatusMessage.style.color = 'red';
+      plexStatusMessage.style.color = '#ea868f';
       plexStatusMessage.style.display = 'block';
     });
   });

@@ -1,4 +1,3 @@
-
 from flask import jsonify, flash
 from flask import current_app as app
 from plexapi.server import PlexServer
@@ -87,7 +86,7 @@ def validate_tautulli_server(data):
             app.logger.info(f"Tautulli connection successful.")
         else:
             app.logger.error(f"Tautulli connection failed.")
-            
+
     except requests.exceptions.RequestException as e:
         print(f"Error validating Tautulli connection: {e}")
         flash(f'Invalid Tautulli URL or API Key: {str(e)}', 'error')
@@ -135,9 +134,8 @@ def validate_trakt_server(data):
                 "trakt-api-version": "2",
                 "trakt-api-key": trakt_client_id,
             }
-        
-            validation_response = requests.get(f"{base_url}/users/settings", headers=headers)
 
+            validation_response = requests.get(f"{base_url}/users/settings", headers=headers)
 
             if validation_response.status_code == 423:
                 return jsonify({'valid': False, 'error': f'Account is locked; please contact Trakt Support'})
@@ -149,7 +147,7 @@ def validate_trakt_server(data):
                 trakt_authorization_scope = response.json()['scope']
                 trakt_authorization_created_at = response.json()['created_at']
                 isValid = True
-            
+
     except requests.exceptions.RequestException as e:
         print(f"Error validating Trakt connection: {e}")
         flash(f'Invalid Trakt ID, Secret, or PIN: {str(e)}', 'error')
@@ -259,7 +257,7 @@ def validate_anidb_server(data):
         else:
             print("Authentication failed")
             return jsonify({'valid': False, 'error': 'Authentication failed'})
-    
+
     except requests.exceptions.RequestException as e:
         # Handle request exceptions (e.g., connection error)
         print(f"RequestException: {str(e)}")

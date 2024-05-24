@@ -45,8 +45,43 @@
         <div class="d-grid gap-2 d-md-block">
           <a class="btn btn-primary" role="button" href="/step/110-sonarr">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
         </div>
-      </ul>
-    </nav>
+      </div>
+    </div>
+    <input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
+
+    <div class="form-floating">
+      <div class="alert alert-dark" role="alert">
+        Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br><br>
+
+        <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br><br>
+
+        Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing <code>Complete Authentication</code>.
+      </div>
+    </div>
+
+    <div class="form-group" id="localhost_url">
+        <div class="input-group input-group-lg">
+          <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" placeholder="Localhost URL" aria-label="Localhost URL" oninput="checkURLField(this)"> <button type="button" class="btn btn-success" id="validate_mal_url">Complete Authentication</button>
+        </div>
+    <div id="malStatusMessage" class="status-message"></div>
+            <div class="form-group" id="hidden_stuff">
+                <input type="hidden" class="form-control" id="access_token" name="access_token" readonly>
+                <input type="hidden" class="form-control" id="token_type" name="token_type" readonly>
+                <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly>
+                <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly>
+            </div>
+        </div>
+<br><br>
+    <hr class="hr">
+    <div class="row">
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/120-trakt">Previous</a>
+      </div>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-success me-md-2" type="submit">Finish</button>
+      </div>
+    </div>
     </form>
     <script>
 

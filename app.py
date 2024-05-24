@@ -24,13 +24,16 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 
+
 @app.route('/')
 def start():
     return render_template('start.html')
 
+
 @app.route('/step-1')
 def index():
     return render_template('index.html')
+
 
 @app.route('/step/<name>', methods=['GET', 'POST'])
 def step(name):
@@ -80,10 +83,12 @@ def build_config():
     omdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('OMDb'))
     mdblist_art = add_border_to_ascii_art(pyfiglet.figlet_format('MDBList'))
     notifiarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Notifiarr'))
+    gotify_art = add_border_to_ascii_art(pyfiglet.figlet_format('Gotify'))
+    anidb_art = add_border_to_ascii_art(pyfiglet.figlet_format('AniDb'))
     radarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Radarr'))
     sonarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Sonarr'))
     trakt_art = add_border_to_ascii_art(pyfiglet.figlet_format('Trakt'))
-
+    mal_art = add_border_to_ascii_art(pyfiglet.figlet_format('MyAnimeList'))
     header_comment = (
         "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
         "and YAML by Red Hat extension. VSC will also leverage the above link to enhance Kometa yml edits."
@@ -109,12 +114,18 @@ def build_config():
         f"{yaml.dump({'mdblist': config_data['mdblist']}, default_flow_style=False, sort_keys=False)}\n"
         f"{notifiarr_art}\n"
         f"{yaml.dump({'notifiarr': config_data['notifiarr']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{gotify_art}\n"
+        f"{yaml.dump({'gotify': config_data['gotify']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{anidb_art}\n"
+        f"{yaml.dump({'anidb': config_data['anidb']}, default_flow_style=False, sort_keys=False)}\n"
         f"{radarr_art}\n"
         f"{yaml.dump({'radarr': config_data['radarr']}, default_flow_style=False, sort_keys=False)}\n"
         f"{sonarr_art}\n"
         f"{yaml.dump({'sonarr': config_data['sonarr']}, default_flow_style=False, sort_keys=False)}\n"
         f"{trakt_art}\n"
         f"{yaml.dump({'trakt': config_data['trakt']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{mal_art}\n"
+        f"{yaml.dump({'mal': config_data['mal']}, default_flow_style=False, sort_keys=False)}\n"
     )
 
     # Store the final YAML content in the session
@@ -125,9 +136,10 @@ def build_config():
         print(config_data)
         flash(f'Validation error: {e.message}', 'danger')
         return render_template('999-danger.html', yaml_content=yaml_content, validation_error=e)
-        
+
     # Render the final step template with the YAML content
     return render_template('999-final.html', yaml_content=yaml_content)
+
 
 @app.route('/download')
 def download():
@@ -142,15 +154,18 @@ def download():
     flash('No configuration to download', 'danger')
     return redirect(url_for('final_step'))
 
+
 @app.route('/validate_plex', methods=['POST'])
 def validate_plex():
     data = request.json
     return validate_plex_server(data)
 
+
 @app.route('/validate_tautulli', methods=['POST'])
 def validate_tautulli():
     data = request.json
     return validate_tautulli_server(data)
+
 
 @app.route('/validate_trakt', methods=['POST'])
 def validate_trakt():
@@ -200,11 +215,13 @@ def submit():
 
         if not valid_language:
             flash('Invalid language code. Must be a valid ISO 639-1 code.', 'error')
-            return jsonify({'messages': [{'category': 'error', 'text': 'Invalid language code. Must be a valid ISO 639-1 code.'}]})
+            return jsonify(
+                {'messages': [{'category': 'error', 'text': 'Invalid language code. Must be a valid ISO 639-1 code.'}]})
 
         if not valid_region:
             flash('Invalid region code. Must be a valid ISO 3166-1 code.', 'error')
-            return jsonify({'messages': [{'category': 'error', 'text': 'Invalid region code. Must be a valid ISO 3166-1 code.'}]})
+            return jsonify(
+                {'messages': [{'category': 'error', 'text': 'Invalid region code. Must be a valid ISO 3166-1 code.'}]})
 
         # Prepare configuration dictionary
         config = {
@@ -234,7 +251,8 @@ def submit():
 
         # Write to config.yml
         with open('config.yml', 'w') as file:
-            file.write('# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n')
+            file.write(
+                '# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n')
             file.write(f"{kometa_art}\n\n")
             file.write(f"{header_comment}\n\n")
             file.write(f"libraries: \n\n")
@@ -254,4 +272,3 @@ def submit():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
-    
