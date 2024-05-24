@@ -65,7 +65,7 @@ def build_config():
         'omdb': session.get('omdb'),
         'mdblist': session.get('mdblist'),
         'notifiarr': session.get('notifiarr'),
-        # 'gotify': session.get('gotify'),
+        'gotify': session.get('gotify'),
         'anidb': session.get('anidb'),
         'radarr': session.get('radarr'),
         'sonarr': session.get('sonarr'),
