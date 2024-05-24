@@ -46,6 +46,10 @@ form {
     border-radius: 5px;
 }
 
+#final-form {
+    max-width: 900px;
+}
+
 .form-container {
     display: flex; /* Use flexbox for layout */
     max-width: 800px; /* Adjust the maximum width as needed */
@@ -55,6 +59,7 @@ form {
 #final-yaml {
     width: 100%; /* Take up remaining space */
     min-height: 400px;
+    font-family: monospace;
 }
 
 label {
