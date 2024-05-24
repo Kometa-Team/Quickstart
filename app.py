@@ -88,7 +88,7 @@ def build_config():
     radarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Radarr'))
     sonarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Sonarr'))
     trakt_art = add_border_to_ascii_art(pyfiglet.figlet_format('Trakt'))
-    mal_art = add_border_to_ascii_art(pyfiglet.figlet_format('MyAnimeList'))
+    mal_art = add_border_to_ascii_art(pyfiglet.figlet_format('MAL'))
     header_comment = (
         "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
         "and YAML by Red Hat extension. VSC will also leverage the above link to enhance Kometa yml edits."
@@ -186,93 +186,6 @@ def validate_mal():
 def validate_anidb():
     data = request.json
     return validate_anidb_server(data)
-
-
-@app.route('/submit', methods=['POST'])
-def submit():
-    try:
-        # Plex settings
-        plex_url = request.form['plex_url']
-        plex_token = request.form['plex_token']
-        plex_dbcache = int(request.form['plex_dbcache'])
-        plex_timeout = int(request.form['plex_timeout'])
-        plex_verify_ssl = 'plex_verify_ssl' in request.form
-        plex_clean_bundles = 'plex_clean_bundles' in request.form
-        plex_empty_trash = 'plex_empty_trash' in request.form
-        plex_optimize = 'plex_optimize' in request.form
-
-        # Validate Plex URL and token
-        try:
-            plex = PlexServer(plex_url, plex_token)
-        except Exception as e:
-            flash(f'Invalid Plex URL or Token: {str(e)}', 'error')
-            return jsonify({'messages': [{'category': 'error', 'text': f'Invalid Plex URL or Token: {str(e)}'}]})
-
-        # TMDb settings
-        tmdb_apikey = request.form['tmdb_apikey']
-        tmdb_language = request.form['tmdb_language']
-        tmdb_region = request.form['tmdb_region']
-        tmdb_cache_expiration = int(request.form['tmdb_cache_expiration'])
-
-        # Validate TMDb settings
-        valid_language = validate_iso639_1(tmdb_language)
-        valid_region = validate_iso3166_1(tmdb_region)
-
-        if not valid_language:
-            flash('Invalid language code. Must be a valid ISO 639-1 code.', 'error')
-            return jsonify(
-                {'messages': [{'category': 'error', 'text': 'Invalid language code. Must be a valid ISO 639-1 code.'}]})
-
-        if not valid_region:
-            flash('Invalid region code. Must be a valid ISO 3166-1 code.', 'error')
-            return jsonify(
-                {'messages': [{'category': 'error', 'text': 'Invalid region code. Must be a valid ISO 3166-1 code.'}]})
-
-        # Prepare configuration dictionary
-        config = {
-            'plex': {
-                'url': plex_url,
-                'token': plex_token,
-                'timeout': plex_timeout,
-                'clean_bundles': plex_clean_bundles,
-                'empty_trash': plex_empty_trash,
-                'optimize': plex_optimize,
-                'db_cache': plex_dbcache,
-                'verify_ssl': plex_verify_ssl,
-            },
-            'tmdb': {
-                'apikey': tmdb_apikey,
-                'language': valid_language,
-                'region': valid_region,
-                'cache_expiration': tmdb_cache_expiration
-            }
-        }
-
-        # Generate ASCII art
-        kometa_art = add_border_to_ascii_art(pyfiglet.figlet_format('KOMETA'))
-        plex_art = add_border_to_ascii_art(pyfiglet.figlet_format('Plex'))
-        tmdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('TMDb'))
-        header_comment = "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension and YAML by Red Hat extension. VSC will also leverage the above link to enhance Kometa yml edits."
-
-        # Write to config.yml
-        with open('config.yml', 'w') as file:
-            file.write(
-                '# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n')
-            file.write(f"{kometa_art}\n\n")
-            file.write(f"{header_comment}\n\n")
-            file.write(f"libraries: \n\n")
-            file.write(f"{plex_art}\n")
-            yaml.dump({'plex': config['plex']}, file, default_flow_style=False, sort_keys=False)
-            file.write("\n\n")
-            file.write(f"{tmdb_art}\n")
-            yaml.dump({'tmdb': config['tmdb']}, file, default_flow_style=False, sort_keys=False)
-
-        flash('Configuration saved successfully!', 'success')
-        return jsonify({'messages': [{'category': 'success', 'text': 'Configuration saved successfully!'}]})
-
-    except Exception as e:
-        flash(f'Error saving configuration: {str(e)}', 'error')
-        return jsonify({'messages': [{'category': 'error', 'text': f'Error saving configuration: {str(e)}'}]})
 
 
 if __name__ == '__main__':
