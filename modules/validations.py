@@ -1,5 +1,6 @@
 from flask import jsonify, flash
 from flask import current_app as app
+from json import JSONDecodeError
 from plexapi.server import PlexServer
 import re
 import requests
@@ -164,6 +165,36 @@ def validate_trakt_server(data):
         'trakt_authorization_scope': trakt_authorization_scope,
         'trakt_authorization_created_at': trakt_authorization_created_at
     })
+
+
+def validate_gotify_server(data):
+    gotify_url = data.get('gotify_url')
+    gotify_apikey = data.get('gotify_apikey')
+    gotify_url = gotify_url.rstrip('#')
+    gotify_url = gotify_url.rstrip('/')
+
+
+    response = requests.get(f"{gotify_url}/version")
+    
+    try:
+        response_json = response.json()
+    except JSONDecodeError as e:
+        return jsonify({'valid': False, 'error': f'Validation error: {str(e)}'})
+
+    if response.status_code >= 400:
+        return jsonify({'valid': False, 'error': f"({response.status_code} [{response.reason}]) {response_json['errorDescription']}"})
+
+    json={"message": "Kometa Test Message", "title": "Kometa Test"}
+
+    response = requests.post(f"{gotify_url}/message", headers={"X-Gotify-Key": gotify_apikey}, json=json)
+
+    if response.status_code != 200:
+        return jsonify({'valid': False, 'error': f"({response.status_code} [{response.reason}]) {response_json['errorDescription']}"})
+
+    return jsonify({'valid': True})
+
+
+
 
 
 def validate_mal_server(data):
