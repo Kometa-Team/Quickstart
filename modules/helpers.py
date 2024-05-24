@@ -16,6 +16,7 @@ def build_oauth_dict(source, form_data):
 
     return(data)
 
+
 def build_simple_dict(source, form_data):
     data = {
         source : {}
@@ -36,6 +37,7 @@ def build_simple_dict(source, form_data):
         data[source][final_key] = value
 
     return(data)
+
 
 def build_config_dict(source, form_data):
     if (source == 'trakt') or (source == 'mal') :

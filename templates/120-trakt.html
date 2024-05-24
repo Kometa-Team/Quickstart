@@ -1,50 +1,58 @@
 {% extends "000-base.html" %} {% block content %}
-    <form action="/step/130-mal" method="post" id="configForm">
-        <!-- Trakt Section -->
-        <div id="traktSection" class="section">
-            <h2>Trakt Settings</h2>
-    <div class="form-divider"></div>
+<form action="/step/130-mal" method="post" id="configForm" name="configForm">
+  <div id="traktSection" class="section">
+    <h2>Trakt Settings</h2>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" oninput="updateTraktURL(this)"> <label for="trakt_client_id">Client ID</label>
     </div>
-    <div class="hstack gap-3">
-      <div class="form-floating">
-        <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" oninput="updateTraktURL(this)"> <label for="trakt_client_secret">Client Secret</label>
-      </div><button type="button" id="toggleClientSecretVisibility" class="btn btn-primary btn-sm">Show</button>
-        <button type="button" class="btn btn-primary btn-sm" id="trakt_open_url" onclick="openTraktUrl()">Retrieve PIN</button>
+    <div class="input-group input-group-lg">
+      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" placeholder="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
     </div>
-
-
-
-            <div class="form-group" id="urlField">
-                When you click "Retrieve PIN" above, you will be taken to a Trakt web page. Log in and allow your application access to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br><br>
-                If you have a PIN you generated in the last few minutes, enter it below.<br><br>
-                <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
-
-                <label for="trakt_pin">Trakt PIN:</label>
-                <input type="text" class="form-control" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)">
-            </div>
-            <div id="traktStatusMessage" class="status-message"></div>
-
-            <div class="form-group" id="hidden_stuff">
-                <input type="hidden" class="form-control" id="access_token" name="access_token" readonly>
-                <input type="hidden" class="form-control" id="token_type" name="token_type" readonly>
-                <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly>
-                <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly>
-                <input type="hidden" class="form-control" id="scope" name="scope" readonly>
-                <input type="hidden" class="form-control" id="created_at" name="created_at" readonly>
-                <button type="button" class="btn btn-primary btn-sm" id="validate_trakt_pin">Validate PIN</button>
-            </div>
-        </div>
-<br><br>
-    <nav aria-label="Page navigation example">
-      <ul class="pagination justify-content-center">
-        <div class="d-grid gap-2 d-md-block">
-          <a class="btn btn-primary" role="button" href="/step/110-sonarr">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
-        </div>
-      </ul>
-    </nav>
-    </form>
+<input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
+    <div class="form-text" id="pin-info">
+      When you click "Retrieve PIN" above, you will be taken to a Trakt web page. Log in and allow your application access to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br>
+      <br>
+      If you have a PIN you generated in the last few minutes, enter it below.<br>
+      <br>
+    </div>
+    <div class="input-group input-group-lg" id="urlField">
+      <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)"> <button class="btn btn-success" type="button" id="validate_trakt_pin">Validate PIN</button>
+    </div>
+    <input type="hidden" class="form-control" id="access_token" name="access_token" readonly> <input type="hidden" class="form-control" id="token_type" name="token_type" readonly> <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly> <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly> <input type="hidden" class="form-control" id="scope" name="scope" readonly> <input type="hidden" class="form-control" id="created_at" name="created_at" readonly>
+    <div id="traktStatusMessage" class="status-message"></div><br>
+    <br>
+    <hr class="hr">
+    <div class="row">
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/110-sonarr">Previous</a>
+      </div>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-primary me-md-2" type="submit">Next</button>
+      </div>
+    </div>
+  </div>
+</form>
     <script>
 
           document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
@@ -119,7 +127,7 @@
             .then(data => {
                 if (data.valid) {
                     traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
-                    traktStatusMessage.style.color = 'green';
+                    traktStatusMessage.style.color = '#75b798';
                     document.getElementById('access_token').value = data.trakt_authorization_access_token;
                     document.getElementById('token_type').value = data.trakt_authorization_token_type;
                     document.getElementById('expires_in').value = data.trakt_authorization_expires_in;
@@ -132,14 +140,14 @@
                     document.getElementById("validate_trakt_pin").disabled = true
                 } else {
                     traktStatusMessage.textContent = data.error;
-                    traktStatusMessage.style.color = 'red';
+                    traktStatusMessage.style.color = '#ea868f';
                 }
                 traktStatusMessage.style.display = 'block';
             })
             .catch(error => {
                 console.error('Error validating Trakt credentials:', error);
                 traktStatusMessage.textContent = 'An error occurred while validating Trakt credentials.';
-                traktStatusMessage.style.color = 'red';
+                traktStatusMessage.style.color = '#ea868f';
                 traktStatusMessage.style.display = 'block';
             });
         });

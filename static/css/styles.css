@@ -1,10 +1,15 @@
 /* General Styles */
 
 body {
-    font-family: Arial, sans-serif;
     margin: 20px;
+}
 
-
+code {
+    font-size: 0.875em;
+    color: #ea868f;
+    word-wrap: break-word;
+    background-color: hsl(225deg 8.87% 10.98%);
+    padding: 0 .2941176471em;
 }
 
 /* Header Styles */
@@ -41,6 +46,10 @@ form {
     border-radius: 5px;
 }
 
+#final-form {
+    max-width: 900px;
+}
+
 .form-container {
     display: flex; /* Use flexbox for layout */
     max-width: 800px; /* Adjust the maximum width as needed */
@@ -50,12 +59,12 @@ form {
 #final-yaml {
     width: 100%; /* Take up remaining space */
     min-height: 400px;
+    font-family: monospace;
 }
 
 label {
     display: block;
     margin-bottom: 10px;
-    font-weight: bold;
 
 }
 
@@ -64,6 +73,11 @@ label {
     border-bottom: 1px solid #3a3a3a;
 }
 
+.form-select, .form-floating > .form-select {
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+    margin-top: 1rem;
+}
 /* Input Styles */
 
 .status-message {

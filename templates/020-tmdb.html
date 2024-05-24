@@ -2,34 +2,57 @@
 <form action="/step/030-tautulli" method="post" id="configForm" name="configForm">
   <div id="tmdbSection">
     <h2>TMDb Settings</h2>
-    <div class="form-divider"></div>
-    <div class="hstack gap-3" style="width: 536px;">
-      <div class="form-floating">
-        <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="################################" required=""> <label for="tmdb_apikey">API Key</label>
+    <hr class="hr">
+    <div class="alert alert-danger" role="alert">
+      This section is mandatory and must be completed<br>
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the TMDb Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+            If you dunno how to obtain your TMDb Token, <a href="">click here</a> to find out how
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
       </div>
-      <button type="button" id="toggleApikeyVisibility" class="btn btn-primary btn-sm">Show</button>
-      <div class="vr"></div>
-      <button type="button" id="validateButton" class="btn btn-success btn-sm">Validate</button>
+    </div>
+    <div class="input-group input-group-lg">
+      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="API Key" aria-label="TMDb API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateButton" type="button">Validate</button>
     </div>
     <div id="statusMessage" class="status-message"></div>
-    <select class="form-select form-select-lg mb-3" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
-      <option value="en">Language - Please validate your TMDB API Key</option>
-    </select> 
-    <select class="form-select form-select-lg mb-3" aria-label="TMDb Region Selector" id="tmdb_region" name="tmdb_region">
-      <option value="US">Region - Please validate your TMDB API Key</option>
-    </select>
-  </div>
-  <div class="form-floating">
-    <input type="number" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">TMDb Cache Expiration (in days)</label>
-  </div><br>
-  <br>
-  <nav aria-label="Page navigation example">
-    <ul class="pagination justify-content-center">
-      <div class="d-grid gap-2 d-md-block">
-        <a class="btn btn-primary" role="button" href="/step/010-plex">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
+    <div class="form-floating">
+      <select class="form-select" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
+        <option value="">
+          Select Language - Please validate TMDB API Key
+        </option>
+      </select> <select class="form-select" aria-label="TMDb Region Selector" id="tmdb_region" name="tmdb_region">
+        <option value="">
+          Select Region - Please validate TMDB API Key
+        </option>
+      </select>
+    </div>
+    <div class="form-floating">
+      <input type="number" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">Cache Expiration (in days)</label>
+    </div>
+    <hr class="hr">
+    <div class="row">
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/010-plex">Previous</a>
       </div>
-    </ul>
-  </nav>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-primary me-md-2" type="submit">Next</button>
+      </div>
+    </div>
+  </div>
 </form>
 <script>
   // Save input values to sessionStorage on change
@@ -93,7 +116,7 @@
       .then(response => {
         if (response.ok) {
           statusMessage.textContent = 'API key is valid!';
-          statusMessage.style.color = 'green';
+          statusMessage.style.color = '#75b798';
           return Promise.all([
             fetch(`https://api.themoviedb.org/3/configuration/languages?api_key=${apiKey}`),
             fetch(`https://api.themoviedb.org/3/watch/providers/regions?api_key=${apiKey}`)
@@ -139,7 +162,7 @@
       })
       .catch(error => {
         statusMessage.textContent = error.message;
-        statusMessage.style.color = 'red';
+        statusMessage.style.color = '#ea868f';
       })
       .finally(() => {
         statusMessage.style.display = 'block';
