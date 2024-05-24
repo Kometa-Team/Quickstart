@@ -1,0 +1,174 @@
+{% extends "000-base.html" %}
+{% block content %}
+<form action="/step/999-final" method="post" id="configForm">
+  <div id="settingsSection">
+    <h2>Settings</h2>
+    <hr class="hr">
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="60">
+      <label for="cache_expiration">Cache Expiration (minutes)</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="asset_directory" name="asset_directory" placeholder="config/assets">
+      <label for="asset_directory">Asset Directory</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="asset_depth" name="asset_depth" placeholder="1">
+      <label for="asset_depth">Asset Depth</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="minimum_items" name="minimum_items" placeholder="1">
+      <label for="minimum_items">Minimum Items</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" placeholder="1">
+      <label for="run_again_delay">Run Again Delay (minutes)</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="tvdb_language" name="tvdb_language" placeholder="eng">
+      <label for="tvdb_language">TVDB Language</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" placeholder="0">
+      <label for="item_refresh_delay">Item Refresh Delay (minutes)</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="overlay_artwork_filetype" name="overlay_artwork_filetype" placeholder="jpg">
+      <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75">
+      <label for="overlay_artwork_quality">Overlay Artwork Quality</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="cache" name="cache" checked>
+      <label class="form-check-label" for="cache">Cache</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="asset_folders" name="asset_folders" checked>
+      <label class="form-check-label" for="asset_folders">Asset Folders</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="create_asset_folders" name="create_asset_folders">
+      <label class="form-check-label" for="create_asset_folders">Create Asset Folders</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="prioritize_assets" name="prioritize_assets" checked>
+      <label class="form-check-label" for="prioritize_assets">Prioritize Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="dimensional_asset_rename" name="dimensional_asset_rename">
+      <label class="form-check-label" for="dimensional_asset_rename">Dimensional Asset Rename</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="download_url_assets" name="download_url_assets">
+      <label class="form-check-label" for="download_url_assets">Download URL Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_missing_season_assets" name="show_missing_season_assets">
+      <label class="form-check-label" for="show_missing_season_assets">Show Missing Season Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_missing_episode_assets" name="show_missing_episode_assets">
+      <label class="form-check-label" for="show_missing_episode_assets">Show Missing Episode Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_asset_not_needed" name="show_asset_not_needed">
+      <label class="form-check-label" for="show_asset_not_needed">Show Asset Not Needed</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="sync_mode" name="sync_mode" checked>
+      <label class="form-check-label" for="sync_mode">Sync Mode</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="default_collection_order" name="default_collection_order" placeholder="">
+      <label for="default_collection_order">Default Collection Order</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="delete_below_minimum" name="delete_below_minimum" checked>
+      <label class="form-check-label" for="delete_below_minimum">Delete Below Minimum</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="delete_not_scheduled" name="delete_not_scheduled">
+      <label class="form-check-label" for="delete_not_scheduled">Delete Not Scheduled</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="missing_only_released" name="missing_only_released" checked>
+      <label class="form-check-label" for="missing_only_released">Missing Only Released</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_unconfigured" name="show_unconfigured" checked>
+      <label class="form-check-label" for="show_unconfigured">Show Unconfigured</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_unmanaged" name="show_unmanaged" checked>
+      <label class="form-check-label" for="show_unmanaged">Show Unmanaged</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_filtered" name="show_filtered" checked>
+      <label class="form-check-label" for="show_filtered">Show Filtered</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_options" name="show_options" checked>
+      <label class="form-check-label" for="show_options">Show Options</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_missing" name="show_missing">
+      <label class="form-check-label" for="show_missing">Show Missing</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="only_filter_missing" name="only_filter_missing">
+      <label class="form-check-label" for="only_filter_missing">Only Filter Missing</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_missing_assets" name="show_missing_assets">
+      <label class="form-check-label" for="show_missing_assets">Show Missing Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="save_report" name="save_report" checked>
+      <label class="form-check-label" for="save_report">Save Report</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="ignore_ids" name="ignore_ids" placeholder="">
+      <label for="ignore_ids">Ignore IDs</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids" placeholder="">
+      <label for="ignore_imdb_ids">Ignore IMDb IDs</label>
+    </div>
+</form>
+
+{% endblock %}
