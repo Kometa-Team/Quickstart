@@ -10,7 +10,7 @@ from plexapi.server import PlexServer
 import pyfiglet
 import secrets
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
 from modules.output import add_border_to_ascii_art
 from modules.helpers import build_config_dict
 
@@ -65,7 +65,7 @@ def build_config():
         'omdb': session.get('omdb'),
         'mdblist': session.get('mdblist'),
         'notifiarr': session.get('notifiarr'),
-        # 'gotify': session.get('gotify'),
+        'gotify': session.get('gotify'),
         'anidb': session.get('anidb'),
         'radarr': session.get('radarr'),
         'sonarr': session.get('sonarr'),
@@ -153,6 +153,11 @@ def download():
         )
     flash('No configuration to download', 'danger')
     return redirect(url_for('final_step'))
+
+@app.route('/validate_gotify', methods=['POST'])
+def validate_gotify():
+    data = request.json
+    return validate_gotify_server(data)
 
 
 @app.route('/validate_plex', methods=['POST'])

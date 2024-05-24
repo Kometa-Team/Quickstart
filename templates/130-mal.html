@@ -3,47 +3,53 @@
         <!-- MyAnimeList Section -->
         <div id="malSection" class="section">
             <h2>MyAnimeList Settings</h2>
-    <div class="form-divider"></div>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" oninput="updateMALTargetURL(this)"> <label for="mal_client_id">Client ID</label>
     </div>
     <div class="form-floating">
-        <input type="text" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{code_verifier}}"> <label for="mal_code_verifier">Code Verifier</label>
+        <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{code_verifier}}">
     </div>
 
-    <div class="hstack gap-3">
-      <div class="form-floating">
-        <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" oninput="updateMALTargetURL(this)"> <label for="mal_client_secret">Client Secret</label>
-      </div>
-      <button type="button" id="toggleClientSecretVisibility" class="btn btn-primary btn-sm">Show</button>
+    <div class="input-group input-group-lg">
+      <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" placeholder="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
     </div>
-
-    <div class="form-group" id="urlField">
-      When you click "Authenticate with MyAnimeList" below, you will be taken to a MyAnimeList web page.  Log in and click the Allow option.  You will be redirected to a localhost URL that will not load. Copy that localhost URL and paste it into the "MyAnimeList Localhost URL" field below.<br><br>
-      <input type="text" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
-      <button type="button" class="btn btn-primary btn-sm" id="mal_get_localhost_url">Authenticate with MyAnimeList</button>
-      <br />
-    </div>
-
-    <div class="form-group" id="localhost_url">
-      <div class="form-floating">
-        <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" oninput="checkURLField(this)"> <label for="mal_localhost_url">Enter localhost URL</label>
-      </div>
-      <button type="button" class="btn btn-primary btn-sm" id="validate_mal_url">Complete Authentication</button>
-    </div>
-            <div id="malStatusMessage" class="status-message"></div>
-            <div class="form-group" id="hidden_stuff">
-                <input type="hidden" class="form-control" id="access_token" name="access_token" readonly>
-                <input type="hidden" class="form-control" id="token_type" name="token_type" readonly>
-                <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly>
-                <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly>
+    <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModal2" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="alert alert-danger" role="alert">
+              Please read the below warning
             </div>
-        </div>
-<br><br>
-    <nav aria-label="Page navigation example">
-      <ul class="pagination justify-content-center">
-        <div class="d-grid gap-2 d-md-block">
-          <a class="btn btn-primary" role="button" href="/step/110-sonarr">⏪ Previous</a> <button class="btn btn-primary me-md-2" type="submit">Next ⏩</button>
+            Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br><br>
+
+            <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br><br>
+
+            Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing the <code>Complete Authentication</code>.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button class="btn btn-primary" id="mal_get_localhost_url" type="button" data-bs-dismiss="modal">Authorize</button>
+          </div>
         </div>
       </div>
     </div>
@@ -98,7 +104,7 @@
                 window.open(url, '_blank').focus();
             }
           });
-          
+
         function updateMALTargetURL() {
           var mal_client_id = document.getElementById('mal_client_id').value;
           var code_verifier = document.getElementById('mal_code_verifier').value;
