@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from plexapi.server import PlexServer
 import pyfiglet
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_gotify_server
 from modules.output import add_border_to_ascii_art
 from modules.helpers import build_config_dict
 
@@ -137,6 +137,11 @@ def download():
         )
     flash('No configuration to download', 'danger')
     return redirect(url_for('final_step'))
+
+@app.route('/validate_gotify', methods=['POST'])
+def validate_gotify():
+    data = request.json
+    return validate_gotify_server(data)
 
 @app.route('/validate_plex', methods=['POST'])
 def validate_plex():

@@ -68,25 +68,42 @@
 
         // Event listener for the validate button
         document.getElementById('validateGotifyButton').addEventListener('click', function() {
-            const url = document.getElementById('gotify_url').value;
-            const apiKey = document.getElementById('gotify_apikey').value;
+            const gotify_url = document.getElementById('gotify_url').value;
+            const gotify_apikey = document.getElementById('gotify_apikey').value;
             const gotifyStatusMessage = document.getElementById('gotifyStatusMessage');
 
-            if (!url || !apiKey) {
+            if (!gotify_url || !gotify_apikey) {
                 gotifyStatusMessage.textContent = 'Please enter both Gotify URL and Token.';
                 gotifyStatusMessage.style.color = 'red';
                 gotifyStatusMessage.style.display = 'block';
                 return;
             }
 
-            validateGotifyApikey(url, apiKey).then(isValid => {
-                if (isValid) {
-                    gotifyStatusMessage.textContent = "Gotify API key is valid.";
+            fetch('/validate_gotify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    gotify_url: gotify_url,
+                    gotify_apikey: gotify_apikey
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    gotifyStatusMessage.textContent = 'Gotify credentials validated successfully!';
                     gotifyStatusMessage.style.color = 'green';
                 } else {
-                    gotifyStatusMessage.textContent = "Gotify API key is invalid.";
+                    gotifyStatusMessage.textContent = data.error;
                     gotifyStatusMessage.style.color = 'red';
                 }
+                gotifyStatusMessage.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error validating Gotify credentials:', error);
+                gotifyStatusMessage.textContent = 'An error occurred while validating Gotify credentials.';
+                gotifyStatusMessage.style.color = 'red';
                 gotifyStatusMessage.style.display = 'block';
             });
         });
