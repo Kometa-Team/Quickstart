@@ -8,7 +8,6 @@ import requests
 import iso639
 import iso3166
 
-
 # TODO: maybe a single entry point here to clean up the imports
 
 def validate_iso3166_1(code):
@@ -249,7 +248,7 @@ def validate_anidb_server(data):
 
     # AniDB API endpoint
     api_url = "http://api.anidb.net:9001/httpapi"
-
+    
     # Prepare the request parameters
     params = {
         'request': 'hints',
@@ -265,7 +264,7 @@ def validate_anidb_server(data):
         # Construct the full URL with query parameters
         full_url = f"{api_url}?request=hints&user={username}&pass={password}&protover=1&client={client}&clientver={clientver}&type=1"
         print(f"Full URL: {full_url}")
-
+        
         # Make a GET request to AniDB API
         response = requests.get(api_url, params=params)
         response_text = response.text
