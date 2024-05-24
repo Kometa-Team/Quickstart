@@ -169,6 +169,59 @@
       <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids" placeholder="">
       <label for="ignore_imdb_ids">Ignore IMDb IDs</label>
     </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" checked>
+      <label class="form-check-label" for="verify_ssl">Verify SSL</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="custom_repo" name="custom_repo" placeholder="">
+      <label for="custom_repo">Custom Repo</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users" placeholder="">
+      <label for="playlist_exclude_users">Playlist Exclude Users</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="playlist_sync_to_users" name="playlist_sync_to_users" checked>
+      <label class="form-check-label" for="playlist_sync_to_users">Playlist Sync to Users</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="playlist_report" name="playlist_report" checked>
+      <label class="form-check-label" for="playlist_report">Playlist Report</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="run_order" name="run_order" placeholder="operations, metadata, collections, overlays">
+      <label for="run_order">Run Order</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="overlay_artwork_filetype" name="overlay_artwork_filetype" placeholder="jpg">
+      <label class="form-check-label" for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75">
+      <label for="overlay_artwork_quality">Overlay Artwork Quality</label>
+    </div>
 </form>
+
+<br><br>
+<hr class="hr">
+<div class="row">
+  <div class="col">
+    <a class="btn btn-secondary" role="button" href="/step/140-webhooks">Previous</a>
+  </div>
+  <div class="col-6"></div>
+  <div class="col d-flex justify-content-end align-items-center">
+    <button class="btn btn-success me-md-2" type="submit">Finish</button>
+  </div>
+</div>
+</div>
 
 {% endblock %}

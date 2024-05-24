@@ -58,6 +58,7 @@ def build_config():
 
     # Combine data from all steps (retrieve from session or other storage)
     config_data = {
+        'settings': session.get('settings'),
         'webhooks': session.get('webhooks'),
         'plex': session.get('plex'),
         'tmdb': session.get('tmdb'),
@@ -77,6 +78,7 @@ def build_config():
 
     # Generate ASCII art
     kometa_art = add_border_to_ascii_art(pyfiglet.figlet_format('KOMETA'))
+    settings_art = add_border_to_ascii_art(pyfiglet.figlet_format('GlobalSettings'))
     webhooks_art = add_border_to_ascii_art(pyfiglet.figlet_format('Webhooks'))
     plex_art = add_border_to_ascii_art(pyfiglet.figlet_format('Plex'))
     tmdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('TMDb'))
@@ -102,6 +104,8 @@ def build_config():
         f"{kometa_art}\n\n"
         f"{header_comment}\n\n"
         "libraries:\n\n"
+        f"{settings_art}\n"
+        f"{yaml.dump({'settings': config_data['settings']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{webhooks_art}\n"
         f"{yaml.dump({'webhooks': config_data['webhooks']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{plex_art}\n"
