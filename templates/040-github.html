@@ -2,43 +2,39 @@
 <form action="/step/050-omdb" method="post" id="configForm" name="configForm">
   <div id="githubSection">
     <h2>GitHub Settings</h2>
-    <hr class="hr" />
-<div class="alert alert-info" role="alert">
-  <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-</div>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the GitHub Section</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        This is some dummy text<br><br>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the GitHub Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="github_token" name="github_token"  placeholder="GitHub Token" aria-label="GitHub Token">
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
-      <button class="btn btn-success" id="validateGithubButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="github_token" name="github_token" placeholder="GitHub Token" aria-label="GitHub Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateGithubButton" type="button">Validate</button>
     </div>
-      <div id="githubStatusMessage" class="status-message"></div><br>
+    <div id="githubStatusMessage" class="status-message"></div><br>
   </div>
-      <hr class="hr" />
+  <hr class="hr">
   <div class="row">
     <div class="col">
       <a class="btn btn-secondary" role="button" href="/step/030-tautulli">Previous</a>
     </div>
-    <div class="col-6">
-    </div>
-  <div class="col d-flex justify-content-end align-items-center">
-    <button class="btn btn-primary me-md-2" type="submit">Next</button>
+    <div class="col-6"></div>
+    <div class="col d-flex justify-content-end align-items-center">
+      <button class="btn btn-primary me-md-2" type="submit">Next</button>
     </div>
   </div>
 </form>

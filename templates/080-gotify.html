@@ -2,47 +2,42 @@
 <form action="/step/090-anidb" method="post" id="configForm" name="configForm">
   <div id="gotifySection">
     <h2>Gotify Settings</h2>
-    <hr class="hr" />
-<div class="alert alert-info" role="alert">
-  <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-</div>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Gotify Section</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        This is some dummy text<br><br>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Gotify Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
     <div class="form-floating">
       <input type="text" class="form-control" id="gotify_url" name="gotify_url" placeholder="http://192.168.1.12:8181"> <label for="gotify_url">Gotify URL</label>
     </div>
-
-
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="gotify_apikey" name="gotify_apikey"  placeholder="API Key" aria-label="API Key">
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
-      <button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="gotify_apikey" name="gotify_apikey" placeholder="API Key" aria-label="API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
     </div>
-      <div id="gotifyStatusMessage" class="status-message"></div><br>
+    <div id="gotifyStatusMessage" class="status-message"></div><br>
   </div>
-      <hr class="hr" />
+  <hr class="hr">
   <div class="row">
     <div class="col">
       <a class="btn btn-secondary" role="button" href="/step/070-notifiarr">Previous</a>
     </div>
-    <div class="col-6">
-    </div>
-  <div class="col d-flex justify-content-end align-items-center">
-    <button class="btn btn-primary me-md-2" type="submit">Next</button>
+    <div class="col-6"></div>
+    <div class="col d-flex justify-content-end align-items-center">
+      <button class="btn btn-primary me-md-2" type="submit">Next</button>
     </div>
   </div>
 </form>

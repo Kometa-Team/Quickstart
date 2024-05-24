@@ -52,106 +52,103 @@
     </div>
   </div>
 </form>
-     <script>
+    <script>
 
--          document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
-+        document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
-             const apikeyInput = document.getElementById('trakt_client_secret');
-             const currentType = apikeyInput.getAttribute('type');
-             apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-             this.textContent = currentType === 'password' ? 'Hide' : 'Show';
--          });
-+        });
-+
-         function updateTraktURL() {
-             var trakt_client_id = document.getElementById('trakt_client_id').value;
-             var myURL = "";
-             if (trakt_client_id.length == 64)
-             {
-                 myURL = "https://trakt.tv/oauth/authorize?response_type=code&client_id=" + trakt_client_id + "&redirect_uri=urn:ietf:wg:oauth:2.0:oob";
-             }
-             console.log("updateTraktURL: " + myURL)
-             document.getElementById('trakt_url').value = myURL;
-             checkURLStart()
-         }
+          document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
+            const apikeyInput = document.getElementById('trakt_client_secret');
+            const currentType = apikeyInput.getAttribute('type');
+            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+          });
+        function updateTraktURL() {
+            var trakt_client_id = document.getElementById('trakt_client_id').value;
+            var myURL = "";
+            if (trakt_client_id.length == 64)
+            {
+                myURL = "https://trakt.tv/oauth/authorize?response_type=code&client_id=" + trakt_client_id + "&redirect_uri=urn:ietf:wg:oauth:2.0:oob";
+            }
+            console.log("updateTraktURL: " + myURL)
+            document.getElementById('trakt_url').value = myURL;
+            checkURLStart()
+        }
 
-         function openTraktUrl() {
-             var url = document.getElementById('trakt_url').value;
-             if(url) {
-                 window.open(url, '_blank').focus();
-             }
-         }
+        function openTraktUrl() {
+            var url = document.getElementById('trakt_url').value;
+            if(url) {
+                window.open(url, '_blank').focus();
+            }
+        }
 
-         function checkPinField() {
-             var pin = document.getElementById('trakt_pin').value;
-             var pinButton = document.getElementById('validate_trakt_pin');
-             pinButton.disabled = (pin == '');
-         }
+        function checkPinField() {
+            var pin = document.getElementById('trakt_pin').value;
+            var pinButton = document.getElementById('validate_trakt_pin');
+            pinButton.disabled = (pin == '');
+        }
 
-         function checkURLStart() {
-             var url = document.getElementById('trakt_url').value;
-             var urlButton = document.getElementById('trakt_open_url');
-             urlButton.disabled = url == '';
-         }
+        function checkURLStart() {
+            var url = document.getElementById('trakt_url').value;
+            var urlButton = document.getElementById('trakt_open_url');
+            urlButton.disabled = url == '';
+        }
 
-         window.onload = function() {
-             var trakt_url_text = document.getElementById('trakt_url');
-             document.getElementById("trakt_open_url").disabled = true
-             document.getElementById("validate_trakt_pin").disabled = true
-             checkURLStart(trakt_url_text);
-         };
+        window.onload = function() {
+            var trakt_url_text = document.getElementById('trakt_url');
+            document.getElementById("trakt_open_url").disabled = true
+            document.getElementById("validate_trakt_pin").disabled = true
+            checkURLStart(trakt_url_text);
+        };
 
-         // Plex validation script
-         document.getElementById('validate_trakt_pin').addEventListener('click', function() {
-             const traktClient = document.getElementById('trakt_client_id').value;
-             const traktSecret = document.getElementById('trakt_client_secret').value;
-             const traktPin = document.getElementById('trakt_pin').value;
-             const traktStatusMessage = document.getElementById('traktStatusMessage');
+        // Plex validation script
+        document.getElementById('validate_trakt_pin').addEventListener('click', function() {
+            const traktClient = document.getElementById('trakt_client_id').value;
+            const traktSecret = document.getElementById('trakt_client_secret').value;
+            const traktPin = document.getElementById('trakt_pin').value;
+            const traktStatusMessage = document.getElementById('traktStatusMessage');
 
-             if (!traktClient || !traktSecret || !traktPin) {
-                 traktStatusMessage.textContent = 'ID, secret, and PIN and all required.';
-                 traktStatusMessage.style.display = 'block';
-                 return;
-             }
+            if (!traktClient || !traktSecret || !traktPin) {
+                traktStatusMessage.textContent = 'ID, secret, and PIN and all required.';
+                traktStatusMessage.style.display = 'block';
+                return;
+            }
 
-             fetch('/validate_trakt', {
-                 method: 'POST',
-                 headers: {
-                     'Content-Type': 'application/json'
-                 },
-                 body: JSON.stringify({
-                     trakt_client_id: traktClient,
-                     trakt_client_secret: traktSecret,
-                     trakt_pin: traktPin
-                 })
-             })
-             .then(response => response.json())
-             .then(data => {
-                 if (data.valid) {
-                     traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
-                     traktStatusMessage.style.color = 'green';
-                     document.getElementById('access_token').value = data.trakt_authorization_access_token;
-                     document.getElementById('token_type').value = data.trakt_authorization_token_type;
-                     document.getElementById('expires_in').value = data.trakt_authorization_expires_in;
-                     document.getElementById('refresh_token').value = data.trakt_authorization_refresh_token;
-                     document.getElementById('scope').value = data.trakt_authorization_scope;
-                     document.getElementById('created_at').value = data.trakt_authorization_created_at;
-                     document.getElementById('trakt_pin').value = "";
-                     document.getElementById('trakt_url').value = "";
-                     document.getElementById("trakt_open_url").disabled = true
-                     document.getElementById("validate_trakt_pin").disabled = true
-                 } else {
-                     traktStatusMessage.textContent = data.error;
-                     traktStatusMessage.style.color = 'red';
-                 }
-                 traktStatusMessage.style.display = 'block';
-             })
-             .catch(error => {
-                 console.error('Error validating Trakt credentials:', error);
-                 traktStatusMessage.textContent = 'An error occurred while validating Trakt credentials.';
-                 traktStatusMessage.style.color = 'red';
-                 traktStatusMessage.style.display = 'block';
-             });
-         });
+            fetch('/validate_trakt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    trakt_client_id: traktClient,
+                    trakt_client_secret: traktSecret,
+                    trakt_pin: traktPin
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid) {
+                    traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
+                    traktStatusMessage.style.color = '#75b798';
+                    document.getElementById('access_token').value = data.trakt_authorization_access_token;
+                    document.getElementById('token_type').value = data.trakt_authorization_token_type;
+                    document.getElementById('expires_in').value = data.trakt_authorization_expires_in;
+                    document.getElementById('refresh_token').value = data.trakt_authorization_refresh_token;
+                    document.getElementById('scope').value = data.trakt_authorization_scope;
+                    document.getElementById('created_at').value = data.trakt_authorization_created_at;
+                    document.getElementById('trakt_pin').value = "";
+                    document.getElementById('trakt_url').value = "";
+                    document.getElementById("trakt_open_url").disabled = true
+                    document.getElementById("validate_trakt_pin").disabled = true
+                } else {
+                    traktStatusMessage.textContent = data.error;
+                    traktStatusMessage.style.color = '#ea868f';
+                }
+                traktStatusMessage.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error validating Trakt credentials:', error);
+                traktStatusMessage.textContent = 'An error occurred while validating Trakt credentials.';
+                traktStatusMessage.style.color = '#ea868f';
+                traktStatusMessage.style.display = 'block';
+            });
+        });
 
-     </script> {% endblock %}
+    </script> {% endblock %}

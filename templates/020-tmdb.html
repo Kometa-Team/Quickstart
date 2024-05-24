@@ -2,56 +2,55 @@
 <form action="/step/030-tautulli" method="post" id="configForm" name="configForm">
   <div id="tmdbSection">
     <h2>TMDb Settings</h2>
-    <hr class="hr" />
-<div class="alert alert-danger" role="alert">
-  This section is mandatory and must be completed<br>
-  <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-</div>
+    <hr class="hr">
+    <div class="alert alert-danger" role="alert">
+      This section is mandatory and must be completed<br>
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the TMDb Section</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        This is some dummy text<br><br>
-        If you dunno how to obtain your TMDb Token, <a href="">click here</a> to find out how
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the TMDb Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+            If you dunno how to obtain your TMDb Token, <a href="">click here</a> to find out how
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey"  placeholder="API Key" aria-label="TMDb API Key" requi#ea868f="">
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
-      <button class="btn btn-success" id="validateButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="API Key" aria-label="TMDb API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateButton" type="button">Validate</button>
     </div>
-      <div id="statusMessage" class="status-message"></div>
-
+    <div id="statusMessage" class="status-message"></div>
     <div class="form-floating">
-    <select class="form-select" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
-      <option value="">Select Language - Please validate TMDB API Key</option>
-    </select>
-    <select class="form-select" aria-label="TMDb Region Selector" id="tmdb_region" name="tmdb_region">
-      <option value="">Select Region - Please validate TMDB API Key</option>
-    </select>
-  </div>
-  <div class="form-floating">
-    <input type="number" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">Cache Expiration (in days)</label>
-  </div>
-    <hr class="hr" />
-  <div class="row">
-    <div class="col">
-      <a class="btn btn-secondary" role="button" href="/step/010-plex">Previous</a>
+      <select class="form-select" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
+        <option value="">
+          Select Language - Please validate TMDB API Key
+        </option>
+      </select> <select class="form-select" aria-label="TMDb Region Selector" id="tmdb_region" name="tmdb_region">
+        <option value="">
+          Select Region - Please validate TMDB API Key
+        </option>
+      </select>
     </div>
-    <div class="col-6">
+    <div class="form-floating">
+      <input type="number" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">Cache Expiration (in days)</label>
     </div>
-  <div class="col d-flex justify-content-end align-items-center">
-    <button class="btn btn-primary me-md-2" type="submit">Next</button>
+    <hr class="hr">
+    <div class="row">
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/010-plex">Previous</a>
+      </div>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-primary me-md-2" type="submit">Next</button>
+      </div>
     </div>
   </div>
 </form>

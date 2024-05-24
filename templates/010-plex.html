@@ -1,41 +1,36 @@
 {% extends "000-base.html" %} {% block content %}
-<form action="/step/020-tmdb" method="post" id="configForm" name="configForm" novalidate>
+<form action="/step/020-tmdb" method="post" id="configForm" name="configForm">
   <div id="plexSection">
     <h2>Plex Settings</h2>
-    <hr class="hr" />
-
-<div class="alert alert-danger" role="alert">
-  This section is mandatory and must be completed<br>
-  <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-</div>
-
+    <hr class="hr">
+    <div class="alert alert-danger" role="alert">
+      This section is mandatory and must be completed<br>
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Plex Section</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        This is some dummy text<br><br>
-        If you dunno how to obtain your Plex Token, <a href="">click here</a> to find out how
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Plex Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+            If you dunno how to obtain your Plex Token, <a href="">click here</a> to find out how
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
     <div class="form-floating">
       <input type="text" class="form-control" id="plex_url" name="plex_url" placeholder="http://127.0.0.1:32400" required=""> <label for="plex_url">Plex URL</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="plex_token" name="plex_token"  placeholder="Token" aria-label="Plex Token" required="">
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
-      <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="plex_token" name="plex_token" placeholder="Token" aria-label="Plex Token" required=""> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
     </div>
-      <div id="plexStatusMessage" class="status-message"></div>
-
+    <div id="plexStatusMessage" class="status-message"></div>
     <div class="form-floating">
       <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40" value="40" min="40" required=""> <label for="plex_db_cache">Database Cache Size (in mb)</label>
     </div>
@@ -54,19 +49,17 @@
     <div class="form-check">
       <input class="form-check-input" type="checkbox" value="" id="plex_optimize"> <label class="form-check-label" for="plex_optimize">Optimize database</label>
     </div>
-    <hr class="hr" />
-  <div class="row">
-    <div class="col">
-      <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
-    </div>
-    <div class="col-6">
-    </div>
-  <div class="col d-flex justify-content-end align-items-center">
-    <button class="btn btn-primary me-md-2" type="submit">Next</button>
+    <hr class="hr">
+    <div class="row">
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
+      </div>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-primary me-md-2" type="submit">Next</button>
+      </div>
     </div>
   </div>
-  </div>
-
 </form>
 <script>
   // Save input values to sessionStorage on change

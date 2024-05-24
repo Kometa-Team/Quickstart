@@ -2,90 +2,88 @@
 <form action="/step/120-trakt" method="post" id="configForm" name="configForm">
   <div id="sonarrSection">
     <h2>Sonarr Settings</h2>
-    <hr class="hr" />
-<div class="alert alert-info" role="alert">
-  <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-</div>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Sonarr Section</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        This is some dummy text<br><br>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Sonarr Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
     <div class="form-floating">
       <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" placeholder="http://127.0.0.1:32400"> <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token"  placeholder="Token" aria-label="Token">
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
-      <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" placeholder="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
     </div>
-      <div id="sonarrStatusMessage" class="status-message"></div><br>
+    <div id="sonarrStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
-    <select class="form-select" aria-label="Root Folder Path" id="sonarr_root_folder_path" name="sonarr_root_folder_path">
-      <option value="">
-        Select Root Folder Path
-      </option>
-    </select> <select class="form-select" aria-label="Monitor" id="sonarr_monitor" name="sonarr_monitor">
-      <option value="all" selected>
-        Select Monitor Preference
-      </option>
-      <option value="all">
-        all (default) - monitor all episodes except specials
-      </option>
-      <option value="none">
-        none - Do not monitor any episodes
-      </option>
-      <option value="future">
-        future - monitor episodes that have not aired yet
-      </option>
-      <option value="missing">
-        missing - monitor episodes that do not have files or have not aired yet
-      </option>
-      <option value="existing">
-        existing - monitor episodes that have files or have not aired yet
-      </option>
-      <option value="pilot">
-        pilot - monitor the first episode, all others will be ignored
-      </option>
-      <option value="first">
-        first - monitor all episodes of the first season only
-      </option>
-      <option value="latest">
-        latest - monitor all episodes of the latest season and future seasons
-      </option>
-    </select> <select class="form-select" aria-label="Quality Profile" id="sonarr_quality_profile" name="sonarr_quality_profile">
-      <option value="">
-        Select Quality Profile
-      </option>
-    </select> <select class="form-select" aria-label="Language Profile" id="sonarr_language_profile" name="sonarr_language_profile">
-      <option value="">
-        Select Language Profile
-      </option>
-    </select> <select class="form-select" aria-label="Series Type" id="sonarr_series_type" name="sonarr_series_type">
-      <option value="standard" selected>
-        Select Series Type
-      </option>
-      <option value="standard">
-        Standard (default)
-      </option>
-      <option value="daily">
-        Daily
-      </option>
-      <option value="anime">
-        Anime
-      </option>
-    </select>
+      <select class="form-select" aria-label="Root Folder Path" id="sonarr_root_folder_path" name="sonarr_root_folder_path">
+        <option value="">
+          Select Root Folder Path
+        </option>
+      </select> <select class="form-select" aria-label="Monitor" id="sonarr_monitor" name="sonarr_monitor">
+        <option value="all" selected>
+          Select Monitor Preference
+        </option>
+        <option value="all">
+          all (default) - monitor all episodes except specials
+        </option>
+        <option value="none">
+          none - Do not monitor any episodes
+        </option>
+        <option value="future">
+          future - monitor episodes that have not aired yet
+        </option>
+        <option value="missing">
+          missing - monitor episodes that do not have files or have not aired yet
+        </option>
+        <option value="existing">
+          existing - monitor episodes that have files or have not aired yet
+        </option>
+        <option value="pilot">
+          pilot - monitor the first episode, all others will be ignored
+        </option>
+        <option value="first">
+          first - monitor all episodes of the first season only
+        </option>
+        <option value="latest">
+          latest - monitor all episodes of the latest season and future seasons
+        </option>
+      </select> <select class="form-select" aria-label="Quality Profile" id="sonarr_quality_profile" name="sonarr_quality_profile">
+        <option value="">
+          Select Quality Profile
+        </option>
+      </select> <select class="form-select" aria-label="Language Profile" id="sonarr_language_profile" name="sonarr_language_profile">
+        <option value="">
+          Select Language Profile
+        </option>
+      </select> <select class="form-select" aria-label="Series Type" id="sonarr_series_type" name="sonarr_series_type">
+        <option value="standard" selected>
+          Select Series Type
+        </option>
+        <option value="standard">
+          Standard (default)
+        </option>
+        <option value="daily">
+          Daily
+        </option>
+        <option value="anime">
+          Anime
+        </option>
+      </select>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag" placeholder=""> <label for="sonarr_tag">Tag to apply to added media</label>
@@ -121,17 +119,16 @@
       <input class="form-check-input" type="checkbox" value="" id="sonarr_ignore_cache"> <label class="form-check-label" for="sonarr_ignore_cache">Ignore Kometa's cache when adding media</label>
     </div><br>
     <br>
-      <hr class="hr" />
+    <hr class="hr">
     <div class="row">
-    <div class="col">
-      <a class="btn btn-secondary" role="button" href="/step/100-radarr">Previous</a>
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/100-radarr">Previous</a>
+      </div>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-primary me-md-2" type="submit">Next</button>
+      </div>
     </div>
-    <div class="col-6">
-    </div>
-  <div class="col d-flex justify-content-end align-items-center">
-    <button class="btn btn-primary me-md-2" type="submit">Next</button>
-    </div>
-  </div>
   </div>
 </form>
 
