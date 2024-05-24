@@ -10,8 +10,7 @@ from plexapi.server import PlexServer
 import pyfiglet
 import secrets
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, \
-    validate_trakt_server, validate_mal_server, validate_anidb_server
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server
 from modules.output import add_border_to_ascii_art
 from modules.helpers import build_config_dict
 
@@ -53,10 +52,10 @@ def step(name):
     if name == '999-final':
         return build_config()
     else:
-        return render_template(name + '.html', code_verifier=code_verifier)
-
+        return render_template(name + '.html', code_verifier = code_verifier)
 
 def build_config():
+
     # Combine data from all steps (retrieve from session or other storage)
     config_data = {
         'plex': session.get('plex'),
@@ -66,7 +65,7 @@ def build_config():
         'omdb': session.get('omdb'),
         'mdblist': session.get('mdblist'),
         'notifiarr': session.get('notifiarr'),
-        'gotify': session.get('gotify'),
+        # 'gotify': session.get('gotify'),
         'anidb': session.get('anidb'),
         'radarr': session.get('radarr'),
         'sonarr': session.get('sonarr'),
@@ -173,12 +172,10 @@ def validate_trakt():
     data = request.json
     return validate_trakt_server(data)
 
-
 @app.route('/validate_mal', methods=['POST'])
 def validate_mal():
     data = request.json
     return validate_mal_server(data)
-
 
 @app.route('/validate_anidb', methods=['POST'])
 def validate_anidb():
