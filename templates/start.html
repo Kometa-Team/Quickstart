@@ -13,26 +13,16 @@
         <img src="{{ url_for('static', filename='images/header.png') }}" alt="Header Image" class="header-image">
     </div>
     <h1><center>Kometa Configuration Builder</center></h1>
-    <form action="/step/010-plex" method="post" id="configForm">
-        <div class="header-container">
-            <img src="{{ url_for('static', filename='images/wizard.webp') }}" alt="Header Image" class="header-image">
-        </div>
-        <p>
-            This wizard will step you through creating a config file for Kometa.
-        </p>
-        <p>    
-            Blah blah it's super cool.
-        </p>
-        <p>    
-            Here's a thing etc etc.
-        </p>
-        <p>    
-            You will need some stuff.
-        </p>
-        <p>    
-            Once you have gathered that stuff, click "Begin".
-        </p>
-            <input type="submit" value="Begin">
+    <form action="/step/010-plex" method="post" id="configForm" name="configForm">
+        <center><img src="{{ url_for('static', filename='images/wizard.webp') }}" alt="Header Image" class="header-image"></center>
+      <div class="form-text" id="pin-info">
+        <p class="fs-1">This wizard will step you through creating a config file for Kometa.</p>
+        <p class="fs-2">Blah blah it's super cool.</p>
+        <p class="fs-3">Here's a thing etc etc.</p>
+        <p class="fs-4">You will need some stuff.</p>
+        <p class="fs-5">Once you have gathered that stuff, click "Begin".</p>
+        <p class="fs-6">The end.</p>
+      </div><input type="submit" value="Begin">
     </form>
 </body>
 </html>
