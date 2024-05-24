@@ -4,6 +4,14 @@ body {
     margin: 20px;
 }
 
+code {
+    font-size: 0.875em;
+    color: #ea868f;
+    word-wrap: break-word;
+    background-color: hsl(225deg 8.87% 10.98%);
+    padding: 0 .2941176471em;
+}
+
 /* Header Styles */
 
 .header-container {
@@ -52,7 +60,6 @@ form {
 label {
     display: block;
     margin-bottom: 10px;
-
 
 }
 

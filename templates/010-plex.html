@@ -14,9 +14,17 @@
             <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Plex Section</h1>
           </div>
           <div class="modal-body">
-            This is some dummy text<br>
+            <a href="https://kometa.wiki/en/latest/config/plex/">Click Here</a> to visit the wiki for this connector<br>
             <br>
-            If you dunno how to obtain your Plex Token, <a href="">click here</a> to find out how
+            Filling in your Plex URL and Token is mandatory as Kometa cannot run without access to a Plex Media Server.<br>
+            <br>
+            You cannot use <code>https://app.plex.tv</code> as your URL as that is invalid, you must provide the direct address you use to access your server.<br>
+            <br>
+            If you need help finding your Plex Authentication Token, please see Plex's <a href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">support article</a>. Do not use the Plex Token found in Plex's <code>Preferences.xml</code> file and do not use the token that you get via <code>https://app.plex.tv</code>.<br>
+            <br>
+            You should press the <code>Validate</code> button to ensure that your URL and Token combination is valid and reachable. Once successfully connected, the wizard will fetch the Database Cache size and update the field in the form.<br>
+            <br>
+            Please note that using the <code>Optimize Database</code> option can make Plex unresponsive, as it is generally not contactable whilst it performs its optimizations. This is expected behavior.
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
