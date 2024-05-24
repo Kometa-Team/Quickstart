@@ -1,0 +1,196 @@
+{% extends "000-base.html" %}
+{% block content %}
+<form action="/step/999-final" method="post" id="configForm">
+  <div id="webhooksSection">
+    <h2>Webhook Settings</h2>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Webhooks Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr class="hr">
+    <div class="form-floating">
+      <select class="form-select" aria-label="Error" id="webhooks_error" name="webhooks_error">
+        <option value="">Select Error Webhook</option>
+        <option value="notifiarr">notifiarr</option>
+        <option value="gotify">gotify</option>
+        <option value="custom">custom</option>
+      </select>
+      <label for="webhooks_error">Error</label>
+    </div>
+    <div class="form-floating">
+      <select class="form-select" aria-label="Run Start" id="webhooks_run_start" name="webhooks_run_start">
+        <option value="">Select Run Start Webhook</option>
+        <option value="notifiarr">notifiarr</option>
+        <option value="gotify">gotify</option>
+        <option value="custom">custom</option>
+      </select>
+      <label for="webhooks_run_start">Run Start</label>
+    </div>
+    <div class="form-floating">
+      <select class="form-select" aria-label="Run End" id="webhooks_run_end" name="webhooks_run_end">
+        <option value="">Select Run End Webhook</option>
+        <option value="notifiarr">notifiarr</option>
+        <option value="gotify">gotify</option>
+        <option value="custom">custom</option>
+      </select>
+      <label for="webhooks_run_end">Run End</label>
+    </div>
+    <div class="form-floating">
+      <select class="form-select" aria-label="Changes" id="webhooks_changes" name="webhooks_changes">
+        <option value="">Select Changes Webhook</option>
+        <option value="notifiarr">notifiarr</option>
+        <option value="gotify">gotify</option>
+        <option value="custom">custom</option>
+      </select>
+      <label for="webhooks_changes">Changes</label>
+    </div>
+    <div class="form-floating">
+      <select class="form-select" aria-label="Version" id="webhooks_version" name="webhooks_version">
+        <option value="">Select Version Webhook</option>
+        <option value="notifiarr">notifiarr</option>
+        <option value="gotify">gotify</option>
+        <option value="custom">custom</option>
+      </select>
+      <label for="webhooks_version">Version</label>
+    </div>
+    <div class="form-floating">
+      <select class="form-select" aria-label="Delete" id="webhooks_delete" name="webhooks_delete">
+        <option value="">Select Delete Webhook</option>
+        <option value="notifiarr">notifiarr</option>
+        <option value="gotify">gotify</option>
+        <option value="custom">custom</option>
+      </select>
+      <label for="webhooks_delete">Delete</label>
+    </div>
+
+    <br><br>
+    <hr class="hr">
+    <div class="row">
+      <div class="col">
+        <a class="btn btn-secondary" role="button" href="/step/130-mal">Previous</a>
+      </div>
+      <div class="col-6"></div>
+      <div class="col d-flex justify-content-end align-items-center">
+        <button class="btn btn-primary me-md-2" type="submit">Next</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+    async function validateWebhooksApikey(apikey, url) {
+        const statusApiUrl = `${url}/api/v3/system/status?apikey=${apikey}`;
+        const rootFolderApiUrl = `${url}/api/v3/rootfolder?apikey=${apikey}`;
+        const qualityProfileApiUrl = `${url}/api/v3/qualityprofile?apikey=${apikey}`;
+        const languageProfileApiUrl = `${url}/api/v3/language?apikey=${apikey}`;
+        const webhooksStatusMessage = document.getElementById('webhooksStatusMessage');
+
+        try {
+            // Validate API key
+            const response = await fetch(statusApiUrl);
+            const data = await response.json();
+            console.log("API Response:", data);
+
+            if (response.ok && 'version' in data) {
+                console.log("Webhooks API key is valid.");
+                webhooksStatusMessage.textContent = "Webhooks API key is valid.";
+                webhooksStatusMessage.style.color = '#75b798';
+                webhooksStatusMessage.style.display = 'block';
+
+                // Fetch and populate root folders
+                const rootFolderResponse = await fetch(rootFolderApiUrl);
+                const rootFolders = await rootFolderResponse.json();
+                const rootFolderSelect = document.getElementById('webhooks_root_folder_path');
+                rootFolderSelect.innerHTML = '<option value="">Select Root Folder</option>';
+                rootFolders.forEach(folder => {
+                    const option = document.createElement('option');
+                    option.value = folder.path;
+                    option.textContent = folder.path;
+                    rootFolderSelect.appendChild(option);
+                });
+
+                // Fetch and populate quality profiles
+                const qualityProfileResponse = await fetch(qualityProfileApiUrl);
+                const qualityProfiles = await qualityProfileResponse.json();
+                const qualityProfileSelect = document.getElementById('webhooks_quality_profile');
+                qualityProfileSelect.innerHTML = '<option value="">Select Quality Profile</option>';
+                qualityProfiles.forEach(profile => {
+                    const option = document.createElement('option');
+                    option.value = profile.name;
+                    option.textContent = profile.name;
+                    qualityProfileSelect.appendChild(option);
+                });
+
+                // Fetch and populate language profiles
+                const languageProfileResponse = await fetch(languageProfileApiUrl);
+                const languageProfiles = await languageProfileResponse.json();
+                const languageProfileSelect = document.getElementById('webhooks_language_profile');
+                languageProfileSelect.innerHTML = '<option value="">Select Language Profile</option>';
+                languageProfiles
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .forEach(profile => {
+                        const option = document.createElement('option');
+                        option.value = profile.name;
+                        option.textContent = profile.name;
+                        if (profile.name === 'English') {
+                            option.selected = true;
+                        }
+                        languageProfileSelect.appendChild(option);
+                    });
+
+                return true;
+            } else {
+                console.log("Invalid Webhooks API key. Error:", data.message);
+                webhooksStatusMessage.textContent = "Webhooks API key is invalid.";
+                webhooksStatusMessage.style.color = '#ea868f';
+                webhooksStatusMessage.style.display = 'block';
+                return false;
+            }
+        } catch (error) {
+            console.error("Error validating Webhooks apikey:", error);
+            webhooksStatusMessage.textContent = 'Error validating Webhooks API key.';
+            webhooksStatusMessage.style.color = '#ea868f';
+            webhooksStatusMessage.style.display = 'block';
+            return false;
+        }
+    }
+
+    document.getElementById('validateWebhooksButton').addEventListener('click', function() {
+        const apiKey = document.getElementById('webhooks_token').value;
+        const url = document.getElementById('webhooks_url').value;
+        const webhooksStatusMessage = document.getElementById('webhooksStatusMessage');
+
+        if (!apiKey || !url) {
+            webhooksStatusMessage.textContent = 'Please enter the Webhooks API key and URL.';
+            webhooksStatusMessage.style.color = '#ea868f';
+            webhooksStatusMessage.style.display = 'block';
+            return;
+        }
+
+        validateWebhooksApikey(apiKey, url);
+    });
+
+    document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+        const apikeyInput = document.getElementById('webhooks_token');
+        const currentType = apikeyInput.getAttribute('type');
+        apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+        this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+    });
+</script>
+{% endblock %}
