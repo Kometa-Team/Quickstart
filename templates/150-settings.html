@@ -105,7 +105,7 @@
 
     <div class="form-floating mb-3">
       <input type="text" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="60">
-      <label for="cache_expiration">Cache Expiration (minutes)</label>
+      <label for="cache_expiration">Cache Expiration (days)</label>
     </div>
 
     <div class="form-floating mb-3">
@@ -321,17 +321,7 @@
 
     <div class="form-floating mb-3">
       <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" placeholder="0">
-      <label for="item_refresh_delay">Item Refresh Delay (minutes)</label>
-    </div>
-
-    <div class="form-floating mb-3">
-      <input type="text" class="form-control" id="overlay_artwork_filetype" name="overlay_artwork_filetype" placeholder="jpg">
-      <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
-    </div>
-
-    <div class="form-floating mb-3">
-      <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75">
-      <label for="overlay_artwork_quality">Overlay Artwork Quality</label>
+      <label for="item_refresh_delay">Item Refresh Delay (seconds)</label>
     </div>
 
     <div class="form-check">
@@ -483,12 +473,16 @@
     </div>
 
     <div class="form-floating mb-3">
-      <input type="text" class="form-control" id="overlay_artwork_filetype" name="overlay_artwork_filetype" placeholder="jpg">
-      <label class="form-check-label" for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
+      <select class="form-select" id="overlay_artwork_filetype" name="overlay_artwork_filetype">
+        <option value="jpg">JPG</option>
+        <option value="png">PNG</option>
+        <option value="webp">WEBP</option>
+      </select>
+      <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
     </div>
 
     <div class="form-floating mb-3">
-      <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75">
+      <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75" min="1" max="100">
       <label for="overlay_artwork_quality">Overlay Artwork Quality</label>
     </div>
 
