@@ -1,94 +1,153 @@
 {% extends "000-base.html" %} {% block content %}
-    <form action="/step/140-webhooks" method="post" id="configForm">
-        <!-- MyAnimeList Section -->
-        <div id="malSection" class="section">
-            <h2>MyAnimeList Settings</h2>
-    <hr class="hr">
-    <div class="alert alert-info" role="alert">
-      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-    </div>
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
-          </div>
-          <div class="modal-body">
-            This is some dummy text<br>
-            <br>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-          </div>
+<form action="/step/999-final" method="post" id="configForm" name="configForm">
+  <div id="malSection" class="section">
+      <div class="col align-self-center">
+        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>MyAnimeList</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+          <a class="btn btn-success" role="button" href="/step/140-webhooks">Next</a> <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle Dropdown</span></button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="/step/010-plex">Plex</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/020-tmdb">TMDb</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/030-tautulli">Tautulli</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/040-github">GitHub</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/050-omdb">OMDb</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/060-mdblist">MDBList</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/070-notifiarr">Notifiarr</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/080-gotify">Gotify</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/090-anidb">AniDB</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/100-radarr">Radarr</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/110-sonarr">Sonarr</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/120-trakt">Trakt</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/130-mal">MyAnimeList</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/140-webhooks">MyAnimeList</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/150-settings">Settings</a>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li>
+              <a class="dropdown-item" href="#">Skip to Validation (doesn't work atm)</a>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
-    <div class="form-floating">
-      <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" oninput="updateMALTargetURL(this)"> <label for="mal_client_id">Client ID</label>
-    </div>
-    <div class="form-floating">
-        <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{code_verifier}}">
-    </div>
-
-    <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" placeholder="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
-    </div>
-    <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModal2" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div class="alert alert-danger" role="alert">
-              Please read the below warning
+    <div class="container text-center">
+      <div class="row">
+        <div class="col"></div>
+        <div class="col-8">
+          <div class="col align-self-end">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" style="width: 25%">
+                25%
+              </div>
             </div>
-            Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br><br>
-
-            <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br><br>
-
-            Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing the <code>Complete Authentication</code>.
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button class="btn btn-primary" id="mal_get_localhost_url" type="button" data-bs-dismiss="modal">Authorize</button>
+        </div>
+        <div class="col"></div>
+      </div>
+      <hr class="hr">
+      <div class="alert alert-info" role="alert">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+      </div>
+      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
+            </div>
+            <div class="modal-body">
+              This is some dummy text<br>
+              <br>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
-
-    <div class="form-floating">
-      <div class="alert alert-dark" role="alert">
-        Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br><br>
-
-        <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br><br>
-
-        Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing <code>Complete Authentication</code>.
+      <div class="form-floating">
+        <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" oninput="updateMALTargetURL(this)"> <label for="mal_client_id">Client ID</label>
       </div>
-    </div>
-
-    <div class="form-group" id="localhost_url">
+      <div class="form-floating">
+        <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{code_verifier}}">
+      </div>
+      <div class="input-group input-group-lg">
+        <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" placeholder="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
+      </div>
+      <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModal2" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-body">
+              <div class="alert alert-danger" role="alert">
+                Please read the below warning
+              </div>Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br>
+              <br>
+              <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br>
+              <br>
+              Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing the <code>Complete Authentication</code>.
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> <button class="btn btn-primary" id="mal_get_localhost_url" type="button" data-bs-dismiss="modal">Authorize</button>
+            </div>
+          </div>
+        </div>
+      </div><input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
+      <div class="form-floating">
+        <div class="alert alert-dark" role="alert">
+          Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br>
+          <br>
+          <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br>
+          <br>
+          Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing <code>Complete Authentication</code>.
+        </div>
+      </div>
+      <div class="form-group" id="localhost_url">
         <div class="input-group input-group-lg">
           <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" placeholder="Localhost URL" aria-label="Localhost URL" oninput="checkURLField(this)"> <button type="button" class="btn btn-success" id="validate_mal_url">Complete Authentication</button>
         </div>
-    <div id="malStatusMessage" class="status-message"></div>
-            <div class="form-group" id="hidden_stuff">
-                <input type="hidden" class="form-control" id="access_token" name="access_token" readonly>
-                <input type="hidden" class="form-control" id="token_type" name="token_type" readonly>
-                <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly>
-                <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly>
-            </div>
+        <div id="malStatusMessage" class="status-message"></div>
+        <div class="form-group" id="hidden_stuff">
+          <input type="hidden" class="form-control" id="access_token" name="access_token" readonly> <input type="hidden" class="form-control" id="token_type" name="token_type" readonly> <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly> <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly>
         </div>
-<br><br>
-    <hr class="hr">
-    <div class="row">
-      <div class="col">
-        <a class="btn btn-secondary" role="button" href="/step/120-trakt">Previous</a>
-      </div>
-      <div class="col-6"></div>
-      <div class="col d-flex justify-content-end align-items-center">
-        <button class="btn btn-primary me-md-2" type="submit">Next</button>
       </div>
     </div>
-    </form>
+  </div>
+</form>
     <script>
 
           document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {

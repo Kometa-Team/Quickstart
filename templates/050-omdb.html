@@ -1,13 +1,92 @@
 {% extends "000-base.html" %} {% block content %}
 <form action="/step/060-mdblist" method="post" id="configForm" name="configForm">
   <div id="omdbSection">
-    <h2>OMDb Settings</h2>
+    <div class="row">
+      <div class="col align-self-center">
+        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>OMDb</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+          <a class="btn btn-success" role="button" href="/step/060-mdblist">Next</a> <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle Dropdown</span></button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="/step/010-plex">Plex</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/020-tmdb">TMDb</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/030-tautulli">Tautulli</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/040-github">GitHub</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/050-omdb">OMDb</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/060-mdblist">MDBList</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/070-notifiarr">Notifiarr</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/080-gotify">Gotify</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/090-anidb">AniDB</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/100-radarr">Radarr</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/110-sonarr">Sonarr</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/120-trakt">Trakt</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/130-mal">MyAnimeList</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/140-webhooks">MyAnimeList</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/150-settings">Settings</a>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li>
+              <a class="dropdown-item" href="#">Skip to Validation (doesn't work atm)</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row">
+        <div class="col"></div>
+        <div class="col-8">
+          <div class="col align-self-end">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" style="width: 25%">
+                25%
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
     <hr class="hr">
     <div class="alert alert-info" role="alert">
       <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
     </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the OMDb Section</h1>
@@ -26,19 +105,8 @@
       <input type="password" class="form-control" id="omdb_apikey" name="omdb_apikey" placeholder="OMDb API Key" aria-label="OMDb API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateOmdbButton" type="button">Validate</button>
     </div>
     <div id="omdbStatusMessage" class="status-message"></div><br>
-  </div>
   <div class="form-floating">
     <input type="number" class="form-control" id="omdb_cache_expiration" name="omdb_cache_expiration" value="60" min="0"> <label for="omdb_cache_expiration">Cache Expiration (in days)</label>
-  </div>
-  <hr class="hr">
-  <div class="row">
-    <div class="col">
-      <a class="btn btn-secondary" role="button" href="/step/040-github">Previous</a>
-    </div>
-    <div class="col-6"></div>
-    <div class="col d-flex justify-content-end align-items-center">
-      <button class="btn btn-primary me-md-2" type="submit">Next</button>
-    </div>
   </div>
 </form>
 <script>

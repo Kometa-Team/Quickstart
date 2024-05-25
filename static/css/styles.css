@@ -39,7 +39,7 @@ code {
 }
 
 form {
-    max-width: 600px;
+    max-width: 900px;
     margin: auto;
     padding: 20px;
     border: 1px solid #343a40;
@@ -65,7 +65,7 @@ form {
 label {
     display: block;
     margin-bottom: 10px;
-
+    text-align: left;
 }
 
 .form-divider {

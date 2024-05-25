@@ -195,6 +195,9 @@ def validate_gotify_server(data):
     return jsonify({'valid': True})
 
 
+
+
+
 def validate_mal_server(data):
     mal_client_id = data.get('mal_client_id')
     mal_client_secret = data.get('mal_client_secret')
