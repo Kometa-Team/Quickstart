@@ -81,8 +81,27 @@
         </div>
         <div class="col"></div>
       </div>
-    <hr class="hr">
-    <div class="form-floating">
+      <hr class="hr">
+      <div class="alert alert-info" role="alert">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+      </div>
+      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
+            </div>
+            <div class="modal-body">
+              This is some dummy text<br>
+              <br>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-floating">
       <select class="form-select" aria-label="Error" id="webhooks_error" name="webhooks_error">
         <option value="">Select Error Webhook</option>
         <option value="notifiarr">notifiarr</option>

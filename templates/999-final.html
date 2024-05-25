@@ -82,10 +82,12 @@
               <div class="col"></div>
           </div>
       <hr class="hr">
-
+      <div class="form-floating">
+        <div class="form-text" id="yaml-content">
+            <br><h5>For your records, here is the YAML that was generated as a result of your inputs.</h5><br>
+        </div>
             <textarea readonly id="final-yaml" class="form-control" rows="20">{{ yaml_content }}</textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Validate and Generate</button>
     </form>
     {% if yaml_content %}
         <br>
