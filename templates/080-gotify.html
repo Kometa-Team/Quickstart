@@ -1,67 +1,82 @@
 {% extends "000-base.html" %} {% block content %}
-<form action="/step/090-anidb" method="post" id="configForm" name="configForm">
+<form
+  action="/step/{{ next_page }}"
+  method="post"
+  id="configForm"
+  name="configForm"
+>
   <div id="gotifySection">
     <div class="row">
       <div class="col align-self-center">
-        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
+        <div class="input-group justify-content-start">
+          <a
+            class="btn btn-secondary"
+            role="button"
+            href="/step/{{ prev_page }}"
+            >Previous</a
+          >
+          <button
+            type="button"
+            class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="/step/start">Start</a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            {% for file, name in template_list %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}"
+                >{{ name }}</a
+              >
+            </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item" href="/step/999-final"
+                >Skip to Validation</a
+              >
+            </li>
+          </ul>
+        </div>
       </div>
       <div class="col-6 align-self-center text-center">
-        <h2>Gotify</h2>
+        <h2>{{ curr_page }}</h2>
       </div>
       <div class="col align-self-center">
         <div class="input-group justify-content-end">
-          <a class="btn btn-success" role="button" href="/step/090-anidb">Next</a> <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle Dropdown</span></button>
+          <a class="btn btn-success" role="button" href="/step/{{ next_page}}"
+            >Next</a
+          >
+          <button
+            type="button"
+            class="btn btn-success dropdown-toggle dropdown-toggle-split"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li>
-              <a class="dropdown-item" href="/step/010-plex">Plex</a>
+              <a class="dropdown-item" href="/step/start">Start</a>
             </li>
+            <li><hr class="dropdown-divider" /></li>
+            {% for file, name in template_list %}
             <li>
-              <a class="dropdown-item" href="/step/020-tmdb">TMDb</a>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}"
+                >{{ name }}</a
+              >
             </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider" /></li>
             <li>
-              <a class="dropdown-item" href="/step/030-tautulli">Tautulli</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/040-github">GitHub</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/050-omdb">OMDb</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/060-mdblist">MDBList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/070-notifiarr">Notifiarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/080-gotify">Gotify</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/090-anidb">AniDB</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/100-radarr">Radarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/110-sonarr">Sonarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/120-trakt">Trakt</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/130-mal">MyAnimeList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/140-webhooks">Webhooks</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/150-settings">Settings</a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li>
-              <a class="dropdown-item" href="#">Skip to Validation (doesn't work atm)</a>
+              <a class="dropdown-item" href="/step/999-final"
+                >Skip to Validation</a
+              >
             </li>
           </ul>
         </div>
@@ -72,143 +87,205 @@
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
-            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-              <div class="progress-bar bg-success" style="width: 25%">
-                25%
-              </div>
+            <div
+              class="progress"
+              role="progressbar"
+              aria-label="Example with label"
+              aria-valuenow="25"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <div class="progress-bar bg-success" style="width: 25%">25%</div>
             </div>
           </div>
         </div>
         <div class="col"></div>
       </div>
     </div>
-    <hr class="hr">
+    <hr class="hr" />
     <div class="alert alert-info" role="alert">
-      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal"
+        >Click Here</a
+      >
+      if you need guidance completing this section.
     </div>
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div
+      class="modal fade"
+      id="exampleModal"
+      tabindex="-1"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Gotify Section</h1>
+            <h1 class="modal-title fs-5" id="exampleModalLabel">
+              Completing the Gotify Section
+            </h1>
           </div>
           <div class="modal-body">
-            This is some dummy text<br>
-            <br>
+            This is some dummy text<br />
+            <br />
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="gotify_url" name="gotify_url" placeholder="http://192.168.1.12:8181"> <label for="gotify_url">Gotify URL</label>
+      <input
+        type="text"
+        class="form-control"
+        id="gotify_url"
+        name="gotify_url"
+        placeholder="http://192.168.1.12:8181"
+      />
+      <label for="gotify_url">Gotify URL</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="gotify_token" name="gotify_token" placeholder="API Key" aria-label="API Key"> <button class="btn btn-secondary" id="toggleTokenVisibility" type="button">Show</button> <button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
+      <input
+        type="password"
+        class="form-control"
+        id="gotify_token"
+        name="gotify_token"
+        placeholder="API Key"
+        aria-label="API Key"
+      />
+      <button
+        class="btn btn-secondary"
+        id="toggleTokenVisibility"
+        type="button"
+      >
+        Show
+      </button>
+      <button class="btn btn-success" id="validateGotifyButton" type="button">
+        Validate
+      </button>
     </div>
-    <div id="gotifyStatusMessage" class="status-message"></div><br>
+    <div id="gotifyStatusMessage" class="status-message"></div>
+    <br />
   </div>
 </form>
 <script>
-        // Function to toggle API key visibility
-        document.getElementById('toggleTokenVisibility').addEventListener('click', function() {
-            const tokenInput = document.getElementById('gotify_token');
-            const currentType = tokenInput.getAttribute('type');
-            tokenInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+  // Function to toggle API key visibility
+  document
+    .getElementById("toggleTokenVisibility")
+    .addEventListener("click", function () {
+      const tokenInput = document.getElementById("gotify_token");
+      const currentType = tokenInput.getAttribute("type");
+      tokenInput.setAttribute(
+        "type",
+        currentType === "password" ? "text" : "password"
+      );
+      this.textContent = currentType === "password" ? "Hide" : "Show";
+    });
+
+  // Function to validate Gotify API key
+  async function validateGotifyToken(url, token) {
+    const apiUrl = `${url}/version?token=${token}`;
+    try {
+      const response = await fetch(apiUrl);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("API Response:", data);
+        return true;
+      } else {
+        const error = await response.json();
+        console.log("Invalid Gotify API key. Error:", error);
+        return false;
+      }
+    } catch (error) {
+      console.error("Error validating Gotify token:", error);
+      return false;
+    }
+  }
+
+  // Event listener for the validate button
+  document
+    .getElementById("validateGotifyButton")
+    .addEventListener("click", function () {
+      const gotify_url = document.getElementById("gotify_url").value;
+      const gotify_token = document.getElementById("gotify_token").value;
+      const gotifyStatusMessage = document.getElementById(
+        "gotifyStatusMessage"
+      );
+
+      if (!gotify_url || !gotify_token) {
+        gotifyStatusMessage.textContent =
+          "Please enter both Gotify URL and Token.";
+        gotifyStatusMessage.style.color = "#ea868f";
+        gotifyStatusMessage.style.display = "block";
+        return;
+      }
+
+      fetch("/validate_gotify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          gotify_url: gotify_url,
+          gotify_token: gotify_token,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.valid) {
+            gotifyStatusMessage.textContent =
+              "Gotify credentials validated successfully!";
+            gotifyStatusMessage.style.color = "green";
+          } else {
+            gotifyStatusMessage.textContent = data.error;
+            gotifyStatusMessage.style.color = "red";
+          }
+          gotifyStatusMessage.style.display = "block";
+        })
+        .catch((error) => {
+          console.error("Error validating Gotify credentials:", error);
+          gotifyStatusMessage.textContent =
+            "An error occurred while validating Gotify credentials.";
+          gotifyStatusMessage.style.color = "red";
+          gotifyStatusMessage.style.display = "block";
         });
+    });
 
-        // Function to validate Gotify API key
-        async function validateGotifyToken(url, token) {
-            const apiUrl = `${url}/version?token=${token}`;
-            try {
-                const response = await fetch(apiUrl);
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log("API Response:", data);
-                    return true;
-                } else {
-                    const error = await response.json();
-                    console.log("Invalid Gotify API key. Error:", error);
-                    return false;
-                }
-            } catch (error) {
-                console.error("Error validating Gotify token:", error);
-                return false;
-            }
-        }
+  // Function to save form data to sessionStorage
+  function saveFormData() {
+    const gotifyUrl = document.getElementById("gotify_url").value;
+    const gotifyToken = document.getElementById("gotify_token").value;
+    sessionStorage.setItem("gotify_url", gotifyUrl);
+    sessionStorage.setItem("gotify_token", gotifyToken);
+  }
 
-        // Event listener for the validate button
-        document.getElementById('validateGotifyButton').addEventListener('click', function() {
-            const gotify_url = document.getElementById('gotify_url').value;
-            const gotify_token = document.getElementById('gotify_token').value;
-            const gotifyStatusMessage = document.getElementById('gotifyStatusMessage');
+  // Function to load form data from sessionStorage
+  function loadFormData() {
+    const gotifyUrl = sessionStorage.getItem("gotify_url");
+    const gotifyToken = sessionStorage.getItem("gotify_token");
+    if (gotifyUrl) {
+      document.getElementById("gotify_url").value = gotifyUrl;
+    }
+    if (gotifyToken) {
+      document.getElementById("gotify_token").value = gotifyToken;
+    }
+  }
 
-            if (!gotify_url || !gotify_token) {
-                gotifyStatusMessage.textContent = 'Please enter both Gotify URL and Token.';
-                gotifyStatusMessage.style.color = '#ea868f';
-                gotifyStatusMessage.style.display = 'block';
-                return;
-            }
+  // Event listener to save form data on submit
+  document
+    .getElementById("configForm")
+    .addEventListener("submit", function (event) {
+      saveFormData();
+    });
 
-            fetch('/validate_gotify', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    gotify_url: gotify_url,
-                    gotify_token: gotify_token
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.valid) {
-                    gotifyStatusMessage.textContent = 'Gotify credentials validated successfully!';
-                    gotifyStatusMessage.style.color = 'green';
-                } else {
-                    gotifyStatusMessage.textContent = data.error;
-                    gotifyStatusMessage.style.color = 'red';
-                }
-                gotifyStatusMessage.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error validating Gotify credentials:', error);
-                gotifyStatusMessage.textContent = 'An error occurred while validating Gotify credentials.';
-                gotifyStatusMessage.style.color = 'red';
-                gotifyStatusMessage.style.display = 'block';
-            });
-        });
-
-        // Function to save form data to sessionStorage
-        function saveFormData() {
-            const gotifyUrl = document.getElementById('gotify_url').value;
-            const gotifyToken = document.getElementById('gotify_token').value;
-            sessionStorage.setItem('gotify_url', gotifyUrl);
-            sessionStorage.setItem('gotify_token', gotifyToken);
-        }
-
-        // Function to load form data from sessionStorage
-        function loadFormData() {
-            const gotifyUrl = sessionStorage.getItem('gotify_url');
-            const gotifyToken = sessionStorage.getItem('gotify_token');
-            if (gotifyUrl) {
-                document.getElementById('gotify_url').value = gotifyUrl;
-            }
-            if (gotifyToken) {
-                document.getElementById('gotify_token').value = gotifyToken;
-            }
-        }
-
-        // Event listener to save form data on submit
-        document.getElementById('configForm').addEventListener('submit', function(event) {
-            saveFormData();
-        });
-
-        // Load form data on page load
-        window.onload = function() {
-            loadFormData();
-        };
-</script> {% endblock %}
+  // Load form data on page load
+  window.onload = function () {
+    loadFormData();
+  };
+</script>
+{% endblock %}

@@ -1,3 +1,5 @@
+import os
+
 def build_oauth_dict(source, form_data):
     data = {
         source : {
@@ -44,3 +46,25 @@ def build_config_dict(source, form_data):
         return build_oauth_dict(source, form_data)
     else:
         return build_simple_dict(source, form_data)
+
+
+def get_template_list(app):
+    templates_dir = os.path.join(app.root_path, 'templates')
+    templates = []
+    for root, dirs, files in os.walk(templates_dir):
+        for file in files:
+            if (
+                file.endswith('.html')
+                and file != '000-base.html'
+                and file[:3].isdigit()
+                and file[3] == '-'
+                and not file.startswith('999-')
+            ):  # Ensure it starts with ###- and does not start with 999-
+                # Remove the leading numbers, dash, and '.html' extension
+                formatted_name = file.split('-', 1)[1].rsplit('.', 1)[0]
+                # Capitalize the first letter
+                formatted_name = formatted_name.capitalize()
+                templates.append((file, formatted_name))
+    # Sort the templates based on the numeric prefix
+    templates.sort(key=lambda x: int(x[0].split('-')[0]))
+    return templates

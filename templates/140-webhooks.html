@@ -1,67 +1,82 @@
 {% extends "000-base.html" %} {% block content %}
-<form action="/step/150-settings" method="post" id="configForm">
+<form
+  action="/step/{{ next_page }}"
+  method="post"
+  id="configForm"
+  name="configForm"
+>
   <div id="webhooksSection">
     <div class="row">
       <div class="col align-self-center">
-        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
+        <div class="input-group justify-content-start">
+          <a
+            class="btn btn-secondary"
+            role="button"
+            href="/step/{{ prev_page }}"
+            >Previous</a
+          >
+          <button
+            type="button"
+            class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="/step/start">Start</a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            {% for file, name in template_list %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}"
+                >{{ name }}</a
+              >
+            </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+              <a class="dropdown-item" href="/step/999-final"
+                >Skip to Validation</a
+              >
+            </li>
+          </ul>
+        </div>
       </div>
       <div class="col-6 align-self-center text-center">
-        <h2>Webhooks</h2>
+        <h2>{{ curr_page }}</h2>
       </div>
       <div class="col align-self-center">
         <div class="input-group justify-content-end">
-          <a class="btn btn-success" role="button" href="/step/150-settings">Next</a> <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle Dropdown</span></button>
+          <a class="btn btn-success" role="button" href="/step/{{ next_page}}"
+            >Next</a
+          >
+          <button
+            type="button"
+            class="btn btn-success dropdown-toggle dropdown-toggle-split"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li>
-              <a class="dropdown-item" href="/step/010-plex">Plex</a>
+              <a class="dropdown-item" href="/step/start">Start</a>
             </li>
+            <li><hr class="dropdown-divider" /></li>
+            {% for file, name in template_list %}
             <li>
-              <a class="dropdown-item" href="/step/020-tmdb">TMDb</a>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}"
+                >{{ name }}</a
+              >
             </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider" /></li>
             <li>
-              <a class="dropdown-item" href="/step/030-tautulli">Tautulli</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/040-github">GitHub</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/050-omdb">OMDb</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/060-mdblist">MDBList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/070-notifiarr">Notifiarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/080-gotify">Gotify</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/090-anidb">AniDB</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/100-radarr">Radarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/110-sonarr">Sonarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/120-trakt">Trakt</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/130-mal">MyAnimeList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/140-webhooks">Webhooks</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/150-settings">Settings</a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li>
-              <a class="dropdown-item" href="#">Skip to Validation (doesn't work atm)</a>
+              <a class="dropdown-item" href="/step/999-final"
+                >Skip to Validation</a
+              >
             </li>
           </ul>
         </div>
@@ -72,92 +87,242 @@
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
-            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-              <div class="progress-bar bg-success" style="width: 25%">
-                25%
-              </div>
+            <div
+              class="progress"
+              role="progressbar"
+              aria-label="Example with label"
+              aria-valuenow="25"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <div class="progress-bar bg-success" style="width: 25%">25%</div>
             </div>
           </div>
         </div>
         <div class="col"></div>
       </div>
     </div>
-      <hr class="hr">
-      <div class="alert alert-info" role="alert">
-        <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-      </div>
-      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
-            </div>
-            <div class="modal-body">
-              This is some dummy text<br>
-              <br>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-            </div>
+    <hr class="hr" />
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal"
+        >Click Here</a
+      >
+      if you need guidance completing this section.
+    </div>
+    <div
+      class="modal fade"
+      id="exampleModal"
+      tabindex="-1"
+      aria-labelledby="exampleModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">
+              Completing the Trakt Section
+            </h1>
+          </div>
+          <div class="modal-body">This is some dummy text<br /><br /></div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-primary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>
-      <div class="form-floating">
-      <select class="form-select" aria-label="Error" id="webhooks_error" name="webhooks_error">
-        <option value="">Select Error Webhook</option>
-        <option value="notifiarr">notifiarr</option>
-        <option value="gotify">gotify</option>
-        <option value="custom">custom</option>
-      </select>
-      <label for="webhooks_error">Error</label>
-    </div>
-    <div class="form-floating">
-      <select class="form-select" aria-label="Run Start" id="webhooks_run_start" name="webhooks_run_start">
-        <option value="">Select Run Start Webhook</option>
-        <option value="notifiarr">notifiarr</option>
-        <option value="gotify">gotify</option>
-        <option value="custom">custom</option>
-      </select>
-      <label for="webhooks_run_start">Run Start</label>
-    </div>
-    <div class="form-floating">
-      <select class="form-select" aria-label="Run End" id="webhooks_run_end" name="webhooks_run_end">
-        <option value="">Select Run End Webhook</option>
-        <option value="notifiarr">notifiarr</option>
-        <option value="gotify">gotify</option>
-        <option value="custom">custom</option>
-      </select>
-      <label for="webhooks_run_end">Run End</label>
-    </div>
-    <div class="form-floating">
-      <select class="form-select" aria-label="Changes" id="webhooks_changes" name="webhooks_changes">
-        <option value="">Select Changes Webhook</option>
-        <option value="notifiarr">notifiarr</option>
-        <option value="gotify">gotify</option>
-        <option value="custom">custom</option>
-      </select>
-      <label for="webhooks_changes">Changes</label>
-    </div>
-    <div class="form-floating">
-      <select class="form-select" aria-label="Version" id="webhooks_version" name="webhooks_version">
-        <option value="">Select Version Webhook</option>
-        <option value="notifiarr">notifiarr</option>
-        <option value="gotify">gotify</option>
-        <option value="custom">custom</option>
-      </select>
-      <label for="webhooks_version">Version</label>
-    </div>
-    <div class="form-floating">
-      <select class="form-select" aria-label="Delete" id="webhooks_delete" name="webhooks_delete">
-        <option value="">Select Delete Webhook</option>
-        <option value="notifiarr">notifiarr</option>
-        <option value="gotify">gotify</option>
-        <option value="custom">custom</option>
-      </select>
-      <label for="webhooks_delete">Delete</label>
     </div>
 
+    <div class="form-floating">
+      <select
+        class="form-select"
+        aria-label="Error"
+        id="webhooks_error"
+        name="webhooks_error"
+        onchange="showCustomInput(this)"
+      >
+        <option value="">Select Error Webhook</option>
+        <option value="notifiarr">Notifiarr</option>
+        <option value="gotify">Gotify</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label for="webhooks_error">Error</label>
+      <input
+        type="text"
+        class="form-control mt-2"
+        id="webhooks_error_custom"
+        name="webhooks_error_custom"
+        placeholder="Enter custom webhook URL"
+        style="display: none"
+      />
+    </div>
+
+    <div class="form-floating">
+      <select
+        class="form-select"
+        aria-label="Run Start"
+        id="webhooks_run_start"
+        name="webhooks_run_start"
+        onchange="showCustomInput(this)"
+      >
+        <option value="">Select Run Start Webhook</option>
+        <option value="notifiarr">Notifiarr</option>
+        <option value="gotify">Gotify</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label for="webhooks_run_start">Run Start</label>
+      <input
+        type="text"
+        class="form-control mt-2"
+        id="webhooks_run_start_custom"
+        name="webhooks_run_start_custom"
+        placeholder="Enter custom webhook URL"
+        style="display: none"
+      />
+    </div>
+
+    <div class="form-floating">
+      <select
+        class="form-select"
+        aria-label="Run End"
+        id="webhooks_run_end"
+        name="webhooks_run_end"
+        onchange="showCustomInput(this)"
+      >
+        <option value="">Select Run End Webhook</option>
+        <option value="notifiarr">Notifiarr</option>
+        <option value="gotify">Gotify</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label for="webhooks_run_end">Run End</label>
+      <input
+        type="text"
+        class="form-control mt-2"
+        id="webhooks_run_end_custom"
+        name="webhooks_run_end_custom"
+        placeholder="Enter custom webhook URL"
+        style="display: none"
+      />
+    </div>
+
+    <div class="form-floating">
+      <select
+        class="form-select"
+        aria-label="Changes"
+        id="webhooks_changes"
+        name="webhooks_changes"
+        onchange="showCustomInput(this)"
+      >
+        <option value="">Select Changes Webhook</option>
+        <option value="notifiarr">Notifiarr</option>
+        <option value="gotify">Gotify</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label for="webhooks_changes">Changes</label>
+      <input
+        type="text"
+        class="form-control mt-2"
+        id="webhooks_changes_custom"
+        name="webhooks_changes_custom"
+        placeholder="Enter custom webhook URL"
+        style="display: none"
+      />
+    </div>
+
+    <div class="form-floating">
+      <select
+        class="form-select"
+        aria-label="Version"
+        id="webhooks_version"
+        name="webhooks_version"
+        onchange="showCustomInput(this)"
+      >
+        <option value="">Select Version Webhook</option>
+        <option value="notifiarr">Notifiarr</option>
+        <option value="gotify">Gotify</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label for="webhooks_version">Version</label>
+      <input
+        type="text"
+        class="form-control mt-2"
+        id="webhooks_version_custom"
+        name="webhooks_version_custom"
+        placeholder="Enter custom webhook URL"
+        style="display: none"
+      />
+    </div>
+
+    <div class="form-floating">
+      <select
+        class="form-select"
+        aria-label="Delete"
+        id="webhooks_delete"
+        name="webhooks_delete"
+        onchange="showCustomInput(this)"
+      >
+        <option value="">Select Delete Webhook</option>
+        <option value="notifiarr">Notifiarr</option>
+        <option value="gotify">Gotify</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label for="webhooks_delete">Delete</label>
+      <input
+        type="text"
+        class="form-control mt-2"
+        id="webhooks_delete_custom"
+        name="webhooks_delete_custom"
+        placeholder="Enter custom webhook URL"
+        style="display: none"
+      />
+    </div>
+
+    <script>
+      function showCustomInput(select) {
+        var customInputId = select.id + "_custom";
+        var customInput = document.getElementById(customInputId);
+        if (select.value === "custom") {
+          customInput.style.display = "block";
+        } else {
+          customInput.style.display = "none";
+          customInput.value = ""; // Clear the custom input if not selected
+        }
+      }
+
+      // Restore custom input visibility on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        var selects = document.querySelectorAll("select");
+        selects.forEach(function (select) {
+          showCustomInput(select);
+        });
+      });
+    </script>
   </div>
 </form>
+
+<script>
+  function showCustomInput(select) {
+    var customInputId = select.id + "_custom";
+    var customInput = document.getElementById(customInputId);
+    if (select.value === "custom") {
+      customInput.style.display = "block";
+    } else {
+      customInput.style.display = "none";
+      customInput.value = ""; // Clear the custom input if not selected
+    }
+  }
+
+  // Restore custom input visibility on page load
+  document.addEventListener("DOMContentLoaded", function () {
+    var selects = document.querySelectorAll("select");
+    selects.forEach(function (select) {
+      showCustomInput(select);
+    });
+  });
+</script>
 
 {% endblock %}

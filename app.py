@@ -12,7 +12,7 @@ import secrets
 
 from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
 from modules.output import add_border_to_ascii_art
-from modules.helpers import build_config_dict
+from modules.helpers import build_config_dict, get_template_list
 
 # Load JSON Schema
 # probably ought to load this from github
@@ -30,15 +30,33 @@ def start():
     return render_template('start.html')
 
 
-@app.route('/step-1')
-def index():
-    return render_template('index.html')
-
-
 @app.route('/step/<name>', methods=['GET', 'POST'])
 def step(name):
+    template_list = get_template_list(app)
+    special_cases = {'start': 'Start', '999-final': 'Final', '999-danger': 'Danger'}
+    
+    if name in special_cases:
+        curr_page = special_cases[name]
+        if name == 'start':
+            prev_page = ""
+            next_page = template_list[0][0].rsplit('.html', 1)[0]
+        elif name == '999-final':
+            prev_page = template_list[-1][0].rsplit('.html', 1)[0]
+            next_page = ""
+        elif name == '999-danger':
+            prev_page = template_list[-1][0].rsplit('.html', 1)[0]
+            next_page = "999-final"
+    else:
+        current_index = next((index for index, (file, _) in enumerate(template_list) if file.startswith(name)), None)
+        
+        if current_index is None:
+            return redirect(url_for('step', name='start'))
+        
+        curr_page = template_list[current_index][0].rsplit('.html', 1)[0].split('-', 1)[1].capitalize()
+        next_page = template_list[current_index + 1][0].rsplit('.html', 1)[0] if current_index + 1 < len(template_list) else "999-final"
+        prev_page = template_list[current_index - 1][0].rsplit('.html', 1)[0] if current_index > 0 else "start"
+
     if request.method == 'POST':
-        # get source from referrer
         source = request.referrer.split("/")[-1]
         source = source.split("?")[0]
         source = source.split('-')[-1]
@@ -49,12 +67,13 @@ def step(name):
 
     code_verifier = secrets.token_urlsafe(100)[:128]
 
-    if name == '999-final':
-        return build_config()
+    if name == '999-final' or name == '999-danger':
+        return build_config(code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page)
     else:
-        return render_template(name + '.html', code_verifier = code_verifier)
+        return render_template(name + '.html', code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page)
 
-def build_config():
+
+def build_config(code_verifier, template_list, next_page, prev_page, curr_page):
 
     # Combine data from all steps (retrieve from session or other storage)
     config_data = {
@@ -113,27 +132,27 @@ def build_config():
         f"{tmdb_art}\n"
         f"{yaml.dump({'tmdb': config_data['tmdb']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{tautulli_art}\n"
-        f"{yaml.dump({'tautulli': config_data['tautulli']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'tautulli': config_data['tautulli']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{github_art}\n"
-        f"{yaml.dump({'github': config_data['github']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'github': config_data['github']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{omdb_art}\n"
-        f"{yaml.dump({'omdb': config_data['omdb']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'omdb': config_data['omdb']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{mdblist_art}\n"
-        f"{yaml.dump({'mdblist': config_data['mdblist']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'mdblist': config_data['mdblist']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{notifiarr_art}\n"
-        f"{yaml.dump({'notifiarr': config_data['notifiarr']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'notifiarr': config_data['notifiarr']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{gotify_art}\n"
-        f"{yaml.dump({'gotify': config_data['gotify']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'gotify': config_data['gotify']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{anidb_art}\n"
-        f"{yaml.dump({'anidb': config_data['anidb']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'anidb': config_data['anidb']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{radarr_art}\n"
-        f"{yaml.dump({'radarr': config_data['radarr']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'radarr': config_data['radarr']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{sonarr_art}\n"
-        f"{yaml.dump({'sonarr': config_data['sonarr']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'sonarr': config_data['sonarr']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{trakt_art}\n"
-        f"{yaml.dump({'trakt': config_data['trakt']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'trakt': config_data['trakt']}, default_flow_style=False, sort_keys=False)}\n\n"
         f"{mal_art}\n"
-        f"{yaml.dump({'mal': config_data['mal']}, default_flow_style=False, sort_keys=False)}\n"
+        f"{yaml.dump({'mal': config_data['mal']}, default_flow_style=False, sort_keys=False)}\n\n"
     )
 
     # Store the final YAML content in the session
@@ -143,10 +162,10 @@ def build_config():
     except jsonschema.exceptions.ValidationError as e:
         print(config_data)
         flash(f'Validation error: {e.message}', 'danger')
-        return render_template('999-danger.html', yaml_content=yaml_content, validation_error=e)
+        return render_template('999-danger.html', yaml_content=yaml_content, validation_error=e, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page)
 
     # Render the final step template with the YAML content
-    return render_template('999-final.html', yaml_content=yaml_content)
+    return render_template('999-final.html', yaml_content=yaml_content, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page)
 
 
 @app.route('/download')

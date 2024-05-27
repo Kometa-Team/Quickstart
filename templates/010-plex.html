@@ -1,72 +1,62 @@
 {% extends "000-base.html" %} {% block content %}
-<form action="/step/020-tmdb" method="post" id="configForm" name="configForm">
+<form
+  action="/step/{{ next_page }}"
+  method="post"
+  id="configForm"
+  name="configForm"
+>
   <div id="plexSection">
     <div class="row">
       <div class="col align-self-center">
-        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
-      </div>
-      <div class="col-6 align-self-center text-center">
-        <h2>Plex</h2>
-      </div>
-      <div class="col align-self-center">
-        <div class="input-group justify-content-end">
-          <a class="btn btn-success" role="button" href="/step/020-tmdb">Next</a> <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle Dropdown</span></button>
-          <ul class="dropdown-menu dropdown-menu-end">
+        <div class="input-group justify-content-start">
+          <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>
+          <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu">
+              <li>
+                  <a class="dropdown-item" href="/step/start">Start</a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+            {% for file, name in template_list %}
+              <li>
+                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider"></li>
             <li>
-              <a class="dropdown-item" href="/step/010-plex">Plex</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/020-tmdb">TMDb</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/030-tautulli">Tautulli</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/040-github">GitHub</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/050-omdb">OMDb</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/060-mdblist">MDBList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/070-notifiarr">Notifiarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/080-gotify">Gotify</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/090-anidb">AniDB</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/100-radarr">Radarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/110-sonarr">Sonarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/120-trakt">Trakt</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/130-mal">MyAnimeList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/140-webhooks">Webhooks</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/150-settings">Settings</a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li>
-              <a class="dropdown-item" href="#">Skip to Validation (doesn't work atm)</a>
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
             </li>
           </ul>
         </div>
       </div>
+      <div class="col-6 align-self-center text-center">
+          <h2>{{ curr_page }}</h2>
+      </div>
+    <div class="col align-self-center">
+      <div class="input-group justify-content-end">
+        <a class="btn btn-success" role="button" href="/step/{{ next_page}}">Next</a>
+        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+              <a class="dropdown-item" href="/step/start">Start</a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          {% for file, name in template_list %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
+            </li>
+        </ul>
+      </div>
     </div>
+  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
