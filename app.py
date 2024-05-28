@@ -43,6 +43,7 @@ def step(name):
     
     if name in special_cases:
         curr_page = special_cases[name]
+        title = special_cases[name]
         if name == 'start':
             prev_page = ""
             next_page = template_list[0][0].rsplit('.html', 1)[0]
@@ -62,6 +63,7 @@ def step(name):
             return redirect(url_for('step', name='start'))
         
         curr_page = template_list[current_index][0].rsplit('.html', 1)[0].split('-', 1)[1].capitalize()
+        title = curr_page
         next_page = template_list[current_index + 1][0].rsplit('.html', 1)[0] if current_index + 1 < len(template_list) else "999-final"
         prev_page = template_list[current_index - 1][0].rsplit('.html', 1)[0] if current_index > 0 else "start"
         
@@ -81,12 +83,12 @@ def step(name):
     code_verifier = secrets.token_urlsafe(100)[:128]
 
     if name == '999-final' or name == '999-danger':
-        return build_config(code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+        return build_config(title=title, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
     else:
-        return render_template(name + '.html', code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+        return render_template(name + '.html', title=title, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
 
-def build_config(code_verifier, template_list, next_page, prev_page, curr_page, progress):
+def build_config(title, code_verifier, template_list, next_page, prev_page, curr_page, progress):
 
     # Combine data from all steps (retrieve from session or other storage)
     config_data = {
@@ -175,10 +177,10 @@ def build_config(code_verifier, template_list, next_page, prev_page, curr_page, 
     except jsonschema.exceptions.ValidationError as e:
         print(config_data)
         flash(f'Validation error: {e.message}', 'danger')
-        return render_template('999-danger.html', yaml_content=yaml_content, validation_error=e, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+        return render_template('999-danger.html', title=title, yaml_content=yaml_content, validation_error=e, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
     # Render the final step template with the YAML content
-    return render_template('999-final.html', yaml_content=yaml_content, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+    return render_template('999-final.html', title=title, yaml_content=yaml_content, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
 
 @app.route('/download')
