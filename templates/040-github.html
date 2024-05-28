@@ -87,23 +87,17 @@
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
-            <div
-              class="progress"
-              role="progressbar"
-              aria-label="Example with label"
-              aria-valuenow="25"
-              aria-valuemin="0"
-              aria-valuemax="100"
-            >
-            <div class="progress-bar bg-success" style="width: {{ progress }}%">
-              {{ progress }}%
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" style="width: {{ progress }}%">
+                {{ progress }}%
+              </div>
             </div>
           </div>
         </div>
         <div class="col"></div>
       </div>
     </div>
-    <hr class="hr" />
+    <hr class="hr">
     <div class="alert alert-info" role="alert">
       <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal"
         >Click Here</a
