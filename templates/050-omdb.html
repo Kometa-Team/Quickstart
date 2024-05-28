@@ -23,12 +23,12 @@
       </div>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="omdb_apikey" name="omdb_apikey" placeholder="OMDb API Key" aria-label="OMDb API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateOmdbButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="omdb_apikey" name="omdb_apikey" value="{{ data['omdb']['apikey'] }}" title="OMDb API Key" aria-label="OMDb API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateOmdbButton" type="button">Validate</button>
     </div>
     <div id="omdbStatusMessage" class="status-message"></div><br>
   </div>
   <div class="form-floating">
-    <input type="number" class="form-control" id="omdb_cache_expiration" name="omdb_cache_expiration" value="60" min="0"> <label for="omdb_cache_expiration">Cache Expiration (in days)</label>
+    <input type="number" class="form-control" id="omdb_cache_expiration" name="omdb_cache_expiration" value="{{ data['omdb']['cache_expiration'] }}" min="0"> <label for="omdb_cache_expiration">Cache Expiration (in days)</label>
   </div>
   <hr class="hr">
   <div class="row">
@@ -42,27 +42,6 @@
   </div>
 </form>
 <script>
-    // Save input values to sessionStorage on change
-    document.getElementById('omdb_apikey').addEventListener('input', function() {
-        sessionStorage.setItem('omdb_apikey', this.value);
-    });
-    document.getElementById('omdb_cache_expiration').addEventListener('input', function() {
-        sessionStorage.setItem('omdb_cache_expiration', this.value);
-    });
-
-    // Load saved values from sessionStorage on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const savedOmdbApikey = sessionStorage.getItem('omdb_apikey');
-        const savedCacheExpiration = sessionStorage.getItem('omdb_cache_expiration');
-
-        if (savedOmdbApikey) {
-            document.getElementById('omdb_apikey').value = savedOmdbApikey;
-        }
-        if (savedCacheExpiration) {
-            document.getElementById('omdb_cache_expiration').value = savedCacheExpiration;
-        }
-    });
-
     document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
         const apikeyInput = document.getElementById('omdb_apikey');
         const currentType = apikeyInput.getAttribute('type');

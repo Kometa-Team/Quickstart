@@ -23,10 +23,10 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="tautulli_url" name="tautulli_url" placeholder="http://192.168.1.12:8181"> <label for="tautulli_url">Tautulli URL</label>
+      <input type="text" class="form-control" id="tautulli_url" name="tautulli_url" value="{{ data['tautulli']['url'] }}" title="http://192.168.1.12:8181"> <label for="tautulli_url">Tautulli URL</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" placeholder="API Key" aria-label="Tautull API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateTautulliButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" value="{{ data['tautulli']['apikey'] }}" title="API Key" aria-label="Tautull API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateTautulliButton" type="button">Validate</button>
     </div>
     <div id="tautulliStatusMessage" class="status-message"></div><br>
   </div>
@@ -42,25 +42,6 @@
   </div>
 </form>
 <script>
-  // Save input values to sessionStorage on change
-  document.getElementById('tautulli_url').addEventListener('input', function() {
-    sessionStorage.setItem('tautulli_url', this.value);
-  });
-  document.getElementById('tautulli_apikey').addEventListener('input', function() {
-    sessionStorage.setItem('tautulli_apikey', this.value);
-  });
-
-  // Load saved values from sessionStorage on page load
-  document.addEventListener('DOMContentLoaded', function() {
-    const savedTautulliUrl = sessionStorage.getItem('tautulli_url');
-    const savedTautulliApikey = sessionStorage.getItem('tautulli_apikey');
-    if (savedTautulliUrl) {
-      document.getElementById('tautulli_url').value = savedTautulliUrl;
-    }
-    if (savedTautulliApikey) {
-      document.getElementById('tautulli_apikey').value = savedTautulliApikey;
-    }
-  });
 
   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
     const apikeyInput = document.getElementById('tautulli_apikey');

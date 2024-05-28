@@ -2,15 +2,20 @@
 <html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta id="plex_valid" data-plex-valid="{{ plex_valid }}">
+    <meta id="tmdb_valid" data-tmdb-valid="{{ tmdb_valid }}">
     <title>Kometa YAML Config Wizard</title>
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-
+    <link href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
+    
 </head>
 <body>
     <script type='text/javascript' src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
   <div class="header-container">
     <img src="{{ url_for('static', filename='images/header.png') }}" alt="Header Image" class="header-image">

@@ -1,4 +1,5 @@
 Flask
+Flask-Session[cachelib]
 PyYAML
 pyfiglet
 python-dotenv

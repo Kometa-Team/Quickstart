@@ -25,22 +25,22 @@
       </div>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="API Key" aria-label="TMDb API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" value="{{ data['tmdb']['apikey'] }}" aria-label="TMDb API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateButton" type="button">Validate</button>
     </div>
     <div id="statusMessage" class="status-message"></div>
     <div class="form-floating">
       <select class="form-select" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
-        <option value="">
+        <option value="{{ data['tmdb']['language'] }}">
           Select Language - Please validate TMDB API Key
         </option>
       </select> <select class="form-select" aria-label="TMDb Region Selector" id="tmdb_region" name="tmdb_region">
-        <option value="">
+        <option value="{{ data['tmdb']['region'] }}">
           Select Region - Please validate TMDB API Key
         </option>
       </select>
     </div>
     <div class="form-floating">
-      <input type="number" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="60" min="0"> <label for="tmdb_cache_expiration">Cache Expiration (in days)</label>
+      <input type="number" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="{{ data['tmdb']['cache_expiration'] }}" min="0"> <label for="tmdb_cache_expiration">Cache Expiration (in days)</label>
     </div>
     <hr class="hr">
     <div class="row">
@@ -55,39 +55,9 @@
   </div>
 </form>
 <script>
-  // Save input values to sessionStorage on change
-  document.getElementById('tmdb_apikey').addEventListener('input', function() {
-    sessionStorage.setItem('tmdb_apikey', this.value);
-  });
-  document.getElementById('tmdb_language').addEventListener('change', function() {
-    sessionStorage.setItem('tmdb_language', this.value);
-  });
-  document.getElementById('tmdb_region').addEventListener('change', function() {
-    sessionStorage.setItem('tmdb_region', this.value);
-  });
-  document.getElementById('tmdb_cache_expiration').addEventListener('input', function() {
-    sessionStorage.setItem('tmdb_cache_expiration', this.value);
-  });
-
-  // Load saved values from sessionStorage on page load
-  document.addEventListener('DOMContentLoaded', function() {
-    const savedApiKey = sessionStorage.getItem('tmdb_apikey');
-    const savedLanguage = sessionStorage.getItem('tmdb_language');
-    const savedRegion = sessionStorage.getItem('tmdb_region');
-    const savedCacheExpiration = sessionStorage.getItem('tmdb_cache_expiration');
-    if (savedApiKey) {
-      document.getElementById('tmdb_apikey').value = savedApiKey;
-    }
-    if (savedLanguage) {
-      document.getElementById('tmdb_language').value = savedLanguage;
-    }
-    if (savedRegion) {
-      document.getElementById('tmdb_region').value = savedRegion;
-    }
-    if (savedCacheExpiration) {
-      document.getElementById('tmdb_cache_expiration').value = savedCacheExpiration;
-    }
-  });
+  // Enable Tooltips
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+  const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 
   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
     const apikeyInput = document.getElementById('tmdb_apikey');

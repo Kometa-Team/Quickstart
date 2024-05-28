@@ -1,4 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session, send_file
+from flask_session import Session
+from cachelib.file import FileSystemCache
+
 import jsonschema
 import yaml
 import requests
@@ -13,6 +16,7 @@ import secrets
 from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
 from modules.output import add_border_to_ascii_art
 from modules.helpers import build_config_dict
+from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage
 
 # Load JSON Schema
 # probably ought to load this from github
@@ -21,9 +25,33 @@ with open('json-schema/config-schema.json', 'r') as file:
 
 load_dotenv()
 
+
 app = Flask(__name__)
+
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 
+# SESSION_TYPE = 'cachelib'
+# SESSION_SERIALIZATION_FORMAT = 'json'
+# SESSION_CACHELIB = FileSystemCache(threshold=500, cache_dir="sessions"),
+# app.config.from_object(__name__)
+# Session(app)
+
+# Create the Flask application
+app = Flask(__name__)
+
+# Details on the Secret Key: https://flask.palletsprojects.com/en/3.0.x/config/#SECRET_KEY
+# NOTE: The secret key is used to cryptographically-sign the cookies used for storing
+#       the session identifier.
+# app.secret_key = os.getenv('SECRET_KEY', default='BAD_SECRET_KEY')
+
+# Configure Redis for storing the session data on the server-side
+app.config['SESSION_TYPE'] = 'cachelib'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = False
+# app.config['SESSION_REDIS'] = redis.from_url('redis://127.0.0.1:6379')
+
+# Create and initialize the Flask-Session object AFTER `app` has been configured
+server_session = Session(app)
 
 @app.route('/')
 def start():
@@ -38,21 +66,16 @@ def index():
 @app.route('/step/<name>', methods=['GET', 'POST'])
 def step(name):
     if request.method == 'POST':
-        # get source from referrer
-        source = request.referrer.split("/")[-1]
-        source = source.split("?")[0]
-        source = source.split('-')[-1]
+        save_settings(request.referrer, request.form)
 
-        data = build_config_dict(source, request.form)
+    data = retrieve_settings(name)
 
-        session[source] = data[source]
-
-    code_verifier = secrets.token_urlsafe(100)[:128]
-
+    plex_valid, tmdb_valid = check_minimum_settings()
+    
     if name == '999-final':
         return build_config()
     else:
-        return render_template(name + '.html', code_verifier = code_verifier)
+        return render_template(name + '.html', data=data, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
 
 def build_config():
 
@@ -153,6 +176,13 @@ def download():
         )
     flash('No configuration to download', 'danger')
     return redirect(url_for('final_step'))
+
+@app.route('/flush_storage', methods=['GET'])
+def flush_storage():
+    flush_session_storage()
+    return redirect(url_for('start'))
+
+
 
 @app.route('/validate_gotify', methods=['POST'])
 def validate_gotify():

@@ -23,7 +23,7 @@
       </div>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="notifiarr_apikey" name="notifiarr_apikey" placeholder="Notifiarr API Key" aria-label="Notifiarr API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateNotifiarrButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="notifiarr_apikey" name="notifiarr_apikey" value="{{ data['notifiarr']['apikey'] }}" title="Notifiarr API Key" aria-label="Notifiarr API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateNotifiarrButton" type="button">Validate</button>
     </div>
     <div id="notifiarrStatusMessage" class="status-message"></div><br>
   </div>
@@ -39,19 +39,6 @@
   </div>
 </form>
 <script>
-    // Save input values to sessionStorage on change
-    document.getElementById('notifiarr_apikey').addEventListener('input', function() {
-        sessionStorage.setItem('notifiarr_apikey', this.value);
-    });
-
-    // Load saved values from sessionStorage on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const savedNotifiarrApikey = sessionStorage.getItem('notifiarr_apikey');
-        if (savedNotifiarrApikey) {
-            document.getElementById('notifiarr_apikey').value = savedNotifiarrApikey;
-        }
-    });
-
     async function validateNotifiarrApikey(apikey) {
         const apiUrl = `https://notifiarr.com/api/v1/user/validate/${apikey}`;
         try {

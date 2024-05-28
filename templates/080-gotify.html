@@ -23,10 +23,10 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="gotify_url" name="gotify_url" placeholder="http://192.168.1.12:8181"> <label for="gotify_url">Gotify URL</label>
+      <input type="text" class="form-control" id="gotify_url" name="gotify_url" value="{{ data['gotify']['url'] }}" title="http://192.168.1.12:8181"> <label for="gotify_url">Gotify URL</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="gotify_apikey" name="gotify_apikey" placeholder="API Key" aria-label="API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="gotify_token" name="gotify_token" value="{{ data['gotify']['token'] }}" title="API Key" aria-label="API Key"> <button class="btn btn-secondary" id="toggleTokenVisibility" type="button">Show</button> <button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
     </div>
     <div id="gotifyStatusMessage" class="status-message"></div><br>
   </div>
@@ -44,7 +44,7 @@
 <script>
         // Function to toggle API key visibility
         document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-            const apikeyInput = document.getElementById('gotify_apikey');
+            const apikeyInput = document.getElementById('gotify_token');
             const currentType = apikeyInput.getAttribute('type');
             apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
             this.textContent = currentType === 'password' ? 'Hide' : 'Show';
@@ -112,33 +112,4 @@
             });
         });
 
-        // Function to save form data to sessionStorage
-        function saveFormData() {
-            const gotifyUrl = document.getElementById('gotify_url').value;
-            const gotifyApikey = document.getElementById('gotify_apikey').value;
-            sessionStorage.setItem('gotify_url', gotifyUrl);
-            sessionStorage.setItem('gotify_apikey', gotifyApikey);
-        }
-
-        // Function to load form data from sessionStorage
-        function loadFormData() {
-            const gotifyUrl = sessionStorage.getItem('gotify_url');
-            const gotifyApikey = sessionStorage.getItem('gotify_apikey');
-            if (gotifyUrl) {
-                document.getElementById('gotify_url').value = gotifyUrl;
-            }
-            if (gotifyApikey) {
-                document.getElementById('gotify_apikey').value = gotifyApikey;
-            }
-        }
-
-        // Event listener to save form data on submit
-        document.getElementById('configForm').addEventListener('submit', function(event) {
-            saveFormData();
-        });
-
-        // Load form data on page load
-        window.onload = function() {
-            loadFormData();
-        };
 </script> {% endblock %}

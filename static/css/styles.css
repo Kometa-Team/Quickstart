@@ -124,3 +124,9 @@ label {
 .me-md-2 {
     margin-right: 0rem !important;
 }
+
+.tooltip-inner {
+    background-color: #fff; 
+    color: #000;
+    border: 1px solid #000;
+}
