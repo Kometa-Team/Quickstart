@@ -1,0 +1,496 @@
+{% extends "000-base.html" %} {% block content %}
+<form action="/step/999-final" method="post" id="configForm">
+  <div id="settingsSection">
+    <div class="row">
+      <div class="col align-self-center">
+        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>Settings</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+          <button class="btn btn-success" type="submit">Finish</button> <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle Dropdown</span></button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="/step/010-plex">Plex</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/020-tmdb">TMDb</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/030-tautulli">Tautulli</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/040-github">GitHub</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/050-omdb">OMDb</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/060-mdblist">MDBList</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/070-notifiarr">Notifiarr</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/080-gotify">Gotify</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/090-anidb">AniDB</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/100-radarr">Radarr</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/110-sonarr">Sonarr</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/120-trakt">Trakt</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/130-mal">MyAnimeList</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/140-webhooks">Webhooks</a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="/step/150-settings">Settings</a>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            <li>
+              <a class="dropdown-item" href="#">Skip to Validation (doesn't work atm)</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row">
+        <div class="col"></div>
+        <div class="col-8">
+          <div class="col align-self-end">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" style="width: 25%">
+                25%
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+      <hr class="hr">
+      <div class="alert alert-info" role="alert">
+        <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+      </div>
+      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
+            </div>
+            <div class="modal-body">
+              This is some dummy text<br>
+              <br>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-floating">
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="60">
+      <label for="cache_expiration">Cache Expiration (days)</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="asset_directory" name="asset_directory" placeholder="config/assets">
+      <label for="asset_directory">Asset Directory</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="asset_depth" name="asset_depth" placeholder="1">
+      <label for="asset_depth">Asset Depth</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="minimum_items" name="minimum_items" placeholder="1">
+      <label for="minimum_items">Minimum Items</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" placeholder="1">
+      <label for="run_again_delay">Run Again Delay (minutes)</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <select class="form-select" id="tvdb_language" name="tvdb_language">
+        <option value="eng" selected>English (eng)</option>
+        <option value="aar">Afar (aar)</option>
+        <option value="abk">Abkhazian (abk)</option>
+        <option value="afr">Afrikaans (afr)</option>
+        <option value="aka">Akan (aka)</option>
+        <option value="alb">Albanian (alb)</option>
+        <option value="amh">Amharic (amh)</option>
+        <option value="ara">Arabic (ara)</option>
+        <option value="arg">Aragonese (arg)</option>
+        <option value="arm">Armenian (arm)</option>
+        <option value="asm">Assamese (asm)</option>
+        <option value="ava">Avaric (ava)</option>
+        <option value="ave">Avestan (ave)</option>
+        <option value="aym">Aymara (aym)</option>
+        <option value="aze">Azerbaijani (aze)</option>
+        <option value="bak">Bashkir (bak)</option>
+        <option value="bam">Bambara (bam)</option>
+        <option value="baq">Basque (baq)</option>
+        <option value="bel">Belarusian (bel)</option>
+        <option value="ben">Bengali (ben)</option>
+        <option value="bih">Bihari (bih)</option>
+        <option value="bis">Bislama (bis)</option>
+        <option value="bos">Bosnian (bos)</option>
+        <option value="bre">Breton (bre)</option>
+        <option value="bul">Bulgarian (bul)</option>
+        <option value="bur">Burmese (bur)</option>
+        <option value="cat">Catalan (cat)</option>
+        <option value="cha">Chamorro (cha)</option>
+        <option value="che">Chechen (che)</option>
+        <option value="chi">Chinese (chi)</option>
+        <option value="chu">Church Slavic (chu)</option>
+        <option value="chv">Chuvash (chv)</option>
+        <option value="cor">Cornish (cor)</option>
+        <option value="cos">Corsican (cos)</option>
+        <option value="cre">Cree (cre)</option>
+        <option value="cze">Czech (cze)</option>
+        <option value="dan">Danish (dan)</option>
+        <option value="div">Divehi (div)</option>
+        <option value="dut">Dutch (dut)</option>
+        <option value="dzo">Dzongkha (dzo)</option>
+        <option value="eng">English (eng)</option>
+        <option value="epo">Esperanto (epo)</option>
+        <option value="est">Estonian (est)</option>
+        <option value="ewe">Ewe (ewe)</option>
+        <option value="fao">Faroese (fao)</option>
+        <option value="fij">Fijian (fij)</option>
+        <option value="fin">Finnish (fin)</option>
+        <option value="fre">French (fre)</option>
+        <option value="fry">Frisian (fry)</option>
+        <option value="ful">Fulah (ful)</option>
+        <option value="geo">Georgian (geo)</option>
+        <option value="ger">German (ger)</option>
+        <option value="gla">Gaelic (gla)</option>
+        <option value="gle">Irish (gle)</option>
+        <option value="glg">Galician (glg)</option>
+        <option value="glv">Manx (glv)</option>
+        <option value="gre">Greek (gre)</option>
+        <option value="grn">Guarani (grn)</option>
+        <option value="guj">Gujarati (guj)</option>
+        <option value="hat">Haitian (hat)</option>
+        <option value="hau">Hausa (hau)</option>
+        <option value="heb">Hebrew (heb)</option>
+        <option value="her">Herero (her)</option>
+        <option value="hin">Hindi (hin)</option>
+        <option value="hmo">Hiri Motu (hmo)</option>
+        <option value="hrv">Croatian (hrv)</option>
+        <option value="hun">Hungarian (hun)</option>
+        <option value="ibo">Igbo (ibo)</option>
+        <option value="ice">Icelandic (ice)</option>
+        <option value="ido">Ido (ido)</option>
+        <option value="iii">Sichuan Yi (iii)</option>
+        <option value="iku">Inuktitut (iku)</option>
+        <option value="ile">Interlingue (ile)</option>
+        <option value="ina">Interlingua (ina)</option>
+        <option value="ind">Indonesian (ind)</option>
+        <option value="ipk">Inupiaq (ipk)</option>
+        <option value="ita">Italian (ita)</option>
+        <option value="jav">Javanese (jav)</option>
+        <option value="jpn">Japanese (jpn)</option>
+        <option value="kal">Kalaallisut (kal)</option>
+        <option value="kan">Kannada (kan)</option>
+        <option value="kas">Kashmiri (kas)</option>
+        <option value="kau">Kanuri (kau)</option>
+        <option value="kaz">Kazakh (kaz)</option>
+        <option value="khm">Central Khmer (khm)</option>
+        <option value="kik">Kikuyu (kik)</option>
+        <option value="kin">Kinyarwanda (kin)</option>
+        <option value="kir">Kirghiz (kir)</option>
+        <option value="kom">Komi (kom)</option>
+        <option value="kon">Kongo (kon)</option>
+        <option value="kor">Korean (kor)</option>
+        <option value="kua">Kuanyama (kua)</option>
+        <option value="kur">Kurdish (kur)</option>
+        <option value="lao">Lao (lao)</option>
+        <option value="lat">Latin (lat)</option>
+        <option value="lav">Latvian (lav)</option>
+        <option value="lim">Limburgan (lim)</option>
+        <option value="lin">Lingala (lin)</option>
+        <option value="lit">Lithuanian (lit)</option>
+        <option value="ltz">Luxembourgish (ltz)</option>
+        <option value="lub">Luba-Katanga (lub)</option>
+        <option value="lug">Ganda (lug)</option>
+        <option value="mac">Macedonian (mac)</option>
+        <option value="mah">Marshallese (mah)</option>
+        <option value="mal">Malayalam (mal)</option>
+        <option value="mao">Maori (mao)</option>
+        <option value="mar">Marathi (mar)</option>
+        <option value="may">Malay (may)</option>
+        <option value="mlg">Malagasy (mlg)</option>
+        <option value="mlt">Maltese (mlt)</option>
+        <option value="mon">Mongolian (mon)</option>
+        <option value="nau">Nauru (nau)</option>
+        <option value="nav">Navajo (nav)</option>
+        <option value="nbl">Ndebele, South (nbl)</option>
+        <option value="nde">Ndebele, North (nde)</option>
+        <option value="ndo">Ndonga (ndo)</option>
+        <option value="nep">Nepali (nep)</option>
+        <option value="nno">Norwegian Nynorsk (nno)</option>
+        <option value="nob">Norwegian Bokmål (nob)</option>
+        <option value="nor">Norwegian (nor)</option>
+        <option value="nya">Nyanja (nya)</option>
+        <option value="oci">Occitan (oci)</option>
+        <option value="oji">Ojibwa (oji)</option>
+        <option value="ori">Oriya (ori)</option>
+        <option value="orm">Oromo (orm)</option>
+        <option value="oss">Ossetian (oss)</option>
+        <option value="pan">Panjabi (pan)</option>
+        <option value="per">Persian (per)</option>
+        <option value="pli">Pali (pli)</option>
+        <option value="pol">Polish (pol)</option>
+        <option value="por">Portuguese (por)</option>
+        <option value="pus">Pushto (pus)</option>
+        <option value="que">Quechua (que)</option>
+        <option value="roh">Romansh (roh)</option>
+        <option value="rum">Romanian (rum)</option>
+        <option value="run">Rundi (run)</option>
+        <option value="rus">Russian (rus)</option>
+        <option value="sag">Sango (sag)</option>
+        <option value="san">Sanskrit (san)</option>
+        <option value="sin">Sinhala (sin)</option>
+        <option value="slk">Slovak (slk)</option>
+        <option value="slv">Slovenian (slv)</option>
+        <option value="sme">Northern Sami (sme)</option>
+        <option value="smo">Samoan (smo)</option>
+        <option value="sna">Shona (sna)</option>
+        <option value="snd">Sindhi (snd)</option>
+        <option value="som">Somali (som)</option>
+        <option value="sot">Sotho, Southern (sot)</option>
+        <option value="spa">Spanish (spa)</option>
+        <option value="srd">Sardinian (srd)</option>
+        <option value="srp">Serbian (srp)</option>
+        <option value="ssw">Swati (ssw)</option>
+        <option value="sun">Sundanese (sun)</option>
+        <option value="swa">Swahili (swa)</option>
+        <option value="swe">Swedish (swe)</option>
+        <option value="tah">Tahitian (tah)</option>
+        <option value="tam">Tamil (tam)</option>
+        <option value="tat">Tatar (tat)</option>
+        <option value="tel">Telugu (tel)</option>
+        <option value="tgk">Tajik (tgk)</option>
+        <option value="tgl">Tagalog (tgl)</option>
+        <option value="tha">Thai (tha)</option>
+        <option value="tib">Tibetan (tib)</option>
+        <option value="tir">Tigrinya (tir)</option>
+        <option value="ton">Tonga (ton)</option>
+        <option value="tsn">Tswana (tsn)</option>
+        <option value="tso">Tsonga (tso)</option>
+        <option value="tuk">Turkmen (tuk)</option>
+        <option value="tur">Turkish (tur)</option>
+        <option value="twi">Twi (twi)</option>
+        <option value="uig">Uighur (uig)</option>
+        <option value="ukr">Ukrainian (ukr)</option>
+        <option value="urd">Urdu (urd)</option>
+        <option value="uzb">Uzbek (uzb)</option>
+        <option value="ven">Venda (ven)</option>
+        <option value="vie">Vietnamese (vie)</option>
+        <option value="vol">Volapük (vol)</option>
+        <option value="wel">Welsh (wel)</option>
+        <option value="wln">Walloon (wln)</option>
+        <option value="wol">Wolof (wol)</option>
+        <option value="xho">Xhosa (xho)</option>
+        <option value="yid">Yiddish (yid)</option>
+        <option value="yor">Yoruba (yor)</option>
+        <option value="zha">Zhuang (zha)</option>
+        <option value="zul">Zulu (zul)</option>
+      </select>
+      <label for="tvdb_language">TVDB Language</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" placeholder="0">
+      <label for="item_refresh_delay">Item Refresh Delay (seconds)</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="cache" name="cache" checked>
+      <label class="form-check-label" for="cache">Cache</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="asset_folders" name="asset_folders" checked>
+      <label class="form-check-label" for="asset_folders">Asset Folders</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="create_asset_folders" name="create_asset_folders">
+      <label class="form-check-label" for="create_asset_folders">Create Asset Folders</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="prioritize_assets" name="prioritize_assets" checked>
+      <label class="form-check-label" for="prioritize_assets">Prioritize Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="dimensional_asset_rename" name="dimensional_asset_rename">
+      <label class="form-check-label" for="dimensional_asset_rename">Dimensional Asset Rename</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="download_url_assets" name="download_url_assets">
+      <label class="form-check-label" for="download_url_assets">Download URL Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_missing_season_assets" name="show_missing_season_assets">
+      <label class="form-check-label" for="show_missing_season_assets">Show Missing Season Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_missing_episode_assets" name="show_missing_episode_assets">
+      <label class="form-check-label" for="show_missing_episode_assets">Show Missing Episode Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_asset_not_needed" name="show_asset_not_needed">
+      <label class="form-check-label" for="show_asset_not_needed">Show Asset Not Needed</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <select class="form-select" id="sync_mode" name="sync_mode">
+        <option value="sync">Sync</option>
+        <option value="append">Append</option>
+      </select>
+      <label for="sync_mode">Sync Mode</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="default_collection_order" name="default_collection_order" placeholder="">
+      <label for="default_collection_order">Default Collection Order</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="delete_below_minimum" name="delete_below_minimum" checked>
+      <label class="form-check-label" for="delete_below_minimum">Delete Below Minimum</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="delete_not_scheduled" name="delete_not_scheduled">
+      <label class="form-check-label" for="delete_not_scheduled">Delete Not Scheduled</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="missing_only_released" name="missing_only_released" checked>
+      <label class="form-check-label" for="missing_only_released">Missing Only Released</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_unconfigured" name="show_unconfigured" checked>
+      <label class="form-check-label" for="show_unconfigured">Show Unconfigured</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_unmanaged" name="show_unmanaged" checked>
+      <label class="form-check-label" for="show_unmanaged">Show Unmanaged</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_filtered" name="show_filtered" checked>
+      <label class="form-check-label" for="show_filtered">Show Filtered</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_options" name="show_options" checked>
+      <label class="form-check-label" for="show_options">Show Options</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_missing" name="show_missing">
+      <label class="form-check-label" for="show_missing">Show Missing</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="only_filter_missing" name="only_filter_missing">
+      <label class="form-check-label" for="only_filter_missing">Only Filter Missing</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="show_missing_assets" name="show_missing_assets">
+      <label class="form-check-label" for="show_missing_assets">Show Missing Assets</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="save_report" name="save_report" checked>
+      <label class="form-check-label" for="save_report">Save Report</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="ignore_ids" name="ignore_ids" placeholder="">
+      <label for="ignore_ids">Ignore IDs</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids" placeholder="">
+      <label for="ignore_imdb_ids">Ignore IMDb IDs</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" checked>
+      <label class="form-check-label" for="verify_ssl">Verify SSL</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="custom_repo" name="custom_repo" placeholder="">
+      <label for="custom_repo">Custom Repo</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users" placeholder="">
+      <label for="playlist_exclude_users">Playlist Exclude Users</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="playlist_sync_to_users" name="playlist_sync_to_users" checked>
+      <label class="form-check-label" for="playlist_sync_to_users">Playlist Sync to Users</label>
+    </div>
+
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="playlist_report" name="playlist_report" checked>
+      <label class="form-check-label" for="playlist_report">Playlist Report</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <select class="form-select" id="overlay_artwork_filetype" name="overlay_artwork_filetype">
+        <option value="jpg">JPG</option>
+        <option value="png">PNG</option>
+        <option value="webp">WEBP</option>
+      </select>
+      <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75" min="1" max="100">
+      <label for="overlay_artwork_quality">Overlay Artwork Quality</label>
+    </div>
+
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="run_order" name="run_order" placeholder="operations, metadata, collections, overlays">
+      <label for="run_order">Run Order</label>
+    </div>
+</form>
+
+{% endblock %}

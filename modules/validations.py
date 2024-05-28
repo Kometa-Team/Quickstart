@@ -4,6 +4,7 @@ from json import JSONDecodeError
 from plexapi.server import PlexServer
 import re
 import requests
+import urllib.parse
 
 import iso639
 import iso3166
@@ -194,9 +195,6 @@ def validate_gotify_server(data):
     return jsonify({'valid': True})
 
 
-
-
-
 def validate_mal_server(data):
     mal_client_id = data.get('mal_client_id')
     mal_client_secret = data.get('mal_client_secret')
@@ -246,6 +244,10 @@ def validate_anidb_server(data):
     client = data.get('client')
     clientver = data.get('clientver')
 
+    safe_password = urllib.parse.quote_plus(password)
+
+    special_chars = safe_password != password
+
     # AniDB API endpoint
     api_url = "http://api.anidb.net:9001/httpapi"
     
@@ -262,36 +264,29 @@ def validate_anidb_server(data):
 
     try:
         # Construct the full URL with query parameters
-        full_url = f"{api_url}?request=hints&user={username}&pass={password}&protover=1&client={client}&clientver={clientver}&type=1"
-        print(f"Full URL: {full_url}")
+        full_url = f"{api_url}?request=hints&user={username}&pass={safe_password}&protover=1&client={client}&clientver={clientver}&type=1"
         
         # Make a GET request to AniDB API
         response = requests.get(api_url, params=params)
         response_text = response.text
-        print(f"Response text: {response_text}")
-        print(f"Status code: {response.status_code}")
 
         # Check if the response contains 'hints'
         if 'hints' in response_text:
-            print("Response contains 'hints'")
-            print("Authentication successful")
             return jsonify({'valid': True})
         elif '<error code="302">' in response_text:
-            print("Error: client version missing or invalid")
             return jsonify({'valid': False, 'error': 'Client version missing or invalid'})
         elif '<error code="303">' in response_text:
-            print("Error: invalid username or password")
             return jsonify({'valid': False, 'error': 'Invalid username or password'})
         elif '<error code="500">' in response_text:
-            print("Error: You have been banned")
             return jsonify({'valid': False, 'error': 'You have been banned(likely for 24 hours)'})
         else:
-            print("Authentication failed")
-            return jsonify({'valid': False, 'error': 'Authentication failed'})
+            if special_chars:
+                return jsonify({'valid': False, 'error': 'Authentication failed; special characters in the password give the API trouble'})
+            else:
+                return jsonify({'valid': False, 'error': 'Authentication failed'})
 
     except requests.exceptions.RequestException as e:
         # Handle request exceptions (e.g., connection error)
-        print(f"RequestException: {str(e)}")
         return jsonify({'valid': False, 'error': str(e)})
 
     return jsonify({'valid': False, 'error': 'Unknown error'})
