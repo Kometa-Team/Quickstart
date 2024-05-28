@@ -40,12 +40,15 @@ def step(name):
         if name == 'start':
             prev_page = ""
             next_page = template_list[0][0].rsplit('.html', 1)[0]
+            progress = 0
         elif name == '999-final':
             prev_page = template_list[-1][0].rsplit('.html', 1)[0]
             next_page = ""
+            progress = 100
         elif name == '999-danger':
             prev_page = template_list[-1][0].rsplit('.html', 1)[0]
             next_page = "999-final"
+            progress = 100
     else:
         current_index = next((index for index, (file, _) in enumerate(template_list) if file.startswith(name)), None)
         
@@ -55,7 +58,11 @@ def step(name):
         curr_page = template_list[current_index][0].rsplit('.html', 1)[0].split('-', 1)[1].capitalize()
         next_page = template_list[current_index + 1][0].rsplit('.html', 1)[0] if current_index + 1 < len(template_list) else "999-final"
         prev_page = template_list[current_index - 1][0].rsplit('.html', 1)[0] if current_index > 0 else "start"
-
+        
+        # Calculate progress
+        total_steps = len([file for file, _ in template_list if not file.startswith('999-')]) + 1  # Exclude 999-*.html but count as one step
+        progress = (current_index + 1) / total_steps * 100
+    
     if request.method == 'POST':
         source = request.referrer.split("/")[-1]
         source = source.split("?")[0]
@@ -68,12 +75,12 @@ def step(name):
     code_verifier = secrets.token_urlsafe(100)[:128]
 
     if name == '999-final' or name == '999-danger':
-        return build_config(code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page)
+        return build_config(code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
     else:
-        return render_template(name + '.html', code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page)
+        return render_template(name + '.html', code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
 
-def build_config(code_verifier, template_list, next_page, prev_page, curr_page):
+def build_config(code_verifier, template_list, next_page, prev_page, curr_page, progress):
 
     # Combine data from all steps (retrieve from session or other storage)
     config_data = {
@@ -162,10 +169,10 @@ def build_config(code_verifier, template_list, next_page, prev_page, curr_page):
     except jsonschema.exceptions.ValidationError as e:
         print(config_data)
         flash(f'Validation error: {e.message}', 'danger')
-        return render_template('999-danger.html', yaml_content=yaml_content, validation_error=e, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page)
+        return render_template('999-danger.html', yaml_content=yaml_content, validation_error=e, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
     # Render the final step template with the YAML content
-    return render_template('999-final.html', yaml_content=yaml_content, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page)
+    return render_template('999-final.html', yaml_content=yaml_content, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
 
 @app.route('/download')
