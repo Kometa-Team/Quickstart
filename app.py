@@ -1,6 +1,5 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session, send_file
 import jsonschema
-import yaml
 import requests
 import io
 import yaml
@@ -28,6 +27,13 @@ app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 @app.route('/')
 def start():
     return render_template('start.html')
+
+
+@app.route('/clear_session', methods=['POST'])
+def clear_session():
+    session.clear()
+    flash('Session cleared successfully.', 'success')
+    return redirect(url_for('start'))
 
 
 @app.route('/step/<name>', methods=['GET', 'POST'])
