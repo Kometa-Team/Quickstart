@@ -1,87 +1,57 @@
 {% extends "000-base.html" %} {% block content %}
-<form
-  action="/step/{{ next_page }}"
-  method="post"
-  id="configForm"
-  name="configForm"
->
-  <div id="traktSection" class="section">
+<form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
+  <div id="traktSection">
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
-          <a
-            class="btn btn-secondary"
-            role="button"
-            href="/step/{{ prev_page }}"
-            >Previous</a
-          >
-          <button
-            type="button"
-            class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
+          <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>
+          <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="visually-hidden">Toggle Dropdown</span>
           </button>
           <ul class="dropdown-menu">
-            <li>
-              <a class="dropdown-item" href="/step/start">Start</a>
-            </li>
-            <li><hr class="dropdown-divider" /></li>
+              <li>
+                  <a class="dropdown-item" href="/step/start">Start</a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
             {% for file, name in template_list %}
-            <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}"
-                >{{ name }}</a
-              >
-            </li>
+              <li>
+                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              </li>
             {% endfor %}
-            <li><hr class="dropdown-divider" /></li>
+            <li><hr class="dropdown-divider"></li>
             <li>
-              <a class="dropdown-item" href="/step/999-final"
-                >Skip to Validation</a
-              >
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
             </li>
           </ul>
         </div>
       </div>
       <div class="col-6 align-self-center text-center">
-        <h2>{{ curr_page }}</h2>
+          <h2>{{ curr_page }}</h2>
       </div>
-      <div class="col align-self-center">
-        <div class="input-group justify-content-end">
-          <a class="btn btn-success" role="button" href="/step/{{ next_page}}"
-            >Next</a
-          >
-          <button
-            type="button"
-            class="btn btn-success dropdown-toggle dropdown-toggle-split"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            <span class="visually-hidden">Toggle Dropdown</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li>
+    <div class="col align-self-center">
+      <div class="input-group justify-content-end">
+        <a class="btn btn-success" role="button" href="/step/{{ next_page}}">Next</a>
+        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
               <a class="dropdown-item" href="/step/start">Start</a>
-            </li>
-            <li><hr class="dropdown-divider" /></li>
-            {% for file, name in template_list %}
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          {% for file, name in template_list %}
             <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}"
-                >{{ name }}</a
-              >
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
             {% endfor %}
-            <li><hr class="dropdown-divider" /></li>
+            <li><hr class="dropdown-divider"></li>
             <li>
-              <a class="dropdown-item" href="/step/999-final"
-                >Skip to Validation</a
-              >
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
             </li>
-          </ul>
-        </div>
+        </ul>
       </div>
     </div>
+  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
@@ -105,7 +75,7 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
           </div>
           <div class="modal-body">
             This is some dummy text<br>
@@ -123,7 +93,7 @@
     <div class="input-group input-group-lg">
       <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" placeholder="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
     </div>
-<input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
+      <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
     <div class="form-text" id="pin-info">
       When you click "Retrieve PIN" above, you will be taken to a Trakt web page. Log in and allow your application access to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br>
       <br>
@@ -136,108 +106,106 @@
     <input type="hidden" class="form-control" id="access_token" name="access_token" readonly> <input type="hidden" class="form-control" id="token_type" name="token_type" readonly> <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly> <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly> <input type="hidden" class="form-control" id="scope" name="scope" readonly> <input type="hidden" class="form-control" id="created_at" name="created_at" readonly>
     <div id="traktStatusMessage" class="status-message"></div><br>
     <br>
-    <hr class="hr">
   </div>
-  </div>
+</div>
 </form>
-    <script>
+<script>
+  document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
+    const apikeyInput = document.getElementById('trakt_client_secret');
+    const currentType = apikeyInput.getAttribute('type');
+    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+});
 
-        document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
-            const apikeyInput = document.getElementById('trakt_client_secret');
-            const currentType = apikeyInput.getAttribute('type');
-            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-        });
+function updateTraktURL() {
+    var trakt_client_id = document.getElementById('trakt_client_id').value;
+    var myURL = "";
+    if (trakt_client_id.length == 64)
+    {
+        myURL = "https://trakt.tv/oauth/authorize?response_type=code&client_id=" + trakt_client_id + "&redirect_uri=urn:ietf:wg:oauth:2.0:oob";
+    }
+    console.log("updateTraktURL: " + myURL)
+    document.getElementById('trakt_url').value = myURL;
+    checkURLStart()
+}
 
-        function updateTraktURL() {
-            var trakt_client_id = document.getElementById('trakt_client_id').value;
-            var myURL = "";
-            if (trakt_client_id.length == 64)
-            {
-                myURL = "https://trakt.tv/oauth/authorize?response_type=code&client_id=" + trakt_client_id + "&redirect_uri=urn:ietf:wg:oauth:2.0:oob";
-            }
-            console.log("updateTraktURL: " + myURL)
-            document.getElementById('trakt_url').value = myURL;
-            checkURLStart()
-        }
+function openTraktUrl() {
+    var url = document.getElementById('trakt_url').value;
+    if(url) {
+        window.open(url, '_blank').focus();
+    }
+}
 
-        function openTraktUrl() {
-            var url = document.getElementById('trakt_url').value;
-            if(url) {
-                window.open(url, '_blank').focus();
-            }
-        }
+function checkPinField() {
+    var pin = document.getElementById('trakt_pin').value;
+    var pinButton = document.getElementById('validate_trakt_pin');
+    pinButton.disabled = (pin == '');
+}
 
-        function checkPinField() {
-            var pin = document.getElementById('trakt_pin').value;
-            var pinButton = document.getElementById('validate_trakt_pin');
-            pinButton.disabled = (pin == '');
-        }
+function checkURLStart() {
+    var url = document.getElementById('trakt_url').value;
+    var urlButton = document.getElementById('trakt_open_url');
+    urlButton.disabled = url == '';
+}
 
-        function checkURLStart() {
-            var url = document.getElementById('trakt_url').value;
-            var urlButton = document.getElementById('trakt_open_url');
-            urlButton.disabled = url == '';
-        }
+window.onload = function() {
+    var trakt_url_text = document.getElementById('trakt_url');
+    document.getElementById("trakt_open_url").disabled = true
+    document.getElementById("validate_trakt_pin").disabled = true
+    checkURLStart(trakt_url_text);
+};
 
-        window.onload = function() {
-            var trakt_url_text = document.getElementById('trakt_url');
+// Plex validation script
+document.getElementById('validate_trakt_pin').addEventListener('click', function() {
+    const traktClient = document.getElementById('trakt_client_id').value;
+    const traktSecret = document.getElementById('trakt_client_secret').value;
+    const traktPin = document.getElementById('trakt_pin').value;
+    const traktStatusMessage = document.getElementById('traktStatusMessage');
+
+    if (!traktClient || !traktSecret || !traktPin) {
+        traktStatusMessage.textContent = 'ID, secret, and PIN and all required.';
+        traktStatusMessage.style.display = 'block';
+        return;
+    }
+
+    fetch('/validate_trakt', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            trakt_client_id: traktClient,
+            trakt_client_secret: traktSecret,
+            trakt_pin: traktPin
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
+            traktStatusMessage.style.color = '#75b798';
+            document.getElementById('access_token').value = data.trakt_authorization_access_token;
+            document.getElementById('token_type').value = data.trakt_authorization_token_type;
+            document.getElementById('expires_in').value = data.trakt_authorization_expires_in;
+            document.getElementById('refresh_token').value = data.trakt_authorization_refresh_token;
+            document.getElementById('scope').value = data.trakt_authorization_scope;
+            document.getElementById('created_at').value = data.trakt_authorization_created_at;
+            document.getElementById('trakt_pin').value = "";
+            document.getElementById('trakt_url').value = "";
             document.getElementById("trakt_open_url").disabled = true
             document.getElementById("validate_trakt_pin").disabled = true
-            checkURLStart(trakt_url_text);
-        };
+        } else {
+            traktStatusMessage.textContent = data.error;
+            traktStatusMessage.style.color = '#ea868f';
+        }
+        traktStatusMessage.style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error validating Trakt credentials:', error);
+        traktStatusMessage.textContent = 'An error occurred while validating Trakt credentials.';
+        traktStatusMessage.style.color = '#ea868f';
+        traktStatusMessage.style.display = 'block';
+    });
+});
 
-        // Plex validation script
-        document.getElementById('validate_trakt_pin').addEventListener('click', function() {
-            const traktClient = document.getElementById('trakt_client_id').value;
-            const traktSecret = document.getElementById('trakt_client_secret').value;
-            const traktPin = document.getElementById('trakt_pin').value;
-            const traktStatusMessage = document.getElementById('traktStatusMessage');
-
-            if (!traktClient || !traktSecret || !traktPin) {
-                traktStatusMessage.textContent = 'ID, secret, and PIN and all required.';
-                traktStatusMessage.style.display = 'block';
-                return;
-            }
-
-            fetch('/validate_trakt', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    trakt_client_id: traktClient,
-                    trakt_client_secret: traktSecret,
-                    trakt_pin: traktPin
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.valid) {
-                    traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
-                    traktStatusMessage.style.color = '#75b798';
-                    document.getElementById('access_token').value = data.trakt_authorization_access_token;
-                    document.getElementById('token_type').value = data.trakt_authorization_token_type;
-                    document.getElementById('expires_in').value = data.trakt_authorization_expires_in;
-                    document.getElementById('refresh_token').value = data.trakt_authorization_refresh_token;
-                    document.getElementById('scope').value = data.trakt_authorization_scope;
-                    document.getElementById('created_at').value = data.trakt_authorization_created_at;
-                    document.getElementById('trakt_pin').value = "";
-                    document.getElementById('trakt_url').value = "";
-                    document.getElementById("trakt_open_url").disabled = true
-                    document.getElementById("validate_trakt_pin").disabled = true
-                } else {
-                    traktStatusMessage.textContent = data.error;
-                    traktStatusMessage.style.color = '#ea868f';
-                }
-                traktStatusMessage.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error validating Trakt credentials:', error);
-                traktStatusMessage.textContent = 'An error occurred while validating Trakt credentials.';
-                traktStatusMessage.style.color = '#ea868f';
-                traktStatusMessage.style.display = 'block';
-            });
-        });
-
-    </script> {% endblock %}
+</script> {% endblock %}

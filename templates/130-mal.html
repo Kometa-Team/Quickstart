@@ -1,87 +1,57 @@
 {% extends "000-base.html" %} {% block content %}
-<form
-  action="/step/{{ next_page }}"
-  method="post"
-  id="configForm"
-  name="configForm"
->
-  <div id="malSection" class="section">
+<form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
+  <div id="malSection">
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
-          <a
-            class="btn btn-secondary"
-            role="button"
-            href="/step/{{ prev_page }}"
-            >Previous</a
-          >
-          <button
-            type="button"
-            class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
+          <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>
+          <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="visually-hidden">Toggle Dropdown</span>
           </button>
           <ul class="dropdown-menu">
-            <li>
-              <a class="dropdown-item" href="/step/start">Start</a>
-            </li>
-            <li><hr class="dropdown-divider" /></li>
+              <li>
+                  <a class="dropdown-item" href="/step/start">Start</a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
             {% for file, name in template_list %}
-            <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}"
-                >{{ name }}</a
-              >
-            </li>
+              <li>
+                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              </li>
             {% endfor %}
-            <li><hr class="dropdown-divider" /></li>
+            <li><hr class="dropdown-divider"></li>
             <li>
-              <a class="dropdown-item" href="/step/999-final"
-                >Skip to Validation</a
-              >
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
             </li>
           </ul>
         </div>
       </div>
       <div class="col-6 align-self-center text-center">
-        <h2>{{ curr_page }}</h2>
+          <h2>{{ curr_page }}</h2>
       </div>
-      <div class="col align-self-center">
-        <div class="input-group justify-content-end">
-          <a class="btn btn-success" role="button" href="/step/{{ next_page}}"
-            >Next</a
-          >
-          <button
-            type="button"
-            class="btn btn-success dropdown-toggle dropdown-toggle-split"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-          >
-            <span class="visually-hidden">Toggle Dropdown</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li>
+    <div class="col align-self-center">
+      <div class="input-group justify-content-end">
+        <a class="btn btn-success" role="button" href="/step/{{ next_page}}">Next</a>
+        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
               <a class="dropdown-item" href="/step/start">Start</a>
-            </li>
-            <li><hr class="dropdown-divider" /></li>
-            {% for file, name in template_list %}
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          {% for file, name in template_list %}
             <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}"
-                >{{ name }}</a
-              >
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
             {% endfor %}
-            <li><hr class="dropdown-divider" /></li>
+            <li><hr class="dropdown-divider"></li>
             <li>
-              <a class="dropdown-item" href="/step/999-final"
-                >Skip to Validation</a
-              >
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
             </li>
-          </ul>
-        </div>
+        </ul>
       </div>
     </div>
+  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
@@ -97,26 +67,26 @@
         <div class="col"></div>
       </div>
     </div>
-      <hr class="hr">
-      <div class="alert alert-info" role="alert">
-        <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-      </div>
-      <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Trakt Section</h1>
-            </div>
-            <div class="modal-body">
-              This is some dummy text<br>
-              <br>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-            </div>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
+    </div>
       <div class="form-floating">
         <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" oninput="updateMALTargetURL(this)"> <label for="mal_client_id">Client ID</label>
       </div>
@@ -165,109 +135,109 @@
     </div>
   </div>
 </form>
-    <script>
+<script>
 
-          document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
-            const apikeyInput = document.getElementById('mal_client_secret');
-            const currentType = apikeyInput.getAttribute('type');
-            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-          });
+  document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
+    const apikeyInput = document.getElementById('mal_client_secret');
+    const currentType = apikeyInput.getAttribute('type');
+    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+  });
 
-          document.getElementById('mal_get_localhost_url').addEventListener('click', function() {
-            var url = document.getElementById('mal_url').value;
-            if(url) {
-                window.open(url, '_blank').focus();
-            }
-          });
+  document.getElementById('mal_get_localhost_url').addEventListener('click', function() {
+    var url = document.getElementById('mal_url').value;
+    if(url) {
+        window.open(url, '_blank').focus();
+    }
+  });
 
-        function updateMALTargetURL() {
-          var mal_client_id = document.getElementById('mal_client_id').value;
-          var code_verifier = document.getElementById('mal_code_verifier').value;
-          var myURL = "";
-          if (mal_client_id.length == 32)
-          {
-            myURL = "https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=" + mal_client_id + "&code_challenge=" + code_verifier;
-          }
-          document.getElementById('mal_url').value = myURL;
-          enableLocalURLButton()
-        }
+function updateMALTargetURL() {
+  var mal_client_id = document.getElementById('mal_client_id').value;
+  var code_verifier = document.getElementById('mal_code_verifier').value;
+  var myURL = "";
+  if (mal_client_id.length == 32)
+  {
+    myURL = "https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=" + mal_client_id + "&code_challenge=" + code_verifier;
+  }
+  document.getElementById('mal_url').value = myURL;
+  enableLocalURLButton()
+}
 
-        function openMALUrl() {
-            var url = document.getElementById('mal_url').value;
-            if(url) {
-                window.open(url, '_blank').focus();
-            }
-        }
+function openMALUrl() {
+    var url = document.getElementById('mal_url').value;
+    if(url) {
+        window.open(url, '_blank').focus();
+    }
+}
 
-        function checkURLField() {
-            var localURL = document.getElementById('mal_localhost_url').value;
-            var localURLButton = document.getElementById('validate_mal_url');
-            localURLButton.disabled = (localURL == '');
-        }
+function checkURLField() {
+    var localURL = document.getElementById('mal_localhost_url').value;
+    var localURLButton = document.getElementById('validate_mal_url');
+    localURLButton.disabled = (localURL == '');
+}
 
-        function enableLocalURLButton() {
-            var url = document.getElementById('mal_url').value;
-            var urlButton = document.getElementById('mal_get_localhost_url');
-            urlButton.disabled = url == '';
-        }
+function enableLocalURLButton() {
+    var url = document.getElementById('mal_url').value;
+    var urlButton = document.getElementById('mal_get_localhost_url');
+    urlButton.disabled = url == '';
+}
 
-        window.onload = function() {
-            var mal_url_text = document.getElementById('mal_url');
+window.onload = function() {
+    var mal_url_text = document.getElementById('mal_url');
+    document.getElementById("validate_mal_url").disabled = true
+    document.getElementById("validate_mal_url").disabled = true
+    enableLocalURLButton(mal_url_text);
+};
+
+document.getElementById('validate_mal_url').addEventListener('click', function() {
+    const malClient = document.getElementById('mal_client_id').value;
+    const malSecret = document.getElementById('mal_client_secret').value;
+    const malVerifier = document.getElementById('mal_code_verifier').value;
+    const malLocalhostURL = document.getElementById('mal_localhost_url').value;
+
+    const malStatusMessage = document.getElementById('malStatusMessage');
+
+    if (!malClient || !malSecret || !malVerifier || !malLocalhostURL) {
+        malStatusMessage.textContent = 'ID, secret, and localhost URL are all required.';
+        malStatusMessage.style.display = 'block';
+        return;
+    }
+
+    fetch('/validate_mal', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            mal_client_id: malClient,
+            mal_client_secret: malSecret,
+            mal_code_verifier: malVerifier,
+            mal_localhost_url: malLocalhostURL
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            malStatusMessage.textContent = 'MyAnimeList credentials validated successfully!';
+            malStatusMessage.style.color = 'green';
+            document.getElementById('access_token').value = data.mal_authorization_access_token;
+            document.getElementById('token_type').value = data.mal_authorization_token_type;
+            document.getElementById('expires_in').value = data.mal_authorization_expires_in;
+            document.getElementById('refresh_token').value = data.mal_authorization_refresh_token;
+            document.getElementById("mal_get_localhost_url").disabled = true
             document.getElementById("validate_mal_url").disabled = true
-            document.getElementById("validate_mal_url").disabled = true
-            enableLocalURLButton(mal_url_text);
-        };
+        } else {
+            malStatusMessage.textContent = data.error;
+            malStatusMessage.style.color = 'red';
+        }
+        malStatusMessage.style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error validating MAL credentials:', error);
+        malStatusMessage.textContent = 'An error occurred while validating MAL credentials.';
+        malStatusMessage.style.color = 'red';
+        malStatusMessage.style.display = 'block';
+    });
+});
 
-        document.getElementById('validate_mal_url').addEventListener('click', function() {
-            const malClient = document.getElementById('mal_client_id').value;
-            const malSecret = document.getElementById('mal_client_secret').value;
-            const malVerifier = document.getElementById('mal_code_verifier').value;
-            const malLocalhostURL = document.getElementById('mal_localhost_url').value;
-
-            const malStatusMessage = document.getElementById('malStatusMessage');
-
-            if (!malClient || !malSecret || !malVerifier || !malLocalhostURL) {
-                malStatusMessage.textContent = 'ID, secret, and localhost URL are all required.';
-                malStatusMessage.style.display = 'block';
-                return;
-            }
-
-            fetch('/validate_mal', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    mal_client_id: malClient,
-                    mal_client_secret: malSecret,
-                    mal_code_verifier: malVerifier,
-                    mal_localhost_url: malLocalhostURL
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.valid) {
-                    malStatusMessage.textContent = 'MyAnimeList credentials validated successfully!';
-                    malStatusMessage.style.color = 'green';
-                    document.getElementById('access_token').value = data.mal_authorization_access_token;
-                    document.getElementById('token_type').value = data.mal_authorization_token_type;
-                    document.getElementById('expires_in').value = data.mal_authorization_expires_in;
-                    document.getElementById('refresh_token').value = data.mal_authorization_refresh_token;
-                    document.getElementById("mal_get_localhost_url").disabled = true
-                    document.getElementById("validate_mal_url").disabled = true
-                } else {
-                    malStatusMessage.textContent = data.error;
-                    malStatusMessage.style.color = 'red';
-                }
-                malStatusMessage.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error validating MAL credentials:', error);
-                malStatusMessage.textContent = 'An error occurred while validating MAL credentials.';
-                malStatusMessage.style.color = 'red';
-                malStatusMessage.style.display = 'block';
-            });
-        });
-
-    </script> {% endblock %}
+</script> {% endblock %}

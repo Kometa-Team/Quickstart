@@ -1,10 +1,5 @@
 {% extends "000-base.html" %} {% block content %}
-<form
-  action="/step/{{ next_page }}"
-  method="post"
-  id="configForm"
-  name="configForm"
->
+<form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
   <div id="omdbSection">
     <div class="row">
       <div class="col align-self-center">
@@ -80,7 +75,7 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the OMDb Section</h1>
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
           </div>
           <div class="modal-body">
             This is some dummy text<br>
