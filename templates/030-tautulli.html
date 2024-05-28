@@ -1,80 +1,65 @@
 {% extends "000-base.html" %} {% block content %}
-<form action="040-github" method="post" id="configForm" name="configForm">
+<form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
   <div id="tautulliSection">
     <div class="row">
       <div class="col align-self-center">
-        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
-      </div>
-      <div class="col-6 align-self-center text-center">
-        <h2>Tautulli</h2>
-      </div>
-      <div class="col align-self-center">
-        <div class="input-group justify-content-end">
-          <a class="btn btn-success" role="button" href="/step/040-github">Next</a> <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle Dropdown</span></button>
-          <ul class="dropdown-menu dropdown-menu-end">
+        <div class="input-group justify-content-start">
+          <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>
+          <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu">
+              <li>
+                  <a class="dropdown-item" href="/step/start">Start</a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+            {% for file, name in template_list %}
+              <li>
+                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider"></li>
             <li>
-              <a class="dropdown-item" href="/step/010-plex">Plex</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/020-tmdb">TMDb</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/030-tautulli">Tautulli</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/040-github">GitHub</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/050-omdb">OMDb</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/060-mdblist">MDBList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/070-notifiarr">Notifiarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/080-gotify">Gotify</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/090-anidb">AniDB</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/100-radarr">Radarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/110-sonarr">Sonarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/120-trakt">Trakt</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/130-mal">MyAnimeList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/140-webhooks">Webhooks</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/150-settings">Settings</a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li>
-              <a class="dropdown-item" href="#">Skip to Validation (doesn't work atm)</a>
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
             </li>
           </ul>
         </div>
       </div>
+      <div class="col-6 align-self-center text-center">
+          <h2>{{ curr_page }}</h2>
+      </div>
+    <div class="col align-self-center">
+      <div class="input-group justify-content-end">
+        <a class="btn btn-success" role="button" href="/step/{{ next_page}}">Next</a>
+        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+              <a class="dropdown-item" href="/step/start">Start</a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          {% for file, name in template_list %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
+            </li>
+        </ul>
+      </div>
     </div>
+  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
             <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-              <div class="progress-bar bg-success" style="width: 25%">
-                25%
+              <div class="progress-bar bg-success" style="width: {{ progress }}%">
+                {{ progress }}%
               </div>
             </div>
           </div>
@@ -90,7 +75,7 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Tautulli Section</h1>
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
           </div>
           <div class="modal-body">
             This is some dummy text<br>
@@ -109,85 +94,104 @@
       <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" placeholder="API Key" aria-label="Tautull API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateTautulliButton" type="button">Validate</button>
     </div>
     <div id="tautulliStatusMessage" class="status-message"></div><br>
-  </div>
 </form>
 <script>
   // Save input values to sessionStorage on change
-  document.getElementById('tautulli_url').addEventListener('input', function() {
-    sessionStorage.setItem('tautulli_url', this.value);
-  });
-  document.getElementById('tautulli_apikey').addEventListener('input', function() {
-    sessionStorage.setItem('tautulli_apikey', this.value);
-  });
+  document
+    .getElementById("tautulli_url")
+    .addEventListener("input", function () {
+      sessionStorage.setItem("tautulli_url", this.value);
+    });
+  document
+    .getElementById("tautulli_apikey")
+    .addEventListener("input", function () {
+      sessionStorage.setItem("tautulli_apikey", this.value);
+    });
 
   // Load saved values from sessionStorage on page load
-  document.addEventListener('DOMContentLoaded', function() {
-    const savedTautulliUrl = sessionStorage.getItem('tautulli_url');
-    const savedTautulliApikey = sessionStorage.getItem('tautulli_apikey');
+  document.addEventListener("DOMContentLoaded", function () {
+    const savedTautulliUrl = sessionStorage.getItem("tautulli_url");
+    const savedTautulliApikey = sessionStorage.getItem("tautulli_apikey");
     if (savedTautulliUrl) {
-      document.getElementById('tautulli_url').value = savedTautulliUrl;
+      document.getElementById("tautulli_url").value = savedTautulliUrl;
     }
     if (savedTautulliApikey) {
-      document.getElementById('tautulli_apikey').value = savedTautulliApikey;
+      document.getElementById("tautulli_apikey").value = savedTautulliApikey;
     }
   });
 
-  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-    const apikeyInput = document.getElementById('tautulli_apikey');
-    const currentType = apikeyInput.getAttribute('type');
-    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-  });
+  document
+    .getElementById("toggleApikeyVisibility")
+    .addEventListener("click", function () {
+      const apikeyInput = document.getElementById("tautulli_apikey");
+      const currentType = apikeyInput.getAttribute("type");
+      apikeyInput.setAttribute(
+        "type",
+        currentType === "password" ? "text" : "password"
+      );
+      this.textContent = currentType === "password" ? "Hide" : "Show";
+    });
 
   // Tautulli validation script
-  document.getElementById('validateTautulliButton').addEventListener('click', function() {
-    const tautulliUrl = document.getElementById('tautulli_url').value;
-    const tautulliApikey = document.getElementById('tautulli_apikey').value;
-    const tautulliStatusMessage = document.getElementById('tautulliStatusMessage');
+  document
+    .getElementById("validateTautulliButton")
+    .addEventListener("click", function () {
+      const tautulliUrl = document.getElementById("tautulli_url").value;
+      const tautulliApikey = document.getElementById("tautulli_apikey").value;
+      const tautulliStatusMessage = document.getElementById(
+        "tautulliStatusMessage"
+      );
 
-    if (!tautulliUrl || !tautulliApikey) {
-      tautulliStatusMessage.textContent = 'Please enter both Tautulli URL and API Key.';
-      tautulliStatusMessage.style.display = 'block';
-      return;
-    }
-
-    fetch('/validate_tautulli', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        tautulli_url: tautulliUrl,
-        tautulli_apikey: tautulliApikey
-      })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.valid) {
-        tautulliStatusMessage.textContent = 'Tautulli server validated successfully!';
-        tautulliStatusMessage.style.color = '#75b798';
-      } else {
-        tautulliStatusMessage.textContent = 'Failed to validate Tautulli server. Please check your URL and API Key.';
-        tautulliStatusMessage.style.color = '#ea868f';
+      if (!tautulliUrl || !tautulliApikey) {
+        tautulliStatusMessage.textContent =
+          "Please enter both Tautulli URL and API Key.";
+        tautulliStatusMessage.style.display = "block";
+        return;
       }
-      tautulliStatusMessage.style.display = 'block';
-    })
-    .catch(error => {
-      console.error('Error validating Tautulli server:', error);
-      tautulliStatusMessage.textContent = 'An error occurred while validating Tautulli server.';
-      tautulliStatusMessage.style.color = '#ea868f';
-      tautulliStatusMessage.style.display = 'block';
-    });
-  });
 
-  document.getElementById('configForm').addEventListener('submit', function(event) {
-    const apiKeyInput = document.getElementById('tautulli_apikey');
-    const urlInput = document.getElementById('tautulli_url');
-    if (!apiKeyInput.value) {
-      apiKeyInput.value = '';
-    }
-    if (!urlInput.value) {
-      urlInput.value = 'http://';
-    }
-  });
-</script> {% endblock %}
+      fetch("/validate_tautulli", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tautulli_url: tautulliUrl,
+          tautulli_apikey: tautulliApikey,
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.valid) {
+            tautulliStatusMessage.textContent =
+              "Tautulli server validated successfully!";
+            tautulliStatusMessage.style.color = "#75b798";
+          } else {
+            tautulliStatusMessage.textContent =
+              "Failed to validate Tautulli server. Please check your URL and API Key.";
+            tautulliStatusMessage.style.color = "#ea868f";
+          }
+          tautulliStatusMessage.style.display = "block";
+        })
+        .catch((error) => {
+          console.error("Error validating Tautulli server:", error);
+          tautulliStatusMessage.textContent =
+            "An error occurred while validating Tautulli server.";
+          tautulliStatusMessage.style.color = "#ea868f";
+          tautulliStatusMessage.style.display = "block";
+        });
+    });
+
+  document
+    .getElementById("configForm")
+    .addEventListener("submit", function (event) {
+      const apiKeyInput = document.getElementById("tautulli_apikey");
+      const urlInput = document.getElementById("tautulli_url");
+      if (!apiKeyInput.value) {
+        apiKeyInput.value = "";
+      }
+      if (!urlInput.value) {
+        urlInput.value = "http://";
+      }
+    });
+</script>
+{% endblock %}
