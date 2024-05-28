@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template, request, redirect, url_for, f
 import jsonschema
 import requests
 import io
-import yaml
+from ruamel.yaml import YAML
 import os
 from dotenv import load_dotenv
 from plexapi.server import PlexServer
@@ -15,8 +15,9 @@ from modules.helpers import build_config_dict, get_template_list
 
 # Load JSON Schema
 # probably ought to load this from github
+yaml = YAML(typ='safe', pure=True)
 with open('json-schema/config-schema.json', 'r') as file:
-    schema = yaml.safe_load(file)
+    schema = yaml.load(file)
 
 load_dotenv()
 
@@ -132,46 +133,42 @@ def build_config(title, code_verifier, template_list, next_page, prev_page, curr
         "and YAML by Red Hat extension. VSC will also leverage the above link to enhance Kometa yml edits."
     )
 
+# Configure the YAML instance
+    yaml.default_flow_style = False
+    yaml.sort_keys = False
+
     # Prepare the final YAML content
     yaml_content = (
         '# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n'
         f"{kometa_art}\n\n"
         f"{header_comment}\n\n"
         "libraries:\n\n"
-        f"{settings_art}\n"
-        f"{yaml.dump({'settings': config_data['settings']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{webhooks_art}\n"
-        f"{yaml.dump({'webhooks': config_data['webhooks']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{plex_art}\n"
-        f"{yaml.dump({'plex': config_data['plex']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{tmdb_art}\n"
-        f"{yaml.dump({'tmdb': config_data['tmdb']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{tautulli_art}\n"
-        f"{yaml.dump({'tautulli': config_data['tautulli']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{github_art}\n"
-        f"{yaml.dump({'github': config_data['github']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{omdb_art}\n"
-        f"{yaml.dump({'omdb': config_data['omdb']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{mdblist_art}\n"
-        f"{yaml.dump({'mdblist': config_data['mdblist']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{notifiarr_art}\n"
-        f"{yaml.dump({'notifiarr': config_data['notifiarr']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{gotify_art}\n"
-        f"{yaml.dump({'gotify': config_data['gotify']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{anidb_art}\n"
-        f"{yaml.dump({'anidb': config_data['anidb']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{radarr_art}\n"
-        f"{yaml.dump({'radarr': config_data['radarr']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{sonarr_art}\n"
-        f"{yaml.dump({'sonarr': config_data['sonarr']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{trakt_art}\n"
-        f"{yaml.dump({'trakt': config_data['trakt']}, default_flow_style=False, sort_keys=False)}\n\n"
-        f"{mal_art}\n"
-        f"{yaml.dump({'mal': config_data['mal']}, default_flow_style=False, sort_keys=False)}\n\n"
     )
+
+    def dump_section(title, data):
+        with io.StringIO() as stream:
+            yaml.dump(data, stream)
+            return f"{title}\n{stream.getvalue()}\n\n"
+
+    yaml_content += dump_section(settings_art, {'settings': config_data['settings']})
+    yaml_content += dump_section(webhooks_art, {'webhooks': config_data['webhooks']})
+    yaml_content += dump_section(plex_art, {'plex': config_data['plex']})
+    yaml_content += dump_section(tmdb_art, {'tmdb': config_data['tmdb']})
+    yaml_content += dump_section(tautulli_art, {'tautulli': config_data['tautulli']})
+    yaml_content += dump_section(github_art, {'github': config_data['github']})
+    yaml_content += dump_section(omdb_art, {'omdb': config_data['omdb']})
+    yaml_content += dump_section(mdblist_art, {'mdblist': config_data['mdblist']})
+    yaml_content += dump_section(notifiarr_art, {'notifiarr': config_data['notifiarr']})
+    yaml_content += dump_section(gotify_art, {'gotify': config_data['gotify']})
+    yaml_content += dump_section(anidb_art, {'anidb': config_data['anidb']})
+    yaml_content += dump_section(radarr_art, {'radarr': config_data['radarr']})
+    yaml_content += dump_section(sonarr_art, {'sonarr': config_data['sonarr']})
+    yaml_content += dump_section(trakt_art, {'trakt': config_data['trakt']})
+    yaml_content += dump_section(mal_art, {'mal': config_data['mal']})
 
     # Store the final YAML content in the session
     session['yaml_content'] = yaml_content
+    
     try:
         jsonschema.validate(instance=config_data, schema=schema)
     except jsonschema.exceptions.ValidationError as e:
