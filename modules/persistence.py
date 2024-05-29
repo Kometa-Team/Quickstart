@@ -32,6 +32,9 @@ def save_settings(raw_source, form_data):
     # save under `010-plex`
     session[source] = data
 
+    print(f"data saved for {source}: {data}")
+
+
 def retrieve_settings(target):
     # target will be `010-plex`
 

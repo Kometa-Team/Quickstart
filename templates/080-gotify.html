@@ -88,10 +88,10 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="gotify_url" name="gotify_url" placeholder="http://192.168.1.12:8181"><label for="gotify_url">Gotify URL</label>
+      <input type="text" class="form-control" id="gotify_url" name="gotify_url" value="{{ data['gotify']['url'] }}" title="http://192.168.1.12:8181"><label for="gotify_url">Gotify URL</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="gotify_token" name="gotify_token" placeholder="API Key" aria-label="API Key"><button class="btn btn-secondary" id="toggleTokenVisibility" type="button">Show</button><button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="gotify_token" name="gotify_token" value="{{ data['gotify']['token'] }}" title="API Key" aria-label="API Key"><button class="btn btn-secondary" id="toggleTokenVisibility" type="button">Show</button><button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
     </div>
     <div id="gotifyStatusMessage" class="status-message"></div><br>
 </form>

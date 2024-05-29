@@ -105,12 +105,14 @@ def step(name):
 
     data = retrieve_settings(name)
 
+    print(f"data retrieved for {name}: {data}")
+
     plex_valid, tmdb_valid = check_minimum_settings()
     
     if name == '999-final' or name == '999-danger':
-        return build_config(title=title, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
+        return build_config(title=title, data=data, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
     else:
-        return render_template(name + '.html', title=title, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
+        return render_template(name + '.html', title=title, data=data, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
 
 
 def build_config(title, code_verifier, template_list, next_page, prev_page, curr_page, progress):
