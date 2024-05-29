@@ -10,6 +10,7 @@ env/
 
 # Ignore session files
 flask_session/
+sessions/
 
 # Ignore environment variables file
 .env
