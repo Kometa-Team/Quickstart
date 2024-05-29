@@ -103,12 +103,12 @@
     <div class="input-group input-group-lg" id="urlField">
       <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)"> <button class="btn btn-success" type="button" id="validate_trakt_pin">Validate PIN</button>
     </div>
-    <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['trakt']['authentication']['access_token'] }}" readonly> 
-    <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['trakt']['authentication']['token_type'] }}" readonly> 
-    <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['trakt']['authentication']['expires_in'] }}" readonly> 
-    <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['trakt']['authentication']['refresh_token'] }}" readonly> 
-    <input type="hidden" class="form-control" id="scope" name="scope" value="{{ data['trakt']['authentication']['scope'] }}" readonly> 
-    <input type="hidden" class="form-control" id="created_at" name="created_at" value="{{ data['trakt']['authentication']['created_at'] }}" readonly>
+    <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['trakt']['authorization']['access_token'] }}" readonly> 
+    <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['trakt']['authorization']['token_type'] }}" readonly> 
+    <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['trakt']['authorization']['expires_in'] }}" readonly> 
+    <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['trakt']['authorization']['refresh_token'] }}" readonly> 
+    <input type="hidden" class="form-control" id="scope" name="scope" value="{{ data['trakt']['authorization']['scope'] }}" readonly> 
+    <input type="hidden" class="form-control" id="created_at" name="created_at" value="{{ data['trakt']['authorization']['created_at'] }}" readonly>
     <div id="traktStatusMessage" class="status-message"></div>
     <br>
     <br>

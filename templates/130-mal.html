@@ -129,10 +129,10 @@
         </div>
         <div id="malStatusMessage" class="status-message"></div>
         <div class="form-group" id="hidden_stuff">
-          <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['mal']['authentication']['access_token'] }}" readonly> 
-          <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['mal']['authentication']['access_token'] }}" readonly> 
-          <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['mal']['authentication']['access_token'] }}" readonly> 
-          <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['mal']['authentication']['access_token'] }}" readonly>
+          <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['mal']['authorization']['access_token'] }}" readonly> 
+          <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['mal']['authorization']['access_token'] }}" readonly> 
+          <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['mal']['authorization']['access_token'] }}" readonly> 
+          <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['mal']['authorization']['access_token'] }}" readonly>
         </div>
       </div>
     </div>
