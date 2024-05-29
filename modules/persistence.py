@@ -2,7 +2,7 @@ from flask import session
 import secrets
 from ruamel.yaml import YAML
 
-from .helpers import build_config_dict, get_template_list
+from .helpers import build_config_dict
 
 def extract_names(raw_source):
     source = raw_source
@@ -34,7 +34,6 @@ def save_settings(raw_source, form_data):
         session[source] = data
 
         print(f"data saved for {source}: {data}")
-
 
 def retrieve_settings(target):
     # target will be `010-plex`
