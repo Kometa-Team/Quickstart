@@ -1,6 +1,6 @@
 from flask import session
 import secrets
-import yaml
+from ruamel.yaml import YAML
 
 from .helpers import build_config_dict, get_template_list
 
@@ -24,15 +24,16 @@ def save_settings(raw_source, form_data):
     # source will be `010-plex`
     # source_name will be `plex`
 
-    data = build_config_dict(source_name, form_data)
+    if len(source) > 0:
+        data = build_config_dict(source_name, form_data)
 
-    # we know that it is valid at this point
-    data['valid'] = True
+        # we know that it is valid at this point
+        data['valid'] = True
     
-    # save under `010-plex`
-    session[source] = data
+        # save under `010-plex`
+        session[source] = data
 
-    print(f"data saved for {source}: {data}")
+        print(f"data saved for {source}: {data}")
 
 
 def retrieve_settings(target):
@@ -58,8 +59,9 @@ def retrieve_settings(target):
 
 def get_dummy_data(target):
     
+    yaml = YAML(typ='safe', pure=True)
     with open('json-schema/prototype_config.yml', 'r') as file:
-        base_config = yaml.safe_load(file)
+        base_config = yaml.load(file)
 
     data = {}
     # dummy data is not valid
