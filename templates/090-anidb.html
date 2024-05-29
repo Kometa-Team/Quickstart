@@ -1,6 +1,6 @@
 {% extends "000-base.html" %} {% block content %}
 <form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
-  <div id="aniDbSection">
+  <div id="{{curr_page}}Section">
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
@@ -30,7 +30,7 @@
       </div>
     <div class="col align-self-center">
       <div class="input-group justify-content-end">
-        <a class="btn btn-success" role="button" href="/step/{{ next_page}}">Next</a>
+        <button type="submit" class="btn btn-success">Next</button>
         <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
           <span class="visually-hidden">Toggle Dropdown</span>
         </button>

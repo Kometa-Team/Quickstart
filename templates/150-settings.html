@@ -1,6 +1,6 @@
 {% extends "000-base.html" %} {% block content %}
 <form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
-  <div id="settingsSection">
+  <div id="{{curr_page}}Section">
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
@@ -30,7 +30,7 @@
       </div>
     <div class="col align-self-center">
       <div class="input-group justify-content-end">
-        <a class="btn btn-success" role="button" href="/step/{{ next_page}}">Next</a>
+        <button type="submit" class="btn btn-success">Next</button>
         <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
           <span class="visually-hidden">Toggle Dropdown</span>
         </button>
@@ -90,7 +90,7 @@
     <div class="form-floating">
 
     <div class="form-floating mb-3">
-      <input type="text" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="60">
+      <input type="number" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="60" min="0">
       <label for="cache_expiration">Cache Expiration (days)</label>
     </div>
 
@@ -100,23 +100,24 @@
     </div>
 
     <div class="form-floating mb-3">
-      <input type="number" class="form-control" id="asset_depth" name="asset_depth" placeholder="1">
+      <input type="number" class="form-control" id="asset_depth" name="asset_depth" placeholder="0" min="0">
       <label for="asset_depth">Asset Depth</label>
     </div>
 
     <div class="form-floating mb-3">
-      <input type="number" class="form-control" id="minimum_items" name="minimum_items" placeholder="1">
+      <input type="number" class="form-control" id="minimum_items" name="minimum_items" placeholder="1" min="1">
       <label for="minimum_items">Minimum Items</label>
     </div>
 
     <div class="form-floating mb-3">
-      <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" placeholder="1">
+      <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" value="0" min="0">
       <label for="run_again_delay">Run Again Delay (minutes)</label>
     </div>
 
     <div class="form-floating mb-3">
       <select class="form-select" id="tvdb_language" name="tvdb_language">
-        <option value="eng" selected>English (eng)</option>
+        <option value="eng">Select TVDB Language</option>
+        <option value="eng" selected>English (eng) (default)</option>
         <option value="aar">Afar (aar)</option>
         <option value="abk">Abkhazian (abk)</option>
         <option value="afr">Afrikaans (afr)</option>
@@ -302,11 +303,10 @@
         <option value="zha">Zhuang (zha)</option>
         <option value="zul">Zulu (zul)</option>
       </select>
-      <label for="tvdb_language">TVDB Language</label>
     </div>
 
     <div class="form-floating mb-3">
-      <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" placeholder="0">
+      <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" placeholder="0" min="0">
       <label for="item_refresh_delay">Item Refresh Delay (seconds)</label>
     </div>
 
@@ -357,17 +357,52 @@
 
     <div class="form-floating mb-3">
       <select class="form-select" id="sync_mode" name="sync_mode">
+        <option value="append">Select Sync Mode</option>
+        <option value="append">Append (default)</option>
         <option value="sync">Sync</option>
-        <option value="append">Append</option>
       </select>
-      <label for="sync_mode">Sync Mode</label>
     </div>
 
     <div class="form-floating mb-3">
-      <input type="text" class="form-control" id="default_collection_order" name="default_collection_order" placeholder="">
-      <label for="default_collection_order">Default Collection Order</label>
+      <select class="form-select" id="default_collection_order" name="default_collection_order">
+        <option value="">Select Default Collection Order</option>
+        <option value="added.asc">Added (Ascending)</option>
+        <option value="added.desc">Added (Descending)</option>
+        <option value="alpha">Alphabetical</option>
+        <option value="audience_rating.asc">Audience Rating (Ascending)</option>
+        <option value="audience_rating.desc">Audience Rating (Descending)</option>
+        <option value="bitrate.asc">Bitrate (Ascending)</option>
+        <option value="bitrate.desc">Bitrate (Descending)</option>
+        <option value="content_rating.asc">Content Rating (Ascending)</option>
+        <option value="content_rating.desc">Content Rating (Descending)</option>
+        <option value="critic_rating.asc">Critic Rating (Ascending)</option>
+        <option value="critic_rating.desc">Critic Rating (Descending)</option>
+        <option value="custom">Custom</option>
+        <option value="duration.asc">Duration (Ascending)</option>
+        <option value="duration.desc">Duration (Descending)</option>
+        <option value="originally_available.asc">Originally Available (Ascending)</option>
+        <option value="originally_available.desc">Originally Available (Descending)</option>
+        <option value="plays.asc">Plays (Ascending)</option>
+        <option value="plays.desc">Plays (Descending)</option>
+        <option value="progress.asc">Progress (Ascending)</option>
+        <option value="progress.desc">Progress (Descending)</option>
+        <option value="random">Random</option>
+        <option value="release">Release</option>
+        <option value="release.asc">Release (Ascending)</option>
+        <option value="release.desc">Release (Descending)</option>
+        <option value="resolution.asc">Resolution (Ascending)</option>
+        <option value="resolution.desc">Resolution (Descending)</option>
+        <option value="title.asc">Title (Ascending)</option>
+        <option value="title.desc">Title (Descending)</option>
+        <option value="user_rating.asc">User Rating (Ascending)</option>
+        <option value="user_rating.desc">User Rating (Descending)</option>
+        <option value="viewed.asc">Viewed (Ascending)</option>
+        <option value="viewed.desc">Viewed (Descending)</option>
+        <option value="year.asc">Year (Ascending)</option>
+        <option value="year.desc">Year (Descending)</option>
+      </select>
     </div>
-
+    
     <div class="form-check">
       <input class="form-check-input" type="checkbox" id="delete_below_minimum" name="delete_below_minimum" checked>
       <label class="form-check-label" for="delete_below_minimum">Delete Below Minimum</label>
@@ -425,12 +460,12 @@
 
     <div class="form-floating mb-3">
       <input type="text" class="form-control" id="ignore_ids" name="ignore_ids" placeholder="">
-      <label for="ignore_ids">Ignore IDs</label>
+      <label for="ignore_ids">Ignore IDs (comma-separated)</label>
     </div>
 
     <div class="form-floating mb-3">
       <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids" placeholder="">
-      <label for="ignore_imdb_ids">Ignore IMDb IDs</label>
+      <label for="ignore_imdb_ids">Ignore IMDb IDs (comma-separated)</label>
     </div>
 
     <div class="form-check">
@@ -445,12 +480,12 @@
 
     <div class="form-floating mb-3">
       <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users" placeholder="">
-      <label for="playlist_exclude_users">Playlist Exclude Users</label>
+      <label for="playlist_exclude_users">Playlist Exclude Users (comma-separated)</label>
     </div>
 
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" id="playlist_sync_to_users" name="playlist_sync_to_users" checked>
-      <label class="form-check-label" for="playlist_sync_to_users">Playlist Sync to Users</label>
+    <div class="form-floating mb-3">
+      <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users" value="all">
+      <label for="playlist_sync_to_users">Playlist Sync to Users (all, or comma-separated)</label>
     </div>
 
     <div class="form-check">
@@ -460,12 +495,12 @@
 
     <div class="form-floating mb-3">
       <select class="form-select" id="overlay_artwork_filetype" name="overlay_artwork_filetype">
-        <option value="jpg">JPG</option>
+        <option value="jpg">Select Overlay Artwork Filetype</option>
+        <option value="jpg">JPG (default)</option>
         <option value="png">PNG</option>
         <option value="webp_lossy">WEBP LOSSY</option>
         <option value="webp_lossless">WEBP LOSSLESS</option>
       </select>
-      <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
     </div>
 
     <div class="form-floating mb-3">
@@ -474,9 +509,16 @@
     </div>
 
     <div class="form-floating mb-3">
-      <input type="text" class="form-control" id="run_order" name="run_order" placeholder="operations, metadata, collections, overlays">
-      <label for="run_order">Run Order</label>
+      <select class="form-select" id="run_order" name="run_order">
+        <option value="">Select Run Order</option>
+        <option value="operations metadata collections overlays">(default) operations metadata collections overlays</option>
+        <option value="operations metadata overlays collections">operations metadata overlays collections</option>
+        <option value="operations collections metadata overlays">operations collections metadata overlays</option>
+        <option value="operations collections overlays metadata">operations collections overlays metadata</option>
+        <option value="operations overlays metadata collections">operations overlays metadata collections</option>
+        <option value="operations overlays collections metadata">operations overlays collections metadata</option>
+      </select>
     </div>
-</form>
+  </form>
 
 {% endblock %}

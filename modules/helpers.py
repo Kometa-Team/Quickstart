@@ -21,7 +21,7 @@ def build_oauth_dict(source, form_data):
 
 def build_simple_dict(source, form_data):
     data = {
-        source : {}
+        source: {}
     }
     for key in form_data:
         final_key = key.replace(source + '_', '', 1)
@@ -38,7 +38,14 @@ def build_simple_dict(source, form_data):
 
         data[source][final_key] = value
 
-    return(data)
+    # Special handling for run_order to split and clean it into a list
+    if 'run_order' in data[source]:
+        run_order = data[source]['run_order']
+        run_order = [item.strip() for item in run_order.split() if item.strip()]
+        data[source]['run_order'] = run_order
+
+    return data
+
 
 
 def build_config_dict(source, form_data):
