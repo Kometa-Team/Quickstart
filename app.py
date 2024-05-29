@@ -98,7 +98,7 @@ def step(name):
         
         # Calculate progress
         total_steps = len([file for file, _ in template_list if not file.startswith('999-')]) + 1  # Exclude 999-*.html but count as one step
-        progress = (current_index + 1) / total_steps * 100
+        progress = round((current_index + 1) / total_steps * 100)
     
     if request.method == 'POST':
         save_settings(request.referrer, request.form)
