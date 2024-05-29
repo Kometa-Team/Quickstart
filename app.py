@@ -60,8 +60,8 @@ def start():
 
 @app.route('/clear_session', methods=['POST'])
 def clear_session():
-    session.clear()
-    flash('Session cleared successfully.', 'success')
+    flush_session_storage()
+    flash('Session storage cleared successfully.', 'success')
     return redirect(url_for('start'))
 
 
@@ -218,12 +218,6 @@ def download():
         )
     flash('No configuration to download', 'danger')
     return redirect(url_for('final_step'))
-
-@app.route('/flush_storage', methods=['GET'])
-def flush_storage():
-    flush_session_storage()
-    return redirect(url_for('start'))
-
 
 
 @app.route('/validate_gotify', methods=['POST'])
