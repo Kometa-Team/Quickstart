@@ -69,8 +69,7 @@ def get_dummy_data(target):
         data[target] = base_config[target]
     except:
         data[target] = {}
-
-    data[target]['valid'] = False
+        data[target]['valid'] = False
 
 
     if target == 'mal':
@@ -94,6 +93,7 @@ def check_minimum_settings():
 def flush_session_storage():
     # this needs to use the dynamic template list,
     # but that needs to be changed to not use the app object
+    session['start'] = None
     session['000-base'] = None
     session['010-plex'] = None
     session['020-tmdb'] = None
