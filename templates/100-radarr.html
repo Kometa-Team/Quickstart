@@ -1,80 +1,65 @@
-{% extends "000-base.html" %}{% block content %}
-<form action="/step/110-sonarr" method="post" id="configForm" name="configForm">
+{% extends "000-base.html" %} {% block content %}
+<form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
   <div id="radarrSection">
     <div class="row">
       <div class="col align-self-center">
-        <a class="btn btn-secondary" role="button" href="/step/start">Previous</a>
-      </div>
-      <div class="col-6 align-self-center text-center">
-        <h2>Radarr</h2>
-      </div>
-      <div class="col align-self-center">
-        <div class="input-group justify-content-end">
-          <a class="btn btn-success" role="button" href="/step/110-sonarr">Next</a> <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Toggle Dropdown</span></button>
-          <ul class="dropdown-menu dropdown-menu-end">
+        <div class="input-group justify-content-start">
+          <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>
+          <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu">
+              <li>
+                  <a class="dropdown-item" href="/step/start">Start</a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+            {% for file, name in template_list %}
+              <li>
+                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider"></li>
             <li>
-              <a class="dropdown-item" href="/step/010-plex">Plex</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/020-tmdb">TMDb</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/030-tautulli">Tautulli</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/040-github">GitHub</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/050-omdb">OMDb</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/060-mdblist">MDBList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/070-notifiarr">Notifiarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/080-gotify">Gotify</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/090-anidb">AniDB</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/100-radarr">Radarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/110-sonarr">Sonarr</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/120-trakt">Trakt</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/130-mal">MyAnimeList</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/140-webhooks">Webhooks</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/step/150-settings">Settings</a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            <li>
-              <a class="dropdown-item" href="#">Skip to Validation (doesn't work atm)</a>
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
             </li>
           </ul>
         </div>
       </div>
+      <div class="col-6 align-self-center text-center">
+          <h2>{{ curr_page }}</h2>
+      </div>
+    <div class="col align-self-center">
+      <div class="input-group justify-content-end">
+        <a class="btn btn-success" role="button" href="/step/{{ next_page}}">Next</a>
+        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li>
+              <a class="dropdown-item" href="/step/start">Start</a>
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          {% for file, name in template_list %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
+            </li>
+        </ul>
+      </div>
     </div>
+  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
             <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-              <div class="progress-bar bg-success" style="width: 25%">
-                25%
+              <div class="progress-bar bg-success" style="width: {{ progress }}%">
+                {{ progress }}%
               </div>
             </div>
           </div>
@@ -93,7 +78,7 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the Radarr Section</h1>
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
           </div>
           <div class="modal-body">
             This is some dummy text<br>
@@ -168,200 +153,199 @@
     </div>
     <div class="form-check">
       <input class="form-check-input" type="checkbox" value="" id="radarr_ignore_cache"> <label class="form-check-label" for="radarr_ignore_cache">Ignore Kometa's cache when adding media</label>
-    </div><br>
+    </div>
 </form>
+<script>
+  // Save input values to sessionStorage on change
+  document.getElementById('radarr_url').addEventListener('input', function() {
+      sessionStorage.setItem('radarr_url', this.value);
+  });
 
-    <script>
-        // Save input values to sessionStorage on change
-        document.getElementById('radarr_url').addEventListener('input', function() {
-            sessionStorage.setItem('radarr_url', this.value);
-        });
+  document.getElementById('radarr_token').addEventListener('input', function() {
+      sessionStorage.setItem('radarr_token', this.value);
+  });
 
-        document.getElementById('radarr_token').addEventListener('input', function() {
-            sessionStorage.setItem('radarr_token', this.value);
-        });
+  document.getElementById('radarr_root_folder_path').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_root_folder_path', this.value);
+  });
 
-        document.getElementById('radarr_root_folder_path').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_root_folder_path', this.value);
-        });
+  document.getElementById('radarr_quality_profile').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_quality_profile', this.value);
+  });
 
-        document.getElementById('radarr_quality_profile').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_quality_profile', this.value);
-        });
+  document.getElementById('radarr_availability').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_availability', this.value);
+  });
 
-        document.getElementById('radarr_availability').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_availability', this.value);
-        });
+  document.getElementById('radarr_tag').addEventListener('input', function() {
+      sessionStorage.setItem('radarr_tag', this.value);
+  });
 
-        document.getElementById('radarr_tag').addEventListener('input', function() {
-            sessionStorage.setItem('radarr_tag', this.value);
-        });
+  document.getElementById('radarr_radarr_path').addEventListener('input', function() {
+      sessionStorage.setItem('radarr_radarr_path', this.value);
+  });
 
-        document.getElementById('radarr_radarr_path').addEventListener('input', function() {
-            sessionStorage.setItem('radarr_radarr_path', this.value);
-        });
+  document.getElementById('radarr_plex_path').addEventListener('input', function() {
+      sessionStorage.setItem('radarr_plex_path', this.value);
+  });
 
-        document.getElementById('radarr_plex_path').addEventListener('input', function() {
-            sessionStorage.setItem('radarr_plex_path', this.value);
-        });
+  document.getElementById('radarr_monitor').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_monitor', this.checked ? 'true' : 'false');
+  });
 
-        document.getElementById('radarr_monitor').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_monitor', this.checked ? 'true' : 'false');
-        });
+  document.getElementById('radarr_search').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_search', this.checked ? 'true' : 'false');
+  });
 
-        document.getElementById('radarr_search').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_search', this.checked ? 'true' : 'false');
-        });
+  document.getElementById('radarr_add_missing').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_add_missing', this.checked ? 'true' : 'false');
+  });
 
-        document.getElementById('radarr_add_missing').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_add_missing', this.checked ? 'true' : 'false');
-        });
+  document.getElementById('radarr_add_existing').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_add_existing', this.checked ? 'true' : 'false');
+  });
 
-        document.getElementById('radarr_add_existing').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_add_existing', this.checked ? 'true' : 'false');
-        });
+  document.getElementById('radarr_upgrade_existing').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_upgrade_existing', this.checked ? 'true' : 'false');
+  });
 
-        document.getElementById('radarr_upgrade_existing').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_upgrade_existing', this.checked ? 'true' : 'false');
-        });
+  document.getElementById('radarr_monitor_existing').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_monitor_existing', this.checked ? 'true' : 'false');
+  });
 
-        document.getElementById('radarr_monitor_existing').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_monitor_existing', this.checked ? 'true' : 'false');
-        });
+  document.getElementById('radarr_ignore_cache').addEventListener('change', function() {
+      sessionStorage.setItem('radarr_ignore_cache', this.checked ? 'true' : 'false');
+  });
 
-        document.getElementById('radarr_ignore_cache').addEventListener('change', function() {
-            sessionStorage.setItem('radarr_ignore_cache', this.checked ? 'true' : 'false');
-        });
+  // Load saved values from sessionStorage on page load
+  document.addEventListener('DOMContentLoaded', function() {
+      loadSessionValue('radarr_url', 'radarr_url');
+      loadSessionValue('radarr_token', 'radarr_token');
+      loadSessionValue('radarr_root_folder_path', 'radarr_root_folder_path');
+      loadSessionValue('radarr_quality_profile', 'radarr_quality_profile');
+      loadSessionValue('radarr_availability', 'radarr_availability');
+      loadSessionValue('radarr_tag', 'radarr_tag');
+      loadSessionValue('radarr_radarr_path', 'radarr_radarr_path');
+      loadSessionValue('radarr_plex_path', 'radarr_plex_path');
+      loadSessionCheckbox('radarr_monitor', 'radarr_monitor');
+      loadSessionCheckbox('radarr_search', 'radarr_search');
+      loadSessionCheckbox('radarr_add_missing', 'radarr_add_missing');
+      loadSessionCheckbox('radarr_add_existing', 'radarr_add_existing');
+      loadSessionCheckbox('radarr_upgrade_existing', 'radarr_upgrade_existing');
+      loadSessionCheckbox('radarr_monitor_existing', 'radarr_monitor_existing');
+      loadSessionCheckbox('radarr_ignore_cache', 'radarr_ignore_cache');
+  });
 
-        // Load saved values from sessionStorage on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadSessionValue('radarr_url', 'radarr_url');
-            loadSessionValue('radarr_token', 'radarr_token');
-            loadSessionValue('radarr_root_folder_path', 'radarr_root_folder_path');
-            loadSessionValue('radarr_quality_profile', 'radarr_quality_profile');
-            loadSessionValue('radarr_availability', 'radarr_availability');
-            loadSessionValue('radarr_tag', 'radarr_tag');
-            loadSessionValue('radarr_radarr_path', 'radarr_radarr_path');
-            loadSessionValue('radarr_plex_path', 'radarr_plex_path');
-            loadSessionCheckbox('radarr_monitor', 'radarr_monitor');
-            loadSessionCheckbox('radarr_search', 'radarr_search');
-            loadSessionCheckbox('radarr_add_missing', 'radarr_add_missing');
-            loadSessionCheckbox('radarr_add_existing', 'radarr_add_existing');
-            loadSessionCheckbox('radarr_upgrade_existing', 'radarr_upgrade_existing');
-            loadSessionCheckbox('radarr_monitor_existing', 'radarr_monitor_existing');
-            loadSessionCheckbox('radarr_ignore_cache', 'radarr_ignore_cache');
-        });
+  // Function to load session value for input fields
+  function loadSessionValue(sessionKey, elementId) {
+      const savedValue = sessionStorage.getItem(sessionKey);
+      if (savedValue) {
+          document.getElementById(elementId).value = savedValue;
+      }
+  }
 
-        // Function to load session value for input fields
-        function loadSessionValue(sessionKey, elementId) {
-            const savedValue = sessionStorage.getItem(sessionKey);
-            if (savedValue) {
-                document.getElementById(elementId).value = savedValue;
-            }
-        }
+  // Function to load session value for checkboxes
+  function loadSessionCheckbox(sessionKey, elementId) {
+      const savedValue = sessionStorage.getItem(sessionKey);
+      if (savedValue === 'true') {
+          document.getElementById(elementId).checked = true;
+      } else {
+          document.getElementById(elementId).checked = false;
+      }
+  }
 
-        // Function to load session value for checkboxes
-        function loadSessionCheckbox(sessionKey, elementId) {
-            const savedValue = sessionStorage.getItem(sessionKey);
-            if (savedValue === 'true') {
-                document.getElementById(elementId).checked = true;
-            } else {
-                document.getElementById(elementId).checked = false;
-            }
-        }
+  async function validateRadarrApikey(apikey, url) {
+      const statusApiUrl = `${url}/api/v3/system/status?apikey=${apikey}`;
+      const rootFolderApiUrl = `${url}/api/v3/rootfolder?apikey=${apikey}`;
+      const qualityProfileApiUrl = `${url}/api/v3/qualityprofile?apikey=${apikey}`;
+      const radarrStatusMessage = document.getElementById('radarrStatusMessage');
+  
+      try {
+          // Validate API key
+          const response = await fetch(statusApiUrl);
+          const data = await response.json();
+  
+          if (response.ok && 'version' in data) {
+              radarrStatusMessage.textContent = "Radarr API key is valid.";
+              radarrStatusMessage.style.color = '#75b798';
+              radarrStatusMessage.style.display = 'block';
+  
+              // Save valid API key to sessionStorage
+              sessionStorage.setItem('radarr_token', apikey);
+  
+              // Fetch and populate root folders
+              const rootFolderResponse = await fetch(rootFolderApiUrl);
+              const rootFolders = await rootFolderResponse.json();
+              const rootFolderSelect = document.getElementById('radarr_root_folder_path');
+              rootFolderSelect.innerHTML = '<option value="">Select Root Folder</option>';
+              rootFolders.forEach(folder => {
+                  const option = document.createElement('option');
+                  option.value = folder.path;
+                  option.textContent = folder.path;
+                  rootFolderSelect.appendChild(option);
+              });
+  
+              // Fetch and populate quality profiles
+              const qualityProfileResponse = await fetch(qualityProfileApiUrl);
+              const qualityProfiles = await qualityProfileResponse.json();
+              const qualityProfileSelect = document.getElementById('radarr_quality_profile');
+              qualityProfileSelect.innerHTML = '<option value="">Select Quality Profile</option>';
+              qualityProfiles.forEach(profile => {
+                  const option = document.createElement('option');
+                  option.value = profile.name;
+                  option.textContent = profile.name;
+                  qualityProfileSelect.appendChild(option);
+              });
+  
+              // Save selected options to sessionStorage
+              sessionStorage.setItem('radarr_root_folder_path', rootFolderSelect.value);
+              sessionStorage.setItem('radarr_quality_profile', qualityProfileSelect.value);
+  
+              return true;
+          } else {
+              console.log("Invalid Radarr API key. Error:", data.message);
+              radarrStatusMessage.textContent = "Radarr API key is invalid.";
+              radarrStatusMessage.style.color = '#ea868f';
+              radarrStatusMessage.style.display = 'block';
+              return false;
+          }
+      } catch (error) {
+          console.error("Error validating Radarr API key:", error);
+          radarrStatusMessage.textContent = 'Error validating Radarr API key.';
+          radarrStatusMessage.style.color = '#ea868f';
+          radarrStatusMessage.style.display = 'block';
+          return false;
+      }
+  }
 
-        async function validateRadarrApikey(apikey, url) {
-            const statusApiUrl = `${url}/api/v3/system/status?apikey=${apikey}`;
-            const rootFolderApiUrl = `${url}/api/v3/rootfolder?apikey=${apikey}`;
-            const qualityProfileApiUrl = `${url}/api/v3/qualityprofile?apikey=${apikey}`;
-            const radarrStatusMessage = document.getElementById('radarrStatusMessage');
-        
-            try {
-                // Validate API key
-                const response = await fetch(statusApiUrl);
-                const data = await response.json();
-        
-                if (response.ok && 'version' in data) {
-                    radarrStatusMessage.textContent = "Radarr API key is valid.";
-                    radarrStatusMessage.style.color = '#75b798';
-                    radarrStatusMessage.style.display = 'block';
-        
-                    // Save valid API key to sessionStorage
-                    sessionStorage.setItem('radarr_token', apikey);
-        
-                    // Fetch and populate root folders
-                    const rootFolderResponse = await fetch(rootFolderApiUrl);
-                    const rootFolders = await rootFolderResponse.json();
-                    const rootFolderSelect = document.getElementById('radarr_root_folder_path');
-                    rootFolderSelect.innerHTML = '<option value="">Select Root Folder</option>';
-                    rootFolders.forEach(folder => {
-                        const option = document.createElement('option');
-                        option.value = folder.path;
-                        option.textContent = folder.path;
-                        rootFolderSelect.appendChild(option);
-                    });
-        
-                    // Fetch and populate quality profiles
-                    const qualityProfileResponse = await fetch(qualityProfileApiUrl);
-                    const qualityProfiles = await qualityProfileResponse.json();
-                    const qualityProfileSelect = document.getElementById('radarr_quality_profile');
-                    qualityProfileSelect.innerHTML = '<option value="">Select Quality Profile</option>';
-                    qualityProfiles.forEach(profile => {
-                        const option = document.createElement('option');
-                        option.value = profile.name;
-                        option.textContent = profile.name;
-                        qualityProfileSelect.appendChild(option);
-                    });
-        
-                    // Save selected options to sessionStorage
-                    sessionStorage.setItem('radarr_root_folder_path', rootFolderSelect.value);
-                    sessionStorage.setItem('radarr_quality_profile', qualityProfileSelect.value);
-        
-                    return true;
-                } else {
-                    console.log("Invalid Radarr API key. Error:", data.message);
-                    radarrStatusMessage.textContent = "Radarr API key is invalid.";
-                    radarrStatusMessage.style.color = '#ea868f';
-                    radarrStatusMessage.style.display = 'block';
-                    return false;
-                }
-            } catch (error) {
-                console.error("Error validating Radarr API key:", error);
-                radarrStatusMessage.textContent = 'Error validating Radarr API key.';
-                radarrStatusMessage.style.color = '#ea868f';
-                radarrStatusMessage.style.display = 'block';
-                return false;
-            }
-        }
+  document.getElementById('validateRadarrButton').addEventListener('click', function() {
+      const apiKey = document.getElementById('radarr_token').value;
+      const url = document.getElementById('radarr_url').value;
+      const radarrStatusMessage = document.getElementById('radarrStatusMessage');
 
-        document.getElementById('validateRadarrButton').addEventListener('click', function() {
-            const apiKey = document.getElementById('radarr_token').value;
-            const url = document.getElementById('radarr_url').value;
-            const radarrStatusMessage = document.getElementById('radarrStatusMessage');
+      if (!apiKey || !url) {
+          radarrStatusMessage.textContent = 'Please enter the Radarr API key and URL.';
+          radarrStatusMessage.style.color = '#ea868f';
+          radarrStatusMessage.style.display = 'block';
+          return;
+      }
 
-            if (!apiKey || !url) {
-                radarrStatusMessage.textContent = 'Please enter the Radarr API key and URL.';
-                radarrStatusMessage.style.color = '#ea868f';
-                radarrStatusMessage.style.display = 'block';
-                return;
-            }
+      validateRadarrApikey(apiKey, url);
+  });
 
-            validateRadarrApikey(apiKey, url);
-        });
+  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+      const apikeyInput = document.getElementById('radarr_token');
+      const currentType = apikeyInput.getAttribute('type');
+      apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+      this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+  });
 
-        document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-            const apikeyInput = document.getElementById('radarr_token');
-            const currentType = apikeyInput.getAttribute('type');
-            apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-            this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-        });
-
-        // Clear API token on form submission to avoid unintentional persistence
-        document.getElementById('configForm').addEventListener('submit', function(event) {
-            const apiKeyInput = document.getElementById('radarr_token');
-            if (!apiKeyInput.value) {
-                apiKeyInput.value = '';
-            }
-        });
-    </script>
+  // Clear API token on form submission to avoid unintentional persistence
+  document.getElementById('configForm').addEventListener('submit', function(event) {
+      const apiKeyInput = document.getElementById('radarr_token');
+      if (!apiKeyInput.value) {
+          apiKeyInput.value = '';
+      }
+  });
+</script>
 {% endblock %}
