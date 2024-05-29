@@ -66,8 +66,13 @@ def get_dummy_data(target):
     data = {}
     # dummy data is not valid
     data['valid'] = False
-    data[target] = base_config[target]
+    try:
+        data[target] = base_config[target]
+    except:
+        data[target] = {}
+
     data[target]['valid'] = False
+
 
     if target == 'mal':
         data['code_verifier'] = secrets.token_urlsafe(100)[:128]
