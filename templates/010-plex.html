@@ -104,6 +104,7 @@
         <input type="password" class="form-control" id="plex_token" name="plex_token" placeholder="Token" aria-label="Plex Token" required=""> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
       </div>
       <div id="plexStatusMessage" class="status-message"></div>
+      <div class="hidden" id="hidden" style="display:none">
       <div class="form-floating">
         <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" placeholder="Set the size of the Plex Database Cache (in Megabytes), default is 40" value="40" min="40" required=""> <label for="plex_db_cache">Database Cache Size (in mb)</label>
       </div>
@@ -122,10 +123,15 @@
       <div class="form-check">
         <input class="form-check-input" type="checkbox" value="" id="plex_optimize"> <label class="form-check-label" for="plex_optimize">Optimize database</label>
       </div>
+      </div>
     </div>
   </div>
 </form>
 <script>
+  // Display additional attributes once Plex validated
+  function showAttributes() {
+
+  }
   // Save input values to sessionStorage on change
   document.getElementById('plex_url').addEventListener('input', function() {
     sessionStorage.setItem('plex_url', this.value);
@@ -224,6 +230,8 @@
         document.getElementById('plex_db_cache').value = data.db_cache;
         plexStatusMessage.textContent = 'Plex server validated successfully!';
         plexStatusMessage.style.color = '#75b798';
+        var T = document.getElementById("hidden");
+        T.style.display = "block";  //
       } else {
         plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
         plexStatusMessage.style.color = '#ea868f';
