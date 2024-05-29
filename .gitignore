@@ -12,6 +12,9 @@ env/
 flask_session/
 sessions/
 
+# Ignore gotify file
+gotify.db
+
 # Ignore environment variables file
 .env
 
