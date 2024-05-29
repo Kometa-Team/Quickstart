@@ -88,22 +88,22 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_url" name="radarr_url" placeholder="http://127.0.0.1:32400"> <label for="radarr_url">Radarr URL (including URL Base if set)</label>
+      <input type="text" class="form-control" id="radarr_url" name="radarr_url" value="{{ data['radarr']['url'] }}" title="http://127.0.0.1:32400"> <label for="radarr_url">Radarr URL (including URL Base if set)</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="radarr_token" name="radarr_token" placeholder="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateRadarrButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="radarr_token" name="radarr_token" value="{{ data['radarr']['token'] }}" title="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateRadarrButton" type="button">Validate</button>
     </div>
     <div id="radarrStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
-      <select class="form-select" aria-label="Root Folder Path" id="radarr_root_folder_path" name="radarr_root_folder_path">
+      <select class="form-select" aria-label="Root Folder Path" id="radarr_root_folder_path" name="radarr_root_folder_path" value="{{ data['radarr']['root_folder_path'] }}">
         <option value="">
           Select Root Folder Path
         </option>
-      </select> <select class="form-select" aria-label="Quality Profile" id="radarr_quality_profile" name="radarr_quality_profile">
+      </select> <select class="form-select" aria-label="Quality Profile" id="radarr_quality_profile" name="radarr_quality_profile" value="{{ data['radarr']['quality_profile'] }}">
         <option value="">
           Select Quality Profile
         </option>
-      </select> <select class="form-select" aria-label="Quality Profile" id="radarr_availability" name="radarr_availability">
+      </select> <select class="form-select" aria-label="Quality Profile" id="radarr_availability" name="radarr_availability" value="{{ data['radarr']['availability'] }}">
         <option value="announced">
           Select Availibility
         </option>
@@ -122,19 +122,19 @@
       </select>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" placeholder=""> <label for="radarr_tag">Tag to apply to added media</label>
+      <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" value="{{ data['radarr']['tag'] }}"placeholder=""> <label for="radarr_tag">Tag to apply to added media</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path" placeholder=""> <label for="radarr_radarr_path">Radarr Path</label>
+      <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path" value="{{ data['radarr']['radarr_path'] }}"placeholder=""> <label for="radarr_radarr_path">Radarr Path</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path" placeholder=""> <label for="radarr_plex_path">Plex Path</label>
+      <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path" value="{{ data['radarr']['plex_path'] }}"placeholder=""> <label for="radarr_plex_path">Plex Path</label>
     </div>
     <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="radarr_monitor" checked> <label class="form-check-label" for="radarr_monitor">Monitor media when added</label>
+      <input class="form-check-input" type="checkbox" value="" id="radarr_monitor" value="{{ data['radarr']['monitor'] }}"checked> <label class="form-check-label" for="radarr_monitor">Monitor media when added</label>
     </div>
     <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="radarr_search" checked> <label class="form-check-label" for="radarr_search">Search media when added</label>
+      <input class="form-check-input" type="checkbox" value="" id="radarr_search" value="{{ data['radarr']['search'] }}"checked> <label class="form-check-label" for="radarr_search">Search media when added</label>
     </div>
     <div class="form-check">
       <input class="form-check-input" type="checkbox" value="" id="radarr_add_missing"> <label class="form-check-label" for="radarr_add_missing">Add missing media from collections</label>

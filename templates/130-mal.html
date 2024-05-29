@@ -88,13 +88,13 @@
       </div>
     </div>
       <div class="form-floating">
-        <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" oninput="updateMALTargetURL(this)"> <label for="mal_client_id">Client ID</label>
+        <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" value="{{ data['mal']['client_id'] }}" oninput="updateMALTargetURL(this)"> <label for="mal_client_id">Client ID</label>
       </div>
       <div class="form-floating">
-        <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{code_verifier}}">
+        <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{ data['code_verifier']}}">
       </div>
       <div class="input-group input-group-lg">
-        <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" placeholder="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
+        <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" value="{{ data['mal']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
       </div>
       <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModal2" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -129,7 +129,10 @@
         </div>
         <div id="malStatusMessage" class="status-message"></div>
         <div class="form-group" id="hidden_stuff">
-          <input type="hidden" class="form-control" id="access_token" name="access_token" readonly> <input type="hidden" class="form-control" id="token_type" name="token_type" readonly> <input type="hidden" class="form-control" id="expires_in" name="expires_in" readonly> <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" readonly>
+          <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['mal']['authentication']['access_token'] }}" readonly> 
+          <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['mal']['authentication']['access_token'] }}" readonly> 
+          <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['mal']['authentication']['access_token'] }}" readonly> 
+          <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['mal']['authentication']['access_token'] }}" readonly>
         </div>
       </div>
     </div>
