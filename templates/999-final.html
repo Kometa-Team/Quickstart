@@ -1,7 +1,7 @@
 {% extends "000-base.html" %} {% block content %}
 <form method="post" id="final-form">
-    <div id="dangerSection">
-      <div class="row">
+  <div id="{{curr_page}}Section">
+    <div class="row">
         <div class="col align-self-center">
           <div class="input-group justify-content-start">
             <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>

@@ -1,6 +1,6 @@
 {% extends "000-base.html" %} {% block content %}
 <form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
-  <div id="webhooksSection">
+  <div id="{{curr_page}}Section">
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
@@ -30,7 +30,7 @@
       </div>
     <div class="col align-self-center">
       <div class="input-group justify-content-end">
-        <a class="btn btn-success" role="button" href="/step/{{ next_page}}">Next</a>
+        <button type="submit" class="btn btn-success">Next</button>
         <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
           <span class="visually-hidden">Toggle Dropdown</span>
         </button>
@@ -95,7 +95,6 @@
         <option value="custom">Custom</option>
       </select>
       <label for="webhooks_error">Error</label>
-      <input type="text" class="form-control mt-2" id="webhooks_error_custom" name="webhooks_error_custom" placeholder="Enter custom webhook URL" style="display: none">
     </div>
 
     <div class="form-floating">
@@ -106,7 +105,6 @@
         <option value="custom">Custom</option>
       </select>
       <label for="webhooks_run_start">Run Start</label>
-      <input type="text" class="form-control mt-2" id="webhooks_run_start_custom" name="webhooks_run_start_custom" placeholder="Enter custom webhook URL" style="display: none">
     </div>
 
     <div class="form-floating">
@@ -117,7 +115,6 @@
         <option value="custom">Custom</option>
       </select>
       <label for="webhooks_run_end">Run End</label>
-      <input type="text" class="form-control mt-2" id="webhooks_run_end_custom" name="webhooks_run_end_custom" placeholder="Enter custom webhook URL" style="display: none">
     </div>
 
     <div class="form-floating">
@@ -128,7 +125,6 @@
         <option value="custom">Custom</option>
       </select>
       <label for="webhooks_changes">Changes</label>
-      <input type="text" class="form-control mt-2" id="webhooks_changes_custom" name="webhooks_changes_custom" placeholder="Enter custom webhook URL" style="display: none">
     </div>
 
     <div class="form-floating">
@@ -139,7 +135,6 @@
         <option value="custom">Custom</option>
       </select>
       <label for="webhooks_version">Version</label>
-      <input type="text" class="form-control mt-2" id="webhooks_version_custom" name="webhooks_version_custom" placeholder="Enter custom webhook URL" style="display: none">
     </div>
 
     <div class="form-floating">
@@ -150,7 +145,6 @@
         <option value="custom">Custom</option>
       </select>
       <label for="webhooks_delete">Delete</label>
-      <input type="text" class="form-control mt-2" id="webhooks_delete_custom" name="webhooks_delete_custom" placeholder="Enter custom webhook URL" style="display: none">
     </div>
 
     <script>
