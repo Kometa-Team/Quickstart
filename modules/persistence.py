@@ -2,7 +2,7 @@ from flask import session
 import secrets
 import yaml
 
-from .helpers import build_config_dict
+from .helpers import build_config_dict, get_template_list
 
 def extract_names(raw_source):
     source = raw_source
@@ -86,6 +86,8 @@ def check_minimum_settings():
     return plex_valid, tmdb_valid
 
 def flush_session_storage():
+    # this needs to use the dynamic template list,
+    # but that needs to be changed to not use the app object
     session['000-base'] = None
     session['010-plex'] = None
     session['020-tmdb'] = None
@@ -100,6 +102,8 @@ def flush_session_storage():
     session['110-sonarr'] = None
     session['120-trakt'] = None
     session['130-mal'] = None
+    session['140-webhooks'] = None
+    session['150-settings'] = None
     session['666-test'] = None
     session['999-danger'] = None
     session['999-final'] = None
