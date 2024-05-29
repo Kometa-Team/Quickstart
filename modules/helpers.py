@@ -3,7 +3,7 @@ import os
 def build_oauth_dict(source, form_data):
     data = {
         source : {
-            'authentication' : {}
+            'authorization' : {}
         }
     }
     for key in form_data:
@@ -14,7 +14,7 @@ def build_oauth_dict(source, form_data):
             data[source][final_key] = value
         else:
             if (final_key != 'url'):
-                data[source]['authentication'][final_key] = value
+                data[source]['authorization'][final_key] = value
 
     return(data)
 
