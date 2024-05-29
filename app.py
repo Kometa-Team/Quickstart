@@ -110,12 +110,12 @@ def step(name):
     plex_valid, tmdb_valid = check_minimum_settings()
     
     if name == '999-final' or name == '999-danger':
-        return build_config(title=title, data=data, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
+        return build_config(title=title, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
     else:
         return render_template(name + '.html', title=title, data=data, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
 
 
-def build_config(title, code_verifier, template_list, next_page, prev_page, curr_page, progress):
+def build_config(title, template_list, next_page, prev_page, curr_page, progress):
 
     # Combine data from all steps (retrieve from session or other storage)
     config_data = {
@@ -200,10 +200,10 @@ def build_config(title, code_verifier, template_list, next_page, prev_page, curr
     except jsonschema.exceptions.ValidationError as e:
         print(config_data)
         flash(f'Validation error: {e.message}', 'danger')
-        return render_template('999-danger.html', title=title, yaml_content=yaml_content, validation_error=e, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+        return render_template('999-danger.html', title=title, yaml_content=yaml_content, validation_error=e, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
     # Render the final step template with the YAML content
-    return render_template('999-final.html', title=title, yaml_content=yaml_content, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+    return render_template('999-final.html', title=title, yaml_content=yaml_content, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
 
 @app.route('/download')
