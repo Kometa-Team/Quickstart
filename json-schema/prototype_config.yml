@@ -452,13 +452,15 @@ plex:                            # Can be individually specified per library as 
   url: http://192.168.1.12:32400
   token: Enter Plex Token
   timeout: 60
-  db_cache: 999
+  db_cache: 40
   clean_bundles: false
   empty_trash: false
   optimize: false
+  verify_ssl: true
 tmdb:                            # REQUIRED for the script to run
   apikey: Enter TMDB API Key
   language: en
+  cache_expiration: 60
 tautulli:                        # Can be individually specified per library as well
   url: http://192.168.1.12:8181
   apikey: Enter Tautulli API Key
@@ -478,6 +480,10 @@ gotify:
 anidb:                           # Not required for AniDB builders unless you want mature content
   username: Enter AniDB Username
   password: Enter AniDB Password
+  client: Enter AniDB Client
+  version: 1
+  language: en
+  cache_expiration: 60
 radarr:                          # Can be individually specified per library as well
   url: http://192.168.1.12:7878
   token: Enter Radarr API Key

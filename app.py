@@ -37,7 +37,7 @@ app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 # Session(app)
 
 # Create the Flask application
-app = Flask(__name__)
+# app = Flask(__name__)
 
 # Details on the Secret Key: https://flask.palletsprojects.com/en/3.0.x/config/#SECRET_KEY
 # NOTE: The secret key is used to cryptographically-sign the cookies used for storing
