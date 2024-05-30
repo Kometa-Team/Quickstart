@@ -88,35 +88,14 @@
       </div>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="mdblist_apikey" name="mdblist_apikey" placeholder="MDBList API Key" aria-label="MDBList API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateMdblistButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="mdblist_apikey" name="mdblist_apikey" value="{{ data['mdblist']['apikey'] }}" title="MDBList API Key" aria-label="MDBList API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateMdblistButton" type="button">Validate</button>
     </div>
     <div id="mdblistStatusMessage" class="status-message"></div><br>
   <div class="form-floating">
-    <input type="number" class="form-control" id="mdblist_cache_expiration" name="mdblist_cache_expiration" value="60" min="0"> <label for="mdblist_cache_expiration">Cache Expiration (in days)</label>
+    <input type="number" class="form-control" id="mdblist_cache_expiration" name="mdblist_cache_expiration" value="{{ data['mdblist']['cache_expiration'] }}" min="0"> <label for="mdblist_cache_expiration">Cache Expiration (in days)</label>
   </div>
 </form>
 <script>
-    // Save input values to sessionStorage on change
-    document.getElementById('mdblist_apikey').addEventListener('input', function() {
-        sessionStorage.setItem('mdblist_apikey', this.value);
-    });
-    document.getElementById('mdblist_cache_expiration').addEventListener('input', function() {
-        sessionStorage.setItem('mdblist_cache_expiration', this.value);
-    });
-
-    // Load saved values from sessionStorage on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const savedMdblistApikey = sessionStorage.getItem('mdblist_apikey');
-        const savedCacheExpiration = sessionStorage.getItem('mdblist_cache_expiration');
-
-        if (savedMdblistApikey) {
-            document.getElementById('mdblist_apikey').value = savedMdblistApikey;
-        }
-        if (savedCacheExpiration) {
-            document.getElementById('mdblist_cache_expiration').value = savedCacheExpiration;
-        }
-    });
-
     async function validateMdblistApikey(apikey) {
         const apiUrl = `https://mdblist.com/api/?apikey=${apikey}&s=test`;
         try {

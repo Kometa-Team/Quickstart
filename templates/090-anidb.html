@@ -88,16 +88,16 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="anidb_client" name="anidb_client" placeholder=""><label for="anidb_client">AniDb Client</label>
+      <input type="text" class="form-control" id="anidb_client" name="anidb_client" value="{{ data['anidb']['client'] }}" title=""><label for="anidb_client">AniDb Client</label>
     </div>
     <div class="form-floating">
-      <input type="number" class="form-control" id="anidb_version" name="anidb_version" value="1" min="1" max="1"><label for="anidb_version">Client Version</label>
+      <input type="number" class="form-control" id="anidb_version" name="anidb_version" value="{{ data['anidb']['version'] }}" min="1" max="1"><label for="anidb_version">Client Version</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="anidb_username" name="anidb_username" placeholder=""><label for="anidb_username">Username</label>
+      <input type="text" class="form-control" id="anidb_username" name="anidb_username" value="{{ data['anidb']['username'] }}" title=""><label for="anidb_username">Username</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="anidb_password" name="anidb_password" placeholder="Password" aria-label="Password"><button class="btn btn-secondary" id="togglePasswordVisibility" type="button">Show</button><button class="btn btn-success" id="validateAnidbButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="anidb_password" name="anidb_password" value="{{ data['anidb']['password'] }}" title="Password" aria-label="Password"><button class="btn btn-secondary" id="togglePasswordVisibility" type="button">Show</button><button class="btn btn-success" id="validateAnidbButton" type="button">Validate</button>
     </div>
     <div id="anidbStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
@@ -295,7 +295,7 @@
       </select>
     </div>
     <div class="form-floating">
-      <input type="number" class="form-control" id="anidb_cache_expiration" name="anidb_cache_expiration" value="60" min="0"><label for="anidb_cache_expiration">Cache Expiration (in days)</label>
+      <input type="number" class="form-control" id="anidb_cache_expiration" name="anidb_cache_expiration" value="{{ data['anidb']['cache_expiration'] }}" min="0"><label for="anidb_cache_expiration">Cache Expiration (in days)</label>
     </div>
 </form>
 <script>

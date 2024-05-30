@@ -1,4 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session, send_file
+from flask_session import Session
+from cachelib.file import FileSystemCache
+
 import jsonschema
 import requests
 import io
@@ -12,6 +15,7 @@ import secrets
 from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
 from modules.output import add_border_to_ascii_art
 from modules.helpers import build_config_dict, get_template_list
+from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage
 
 # Load JSON Schema
 # probably ought to load this from github
@@ -21,9 +25,33 @@ with open('json-schema/config-schema.json', 'r') as file:
 
 load_dotenv()
 
+
 app = Flask(__name__)
+
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 
+# SESSION_TYPE = 'cachelib'
+# SESSION_SERIALIZATION_FORMAT = 'json'
+# SESSION_CACHELIB = FileSystemCache(threshold=500, cache_dir="sessions"),
+# app.config.from_object(__name__)
+# Session(app)
+
+# Create the Flask application
+app = Flask(__name__)
+
+# Details on the Secret Key: https://flask.palletsprojects.com/en/3.0.x/config/#SECRET_KEY
+# NOTE: The secret key is used to cryptographically-sign the cookies used for storing
+#       the session identifier.
+# app.secret_key = os.getenv('SECRET_KEY', default='BAD_SECRET_KEY')
+
+# Configure Redis for storing the session data on the server-side
+app.config['SESSION_TYPE'] = 'cachelib'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = False
+# app.config['SESSION_REDIS'] = redis.from_url('redis://127.0.0.1:6379')
+
+# Create and initialize the Flask-Session object AFTER `app` has been configured
+server_session = Session(app)
 
 @app.route('/')
 def start():
@@ -32,8 +60,8 @@ def start():
 
 @app.route('/clear_session', methods=['POST'])
 def clear_session():
-    session.clear()
-    flash('Session cleared successfully.', 'success')
+    flush_session_storage()
+    flash('Session storage cleared successfully.', 'success')
     return redirect(url_for('start'))
 
 
@@ -73,23 +101,21 @@ def step(name):
         progress = (current_index + 1) / total_steps * 100
     
     if request.method == 'POST':
-        source = request.referrer.split("/")[-1]
-        source = source.split("?")[0]
-        source = source.split('-')[-1]
+        save_settings(request.referrer, request.form)
 
-        data = build_config_dict(source, request.form)
+    data = retrieve_settings(name)
 
-        session[source] = data[source]
+    print(f"data retrieved for {name}: {data}")
 
-    code_verifier = secrets.token_urlsafe(100)[:128]
-
+    plex_valid, tmdb_valid = check_minimum_settings()
+    
     if name == '999-final' or name == '999-danger':
-        return build_config(title=title, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+        return build_config(title=title, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
     else:
-        return render_template(name + '.html', title=title, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+        return render_template(name + '.html', title=title, data=data, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
 
 
-def build_config(title, code_verifier, template_list, next_page, prev_page, curr_page, progress):
+def build_config(title, template_list, next_page, prev_page, curr_page, progress):
 
     # Combine data from all steps (retrieve from session or other storage)
     config_data = {
@@ -174,10 +200,10 @@ def build_config(title, code_verifier, template_list, next_page, prev_page, curr
     except jsonschema.exceptions.ValidationError as e:
         print(config_data)
         flash(f'Validation error: {e.message}', 'danger')
-        return render_template('999-danger.html', title=title, yaml_content=yaml_content, validation_error=e, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+        return render_template('999-danger.html', title=title, yaml_content=yaml_content, validation_error=e, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
     # Render the final step template with the YAML content
-    return render_template('999-final.html', title=title, yaml_content=yaml_content, code_verifier=code_verifier, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+    return render_template('999-final.html', title=title, yaml_content=yaml_content, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
 
 @app.route('/download')
@@ -192,6 +218,7 @@ def download():
         )
     flash('No configuration to download', 'danger')
     return redirect(url_for('final_step'))
+
 
 @app.route('/validate_gotify', methods=['POST'])
 def validate_gotify():
