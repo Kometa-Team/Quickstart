@@ -89,18 +89,18 @@
     </div>
 
     <div class="form-floating">
-      <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" placeholder="http://127.0.0.1:32400"> <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
+      <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" value="{{ data['sonarr']['url'] }}" value="{{ data['sonarr']['url'] }}" placeholder="http://127.0.0.1:32400"> <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" placeholder="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" value="{{ data['sonarr']['token'] }}" value="{{ data['sonarr']['token'] }}" placeholder="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
     </div>
     <div id="sonarrStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
-      <select class="form-select" aria-label="Root Folder Path" id="sonarr_root_folder_path" name="sonarr_root_folder_path">
+      <select class="form-select" aria-label="Root Folder Path" id="sonarr_root_folder_path" name="sonarr_root_folder_path" value="{{ data['sonarr']['root_folder_path'] }}" value="{{ data['sonarr']['root_folder_path'] }}">
         <option value="">
           Select Root Folder Path
         </option>
-      </select> <select class="form-select" aria-label="Monitor" id="sonarr_monitor" name="sonarr_monitor">
+      </select> <select class="form-select" aria-label="Monitor" id="sonarr_monitor" name="sonarr_monitor" value="{{ data['sonarr']['monitor'] }}">
         <option value="all" selected>
           Select Monitor Preference
         </option>
@@ -128,15 +128,15 @@
         <option value="latest">
           latest - monitor all episodes of the latest season and future seasons
         </option>
-      </select> <select class="form-select" aria-label="Quality Profile" id="sonarr_quality_profile" name="sonarr_quality_profile">
+      </select> <select class="form-select" aria-label="Quality Profile" id="sonarr_quality_profile" value="{{ data['sonarr']['quality_profile'] }}" name="sonarr_quality_profile" value="{{ data['sonarr']['quality_profile'] }}">
         <option value="">
           Select Quality Profile
         </option>
-      </select> <select class="form-select" aria-label="Language Profile" id="sonarr_language_profile" name="sonarr_language_profile">
+      </select> <select class="form-select" aria-label="Language Profile" id="sonarr_language_profile" value="{{ data['sonarr']['language_profile'] }}" name="sonarr_language_profile" value="{{ data['sonarr']['language_profile'] }}">
         <option value="">
           Select Language Profile
         </option>
-      </select> <select class="form-select" aria-label="Series Type" id="sonarr_series_type" name="sonarr_series_type">
+      </select> <select class="form-select" aria-label="Series Type" id="sonarr_series_type" value="{{ data['sonarr']['series_type'] }}" name="sonarr_series_type" value="{{ data['sonarr']['series_type'] }}">
         <option value="standard" selected>
           Select Series Type
         </option>
@@ -152,13 +152,13 @@
       </select>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag" placeholder=""> <label for="sonarr_tag">Tag to apply to added media</label>
+      <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag" value="{{ data['sonarr']['tag'] }}" placeholder=""> <label for="sonarr_tag">Tag to apply to added media</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="sonarr_sonarr_path" name="sonarr_sonarr_path" placeholder=""> <label for="sonarr_sonarr_path">Sonarr Path</label>
+      <input type="text" class="form-control" id="sonarr_sonarr_path" name="sonarr_sonarr_path" value="{{ data['sonarr']['sonarr_path'] }}" placeholder=""> <label for="sonarr_sonarr_path">Sonarr Path</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path" placeholder=""> <label for="sonarr_plex_path">Plex Path</label>
+      <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path" value="{{ data['sonarr']['plex_path'] }}" placeholder=""> <label for="sonarr_plex_path">Plex Path</label>
     </div>
     <div class="form-check">
       <input class="form-check-input" type="checkbox" value="" id="sonarr_search" checked> <label class="form-check-label" for="sonarr_search">Search for media when added</label>

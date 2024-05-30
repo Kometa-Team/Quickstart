@@ -8,6 +8,13 @@ __pycache__/
 venv/
 env/
 
+# Ignore session files
+flask_session/
+sessions/
+
+# Ignore gotify file
+gotify.db
+
 # Ignore environment variables file
 .env
 

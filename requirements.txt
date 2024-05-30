@@ -1,4 +1,5 @@
 Flask
+Flask-Session[cachelib]
 pyfiglet
 python-dotenv
 plexapi
