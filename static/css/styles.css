@@ -73,11 +73,15 @@ label {
     border-bottom: 1px solid #3a3a3a;
 }
 
-.form-select, .form-floating > .form-select {
-    padding-top: 0rem;
-    padding-bottom: 0rem;
-    margin-top: 1rem;
+.accordion {
+  --bs-accordion-bg: #191d20;
 }
+
+.accordion-body {
+  background-color: #212529;
+}
+
+
 /* Input Styles */
 
 .status-message {
