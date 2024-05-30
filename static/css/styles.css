@@ -1,4 +1,6 @@
-/* General Styles */
+/* -------------------- */
+/* GENERAL STYLES      */
+/* -------------------- */
 
 body {
     margin: 20px;
@@ -9,10 +11,13 @@ code {
     color: #ea868f;
     word-wrap: break-word;
     background-color: hsl(225deg 8.87% 10.98%);
-    padding: 0 .2941176471em;
+    padding: 0 0.2941176471em;
 }
 
-/* Header Styles */
+
+/* -------------------- */
+/* HEADER STYLES        */
+/* -------------------- */
 
 .header-container {
     text-align: center;
@@ -24,11 +29,22 @@ code {
     height: auto;
 }
 
-/* Form Styles */
+
+/* -------------------- */
+/* FORM STYLES          */
+/* -------------------- */
+
+form, #final-form { /* Combined similar selectors */
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    border: 1px solid #343a40;
+    border-radius: 5px;
+}
 
 .form-container {
-    display: flex; /* Use flexbox for layout */
-    max-width: 800px; /* Adjust the maximum width as needed */
+    display: flex; 
+    max-width: 800px; 
     margin: auto;
 }
 
@@ -38,26 +54,8 @@ code {
     margin-bottom: 1rem;
 }
 
-form {
-    max-width: 900px;
-    margin: auto;
-    padding: 20px;
-    border: 1px solid #343a40;
-    border-radius: 5px;
-}
-
-#final-form {
-    max-width: 900px;
-}
-
-.form-container {
-    display: flex; /* Use flexbox for layout */
-    max-width: 800px; /* Adjust the maximum width as needed */
-    margin: auto;
-}
-
 #final-yaml {
-    width: 100%; /* Take up remaining space */
+    width: 100%; 
     min-height: 400px;
     font-family: monospace;
 }
@@ -68,21 +66,46 @@ label {
     text-align: left;
 }
 
+/* -------------------- */
+/* FORM COMPONENTS      */
+/* -------------------- */
+
 .form-divider {
     margin: 15px;
     border-bottom: 1px solid #3a3a3a;
 }
 
 .accordion {
-  --bs-accordion-bg: #191d20;
+    --bs-accordion-bg: #191d20;
 }
 
-.accordion-body {
-  background-color: #212529;
+.accordion-body, 
+.card-group { /* Combined similar selectors */
+    background-color: #212529;
+    padding-top: 10px; /* Added consistent padding to card group */
+    padding-bottom: 10px;
+}
+
+.form-select, 
+.form-floating > .form-select {
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+    margin-top: 1rem;
 }
 
 
-/* Input Styles */
+.mb-3.small {
+    margin-bottom: 0rem !important;
+}
+
+.form-check-input[type=checkbox] {
+    margin-right: 10px;
+}
+
+
+/* -------------------- */
+/* INPUT STYLES         */
+/* -------------------- */
 
 .status-message {
     display: none;
@@ -91,7 +114,9 @@ label {
     font-size: 0.875em;
 }
 
-/* Message Styles */
+/* -------------------- */
+/* MESSAGE STYLES       */
+/* -------------------- */
 
 .messages {
     max-width: 600px;
@@ -128,6 +153,10 @@ label {
 .me-md-2 {
     margin-right: 0rem !important;
 }
+
+/* -------------------- */
+/* TOOLTIP STYLES       */
+/* -------------------- */
 
 .tooltip-inner {
     background-color: #fff; 
