@@ -116,89 +116,105 @@ def step(name):
 
 
 def build_config(title, template_list, next_page, prev_page, curr_page, progress):
+    sections = get_template_list(app)
+    section_names = [section[0].rsplit('.html', 1)[0] for section in sections]
 
-    # Combine data from all steps (retrieve from session or other storage)
-    config_data = {
-        'settings': session.get('settings'),
-        'webhooks': session.get('webhooks'),
-        'plex': session.get('plex'),
-        'tmdb': session.get('tmdb'),
-        'tautulli': session.get('tautulli'),
-        'github': session.get('github'),
-        'omdb': session.get('omdb'),
-        'mdblist': session.get('mdblist'),
-        'notifiarr': session.get('notifiarr'),
-        'gotify': session.get('gotify'),
-        'anidb': session.get('anidb'),
-        'radarr': session.get('radarr'),
-        'sonarr': session.get('sonarr'),
-        'trakt': session.get('trakt'),
-        'mal': session.get('mal'),
-        # Add other sections as needed
-    }
+    config_data = {}
+    for index, section in enumerate(section_names):
+        section_data = retrieve_settings(section)
+
+        if section in section_data:
+            config_data[section] = section_data[section]
+        else:
+            config_data[section] = section_data
 
     # Generate ASCII art
-    kometa_art = add_border_to_ascii_art(pyfiglet.figlet_format('KOMETA'))
-    settings_art = add_border_to_ascii_art(pyfiglet.figlet_format('GlobalSettings'))
-    webhooks_art = add_border_to_ascii_art(pyfiglet.figlet_format('Webhooks'))
-    plex_art = add_border_to_ascii_art(pyfiglet.figlet_format('Plex'))
-    tmdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('TMDb'))
-    tautulli_art = add_border_to_ascii_art(pyfiglet.figlet_format('Tautulli'))
-    github_art = add_border_to_ascii_art(pyfiglet.figlet_format('Github'))
-    omdb_art = add_border_to_ascii_art(pyfiglet.figlet_format('OMDb'))
-    mdblist_art = add_border_to_ascii_art(pyfiglet.figlet_format('MDBList'))
-    notifiarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Notifiarr'))
-    gotify_art = add_border_to_ascii_art(pyfiglet.figlet_format('Gotify'))
-    anidb_art = add_border_to_ascii_art(pyfiglet.figlet_format('AniDb'))
-    radarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Radarr'))
-    sonarr_art = add_border_to_ascii_art(pyfiglet.figlet_format('Sonarr'))
-    trakt_art = add_border_to_ascii_art(pyfiglet.figlet_format('Trakt'))
-    mal_art = add_border_to_ascii_art(pyfiglet.figlet_format('MAL'))
+    ascii_arts = {
+        'kometa': add_border_to_ascii_art(pyfiglet.figlet_format('KOMETA')),
+        'settings': add_border_to_ascii_art(pyfiglet.figlet_format('GlobalSettings')),
+        'webhooks': add_border_to_ascii_art(pyfiglet.figlet_format('Webhooks')),
+        'plex': add_border_to_ascii_art(pyfiglet.figlet_format('Plex')),
+        'tmdb': add_border_to_ascii_art(pyfiglet.figlet_format('TMDb')),
+        'tautulli': add_border_to_ascii_art(pyfiglet.figlet_format('Tautulli')),
+        'github': add_border_to_ascii_art(pyfiglet.figlet_format('Github')),
+        'omdb': add_border_to_ascii_art(pyfiglet.figlet_format('OMDb')),
+        'mdblist': add_border_to_ascii_art(pyfiglet.figlet_format('MDBList')),
+        'notifiarr': add_border_to_ascii_art(pyfiglet.figlet_format('Notifiarr')),
+        'gotify': add_border_to_ascii_art(pyfiglet.figlet_format('Gotify')),
+        'anidb': add_border_to_ascii_art(pyfiglet.figlet_format('AniDb')),
+        'radarr': add_border_to_ascii_art(pyfiglet.figlet_format('Radarr')),
+        'sonarr': add_border_to_ascii_art(pyfiglet.figlet_format('Sonarr')),
+        'trakt': add_border_to_ascii_art(pyfiglet.figlet_format('Trakt')),
+        'mal': add_border_to_ascii_art(pyfiglet.figlet_format('MAL'))
+    }
+
     header_comment = (
         "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
         "and YAML by Red Hat extension. VSC will also leverage the above link to enhance Kometa yml edits."
     )
 
-# Configure the YAML instance
+    # Configure the YAML instance
     yaml.default_flow_style = False
     yaml.sort_keys = False
 
     # Prepare the final YAML content
     yaml_content = (
         '# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n'
-        f"{kometa_art}\n\n"
+        f"{ascii_arts['kometa']}\n\n"
         f"{header_comment}\n\n"
         "libraries:\n\n"
     )
 
     def dump_section(title, data):
+        # Convert 'true' and 'false' strings to boolean values
+        for key, value in data.items():
+            if value == 'true':
+                data[key] = True
+            elif value == 'false':
+                data[key] = False
+        
+        # Remove 'valid' key if present
+        data = {k: v for k, v in data.items() if k != 'valid'}
+
         with io.StringIO() as stream:
             yaml.dump(data, stream)
-            return f"{title}\n{stream.getvalue()}\n\n"
+            return f"{title}\n{stream.getvalue().strip()}\n\n"
 
-    yaml_content += dump_section(settings_art, {'settings': config_data['settings']})
-    yaml_content += dump_section(webhooks_art, {'webhooks': config_data['webhooks']})
-    yaml_content += dump_section(plex_art, {'plex': config_data['plex']})
-    yaml_content += dump_section(tmdb_art, {'tmdb': config_data['tmdb']})
-    yaml_content += dump_section(tautulli_art, {'tautulli': config_data['tautulli']})
-    yaml_content += dump_section(github_art, {'github': config_data['github']})
-    yaml_content += dump_section(omdb_art, {'omdb': config_data['omdb']})
-    yaml_content += dump_section(mdblist_art, {'mdblist': config_data['mdblist']})
-    yaml_content += dump_section(notifiarr_art, {'notifiarr': config_data['notifiarr']})
-    yaml_content += dump_section(gotify_art, {'gotify': config_data['gotify']})
-    yaml_content += dump_section(anidb_art, {'anidb': config_data['anidb']})
-    yaml_content += dump_section(radarr_art, {'radarr': config_data['radarr']})
-    yaml_content += dump_section(sonarr_art, {'sonarr': config_data['sonarr']})
-    yaml_content += dump_section(trakt_art, {'trakt': config_data['trakt']})
-    yaml_content += dump_section(mal_art, {'mal': config_data['mal']})
+    ordered_sections = [
+        ('settings', '150-settings'),
+        ('webhooks', '140-webhooks'),
+        ('plex', '010-plex'),
+        ('tmdb', '020-tmdb'),
+        ('tautulli', '030-tautulli'),
+        ('github', '040-github'),
+        ('omdb', '050-omdb'),
+        ('mdblist', '060-mdblist'),
+        ('notifiarr', '070-notifiarr'),
+        ('gotify', '080-gotify'),
+        ('anidb', '090-anidb'),
+        ('radarr', '100-radarr'),
+        ('sonarr', '110-sonarr'),
+        ('trakt', '120-trakt'),
+        ('mal', '130-mal')
+    ]
+
+    for section_name, section_key in ordered_sections:
+        section_art = ascii_arts.get(section_name)
+        if section_art:
+            yaml_content += dump_section(section_art, config_data[section_key])
 
     # Store the final YAML content in the session
-    session['yaml_content'] = yaml_content
+    yaml_content = yaml_content.replace("'true'", "true")
+    yaml_content = yaml_content.replace("'false'", "false")
     
+    print(f"config_data:{config_data}")
+    print("==================================================\n")
+    print(f"yaml_content:{yaml_content}")
+    print("==================================================\n")
+
     try:
         jsonschema.validate(instance=config_data, schema=schema)
     except jsonschema.exceptions.ValidationError as e:
-        print(config_data)
         flash(f'Validation error: {e.message}', 'danger')
         return render_template('999-danger.html', title=title, yaml_content=yaml_content, validation_error=e, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
 
