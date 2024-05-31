@@ -116,15 +116,15 @@
                                 <label for="asset_directory">Asset Directory</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="asset_folders" name="asset_folders"
-                                       checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="asset_folders" name="asset_folders" value="true" {% if data['settings']['asset_folders']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="asset_folders">Asset Folders</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="create_asset_folders"
-                                       name="create_asset_folders">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="create_asset_folders" name="create_asset_folders" value="true" {% if data['settings']['create_asset_folders']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="create_asset_folders">Create Asset Folders</label>
                             </div>
 
@@ -134,45 +134,44 @@
                                 <label for="asset_depth">Asset Depth</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="prioritize_assets"
-                                       name="prioritize_assets" checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="prioritize_assets" name="prioritize_assets" value="true" {% if data['settings']['prioritize_assets']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="prioritize_assets">Prioritize Assets</label>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="dimensional_asset_rename"
-                                       name="dimensional_asset_rename">
-                                <label class="form-check-label" for="dimensional_asset_rename">Dimensional Asset
-                                    Rename</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="dimensional_asset_rename" name="dimensional_asset_rename" value="true" {% if data['settings']['dimensional_asset_rename']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
+                                <label class="form-check-label" for="dimensional_asset_rename">Dimensional Asset Rename</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="download_url_assets"
-                                       name="download_url_assets">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="download_url_assets" name="download_url_assets" value="true" {% if data['settings']['download_url_assets']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="download_url_assets">Download URL Assets</label>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="show_missing_assets"
-                                       name="show_missing_assets">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show_missing_assets" name="show_missing_assets" value="true" {% if data['settings']['show_missing_assets']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="show_missing_assets">Show Missing Assets</label>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="show_missing_season_assets"
-                                       name="show_missing_season_assets">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show_missing_season_assets" name="show_missing_season_assets" value="true" {% if data['settings']['show_missing_season_assets']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="show_missing_season_assets">Show Missing Season
                                     Assets</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="show_missing_episode_assets"
-                                       name="show_missing_episode_assets">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show_missing_episode_assets" name="show_missing_episode_assets" value="true" {% if data['settings']['show_missing_episode_assets']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="show_missing_episode_assets">Show Missing Episode
                                     Assets</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="show_asset_not_needed"
-                                       name="show_asset_not_needed">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show_asset_not_needed" name="show_asset_not_needed" value="true" {% if data['settings']['show_asset_not_needed']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="show_asset_not_needed">Show Asset Not
                                     Needed</label>
                             </div>
@@ -205,8 +204,9 @@
                     </h2>
                     <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
                         <div class="accordion-body">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="cache" name="cache" checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="cache" name="cache" value="true" {% if data['settings']['cache']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="cache">Cache</label>
                             </div>
                             <div class="form-floating mb-3">
@@ -255,15 +255,15 @@
                                 <label for="minimum_items">Minimum Items</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="delete_below_minimum"
-                                       name="delete_below_minimum" checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="delete_below_minimum" name="delete_below_minimum" value="true" {% if data['settings']['delete_below_minimum']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="delete_below_minimum">Delete Below Minimum</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="delete_not_scheduled"
-                                       name="delete_not_scheduled">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="delete_not_scheduled" name="delete_not_scheduled" value="true" {% if data['settings']['delete_not_scheduled']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="delete_not_scheduled">Delete Not Scheduled</label>
                             </div>
 
@@ -273,22 +273,20 @@
                                 <label for="run_again_delay">Run Again Delay (minutes)</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="playlist_sync_to_users"
-                                       name="playlist_sync_to_users" checked>
-                                <label class="form-check-label" for="playlist_sync_to_users">Playlist Sync to
-                                    Users</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="playlist_sync_to_users" name="playlist_sync_to_users" value="true" {% if data['settings']['playlist_sync_to_users']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
+                                <label class="form-check-label" for="playlist_sync_to_users">Playlist Sync to Users</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="playlist_exclude_users"
-                                       name="playlist_exclude_users" placeholder="">
+                                <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users" placeholder="">
                                 <label for="playlist_exclude_users">Playlist Exclude Users</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="playlist_report"
-                                       name="playlist_report" checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="playlist_report" name="playlist_report" value="true" {% if data['settings']['playlist_report']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="playlist_report">Playlist Report</label>
                             </div>
                         </div>
@@ -306,40 +304,39 @@
                         <div class="accordion-body">
 
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="missing_only_released"
-                                       name="missing_only_released" checked>
-                                <label class="form-check-label" for="missing_only_released">Missing Only
-                                    Released</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="missing_only_released" name="missing_only_released" value="true" {% if data['settings']['missing_only_released']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
+                                <label class="form-check-label" for="missing_only_released">Missing Only Released</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="show_unconfigured"
-                                       name="show_unconfigured" checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show_unconfigured" name="show_unconfigured" value="true" {% if data['settings']['show_unconfigured']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="show_unconfigured">Show Unconfigured</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="show_unmanaged"
-                                       name="show_unmanaged" checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show_unmanaged" name="show_unmanaged" value="true" {% if data['settings']['show_unmanaged']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="show_unmanaged">Show Unmanaged</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="show_filtered" name="show_filtered"
-                                       checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show_filtered" name="show_filtered" value="true" {% if data['settings']['show_filtered']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="show_filtered">Show Filtered</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="only_filter_missing"
-                                       name="only_filter_missing">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="only_filter_missing" name="only_filter_missing" value="true" {% if data['settings']['only_filter_missing']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="only_filter_missing">Only Filter Missing</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="save_report" name="save_report"
-                                       checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="save_report" name="save_report" value="true" {% if data['settings']['save_report']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="save_report">Save Report</label>
                             </div>
 
@@ -584,9 +581,9 @@
                                 <label for="run_order">Run Order</label>
                             </div>
 
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl"
-                                       checked>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" value="true" {% if data['settings']['verify_ssl']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="settings_monitor_existing" value="false">
                                 <label class="form-check-label" for="verify_ssl">Verify SSL</label>
                             </div>
 
