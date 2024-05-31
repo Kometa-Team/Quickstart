@@ -2,7 +2,7 @@ from flask import session
 import secrets
 from ruamel.yaml import YAML
 
-from .helpers import build_config_dict
+from .helpers import build_config_dict, get_template_list
 
 def extract_names(raw_source):
     source = raw_source
@@ -93,23 +93,7 @@ def check_minimum_settings():
 def flush_session_storage():
     # this needs to use the dynamic template list,
     # but that needs to be changed to not use the app object
-    session['start'] = None
-    session['000-base'] = None
-    session['010-plex'] = None
-    session['020-tmdb'] = None
-    session['030-tautulli'] = None
-    session['040-github'] = None
-    session['050-omdb'] = None
-    session['060-mdblist'] = None
-    session['070-notifiarr'] = None
-    session['080-gotify'] = None
-    session['090-anidb'] = None
-    session['100-radarr'] = None
-    session['110-sonarr'] = None
-    session['120-trakt'] = None
-    session['130-mal'] = None
-    session['140-webhooks'] = None
-    session['150-settings'] = None
-    session['666-test'] = None
-    session['999-danger'] = None
-    session['999-final'] = None
+    template_list = get_template_list()
+    for name in template_list:
+        item = template_list[name]
+        session[item['stem']] = None

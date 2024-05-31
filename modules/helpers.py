@@ -1,4 +1,6 @@
 import os
+from flask import current_app as app
+from pathlib import Path
 
 def build_oauth_dict(source, form_data):
     data = {
@@ -47,7 +49,6 @@ def build_simple_dict(source, form_data):
     return data
 
 
-
 def build_config_dict(source, form_data):
     if (source == 'trakt') or (source == 'mal') :
         return build_oauth_dict(source, form_data)
@@ -55,23 +56,89 @@ def build_config_dict(source, form_data):
         return build_simple_dict(source, form_data)
 
 
-def get_template_list(app):
+def belongs_in_template_list(file):
+    return (file.endswith('.html') 
+            and file != '000-base.html'
+            and file[:3].isdigit()
+            and file[3] == '-'
+            and not file.startswith('999-'))
+
+def user_visible_name(raw_name):
+    if raw_name == 'tmdb' or raw_name == 'omdb':
+        # Capitalize the whole thing
+        formatted_name = raw_name.upper()
+    elif raw_name == 'mal':
+        formatted_name = 'MyAnimeList'
+    elif raw_name == 'mdblist':
+        formatted_name = 'MDBList'
+    elif raw_name == 'anidb':
+        formatted_name = 'AniDB'
+    else:
+        # Capitalize the first letter
+        formatted_name = raw_name.capitalize()
+
+    return formatted_name
+
+
+def get_bits(file):
+    file_stem = Path(file).stem
+    bits = file_stem.split('-')
+    num = bits[0]
+    raw_name = bits[1]
+
+    return file_stem, num, raw_name
+
+def get_next(file_list, file):
+    stem, cmp_num, b = get_bits(file)
+    cmp_num = int(cmp_num)
+    if stem == '900-final':
+        return ''
+
+    for item in file_list:
+        stem, this_num, b = get_bits(item)
+        this_num = int(this_num)
+        if this_num > cmp_num:
+            return stem
+
+    return '900-final'
+
+def template_record(file, prev, next):
+    rec = {}
+    file_stem, num, raw_name = get_bits(file)
+    rec['num'] = num
+    rec['file'] = file
+    rec['stem'] = file_stem
+    rec['name'] = user_visible_name(raw_name)
+    rec['raw_name'] = raw_name
+    rec['next'] = next
+    rec['prev'] = prev
+
+    return rec
+
+def get_file_list():
     templates_dir = os.path.join(app.root_path, 'templates')
-    templates = []
-    for root, dirs, files in os.walk(templates_dir):
-        for file in files:
-            if (
-                file.endswith('.html')
-                and file != '000-base.html'
-                and file[:3].isdigit()
-                and file[3] == '-'
-                and not file.startswith('999-')
-            ):  # Ensure it starts with ###- and does not start with 999-
-                # Remove the leading numbers, dash, and '.html' extension
-                formatted_name = file.split('-', 1)[1].rsplit('.', 1)[0]
-                # Capitalize the first letter
-                formatted_name = formatted_name.capitalize()
-                templates.append((file, formatted_name))
-    # Sort the templates based on the numeric prefix
-    templates.sort(key=lambda x: int(x[0].split('-')[0]))
+    file_list = sorted(os.listdir(templates_dir))
+    final_list = []
+
+    for file in file_list:
+        if belongs_in_template_list(file):
+            final_list.append(file)
+
+    return final_list
+
+def get_template_list():
+    templates_dir = os.path.join(app.root_path, 'templates')
+    file_list = sorted(os.listdir(templates_dir))
+
+    templates = {}
+
+    prev_item = '001-start'
+    for file in file_list:
+        if belongs_in_template_list(file):
+            next = get_next(file_list, file)
+            prev = prev_item
+            rec = template_record(file, prev, next)
+            templates[rec['num']] = rec
+            prev_item = rec['stem']
+
     return templates

@@ -8,13 +8,14 @@ import io
 from ruamel.yaml import YAML
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 from plexapi.server import PlexServer
 import pyfiglet
 import secrets
 
 from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
 from modules.output import add_border_to_ascii_art
-from modules.helpers import build_config_dict, get_template_list
+from modules.helpers import build_config_dict, get_template_list, get_bits, get_file_list
 from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage
 
 # Load JSON Schema
@@ -55,7 +56,7 @@ server_session = Session(app)
 
 @app.route('/')
 def start():
-    return render_template('start.html')
+    return render_template('001-start.html')
 
 
 @app.route('/clear_session', methods=['POST'])
@@ -67,42 +68,34 @@ def clear_session():
 
 @app.route('/step/<name>', methods=['GET', 'POST'])
 def step(name):
-    template_list = get_template_list(app)
-    special_cases = {'start': 'Start', '999-final': 'Final', '999-danger': 'Danger'}
-    
-    if name in special_cases:
-        curr_page = special_cases[name]
-        title = special_cases[name]
-        if name == 'start':
-            prev_page = ""
-            next_page = template_list[0][0].rsplit('.html', 1)[0]
-            progress = 0
-        elif name == '999-final':
-            prev_page = template_list[-1][0].rsplit('.html', 1)[0]
-            next_page = ""
-            progress = 100
-        elif name == '999-danger':
-            prev_page = template_list[-1][0].rsplit('.html', 1)[0]
-            next_page = "999-final"
-            progress = 100
-    else:
-        current_index = next((index for index, (file, _) in enumerate(template_list) if file.startswith(name)), None)
-        
-        if current_index is None:
-            return redirect(url_for('step', name='start'))
-        
-        curr_page = template_list[current_index][0].rsplit('.html', 1)[0].split('-', 1)[1].capitalize()
-        title = curr_page
-        next_page = template_list[current_index + 1][0].rsplit('.html', 1)[0] if current_index + 1 < len(template_list) else "999-final"
-        prev_page = template_list[current_index - 1][0].rsplit('.html', 1)[0] if current_index > 0 else "start"
-        
-        # Calculate progress
-        total_steps = len([file for file, _ in template_list if not file.startswith('999-')]) + 1  # Exclude 999-*.html but count as one step
-        progress = round((current_index + 1) / total_steps * 100)
-    
+
     if request.method == 'POST':
         save_settings(request.referrer, request.form)
 
+    file_list = get_file_list()
+
+    template_list = get_template_list()
+
+    total_steps = len(template_list)
+
+    stem, num, b = get_bits(name)
+
+    current_index = -1
+    item = None
+
+    try:
+        current_index = list(template_list).index(num)
+        item = template_list[num]
+    except:
+        # not in there
+        return redirect(url_for('start'))
+    
+    progress = round((current_index + 1) / total_steps * 100)
+    
+    title = item['name']
+    next_page = item['next']
+    prev_page = item['prev']
+        
     data = retrieve_settings(name)
 
     print(f"data retrieved for {name}: {data}")
