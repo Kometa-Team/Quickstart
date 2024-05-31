@@ -575,11 +575,17 @@
                     <div id="CollapseSix" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
                         <div class="accordion-body">
 
-                            <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="run_order" name="run_order"
-                                       placeholder="operations, metadata, collections, overlays">
-                                <label for="run_order">Run Order</label>
-                            </div>
+                          <div class="form-floating mb-3">
+                            <select class="form-select" id="run_order" name="run_order">
+                                <option value="operations metadata collections overlays">operations metadata collections overlays (default)</option>
+                                <option value="operations metadata overlays collections">operations metadata overlays collections</option>
+                                <option value="operations collections metadata overlays">operations collections metadata overlays</option>
+                                <option value="operations collections overlays metadata">operations collections overlays metadata</option>
+                                <option value="operations overlays metadata collections">operations overlays metadata collections</option>
+                                <option value="operations overlays collections metadata">operations overlays collections metadata</option>
+                            </select>
+                            <label for="run_order">Run Order</label>
+                        </div>                        
 
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" value="true" {% if data['settings']['verify_ssl']|string|lower == 'true' %}checked{% endif %}>
