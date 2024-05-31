@@ -15,7 +15,7 @@ import secrets
 
 from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
 from modules.output import add_border_to_ascii_art
-from modules.helpers import build_config_dict, get_template_list, get_bits, get_file_list
+from modules.helpers import build_config_dict, get_template_list, get_bits, get_menu_list
 from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage
 
 # Load JSON Schema
@@ -72,7 +72,7 @@ def step(name):
     if request.method == 'POST':
         save_settings(request.referrer, request.form)
 
-    file_list = get_file_list()
+    file_list = get_menu_list()
 
     template_list = get_template_list()
 
@@ -103,9 +103,9 @@ def step(name):
     plex_valid, tmdb_valid = check_minimum_settings()
     
     if name == '999-final' or name == '999-danger':
-        return build_config(title=title, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress)
+        return build_config(title=title, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress)
     else:
-        return render_template(name + '.html', title=title, data=data, template_list=template_list, next_page=next_page, prev_page=prev_page, curr_page=curr_page, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
+        return render_template(name + '.html', title=title, data=data, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid)
 
 
 def build_config(title, template_list, next_page, prev_page, curr_page, progress):

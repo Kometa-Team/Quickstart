@@ -73,6 +73,8 @@ def user_visible_name(raw_name):
         formatted_name = 'MDBList'
     elif raw_name == 'anidb':
         formatted_name = 'AniDB'
+    elif raw_name == 'final':
+        formatted_name = 'Final Validation'
     else:
         # Capitalize the first letter
         formatted_name = raw_name.capitalize()
@@ -115,14 +117,15 @@ def template_record(file, prev, next):
 
     return rec
 
-def get_file_list():
+def get_menu_list():
     templates_dir = os.path.join(app.root_path, 'templates')
     file_list = sorted(os.listdir(templates_dir))
     final_list = []
 
     for file in file_list:
         if belongs_in_template_list(file):
-            final_list.append(file)
+            file_stem, num, raw_name = get_bits(file)
+            final_list.append((file, user_visible_name(raw_name)))
 
     return final_list
 
