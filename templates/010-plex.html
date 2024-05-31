@@ -9,19 +9,17 @@
             <span class="visually-hidden">Toggle Dropdown</span>
           </button>
           <ul class="dropdown-menu">
-              <li>
-                  <a class="dropdown-item" href="/step/start">Start</a>
-              </li>
-              <li><hr class="dropdown-divider"></li>
             {% for file, name in template_list %}
+              {% if name == 'Final Validation' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
               <li>
                 <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
               </li>
+              {% if name == 'Start' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
             {% endfor %}
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
-            </li>
           </ul>
         </div>
       </div>
@@ -35,19 +33,17 @@
             <span class="visually-hidden">Toggle Dropdown</span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-                <a class="dropdown-item" href="/step/start">Start</a>
-            </li>
-            <li><hr class="dropdown-divider"></li>
             {% for file, name in template_list %}
+              {% if name == 'Final Validation' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
               <li>
                 <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
               </li>
+              {% if name == 'Start' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
             {% endfor %}
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
-            </li>
           </ul>
         </div>
       </div>
@@ -104,7 +100,8 @@
       <input type="password" class="form-control" id="plex_token" name="plex_token" value="{{ data['plex']['token'] }}" title="Token" aria-label="Plex Token" required=""> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
     </div>
     <div id="plexStatusMessage" class="status-message"></div>
-    <div class="form-floating">
+    <div class="hidden" id="hidden" style="display:none">
+      <div class="form-floating">
       <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" value="{{ data['plex']['db_cache'] }}" title="Set the size of the Plex Database Cache (in Megabytes), default is 40" min="40" required=""> <label for="plex_db_cache">Database Cache Size (in mb)</label>
     </div>
     <div class="form-floating">
@@ -171,6 +168,8 @@
         document.getElementById('plex_db_cache').value = data.db_cache;
         plexStatusMessage.textContent = 'Plex server validated successfully!';
         plexStatusMessage.style.color = '#75b798';
+        var T = document.getElementById("hidden");
+        T.style.display = "block";  //
       } else {
         plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
         plexStatusMessage.style.color = '#ea868f';

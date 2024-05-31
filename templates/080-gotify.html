@@ -9,19 +9,17 @@
             <span class="visually-hidden">Toggle Dropdown</span>
           </button>
           <ul class="dropdown-menu">
-              <li>
-                  <a class="dropdown-item" href="/step/start">Start</a>
-              </li>
-              <li><hr class="dropdown-divider"></li>
             {% for file, name in template_list %}
+              {% if name == 'Final Validation' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
               <li>
                 <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
               </li>
+              {% if name == 'Start' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
             {% endfor %}
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
-            </li>
           </ul>
         </div>
       </div>
@@ -35,19 +33,17 @@
           <span class="visually-hidden">Toggle Dropdown</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
-          <li>
-              <a class="dropdown-item" href="/step/start">Start</a>
-          </li>
-          <li><hr class="dropdown-divider"></li>
           {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+              <li><hr class="dropdown-divider"></li>
+            {% endif %}
             <li>
               <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
-            {% endfor %}
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
-            </li>
+            {% if name == 'Start' %}
+              <li><hr class="dropdown-divider"></li>
+            {% endif %}
+          {% endfor %}
         </ul>
       </div>
     </div>

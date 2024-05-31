@@ -9,19 +9,17 @@
             <span class="visually-hidden">Toggle Dropdown</span>
           </button>
           <ul class="dropdown-menu">
-              <li>
-                  <a class="dropdown-item" href="/step/start">Start</a>
-              </li>
-              <li><hr class="dropdown-divider"></li>
             {% for file, name in template_list %}
+              {% if name == 'Final Validation' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
               <li>
                 <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
               </li>
+              {% if name == 'Start' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
             {% endfor %}
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
-            </li>
           </ul>
         </div>
       </div>
@@ -35,19 +33,17 @@
           <span class="visually-hidden">Toggle Dropdown</span>
         </button>
         <ul class="dropdown-menu dropdown-menu-end">
-          <li>
-              <a class="dropdown-item" href="/step/start">Start</a>
-          </li>
-          <li><hr class="dropdown-divider"></li>
           {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+              <li><hr class="dropdown-divider"></li>
+            {% endif %}
             <li>
               <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
-            {% endfor %}
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="/step/999-final">Skip to Validation</a>
-            </li>
+            {% if name == 'Start' %}
+              <li><hr class="dropdown-divider"></li>
+            {% endif %}
+          {% endfor %}
         </ul>
       </div>
     </div>
@@ -160,30 +156,56 @@
     <div class="form-floating">
       <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path" value="{{ data['sonarr']['plex_path'] }}" placeholder=""> <label for="sonarr_plex_path">Plex Path</label>
     </div>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="sonarr_search" checked> <label class="form-check-label" for="sonarr_search">Search for media when added</label>
+
+
+
+
+
+
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="sonarr_search" id="sonarr_search" value="true" {% if data['sonarr']['search']|string|lower == 'true' %}checked{% endif %}>
+      <input type="hidden" name="sonarr_search" value="false">
+      <label class="form-check-label" for="sonarr_search">Search for media when added</label>
     </div>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="sonarr_season_folder" checked> <label class="form-check-label" for="sonarr_season_folder">Use the Season Folder option when adding new media</label>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="sonarr_season_folder" id="sonarr_season_folder" value="true" {% if data['sonarr']['season_folder']|string|lower == 'true' %}checked{% endif %}>
+      <input type="hidden" name="sonarr_season_folder" value="false">
+      <label class="form-check-label" for="sonarr_season_folder">Use the Season Folder option when adding new media</label>
     </div>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="sonarr_add_missing"> <label class="form-check-label" for="sonarr_add_missing">Add missing media from collections</label>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="sonarr_add_missing" id="sonarr_add_missing" value="true" {% if data['sonarr']['add_missing']|string|lower == 'true' %}checked{% endif %}>
+      <input type="hidden" name="sonarr_add_missing" value="false">
+      <label class="form-check-label" for="sonarr_add_missing">Add missing media from collections</label>
     </div>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="sonarr_add_existing"> <label class="form-check-label" for="sonarr_add_existing">Add existing media from collections</label>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="sonarr_add_existing" id="sonarr_add_existing" value="true" {% if data['sonarr']['add_existing']|string|lower == 'true' %}checked{% endif %}>
+      <input type="hidden" name="sonarr_add_existing" value="false">
+      <label class="form-check-label" for="sonarr_add_existing">Add existing media from collections</label>
     </div>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="sonarr_upgrade_existing"> <label class="form-check-label" for="sonarr_upgrade_existing">Upgrade existing media from collections to the Quality Profile</label>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="sonarr_upgrade_existing" id="sonarr_upgrade_existing" value="true" {% if data['sonarr']['upgrade_existing']|string|lower == 'true' %}checked{% endif %}>
+      <input type="hidden" name="sonarr_upgrade_existing" value="false">
+      <label class="form-check-label" for="sonarr_upgrade_existing">Upgrade existing media from collections to the Quality Profile</label>
     </div>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="sonarr_monitor_existing"> <label class="form-check-label" for="sonarr_monitor_existing">Set existing media from collections to monitored</label>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="sonarr_monitor_existing" id="sonarr_monitor_existing" value="true" {% if data['sonarr']['monitor_existing']|string|lower == 'true' %}checked{% endif %}>
+      <input type="hidden" name="sonarr_monitor_existing" value="false">
+      <label class="form-check-label" for="sonarr_monitor_existing">Set existing media from collections to monitored</label>
     </div>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="sonarr_cutoff_search"> <label class="form-check-label" for="sonarr_cutoff_search">Start search for cutoff unmet episodes when adding new media</label>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="sonarr_cutoff_search" id="sonarr_cutoff_search" value="true" {% if data['sonarr']['cutoff_search']|string|lower == 'true' %}checked{% endif %}>
+      <input type="hidden" name="sonarr_cutoff_search" value="false">
+      <label class="form-check-label" for="sonarr_cutoff_search">Start search for cutoff unmet episodes when adding new media</label>
     </div>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" value="" id="sonarr_ignore_cache"> <label class="form-check-label" for="sonarr_ignore_cache">Ignore Kometa's cache when adding media</label>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" name="sonarr_ignore_cache" id="sonarr_ignore_cache" value="true" {% if data['sonarr']['ignore_cache']|string|lower == 'true' %}checked{% endif %}>
+      <input type="hidden" name="sonarr_ignore_cache" value="false">
+      <label class="form-check-label" for="sonarr_ignore_cache">Ignore Kometa's cache when adding media</label>
     </div>
+
+
+
+
 </form>
 <script>
   async function validateSonarrApikey(apikey, url) {

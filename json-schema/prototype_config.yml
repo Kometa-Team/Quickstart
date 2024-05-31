@@ -442,6 +442,11 @@ settings:
   custom_repo:
   overlay_artwork_filetype: jpg
   overlay_artwork_quality: 72
+  run_order:
+  - operations
+  - metadata
+  - collections
+  - overlays
 webhooks:                        # Can be individually specified per library as well
   error:
   version:
