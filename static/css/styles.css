@@ -88,8 +88,7 @@ label {
 
 .form-select, 
 .form-floating > .form-select {
-    padding-top: 0rem;
-    padding-bottom: 0rem;
+
     margin-top: 1rem;
 }
 

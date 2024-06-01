@@ -97,7 +97,7 @@
     </div>
     <div id="anidbStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
-      <select class="form-select" aria-label="Language">
+      <select class="form-select">
         <option selected value="">Select Language</option>
         <option value="en">English</option>
         <option value="aa">Afar</option>
@@ -289,6 +289,7 @@
         <option value="zh">Chinese</option>
         <option value="zu">Zulu</option>
       </select>
+      <label for="Language">Language</label>
     </div>
     <div class="form-floating">
       <input type="number" class="form-control" id="anidb_cache_expiration" name="anidb_cache_expiration" value="{{ data['anidb']['cache_expiration'] }}" min="0"><label for="anidb_cache_expiration">Cache Expiration (in days)</label>

@@ -150,15 +150,13 @@
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="show_missing_episode_assets" name="show_missing_episode_assets" value="true" {% if data['settings']['show_missing_episode_assets']|string|lower == 'true' %}checked{% endif %}>
                                 <input type="hidden" name="show_missing_episode_assets" value="false">
-                                <label class="form-check-label" for="show_missing_episode_assets">Show Missing Episode
-                                    Assets</label>
+                                <label class="form-check-label" for="show_missing_episode_assets">Show Missing Episode Assets</label>
                             </div>
 
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="show_asset_not_needed" name="show_asset_not_needed" value="true" {% if data['settings']['show_asset_not_needed']|string|lower == 'true' %}checked{% endif %}>
                                 <input type="hidden" name="show_asset_not_needed" value="false">
-                                <label class="form-check-label" for="show_asset_not_needed">Show Asset Not
-                                    Needed</label>
+                                <label class="form-check-label" for="show_asset_not_needed">Show Asset Not Needed</label>
                             </div>
 
                             <div class="form-floating mb-3">
@@ -169,6 +167,7 @@
                                 <option value="webp_lossy">WEBP LOSSY</option>
                                 <option value="webp_lossless">WEBP LOSSLESS</option>
                               </select>
+                              <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
                             </div>
 
                             <div class="form-floating mb-3">
@@ -216,6 +215,7 @@
                                 <option value="append">Append (default)</option>
                                 <option value="sync">Sync</option>
                               </select>
+                              <label for="Sync Mode">Sync Mode</label>
                             </div>
 
                             <div class="form-floating mb-3">
@@ -256,6 +256,7 @@
                                 <option value="year.asc">Year (Ascending)</option>
                                 <option value="year.desc">Year (Descending)</option>
                               </select>
+                              <label for="Default Collection Order">Default Collection Order</label>
                             </div>
 
                             <div class="form-floating mb-3">
@@ -560,6 +561,7 @@
                               <option value="zha">Zhuang (zha)</option>
                               <option value="zul">Zulu (zul)</option>
                             </select>
+                            <label for="TVDB Language">TVDB Language</label>
                           </div>
 
                           <div class="form-floating mb-3">
@@ -601,6 +603,7 @@
                               <option value="operations overlays metadata collections">operations overlays metadata collections</option>
                               <option value="operations overlays collections metadata">operations overlays collections metadata</option>
                             </select>
+                            <label for="Run Order">Run Order</label>
                           </div>                        
 
                             <div class="form-check form-switch">

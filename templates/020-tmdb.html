@@ -64,7 +64,8 @@
       </div>
     </div>
     <hr class="hr">
-    <div class="alert alert-info" role="alert">
+    <div class="alert alert-danger" role="alert">
+      This section is mandatory and must be completed<br>
       <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
     </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -88,8 +89,16 @@
     </div>
     <div id="statusMessage" class="status-message"></div>
     <div class="form-floating">
-      <select class="form-select" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language"><option value="{{ data['tmdb']['language'] }}">Select Language - Please validate TMDB API Key</option><label for="tmdb_language">Language</label></select>
-      <select class="form-select" aria-label="TMDb Region Selector" id="tmdb_region" name="tmdb_region"><option value="{{ data['tmdb']['region'] }}">Select Region - Please validate TMDB API Key</option><label for="tmdb_region">Region</label></select>
+      <select class="form-select" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
+        <option value="{{ data['tmdb']['language'] }}">Please validate TMDB API Key</option>
+      </select>
+      <label for="tmdb_language">Language</label>
+    </div>
+    <div class="form-floating">
+      <select class="form-select" aria-label="TMDb Region Selector" id="tmdb_region" name="tmdb_region">
+      <option value="{{ data['tmdb']['region'] }}">Please validate TMDB API Key</option>
+      </select>
+      <label for="tmdb_region">Region</label>
     </div>
     <div class="form-floating">
       <input type="number" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="{{ data['tmdb']['cache_expiration'] }}" min="0"><label for="tmdb_cache_expiration">Cache Expiration (in days)</label>
