@@ -10,44 +10,52 @@
           </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
-              {% if name == 'Final Validation' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li>
-                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-              </li>
-              {% if name == 'Start' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-6 align-self-center text-center">
-          <h2>{{ curr_page }}</h2>
-      </div>
-    <div class="col align-self-center">
-      <div class="input-group justify-content-end">
-        <button type="submit" class="btn btn-success">Next</button>
-        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-          <span class="visually-hidden">Toggle Dropdown</span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          {% for file, name in template_list %}
             {% if name == 'Final Validation' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
             <li>
               <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
-          {% endfor %}
-        </ul>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>{{ curr_page }}</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+          <button type="submit" class="btn btn-success">Next</button>
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
@@ -84,12 +92,15 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" value="{{ data['trakt']['client_id'] }}" oninput="updateTraktURL(this)"> <label for="trakt_client_id">Client ID</label>
+      <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" value="{{ data['trakt']['client_id'] }}" oninput="updateTraktURL(this)">
+      <label for="trakt_client_id">Client ID</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" placeholder="{{ data['trakt']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
+      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" placeholder="{{ data['trakt']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)">
+      <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button>
+      <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
     </div>
-      <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
+    <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
     <div class="form-text" id="pin-info">
       When you click "Retrieve PIN" above, you will be taken to a Trakt web page. Log in and allow your application access to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br>
       <br>
@@ -97,19 +108,19 @@
       <br>
     </div>
     <div class="input-group input-group-lg" id="urlField">
-      <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)"> <button class="btn btn-success" type="button" id="validate_trakt_pin">Validate PIN</button>
+      <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)">
+      <button class="btn btn-success" type="button" id="validate_trakt_pin">Validate PIN</button>
     </div>
-    <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['trakt']['authorization']['access_token'] }}" readonly> 
-    <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['trakt']['authorization']['token_type'] }}" readonly> 
-    <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['trakt']['authorization']['expires_in'] }}" readonly> 
-    <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['trakt']['authorization']['refresh_token'] }}" readonly> 
-    <input type="hidden" class="form-control" id="scope" name="scope" value="{{ data['trakt']['authorization']['scope'] }}" readonly> 
+    <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['trakt']['authorization']['access_token'] }}" readonly>
+    <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['trakt']['authorization']['token_type'] }}" readonly>
+    <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['trakt']['authorization']['expires_in'] }}" readonly>
+    <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['trakt']['authorization']['refresh_token'] }}" readonly>
+    <input type="hidden" class="form-control" id="scope" name="scope" value="{{ data['trakt']['authorization']['scope'] }}" readonly>
     <input type="hidden" class="form-control" id="created_at" name="created_at" value="{{ data['trakt']['authorization']['created_at'] }}" readonly>
     <div id="traktStatusMessage" class="status-message"></div>
     <br>
     <br>
   </div>
-</div>
 </form>
 <script>
 

@@ -10,44 +10,52 @@
           </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
-              {% if name == 'Final Validation' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li>
-                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-              </li>
-              {% if name == 'Start' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-6 align-self-center text-center">
-          <h2>{{ curr_page }}</h2>
-      </div>
-    <div class="col align-self-center">
-      <div class="input-group justify-content-end">
-        <button type="submit" class="btn btn-success">Next</button>
-        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-          <span class="visually-hidden">Toggle Dropdown</span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          {% for file, name in template_list %}
             {% if name == 'Final Validation' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
             <li>
               <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
-          {% endfor %}
-        </ul>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>{{ curr_page }}</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+          <button type="submit" class="btn btn-success">Next</button>
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
@@ -84,12 +92,16 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_url" name="radarr_url" value="{{ data['radarr']['url'] }}" title="http://127.0.0.1:32400"> <label for="radarr_url">Radarr URL (including URL Base if set)</label>
+      <input type="text" class="form-control" id="radarr_url" name="radarr_url" value="{{ data['radarr']['url'] }}" title="http://127.0.0.1:32400">
+      <label for="radarr_url">Radarr URL (including URL Base if set)</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="radarr_token" name="radarr_token" placeholder="{{ data['radarr']['token'] }}" title="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateRadarrButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="radarr_token" name="radarr_token" placeholder="{{ data['radarr']['token'] }}" title="Token" aria-label="Token">
+      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
+      <button class="btn btn-success" id="validateRadarrButton" type="button">Validate</button>
     </div>
-    <div id="radarrStatusMessage" class="status-message"></div><br>
+    <div id="radarrStatusMessage" class="status-message"></div>
+    <br>
 
     <div class="form-floating">
       <select class="form-select" id="radarr_root_folder_path" name="radarr_root_folder_path" value="{{ data['radarr']['root_folder_path'] }}">
@@ -97,20 +109,22 @@
           Select Root Folder Path
         </option>
       </select>
-      <label for="Root Folder Path">Root Folder Path</label>
+      <label for="radarr_root_folder_path">Root Folder Path</label>
     </div>
 
     <div class="form-floating">
-      </select> <select class="form-select" id="radarr_quality_profile" name="radarr_quality_profile" value="{{ data['radarr']['quality_profile'] }}">
+      </select>
+      <select class="form-select" id="radarr_quality_profile" name="radarr_quality_profile" value="{{ data['radarr']['quality_profile'] }}">
         <option value="">
           Select Quality Profile
         </option>
       </select>
-      <label for="Quality Profile">Quality Profile</label>
+      <label for="radarr_quality_profile">Quality Profile</label>
     </div>
-    
+
     <div class="form-floating">
-        </select> <select class="form-select" id="radarr_availability" name="radarr_availability" value="{{ data['radarr']['availability'] }}">
+      </select>
+      <select class="form-select" id="radarr_availability" name="radarr_availability" value="{{ data['radarr']['availability'] }}">
         <option value="announced">
           Select Availibility
         </option>
@@ -127,20 +141,23 @@
           DB
         </option>
       </select>
-      <label for="Select Availibility">Select Availibility</label>
+      <label for="radarr_availability">Select Availibility</label>
     </div>
 
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" value="{{ data['radarr']['tag'] }}"placeholder=""> <label for="radarr_tag">Tag to apply to added media</label>
+      <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" value="{{ data['radarr']['tag'] }}" placeholder="">
+      <label for="radarr_tag">Tag to apply to added media</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path" value="{{ data['radarr']['radarr_path'] }}"placeholder=""> <label for="radarr_radarr_path">Radarr Path</label>
+      <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path" value="{{ data['radarr']['radarr_path'] }}" placeholder="">
+      <label for="radarr_radarr_path">Radarr Path</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path" value="{{ data['radarr']['plex_path'] }}"placeholder=""> <label for="radarr_plex_path">Plex Path</label>
+      <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path" value="{{ data['radarr']['plex_path'] }}" placeholder="">
+      <label for="radarr_plex_path">Plex Path</label>
     </div>
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox"  name="radarr_monitor" id="radarr_monitor" value="true" {% if data['radarr']['monitor']|string|lower == 'true' %}checked{% endif %}>
+      <input class="form-check-input" type="checkbox" name="radarr_monitor" id="radarr_monitor" value="true" {% if data['radarr']['monitor']|string|lower == 'true' %}checked{% endif %}>
       <input type="hidden" name="radarr_monitor" value="false">
       <label class="form-check-label" for="radarr_monitor">Monitor media when added</label>
     </div>
@@ -174,6 +191,7 @@
       <input type="hidden" name="radarr_ignore_cache" value="false">
       <label class="form-check-label" for="radarr_ignore_cache">Ignore Kometa's cache when adding media</label>
     </div>
+  </div>
 </form>
 <script>
 

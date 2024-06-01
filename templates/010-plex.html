@@ -10,21 +10,25 @@
           </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
-              {% if name == 'Final Validation' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li>
-                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-              </li>
-              {% if name == 'Start' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
             {% endfor %}
           </ul>
         </div>
       </div>
       <div class="col-6 align-self-center text-center">
-          <h2>{{ curr_page }}</h2>
+        <h2>{{ curr_page }}</h2>
       </div>
       <div class="col align-self-center">
         <div class="input-group justify-content-end">
@@ -34,15 +38,19 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             {% for file, name in template_list %}
-              {% if name == 'Final Validation' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li>
-                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-              </li>
-              {% if name == 'Start' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
             {% endfor %}
           </ul>
         </div>
@@ -79,13 +87,18 @@
             <br>
             Filling in your Plex URL and Token is mandatory as Kometa cannot run without access to a Plex Media Server.<br>
             <br>
-            You cannot use <code>https://app.plex.tv</code> as your URL as that is invalid, you must provide the direct address you use to access your server.<br>
+            You cannot use
+            <code>https://app.plex.tv</code> as your URL as that is invalid, you must provide the direct address you use to access your server.<br>
             <br>
-            If you need help finding your Plex Authentication Token, please see Plex's <a href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">support article</a>. Do not use the Plex Token found in Plex's <code>Preferences.xml</code> file and do not use the token that you get via <code>https://app.plex.tv</code>.<br>
+            If you need help finding your Plex Authentication Token, please see Plex's
+            <a href="https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/">support article</a>. Do not use the Plex Token found in Plex's
+            <code>Preferences.xml</code> file and do not use the token that you get via <code>https://app.plex.tv</code>.<br>
             <br>
-            You should press the <code>Validate</code> button to ensure that your URL and Token combination is valid and reachable. Once successfully connected, the wizard will fetch the Database Cache size and update the field in the form.<br>
+            You should press the
+            <code>Validate</code> button to ensure that your URL and Token combination is valid and reachable. Once successfully connected, the wizard will fetch the Database Cache size and update the field in the form.<br>
             <br>
-            Please note that using the <code>Optimize Database</code> option can make Plex unresponsive, as it is generally not contactable whilst it performs its optimizations. This is expected behavior.
+            Please note that using the
+            <code>Optimize Database</code> option can make Plex unresponsive, as it is generally not contactable whilst it performs its optimizations. This is expected behavior.
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
@@ -94,43 +107,48 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="plex_url" name="plex_url" value="{{ data['plex']['url'] }}" title="http://127.0.0.1:32400" required=""> <label for="plex_url">Plex URL</label>
+      <input type="text" class="form-control" id="plex_url" name="plex_url" value="{{ data['plex']['url'] }}" title="http://127.0.0.1:32400" required="">
+      <label for="plex_url">Plex URL</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="plex_token" name="plex_token" placeholder="{{ data['plex']['token'] }}" title="Token" aria-label="Plex Token" required=""> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="plex_token" name="plex_token" placeholder="{{ data['plex']['token'] }}" title="Token" aria-label="Plex Token" required="">
+      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
+      <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
     </div>
     <div id="plexStatusMessage" class="status-message"></div>
     <div class="hidden" id="hidden" style="display:none">
       <div class="form-floating">
-      <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" value="{{ data['plex']['db_cache'] }}" title="Set the size of the Plex Database Cache (in Megabytes), default is 40" min="40" required=""> <label for="plex_db_cache">Database Cache Size (in mb)</label>
-    </div>
-    <div class="form-floating">
-      <input type="number" class="form-control" id="plex_timeout" name="plex_timeout" value="{{ data['plex']['timeout'] }}" title="Amount of seconds to wait for Plex to respond, default is 60" min="60" required=""> <label for="plex_timeout">Timeout (in seconds)</label>
-    </div>
+        <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" value="{{ data['plex']['db_cache'] }}" title="Set the size of the Plex Database Cache (in Megabytes), default is 40" min="40" required="">
+        <label for="plex_db_cache">Database Cache Size (in mb)</label>
+      </div>
+      <div class="form-floating">
+        <input type="number" class="form-control" id="plex_timeout" name="plex_timeout" value="{{ data['plex']['timeout'] }}" title="Amount of seconds to wait for Plex to respond, default is 60" min="60" required="">
+        <label for="plex_timeout">Timeout (in seconds)</label>
+      </div>
 
-    <!-- Checkbox handling -->
-    <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="plex_verify_ssl" id="plex_verify_ssl" value="true" {% if data['plex']['verify_ssl']|string|lower == 'true' %}checked{% endif %}>
-      <input type="hidden" name="plex_verify_ssl" value="false">
-      <label class="form-check-label" for="plex_verify_ssl">Verify SSL</label>
-    </div>
-    <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="plex_clean_bundles" id="plex_clean_bundles" value="true" {% if data['plex']['clean_bundles']|string|lower == 'true' %}checked{% endif %}>
-      <input type="hidden" name="plex_clean_bundles" value="false">
-      <label class="form-check-label" for="plex_clean_bundles">Clean bundles</label>
-    </div>
-    <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="plex_empty_trash" id="plex_empty_trash" value="true" {% if data['plex']['empty_trash']|string|lower == 'true' %}checked{% endif %}>
-      <input type="hidden" name="plex_empty_trash" value="false">
-      <label class="form-check-label" for="plex_empty_trash">Empty trash</label>
-    </div>
-    <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="plex_optimize" id="plex_optimize" value="true" {% if data['plex']['optimize']|string|lower == 'true' %}checked{% endif %}>
-      <input type="hidden" name="plex_optimize" value="false">
-      <label class="form-check-label" for="plex_optimize">Optimize database</label>
+      <!-- Checkbox handling -->
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" name="plex_verify_ssl" id="plex_verify_ssl" value="true" {% if data['plex']['verify_ssl']|string|lower == 'true' %}checked{% endif %}>
+        <input type="hidden" name="plex_verify_ssl" value="false">
+        <label class="form-check-label" for="plex_verify_ssl">Verify SSL</label>
+      </div>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" name="plex_clean_bundles" id="plex_clean_bundles" value="true" {% if data['plex']['clean_bundles']|string|lower == 'true' %}checked{% endif %}>
+        <input type="hidden" name="plex_clean_bundles" value="false">
+        <label class="form-check-label" for="plex_clean_bundles">Clean bundles</label>
+      </div>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" name="plex_empty_trash" id="plex_empty_trash" value="true" {% if data['plex']['empty_trash']|string|lower == 'true' %}checked{% endif %}>
+        <input type="hidden" name="plex_empty_trash" value="false">
+        <label class="form-check-label" for="plex_empty_trash">Empty trash</label>
+      </div>
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" name="plex_optimize" id="plex_optimize" value="true" {% if data['plex']['optimize']|string|lower == 'true' %}checked{% endif %}>
+        <input type="hidden" name="plex_optimize" value="false">
+        <label class="form-check-label" for="plex_optimize">Optimize database</label>
+      </div>
     </div>
   </div>
-</div>
 </form>
 <script>
   // Show token by default

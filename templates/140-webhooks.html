@@ -1,133 +1,141 @@
 {% extends "000-base.html" %} {% block content %}
 <form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
-    <div id="{{curr_page}}Section">
-        <div class="row">
-            <div class="col align-self-center">
-                <div class="input-group justify-content-start">
-                    <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>
-                    <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="visually-hidden">Toggle Dropdown</span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        {% for file, name in template_list %}
-                            {% if name == 'Final Validation' %}
-                            <li><hr class="dropdown-divider"></li>
-                            {% endif %}
-                            <li>
-                            <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-                            </li>
-                            {% if name == 'Start' %}
-                            <li><hr class="dropdown-divider"></li>
-                            {% endif %}
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-            <div class="col-6 align-self-center text-center">
-                <h2>{{ curr_page }}</h2>
-            </div>
-            <div class="col align-self-center">
-                <div class="input-group justify-content-end">
-                    <button type="submit" class="btn btn-success">Next</button>
-                    <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="visually-hidden">Toggle Dropdown</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        {% for file, name in template_list %}
-                            {% if name == 'Final Validation' %}
-                            <li><hr class="dropdown-divider"></li>
-                            {% endif %}
-                            <li>
-                            <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-                            </li>
-                            {% if name == 'Start' %}
-                            <li><hr class="dropdown-divider"></li>
-                            {% endif %}
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
+  <div id="{{curr_page}}Section">
+    <div class="row">
+      <div class="col align-self-center">
+        <div class="input-group justify-content-start">
+          <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>
+          <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
         </div>
-        <div class="container text-center">
-            <div class="row">
-                <div class="col"></div>
-                <div class="col-8">
-                    <div class="col align-self-end">
-                        <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25"
-                             aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar bg-success" style="width: {{ progress }}%">
-                                {{ progress }}%
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col"></div>
-            </div>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>{{ curr_page }}</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+          <button type="submit" class="btn btn-success">Next</button>
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split"
+            data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
         </div>
-        <hr class="hr">
-        <div class="alert alert-info" role="alert">
-            <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance
-            completing this section.
-        </div>
-        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
-                    </div>
-                    <div class="modal-body">
-                        This is some dummy text<br>
-                        <br>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {% for webhook in ["error", "run_start", "run_end", "changes", "version", "delete"] %}
-        <div class="form-floating">
-            <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)">
-                <option value="">Select Webhook</option>
-                <option value="notifiarr">Notifiarr</option>
-                <option value="gotify">Gotify</option>
-                <option value="custom">Custom</option>
-            </select>
-            <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
-            <div class="input-group input-group-lg" id="webhooks_{{ webhook }}_custom" style="display: none;">
-                <div class="input-group input-group-lg">
-                    <input type="text" class="form-control" placeholder="Enter webhook URL ({{ webhook|replace("_", " ")|title }})"> <button class="btn btn-success" type="button">Validate</button>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-
-        <script>
-            function showCustomInput(select) {
-              var customInputId = select.id + "_custom";
-              var customInput = document.getElementById(customInputId);
-              if (select.value === "custom") {
-                customInput.style.display = "block";
-                customInput.querySelector("input").disabled = false;
-                customInput.querySelector("button").disabled = false;
-              } else {
-                customInput.style.display = "none";
-                customInput.querySelector("input").value = "";
-                customInput.querySelector("input").disabled = true;
-                customInput.querySelector("button").disabled = true;
-              }
-            }
-
-            document.addEventListener("DOMContentLoaded", function () {
-              var selects = document.querySelectorAll("select");
-              selects.forEach(function (select) {
-                showCustomInput(select);
-              });
-            });
-        </script>
+      </div>
     </div>
+    <div class="container text-center">
+      <div class="row">
+        <div class="col"></div>
+        <div class="col-8">
+          <div class="col align-self-end">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25"
+              aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" style="width: {{ progress }}%">
+                {{ progress }}%
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance
+      completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% for webhook in ["error", "run_start", "run_end", "changes", "version", "delete"] %}
+    <div class="form-floating">
+      <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)">
+        <option value="">Select Webhook</option>
+        <option value="notifiarr">Notifiarr</option>
+        <option value="gotify">Gotify</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
+      <div class="input-group input-group-lg" id="webhooks_{{ webhook }}_custom" style="display: none;">
+        <div class="input-group input-group-lg">
+          <input type="text" class="form-control" placeholder="Enter webhook URL ({{ webhook|replace(" _", " ")|title }})">
+          <button class="btn btn-success" type="button">Validate</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 </form>
+<script>
+  function showCustomInput(select) {
+    var customInputId = select.id + "_custom";
+    var customInput = document.getElementById(customInputId);
+    if (select.value === "custom") {
+      customInput.style.display = "block";
+      customInput.querySelector("input").disabled = false;
+      customInput.querySelector("button").disabled = false;
+    } else {
+      customInput.style.display = "none";
+      customInput.querySelector("input").value = "";
+      customInput.querySelector("input").disabled = true;
+      customInput.querySelector("button").disabled = true;
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var selects = document.querySelectorAll("select");
+    selects.forEach(function (select) {
+      showCustomInput(select);
+    });
+  });
+</script>
 {% endblock %}
