@@ -10,52 +10,44 @@
           </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
-            {% if name == 'Final Validation' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
-            <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-            </li>
-            {% if name == 'Start' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
+              {% if name == 'Final Validation' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
+              <li>
+                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              </li>
+              {% if name == 'Start' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
             {% endfor %}
           </ul>
         </div>
       </div>
       <div class="col-6 align-self-center text-center">
-        <h2>{{ curr_page }}</h2>
+          <h2>{{ curr_page }}</h2>
       </div>
-      <div class="col align-self-center">
-        <div class="input-group justify-content-end">
-          <button type="submit" class="btn btn-success">Next</button>
-          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-            <span class="visually-hidden">Toggle Dropdown</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            {% for file, name in template_list %}
+    <div class="col align-self-center">
+      <div class="input-group justify-content-end">
+        <button type="submit" class="btn btn-success">Next</button>
+        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          {% for file, name in template_list %}
             {% if name == 'Final Validation' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
+              <li><hr class="dropdown-divider"></li>
             {% endif %}
             <li>
               <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
+              <li><hr class="dropdown-divider"></li>
             {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
+          {% endfor %}
+        </ul>
       </div>
     </div>
+  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
@@ -101,14 +93,11 @@
       <input type="text" class="form-control" id="anidb_username" name="anidb_username" value="{{ data['anidb']['username'] }}" title=""><label for="anidb_username">Username</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="anidb_password" name="anidb_password" placeholder="{{ data['anidb']['password'] }}" title="Password" aria-label="Password">
-      <button class="btn btn-secondary" id="togglePasswordVisibility" type="button">Show</button>
-      <button class="btn btn-success" id="validateAnidbButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="anidb_password" name="anidb_password" placeholder="{{ data['anidb']['password'] }}" title="Password" aria-label="Password"><button class="btn btn-secondary" id="togglePasswordVisibility" type="button">Show</button><button class="btn btn-success" id="validateAnidbButton" type="button">Validate</button>
     </div>
-    <div id="anidbStatusMessage" class="status-message"></div>
-    <br>
+    <div id="anidbStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
-      <select class="form-select" id="anidb_language">
+      <select class="form-select">
         <option selected value="">Select Language</option>
         <option value="en">English</option>
         <option value="aa">Afar</option>
@@ -139,7 +128,10 @@
         <option value="co">Corsican</option>
         <option value="cr">Cree</option>
         <option value="cs">Czech</option>
-        <option value="cu">Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic</option>
+        <option value="cu">
+          Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old
+          Church Slavonic
+        </option>
         <option value="cv">Chuvash</option>
         <option value="cy">Welsh</option>
         <option value="da">Danish</option>
@@ -174,7 +166,9 @@
         <option value="hu">Hungarian</option>
         <option value="hy">Armenian</option>
         <option value="hz">Herero</option>
-        <option value="ia">Interlingua (International Auxiliary Language Association)</option>
+        <option value="ia">
+          Interlingua (International Auxiliary Language Association)
+        </option>
         <option value="id">Indonesian</option>
         <option value="ie">Interlingue; Occidental</option>
         <option value="ig">Igbo</option>
@@ -295,12 +289,11 @@
         <option value="zh">Chinese</option>
         <option value="zu">Zulu</option>
       </select>
-      <label for="anidb_language">Language</label>
+      <label for="Language">Language</label>
     </div>
     <div class="form-floating">
       <input type="number" class="form-control" id="anidb_cache_expiration" name="anidb_cache_expiration" value="{{ data['anidb']['cache_expiration'] }}" min="0"><label for="anidb_cache_expiration">Cache Expiration (in days)</label>
     </div>
-  </div>
 </form>
 <script>
 
