@@ -97,10 +97,9 @@
                 <option value="custom">Custom</option>
             </select>
             <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
-            <div class="col-8" id="webhooks_{{ webhook }}_custom" style="display: none;">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="Enter webhook URL (Custom only)">
-                    <button type="button" class="btn btn-primary">Validate</button>
+            <div class="input-group input-group-lg" id="webhooks_{{ webhook }}_custom" style="display: none;">
+                <div class="input-group input-group-lg">
+                    <input type="text" class="form-control" placeholder="Enter webhook URL ({{ webhook|replace("_", " ")|title }})"> <button class="btn btn-success" type="button">Validate</button>
                 </div>
             </div>
         </div>
