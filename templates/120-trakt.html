@@ -87,7 +87,7 @@
       <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" value="{{ data['trakt']['client_id'] }}" oninput="updateTraktURL(this)"> <label for="trakt_client_id">Client ID</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" value="{{ data['trakt']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
+      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" placeholder="{{ data['trakt']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
     </div>
       <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
     <div class="form-text" id="pin-info">
@@ -112,12 +112,25 @@
 </div>
 </form>
 <script>
-  document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
-    const apikeyInput = document.getElementById('trakt_client_secret');
-    const currentType = apikeyInput.getAttribute('type');
-    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-});
+
+  // Show trakt_client_secret by default
+  document.addEventListener("DOMContentLoaded", function () {
+    const apikeyInput = document.getElementById("trakt_client_secret");
+    const toggleButton = document.getElementById("toggleApikeyVisibility");
+
+    // Show the password initially
+    apikeyInput.setAttribute("type", "text");
+    toggleButton.textContent = "Hide";
+
+    toggleButton.addEventListener("click", function () {
+      const currentType = apikeyInput.getAttribute("type");
+      apikeyInput.setAttribute(
+        "type",
+        currentType === "password" ? "text" : "password"
+      );
+      this.textContent = currentType === "password" ? "Hide" : "Show";
+    });
+  });
 
 function updateTraktURL() {
     var trakt_client_id = document.getElementById('trakt_client_id').value;

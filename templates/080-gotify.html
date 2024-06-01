@@ -87,23 +87,30 @@
       <input type="text" class="form-control" id="gotify_url" name="gotify_url" value="{{ data['gotify']['url'] }}" title="http://192.168.1.12:8181"><label for="gotify_url">Gotify URL</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="gotify_token" name="gotify_token" value="{{ data['gotify']['token'] }}" title="API Key" aria-label="API Key"><button class="btn btn-secondary" id="toggleTokenVisibility" type="button">Show</button><button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="gotify_token" name="gotify_token" placeholder="{{ data['gotify']['token'] }}" title="API Key" aria-label="API Key"><button class="btn btn-secondary" id="toggleTokenVisibility" type="button">Show</button><button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
     </div>
     <div id="gotifyStatusMessage" class="status-message"></div><br>
 </form>
 <script>
-  // Function to toggle API key visibility
-  document
-    .getElementById("toggleTokenVisibility")
-    .addEventListener("click", function () {
-      const tokenInput = document.getElementById("gotify_token");
-      const currentType = tokenInput.getAttribute("type");
-      tokenInput.setAttribute(
+
+  // Show gotify_token by default
+  document.addEventListener("DOMContentLoaded", function () {
+    const apikeyInput = document.getElementById("gotify_token");
+    const toggleButton = document.getElementById("toggleApikeyVisibility");
+
+    // Show the password initially
+    apikeyInput.setAttribute("type", "text");
+    toggleButton.textContent = "Hide";
+
+    toggleButton.addEventListener("click", function () {
+      const currentType = apikeyInput.getAttribute("type");
+      apikeyInput.setAttribute(
         "type",
         currentType === "password" ? "text" : "password"
       );
       this.textContent = currentType === "password" ? "Hide" : "Show";
     });
+  });
 
   // Function to validate Gotify API key
   async function validateGotifyToken(url, token) {
