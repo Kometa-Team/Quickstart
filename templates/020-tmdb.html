@@ -85,7 +85,7 @@
       </div>
     </div>
       <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" placeholder="{{ data['tmdb']['apikey'] }}" title="API Key" aria-label="TMDb API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button><button class="btn btn-success" id="validateButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" value="{{ data['tmdb']['apikey'] }}" title="API Key" aria-label="TMDb API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button><button class="btn btn-success" id="validateButton" type="button">Validate</button>
     </div>
     <div id="statusMessage" class="status-message"></div>
     <div class="form-floating">
@@ -113,16 +113,10 @@
     (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
   );
 
-  // Show tmdb_apikey by default
-  document.addEventListener("DOMContentLoaded", function () {
-    const apikeyInput = document.getElementById("tmdb_apikey");
-    const toggleButton = document.getElementById("toggleApikeyVisibility");
-
-    // Show the password initially
-    apikeyInput.setAttribute("type", "text");
-    toggleButton.textContent = "Hide";
-
-    toggleButton.addEventListener("click", function () {
+  document
+    .getElementById("toggleApikeyVisibility")
+    .addEventListener("click", function () {
+      const apikeyInput = document.getElementById("tmdb_apikey");
       const currentType = apikeyInput.getAttribute("type");
       apikeyInput.setAttribute(
         "type",
@@ -130,7 +124,6 @@
       );
       this.textContent = currentType === "password" ? "Hide" : "Show";
     });
-  });
 
   function sortByEnglishName(data) {
     return data.sort((a, b) => a.english_name.localeCompare(b.english_name));

@@ -88,7 +88,7 @@
       <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" value="{{ data['sonarr']['url'] }}" placeholder="http://127.0.0.1:32400"> <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" placeholder="{{ data['sonarr']['token'] }}" placeholder="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" value="{{ data['sonarr']['token'] }}" placeholder="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
     </div>
     <div id="sonarrStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
@@ -179,6 +179,11 @@
       <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path" value="{{ data['sonarr']['plex_path'] }}" placeholder=""> <label for="sonarr_plex_path">Plex Path</label>
     </div>
 
+
+
+
+
+
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" name="sonarr_search" id="sonarr_search" value="true" {% if data['sonarr']['search']|string|lower == 'true' %}checked{% endif %}>
       <input type="hidden" name="sonarr_search" value="false">
@@ -219,6 +224,9 @@
       <input type="hidden" name="sonarr_ignore_cache" value="false">
       <label class="form-check-label" for="sonarr_ignore_cache">Ignore Kometa's cache when adding media</label>
     </div>
+
+
+
 
 </form>
 <script>
@@ -314,22 +322,10 @@
       validateSonarrApikey(apiKey, url);
   });
 
-  // Show sonarr_token by default
-  document.addEventListener("DOMContentLoaded", function () {
-    const apikeyInput = document.getElementById("sonarr_token");
-    const toggleButton = document.getElementById("toggleApikeyVisibility");
-
-    // Show the password initially
-    apikeyInput.setAttribute("type", "text");
-    toggleButton.textContent = "Hide";
-
-    toggleButton.addEventListener("click", function () {
-      const currentType = apikeyInput.getAttribute("type");
-      apikeyInput.setAttribute(
-        "type",
-        currentType === "password" ? "text" : "password"
-      );
-      this.textContent = currentType === "password" ? "Hide" : "Show";
-    });
+  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+      const apikeyInput = document.getElementById('sonarr_token');
+      const currentType = apikeyInput.getAttribute('type');
+      apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+      this.textContent = currentType === 'password' ? 'Hide' : 'Show';
   });
 </script> {% endblock %}

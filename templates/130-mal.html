@@ -90,7 +90,7 @@
         <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{ data['code_verifier']}}">
       </div>
       <div class="input-group input-group-lg">
-        <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" placeholder="{{ data['mal']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
+        <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" value="{{ data['mal']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
       </div>
       <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModal2" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -136,23 +136,11 @@
 </form>
 <script>
 
-  // Show mal_client_secret by default
-  document.addEventListener("DOMContentLoaded", function () {
-    const apikeyInput = document.getElementById("mal_client_secret");
-    const toggleButton = document.getElementById("toggleApikeyVisibility");
-
-    // Show the password initially
-    apikeyInput.setAttribute("type", "text");
-    toggleButton.textContent = "Hide";
-
-    toggleButton.addEventListener("click", function () {
-      const currentType = apikeyInput.getAttribute("type");
-      apikeyInput.setAttribute(
-        "type",
-        currentType === "password" ? "text" : "password"
-      );
-      this.textContent = currentType === "password" ? "Hide" : "Show";
-    });
+  document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
+    const apikeyInput = document.getElementById('mal_client_secret');
+    const currentType = apikeyInput.getAttribute('type');
+    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
   });
 
   document.getElementById('mal_get_localhost_url').addEventListener('click', function() {

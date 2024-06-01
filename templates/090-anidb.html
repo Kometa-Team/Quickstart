@@ -93,7 +93,7 @@
       <input type="text" class="form-control" id="anidb_username" name="anidb_username" value="{{ data['anidb']['username'] }}" title=""><label for="anidb_username">Username</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="anidb_password" name="anidb_password" placeholder="{{ data['anidb']['password'] }}" title="Password" aria-label="Password"><button class="btn btn-secondary" id="togglePasswordVisibility" type="button">Show</button><button class="btn btn-success" id="validateAnidbButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="anidb_password" name="anidb_password" value="{{ data['anidb']['password'] }}" title="Password" aria-label="Password"><button class="btn btn-secondary" id="togglePasswordVisibility" type="button">Show</button><button class="btn btn-success" id="validateAnidbButton" type="button">Validate</button>
     </div>
     <div id="anidbStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
@@ -296,25 +296,17 @@
     </div>
 </form>
 <script>
-
-  // Show anidb_password by default
-  document.addEventListener("DOMContentLoaded", function () {
-    const apikeyInput = document.getElementById("anidb_password");
-    const toggleButton = document.getElementById("toggleApikeyVisibility");
-
-    // Show the password initially
-    apikeyInput.setAttribute("type", "text");
-    toggleButton.textContent = "Hide";
-
-    toggleButton.addEventListener("click", function () {
-      const currentType = apikeyInput.getAttribute("type");
-      apikeyInput.setAttribute(
+  document
+    .getElementById("togglePasswordVisibility")
+    .addEventListener("click", function () {
+      const passwordInput = document.getElementById("anidb_password");
+      const currentType = passwordInput.getAttribute("type");
+      passwordInput.setAttribute(
         "type",
         currentType === "password" ? "text" : "password"
       );
       this.textContent = currentType === "password" ? "Hide" : "Show";
     });
-  });
 
   document
     .getElementById("validateAnidbButton")
