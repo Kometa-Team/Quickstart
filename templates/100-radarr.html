@@ -90,16 +90,27 @@
       <input type="password" class="form-control" id="radarr_token" name="radarr_token" value="{{ data['radarr']['token'] }}" title="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateRadarrButton" type="button">Validate</button>
     </div>
     <div id="radarrStatusMessage" class="status-message"></div><br>
+
     <div class="form-floating">
-      <select class="form-select" aria-label="Root Folder Path" id="radarr_root_folder_path" name="radarr_root_folder_path" value="{{ data['radarr']['root_folder_path'] }}">
+      <select class="form-select" id="radarr_root_folder_path" name="radarr_root_folder_path" value="{{ data['radarr']['root_folder_path'] }}">
         <option value="">
           Select Root Folder Path
         </option>
-      </select> <select class="form-select" aria-label="Quality Profile" id="radarr_quality_profile" name="radarr_quality_profile" value="{{ data['radarr']['quality_profile'] }}">
+      </select>
+      <label for="Root Folder Path">Root Folder Path</label>
+    </div>
+
+    <div class="form-floating">
+      </select> <select class="form-select" id="radarr_quality_profile" name="radarr_quality_profile" value="{{ data['radarr']['quality_profile'] }}">
         <option value="">
           Select Quality Profile
         </option>
-      </select> <select class="form-select" aria-label="Quality Profile" id="radarr_availability" name="radarr_availability" value="{{ data['radarr']['availability'] }}">
+      </select>
+      <label for="Quality Profile">Quality Profile</label>
+    </div>
+    
+    <div class="form-floating">
+        </select> <select class="form-select" id="radarr_availability" name="radarr_availability" value="{{ data['radarr']['availability'] }}">
         <option value="announced">
           Select Availibility
         </option>
@@ -116,7 +127,9 @@
           DB
         </option>
       </select>
+      <label for="Select Availibility">Select Availibility</label>
     </div>
+
     <div class="form-floating">
       <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" value="{{ data['radarr']['tag'] }}"placeholder=""> <label for="radarr_tag">Tag to apply to added media</label>
     </div>

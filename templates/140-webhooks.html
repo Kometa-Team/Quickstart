@@ -88,132 +88,23 @@
             </div>
         </div>
 
-        <div class="row">
-            <h6>Error Webhook Details</h6>
-            <div class="col-4">
-                <select class="form-select" aria-label="Error" id="webhooks_error" name="webhooks_error"
-                        onchange="showCustomInput(this)">
-                    <option value="">Select Webhook</option>
-                    <option value="">None</option>
-                    <option value="notifiarr">Notifiarr</option>
-                    <option value="gotify">Gotify</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
-            <div class="col-8">
+        {% for webhook in ["error", "run_start", "run_end", "changes", "version", "delete"] %}
+        <div class="form-floating">
+            <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)">
+                <option value="">Select Webhook</option>
+                <option value="notifiarr">Notifiarr</option>
+                <option value="gotify">Gotify</option>
+                <option value="custom">Custom</option>
+            </select>
+            <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
+            <div class="col-8" id="webhooks_{{ webhook }}_custom" style="display: none;">
                 <div class="input-group mb-3">
-                    <input type="text" class="form-control" aria-label="Text input with segmented dropdown button"
-                           placeholder="Enter webook URL (Custom only)" disabled>
-                    <button type="button" class="btn btn-primary" disabled>Validate</button>
+                    <input type="text" class="form-control" placeholder="Enter webhook URL (Custom only)">
+                    <button type="button" class="btn btn-primary">Validate</button>
                 </div>
             </div>
         </div>
-
-        <div class="row">
-            <h6>Run Start Webhook Details</h6>
-            <div class="col-4">
-                <select class="form-select" aria-label="Run Start" id="webhooks_run_start" name="webhooks_run_start"
-                        onchange="showCustomInput(this)">
-                    <option value="">Select Webhook</option>
-                    <option value="">None</option>
-                    <option value="notifiarr">Notifiarr</option>
-                    <option value="gotify">Gotify</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
-            <div class="col-8">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" aria-label="Text input with segmented dropdown button"
-                           placeholder="Enter webook URL (Custom only)" disabled>
-                    <button type="button" class="btn btn-primary" disabled>Validate</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <h6>Run End Webhook Details</h6>
-            <div class="col-4">
-                <select class="form-select" aria-label="Run End" id="webhooks_run_end" name="webhooks_run_end"
-                        onchange="showCustomInput(this)">
-                    <option value="">Select Webhook</option>
-                    <option value="">None</option>
-                    <option value="notifiarr">Notifiarr</option>
-                    <option value="gotify">Gotify</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
-            <div class="col-8">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" aria-label="Text input with segmented dropdown button"
-                           placeholder="Enter webook URL (Custom only)" disabled>
-                    <button type="button" class="btn btn-primary" disabled>Validate</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <h6>Changes Webhook Details</h6>
-            <div class="col-4">
-                <select class="form-select" aria-label="Changes" id="webhooks_changes" name="webhooks_changes"
-                        onchange="showCustomInput(this)">
-                    <option value="">Select Webhook</option>
-                    <option value="">None</option>
-                    <option value="notifiarr">Notifiarr</option>
-                    <option value="gotify">Gotify</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
-            <div class="col-8">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" aria-label="Text input with segmented dropdown button"
-                           placeholder="Enter webook URL (Custom only)" disabled>
-                    <button type="button" class="btn btn-primary" disabled>Validate</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <h6>Version Webhook Details</h6>
-            <div class="col-4">
-                <select class="form-select" aria-label="Version" id="webhooks_version" name="webhooks_version"
-                        onchange="showCustomInput(this)">
-                    <option value="">Select Webhook</option>
-                    <option value="">None</option>
-                    <option value="notifiarr">Notifiarr</option>
-                    <option value="gotify">Gotify</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
-            <div class="col-8">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" aria-label="Text input with segmented dropdown button"
-                           placeholder="Enter webook URL (Custom only)" disabled>
-                    <button type="button" class="btn btn-primary" disabled>Validate</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="row">
-            <h6>Delete Webhook Details</h6>
-            <div class="col-4">
-                <select class="form-select" aria-label="Delete" id="webhooks_delete" name="webhooks_delete"
-                        onchange="showCustomInput(this)">
-                    <option value="">Select Webhook</option>
-                    <option value="">None</option>
-                    <option value="notifiarr">Notifiarr</option>
-                    <option value="gotify">Gotify</option>
-                    <option value="custom">Custom</option>
-                </select>
-            </div>
-            <div class="col-8">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" aria-label="Text input with segmented dropdown button"
-                           placeholder="Enter webook URL (Custom only)" disabled>
-                    <button type="button" class="btn btn-primary" disabled>Validate</button>
-                </div>
-            </div>
-        </div>
-
+        {% endfor %}
 
         <script>
             function showCustomInput(select) {
@@ -221,13 +112,16 @@
               var customInput = document.getElementById(customInputId);
               if (select.value === "custom") {
                 customInput.style.display = "block";
+                customInput.querySelector("input").disabled = false;
+                customInput.querySelector("button").disabled = false;
               } else {
                 customInput.style.display = "none";
-                customInput.value = ""; // Clear the custom input if not selected
+                customInput.querySelector("input").value = "";
+                customInput.querySelector("input").disabled = true;
+                customInput.querySelector("button").disabled = true;
               }
             }
 
-            // Restore custom input visibility on page load
             document.addEventListener("DOMContentLoaded", function () {
               var selects = document.querySelectorAll("select");
               selects.forEach(function (select) {
@@ -235,26 +129,6 @@
               });
             });
         </script>
+    </div>
 </form>
-<script>
-    function showCustomInput(select) {
-      var customInputId = select.id + "_custom";
-      var customInput = document.getElementById(customInputId);
-      if (select.value === "custom") {
-        customInput.style.display = "block";
-      } else {
-        customInput.style.display = "none";
-        customInput.value = ""; // Clear the custom input if not selected
-      }
-    }
-
-    // Restore custom input visibility on page load
-    document.addEventListener("DOMContentLoaded", function () {
-      var selects = document.querySelectorAll("select");
-      selects.forEach(function (select) {
-        showCustomInput(select);
-      });
-    });
-</script>
-
 {% endblock %}
