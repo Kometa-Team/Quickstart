@@ -97,7 +97,7 @@
       <input type="text" class="form-control" id="plex_url" name="plex_url" value="{{ data['plex']['url'] }}" title="http://127.0.0.1:32400" required=""> <label for="plex_url">Plex URL</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="plex_token" name="plex_token" value="{{ data['plex']['token'] }}" title="Token" aria-label="Plex Token" required=""> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="plex_token" name="plex_token" placeholder="{{ data['plex']['token'] }}" title="Token" aria-label="Plex Token" required=""> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
     </div>
     <div id="plexStatusMessage" class="status-message"></div>
     <div class="hidden" id="hidden" style="display:none">
@@ -133,11 +133,20 @@
 </div>
 </form>
 <script>
-  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+  // Show token by default
+  document.addEventListener('DOMContentLoaded', function() { // Ensure the DOM is ready
     const apikeyInput = document.getElementById('plex_token');
-    const currentType = apikeyInput.getAttribute('type');
-    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+    const toggleButton = document.getElementById('toggleApikeyVisibility');
+
+    // Initially show the password
+    apikeyInput.setAttribute('type', 'text');
+    toggleButton.textContent = 'Hide'; // Update button text
+
+    toggleButton.addEventListener('click', function() {
+      const currentType = apikeyInput.getAttribute('type');
+      apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+      this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+    });
   });
 
   // Plex validation script
