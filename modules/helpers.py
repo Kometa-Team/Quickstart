@@ -145,3 +145,4 @@ def get_template_list():
             prev_item = rec['stem']
 
     return templates
+
