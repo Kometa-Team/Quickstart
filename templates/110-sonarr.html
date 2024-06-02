@@ -97,7 +97,7 @@
           Select Root Folder Path
         </option>
       </select>
-      <label for="Root Folder Path">Root Folder Path</label>
+      <label for="sonarr_root_folder_path">Root Folder Path</label>
     </div>
 
     <div class="form-floating">
@@ -130,7 +130,7 @@
           latest - monitor all episodes of the latest season and future seasons
         </option>
       </select>
-      <label for="Monitor">Monitor</label>
+      <label for="sonarr_monitor">Monitor</label>
     </div>
 
     <div class="form-floating">
@@ -139,7 +139,7 @@
           Select Quality Profile
         </option>
       </select> 
-      <label for="Quality Profile">Quality Profile</label>
+      <label for="sonarr_quality_profile">Quality Profile</label>
     </div>
 
     <div class="form-floating">
@@ -148,7 +148,7 @@
           Select Language Profile
         </option>
       </select>
-      <label for="Language Profile">Language Profile</label>
+      <label for="sonarr_language_profile">Language Profile</label>
     </div>
 
     <div class="form-floating">
@@ -166,7 +166,7 @@
           Anime
         </option>
       </select>
-      <label for="Series Type">Series Type</label>
+      <label for="sonarr_series_type">Series Type</label>
     </div>
 
     <div class="form-floating">
@@ -224,10 +224,7 @@
       <input type="hidden" name="sonarr_ignore_cache" value="false">
       <label class="form-check-label" for="sonarr_ignore_cache">Ignore Kometa's cache when adding media</label>
     </div>
-
-
-
-
+  </div>
 </form>
 <script>
   async function validateSonarrApikey(apikey, url) {
