@@ -10,44 +10,52 @@
           </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
-              {% if name == 'Final Validation' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li>
-                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-              </li>
-              {% if name == 'Start' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-6 align-self-center text-center">
-          <h2>{{ curr_page }}</h2>
-      </div>
-    <div class="col align-self-center">
-      <div class="input-group justify-content-end">
-        <button type="submit" class="btn btn-success">Next</button>
-        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-          <span class="visually-hidden">Toggle Dropdown</span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          {% for file, name in template_list %}
             {% if name == 'Final Validation' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
             <li>
               <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
-          {% endfor %}
-        </ul>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>{{ curr_page }}</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+          <button type="submit" class="btn btn-success">Next</button>
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
@@ -83,53 +91,61 @@
         </div>
       </div>
     </div>
-      <div class="form-floating">
-        <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" value="{{ data['mal']['client_id'] }}" oninput="updateMALTargetURL(this)"> <label for="mal_client_id">Client ID</label>
-      </div>
-      <div class="form-floating">
-        <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{ data['code_verifier']}}">
-      </div>
-      <div class="input-group input-group-lg">
-        <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" value="{{ data['mal']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"> <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button> <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
-      </div>
-      <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModal2" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-          <div class="modal-content">
-            <div class="modal-body">
-              <div class="alert alert-danger" role="alert">
-                Please read the below warning
-              </div>Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br>
-              <br>
-              <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br>
-              <br>
-              Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing the <code>Complete Authentication</code>.
+    <div class="form-floating">
+      <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" value="{{ data['mal']['client_id'] }}" oninput="updateMALTargetURL(this)">
+      <label for="mal_client_id">Client ID</label>
+    </div>
+    <div class="form-floating">
+      <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{ data['code_verifier']}}">
+    </div>
+    <div class="input-group input-group-lg">
+      <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" value="{{ data['mal']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)">
+      <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button>
+      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
+    </div>
+    <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModal2" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-body">
+            <div class="alert alert-danger" role="alert">
+              Please read the below warning
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> <button class="btn btn-primary" id="mal_get_localhost_url" type="button" data-bs-dismiss="modal">Authorize</button>
-            </div>
+            Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br>
+            <br>
+            <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br>
+            <br>
+            Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing the
+            <code>Complete Authentication</code>.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button class="btn btn-primary" id="mal_get_localhost_url" type="button" data-bs-dismiss="modal">Authorize</button>
           </div>
         </div>
-      </div><input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
-      <div class="form-floating">
-        <div class="alert alert-dark" role="alert">
-          Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br>
-          <br>
-          <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br>
-          <br>
-          Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing <code>Complete Authentication</code>.
-        </div>
       </div>
-      <div class="form-group" id="localhost_url">
-        <div class="input-group input-group-lg">
-          <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" placeholder="Localhost URL" aria-label="Localhost URL" oninput="checkURLField(this)"> <button type="button" class="btn btn-success" id="validate_mal_url">Complete Authentication</button>
-        </div>
-        <div id="malStatusMessage" class="status-message"></div>
-        <div class="form-group" id="hidden_stuff">
-          <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['mal']['authorization']['access_token'] }}" readonly> 
-          <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['mal']['authorization']['access_token'] }}" readonly> 
-          <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['mal']['authorization']['access_token'] }}" readonly> 
-          <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['mal']['authorization']['access_token'] }}" readonly>
-        </div>
+    </div>
+    <input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
+    <div class="form-floating">
+      <div class="alert alert-dark" role="alert">
+        Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br>
+        <br>
+        <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br>
+        <br>
+        Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing
+        <code>Complete Authentication</code>.
+      </div>
+    </div>
+    <div class="form-group" id="localhost_url">
+      <div class="input-group input-group-lg">
+        <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" placeholder="Localhost URL" aria-label="Localhost URL" oninput="checkURLField(this)">
+        <button type="button" class="btn btn-success" id="validate_mal_url">Complete Authentication</button>
+      </div>
+      <div id="malStatusMessage" class="status-message"></div>
+      <div class="form-group" id="hidden_stuff">
+        <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['mal']['authorization']['access_token'] }}" readonly>
+        <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['mal']['authorization']['access_token'] }}" readonly>
+        <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['mal']['authorization']['access_token'] }}" readonly>
+        <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['mal']['authorization']['access_token'] }}" readonly>
       </div>
     </div>
   </div>

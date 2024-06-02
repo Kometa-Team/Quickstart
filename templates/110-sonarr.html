@@ -10,44 +10,52 @@
           </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
-              {% if name == 'Final Validation' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li>
-                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-              </li>
-              {% if name == 'Start' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-6 align-self-center text-center">
-          <h2>{{ curr_page }}</h2>
-      </div>
-    <div class="col align-self-center">
-      <div class="input-group justify-content-end">
-        <button type="submit" class="btn btn-success">Next</button>
-        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-          <span class="visually-hidden">Toggle Dropdown</span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          {% for file, name in template_list %}
             {% if name == 'Final Validation' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
             <li>
               <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
-          {% endfor %}
-        </ul>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>{{ curr_page }}</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+          <button type="submit" class="btn btn-success">Next</button>
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
@@ -85,19 +93,23 @@
     </div>
 
     <div class="form-floating">
-      <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" value="{{ data['sonarr']['url'] }}" placeholder="http://127.0.0.1:32400"> <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
+      <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" value="{{ data['sonarr']['url'] }}" placeholder="http://127.0.0.1:32400">
+      <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" value="{{ data['sonarr']['token'] }}" placeholder="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" value="{{ data['sonarr']['token'] }}" placeholder="Token" aria-label="Token">
+      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
+      <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
     </div>
-    <div id="sonarrStatusMessage" class="status-message"></div><br>
+    <div id="sonarrStatusMessage" class="status-message"></div>
+    <br>
     <div class="form-floating">
       <select class="form-select" id="sonarr_root_folder_path" name="sonarr_root_folder_path" value="{{ data['sonarr']['root_folder_path'] }}">
         <option value="">
           Select Root Folder Path
         </option>
       </select>
-      <label for="Root Folder Path">Root Folder Path</label>
+      <label for="sonarr_root_folder_path">Root Folder Path</label>
     </div>
 
     <div class="form-floating">
@@ -130,7 +142,7 @@
           latest - monitor all episodes of the latest season and future seasons
         </option>
       </select>
-      <label for="Monitor">Monitor</label>
+      <label for="sonarr_monitor">Monitor</label>
     </div>
 
     <div class="form-floating">
@@ -138,17 +150,17 @@
         <option value="">
           Select Quality Profile
         </option>
-      </select> 
-      <label for="Quality Profile">Quality Profile</label>
+      </select>
+      <label for="sonarr_quality_profile">Quality Profile</label>
     </div>
 
     <div class="form-floating">
-        <select class="form-select" id="sonarr_language_profile" value="{{ data['sonarr']['language_profile'] }}" name="sonarr_language_profile" value="{{ data['sonarr']['language_profile'] }}">
+      <select class="form-select" id="sonarr_language_profile" value="{{ data['sonarr']['language_profile'] }}" name="sonarr_language_profile" value="{{ data['sonarr']['language_profile'] }}">
         <option value="">
           Select Language Profile
         </option>
       </select>
-      <label for="Language Profile">Language Profile</label>
+      <label for="sonarr_language_profile">Language Profile</label>
     </div>
 
     <div class="form-floating">
@@ -166,22 +178,21 @@
           Anime
         </option>
       </select>
-      <label for="Series Type">Series Type</label>
+      <label for="sonarr_series_type">Series Type</label>
     </div>
 
     <div class="form-floating">
-      <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag" value="{{ data['sonarr']['tag'] }}" placeholder=""> <label for="sonarr_tag">Tag to apply to added media</label>
+      <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag" value="{{ data['sonarr']['tag'] }}" placeholder="">
+      <label for="sonarr_tag">Tag to apply to added media</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="sonarr_sonarr_path" name="sonarr_sonarr_path" value="{{ data['sonarr']['sonarr_path'] }}" placeholder=""> <label for="sonarr_sonarr_path">Sonarr Path</label>
+      <input type="text" class="form-control" id="sonarr_sonarr_path" name="sonarr_sonarr_path" value="{{ data['sonarr']['sonarr_path'] }}" placeholder="">
+      <label for="sonarr_sonarr_path">Sonarr Path</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path" value="{{ data['sonarr']['plex_path'] }}" placeholder=""> <label for="sonarr_plex_path">Plex Path</label>
+      <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path" value="{{ data['sonarr']['plex_path'] }}" placeholder="">
+      <label for="sonarr_plex_path">Plex Path</label>
     </div>
-
-
-
-
 
 
     <div class="form-check form-switch">
@@ -224,10 +235,7 @@
       <input type="hidden" name="sonarr_ignore_cache" value="false">
       <label class="form-check-label" for="sonarr_ignore_cache">Ignore Kometa's cache when adding media</label>
     </div>
-
-
-
-
+  </div>
 </form>
 <script>
   async function validateSonarrApikey(apikey, url) {

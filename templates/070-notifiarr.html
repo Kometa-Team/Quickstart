@@ -10,44 +10,52 @@
           </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
-              {% if name == 'Final Validation' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li>
-                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-              </li>
-              {% if name == 'Start' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-      </div>
-      <div class="col-6 align-self-center text-center">
-          <h2>{{ curr_page }}</h2>
-      </div>
-    <div class="col align-self-center">
-      <div class="input-group justify-content-end">
-        <button type="submit" class="btn btn-success">Next</button>
-        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-          <span class="visually-hidden">Toggle Dropdown</span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end">
-          {% for file, name in template_list %}
             {% if name == 'Final Validation' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
             <li>
               <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
-              <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
             {% endif %}
-          {% endfor %}
-        </ul>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>{{ curr_page }}</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+          <button type="submit" class="btn btn-success">Next</button>
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="visually-hidden">Toggle Dropdown</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
-  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
@@ -84,78 +92,82 @@
       </div>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="notifiarr_apikey" name="notifiarr_apikey" value="{{ data['notifiarr']['apikey'] }}" title="Notifiarr API Key" aria-label="Notifiarr API Key"><button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button><button class="btn btn-success" id="validateNotifiarrButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="notifiarr_apikey" name="notifiarr_apikey" value="{{ data['notifiarr']['apikey'] }}" title="Notifiarr API Key" aria-label="Notifiarr API Key">
+      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
+      <button class="btn btn-success" id="validateNotifiarrButton" type="button">Validate</button>
     </div>
-    <div id="notifiarrStatusMessage" class="status-message"></div><br>
+    <div id="notifiarrStatusMessage" class="status-message"></div>
+    <br>
+  </div>
 </form>
 <script>
-    async function validateNotifiarrApikey(apikey) {
-        const apiUrl = `https://notifiarr.com/api/v1/user/validate/${apikey}`;
-        try {
-            const response = await fetch(apiUrl);
-            const data = await response.json();
-            console.log("API Response:", data);
+  async function validateNotifiarrApikey(apikey) {
+      const apiUrl = `https://notifiarr.com/api/v1/user/validate/${apikey}`;
+      try {
+          const response = await fetch(apiUrl);
+          const data = await response.json();
+          console.log("API Response:", data);
 
-      if (data.result === "success") {
-        console.log("Notifiarr API key is valid.");
-        return true;
-      } else {
-        console.log("Invalid Notifiarr API key. Error:", data.Error);
-        return false;
-      }
-    } catch (error) {
-      console.error("Error validating Notifiarr apikey:", error);
+    if (data.result === "success") {
+      console.log("Notifiarr API key is valid.");
+      return true;
+    } else {
+      console.log("Invalid Notifiarr API key. Error:", data.Error);
       return false;
     }
+  } catch (error) {
+    console.error("Error validating Notifiarr apikey:", error);
+    return false;
   }
+}
 
-  document
-    .getElementById("validateNotifiarrButton")
-    .addEventListener("click", function () {
-      const apiKey = document.getElementById("notifiarr_apikey").value;
-      const notifiarrStatusMessage = document.getElementById(
-        "notifiarrStatusMessage"
-      );
+document
+  .getElementById("validateNotifiarrButton")
+  .addEventListener("click", function () {
+    const apiKey = document.getElementById("notifiarr_apikey").value;
+    const notifiarrStatusMessage = document.getElementById(
+      "notifiarrStatusMessage"
+    );
 
-      if (!apiKey) {
-        notifiarrStatusMessage.textContent =
-          "Please enter a Notifiarr API key.";
+    if (!apiKey) {
+      notifiarrStatusMessage.textContent =
+        "Please enter a Notifiarr API key.";
+      notifiarrStatusMessage.style.color = "#ea868f";
+      notifiarrStatusMessage.style.display = "block";
+      return;
+    }
+
+    validateNotifiarrApikey(apiKey).then((isValid) => {
+      if (isValid) {
+        notifiarrStatusMessage.textContent = "Notifiarr API key is valid.";
+        notifiarrStatusMessage.style.color = "#75b798";
+      } else {
+        notifiarrStatusMessage.textContent = "Notifiarr API key is invalid.";
         notifiarrStatusMessage.style.color = "#ea868f";
-        notifiarrStatusMessage.style.display = "block";
-        return;
       }
-
-      validateNotifiarrApikey(apiKey).then((isValid) => {
-        if (isValid) {
-          notifiarrStatusMessage.textContent = "Notifiarr API key is valid.";
-          notifiarrStatusMessage.style.color = "#75b798";
-        } else {
-          notifiarrStatusMessage.textContent = "Notifiarr API key is invalid.";
-          notifiarrStatusMessage.style.color = "#ea868f";
-        }
-        notifiarrStatusMessage.style.display = "block";
-      });
+      notifiarrStatusMessage.style.display = "block";
     });
+  });
 
-  document
-    .getElementById("toggleApikeyVisibility")
-    .addEventListener("click", function () {
-      const apikeyInput = document.getElementById("notifiarr_apikey");
-      const currentType = apikeyInput.getAttribute("type");
-      apikeyInput.setAttribute(
-        "type",
-        currentType === "password" ? "text" : "password"
-      );
-      this.textContent = currentType === "password" ? "Hide" : "Show";
-    });
+document
+  .getElementById("toggleApikeyVisibility")
+  .addEventListener("click", function () {
+    const apikeyInput = document.getElementById("notifiarr_apikey");
+    const currentType = apikeyInput.getAttribute("type");
+    apikeyInput.setAttribute(
+      "type",
+      currentType === "password" ? "text" : "password"
+    );
+    this.textContent = currentType === "password" ? "Hide" : "Show";
+  });
 
-  document
-    .getElementById("configForm")
-    .addEventListener("submit", function (event) {
-      const apiKeyInput = document.getElementById("notifiarr_apikey");
-      if (!apiKeyInput.value) {
-        apiKeyInput.value = "";
-      }
-    });
+document
+  .getElementById("configForm")
+  .addEventListener("submit", function (event) {
+    const apiKeyInput = document.getElementById("notifiarr_apikey");
+    if (!apiKeyInput.value) {
+      apiKeyInput.value = "";
+    }
+  });
 </script>
 {% endblock %}
