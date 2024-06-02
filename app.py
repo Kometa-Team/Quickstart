@@ -19,10 +19,21 @@ from modules.helpers import build_config_dict, get_template_list, get_bits, get_
 from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage
 
 # Load JSON Schema
-# probably ought to load this from github
 yaml = YAML(typ='safe', pure=True)
-with open('json-schema/config-schema.json', 'r') as file:
-    schema = yaml.load(file)
+
+# URL to the JSON schema
+url = 'https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json'
+
+try:
+    # Fetch the schema
+    response = requests.get(url)
+    response.raise_for_status()  # Ensure we notice bad responses
+
+    # Load the schema
+    schema = yaml.load(response.text)
+except requests.RequestException as e:
+    print(f"Error fetching the JSON schema: {e}")
+    schema = None  # or handle the error appropriately
 
 load_dotenv()
 

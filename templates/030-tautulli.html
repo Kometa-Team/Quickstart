@@ -10,52 +10,44 @@
           </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
-            {% if name == 'Final Validation' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
-            <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-            </li>
-            {% if name == 'Start' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
+              {% if name == 'Final Validation' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
+              <li>
+                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              </li>
+              {% if name == 'Start' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
             {% endfor %}
           </ul>
         </div>
       </div>
       <div class="col-6 align-self-center text-center">
-        <h2>{{ curr_page }}</h2>
+          <h2>{{ curr_page }}</h2>
       </div>
-      <div class="col align-self-center">
-        <div class="input-group justify-content-end">
-          <button type="submit" class="btn btn-success">Next</button>
-          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-            <span class="visually-hidden">Toggle Dropdown</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            {% for file, name in template_list %}
+    <div class="col align-self-center">
+      <div class="input-group justify-content-end">
+        <button type="submit" class="btn btn-success">Next</button>
+        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          {% for file, name in template_list %}
             {% if name == 'Final Validation' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
+              <li><hr class="dropdown-divider"></li>
             {% endif %}
             <li>
               <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
+              <li><hr class="dropdown-divider"></li>
             {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
+          {% endfor %}
+        </ul>
       </div>
     </div>
+  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>
@@ -92,16 +84,12 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="tautulli_url" name="tautulli_url" value="{{ data['tautulli']['url'] }}" title="http://192.168.1.12:8181">
-      <label for="tautulli_url">Tautulli URL</label>
+      <input type="text" class="form-control" id="tautulli_url" name="tautulli_url" value="{{ data['tautulli']['url'] }}" title="http://192.168.1.12:8181"> <label for="tautulli_url">Tautulli URL</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" value="{{ data['tautulli']['apikey'] }}" title="API Key" aria-label="Tautull API Key">
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button>
-      <button class="btn btn-success" id="validateTautulliButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey" value="{{ data['tautulli']['apikey'] }}" title="API Key" aria-label="Tautull API Key"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateTautulliButton" type="button">Validate</button>
     </div>
-    <div id="tautulliStatusMessage" class="status-message"></div>
-    <br>
+    <div id="tautulliStatusMessage" class="status-message"></div><br>
   </div>
 </form>
 <script>
