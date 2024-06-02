@@ -1,8 +1,10 @@
 from flask import session
+import os
 import secrets
 from ruamel.yaml import YAML
+from flask import current_app as app
 
-from .helpers import build_config_dict, get_template_list
+from .helpers import build_config_dict, get_template_list, get_bits
 
 def extract_names(raw_source):
     source = raw_source
@@ -24,11 +26,14 @@ def save_settings(raw_source, form_data):
     # source will be `010-plex`
     # source_name will be `plex`
 
+    
     if len(source) > 0:
         data = build_config_dict(source_name, form_data)
+        
+        base_data = get_dummy_data(source_name)
 
         # we know that it is valid at this point
-        data['valid'] = True
+        data['valid'] = data != base_data
     
         # save under `010-plex`
         session[source] = data
@@ -97,3 +102,21 @@ def flush_session_storage():
     for name in template_list:
         item = template_list[name]
         session[item['stem']] = None
+
+def notification_systems_available():
+    notifiarr_available = False
+    gotify_available = False
+    
+    templates_dir = os.path.join(app.root_path, 'templates')
+    file_list = sorted(os.listdir(templates_dir))
+
+    for file in file_list:
+        stem, this_num, b = get_bits(file)
+        if "notifiarr" in stem:
+            notifiarr_data = retrieve_settings(stem)
+            notifiarr_available = notifiarr_data['valid']
+        if "gotify" in stem:
+            gotify_data = retrieve_settings(stem)
+            gotify_available = gotify_data['valid']
+
+    return notifiarr_available, gotify_available
