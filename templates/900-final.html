@@ -51,7 +51,8 @@
         </div>
             <textarea readonly id="final-yaml" class="form-control" rows="20">{{ yaml_content }}</textarea>
         </div>
-    </form>
+    </div>
+</form>
     {% if yaml_content %}
         <br>
         <a href="{{ url_for('download') }}" class="btn btn-success">Download Config</a>
