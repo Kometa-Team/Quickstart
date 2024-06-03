@@ -121,6 +121,7 @@
         <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" value="{{ data['plex']['db_cache'] }}" title="Set the size of the Plex Database Cache (in Megabytes), default is 40" min="40" required="">
         <label for="plex_db_cache">Database Cache Size (in mb)</label>
       </div>
+      <div id="plexDbcache" class="status-message"></div>
       <div class="form-floating">
         <input type="number" class="form-control" id="plex_timeout" name="plex_timeout" value="{{ data['plex']['timeout'] }}" title="Amount of seconds to wait for Plex to respond, default is 60" min="60" required="">
         <label for="plex_timeout">Timeout (in seconds)</label>
@@ -145,7 +146,7 @@
       <div class="form-check form-switch">
         <input class="form-check-input" type="checkbox" name="plex_optimize" id="plex_optimize" value="true" {% if data['plex']['optimize']|string|lower == 'true' %}checked{% endif %}>
         <input type="hidden" name="plex_optimize" value="false">
-        <label class="form-check-label" for="plex_optimize">Optimize database</label>
+        <label class="form-check-label" for="plex_optimize">Optimize Database</label>
       </div>
     </div>
   </div>
@@ -163,6 +164,8 @@
     const plexUrl = document.getElementById('plex_url').value;
     const plexToken = document.getElementById('plex_token').value;
     const plexStatusMessage = document.getElementById('plexStatusMessage');
+    const plexDbcache = document.getElementById('plexDbcache');
+    const currentDbCache = document.getElementById('plex_db_cache').value;
 
     if (!plexUrl || !plexToken) {
       plexStatusMessage.textContent = 'Please enter both Plex URL and Token.';
@@ -183,16 +186,25 @@
     .then(response => response.json())
     .then(data => {
       if (data.valid) {
-        document.getElementById('plex_db_cache').value = data.db_cache;
+        const serverDbCache = data.db_cache;
+        plexDbcache.textContent = 'Database cache value retrieved from server is: ' + serverDbCache + ' MB';
+        plexDbcache.style.color = '#75b798';
+
         plexStatusMessage.textContent = 'Plex server validated successfully!';
         plexStatusMessage.style.color = '#75b798';
-        var T = document.getElementById("hidden");
-        T.style.display = "block";  //
+        var hiddenSection = document.getElementById("hidden");
+        hiddenSection.style.display = "block";
+
+        if (currentDbCache != serverDbCache) {
+          plexDbcache.textContent += 'Warning: The value in the input box (' + currentDbCache + ' MB) does not match the value retrieved from the server (' + serverDbCache + ' MB).';
+          plexDbcache.style.color = '#FFA500';
+        }
       } else {
         plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
         plexStatusMessage.style.color = '#ea868f';
       }
       plexStatusMessage.style.display = 'block';
+      plexDbcache.style.display = 'block';
     })
     .catch(error => {
       console.error('Error validating Plex server:', error);
