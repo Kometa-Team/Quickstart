@@ -47,15 +47,30 @@
     <hr class="hr">
     <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
     </div>
+    <div class="alert alert-danger" role="alert" id="yaml-warning-msg">
+      The inputs you entered <b>did not</b> pass validation, a valid config
+      <b>could not</b> be generated. Please try again.
+    </div>
+    <div class="form-floating">
+      <div class="form-text" id="yaml-warnings">
+        <h5>The below error(s) occurred validating your inputs.</h5><br>
+      </div>
+      <textarea class="form-control" placeholder="Leave a comment here" id="validation-error" style="height: 300px">{{ validation_error }}</textarea>
+    </div>
+    </div>
     <div class="form-floating">
       <div class="form-text" id="yaml-content">
         <br><h5>For your records, here is the YAML that was generated as a result of your inputs.</h5><br>
+
+      <div class="alert alert-info" role="alert">
+        As a reminder, this will most likely not work with Kometa as it has not passed validation.
+      </div>
       </div>
       <textarea readonly id="final-yaml" class="form-control" rows="20">{{ yaml_content }}</textarea>
     </div>
     {% if yaml_content %}
       <br>
-      <a href="{{ url_for('download') }}" id="download-btn" class="btn btn-success">Download Config</a>
+      <a href="{{ url_for('download') }}" id="download-btn" class="btn btn-success d-none">Download Config</a>
     {% endif %}
   </div>
 </form>
@@ -68,7 +83,7 @@ $(document).ready(function() {
   // Fetch the validation status
   var plexValid = $('#plex_valid').data("plex-valid") === "True";
   var tmdbValid = $('#tmdb_valid').data("tmdb-valid") === "True";
-
+  var validationError = $('#validation-error').val().trim();
   // Debugging: Check the values of the meta tags
   // console.log("Plex Valid:", plexValid);
   // console.log("TMDb Valid:", tmdbValid);
@@ -86,9 +101,11 @@ $(document).ready(function() {
 
   // If there are validation messages, display them
   if (validationMessages.length > 0) {
-    // $('#validation-messages').html(validationMessages.join('<br>')).show();
+    $('#validation-messages').html(validationMessages.join('<br>')).show();
     // Hide the download button and textarea
-    $('#download-btn, #final-yaml, #yaml-content').addClass('d-none');
+    $('#download-btn, #final-yaml, #yaml-content, #yaml-warnings, #yaml-warning-msg, #validation-error').addClass('d-none');
+  } else if (!validationError) {
+    $('#download-btn').removeClass('d-none');
   }
 
   // Debugging: Confirm if validation messages div is updated

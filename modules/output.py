@@ -36,6 +36,7 @@ def build_config():
         
         if section_data['valid']:
             # it's valid data and needs to end up in the config
+            section_data = {k: v for k, v in section_data.items() if k != 'valid'}
             config_data[config_attribute] = section_data
 
     header_comment = (
@@ -94,20 +95,22 @@ def build_config():
         ('mal', '130-mal')
     ]
 
-    for section_name in config_data:
-        section_data = config_data[section_name]
-        section_art = header_art[section_name]
+    for section_key, section_stem in ordered_sections:
+        if section_key in config_data:
+            section_data = config_data[section_key]
+            section_art = header_art[section_key]
 
-        yaml_content += dump_section(section_art, section_name, section_data)
+            yaml_content += dump_section(section_art, section_key, section_data)
 
     # Store the final YAML content in the session
     yaml_content = yaml_content.replace("'true'", "true")
     yaml_content = yaml_content.replace("'false'", "false")
-    
-    print(f"config_data:{config_data}")
-    print("==================================================\n")
-    print(f"yaml_content:{yaml_content}")
-    print("==================================================\n")
+
+    print("\n==================================================\n")
+    print(f"config_data:\n{config_data}")
+    print("\n==================================================\n")
+    print(f"yaml_content:\n{yaml_content}")
+    print("\n==================================================\n")
 
     validated = False
     

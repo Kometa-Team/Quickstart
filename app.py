@@ -119,16 +119,16 @@ def step(name):
     
     # This should not be based on name; maybe next being empty
     # Why does the error condition need its own page?
-    if name == '900-final' or name == '999-danger':
+    if name == '900-final':
         validated, config_data, yaml_content = build_config()
 
         try:
             jsonschema.validate(instance=config_data, schema=schema)
         except jsonschema.exceptions.ValidationError as e:
             flash(f'Validation error: {e.message}', 'danger')
-            return render_template('999-danger.html', title=title, yaml_content=yaml_content, validation_error=e, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress)
+            return render_template('900-final.html', title=title, data=data, yaml_content=yaml_content, validation_error=e, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available)
 
-        return render_template('999-final.html', title=title, yaml_content=yaml_content, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress)
+        return render_template('900-final.html', title=title, data=data, yaml_content=yaml_content, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available)
     else:
         return render_template(name + '.html', title=title, data=data, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available)
 
