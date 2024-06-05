@@ -136,52 +136,8 @@ def step(name):
 
         return render_template('900-final.html', title=title, data=data, yaml_content=yaml_content, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available, header_style=header_style)
     else:
-        # Ensure 'anidb', 'settings', 'webhooks' exist in data
-        if 'anidb' not in data:
-            data['anidb'] = {}
-        if 'webhooks' not in data:
-            data['webhooks'] = {}
-        if 'settings' not in data:
-            data['settings'] = {}
-            
-        # Default values if they don't exist
-        if 'language' not in data['anidb']:
-            data['anidb']['language'] = 'en'  # Default to English
-        if 'error' not in data['webhooks']:
-            data['webhooks']['error'] = ''
-        if 'run_start' not in data['webhooks']:
-            data['webhooks']['run_start'] = ''
-        if 'run_end' not in data['webhooks']:
-            data['webhooks']['run_end'] = ''
-        if 'changes' not in data['webhooks']:
-            data['webhooks']['changes'] = ''
-        if 'version' not in data['webhooks']:
-            data['webhooks']['version'] = ''
-        if 'delete' not in data['webhooks']:
-            data['webhooks']['delete'] = ''
-        if 'run_order' not in data['settings']:
-            data['settings']['run_order'] = ['operations', 'metadata', 'collections', 'overlays']
-        if 'overlay_artwork_filetype' not in data['settings']:
-            data['settings']['overlay_artwork_filetype'] = 'jpg'
-        if 'sync_mode' not in data['settings']:
-            data['settings']['sync_mode'] = 'append'
-        if 'default_collection_order' not in data['settings']:
-            data['settings']['default_collection_order'] = ''
-            
-        # Retrieve the saved info
-        run_order_list = data.get('settings', {}).get('run_order', ['operations', 'metadata', 'collections', 'overlays'])
-        run_order = " ".join(run_order_list)        
-        overlay_artwork_filetype = data['settings'].get('overlay_artwork_filetype', 'jpg')
-        sync_mode = data['settings'].get('sync_mode', 'append')
-        default_collection_order = data['settings'].get('default_collection_order', '')
-        wh_error = data['webhooks'].get('error', '')
-        wh_run_start = data['webhooks'].get('run_start', '')
-        wh_run_end = data['webhooks'].get('run_end', '')
-        wh_changes = data['webhooks'].get('changes', '')
-        wh_version = data['webhooks'].get('version', '')
-        wh_delete = data['webhooks'].get('delete', '')
 
-        return render_template(name + '.html', title=title, data=data, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available, iso_639_1_languages=iso_639_1_languages, iso_639_2_languages=iso_639_2_languages, iso_3166_1_regions=iso_3166_1_regions, run_order=run_order, overlay_artwork_filetype=overlay_artwork_filetype, sync_mode=sync_mode, default_collection_order=default_collection_order, wh_error=wh_error, wh_run_start=wh_run_start, wh_run_end=wh_run_end, wh_changes=wh_changes, wh_version=wh_version, wh_delete=wh_delete)
+        return render_template(name + '.html', title=title, data=data, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available, iso_639_1_languages=iso_639_1_languages, iso_639_2_languages=iso_639_2_languages, iso_3166_1_regions=iso_3166_1_regions)
 
 @app.route('/download')
 def download():
