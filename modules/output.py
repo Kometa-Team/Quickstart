@@ -18,7 +18,7 @@ def add_border_to_ascii_art(art):
 def section_heading(title):
     return add_border_to_ascii_art(pyfiglet.figlet_format(title))
 
-def build_config():
+def build_config(header_style='ascii'):
     sections = get_template_list()
 
     config_data = {}
@@ -29,9 +29,15 @@ def build_config():
         # {'num': '001', 'file': '001-start.html', 'stem': '001-start', 'name': 'Start', 'raw_name': 'start', 'next': '010-plex', 'prev': '001-start'}
         persistence_key = item['stem']
         config_attribute = item['raw_name']
-        header_art[config_attribute] = section_heading(item['name'])
-
+        if header_style == 'ascii':
+            header_art[config_attribute] = section_heading(item['name'])
+        elif header_style == 'divider':
+            header_art[config_attribute] = "#==================== " + item['name'] + " ====================#"
+        else:
+            header_art[config_attribute] = ''
+		
         section_data = retrieve_settings(persistence_key)
+
         # {'mal': {'authorization': {'code_verifier': 'OEOOZwnH8RWLczgahkUbo__vabgHl7XyvWkDx0twLB4FCaxPY88C9tNXnmxzBq946vSekKbPc3WhW4SwWrq0ld5xKpm27foQx4RXfnXY25iL7Pm0WCCuYkO-iQga69jv', 'localhost_url': '', 'access_token': 'None', 'token_type': 'None', 'expires_in': 'None', 'refresh_token': 'None'}, 'client_id': 'Enter MyAnimeList Client ID', 'client_secret': 'Enter MyAnimeList Client Secret'}, 'valid': True}
         
         if section_data['valid']:
@@ -56,7 +62,7 @@ def build_config():
     # Prepare the final YAML content
     yaml_content = (
         '# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n'
-        f"{section_heading('KOMETA')}\n\n"
+        f"{section_heading('KOMETA') if header_style == 'ascii' else ('#==================== KOMETA ====================#' if header_style == 'divider' else '')}\n\n"
         f"{header_comment}\n\n"
         "libraries:\n\n"
     )
@@ -121,4 +127,3 @@ def build_config():
         validated = False
 
     return validated, config_data, yaml_content
-

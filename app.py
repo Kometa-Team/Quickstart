@@ -82,6 +82,9 @@ def step(name):
 
     if request.method == 'POST':
         save_settings(request.referrer, request.form)
+        header_style = request.form.get('header_style', 'ascii')
+    else:
+        header_style = 'ascii'  # Default to ASCII art
 
     file_list = get_menu_list()
 
@@ -120,15 +123,15 @@ def step(name):
     # This should not be based on name; maybe next being empty
     # Why does the error condition need its own page?
     if name == '900-final':
-        validated, config_data, yaml_content = build_config()
+        validated, config_data, yaml_content = build_config(header_style)
 
         try:
             jsonschema.validate(instance=config_data, schema=schema)
         except jsonschema.exceptions.ValidationError as e:
             flash(f'Validation error: {e.message}', 'danger')
-            return render_template('900-final.html', title=title, data=data, yaml_content=yaml_content, validation_error=e, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available)
+            return render_template('900-final.html', title=title, data=data, yaml_content=yaml_content, validation_error=e, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available, header_style=header_style)
 
-        return render_template('900-final.html', title=title, data=data, yaml_content=yaml_content, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available)
+        return render_template('900-final.html', title=title, data=data, yaml_content=yaml_content, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available, header_style=header_style)
     else:
         return render_template(name + '.html', title=title, data=data, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available)
 

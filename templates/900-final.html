@@ -45,6 +45,15 @@
       </div>
     </div>
     <hr class="hr">
+    <div class="form-floating">
+      <select id="header-style" name="header_style" class="form-select">
+        <option value="ascii" {% if header_style == 'ascii' %}selected{% endif %}>With ASCII Art</option>
+        <option value="divider" {% if header_style == 'divider' %}selected{% endif %}>With Simple Divider</option>
+        <option value="none" {% if header_style == 'none' %}selected{% endif %}>No Headers/Dividers</option>
+      </select>
+      <label for="header-style">Header Style</label>
+    </div>
+
     <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
     </div>
     <div class="alert alert-danger" role="alert" id="yaml-warning-msg">
@@ -110,6 +119,10 @@ $(document).ready(function() {
 
   // Debugging: Confirm if validation messages div is updated
   // console.log("Validation Messages:", $('#validation-messages').html());
+});
+
+  document.getElementById('header-style').addEventListener('change', function() {
+  document.getElementById('final-form').submit();
 });
 </script>
 {% endblock %}
