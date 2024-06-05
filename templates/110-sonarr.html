@@ -88,7 +88,11 @@
       <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" value="{{ data['sonarr']['url'] }}" placeholder="http://127.0.0.1:32400"> <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
     </div>
     <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" value="{{ data['sonarr']['token'] }}" placeholder="Token" aria-label="Token"> <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">Show</button> <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
+      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" value="{{ data['sonarr']['token'] }}" placeholder="Token" aria-label="Token">
+      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
+        <i class="fas fa-eye"></i>
+      </button>
+      <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
     </div>
     <div id="sonarrStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
@@ -322,7 +326,7 @@
   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
       const apikeyInput = document.getElementById('sonarr_token');
       const currentType = apikeyInput.getAttribute('type');
-      apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-      this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+      apikeyInput.setAttribute("type", currentType === "password" ? "text" : "password");
+      this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
   });
 </script> {% endblock %}

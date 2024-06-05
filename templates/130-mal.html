@@ -100,8 +100,10 @@
     </div>
     <div class="input-group input-group-lg">
       <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" value="{{ data['mal']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)">
-      <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button>
-      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
+      <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">
+        <i class="fas fa-eye"></i>
+      </button>
+      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
     </div>
     <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModal2" aria-hidden="true">
       <div class="modal-dialog modal-lg">
@@ -119,7 +121,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button class="btn btn-primary" id="mal_get_localhost_url" type="button" data-bs-dismiss="modal">Authorize</button>
+            <button class="btn btn-success" id="mal_get_localhost_url" type="button" data-bs-dismiss="modal">Authorize</button>
           </div>
         </div>
       </div>
@@ -154,8 +156,8 @@
   document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
     const apikeyInput = document.getElementById('mal_client_secret');
     const currentType = apikeyInput.getAttribute('type');
-    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
+    apikeyInput.setAttribute("type", currentType === "password" ? "text" : "password");
+    this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
   });
 
   document.getElementById('mal_get_localhost_url').addEventListener('click', function() {

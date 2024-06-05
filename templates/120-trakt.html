@@ -97,8 +97,9 @@
     </div>
     <div class="input-group input-group-lg">
       <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" value="{{ data['trakt']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)">
-      <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">Show</button>
-      <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
+      <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">
+        <i class="fas fa-eye"></i>
+      </button><button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
     </div>
     <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
     <div class="form-text" id="pin-info">
@@ -125,9 +126,9 @@
   document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
     const apikeyInput = document.getElementById('trakt_client_secret');
     const currentType = apikeyInput.getAttribute('type');
-    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
-    this.textContent = currentType === 'password' ? 'Hide' : 'Show';
-});
+    apikeyInput.setAttribute("type", currentType === "password" ? "text" : "password");
+      this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  });
 
 function updateTraktURL() {
     var trakt_client_id = document.getElementById('trakt_client_id').value;
