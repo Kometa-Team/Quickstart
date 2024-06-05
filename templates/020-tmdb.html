@@ -92,8 +92,8 @@
         </div>
       </div>
     </div>
-    <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" value="{{ data['tmdb']['apikey'] }}" title="API Key" aria-label="TMDb API Key">
+    <div class="input-group input-group-lg form-floating">
+      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" value="{{ data['tmdb']['apikey'] }}" title="API Key" aria-label="TMDb API Key"><label for="tmdb_apikey">TMDB API Key</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
@@ -101,17 +101,24 @@
     </div>
     <div id="statusMessage" class="status-message"></div>
     <div class="form-floating">
-      <select class="form-select" aria-label="TMDb Language Selector" id="tmdb_language" name="tmdb_language">
-        <option value="{{ data['tmdb']['language'] }}">Please validate TMDB API Key</option>
+      <select class="form-select" id="tmdb_language" name="tmdb_language">
+        <option value="">Select Language</option>
+        {% for code, language in iso_639_1_languages %}
+          <option value="{{ code }}" {% if code == data['tmdb']['language'] %}selected{% endif %}>{{ language }}</option>
+        {% endfor %}
       </select>
       <label for="tmdb_language">Language</label>
     </div>
     <div class="form-floating">
-      <select class="form-select" aria-label="TMDb Region Selector" id="tmdb_region" name="tmdb_region">
-        <option value="{{ data['tmdb']['region'] }}">Please validate TMDB API Key</option>
+      <select class="form-select" id="tmdb_region" name="tmdb_region">
+        <option value="">Select Region</option>
+        {% for code, region in iso_3166_1_regions | sort(attribute='1') %}
+          <option value="{{ code }}" {% if code == data['tmdb']['region'] %}selected{% endif %}>{{ region }}</option>
+        {% endfor %}
       </select>
       <label for="tmdb_region">Region</label>
     </div>
+
     <div class="form-floating">
       <input type="number" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="{{ data['tmdb']['cache_expiration'] }}" min="0"><label for="tmdb_cache_expiration">Cache Expiration (in days)</label>
     </div>
@@ -169,43 +176,6 @@
           } else {
             throw new Error("Invalid API key");
           }
-        })
-        .then((responses) =>
-          Promise.all(responses.map((response) => response.json()))
-        )
-        .then((data) => {
-          const [languagesData, regionsData] = data;
-
-          // Clear previous options
-          languageSelect.innerHTML = "";
-          regionSelect.innerHTML = "";
-
-          const sortedLanguages = sortByEnglishName(languagesData);
-          const sortedRegions = sortByEnglishName(regionsData.results);
-
-          // Populate the language dropdown
-          sortedLanguages.forEach((language) => {
-            if (language.english_name) {
-              const option = document.createElement("option");
-              option.value = language.iso_639_1;
-              option.textContent = language.english_name;
-              languageSelect.appendChild(option);
-            }
-          });
-
-          // Populate the region dropdown
-          sortedRegions.forEach((region) => {
-            if (region.english_name) {
-              const option = document.createElement("option");
-              option.value = region.iso_3166_1;
-              option.textContent = region.english_name;
-              regionSelect.appendChild(option);
-            }
-          });
-
-          // Set default language and region to English
-          languageSelect.value = "en";
-          regionSelect.value = "US";
         })
         .catch((error) => {
           statusMessage.textContent = error.message;

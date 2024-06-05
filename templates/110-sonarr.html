@@ -85,10 +85,10 @@
     </div>
 
     <div class="form-floating">
-      <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" value="{{ data['sonarr']['url'] }}" placeholder="http://127.0.0.1:32400"> <label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
+      <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" value="{{ data['sonarr']['url'] }}"><label for="sonarr_url">Sonarr URL (including URL Base if set)</label>
     </div>
-    <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" value="{{ data['sonarr']['token'] }}" placeholder="Token" aria-label="Token">
+    <div class="input-group input-group-lg form-floating">
+      <input type="password" class="form-control" id="sonarr_token" name="sonarr_token" value="{{ data['sonarr']['token'] }}" placeholder="Token" aria-label="Token"><label for="sonarr_token">Sonarr API Key</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
@@ -105,38 +105,36 @@
     </div>
 
     <div class="form-floating">
-      <select class="form-select" id="sonarr_monitor" name="sonarr_monitor" value="{{ data['sonarr']['monitor'] }}">
-        <option value="all" selected>
-          Select Monitor Preference
-        </option>
-        <option value="all">
+      <select class="form-select" id="sonarr_monitor" name="sonarr_monitor">
+        <option value="" {% if data['sonarr']['monitor'] == '' %}selected{% endif %} disabled>Select Monitor Preference</option>
+        <option value="all" {% if data['sonarr']['monitor'] == 'all' %}selected{% endif %}>
           all (default) - monitor all episodes except specials
         </option>
-        <option value="none">
+        <option value="none" {% if data['sonarr']['monitor'] == 'none' %}selected{% endif %}>
           none - Do not monitor any episodes
         </option>
-        <option value="future">
+        <option value="future" {% if data['sonarr']['monitor'] == 'future' %}selected{% endif %}>
           future - monitor episodes that have not aired yet
         </option>
-        <option value="missing">
+        <option value="missing" {% if data['sonarr']['monitor'] == 'missing' %}selected{% endif %}>
           missing - monitor episodes that do not have files or have not aired yet
         </option>
-        <option value="existing">
+        <option value="existing" {% if data['sonarr']['monitor'] == 'existing' %}selected{% endif %}>
           existing - monitor episodes that have files or have not aired yet
         </option>
-        <option value="pilot">
+        <option value="pilot" {% if data['sonarr']['monitor'] == 'pilot' %}selected{% endif %}>
           pilot - monitor the first episode, all others will be ignored
         </option>
-        <option value="first">
+        <option value="first" {% if data['sonarr']['monitor'] == 'first' %}selected{% endif %}>
           first - monitor all episodes of the first season only
         </option>
-        <option value="latest">
+        <option value="latest" {% if data['sonarr']['monitor'] == 'latest' %}selected{% endif %}>
           latest - monitor all episodes of the latest season and future seasons
         </option>
       </select>
       <label for="sonarr_monitor">Monitor</label>
     </div>
-
+    
     <div class="form-floating">
       <select class="form-select" id="sonarr_quality_profile" value="{{ data['sonarr']['quality_profile'] }}" name="sonarr_quality_profile" value="{{ data['sonarr']['quality_profile'] }}">
         <option value="">
@@ -156,17 +154,15 @@
     </div>
 
     <div class="form-floating">
-      <select class="form-select" id="sonarr_series_type" value="{{ data['sonarr']['series_type'] }}" name="sonarr_series_type" value="{{ data['sonarr']['series_type'] }}">
-        <option value="standard" selected>
-          Select Series Type
-        </option>
-        <option value="standard">
+      <select class="form-select" id="sonarr_series_type" name="sonarr_series_type">
+        <option value="" {% if data['sonarr']['series_type'] == '' %}selected{% endif %} disabled>Select Series Type</option>
+        <option value="standard" {% if data['sonarr']['series_type'] == 'standard' %}selected{% endif %}>
           Standard (default)
         </option>
-        <option value="daily">
+        <option value="daily" {% if data['sonarr']['series_type'] == 'daily' %}selected{% endif %}>
           Daily
         </option>
-        <option value="anime">
+        <option value="anime" {% if data['sonarr']['series_type'] == 'anime' %}selected{% endif %}>
           Anime
         </option>
       </select>

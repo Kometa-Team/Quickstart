@@ -76,8 +76,7 @@
     </div>
     <hr class="hr">
     <div class="alert alert-info" role="alert">
-      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance
-      completing this section.
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
     </div>
     <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
@@ -100,9 +99,9 @@
     <div class="form-floating">
       <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)">
         <option value="">Select Webhook</option>
-        <option value="notifiarr">Notifiarr</option>
-        <option value="gotify">Gotify</option>
-        <option value="custom">Custom</option>
+        <option value="notifiarr" {% if data.webhooks[webhook] == 'notifiarr' %}selected{% endif %}>Notifiarr</option>
+        <option value="gotify" {% if data.webhooks[webhook] == 'gotify' %}selected{% endif %}>Gotify</option>
+        <option value="custom" {% if data.webhooks[webhook] == 'custom' %}selected{% endif %}>Custom</option>
       </select>
       <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
       <div class="input-group input-group-lg" id="webhooks_{{ webhook }}_custom" style="display: none;">

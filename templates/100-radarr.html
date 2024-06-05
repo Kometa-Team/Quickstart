@@ -92,11 +92,10 @@
       </div>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_url" name="radarr_url" value="{{ data['radarr']['url'] }}" title="http://127.0.0.1:32400">
-      <label for="radarr_url">Radarr URL (including URL Base if set)</label>
+      <input type="text" class="form-control" id="radarr_url" name="radarr_url" value="{{ data['radarr']['url'] }}"><label for="radarr_url">Radarr URL (including URL Base if set)</label>
     </div>
-    <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="radarr_token" name="radarr_token" value="{{ data['radarr']['token'] }}" title="Token" aria-label="Token">
+    <div class="input-group input-group-lg form-floating">
+      <input type="password" class="form-control" id="radarr_token" name="radarr_token" value="{{ data['radarr']['token'] }}" title="Token" aria-label="Token"><label for="radarr_token">Radarr API Key</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
@@ -125,25 +124,14 @@
     </div>
 
     <div class="form-floating">
+      <select class="form-select" id="radarr_availability" name="radarr_availability">
+        <option value="" selected disabled>Select Availability</option>
+        <option value="announced" {% if data['radarr']['availability'] == 'announced' %}selected{% endif %}>Announced (default)</option>
+        <option value="cinemas" {% if data['radarr']['availability'] == 'cinemas' %}selected{% endif %}>Cinemas</option>
+        <option value="released" {% if data['radarr']['availability'] == 'released' %}selected{% endif %}>Released</option>
+        <option value="db" {% if data['radarr']['availability'] == 'db' %}selected{% endif %}>DB</option>
       </select>
-      <select class="form-select" id="radarr_availability" name="radarr_availability" value="{{ data['radarr']['availability'] }}">
-        <option value="announced">
-          Select Availibility
-        </option>
-        <option value="announced">
-          Announced (default)
-        </option>
-        <option value="cinemas">
-          Cinemas
-        </option>
-        <option value="released">
-          Released
-        </option>
-        <option value="db">
-          DB
-        </option>
-      </select>
-      <label for="radarr_availability">Select Availibility</label>
+      <label for="radarr_availability">Select Availability</label>
     </div>
 
     <div class="form-floating">

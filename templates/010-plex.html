@@ -110,8 +110,8 @@
       <input type="text" class="form-control" id="plex_url" name="plex_url" value="{{ data['plex']['url'] }}" title="http://127.0.0.1:32400" required="">
       <label for="plex_url">Plex URL</label>
     </div>
-    <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="plex_token" name="plex_token" value="{{ data['plex']['token'] }}" title="Token" aria-label="Plex Token" required="">
+    <div class="input-group input-group-lg form-floating">
+      <input type="password" class="form-control" id="plex_token" name="plex_token" value="{{ data['plex']['token'] }}" title="Token" aria-label="Plex Token" required=""><label for="plex_token">Plex Token</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>

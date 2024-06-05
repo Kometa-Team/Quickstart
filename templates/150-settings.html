@@ -160,19 +160,18 @@
                             </div>
 
                             <div class="form-floating mb-3">
-                              <select class="form-select" id="overlay_artwork_filetype" name="overlay_artwork_filetype">
-                                <option value="jpg">Select Overlay Artwork Filetype</option>
-                                <option value="jpg">JPG (default)</option>
-                                <option value="png">PNG</option>
-                                <option value="webp_lossy">WEBP LOSSY</option>
-                                <option value="webp_lossless">WEBP LOSSLESS</option>
-                              </select>
-                              <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
+                                <select class="form-select" id="overlay_artwork_filetype" name="overlay_artwork_filetype">
+                                    <option value="jpg" {% if overlay_artwork_filetype == 'jpg' %}selected{% endif %}>JPG (default)</option>
+                                    <option value="png" {% if overlay_artwork_filetype == 'png' %}selected{% endif %}>PNG</option>
+                                    <option value="webp_lossy" {% if overlay_artwork_filetype == 'webp_lossy' %}selected{% endif %}>WEBP LOSSY</option>
+                                    <option value="webp_lossless" {% if overlay_artwork_filetype == 'webp_lossless' %}selected{% endif %}>WEBP LOSSLESS</option>
+                                </select>
+                                <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75" min="1" max="100">
-                              <label for="overlay_artwork_quality">Overlay Artwork Quality</label>
+                                <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75" min="1" max="100">
+                                <label for="overlay_artwork_quality">Overlay Artwork Quality</label>
                             </div>
                         </div>
                     </div>
@@ -210,53 +209,52 @@
 
 
                             <div class="form-floating mb-3">
-                              <select class="form-select" id="sync_mode" name="sync_mode">
-                                <option value="append">Select Sync Mode</option>
-                                <option value="append">Append (default)</option>
-                                <option value="sync">Sync</option>
-                              </select>
-                              <label for="sync_mode">Sync Mode</label>
+                                <select class="form-select" id="sync_mode" name="sync_mode">
+                                    <option value="append" {% if sync_mode == 'append' %}selected{% endif %}>Append (default)</option>
+                                    <option value="sync" {% if sync_mode == 'sync' %}selected{% endif %}>Sync</option>
+                                </select>
+                                <label for="sync_mode">Sync Mode</label>
                             </div>
-
+                            
                             <div class="form-floating mb-3">
-                              <select class="form-select" id="default_collection_order" name="default_collection_order">
-                                <option value="">Select Default Collection Order</option>
-                                <option value="added.asc">Added (Ascending)</option>
-                                <option value="added.desc">Added (Descending)</option>
-                                <option value="alpha">Alphabetical</option>
-                                <option value="audience_rating.asc">Audience Rating (Ascending)</option>
-                                <option value="audience_rating.desc">Audience Rating (Descending)</option>
-                                <option value="bitrate.asc">Bitrate (Ascending)</option>
-                                <option value="bitrate.desc">Bitrate (Descending)</option>
-                                <option value="content_rating.asc">Content Rating (Ascending)</option>
-                                <option value="content_rating.desc">Content Rating (Descending)</option>
-                                <option value="critic_rating.asc">Critic Rating (Ascending)</option>
-                                <option value="critic_rating.desc">Critic Rating (Descending)</option>
-                                <option value="custom">Custom</option>
-                                <option value="duration.asc">Duration (Ascending)</option>
-                                <option value="duration.desc">Duration (Descending)</option>
-                                <option value="originally_available.asc">Originally Available (Ascending)</option>
-                                <option value="originally_available.desc">Originally Available (Descending)</option>
-                                <option value="plays.asc">Plays (Ascending)</option>
-                                <option value="plays.desc">Plays (Descending)</option>
-                                <option value="progress.asc">Progress (Ascending)</option>
-                                <option value="progress.desc">Progress (Descending)</option>
-                                <option value="random">Random</option>
-                                <option value="release">Release</option>
-                                <option value="release.asc">Release (Ascending)</option>
-                                <option value="release.desc">Release (Descending)</option>
-                                <option value="resolution.asc">Resolution (Ascending)</option>
-                                <option value="resolution.desc">Resolution (Descending)</option>
-                                <option value="title.asc">Title (Ascending)</option>
-                                <option value="title.desc">Title (Descending)</option>
-                                <option value="user_rating.asc">User Rating (Ascending)</option>
-                                <option value="user_rating.desc">User Rating (Descending)</option>
-                                <option value="viewed.asc">Viewed (Ascending)</option>
-                                <option value="viewed.desc">Viewed (Descending)</option>
-                                <option value="year.asc">Year (Ascending)</option>
-                                <option value="year.desc">Year (Descending)</option>
-                              </select>
-                              <label for="default_collection_order">Default Collection Order</label>
+                                <select class="form-select" id="default_collection_order" name="default_collection_order">
+                                    <option value="" {% if default_collection_order == '' %}selected{% endif %}>Select Default Collection Order</option>
+                                    <option value="added.asc" {% if default_collection_order == 'added.asc' %}selected{% endif %}>Added (Ascending)</option>
+                                    <option value="added.desc" {% if default_collection_order == 'added.desc' %}selected{% endif %}>Added (Descending)</option>
+                                    <option value="alpha" {% if default_collection_order == 'alpha' %}selected{% endif %}>Alphabetical</option>
+                                    <option value="audience_rating.asc" {% if default_collection_order == 'audience_rating.asc' %}selected{% endif %}>Audience Rating (Ascending)</option>
+                                    <option value="audience_rating.desc" {% if default_collection_order == 'audience_rating.desc' %}selected{% endif %}>Audience Rating (Descending)</option>
+                                    <option value="bitrate.asc" {% if default_collection_order == 'bitrate.asc' %}selected{% endif %}>Bitrate (Ascending)</option>
+                                    <option value="bitrate.desc" {% if default_collection_order == 'bitrate.desc' %}selected{% endif %}>Bitrate (Descending)</option>
+                                    <option value="content_rating.asc" {% if default_collection_order == 'content_rating.asc' %}selected{% endif %}>Content Rating (Ascending)</option>
+                                    <option value="content_rating.desc" {% if default_collection_order == 'content_rating.desc' %}selected{% endif %}>Content Rating (Descending)</option>
+                                    <option value="critic_rating.asc" {% if default_collection_order == 'critic_rating.asc' %}selected{% endif %}>Critic Rating (Ascending)</option>
+                                    <option value="critic_rating.desc" {% if default_collection_order == 'critic_rating.desc' %}selected{% endif %}>Critic Rating (Descending)</option>
+                                    <option value="custom" {% if default_collection_order == 'custom' %}selected{% endif %}>Custom</option>
+                                    <option value="duration.asc" {% if default_collection_order == 'duration.asc' %}selected{% endif %}>Duration (Ascending)</option>
+                                    <option value="duration.desc" {% if default_collection_order == 'duration.desc' %}selected{% endif %}>Duration (Descending)</option>
+                                    <option value="originally_available.asc" {% if default_collection_order == 'originally_available.asc' %}selected{% endif %}>Originally Available (Ascending)</option>
+                                    <option value="originally_available.desc" {% if default_collection_order == 'originally_available.desc' %}selected{% endif %}>Originally Available (Descending)</option>
+                                    <option value="plays.asc" {% if default_collection_order == 'plays.asc' %}selected{% endif %}>Plays (Ascending)</option>
+                                    <option value="plays.desc" {% if default_collection_order == 'plays.desc' %}selected{% endif %}>Plays (Descending)</option>
+                                    <option value="progress.asc" {% if default_collection_order == 'progress.asc' %}selected{% endif %}>Progress (Ascending)</option>
+                                    <option value="progress.desc" {% if default_collection_order == 'progress.desc' %}selected{% endif %}>Progress (Descending)</option>
+                                    <option value="random" {% if default_collection_order == 'random' %}selected{% endif %}>Random</option>
+                                    <option value="release" {% if default_collection_order == 'release' %}selected{% endif %}>Release</option>
+                                    <option value="release.asc" {% if default_collection_order == 'release.asc' %}selected{% endif %}>Release (Ascending)</option>
+                                    <option value="release.desc" {% if default_collection_order == 'release.desc' %}selected{% endif %}>Release (Descending)</option>
+                                    <option value="resolution.asc" {% if default_collection_order == 'resolution.asc' %}selected{% endif %}>Resolution (Ascending)</option>
+                                    <option value="resolution.desc" {% if default_collection_order == 'resolution.desc' %}selected{% endif %}>Resolution (Descending)</option>
+                                    <option value="title.asc" {% if default_collection_order == 'title.asc' %}selected{% endif %}>Title (Ascending)</option>
+                                    <option value="title.desc" {% if default_collection_order == 'title.desc' %}selected{% endif %}>Title (Descending)</option>
+                                    <option value="user_rating.asc" {% if default_collection_order == 'user_rating.asc' %}selected{% endif %}>User Rating (Ascending)</option>
+                                    <option value="user_rating.desc" {% if default_collection_order == 'user_rating.desc' %}selected{% endif %}>User Rating (Descending)</option>
+                                    <option value="viewed.asc" {% if default_collection_order == 'viewed.asc' %}selected{% endif %}>Viewed (Ascending)</option>
+                                    <option value="viewed.desc" {% if default_collection_order == 'viewed.desc' %}selected{% endif %}>Viewed (Descending)</option>
+                                    <option value="year.asc" {% if default_collection_order == 'year.asc' %}selected{% endif %}>Year (Ascending)</option>
+                                    <option value="year.desc" {% if default_collection_order == 'year.desc' %}selected{% endif %}>Year (Descending)</option>
+                                </select>
+                                <label for="default_collection_order">Default Collection Order</label>
                             </div>
 
                             <div class="form-floating mb-3">
@@ -374,193 +372,10 @@
 
                           <div class="form-floating mb-3">
                             <select class="form-select" id="tvdb_language" name="tvdb_language">
-                              <option value="eng">Select TVDB Language</option>
-                              <option value="eng" selected>English (eng) (default)</option>
-                              <option value="aar">Afar (aar)</option>
-                              <option value="abk">Abkhazian (abk)</option>
-                              <option value="afr">Afrikaans (afr)</option>
-                              <option value="aka">Akan (aka)</option>
-                              <option value="alb">Albanian (alb)</option>
-                              <option value="amh">Amharic (amh)</option>
-                              <option value="ara">Arabic (ara)</option>
-                              <option value="arg">Aragonese (arg)</option>
-                              <option value="arm">Armenian (arm)</option>
-                              <option value="asm">Assamese (asm)</option>
-                              <option value="ava">Avaric (ava)</option>
-                              <option value="ave">Avestan (ave)</option>
-                              <option value="aym">Aymara (aym)</option>
-                              <option value="aze">Azerbaijani (aze)</option>
-                              <option value="bak">Bashkir (bak)</option>
-                              <option value="bam">Bambara (bam)</option>
-                              <option value="baq">Basque (baq)</option>
-                              <option value="bel">Belarusian (bel)</option>
-                              <option value="ben">Bengali (ben)</option>
-                              <option value="bih">Bihari (bih)</option>
-                              <option value="bis">Bislama (bis)</option>
-                              <option value="bos">Bosnian (bos)</option>
-                              <option value="bre">Breton (bre)</option>
-                              <option value="bul">Bulgarian (bul)</option>
-                              <option value="bur">Burmese (bur)</option>
-                              <option value="cat">Catalan (cat)</option>
-                              <option value="cha">Chamorro (cha)</option>
-                              <option value="che">Chechen (che)</option>
-                              <option value="chi">Chinese (chi)</option>
-                              <option value="chu">Church Slavic (chu)</option>
-                              <option value="chv">Chuvash (chv)</option>
-                              <option value="cor">Cornish (cor)</option>
-                              <option value="cos">Corsican (cos)</option>
-                              <option value="cre">Cree (cre)</option>
-                              <option value="cze">Czech (cze)</option>
-                              <option value="dan">Danish (dan)</option>
-                              <option value="div">Divehi (div)</option>
-                              <option value="dut">Dutch (dut)</option>
-                              <option value="dzo">Dzongkha (dzo)</option>
-                              <option value="eng">English (eng)</option>
-                              <option value="epo">Esperanto (epo)</option>
-                              <option value="est">Estonian (est)</option>
-                              <option value="ewe">Ewe (ewe)</option>
-                              <option value="fao">Faroese (fao)</option>
-                              <option value="fij">Fijian (fij)</option>
-                              <option value="fin">Finnish (fin)</option>
-                              <option value="fre">French (fre)</option>
-                              <option value="fry">Frisian (fry)</option>
-                              <option value="ful">Fulah (ful)</option>
-                              <option value="geo">Georgian (geo)</option>
-                              <option value="ger">German (ger)</option>
-                              <option value="gla">Gaelic (gla)</option>
-                              <option value="gle">Irish (gle)</option>
-                              <option value="glg">Galician (glg)</option>
-                              <option value="glv">Manx (glv)</option>
-                              <option value="gre">Greek (gre)</option>
-                              <option value="grn">Guarani (grn)</option>
-                              <option value="guj">Gujarati (guj)</option>
-                              <option value="hat">Haitian (hat)</option>
-                              <option value="hau">Hausa (hau)</option>
-                              <option value="heb">Hebrew (heb)</option>
-                              <option value="her">Herero (her)</option>
-                              <option value="hin">Hindi (hin)</option>
-                              <option value="hmo">Hiri Motu (hmo)</option>
-                              <option value="hrv">Croatian (hrv)</option>
-                              <option value="hun">Hungarian (hun)</option>
-                              <option value="ibo">Igbo (ibo)</option>
-                              <option value="ice">Icelandic (ice)</option>
-                              <option value="ido">Ido (ido)</option>
-                              <option value="iii">Sichuan Yi (iii)</option>
-                              <option value="iku">Inuktitut (iku)</option>
-                              <option value="ile">Interlingue (ile)</option>
-                              <option value="ina">Interlingua (ina)</option>
-                              <option value="ind">Indonesian (ind)</option>
-                              <option value="ipk">Inupiaq (ipk)</option>
-                              <option value="ita">Italian (ita)</option>
-                              <option value="jav">Javanese (jav)</option>
-                              <option value="jpn">Japanese (jpn)</option>
-                              <option value="kal">Kalaallisut (kal)</option>
-                              <option value="kan">Kannada (kan)</option>
-                              <option value="kas">Kashmiri (kas)</option>
-                              <option value="kau">Kanuri (kau)</option>
-                              <option value="kaz">Kazakh (kaz)</option>
-                              <option value="khm">Central Khmer (khm)</option>
-                              <option value="kik">Kikuyu (kik)</option>
-                              <option value="kin">Kinyarwanda (kin)</option>
-                              <option value="kir">Kirghiz (kir)</option>
-                              <option value="kom">Komi (kom)</option>
-                              <option value="kon">Kongo (kon)</option>
-                              <option value="kor">Korean (kor)</option>
-                              <option value="kua">Kuanyama (kua)</option>
-                              <option value="kur">Kurdish (kur)</option>
-                              <option value="lao">Lao (lao)</option>
-                              <option value="lat">Latin (lat)</option>
-                              <option value="lav">Latvian (lav)</option>
-                              <option value="lim">Limburgan (lim)</option>
-                              <option value="lin">Lingala (lin)</option>
-                              <option value="lit">Lithuanian (lit)</option>
-                              <option value="ltz">Luxembourgish (ltz)</option>
-                              <option value="lub">Luba-Katanga (lub)</option>
-                              <option value="lug">Ganda (lug)</option>
-                              <option value="mac">Macedonian (mac)</option>
-                              <option value="mah">Marshallese (mah)</option>
-                              <option value="mal">Malayalam (mal)</option>
-                              <option value="mao">Maori (mao)</option>
-                              <option value="mar">Marathi (mar)</option>
-                              <option value="may">Malay (may)</option>
-                              <option value="mlg">Malagasy (mlg)</option>
-                              <option value="mlt">Maltese (mlt)</option>
-                              <option value="mon">Mongolian (mon)</option>
-                              <option value="nau">Nauru (nau)</option>
-                              <option value="nav">Navajo (nav)</option>
-                              <option value="nbl">Ndebele, South (nbl)</option>
-                              <option value="nde">Ndebele, North (nde)</option>
-                              <option value="ndo">Ndonga (ndo)</option>
-                              <option value="nep">Nepali (nep)</option>
-                              <option value="nno">Norwegian Nynorsk (nno)</option>
-                              <option value="nob">Norwegian Bokmål (nob)</option>
-                              <option value="nor">Norwegian (nor)</option>
-                              <option value="nya">Nyanja (nya)</option>
-                              <option value="oci">Occitan (oci)</option>
-                              <option value="oji">Ojibwa (oji)</option>
-                              <option value="ori">Oriya (ori)</option>
-                              <option value="orm">Oromo (orm)</option>
-                              <option value="oss">Ossetian (oss)</option>
-                              <option value="pan">Panjabi (pan)</option>
-                              <option value="per">Persian (per)</option>
-                              <option value="pli">Pali (pli)</option>
-                              <option value="pol">Polish (pol)</option>
-                              <option value="por">Portuguese (por)</option>
-                              <option value="pus">Pushto (pus)</option>
-                              <option value="que">Quechua (que)</option>
-                              <option value="roh">Romansh (roh)</option>
-                              <option value="rum">Romanian (rum)</option>
-                              <option value="run">Rundi (run)</option>
-                              <option value="rus">Russian (rus)</option>
-                              <option value="sag">Sango (sag)</option>
-                              <option value="san">Sanskrit (san)</option>
-                              <option value="sin">Sinhala (sin)</option>
-                              <option value="slk">Slovak (slk)</option>
-                              <option value="slv">Slovenian (slv)</option>
-                              <option value="sme">Northern Sami (sme)</option>
-                              <option value="smo">Samoan (smo)</option>
-                              <option value="sna">Shona (sna)</option>
-                              <option value="snd">Sindhi (snd)</option>
-                              <option value="som">Somali (som)</option>
-                              <option value="sot">Sotho, Southern (sot)</option>
-                              <option value="spa">Spanish (spa)</option>
-                              <option value="srd">Sardinian (srd)</option>
-                              <option value="srp">Serbian (srp)</option>
-                              <option value="ssw">Swati (ssw)</option>
-                              <option value="sun">Sundanese (sun)</option>
-                              <option value="swa">Swahili (swa)</option>
-                              <option value="swe">Swedish (swe)</option>
-                              <option value="tah">Tahitian (tah)</option>
-                              <option value="tam">Tamil (tam)</option>
-                              <option value="tat">Tatar (tat)</option>
-                              <option value="tel">Telugu (tel)</option>
-                              <option value="tgk">Tajik (tgk)</option>
-                              <option value="tgl">Tagalog (tgl)</option>
-                              <option value="tha">Thai (tha)</option>
-                              <option value="tib">Tibetan (tib)</option>
-                              <option value="tir">Tigrinya (tir)</option>
-                              <option value="ton">Tonga (ton)</option>
-                              <option value="tsn">Tswana (tsn)</option>
-                              <option value="tso">Tsonga (tso)</option>
-                              <option value="tuk">Turkmen (tuk)</option>
-                              <option value="tur">Turkish (tur)</option>
-                              <option value="twi">Twi (twi)</option>
-                              <option value="uig">Uighur (uig)</option>
-                              <option value="ukr">Ukrainian (ukr)</option>
-                              <option value="urd">Urdu (urd)</option>
-                              <option value="uzb">Uzbek (uzb)</option>
-                              <option value="ven">Venda (ven)</option>
-                              <option value="vie">Vietnamese (vie)</option>
-                              <option value="vol">Volapük (vol)</option>
-                              <option value="wel">Welsh (wel)</option>
-                              <option value="wln">Walloon (wln)</option>
-                              <option value="wol">Wolof (wol)</option>
-                              <option value="xho">Xhosa (xho)</option>
-                              <option value="yid">Yiddish (yid)</option>
-                              <option value="yor">Yoruba (yor)</option>
-                              <option value="zha">Zhuang (zha)</option>
-                              <option value="zul">Zulu (zul)</option>
-                            </select>
+                                <option value="">Select TVDb Language</option>
+                                {% for code, language in iso_639_2_languages | sort(attribute='1') %}
+                                  <option value="{{ code }}" {% if code == data['settings']['tvdb_language'] %}selected{% endif %}>{{ language }}</option>
+                                {% endfor %}                            </select>
                             <label for="tvdb_language">TVDB Language</label>
                           </div>
 
@@ -587,24 +402,24 @@
                     <div id="CollapseSix" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
                         <div class="accordion-body">
 
-                          <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="show_options" name="show_options" value="true" {% if data['settings']['show_options']|string|lower == 'true' %}checked{% endif %}>
-                            <input type="hidden" name="show_options" value="false">
-                            <label class="form-check-label" for="show_options">Show Options</label>
-                          </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="show_options" name="show_options" value="true" {% if data['settings']['show_options']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="show_options" value="false">
+                                <label class="form-check-label" for="show_options">Show Options</label>
+                            </div>
 
-                          <div class="form-floating mb-3">
-                            <select class="form-select" id="run_order" name="run_order">
-                              <option value="">Select Run Order</option>
-                              <option value="operations metadata collections overlays">(default) operations metadata collections overlays</option>
-                              <option value="operations metadata overlays collections">operations metadata overlays collections</option>
-                              <option value="operations collections metadata overlays">operations collections metadata overlays</option>
-                              <option value="operations collections overlays metadata">operations collections overlays metadata</option>
-                              <option value="operations overlays metadata collections">operations overlays metadata collections</option>
-                              <option value="operations overlays collections metadata">operations overlays collections metadata</option>
-                            </select>
-                            <label for="run_order">Run Order</label>
-                          </div>                        
+                            <div class="form-floating mb-3">
+                                <select class="form-select" id="run_order" name="run_order">
+                                    <option value="">Select Run Order</option>
+                                    <option value="operations metadata collections overlays" {% if run_order == 'operations metadata collections overlays' %}selected{% endif %}>(default) operations metadata collections overlays</option>
+                                    <option value="operations metadata overlays collections" {% if run_order == 'operations metadata overlays collections' %}selected{% endif %}>operations metadata overlays collections</option>
+                                    <option value="operations collections metadata overlays" {% if run_order == 'operations collections metadata overlays' %}selected{% endif %}>operations collections metadata overlays</option>
+                                    <option value="operations collections overlays metadata" {% if run_order == 'operations collections overlays metadata' %}selected{% endif %}>operations collections overlays metadata</option>
+                                    <option value="operations overlays metadata collections" {% if run_order == 'operations overlays metadata collections' %}selected{% endif %}>operations overlays metadata collections</option>
+                                    <option value="operations overlays collections metadata" {% if run_order == 'operations overlays collections metadata' %}selected{% endif %}>operations overlays collections metadata</option>
+                                </select>
+                                <label for="run_order">Run Order</label>
+                            </div>
 
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" value="true" {% if data['settings']['verify_ssl']|string|lower == 'true' %}checked{% endif %}>

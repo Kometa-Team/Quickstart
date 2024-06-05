@@ -98,8 +98,8 @@
     <div class="form-floating">
       <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{ data['code_verifier']}}">
     </div>
-    <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" value="{{ data['mal']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)">
+    <div class="input-group input-group-lg form-floating">
+      <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret" value="{{ data['mal']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)"><label for="client_secret">Client Secret</label>
       <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
