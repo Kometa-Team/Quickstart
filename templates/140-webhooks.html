@@ -103,12 +103,14 @@
         <option value="">Select Webhook</option>
         <option value="notifiarr" {% if data.webhooks[webhook] == 'notifiarr' %}selected{% endif %}>Notifiarr</option>
         <option value="gotify" {% if data.webhooks[webhook] == 'gotify' %}selected{% endif %}>Gotify</option>
-        <option value="custom" {% if data.webhooks[webhook] == 'custom' %}selected{% endif %}>Custom</option>
+        <option value="custom" {% if data.webhooks[webhook].startswith('http') %}selected{% endif %}>Custom</option>
+
       </select>
       <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
-      <div class="input-group input-group-lg" id="webhooks_{{ webhook }}_custom" style="display: none;">
+      <div class="input-group input-group-lg custom-webhook" id="webhooks_{{ webhook }}_custom" style="display: none;">
         <div class="input-group input-group-lg">
-          <input type="text" class="form-control" placeholder="Enter webhook URL ({{ webhook|replace("_", " ")|title }})">
+          <input type="text" class="form-control custom-webhook-url" placeholder="Enter webhook URL ({{ webhook|replace("_", " ")|title }})"
+                 value="{% if data.webhooks[webhook].startswith('http') %}{{ data.webhooks[webhook] }}{% endif %}">
           <button class="btn btn-success" type="button">Validate</button>
         </div>
       </div>
@@ -119,7 +121,7 @@
     function showCustomInput(select) {
       var customInputId = select.id + "_custom";
       var customInput = $("#" + customInputId);
-      if ($(select).val() === "custom") {
+      if ($(select).val() === "custom" || $(select).val().startsWith('http')) {
         customInput.show();
         customInput.find("input, button").prop("disabled", false);
       } else {
@@ -130,22 +132,33 @@
     }
 
     $(document).ready(function() {
-        var notifiarrAvailable = $('#notifiarr_available').data('notifiarr-available') === "True";
-        var gotifyAvailable = $('#gotify_available').data('gotify-available') === "True";
+      var notifiarrAvailable = $('#notifiarr_available').data('notifiarr-available') === "True";
+      var gotifyAvailable = $('#gotify_available').data('gotify-available') === "True";
 
+      $('select.form-select').each(function() {
+        var notifiarrOption = $(this).find('option[value="notifiarr"]');
+        if (!notifiarrAvailable) {
+          notifiarrOption.prop('disabled', true);
+        }
+
+        var gotifyOption = $(this).find('option[value="gotify"]');
+        if (!gotifyAvailable) {
+          gotifyOption.prop('disabled', true);
+        }
+
+        showCustomInput(this);
+      });
+
+      $('#configForm').on('submit', function(e) {
         $('select.form-select').each(function() {
-            var notifiarrOption = $(this).find('option[value="notifiarr"]');
-            if (!notifiarrAvailable) {
-                notifiarrOption.prop('disabled', true);
-            }
-
-            var gotifyOption = $(this).find('option[value="gotify"]');
-            if (!gotifyAvailable) {
-                gotifyOption.prop('disabled', true);
-            }
-
-            showCustomInput(this);
+          if ($(this).val() === 'custom') {
+            var customInputId = $(this).attr('id') + '_custom';
+            var customUrl = $('#' + customInputId).find('input.custom-webhook-url').val();
+            $(this).append('<option value="' + customUrl + '" selected="selected">' + customUrl + '</option>');
+            $(this).val(customUrl);
+          }
         });
+      });
     });
     </script>
   </div>
