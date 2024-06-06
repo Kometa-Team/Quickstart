@@ -1,4 +1,6 @@
 {% extends "000-base.html" %} {% block content %}
+<meta id="notifiarr_available" data-notifiarr-available="{{ notifiarr_available }}">
+<meta id="gotify_available" data-gotify-available="{{ gotify_available }}">
 <form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
   <div id="{{curr_page}}Section">
     <div class="row">

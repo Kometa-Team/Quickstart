@@ -119,9 +119,9 @@ def step(name):
 
     plex_valid, tmdb_valid = check_minimum_settings()
     
-    # notifiarr_available, gotify_available = notification_systems_available()
-    notifiarr_available = False
-    gotify_available = False
+    notifiarr_available, gotify_available = notification_systems_available()
+    # notifiarr_available = False
+    # gotify_available = False
     
     # This should not be based on name; maybe next being empty
     if name == '900-final':
