@@ -29,21 +29,25 @@ def build_simple_dict(source, form_data):
         final_key = key.replace(source + '_', '', 1)
         value = form_data[key]
 
-        try:
-            value = int(value)
-        except ValueError:
+        if value is not None:
             try:
-                if value.lower() == 'on':
-                    value = bool(value)
+                value = int(value)
             except ValueError:
-                value = value
+                try:
+                    if value.lower() == 'on':
+                        value = bool(value)
+                except ValueError:
+                    value = value
 
         data[source][final_key] = value
 
     # Special handling for run_order to split and clean it into a list
     if 'run_order' in data[source]:
         run_order = data[source]['run_order']
-        run_order = [item.strip() for item in run_order.split() if item.strip()]
+        if run_order is not None:
+            run_order = [item.strip() for item in run_order.split() if item.strip()]
+        else:
+            run_order = ['operations', 'metadata', 'collections', 'overlays']
         data[source]['run_order'] = run_order
 
     return data
@@ -81,6 +85,10 @@ def user_visible_name(raw_name):
 
     return formatted_name
 
+def booler(thing):
+    if type(thing) == str:
+        thing = eval(thing)
+    return bool(thing)
 
 def get_bits(file):
     file_stem = Path(file).stem
