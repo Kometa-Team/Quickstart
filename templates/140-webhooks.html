@@ -84,7 +84,7 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title }} Section</h1>
           </div>
           <div class="modal-body">
             This is some dummy text<br>
@@ -108,7 +108,7 @@
       <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
       <div class="input-group input-group-lg" id="webhooks_{{ webhook }}_custom" style="display: none;">
         <div class="input-group input-group-lg">
-          <input type="text" class="form-control" placeholder="Enter webhook URL ({{ webhook|replace(" _", " ")|title }})">
+          <input type="text" class="form-control" placeholder="Enter webhook URL ({{ webhook|replace("_", " ")|title }})">
           <button class="btn btn-success" type="button">Validate</button>
         </div>
       </div>
@@ -116,27 +116,37 @@
     {% endfor %}
 
     <script>
-      function showCustomInput(select) {
-        var customInputId = select.id + "_custom";
-        var customInput = document.getElementById(customInputId);
-        if (select.value === "custom") {
-          customInput.style.display = "block";
-          customInput.querySelector("input").disabled = false;
-          customInput.querySelector("button").disabled = false;
-        } else {
-          customInput.style.display = "none";
-          customInput.querySelector("input").value = "";
-          customInput.querySelector("input").disabled = true;
-          customInput.querySelector("button").disabled = true;
-        }
+    function showCustomInput(select) {
+      var customInputId = select.id + "_custom";
+      var customInput = $("#" + customInputId);
+      if ($(select).val() === "custom") {
+        customInput.show();
+        customInput.find("input, button").prop("disabled", false);
+      } else {
+        customInput.hide();
+        customInput.find("input").val("");
+        customInput.find("input, button").prop("disabled", true);
       }
+    }
 
-      document.addEventListener("DOMContentLoaded", function () {
-        var selects = document.querySelectorAll("select");
-        selects.forEach(function (select) {
-          showCustomInput(select);
+    $(document).ready(function() {
+        var notifiarrAvailable = $('#notifiarr_available').data('notifiarr-available') === "True";
+        var gotifyAvailable = $('#gotify_available').data('gotify-available') === "True";
+
+        $('select.form-select').each(function() {
+            var notifiarrOption = $(this).find('option[value="notifiarr"]');
+            if (!notifiarrAvailable) {
+                notifiarrOption.prop('disabled', true);
+            }
+
+            var gotifyOption = $(this).find('option[value="gotify"]');
+            if (!gotifyAvailable) {
+                gotifyOption.prop('disabled', true);
+            }
+
+            showCustomInput(this);
         });
-      });
+    });
     </script>
   </div>
 </form>
