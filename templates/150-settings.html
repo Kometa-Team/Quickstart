@@ -98,7 +98,7 @@
                     <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
                         <div class="accordion-body">
                             <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="asset_directory" name="asset_directory" placeholder="config/assets">
+                                <input type="text" class="form-control" id="asset_directory" name="asset_directory" placeholder="config/assets" value="{{ data['settings']['asset_directory'] }}">
                                 <label for="asset_directory">Asset Directory</label>
                             </div>
 
@@ -115,7 +115,7 @@
                             </div>
 
                             <div class="form-floating mb-3">
-                                <input type="number" class="form-control" id="asset_depth" name="asset_depth" placeholder="0" min="0">
+                                <input type="number" class="form-control" id="asset_depth" name="asset_depth" placeholder="0" min="0"value="{{ data['settings']['asset_depth'] }}">
                                 <label for="asset_depth">Asset Depth</label>
                             </div>
 
@@ -161,16 +161,16 @@
 
                             <div class="form-floating mb-3">
                                 <select class="form-select" id="overlay_artwork_filetype" name="overlay_artwork_filetype">
-                                    <option value="jpg" {% if overlay_artwork_filetype == 'jpg' %}selected{% endif %}>JPG (default)</option>
-                                    <option value="png" {% if overlay_artwork_filetype == 'png' %}selected{% endif %}>PNG</option>
-                                    <option value="webp_lossy" {% if overlay_artwork_filetype == 'webp_lossy' %}selected{% endif %}>WEBP LOSSY</option>
-                                    <option value="webp_lossless" {% if overlay_artwork_filetype == 'webp_lossless' %}selected{% endif %}>WEBP LOSSLESS</option>
+                                    <option value="jpg" {% if data['settings']['overlay_artwork_filetype'] == 'jpg' %}selected{% endif %}>JPG (default)</option>
+                                    <option value="png" {% if data['settings']['overlay_artwork_filetype'] == 'png' %}selected{% endif %}>PNG</option>
+                                    <option value="webp_lossy" {% if data['settings']['overlay_artwork_filetype'] == 'webp_lossy' %}selected{% endif %}>WEBP LOSSY</option>
+                                    <option value="webp_lossless" {% if data['settings']['overlay_artwork_filetype'] == 'webp_lossless' %}selected{% endif %}>WEBP LOSSLESS</option>
                                 </select>
                                 <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                                <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75" min="1" max="100">
+                                <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" placeholder="75" min="1" max="100"value="{{ data['settings']['overlay_artwork_quality'] }}">
                                 <label for="overlay_artwork_quality">Overlay Artwork Quality</label>
                             </div>
                         </div>
@@ -191,7 +191,7 @@
                                 <label class="form-check-label" for="cache">Cache</label>
                             </div>
                             <div class="form-floating mb-3">
-                              <input type="number" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="60" min="0">
+                              <input type="number" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="60" min="0" value="{{ data['settings']['cache_expiration'] }}">
                               <label for="cache_expiration">Cache Expiration (days)</label>
                             </div>
                         </div>
@@ -207,63 +207,62 @@
                     <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
                         <div class="accordion-body">
 
-
                             <div class="form-floating mb-3">
                                 <select class="form-select" id="sync_mode" name="sync_mode">
-                                    <option value="append" {% if sync_mode == 'append' %}selected{% endif %}>Append (default)</option>
-                                    <option value="sync" {% if sync_mode == 'sync' %}selected{% endif %}>Sync</option>
+                                    <option value="append" {% if data['settings']['sync_mode'] == 'append' %}selected{% endif %}>Append (default)</option>
+                                    <option value="sync" {% if data['settings']['sync_mode'] == 'sync' %}selected{% endif %}>Sync</option>
                                 </select>
                                 <label for="sync_mode">Sync Mode</label>
                             </div>
-                            
+
                             <div class="form-floating mb-3">
                                 <select class="form-select" id="default_collection_order" name="default_collection_order">
-                                    <option value="" {% if default_collection_order == '' %}selected{% endif %}>Select Default Collection Order</option>
-                                    <option value="added.asc" {% if default_collection_order == 'added.asc' %}selected{% endif %}>Added (Ascending)</option>
-                                    <option value="added.desc" {% if default_collection_order == 'added.desc' %}selected{% endif %}>Added (Descending)</option>
-                                    <option value="alpha" {% if default_collection_order == 'alpha' %}selected{% endif %}>Alphabetical</option>
-                                    <option value="audience_rating.asc" {% if default_collection_order == 'audience_rating.asc' %}selected{% endif %}>Audience Rating (Ascending)</option>
-                                    <option value="audience_rating.desc" {% if default_collection_order == 'audience_rating.desc' %}selected{% endif %}>Audience Rating (Descending)</option>
-                                    <option value="bitrate.asc" {% if default_collection_order == 'bitrate.asc' %}selected{% endif %}>Bitrate (Ascending)</option>
-                                    <option value="bitrate.desc" {% if default_collection_order == 'bitrate.desc' %}selected{% endif %}>Bitrate (Descending)</option>
-                                    <option value="content_rating.asc" {% if default_collection_order == 'content_rating.asc' %}selected{% endif %}>Content Rating (Ascending)</option>
-                                    <option value="content_rating.desc" {% if default_collection_order == 'content_rating.desc' %}selected{% endif %}>Content Rating (Descending)</option>
-                                    <option value="critic_rating.asc" {% if default_collection_order == 'critic_rating.asc' %}selected{% endif %}>Critic Rating (Ascending)</option>
-                                    <option value="critic_rating.desc" {% if default_collection_order == 'critic_rating.desc' %}selected{% endif %}>Critic Rating (Descending)</option>
-                                    <option value="custom" {% if default_collection_order == 'custom' %}selected{% endif %}>Custom</option>
-                                    <option value="duration.asc" {% if default_collection_order == 'duration.asc' %}selected{% endif %}>Duration (Ascending)</option>
-                                    <option value="duration.desc" {% if default_collection_order == 'duration.desc' %}selected{% endif %}>Duration (Descending)</option>
-                                    <option value="originally_available.asc" {% if default_collection_order == 'originally_available.asc' %}selected{% endif %}>Originally Available (Ascending)</option>
-                                    <option value="originally_available.desc" {% if default_collection_order == 'originally_available.desc' %}selected{% endif %}>Originally Available (Descending)</option>
-                                    <option value="plays.asc" {% if default_collection_order == 'plays.asc' %}selected{% endif %}>Plays (Ascending)</option>
-                                    <option value="plays.desc" {% if default_collection_order == 'plays.desc' %}selected{% endif %}>Plays (Descending)</option>
-                                    <option value="progress.asc" {% if default_collection_order == 'progress.asc' %}selected{% endif %}>Progress (Ascending)</option>
-                                    <option value="progress.desc" {% if default_collection_order == 'progress.desc' %}selected{% endif %}>Progress (Descending)</option>
-                                    <option value="random" {% if default_collection_order == 'random' %}selected{% endif %}>Random</option>
-                                    <option value="release" {% if default_collection_order == 'release' %}selected{% endif %}>Release</option>
-                                    <option value="release.asc" {% if default_collection_order == 'release.asc' %}selected{% endif %}>Release (Ascending)</option>
-                                    <option value="release.desc" {% if default_collection_order == 'release.desc' %}selected{% endif %}>Release (Descending)</option>
-                                    <option value="resolution.asc" {% if default_collection_order == 'resolution.asc' %}selected{% endif %}>Resolution (Ascending)</option>
-                                    <option value="resolution.desc" {% if default_collection_order == 'resolution.desc' %}selected{% endif %}>Resolution (Descending)</option>
-                                    <option value="title.asc" {% if default_collection_order == 'title.asc' %}selected{% endif %}>Title (Ascending)</option>
-                                    <option value="title.desc" {% if default_collection_order == 'title.desc' %}selected{% endif %}>Title (Descending)</option>
-                                    <option value="user_rating.asc" {% if default_collection_order == 'user_rating.asc' %}selected{% endif %}>User Rating (Ascending)</option>
-                                    <option value="user_rating.desc" {% if default_collection_order == 'user_rating.desc' %}selected{% endif %}>User Rating (Descending)</option>
-                                    <option value="viewed.asc" {% if default_collection_order == 'viewed.asc' %}selected{% endif %}>Viewed (Ascending)</option>
-                                    <option value="viewed.desc" {% if default_collection_order == 'viewed.desc' %}selected{% endif %}>Viewed (Descending)</option>
-                                    <option value="year.asc" {% if default_collection_order == 'year.asc' %}selected{% endif %}>Year (Ascending)</option>
-                                    <option value="year.desc" {% if default_collection_order == 'year.desc' %}selected{% endif %}>Year (Descending)</option>
+                                    <option value="" {% if data['settings']['default_collection_order'] == '' %}selected{% endif %}>Select Default Collection Order</option>
+                                    <option value="added.asc" {% if data['settings']['default_collection_order'] == 'added.asc' %}selected{% endif %}>Added (Ascending)</option>
+                                    <option value="added.desc" {% if data['settings']['default_collection_order'] == 'added.desc' %}selected{% endif %}>Added (Descending)</option>
+                                    <option value="alpha" {% if data['settings']['default_collection_order'] == 'alpha' %}selected{% endif %}>Alphabetical</option>
+                                    <option value="audience_rating.asc" {% if data['settings']['default_collection_order'] == 'audience_rating.asc' %}selected{% endif %}>Audience Rating (Ascending)</option>
+                                    <option value="audience_rating.desc" {% if data['settings']['default_collection_order'] == 'audience_rating.desc' %}selected{% endif %}>Audience Rating (Descending)</option>
+                                    <option value="bitrate.asc" {% if data['settings']['default_collection_order'] == 'bitrate.asc' %}selected{% endif %}>Bitrate (Ascending)</option>
+                                    <option value="bitrate.desc" {% if data['settings']['default_collection_order'] == 'bitrate.desc' %}selected{% endif %}>Bitrate (Descending)</option>
+                                    <option value="content_rating.asc" {% if data['settings']['default_collection_order'] == 'content_rating.asc' %}selected{% endif %}>Content Rating (Ascending)</option>
+                                    <option value="content_rating.desc" {% if data['settings']['default_collection_order'] == 'content_rating.desc' %}selected{% endif %}>Content Rating (Descending)</option>
+                                    <option value="critic_rating.asc" {% if data['settings']['default_collection_order'] == 'critic_rating.asc' %}selected{% endif %}>Critic Rating (Ascending)</option>
+                                    <option value="critic_rating.desc" {% if data['settings']['default_collection_order'] == 'critic_rating.desc' %}selected{% endif %}>Critic Rating (Descending)</option>
+                                    <option value="custom" {% if data['settings']['default_collection_order'] == 'custom' %}selected{% endif %}>Custom</option>
+                                    <option value="duration.asc" {% if data['settings']['default_collection_order'] == 'duration.asc' %}selected{% endif %}>Duration (Ascending)</option>
+                                    <option value="duration.desc" {% if data['settings']['default_collection_order'] == 'duration.desc' %}selected{% endif %}>Duration (Descending)</option>
+                                    <option value="originally_available.asc" {% if data['settings']['default_collection_order'] == 'originally_available.asc' %}selected{% endif %}>Originally Available (Ascending)</option>
+                                    <option value="originally_available.desc" {% if data['settings']['default_collection_order'] == 'originally_available.desc' %}selected{% endif %}>Originally Available (Descending)</option>
+                                    <option value="plays.asc" {% if data['settings']['default_collection_order'] == 'plays.asc' %}selected{% endif %}>Plays (Ascending)</option>
+                                    <option value="plays.desc" {% if data['settings']['default_collection_order'] == 'plays.desc' %}selected{% endif %}>Plays (Descending)</option>
+                                    <option value="progress.asc" {% if data['settings']['default_collection_order'] == 'progress.asc' %}selected{% endif %}>Progress (Ascending)</option>
+                                    <option value="progress.desc" {% if data['settings']['default_collection_order'] == 'progress.desc' %}selected{% endif %}>Progress (Descending)</option>
+                                    <option value="random" {% if data['settings']['default_collection_order'] == 'random' %}selected{% endif %}>Random</option>
+                                    <option value="release" {% if data['settings']['default_collection_order'] == 'release' %}selected{% endif %}>Release</option>
+                                    <option value="release.asc" {% if data['settings']['default_collection_order'] == 'release.asc' %}selected{% endif %}>Release (Ascending)</option>
+                                    <option value="release.desc" {% if data['settings']['default_collection_order'] == 'release.desc' %}selected{% endif %}>Release (Descending)</option>
+                                    <option value="resolution.asc" {% if data['settings']['default_collection_order'] == 'resolution.asc' %}selected{% endif %}>Resolution (Ascending)</option>
+                                    <option value="resolution.desc" {% if data['settings']['default_collection_order'] == 'resolution.desc' %}selected{% endif %}>Resolution (Descending)</option>
+                                    <option value="title.asc" {% if data['settings']['default_collection_order'] == 'title.asc' %}selected{% endif %}>Title (Ascending)</option>
+                                    <option value="title.desc" {% if data['settings']['default_collection_order'] == 'title.desc' %}selected{% endif %}>Title (Descending)</option>
+                                    <option value="user_rating.asc" {% if data['settings']['default_collection_order'] == 'user_rating.asc' %}selected{% endif %}>User Rating (Ascending)</option>
+                                    <option value="user_rating.desc" {% if data['settings']['default_collection_order'] == 'user_rating.desc' %}selected{% endif %}>User Rating (Descending)</option>
+                                    <option value="viewed.asc" {% if data['settings']['default_collection_order'] == 'viewed.asc' %}selected{% endif %}>Viewed (Ascending)</option>
+                                    <option value="viewed.desc" {% if data['settings']['default_collection_order'] == 'viewed.desc' %}selected{% endif %}>Viewed (Descending)</option>
+                                    <option value="year.asc" {% if data['settings']['default_collection_order'] == 'year.asc' %}selected{% endif %}>Year (Ascending)</option>
+                                    <option value="year.desc" {% if data['settings']['default_collection_order'] == 'year.desc' %}selected{% endif %}>Year (Descending)</option>
                                 </select>
                                 <label for="default_collection_order">Default Collection Order</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" placeholder="0" min="0">
+                              <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" placeholder="0" min="0" value="{{ data['settings']['item_refresh_delay'] }}">
                               <label for="item_refresh_delay">Item Refresh Delay (seconds)</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="number" class="form-control" id="minimum_items" name="minimum_items" placeholder="1" min="1">
+                              <input type="number" class="form-control" id="minimum_items" name="minimum_items" placeholder="1" min="1" value="{{ data['settings']['minimum_items'] }}">
                               <label for="minimum_items">Minimum Items</label>
                             </div>
 
@@ -286,17 +285,17 @@
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" value="0" min="0">
+                              <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" min="0" value="{{ data['settings']['run_again_delay'] }}">
                               <label for="run_again_delay">Run Again Delay (minutes)</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users" value="all">
+                              <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users" value="{{ data['settings']['playlist_sync_to_users'] }}">
                               <label for="playlist_sync_to_users">Playlist Sync to Users (all, or comma-separated)</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users" placeholder="">
+                              <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users" placeholder="" value="{{ data['settings']['playlist_exclude_users'] }}">
                               <label for="playlist_exclude_users">Playlist Exclude Users (comma-separated)</label>
                             </div>
 
@@ -380,12 +379,12 @@
                           </div>
 
                           <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="ignore_ids" name="ignore_ids" placeholder="">
+                            <input type="text" class="form-control" id="ignore_ids" name="ignore_ids" placeholder="" value="{{ data['settings']['ignore_ids'] }}">
                             <label for="ignore_ids">Ignore IDs (comma-separated)</label>
                           </div>
                       
                           <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids" placeholder="">
+                            <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids" placeholder="" value="{{ data['settings']['ignore_imdb_ids'] }}">
                             <label for="ignore_imdb_ids">Ignore IMDb IDs (comma-separated)</label>
                           </div>
                         </div>
@@ -411,12 +410,12 @@
                             <div class="form-floating mb-3">
                                 <select class="form-select" id="run_order" name="run_order">
                                     <option value="">Select Run Order</option>
-                                    <option value="operations metadata collections overlays" {% if run_order == 'operations metadata collections overlays' %}selected{% endif %}>(default) operations metadata collections overlays</option>
-                                    <option value="operations metadata overlays collections" {% if run_order == 'operations metadata overlays collections' %}selected{% endif %}>operations metadata overlays collections</option>
-                                    <option value="operations collections metadata overlays" {% if run_order == 'operations collections metadata overlays' %}selected{% endif %}>operations collections metadata overlays</option>
-                                    <option value="operations collections overlays metadata" {% if run_order == 'operations collections overlays metadata' %}selected{% endif %}>operations collections overlays metadata</option>
-                                    <option value="operations overlays metadata collections" {% if run_order == 'operations overlays metadata collections' %}selected{% endif %}>operations overlays metadata collections</option>
-                                    <option value="operations overlays collections metadata" {% if run_order == 'operations overlays collections metadata' %}selected{% endif %}>operations overlays collections metadata</option>
+                                    <option value="operations metadata collections overlays" {% if ' '.join(data['settings']['run_order']) == 'operations metadata collections overlays' %}selected{% endif %}>(default) operations metadata collections overlays</option>
+                                    <option value="operations metadata overlays collections" {% if ' '.join(data['settings']['run_order']) == 'operations metadata overlays collections' %}selected{% endif %}>operations metadata overlays collections</option>
+                                    <option value="operations collections metadata overlays" {% if ' '.join(data['settings']['run_order']) == 'operations collections metadata overlays' %}selected{% endif %}>operations collections metadata overlays</option>
+                                    <option value="operations collections overlays metadata" {% if ' '.join(data['settings']['run_order']) == 'operations collections overlays metadata' %}selected{% endif %}>operations collections overlays metadata</option>
+                                    <option value="operations overlays metadata collections" {% if ' '.join(data['settings']['run_order']) == 'operations overlays metadata collections' %}selected{% endif %}>operations overlays metadata collections</option>
+                                    <option value="operations overlays collections metadata" {% if ' '.join(data['settings']['run_order']) == 'operations overlays collections metadata' %}selected{% endif %}>operations overlays collections metadata</option>
                                 </select>
                                 <label for="run_order">Run Order</label>
                             </div>
@@ -428,7 +427,7 @@
                             </div>
 
                             <div class="form-floating mb-3">
-                                <input type="text" class="form-control" id="custom_repo" name="custom_repo" placeholder="">
+                                <input type="text" class="form-control" id="custom_repo" name="custom_repo" placeholder="" value="{{ data['settings']['custom_repo'] }}">
                                 <label for="custom_repo">Custom Repo</label>
                             </div>
                         </div>
