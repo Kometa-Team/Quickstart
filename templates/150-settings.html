@@ -1,10 +1,10 @@
 {% extends "000-base.html" %} {% block content %}
-<form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
-    <div id="{{curr_page}}Section">
+<form action="/step/{{ page_info['next_page'] }}" method="post" id="configForm" name="configForm">
+    <div id="{{page_info['title']}}Section">
         <div class="row">
             <div class="col align-self-center">
                 <div class="input-group justify-content-start">
-                    <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>
+                    <a class="btn btn-secondary" role="button" href="/step/{{ page_info['prev_page'] }}">Previous</a>
                     <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
                             data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="visually-hidden">Toggle Dropdown</span>
@@ -25,7 +25,7 @@
                 </div>
             </div>
             <div class="col-6 align-self-center text-center">
-                <h2>{{ curr_page }}</h2>
+                <h2>{{ page_info['title'] }}</h2>
             </div>
             <div class="col align-self-center">
                 <div class="input-group justify-content-end">
@@ -56,8 +56,8 @@
                 <div class="col-8">
                     <div class="col align-self-end">
                         <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar bg-success" style="width: {{ progress }}%">
-                                {{ progress }}%
+                            <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
+                                {{ page_info['progress'] }}%
                             </div>
                         </div>
                     </div>
@@ -191,8 +191,8 @@
                                 <label class="form-check-label" for="cache">Cache</label>
                             </div>
                             <div class="form-floating mb-3">
-                              <input type="number" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="60" min="0" value="{{ data['settings']['cache_expiration'] }}">
-                              <label for="cache_expiration">Cache Expiration (days)</label>
+                                <input type="number" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="60" min="0" value="{{ data['settings']['cache_expiration'] }}">
+                                <label for="cache_expiration">Cache Expiration (days)</label>
                             </div>
                         </div>
                     </div>
@@ -257,13 +257,13 @@
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" placeholder="0" min="0" value="{{ data['settings']['item_refresh_delay'] }}">
-                              <label for="item_refresh_delay">Item Refresh Delay (seconds)</label>
+                                <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" placeholder="0" min="0" value="{{ data['settings']['item_refresh_delay'] }}">
+                                <label for="item_refresh_delay">Item Refresh Delay (seconds)</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="number" class="form-control" id="minimum_items" name="minimum_items" placeholder="1" min="1" value="{{ data['settings']['minimum_items'] }}">
-                              <label for="minimum_items">Minimum Items</label>
+                                <input type="number" class="form-control" id="minimum_items" name="minimum_items" placeholder="1" min="1" value="{{ data['settings']['minimum_items'] }}">
+                                <label for="minimum_items">Minimum Items</label>
                             </div>
 
                             <div class="form-check form-switch">
@@ -369,24 +369,24 @@
                     <div id="CollapseFive" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
                         <div class="accordion-body">
 
-                          <div class="form-floating mb-3">
-                            <select class="form-select" id="tvdb_language" name="tvdb_language">
-                                <option value="">Select TVDb Language</option>
-                                {% for code, language in iso_639_2_languages | sort(attribute='1') %}
-                                  <option value="{{ code }}" {% if code == data['settings']['tvdb_language'] %}selected{% endif %}>{{ language }}</option>
-                                {% endfor %}                            </select>
-                            <label for="tvdb_language">TVDB Language</label>
-                          </div>
+                            <div class="form-floating mb-3">
+                                <select class="form-select" id="tvdb_language" name="tvdb_language">
+                                    <option value="">Select TVDb Language</option>
+                                    {% for code, language in data['iso_639_2_languages'] | sort(attribute='1') %}
+                                        <option value="{{ code }}" {% if code == data['settings']['tvdb_language'] %}selected{% endif %}>{{ language }}</option>
+                                    {% endfor %}                            </select>
+                                <label for="tvdb_language">TVDB Language</label>
+                            </div>
 
-                          <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="ignore_ids" name="ignore_ids" placeholder="" value="{{ data['settings']['ignore_ids'] }}">
-                            <label for="ignore_ids">Ignore IDs (comma-separated)</label>
-                          </div>
-                      
-                          <div class="form-floating mb-3">
-                            <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids" placeholder="" value="{{ data['settings']['ignore_imdb_ids'] }}">
-                            <label for="ignore_imdb_ids">Ignore IMDb IDs (comma-separated)</label>
-                          </div>
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="ignore_ids" name="ignore_ids" placeholder="" value="{{ data['settings']['ignore_ids'] }}">
+                                <label for="ignore_ids">Ignore IDs (comma-separated)</label>
+                            </div>
+
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids" placeholder="" value="{{ data['settings']['ignore_imdb_ids'] }}">
+                                <label for="ignore_imdb_ids">Ignore IMDb IDs (comma-separated)</label>
+                            </div>
                         </div>
                     </div>
                 </div>

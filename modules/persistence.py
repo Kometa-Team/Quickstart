@@ -5,6 +5,9 @@ from ruamel.yaml import YAML
 from flask import current_app as app
 
 from .helpers import build_config_dict, get_template_list, get_bits
+from .iso_639_1 import iso_639_1_languages  # Importing the languages list
+from .iso_639_2 import iso_639_2_languages  # Importing the languages list
+from .iso_3166_1 import iso_3166_1_regions  # Importing the regions list
 
 def extract_names(raw_source):
     source = raw_source
@@ -52,6 +55,16 @@ def retrieve_settings(target):
 
     if not data:
         data = get_dummy_data(source_name)
+
+    if target == '020-tmdb':
+        data['iso_639_1_languages'] = iso_639_1_languages
+        data['iso_3166_1_regions'] = iso_3166_1_regions
+
+    if target == '090-anidb':
+        data['iso_639_1_languages'] = iso_639_1_languages
+
+    if target == '150-settings':
+        data['iso_639_2_languages'] = iso_639_2_languages
 
     try:
         if data['validated']:
