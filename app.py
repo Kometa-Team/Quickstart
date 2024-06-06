@@ -17,6 +17,9 @@ from modules.validations import validate_iso3166_1, validate_iso639_1, validate_
 from modules.output import build_config
 from modules.helpers import get_template_list, get_bits, get_menu_list
 from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
+from modules.iso_639_1 import iso_639_1_languages  # Importing the languages list
+from modules.iso_639_2 import iso_639_2_languages  # Importing the languages list
+from modules.iso_3166_1 import iso_3166_1_regions  # Importing the regions list
 
 # Load JSON Schema
 yaml = YAML(typ='safe', pure=True)
@@ -116,12 +119,11 @@ def step(name):
 
     plex_valid, tmdb_valid = check_minimum_settings()
     
-    # notifiarr_available, gotify_available = notification_systems_available()
-    notifiarr_available = False
-    gotify_available = False
+    notifiarr_available, gotify_available = notification_systems_available()
+    # notifiarr_available = False
+    # gotify_available = False
     
     # This should not be based on name; maybe next being empty
-    # Why does the error condition need its own page?
     if name == '900-final':
         validated, config_data, yaml_content = build_config(header_style)
 
@@ -133,7 +135,8 @@ def step(name):
 
         return render_template('900-final.html', title=title, data=data, yaml_content=yaml_content, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available, header_style=header_style)
     else:
-        return render_template(name + '.html', title=title, data=data, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available)
+
+        return render_template(name + '.html', title=title, data=data, template_list=file_list, next_page=next_page, prev_page=prev_page, curr_page=title, progress=progress, plex_valid=plex_valid, tmdb_valid=tmdb_valid, notifiarr_available=notifiarr_available, gotify_available=gotify_available, iso_639_1_languages=iso_639_1_languages, iso_639_2_languages=iso_639_2_languages, iso_3166_1_regions=iso_3166_1_regions)
 
 @app.route('/download')
 def download():

@@ -95,8 +95,8 @@
       <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" value="{{ data['trakt']['client_id'] }}" oninput="updateTraktURL(this)">
       <label for="trakt_client_id">Client ID</label>
     </div>
-    <div class="input-group input-group-lg">
-      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" value="{{ data['trakt']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)">
+    <div class="input-group input-group-lg form-floating">
+      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" value="{{ data['trakt']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"><label for="client_secret">Client Secret</label>
       <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button><button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
