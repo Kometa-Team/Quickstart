@@ -124,7 +124,6 @@ def step(name):
     gotify_available = False
     
     # This should not be based on name; maybe next being empty
-    # Why does the error condition need its own page?
     if name == '900-final':
         validated, config_data, yaml_content = build_config(header_style)
 
