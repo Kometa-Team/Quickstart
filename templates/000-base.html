@@ -21,6 +21,12 @@
     />
   </head>
   <body>
+    <script type="text/javascript">// <![CDATA[
+      function loading(){
+          $("#loading").show();
+          $("#content").hide();       
+      }
+// ]]></script>
     <script
       type="text/javascript"
       src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"
@@ -44,7 +50,12 @@
                 </ul>
             {% endif %}
         {% endwith %} -->
-        {% block content %}{% endblock %}
+        <div id="loading">
+          <img height=100 width=100 src="{{ url_for('static', filename='loadingimage.gif') }}" />
+        </div>
+        <div id="content">
+          {% block content %}{% endblock %}
+        </div>
       </div>
     </div>
   </body>
