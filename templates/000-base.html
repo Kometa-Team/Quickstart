@@ -22,9 +22,14 @@
   </head>
   <body>
     <script type="text/javascript">// <![CDATA[
-      function loading(){
-          $("#loading").show();
-          $("#content").hide();       
+      function loading(type){
+        if (type == 'next') {
+          $('#next-spinner-text').text("Loading")
+          $('#next-spinner-span').addClass('spinner-border')
+        } else {
+          $('#prev-spinner-text').text("Loading")
+          $('#prev-spinner-span').addClass('spinner-border')
+        }
       }
 // ]]></script>
     <script
