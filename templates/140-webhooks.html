@@ -1,12 +1,12 @@
 {% extends "000-base.html" %} {% block content %}
-<meta id="notifiarr_available" data-notifiarr-available="{{ notifiarr_available }}">
-<meta id="gotify_available" data-gotify-available="{{ gotify_available }}">
-<form action="/step/{{ next_page }}" method="post" id="configForm" name="configForm">
-  <div id="{{curr_page}}Section">
+<meta id="notifiarr_available" data-notifiarr-available="{{ page_info['notifiarr_available'] }}">
+<meta id="gotify_available" data-gotify-available="{{ page_info['gotify_available'] }}">
+<form method="post" id="configForm" name="configForm">
+  <div id="{{page_info['title']}}Section">
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
-          <a class="btn btn-secondary" role="button" href="/step/{{ prev_page }}">Previous</a>
+          <button type="submit" class="btn btn-secondary" formaction="/step/{{ page_info['prev_page'] }}">Previous</button>
           <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split"
             data-bs-toggle="dropdown" aria-expanded="false">
             <span class="visually-hidden">Toggle Dropdown</span>
@@ -31,11 +31,11 @@
         </div>
       </div>
       <div class="col-6 align-self-center text-center">
-        <h2>{{ curr_page }}</h2>
+        <h2>{{ page_info['title'] }}</h2>
       </div>
       <div class="col align-self-center">
         <div class="input-group justify-content-end">
-          <button type="submit" class="btn btn-success">Next</button>
+          <button type="submit" class="btn btn-success" formaction="/step/{{ page_info['next_page'] }}">Next</button>
           <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split"
             data-bs-toggle="dropdown" aria-expanded="false">
             <span class="visually-hidden">Toggle Dropdown</span>
@@ -67,8 +67,8 @@
           <div class="col align-self-end">
             <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25"
               aria-valuemin="0" aria-valuemax="100">
-              <div class="progress-bar bg-success" style="width: {{ progress }}%">
-                {{ progress }}%
+              <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
+                {{ page_info['progress'] }}%
               </div>
             </div>
           </div>
@@ -84,7 +84,7 @@
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title }} Section</h1>
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ page_info['title'] }} Section</h1>
           </div>
           <div class="modal-body">
             This is some dummy text<br>
@@ -100,17 +100,16 @@
     {% for webhook in ["error", "run_start", "run_end", "changes", "version", "delete"] %}
     <div class="form-floating">
       <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)">
-        <option value="">Select Webhook</option>
+        <option value="">None</option>
         <option value="notifiarr" {% if data.webhooks[webhook] == 'notifiarr' %}selected{% endif %}>Notifiarr</option>
         <option value="gotify" {% if data.webhooks[webhook] == 'gotify' %}selected{% endif %}>Gotify</option>
-        <option value="custom" {% if data.webhooks[webhook].startswith('http') %}selected{% endif %}>Custom</option>
-
+        <option value="custom" {% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}selected{% endif %}>Custom</option>
       </select>
       <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
       <div class="input-group input-group-lg custom-webhook" id="webhooks_{{ webhook }}_custom" style="display: none;">
         <div class="input-group input-group-lg">
           <input type="text" class="form-control custom-webhook-url" placeholder="Enter webhook URL ({{ webhook|replace("_", " ")|title }})"
-                 value="{% if data.webhooks[webhook].startswith('http') %}{{ data.webhooks[webhook] }}{% endif %}">
+                 value="{% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}{{ data.webhooks[webhook] }}{% endif %}">
           <button class="btn btn-success" type="button">Validate</button>
         </div>
       </div>

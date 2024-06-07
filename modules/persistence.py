@@ -5,6 +5,9 @@ from ruamel.yaml import YAML
 from flask import current_app as app
 
 from .helpers import build_config_dict, get_template_list, get_bits
+from .iso_639_1 import iso_639_1_languages  # Importing the languages list
+from .iso_639_2 import iso_639_2_languages  # Importing the languages list
+from .iso_3166_1 import iso_3166_1_regions  # Importing the regions list
 
 def extract_names(raw_source):
     source = raw_source
@@ -20,15 +23,33 @@ def extract_names(raw_source):
 
     return source, source_name    
 
+def clean_form_data (form_data):
+    clean_data = {}
+
+    for key in form_data:
+        value = form_data[key]
+        lc_value = value.lower() if isinstance(value, str) else None
+        if len(value) == 0 or lc_value == 'none':
+            clean_data[key] = None
+        elif lc_value == 'true' or lc_value == 'on':
+            clean_data[key] = True
+        elif lc_value == 'false':
+            clean_data[key] = False
+        else:
+            clean_data[key] = value
+
+    return clean_data
+
 def save_settings(raw_source, form_data):
     # get source from referrer
     source, source_name = extract_names(raw_source)
     # source will be `010-plex`
     # source_name will be `plex`
-
     
+    clean_data = clean_form_data(form_data)
+
     if len(source) > 0:
-        data = build_config_dict(source_name, form_data)
+        data = build_config_dict(source_name, clean_data)
         
         base_data = get_dummy_data(source_name)
 
@@ -52,6 +73,16 @@ def retrieve_settings(target):
 
     if not data:
         data = get_dummy_data(source_name)
+
+    if target == '020-tmdb':
+        data['iso_639_1_languages'] = iso_639_1_languages
+        data['iso_3166_1_regions'] = iso_3166_1_regions
+
+    if target == '090-anidb':
+        data['iso_639_1_languages'] = iso_639_1_languages
+
+    if target == '150-settings':
+        data['iso_639_2_languages'] = iso_639_2_languages
 
     try:
         if data['validated']:
@@ -114,9 +145,15 @@ def notification_systems_available():
         stem, this_num, b = get_bits(file)
         if "notifiarr" in stem:
             notifiarr_data = retrieve_settings(stem)
-            notifiarr_available = notifiarr_data['valid']
+            try:
+                notifiarr_available = eval(notifiarr_data['valid'])
+            except:
+                notifiarr_available = False
         if "gotify" in stem:
             gotify_data = retrieve_settings(stem)
-            gotify_available = gotify_data['valid']
+            try:
+                gotify_available = eval(gotify_data['valid'])
+            except:
+                gotify_available = False
 
     return notifiarr_available, gotify_available

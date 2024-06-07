@@ -18,6 +18,14 @@ def add_border_to_ascii_art(art):
 def section_heading(title):
     return add_border_to_ascii_art(pyfiglet.figlet_format(title))
 
+def clean_section_data(section_data):
+    section_data.pop('iso_639_1_languages', None)
+    section_data.pop('iso_639_2_languages', None)
+    section_data.pop('iso_3166_1_regions', None)
+    section_data.pop('valid', None)
+
+    return section_data
+
 def build_config(header_style='ascii'):
     sections = get_template_list()
 
@@ -40,10 +48,12 @@ def build_config(header_style='ascii'):
 
         # {'mal': {'authorization': {'code_verifier': 'OEOOZwnH8RWLczgahkUbo__vabgHl7XyvWkDx0twLB4FCaxPY88C9tNXnmxzBq946vSekKbPc3WhW4SwWrq0ld5xKpm27foQx4RXfnXY25iL7Pm0WCCuYkO-iQga69jv', 'localhost_url': '', 'access_token': 'None', 'token_type': 'None', 'expires_in': 'None', 'refresh_token': 'None'}, 'client_id': 'Enter MyAnimeList Client ID', 'client_secret': 'Enter MyAnimeList Client Secret'}, 'valid': True}
         
-        if section_data['valid']:
+        if 'valid' in section_data and section_data['valid']:
             # it's valid data and needs to end up in the config
-            section_data = {k: v for k, v in section_data.items() if k != 'valid'}
-            config_data[config_attribute] = section_data
+            # but first clear some chaff
+            clean_data = clean_section_data(section_data)
+
+            config_data[config_attribute] = clean_data
 
     header_comment = (
         "### We highly recommend using Visual Studio Code with indent-rainbow by oderwat extension "
@@ -78,6 +88,8 @@ def build_config(header_style='ascii'):
         
         # Remove 'valid' key if present
         data = {k: v for k, v in data.items() if k != 'valid'}
+
+        yaml = YAML()
 
         with io.StringIO() as stream:
             yaml.dump(data, stream)
