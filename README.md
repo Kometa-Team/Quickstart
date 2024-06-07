@@ -22,7 +22,7 @@ Or how to call it to run from the venv if you have closed the powershell prompt.
 `.\venv\scripts\python app.py`
 
 Which will look like this and then open up your favorite browswer and navigate to the listed URLs:
-![image](./static/images/running-in-pwsh.png)
+![image](./images/running-in-pwsh.png)
 
 Note: Updates can then be performed pretty easily by opening up your Windows powershell prompt into the `pyprogs` directory and performing the following commands:
 ```
