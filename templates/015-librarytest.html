@@ -4,38 +4,56 @@
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
-          <button type="submit" class="btn btn-secondary" formaction="/step/{{ page_info['prev_page'] }}"><i class="fa fa-arrow-left"></i></button>
+            <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
+                <span id="prev-spinner-span" class="spinner-border-sm" aria-hidden="true"></span>
+                <span id="prev-spinner-text" role="status">Previous</span>
+            </button>
+            <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="visually-hidden">Toggle Dropdown</span>
+            </button>
+            <ul class="dropdown-menu">
+            {% for file, name in template_list %}
+              {% if name == 'Final Validation' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
+              <li>
+                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              </li>
+              {% if name == 'Start' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
+            {% endfor %}
+          </ul>
         </div>
       </div>
       <div class="col-6 align-self-center text-center">
-        <h2>{{ page_info['title'] }}</h2>
+          <h2>{{ page_info['title'] }}</h2>
       </div>
-      <div class="col align-self-center">
-        <div class="input-group justify-content-end">
-          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>Jump To</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
+    <div class="col align-self-center">
+      <div class="input-group justify-content-end">
+        <button type="submit" class="btn btn-success" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
+            <span id="next-spinner-span" class="spinner-border-sm" aria-hidden="true"></span>
+            <span id="next-spinner-text" role="status">Next</span>
+        </button>
+        <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
             {% for file, name in template_list %}
-            {% if name == 'Final Validation' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
-            <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
-            </li>
-            {% if name == 'Start' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
+              {% if name == 'Final Validation' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
+              <li>
+                <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              </li>
+              {% if name == 'Start' %}
+                <li><hr class="dropdown-divider"></li>
+              {% endif %}
             {% endfor %}
-          </ul>
-          <button type="submit" class="btn btn-success" formaction="/step/{{ page_info['next_page'] }}"><i class="fa fa-arrow-right"></i></button>
-        </div>
+        </ul>
       </div>
     </div>
+  </div>
     <div class="container text-center">
       <div class="row">
         <div class="col"></div>

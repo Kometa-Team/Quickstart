@@ -162,3 +162,11 @@ label {
     color: #000;
     border: 1px solid #000;
 }
+
+div#loading {
+    width: 100;
+    height: 100;
+    display: none;
+    text-align: center;
+    cursor: wait;
+    }

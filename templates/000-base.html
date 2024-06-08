@@ -21,6 +21,17 @@
     />
   </head>
   <body>
+    <script type="text/javascript">// <![CDATA[
+      function loading(type){
+        if (type == 'next') {
+          $('#next-spinner-text').text("Loading")
+          $('#next-spinner-span').addClass('spinner-border')
+        } else {
+          $('#prev-spinner-text').text("Loading")
+          $('#prev-spinner-span').addClass('spinner-border')
+        }
+      }
+// ]]></script>
     <script
       type="text/javascript"
       src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"
@@ -44,7 +55,12 @@
                 </ul>
             {% endif %}
         {% endwith %} -->
-        {% block content %}{% endblock %}
+        <div id="loading">
+          <img height=100 width=100 src="{{ url_for('static', filename='loadingimage.gif') }}" />
+        </div>
+        <div id="content">
+          {% block content %}{% endblock %}
+        </div>
       </div>
     </div>
   </body>
