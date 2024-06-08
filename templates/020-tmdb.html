@@ -4,7 +4,10 @@
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
-          <button type="submit" class="btn btn-secondary" formaction="/step/{{ page_info['prev_page'] }}">Previous</button>
+          <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
+            <span id="prev-spinner-span" class="spinner-border-sm" aria-hidden="true"></span>
+            <span id="prev-spinner-text" role="status">Previous</span>
+          </button>
           <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="visually-hidden">Toggle Dropdown</span>
           </button>
@@ -32,7 +35,10 @@
       </div>
       <div class="col align-self-center">
         <div class="input-group justify-content-end">
-          <button type="submit" class="btn btn-success" formaction="/step/{{ page_info['next_page'] }}">Next</button>
+          <button type="submit" class="btn btn-success" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
+            <span id="next-spinner-span" class="spinner-border-sm" aria-hidden="true"></span>
+            <span id="next-spinner-text" role="status">Next</span>
+          </button>
           <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
             <span class="visually-hidden">Toggle Dropdown</span>
           </button>
