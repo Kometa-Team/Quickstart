@@ -1,0 +1,949 @@
+{% extends "000-base.html" %} {% block content %}
+<form method="post" id="configForm" name="configForm">
+  <div id="{{page_info['title']}}Section">
+    <div class="row">
+      <div class="col align-self-center">
+        <div class="input-group justify-content-start">
+          <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
+            <i id="prev-spinner-icon" class="fa fa-arrow-left"></i>
+          </button>
+        </div>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>{{ page_info['title'] }}</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end">
+        <div class="input-group justify-content-end jump-spinner-container">
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span id="jump-to-text">Jump To</span>
+            <i id="jump-spinner-icon" class=""></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+          <button type="submit" class="btn btn-success" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
+            <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row">
+        <div class="col"></div>
+        <div class="col-8">
+          <div class="col align-self-end">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
+                {{ page_info['progress'] }}%
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+        <hr class="hr">
+        <div class="accordion" id="accordionExample">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Award Collections
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div class="accordion-body">
+                        <div class="card-group">
+                            <div class="card" id="separator_award">
+                                <img src="../static/images/posters/separator_award.jpg" class="card-img-top"
+                                     alt="Award Separator">
+                                <div class="card-body">
+                                    <h5 class="card-title">Award Separator</h5>
+                                    <p class="card-text">Award Collections</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input"
+                                                   id="separator_award_checkbox"> Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button"
+                                                id="separator_award_button" data-bs-toggle="modal"
+                                                data-bs-target="#separator_award_modal">Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal fade" id="separator_award_modal" tabindex="-1"
+                                 aria-labelledby="separator_award_modal" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="exampleModalLabel">Awards Separator</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form>
+                                                <div class="form-group">
+                                                    <label for="use_award_separator">Use Separator:</label>
+                                                    <select class="form-control" id="use_award_separator">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false">No</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="sep_style">Separator Style:</label>
+                                                    <select class="form-control" id="sep_style">
+                                                        <option value="orig">Original</option>
+                                                        <option value="amethyst">Amethyst</option>
+                                                        <option value="aqua">Aqua</option>
+                                                        <option value="blue">Blue</option>
+                                                        <option value="forest">Forest</option>
+                                                        <option value="fuchsia">Fuchsia</option>
+                                                        <option value="gold">Gold</option>
+                                                        <option value="gray">Gray</option>
+                                                        <option value="green">Green</option>
+                                                        <option value="navy">Navy</option>
+                                                        <option value="ocean">Ocean</option>
+                                                        <option value="olive">Olive</option>
+                                                        <option value="orchid">Orchid</option>
+                                                        <option value="pink">Pink</option>
+                                                        <option value="plum">Plum</option>
+                                                        <option value="purple">Purple</option>
+                                                        <option value="red">Red</option>
+                                                        <option value="rust">Rust</option>
+                                                        <option value="salmon">Salmon</option>
+                                                        <option value="sand">Sand</option>
+                                                        <option value="stb">Stb</option>
+                                                        <option value="tan">Tan</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="sort_prefix">Sort Prefix:</label>
+                                                    <input type="text" class="form-control" id="sort_prefix"
+                                                           placeholder="!">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="sort_title">Sort Title:</label>
+                                                    <input type="text" class="form-control" id="sort_title"
+                                                           placeholder="<<sort_prefix>><<collection_section>>_!<<title>>">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="placeholder_tmdb_movie">Placeholder TMDb Movie
+                                                        ID:</label>
+                                                    <input type="text" class="form-control" id="placeholder_tmdb_movie">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="placeholder_tvdb_show">Placeholder TVDb Show ID:</label>
+                                                    <input type="text" class="form-control" id="placeholder_tvdb_show">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="placeholder_imdb_id">Placeholder IMDb ID:</label>
+                                                    <input type="text" class="form-control" id="placeholder_imdb_id">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="name_separator">Collection Name:</label>
+                                                    <input type="text" class="form-control" id="name_separator"
+                                                           placeholder="Award Collections">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="summary_separator">Collection Summary:</label>
+                                                    <textarea class="form-control" id="summary_separator"></textarea>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="collection_mode">Collection Mode:</label>
+                                                    <select class="form-control" id="collection_mode">
+                                                        <option value="default">Library Default</option>
+                                                        <option value="hide">Hide Collection</option>
+                                                        <option value="hide_items">Hide Items</option>
+                                                        <option value="show_items">Show Items</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="url_poster_separator">Poster URL:</label>
+                                                    <input type="text" class="form-control" id="url_poster_separator">
+                                                </div>
+
+                                                <button type="submit" class="btn btn-primary">Submit</button>
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                Close
+                                            </button>
+                                            <button type="button" class="btn btn-primary">Save changes</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="oscars">
+                                <img src="../static/images/posters/oscars.jpg" class="card-img-top"
+                                     alt="Academy Awards (Oscars)">
+                                <div class="card-body">
+                                    <h5 class="card-title">Academy Awards (Oscars)</h5>
+                                    <p class="card-text">Best Picture Winners, Best Director Winners, 2022</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="oscars_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="oscars_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="berlinale">
+                                <img src="../static/images/posters/berlinale.jpg" class="card-img-top"
+                                     alt="Berlin International Film Festival Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Berlin International Film Festival Awards</h5>
+                                    <p class="card-text">Best Picture Winners, Golden Bears, 2021</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input"
+                                                   id="berlinale_checkbox"> Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button"
+                                                id="berlinale_button">Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-group">
+                            <div class="card" id="bafta">
+                                <img src="../static/images/posters/bafta.jpg" class="card-img-top"
+                                     alt="British Academy of Film Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">British Academy of Film Awards</h5>
+                                    <p class="card-text">Best Films, Best Picture Winners, 2023</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="bafta_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="bafta_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="cannes">
+                                <img src="../static/images/posters/cannes.jpg" class="card-img-top"
+                                     alt="Cannes Film Festival Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Cannes Film Festival Awards</h5>
+                                    <p class="card-text">Best Director Winners, Best Picture Winners, 2022</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="cannes_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="cannes_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="cesar">
+                                <img src="../static/images/posters/cesar.jpg" class="card-img-top" alt="César Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">César Awards</h5>
+                                    <p class="card-text">César Best Film Winners, César 2018
+                                    </p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="cesar_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="cesar_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-group">
+                            <div class="card" id="choice">
+                                <img src="../static/images/posters/choice.jpg" class="card-img-top"
+                                     alt="Critics Choice Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Critics Choice Awards</h5>
+                                    <p class="card-text">Critics Choice Best Picture Winners,
+                                        Critics Choice Awards 2020</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="choice_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="choice_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" id="emmy">
+                                <img src="../static/images/posters/emmy.jpg" class="card-img-top" alt="Emmy Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Emmy Awards</h5>
+                                    <p class="card-text">Emmys Best in Category Winners, Emmys 2021</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="emmy_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="emmy_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="golden">
+                                <img src="../static/images/posters/golden.jpg" class="card-img-top"
+                                     alt="Golden Globe Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Golden Globe Awards</h5>
+                                    <p class="card-text">Golden Globes Best Picture Winners,
+                                        Golden Globes Best Director Winners, Golden Globe 2019</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="golden_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="golden_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-group">
+                            <div class="card" id="spirit">
+                                <img src="../static/images/posters/spirit.jpg" class="card-img-top"
+                                     alt="Independent Spirit Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Independent Spirit Awards</h5>
+                                    <p class="card-text">Spirit Best Feature Winners,
+                                        Independent Spirit Awards 2021</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="spirit_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="spirit_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="nfr">
+                                <img src="../static/images/posters/nfr.jpg" class="card-img-top"
+                                     alt="National Film Registry">
+                                <div class="card-body">
+                                    <h5 class="card-title">National Film Registry</h5>
+                                    <p class="card-text">National Film Registry All Time,
+                                        National Film Registry 2021</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="nfr_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="nfr_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="pca">
+                                <img src="../static/images/posters/pca.jpg" class="card-img-top"
+                                     alt="People's Choice Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">People's Choice Awards</h5>
+                                    <p class="card-text">People's Choice Award Winners,
+                                        People's Choice Awards 2022</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="pca_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="pca_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-group">
+                            <div class="card" id="razzie">
+                                <img src="../static/images/posters/razzie.jpg" class="card-img-top" alt="Razzie Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Razzie Awards</h5>
+                                    <p class="card-text">Razzies Golden Raspberry Winners,
+                                        Razzie 2023</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="razzie_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="razzie_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="sag">
+                                <img src="../static/images/posters/sag.jpg" class="card-img-top"
+                                     alt="Screen Actors Guild Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Screen Actors Guild Awards</h5>
+                                    <p class="card-text">Screen Actors Guild Award Winners,
+                                        Screen Actors Guild 2021</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="sag_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="sag_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="sundance">
+                                <img src="../static/images/posters/sundance.jpg" class="card-img-top"
+                                     alt="Sundance Film Festival Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Sundance Film Festival Awards</h5>
+                                    <p class="card-text">Sundance Grand Jury Winners,
+                                        Sundance Film Festival 2017</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input"
+                                                   id="sundance_checkbox"> Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button"
+                                                id="sundance_button">Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row row-cols-1 row-cols-md-3 g-2">
+                            <div class="card" id="tiff">
+                                <img src="../static/images/posters/tiff.jpg" class="card-img-top"
+                                     alt="Toronto International Film Festival Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Toronto International Film Festival Awards</h5>
+                                    <p class="card-text">Toronto People's Choice Award,
+                                        Toronto International Film Festival 2020</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="tiff_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="tiff_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="venice">
+                                <img src="../static/images/posters/venice.jpg" class="card-img-top"
+                                     alt="Venice Film Festival Awards">
+                                <div class="card-body">
+                                    <h5 class="card-title">Venice Film Festival Awards</h5>
+                                    <p class="card-text">Venice Golden Lions, Venice 2023</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="venice_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="venice_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+                        Chart Collections
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                    <div class="accordion-body">
+                        <div class="card-group">
+                            <div class="card" id="separator_chart">
+                                <img src="../static/images/posters/separator_chart.jpg" class="card-img-top"
+                                     alt="Award Separator">
+                                <div class="card-body">
+                                    <h5 class="card-title">Chart Separator</h5>
+                                    <p class="card-text">Chart Collections</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input"
+                                                   id="separator_chart_checkbox"> Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button"
+                                                id="separator_chart_button" data-bs-toggle="modal"
+                                                data-bs-target="#separator_chart_modal">Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal fade" id="separator_chart_modal" tabindex="-1"
+                                 aria-labelledby="separator_chart_modal" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h1 class="modal-title fs-5" id="exampleModalLabel">Charts Separator</h1>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                    aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form>
+                                                <div class="form-group">
+                                                    <label for="use_chart_separator">Use Separator:</label>
+                                                    <select class="form-control" id="use_chart_separator">
+                                                        <option value="true">Yes</option>
+                                                        <option value="false">No</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="sep_style">Separator Style:</label>
+                                                    <select class="form-control" id="sep_style">
+                                                        <option value="orig">Original</option>
+                                                        <option value="amethyst">Amethyst</option>
+                                                        <option value="aqua">Aqua</option>
+                                                        <option value="blue">Blue</option>
+                                                        <option value="forest">Forest</option>
+                                                        <option value="fuchsia">Fuchsia</option>
+                                                        <option value="gold">Gold</option>
+                                                        <option value="gray">Gray</option>
+                                                        <option value="green">Green</option>
+                                                        <option value="navy">Navy</option>
+                                                        <option value="ocean">Ocean</option>
+                                                        <option value="olive">Olive</option>
+                                                        <option value="orchid">Orchid</option>
+                                                        <option value="pink">Pink</option>
+                                                        <option value="plum">Plum</option>
+                                                        <option value="purple">Purple</option>
+                                                        <option value="red">Red</option>
+                                                        <option value="rust">Rust</option>
+                                                        <option value="salmon">Salmon</option>
+                                                        <option value="sand">Sand</option>
+                                                        <option value="stb">Stb</option>
+                                                        <option value="tan">Tan</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="sort_prefix">Sort Prefix:</label>
+                                                    <input type="text" class="form-control" id="sort_prefix"
+                                                           placeholder="!">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="sort_title">Sort Title:</label>
+                                                    <input type="text" class="form-control" id="sort_title"
+                                                           placeholder="<<sort_prefix>><<collection_section>>_!<<title>>">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="placeholder_tmdb_movie">Placeholder TMDb Movie
+                                                        ID:</label>
+                                                    <input type="text" class="form-control" id="placeholder_tmdb_movie">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="placeholder_tvdb_show">Placeholder TVDb Show ID:</label>
+                                                    <input type="text" class="form-control" id="placeholder_tvdb_show">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="placeholder_imdb_id">Placeholder IMDb ID:</label>
+                                                    <input type="text" class="form-control" id="placeholder_imdb_id">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="name_separator">Collection Name:</label>
+                                                    <input type="text" class="form-control" id="name_separator"
+                                                           placeholder="Award Collections">
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="summary_separator">Collection Summary:</label>
+                                                    <textarea class="form-control" id="summary_separator"></textarea>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="collection_mode">Collection Mode:</label>
+                                                    <select class="form-control" id="collection_mode">
+                                                        <option value="default">Library Default</option>
+                                                        <option value="hide">Hide Collection</option>
+                                                        <option value="hide_items">Hide Items</option>
+                                                        <option value="show_items">Show Items</option>
+                                                    </select>
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="url_poster_separator">Poster URL:</label>
+                                                    <input type="text" class="form-control" id="url_poster_separator">
+                                                </div>
+
+                                                <button type="submit" class="btn btn-primary">Submit</button>
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                Close
+                                            </button>
+                                            <button type="button" class="btn btn-primary">Save changes</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="basic">
+                                <img src="../static/images/posters/basic.jpg" class="card-img-top"
+                                     alt="Basic Charts">
+                                <div class="card-body">
+                                    <h5 class="card-title">Basic</h5>
+                                    <p class="card-text">Newly Released</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="basic_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="basic_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="tautulli">
+                                <img src="../static/images/posters/tautulli.jpg" class="card-img-top"
+                                     alt="Tautulli">
+                                <div class="card-body">
+                                    <h5 class="card-title">Tautulli</h5>
+                                    <p class="card-text">Plex Popular, Plex Watched</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input"
+                                                   id="tautulli_checkbox"> Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button"
+                                                id="tautulli_button">Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-group">
+                            <div class="card" id="imdb">
+                                <img src="../static/images/posters/imdb.jpg" class="card-img-top"
+                                     alt="IMDb">
+                                <div class="card-body">
+                                    <h5 class="card-title">IMDb</h5>
+                                    <p class="card-text">Popular, Top 250, Lowest Rated</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="imdb_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="imdb_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="tmdb">
+                                <img src="../static/images/posters/tmdb.jpg" class="card-img-top"
+                                     alt="TMDb">
+                                <div class="card-body">
+                                    <h5 class="card-title">TMDb</h5>
+                                    <p class="card-text">Popular, Trending, Recommended</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="tmdb_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="tmdb_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="trakt">
+                                <img src="../static/images/posters/trakt.jpg" class="card-img-top" alt="Trakt">
+                                <div class="card-body">
+                                    <h5 class="card-title">Trakt</h5>
+                                    <p class="card-text">Collected, Recommended, Popular
+                                    </p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="trakt_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="trakt_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-group">
+                            <div class="card" id="anilist">
+                                <img src="../static/images/posters/anilist.jpg" class="card-img-top"
+                                     alt="AniList">
+                                <div class="card-body">
+                                    <h5 class="card-title">AniList</h5>
+                                    <p class="card-text">Popular, Trending, Top Rated</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input" id="anilist_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="anilist_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card" id="myanimelist">
+                                <img src="../static/images/posters/myanimelist.jpg" class="card-img-top"
+                                     alt="MyAnimeList">
+                                <div class="card-body">
+                                    <h5 class="card-title">MyAnimeList</h5>
+                                    <p class="card-text">Popular, Top Rated, Favorited</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input"
+                                                   id="myanimelist_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="myanimelist_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card" id="other_chart">
+                                <img src="../static/images/posters/other_chart.jpg" class="card-img-top"
+                                     alt="Other Charts">
+                                <div class="card-body">
+                                    <h5 class="card-title">Other Charts</h5>
+                                    <p class="card-text">AniDB Popular, Common Sense Selection, Top 10 Pirated</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="input-group mb-3 small">
+                                        <div class="input-group-text">
+                                            <input class="form-check-input mt-0" type="checkbox" value=""
+                                                   aria-label="Checkbox for following text input"
+                                                   id="other_chart_checkbox">
+                                            Enable
+                                        </div>
+                                        <button class="btn btn-primary btn-sm" type="button" id="other_chart_button">
+                                            Customize
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="modal fade" id="traktModal" tabindex="-1" aria-labelledby="traktModal" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="traktModalLabel">Customize Trakt Collections</h1>
+                    </div>
+                    <div class="modal-body">
+                        <div class="control-group">
+                            <p class="pull-left">Select which collections you would like:</p>
+                            <div class="controls span2">
+                                <label class="checkbox">
+                                    <input type="checkbox" value="option1" id="inlineCheckbox1" checked> Trakt
+                                    Anticipated
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" value="option2" id="inlineCheckbox2" checked> Trakt Collected
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" value="option3" id="inlineCheckbox3" checked> Trakt Popular
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" value="option3" id="inlineCheckbox3" checked> Trakt
+                                    Recommended
+                                </label>
+                            </div>
+                            <div class="controls span2">
+                                <label class="checkbox">
+                                    <input type="checkbox" value="option1" id="inlineCheckbox1" checked> Trakt Trending
+                                </label>
+                                <label class="checkbox">
+                                    <input type="checkbox" value="option2" id="inlineCheckbox2" checked> Trakt Watched
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<script>
+    function library_select() {
+        var T = document.getElementById("library_select");
+        T.style.display = "block";  // <-- Set it to block
+    }
+</script>
+{% endblock %}
