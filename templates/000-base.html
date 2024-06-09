@@ -21,17 +21,15 @@
     />
   </head>
   <body>
-    <script type="text/javascript">// <![CDATA[
-      function loading(type){
-        if (type == 'next') {
-          $('#next-spinner-text').text("Loading")
-          $('#next-spinner-span').addClass('spinner-border')
-        } else {
-          $('#prev-spinner-text').text("Loading")
-          $('#prev-spinner-span').addClass('spinner-border')
+    <script type="text/javascript">
+      function loading(type) {
+        if (type === 'next') {
+          $('#next-spinner-icon').removeClass('fa-arrow-right').addClass('spinner-border spinner-border-sm');
+        } else if (type === 'prev') {
+          $('#prev-spinner-icon').removeClass('fa-arrow-left').addClass('spinner-border spinner-border-sm');
         }
       }
-// ]]></script>
+    </script>
     <script
       type="text/javascript"
       src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"
