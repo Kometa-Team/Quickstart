@@ -14,8 +14,10 @@
       </div>
       <div class="col align-self-center">
         <div class="input-group justify-content-end">
+        <div class="input-group justify-content-end jump-spinner-container">
           <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>Jump To</span>
+            <span id="jump-to-text">Jump To</span>
+            <i id="jump-spinner-icon" class=""></i>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             {% for file, name in template_list %}
@@ -25,7 +27,7 @@
             </li>
             {% endif %}
             <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
             <li>
@@ -317,4 +319,5 @@
       apikeyInput.setAttribute("type", currentType === "password" ? "text" : "password");
       this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
   });
-</script> {% endblock %}
+</script>
+{% endblock %}
