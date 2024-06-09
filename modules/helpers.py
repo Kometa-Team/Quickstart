@@ -29,15 +29,11 @@ def build_simple_dict(source, form_data):
         final_key = key.replace(source + '_', '', 1)
         value = form_data[key]
 
-        if value is not None:
+        if value is not None and not isinstance(value, bool):
             try:
                 value = int(value)
             except ValueError:
-                try:
-                    if value.lower() == 'on':
-                        value = bool(value)
-                except ValueError:
-                    value = value
+                value = value
 
         data[source][final_key] = value
 
