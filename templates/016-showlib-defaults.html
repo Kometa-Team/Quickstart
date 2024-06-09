@@ -1,5 +1,5 @@
 {% extends "000-base.html" %} {% block content %}
-<form id="configForm" method="post" name="configForm">
+<form method="post" id="configForm" name="configForm">
   <div id="{{page_info['title']}}Section">
     <div class="row">
       <div class="col align-self-center">
@@ -13,9 +13,10 @@
         <h2>{{ page_info['title'] }}</h2>
       </div>
       <div class="col align-self-center">
-        <div class="input-group justify-content-end">
+        <div class="input-group justify-content-end jump-spinner-container">
           <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>Jump To</span>
+            <span id="jump-to-text">Jump To</span>
+            <i id="jump-spinner-icon" class=""></i>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             {% for file, name in template_list %}
@@ -25,7 +26,7 @@
             </li>
             {% endif %}
             <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
             <li>
@@ -45,7 +46,7 @@
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
-            <div aria-label="Example with label" aria-valuemax="100" aria-valuemin="0" aria-valuenow="25" class="progress" role="progressbar">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
               <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
                 {{ page_info['progress'] }}%
               </div>
@@ -57,19 +58,20 @@
     </div>
     <hr class="hr">
     <div class="alert alert-info" role="alert">
-      <a data-bs-target="#exampleModal" data-bs-toggle="modal" href="#">Click Here</a> if you need guidance completing this section.
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
     </div>
-    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
           </div>
           <div class="modal-body">
-            This is some dummy text<br> <br>
+            This is some dummy text<br>
+            <br>
           </div>
           <div class="modal-footer">
-            <button class="btn btn-primary" data-bs-dismiss="modal" type="button">Close</button>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
@@ -196,98 +198,6 @@
                   </div>
                 </div>
               </div>
-              <div class="card" id="oscars">
-                <img alt="Academy Awards (Oscars)" class="card-img-top" src="../static/images/posters/oscars.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Academy Awards (Oscars)</h5>
-                  <p class="card-text">Example Collections:<br><i>- Best Picture Winners<br>- Best Director Winners<br>- 2022</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="oscars_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="oscars_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card" id="berlinale">
-                <img alt="Berlin International Film Festival Awards" class="card-img-top" src="../static/images/posters/berlinale.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Berlin International Film Festival Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Best Picture Winners<br>- Golden Bears<br>- 2021</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="berlinale_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="berlinale_button" type="button">Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card-group">
-              <div class="card" id="bafta">
-                <img alt="British Academy of Film Awards" class="card-img-top" src="../static/images/posters/bafta.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">British Academy of Film Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Best Films<br>- Best Picture Winners<br>- 2023</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="bafta_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="bafta_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card" id="cannes">
-                <img alt="Cannes Film Festival Awards" class="card-img-top" src="../static/images/posters/cannes.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Cannes Film Festival Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Best Director Winners<br>- Best Picture Winners<br>- 2022</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="cannes_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="cannes_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card" id="cesar">
-                <img alt="César Awards" class="card-img-top" src="../static/images/posters/cesar.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">César Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- César Best Film Winners<br>- César 2018 </i></p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="cesar_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="cesar_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card-group">
               <div class="card" id="choice">
                 <img alt="Critics Choice Awards" class="card-img-top" src="../static/images/posters/choice.jpg">
                 <div class="card-body">
@@ -324,6 +234,8 @@
                   </div>
                 </div>
               </div>
+            </div>
+            <div class="card-group">
               <div class="card" id="golden">
                 <img alt="Golden Globe Awards" class="card-img-top" src="../static/images/posters/golden.jpg">
                 <div class="card-body">
@@ -337,44 +249,6 @@
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="golden_checkbox" type="checkbox" value=""> Enable
                     </div>
                     <button class="btn btn-primary btn-sm" disabled id="golden_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card-group">
-              <div class="card" id="spirit">
-                <img alt="Independent Spirit Awards" class="card-img-top" src="../static/images/posters/spirit.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Independent Spirit Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Spirit Best Feature Winners<br>- Independent Spirit Awards 2021</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="spirit_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="spirit_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card" id="nfr">
-                <img alt="National Film Registry" class="card-img-top" src="../static/images/posters/nfr.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">National Film Registry</h5>
-                  <p class="card-text">Example Collections:<br><i>- National Film Registry All Time<br>- National Film Registry 2021</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="nfr_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="nfr_button" type="button">
                       Customize
                     </button>
                   </div>
@@ -398,26 +272,6 @@
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="card-group">
-              <div class="card" id="razzie">
-                <img alt="Razzie Awards" class="card-img-top" src="../static/images/posters/razzie.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Razzie Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Razzies Golden Raspberry Winners<br>- Razzie 2023</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="razzie_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="razzie_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
               <div class="card" id="sag">
                 <img alt="Screen Actors Guild Awards" class="card-img-top" src="../static/images/posters/sag.jpg">
                 <div class="card-body">
@@ -431,60 +285,6 @@
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="sag_checkbox" type="checkbox" value=""> Enable
                     </div>
                     <button class="btn btn-primary btn-sm" disabled id="sag_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card" id="sundance">
-                <img alt="Sundance Film Festival Awards" class="card-img-top" src="../static/images/posters/sundance.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Sundance Film Festival Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Sundance Grand Jury Winners<br>- Sundance Film Festival 2017</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="sundance_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="sundance_button" type="button">Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row row-cols-1 row-cols-md-3 g-2">
-              <div class="card" id="tiff">
-                <img alt="Toronto International Film Festival Awards" class="card-img-top" src="../static/images/posters/tiff.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Toronto International Film Festival Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Toronto People's Choice Award<br>- Toronto International Film Festival 2020</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="tiff_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="tiff_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card" id="venice">
-                <img alt="Venice Film Festival Awards" class="card-img-top" src="../static/images/posters/venice.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Venice Film Festival Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Venice Golden Lions<br>- Venice 2023</i></p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="venice_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="venice_button" type="button">
                       Customize
                     </button>
                   </div>
@@ -1052,7 +852,7 @@
                 <img alt="Resolutions" class="card-img-top" src="../static/images/posters/resolution.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Resolutions</h5>
-                  <p class="card-text">Example Collections:<br><i>- 4K Movies<br>- 1080p Movies<br>- 720p Movies</i></p>
+                  <p class="card-text">Example Collections:<br><i>- 4K Shows<br>- 1080p Shows<br>- 720p Shows</i></p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -1115,12 +915,30 @@
         </h2>
         <div class="accordion-collapse collapse" data-bs-parent="#accordionExample" id="collapseProduction">
           <div class="accordion-body">
-            <div class="row row-cols-1 row-cols-md-3 g-2">
+            <div class="card-group">
+              <div class="card" id="network">
+                <img alt="Networks" class="card-img-top" src="../static/images/posters/network.jpg">
+                <div class="card-body">
+                  <h5 class="card-title">Networks</h5>
+                  <p class="card-text">Example Collections:<br><i>- Lifetime<br>- BBC<br>- Nickelodeon</i>
+                  </p>
+                </div>
+                <div class="card-footer">
+                  <div class="input-group mb-3 small">
+                    <div class="input-group-text">
+                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="network_checkbox" type="checkbox" value=""> Enable
+                    </div>
+                    <button class="btn btn-primary btn-sm" disabled id="network_button" type="button">
+                      Customize
+                    </button>
+                  </div>
+                </div>
+              </div>
               <div class="card" id="streaming">
                 <img alt="Streaming" class="card-img-top" src="../static/images/posters/streaming.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Streaming</h5>
-                  <p class="card-text">Example Collections:<br><i>- Disney+ Movies<br>- Netflix Movies<br>- Crunchyroll Movies</i>
+                  <p class="card-text">Example Collections:<br><i>- Disney+ Shows<br>- Netflix Shows<br>- Crunchyroll Shows</i>
                   </p>
                 </div>
                 <div class="card-footer">
@@ -1164,7 +982,7 @@
         </h2>
         <div class="accordion-collapse collapse" data-bs-parent="#accordionExample" id="collapsePeople">
           <div class="accordion-body">
-            <div class="card-group">
+            <div class="row row-cols-1 row-cols-md-3 g-1">
               <div class="card" id="actor">
                 <img alt="Actors" class="card-img-top" src="../static/images/posters/actor.jpg">
                 <div class="card-body">
@@ -1183,126 +1001,53 @@
                   </div>
                 </div>
               </div>
-              <div class="card" id="director">
-                <img alt="Directors" class="card-img-top" src="../static/images/posters/director.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Directors</h5>
-                  <p class="card-text">Example Collections:<br><i>- Steven Spielberg (Director)<br>- Olivia Wilde (Director)<br>- Ang Lee (Director)</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="director_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="director_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="card" id="producer">
-                <img alt="Producers" class="card-img-top" src="../static/images/posters/producer.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Producers</h5>
-                  <p class="card-text">Example Collections:<br><i>- James Cameron (Producer)<br>- Reese Witherspoon (Producer)<br>- Kevin Feige (Producer)</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="producer_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="producer_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="row row-cols-1 row-cols-md-3 g-1">
-              <div class="card" id="writer">
-                <img alt="Writers" class="card-img-top" src="../static/images/posters/writer.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Writers</h5>
-                  <p class="card-text">Example Collections:<br><i>- Lilly Wachowski (Writer)<br>- James Gunn (Writer)<br>- Jack Kirby (Writer)</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="writer_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="writer_button" type="button">
-                      Customize
-                    </button>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="accordion-item">
-        <h2 class="accordion-header">
-          <button aria-controls="collapseTime" aria-expanded="true" class="accordion-button collapsed" data-bs-target="#collapseTime" data-bs-toggle="collapse" type="button">
-            Time Collections
-          </button>
-        </h2>
-        <div class="accordion-collapse collapse" data-bs-parent="#accordionExample" id="collapseTime">
-          <div class="accordion-body">
-            <div class="card-group">
-              <div class="card" id="seasonal">
-                <img alt="Seasonal" class="card-img-top" src="../static/images/posters/seasonal.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Seasonal</h5>
-                  <p class="card-text">Example Collections:<br>- 🐰 <i>Easter Movies</i><br>- 🎅
-                    <i>Christmas Movies</i><br>- 🎃 <i>Halloween Movies</i></p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="seasonal_checkbox" type="checkbox" value=""> Enable
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button aria-controls="collapseTime" aria-expanded="true" class="accordion-button collapsed" data-bs-target="#collapseTime" data-bs-toggle="collapse" type="button">
+              Time Collections
+            </button>
+          </h2>
+          <div class="accordion-collapse collapse" data-bs-parent="#accordionExample" id="collapseTime">
+            <div class="accordion-body">
+              <div class="row row-cols-1 row-cols-md-3 g-2">
+                <div class="card" id="year">
+                  <img alt="Years" class="card-img-top" src="../static/images/posters/year.jpg">
+                  <div class="card-body">
+                    <h5 class="card-title">Years</h5>
+                    <p class="card-text">Example Collections:<br><i>- Best of 2010<br>- Best of 2017<br>- Best of 2023</i>
+                    </p>
+                  </div>
+                  <div class="card-footer">
+                    <div class="input-group mb-3 small">
+                      <div class="input-group-text">
+                        <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="year_checkbox" type="checkbox" value=""> Enable
+                      </div>
+                      <button class="btn btn-primary btn-sm" disabled id="year_button" type="button">
+                        Customize
+                      </button>
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="seasonal_button" type="button">
-                      Customize
-                    </button>
                   </div>
                 </div>
-              </div>
-              <div class="card" id="year">
-                <img alt="Years" class="card-img-top" src="../static/images/posters/year.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Years</h5>
-                  <p class="card-text">Example Collections:<br><i>- Best of 2010<br>- Best of 2017<br>- Best of 2023</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="year_checkbox" type="checkbox" value=""> Enable
-                    </div>
-                    <button class="btn btn-primary btn-sm" disabled id="year_button" type="button">
-                      Customize
-                    </button>
+                <div class="card" id="decade">
+                  <img alt="Decades" class="card-img-top" src="../static/images/posters/decade.jpg">
+                  <div class="card-body">
+                    <h5 class="card-title">Decades</h5>
+                    <p class="card-text">Example Collections:<br><i>- Best of 2020s<br>- Best of 1990s<br>- Best of 2000s</i>
+                    </p>
                   </div>
-                </div>
-              </div>
-              <div class="card" id="decade">
-                <img alt="Decades" class="card-img-top" src="../static/images/posters/decade.jpg">
-                <div class="card-body">
-                  <h5 class="card-title">Decades</h5>
-                  <p class="card-text">Example Collections:<br><i>- Best of 2020s<br>- Best of 1990s<br>- Best of 2000s</i>
-                  </p>
-                </div>
-                <div class="card-footer">
-                  <div class="input-group mb-3 small">
-                    <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="decade_checkbox" type="checkbox" value=""> Enable
+                  <div class="card-footer">
+                    <div class="input-group mb-3 small">
+                      <div class="input-group-text">
+                        <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="decade_checkbox" type="checkbox" value=""> Enable
+                      </div>
+                      <button class="btn btn-primary btn-sm" disabled id="decade_button" type="button">
+                        Customize
+                      </button>
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="decade_button" type="button">
-                      Customize
-                    </button>
                   </div>
                 </div>
               </div>
@@ -1311,7 +1056,6 @@
         </div>
       </div>
     </div>
-  </div>
 </form>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
