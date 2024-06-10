@@ -19,6 +19,17 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/styles.css') }}"
     />
+    <style>
+      .jump-spinner-container {
+        position: relative;
+      }
+      #jump-spinner-icon {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+      }
+    </style>
   </head>
   <body>
     <script type="text/javascript">
@@ -36,15 +47,13 @@
       // Function to handle jump to action
       function jumpTo(targetPage) {
         const form = document.getElementById('configForm');
-        
-        // Check if form exists
-        if (!form) {
-          loading('jump');
-          // Redirect to the target page directly if no form is found
-          window.location.href = '/step/' + targetPage;
+
+        // Check form validity
+        if (!form.checkValidity()) {
+          form.reportValidity();
           return;
         }
-        
+
         // Create FormData object from the form
         const formData = new FormData(form);
 
