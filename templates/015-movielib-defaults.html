@@ -1,11 +1,11 @@
 {% extends "000-base.html" %} {% block content %}
-<form method="post" id="configForm" name="configForm">
+<form id="configForm" method="post" name="configForm">
   <div id="{{page_info['title']}}Section">
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
-          <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
-            <i id="prev-spinner-icon" class="fa fa-arrow-left"></i>
+          <button class="btn btn-secondary" formaction="/step/{{ page_info['prev_page'] }}" onclick="loading('prev')" type="submit">
+            <i class="fa fa-arrow-left" id="prev-spinner-icon"></i>
           </button>
         </div>
       </div>
@@ -14,13 +14,11 @@
       </div>
       <div class="col align-self-center">
         <div class="input-group justify-content-end jump-spinner-container">
-          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-            <span id="jump-to-text">Jump To</span>
-            <i id="jump-spinner-icon" class=""></i>
+          <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" type="button">
+            <span id="jump-to-text">Jump To</span> <i class="" id="jump-spinner-icon"></i>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            {% for file, name in template_list %}
-            {% if name == 'Final Validation' %}
+            {% for file, name in template_list %} {% if name == 'Final Validation' %}
             <li>
               <hr class="dropdown-divider">
             </li>
@@ -32,11 +30,10 @@
             <li>
               <hr class="dropdown-divider">
             </li>
-            {% endif %}
-            {% endfor %}
+            {% endif %} {% endfor %}
           </ul>
-          <button type="submit" class="btn btn-success" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
-            <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+          <button class="btn btn-success" formaction="/step/{{ page_info['next_page'] }}" onclick="loading('next')" type="submit">
+            <i class="fa fa-arrow-right" id="next-spinner-icon"></i>
           </button>
         </div>
       </div>
@@ -46,7 +43,7 @@
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
-            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+            <div aria-label="Example with label" aria-valuemax="100" aria-valuemin="0" aria-valuenow="25" class="progress" role="progressbar">
               <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
                 {{ page_info['progress'] }}%
               </div>
@@ -58,20 +55,19 @@
     </div>
     <hr class="hr">
     <div class="alert alert-info" role="alert">
-      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
+      <a data-bs-target="#exampleModal" data-bs-toggle="modal" href="#">Click Here</a> if you need guidance completing this section.
     </div>
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div aria-hidden="true" aria-labelledby="exampleModalLabel" class="modal fade" id="exampleModal" tabindex="-1">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ title}} Section</h1>
           </div>
           <div class="modal-body">
-            This is some dummy text<br>
-            <br>
+            This is some dummy text<br> <br>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+            <button class="btn btn-primary" data-bs-dismiss="modal" type="button">Close</button>
           </div>
         </div>
       </div>
@@ -98,7 +94,7 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="separator_award_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" data-bs-target="#separator_award_modal" data-bs-toggle="modal" disabled disabled id="separator_award_button" type="button">Customize
+                    <button class="btn btn-primary btn-sm" data-bs-target="#separator_award_modal" data-bs-toggle="modal" disabled id="separator_award_button" type="button">Customize
                     </button>
                   </div>
                 </div>
@@ -107,86 +103,59 @@
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
-                      <h1 class="modal-title fs-5" id="exampleModalLabel">Awards Separator</h1>
+                      <h1 class="modal-title fs-5">Awards Separator</h1>
                       <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
                     </div>
                     <div class="modal-body">
                       <form>
                         <div class="form-group">
-                          <label for="use_award_separator">Use Separator:</label>
-                          <select class="form-control" id="use_award_separator">
-                            <option value="true">Yes</option>
-                            <option value="false">No</option>
+                          <label for="sep_style">Separator Style:</label>
+                          <select class="form-control" id="separator_award_sep_style">
+                            <option value="orig">Original</option>
+                            <option value="amethyst">Amethyst</option>
+                            <option value="aqua">Aqua</option>
+                            <option value="blue">Blue</option>
+                            <option value="stb">Brown</option>
+                            <option value="forest">Forest</option>
+                            <option value="fuchsia">Fuchsia</option>
+                            <option value="gold">Gold</option>
+                            <option value="gray">Gray</option>
+                            <option value="green">Green</option>
+                            <option value="navy">Navy</option>
+                            <option value="ocean">Ocean</option>
+                            <option value="olive">Olive</option>
+                            <option value="orchid">Orchid</option>
+                            <option value="pink">Pink</option>
+                            <option value="plum">Plum</option>
+                            <option value="purple">Purple</option>
+                            <option value="red">Red</option>
+                            <option value="rust">Rust</option>
+                            <option value="salmon">Salmon</option>
+                            <option value="sand">Sand</option>
+                            <option value="tan">Tan</option>
                           </select>
                         </div>
                         <div class="form-group">
-                          <label for="sep_style">Separator Style:</label> <select class="form-control" id="sep_style">
-                          <option value="orig">Original</option>
-                          <option value="amethyst">Amethyst</option>
-                          <option value="aqua">Aqua</option>
-                          <option value="blue">Blue</option>
-                          <option value="forest">Forest</option>
-                          <option value="fuchsia">Fuchsia</option>
-                          <option value="gold">Gold</option>
-                          <option value="gray">Gray</option>
-                          <option value="green">Green</option>
-                          <option value="navy">Navy</option>
-                          <option value="ocean">Ocean</option>
-                          <option value="olive">Olive</option>
-                          <option value="orchid">Orchid</option>
-                          <option value="pink">Pink</option>
-                          <option value="plum">Plum</option>
-                          <option value="purple">Purple</option>
-                          <option value="red">Red</option>
-                          <option value="rust">Rust</option>
-                          <option value="salmon">Salmon</option>
-                          <option value="sand">Sand</option>
-                          <option value="stb">Stb</option>
-                          <option value="tan">Tan</option>
-                        </select>
-                        </div>
-                        <div class="form-group">
-                          <label for="sort_prefix">Sort Prefix:</label>
-                          <input class="form-control" id="sort_prefix" placeholder="!" type="text">
-                        </div>
-                        <div class="form-group">
-                          <label for="sort_title">Sort Title:</label>
-                          <input class="form-control" id="sort_title" placeholder="<<sort_prefix>><<collection_section>>_!<<title>>" type="text">
-                        </div>
-                        <div class="form-group">
                           <label for="placeholder_tmdb_movie">Placeholder TMDb Movie ID:</label>
-                          <input class="form-control" id="placeholder_tmdb_movie" type="text">
+                          <input class="form-control" id="separator_award_placeholder_tmdb_movie" type="text">
                         </div>
                         <div class="form-group">
                           <label for="placeholder_tvdb_show">Placeholder TVDb Show ID:</label>
-                          <input class="form-control" id="placeholder_tvdb_show" type="text">
+                          <input class="form-control" id="separator_award_placeholder_tvdb_show" type="text">
                         </div>
                         <div class="form-group">
                           <label for="placeholder_imdb_id">Placeholder IMDb ID:</label>
-                          <input class="form-control" id="placeholder_imdb_id" type="text">
-                        </div>
-                        <div class="form-group">
-                          <label for="name_separator">Collection Name:</label>
-                          <input class="form-control" id="name_separator" placeholder="Award Collections" type="text">
-                        </div>
-                        <div class="form-group">
-                          <label for="summary_separator">Collection Summary:</label>
-                          <textarea class="form-control" id="summary_separator"></textarea>
+                          <input class="form-control" id="separator_award_placeholder_imdb_id" type="text">
                         </div>
                         <div class="form-group">
                           <label for="collection_mode">Collection Mode:</label>
-                          <select class="form-control" id="collection_mode">
+                          <select class="form-control" id="separator_award_collection_mode">
                             <option value="default">Library Default</option>
                             <option value="hide">Hide Collection</option>
                             <option value="hide_items">Hide Items</option>
                             <option value="show_items">Show Items</option>
                           </select>
                         </div>
-                        <div class="form-group">
-                          <label for="url_poster_separator">Poster URL:</label>
-                          <input class="form-control" id="url_poster_separator" type="text">
-                        </div>
-                        <button class="btn btn-primary" type="submit">Submit</button>
                       </form>
                     </div>
                     <div class="modal-footer">
@@ -210,9 +179,65 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="oscars_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="oscars_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#oscars_modal" data-bs-toggle="modal" disabled id="oscars_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+              </div>
+              <div aria-hidden="true" aria-labelledby="oscars_modal" class="modal fade" id="oscars_modal" tabindex="-1">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h1 class="modal-title fs-5">Academy Awards (Oscars)</h1>
+                      <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                    </div>
+                    <div class="modal-body">
+                      <form>
+                        <div class="mb-3" id="oscarsOptions">
+                          <h6>Enabled Collections</h6>
+                          <div class="dropdown">
+                            <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="oscarsDropdown" type="button">
+                              Select
+                            </button>
+                            <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                              <li>
+                                <div class="form-check">
+                                  <input checked class="form-check-input" id="oscars_use_best_picture" type="checkbox">
+                                  <label class="form-check-label" for="oscars_use_best_picture">Oscars Best Picture Winners</label>
+                                </div>
+                                <div class="form-check">
+                                  <input checked class="form-check-input" id="oscars_use_best_director" type="checkbox">
+                                  <label class="form-check-label" for="oscars_use_best_director">Oscars Best Director Winners</label>
+                                </div>
+                                <div class="form-check">
+                                  <input checked class="form-check-input" id="oscars_use_year_collections" type="checkbox">
+                                  <label class="form-check-label" for="oscars_use_year_collections">Oscars Winners (year)</label>
+                                </div>
+                              </li>
+                            </ul>
+                          </div>
+                          <br>
+                          <div class="mb-3">
+                            <label class="form-label" for="oscars_collection_order"><h6>Collection Order</h6></label>
+                            <select class="form-select" id="oscars_collection_order">
+                              <option selected value="custom">Default IMDb Order</option>
+                              <option value="release">Release Date</option>
+                              <option value="alpha">Alphabetically</option>
+                              <option value="critic_rating.desc">Critic Rating</option>
+                              <option value="audience_rating.desc">Audience Rating</option>
+                              <option value="random.desc">Randomly</option>
+                            </select>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
+                        Close
+                      </button>
+                      <button class="btn btn-primary" type="button">Save changes</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -220,7 +245,7 @@
                 <img alt="Berlin International Film Festival Awards" class="card-img-top" src="../static/images/posters/berlinale.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Berlin International Film Festival Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Best Picture Winners<br>- Golden Bears<br>- 2021</i>
+                  <p class="card-text">Example Collections:<br><i><br>- Golden Bears<br>- 2021</i>
                   </p>
                 </div>
                 <div class="card-footer">
@@ -228,8 +253,61 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="berlinale_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="berlinale_button" type="button">Customize
+                    <button class="btn btn-primary btn-sm" data-bs-target="#berlinale_modal" data-bs-toggle="modal" disabled id="berlinale_button" type="button">
+                      Customize
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div aria-hidden="true" aria-labelledby="berlinale_modal" class="modal fade" id="berlinale_modal" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h1 class="modal-title fs-5">Berlin Film Festival Awards</h1>
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                  </div>
+                  <div class="modal-body">
+                    <form>
+                      <div class="mb-3" id="berlinaleOptions">
+                        <h6>Enabled Collections</h6>
+                        <div class="dropdown">
+                          <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="berlinaleDropdown" type="button">
+                            Select
+                          </button>
+                          <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                            <li>
+                              <div class="form-check">
+                                <input checked class="form-check-input" id="berlinale_use_golden" type="checkbox">
+                                <label class="form-check-label" for="berlinale_use_golden">Berlinale Golden Bears</label>
+                              </div>
+                              <div class="form-check">
+                                <input checked class="form-check-input" id="berlinale_use_year_collections" type="checkbox">
+                                <label class="form-check-label" for="berlinale_use_year_collections">Berlinale (year)</label>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+                        <br>
+                        <div class="mb-3">
+                          <label class="form-label" for="berlinale_collection_order"><h6>Collection Order</h6></label>
+                          <select class="form-select" id="berlinale_collection_order">
+                            <option selected value="custom">Default IMDb Order</option>
+                            <option value="release">Release Date</option>
+                            <option value="alpha">Alphabetically</option>
+                            <option value="critic_rating.desc">Critic Rating</option>
+                            <option value="audience_rating.desc">Audience Rating</option>
+                            <option value="random.desc">Randomly</option>
+                          </select>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                  <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
+                      Close
+                    </button>
+                    <button class="btn btn-primary" type="button">Save changes</button>
                   </div>
                 </div>
               </div>
@@ -247,9 +325,61 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="bafta_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="bafta_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#bafta_modal" data-bs-toggle="modal" disabled id="bafta_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+              </div>
+              <div aria-hidden="true" aria-labelledby="bafta_modal" class="modal fade" id="bafta_modal" tabindex="-1">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h1 class="modal-title fs-5">British Academy of Film Awards</h1>
+                      <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                    </div>
+                    <div class="modal-body">
+                      <form>
+                        <div class="mb-3" id="baftaOptions">
+                          <h6>Enabled Collections</h6>
+                          <div class="dropdown">
+                            <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="baftaDropdown" type="button">
+                              Select
+                            </button>
+                            <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                              <li>
+                                <div class="form-check">
+                                  <input checked class="form-check-input" id="bafta_use_best" type="checkbox">
+                                  <label class="form-check-label" for="bafta_use_best">BAFTA Best Films</label>
+                                </div>
+                                <div class="form-check">
+                                  <input checked class="form-check-input" id="bafta_use_year_collections" type="checkbox">
+                                  <label class="form-check-label" for="bafta_use_year_collections">BAFTA (year)</label>
+                                </div>
+                              </li>
+                            </ul>
+                          </div>
+                          <br>
+                          <div class="mb-3">
+                            <label class="form-label" for="bafta_collection_order"><h6>Collection Order</h6></label>
+                            <select class="form-select" id="bafta_collection_order">
+                              <option selected value="custom">Default IMDb Order</option>
+                              <option value="release">Release Date</option>
+                              <option value="alpha">Alphabetically</option>
+                              <option value="critic_rating.desc">Critic Rating</option>
+                              <option value="audience_rating.desc">Audience Rating</option>
+                              <option value="random.desc">Randomly</option>
+                            </select>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
+                        Close
+                      </button>
+                      <button class="btn btn-primary" type="button">Save changes</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -265,9 +395,61 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="cannes_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="cannes_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#cannes_modal" data-bs-toggle="modal" disabled id="cannes_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+              </div>
+              <div aria-hidden="true" aria-labelledby="cannes_modal" class="modal fade" id="cannes_modal" tabindex="-1">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h1 class="modal-title fs-5">Cannes Film Festival Awards</h1>
+                      <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                    </div>
+                    <div class="modal-body">
+                      <form>
+                        <div class="mb-3" id="cannesOptions">
+                          <h6>Enabled Collections</h6>
+                          <div class="dropdown">
+                            <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="cannesDropdown" type="button">
+                              Select
+                            </button>
+                            <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                              <li>
+                                <div class="form-check">
+                                  <input checked class="form-check-input" id="cannes_use_best" type="checkbox">
+                                  <label class="form-check-label" for="cannes_use_best">Cannes Golden Palm Winners</label>
+                                </div>
+                                <div class="form-check">
+                                  <input checked class="form-check-input" id="cannes_use_year_collections" type="checkbox">
+                                  <label class="form-check-label" for="cannes_use_year_collections">Cannes (year)</label>
+                                </div>
+                              </li>
+                            </ul>
+                          </div>
+                          <br>
+                          <div class="mb-3">
+                            <label class="form-label" for="cannes_collection_order"><h6>Collection Order</h6></label>
+                            <select class="form-select" id="cannes_collection_order">
+                              <option selected value="custom">Default IMDb Order</option>
+                              <option value="release">Release Date</option>
+                              <option value="alpha">Alphabetically</option>
+                              <option value="critic_rating.desc">Critic Rating</option>
+                              <option value="audience_rating.desc">Audience Rating</option>
+                              <option value="random.desc">Randomly</option>
+                            </select>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                    <div class="modal-footer">
+                      <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
+                        Close
+                      </button>
+                      <button class="btn btn-primary" type="button">Save changes</button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -282,9 +464,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="cesar_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="cesar_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#cesar_modal" data-bs-toggle="modal" disabled id="cesar_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div aria-hidden="true" aria-labelledby="cesar_modal" class="modal fade" id="cesar_modal" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h1 class="modal-title fs-5">César Awards</h1>
+                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                  </div>
+                  <div class="modal-body">
+                    <form>
+                      <div class="mb-3" id="cesarOptions">
+                        <h6>Enabled Collections</h6>
+                        <div class="dropdown">
+                          <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="cesarDropdown" type="button">
+                            Select
+                          </button>
+                          <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                            <li>
+                              <div class="form-check">
+                                <input checked class="form-check-input" id="cesar_use_best" type="checkbox">
+                                <label class="form-check-label" for="cesar_use_best">César Best Film Winners</label>
+                              </div>
+                              <div class="form-check">
+                                <input checked class="form-check-input" id="cesar_use_year_collections" type="checkbox">
+                                <label class="form-check-label" for="cesar_use_year_collections">César (year)</label>
+                              </div>
+                            </li>
+                          </ul>
+                        </div>
+                        <br>
+                        <div class="mb-3">
+                          <label class="form-label" for="cesar_collection_order"><h6>Collection Order</h6></label>
+                          <select class="form-select" id="cesar_collection_order">
+                            <option selected value="custom">Default IMDb Order</option>
+                            <option value="release">Release Date</option>
+                            <option value="alpha">Alphabetically</option>
+                            <option value="critic_rating.desc">Critic Rating</option>
+                            <option value="audience_rating.desc">Audience Rating</option>
+                            <option value="random.desc">Randomly</option>
+                          </select>
+                        </div>
+                      </div>
+                    </form>
                   </div>
                 </div>
               </div>
@@ -302,9 +530,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="choice_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="choice_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#choice_modal" data-bs-toggle="modal" disabled id="choice_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="choice_modal" class="modal fade" id="choice_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">Critics Choice Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="choiceOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="choiceDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="choice_use_best" type="checkbox">
+                                    <label class="form-check-label" for="choice_use_best">Critics Choice Best Picture Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="choice_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="choice_use_year_collections">Critics Choice Awards (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="choice_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="choice_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -320,9 +594,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="emmy_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="emmy_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#emmy_modal" data-bs-toggle="modal" disabled id="emmy_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="emmy_modal" class="modal fade" id="emmy_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">Emmy Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="emmyOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="emmyDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="emmy_use_best" type="checkbox">
+                                    <label class="form-check-label" for="emmy_use_best">Emmys Best in Category Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="emmy_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="emmy_use_year_collections">Emmys (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="emmy_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="emmy_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -338,9 +658,59 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="golden_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="golden_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#golden_modal" data-bs-toggle="modal" disabled id="golden_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="golden_modal" class="modal fade" id="golden_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">Golden Globe Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="goldenOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="goldenDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="golden_use_best_picture" type="checkbox">
+                                    <label class="form-check-label" for="golden_use_best_picture">Golden Globes Best Picture Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="golden_use_best_director" type="checkbox">
+                                    <label class="form-check-label" for="golden_use_best_director">Golden Globes Best Director Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="golden_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="golden_use_year_collections">Golden Globe (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="golden_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="golden_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -358,9 +728,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="spirit_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="spirit_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#spirit_modal" data-bs-toggle="modal" disabled id="spirit_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="spirit_modal" class="modal fade" id="spirit_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">Independent Spirit Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="spiritOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="spiritDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="spirit_use_best" type="checkbox">
+                                    <label class="form-check-label" for="spirit_use_best">Independent Spirit Best Feature Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="spirit_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="spirit_use_year_collections">Independent Spirit Awards (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="spirit_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="spirit_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -376,9 +792,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="nfr_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="nfr_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#nfr_modal" data-bs-toggle="modal" disabled id="nfr_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="nfr_modal" class="modal fade" id="nfr_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">National Film Registry</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="nfrOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="nfrDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="nfr_use_all_time" type="checkbox">
+                                    <label class="form-check-label" for="nfr_use_all_time">National Film Registry All Time</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="nfr_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="nfr_use_year_collections">National Film Registry (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="nfr_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="nfr_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -394,9 +856,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="pca_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="pca_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#pca_modal" data-bs-toggle="modal" disabled id="pca_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="pca_modal" class="modal fade" id="pca_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">People's Choice Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="pcaOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="pcaDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="pca_use_pca" type="checkbox">
+                                    <label class="form-check-label" for="pca_use_pca">People's Choice Award Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="pca_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="pca_use_year_collections">People's Choice Awards (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="pca_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="pca_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -414,9 +922,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="razzie_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="razzie_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#razzie_modal" data-bs-toggle="modal" disabled id="razzie_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="razzie_modal" class="modal fade" id="razzie_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">Razzie Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="razzieOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="razzieDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="razzie_use_golden" type="checkbox">
+                                    <label class="form-check-label" for="razzie_use_golden">Razzies Golden Raspberry Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="razzie_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="razzie_use_year_collections">Razzie (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="razzie_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="razzie_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -432,9 +986,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="sag_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="sag_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#sag_modal" data-bs-toggle="modal" disabled id="sag_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="sag_modal" class="modal fade" id="sag_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">Screen Actors Guild Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="sagOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="sagDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="sag_use_golden" type="checkbox">
+                                    <label class="form-check-label" for="sag_use_golden">Screen Actors Guild Award Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="sag_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="sag_use_year_collections">Screen Actors Guild (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="sag_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="sag_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -450,8 +1050,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="sundance_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="sundance_button" type="button">Customize
+                    <button class="btn btn-primary btn-sm" data-bs-target="#sundance_modal" data-bs-toggle="modal" disabled id="sundance_button" type="button">
+                      Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="sundance_modal" class="modal fade" id="sundance_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">Sundance Film Festival Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="sundanceOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="sundanceDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="sundance_use_grand" type="checkbox">
+                                    <label class="form-check-label" for="sundance_use_grand">Sundance Grand Jury Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="sundance_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="sundance_use_year_collections">Sundance Film Festival (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="sundance_collection_order"><h6>Collection Order</h6>
+                              </label> <select class="form-select" id="sundance_collection_order">
+                              <option selected value="custom">Default IMDb Order</option>
+                              <option value="release">Release Date</option>
+                              <option value="alpha">Alphabetically</option>
+                              <option value="critic_rating.desc">Critic Rating</option>
+                              <option value="audience_rating.desc">Audience Rating</option>
+                              <option value="random.desc">Randomly</option>
+                            </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -469,9 +1116,55 @@
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="tiff_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="tiff_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#tiff_modal" data-bs-toggle="modal" disabled id="tiff_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="tiff_modal" class="modal fade" id="tiff_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">Toronto International Film Festival Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="tiffOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="tiffDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="tiff_use_best" type="checkbox">
+                                    <label class="form-check-label" for="tiff_use_best">Toronto People's Choice Award Winners</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="tiff_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="tiff_use_year_collections">Toronto International Film Festival (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="tiff_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="tiff_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -479,16 +1172,63 @@
                 <img alt="Venice Film Festival Awards" class="card-img-top" src="../static/images/posters/venice.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Venice Film Festival Awards</h5>
-                  <p class="card-text">Example Collections:<br><i>- Venice Golden Lions<br>- Venice 2023</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Venice Golden Lions<br>- Venice 2023</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
                     <div class="input-group-text">
                       <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="venice_checkbox" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" disabled id="venice_button" type="button">
+                    <button class="btn btn-primary btn-sm" data-bs-target="#venice_modal" data-bs-toggle="modal" disabled id="venice_button" type="button">
                       Customize
                     </button>
+                  </div>
+                </div>
+                <div aria-hidden="true" aria-labelledby="venice_modal" class="modal fade" id="venice_modal" tabindex="-1">
+                  <div class="modal-dialog">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h1 class="modal-title fs-5">Venice Film Festival Awards</h1>
+                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                      </div>
+                      <div class="modal-body">
+                        <form>
+                          <div class="mb-3" id="veniceOptions">
+                            <h6>Enabled Collections</h6>
+                            <div class="dropdown">
+                              <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle" data-bs-toggle="dropdown" id="veniceDropdown" type="button">
+                                Select
+                              </button>
+                              <ul aria-labelledby="multiSelectDropdown" class="dropdown-menu">
+                                <li>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="venice_use_golden" type="checkbox">
+                                    <label class="form-check-label" for="venice_use_golden">Venice Golden Lions</label>
+                                  </div>
+                                  <div class="form-check">
+                                    <input checked class="form-check-input" id="venice_use_year_collections" type="checkbox">
+                                    <label class="form-check-label" for="venice_use_year_collections">Venice (year)</label>
+                                  </div>
+                                </li>
+                              </ul>
+                            </div>
+                            <br>
+                            <div class="mb-3">
+                              <label class="form-label" for="venice_collection_order"><h6>Collection Order</h6></label>
+                              <select class="form-select" id="venice_collection_order">
+                                <option selected value="custom">Default IMDb Order</option>
+                                <option value="release">Release Date</option>
+                                <option value="alpha">Alphabetically</option>
+                                <option value="critic_rating.desc">Critic Rating</option>
+                                <option value="audience_rating.desc">Audience Rating</option>
+                                <option value="random.desc">Randomly</option>
+                              </select>
+                            </div>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -637,7 +1377,8 @@
                 <img alt="Tautulli" class="card-img-top" src="../static/images/posters/tautulli.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Tautulli</h5>
-                  <p class="card-text">Example Collections:<br><i>- Plex Popular<br>- Plex Watched</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Plex Popular<br>- Plex Watched</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -655,7 +1396,8 @@
                 <img alt="IMDb" class="card-img-top" src="../static/images/posters/imdb.jpg">
                 <div class="card-body">
                   <h5 class="card-title">IMDb</h5>
-                  <p class="card-text">Example Collections:<br><i>- Popular<br>- Top 250<br>- Lowest Rated</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Popular<br>- Top 250<br>- Lowest Rated</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -672,7 +1414,8 @@
                 <img alt="TMDb" class="card-img-top" src="../static/images/posters/tmdb.jpg">
                 <div class="card-body">
                   <h5 class="card-title">TMDb</h5>
-                  <p class="card-text">Example Collections:<br><i>- Popular<br>- Trending<br>- Recommended</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Popular<br>- Trending<br>- Recommended</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -689,7 +1432,8 @@
                 <img alt="Trakt" class="card-img-top" src="../static/images/posters/trakt.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Trakt</h5>
-                  <p class="card-text">Example Collections:<br><i>- Collected<br>- Recommended<br>- Popular </i></p>
+                  <p class="card-text">Example Collections:<br><i>- Collected<br>- Recommended<br>- Popular </i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -707,7 +1451,8 @@
                 <img alt="AniList" class="card-img-top" src="../static/images/posters/anilist.jpg">
                 <div class="card-body">
                   <h5 class="card-title">AniList</h5>
-                  <p class="card-text">Example Collections:<br><i>- Popular<br>- Trending<br>- Top Rated</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Popular<br>- Trending<br>- Top Rated</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -724,7 +1469,8 @@
                 <img alt="MyAnimeList" class="card-img-top" src="../static/images/posters/myanimelist.jpg">
                 <div class="card-body">
                   <h5 class="card-title">MyAnimeList</h5>
-                  <p class="card-text">Example Collections:<br><i>- Popular<br>- Top Rated<br>- Favorited</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Popular<br>- Top Rated<br>- Favorited</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -772,7 +1518,8 @@
                 <img alt="Genres" class="card-img-top" src="../static/images/posters/genre.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Genres</h5>
-                  <p class="card-text">Example Collections:<br><i>- Action<br>- Drama<br>- Science Fiction</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Action<br>- Drama<br>- Science Fiction</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -826,7 +1573,8 @@
                 <img alt="Based On..." class="card-img-top" src="../static/images/posters/based.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Based On...</h5>
-                  <p class="card-text">Example Collections:<br><i>- Based on a Book<br>- Based on a True Story</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Based on a Book<br>- Based on a True Story</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -907,7 +1655,8 @@
                 <img alt="DE Content Ratings" class="card-img-top" src="../static/images/posters/content_rating_de.jpg">
                 <div class="card-body">
                   <h5 class="card-title">DE Content Ratings</h5>
-                  <p class="card-text">Example Collections:<br><i>- Films 12<br>- Films 17<br>- Films 18</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Films 12<br>- Films 17<br>- Films 18</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -973,7 +1722,8 @@
                 <img alt="Countries" class="card-img-top" src="../static/images/posters/country.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Countries</h5>
-                  <p class="card-text">Example Collections:<br><i>- Belgium<br>- India<br>- France</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Belgium<br>- India<br>- France</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -990,7 +1740,8 @@
                 <img alt="Regions" class="card-img-top" src="../static/images/posters/region.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Regions</h5>
-                  <p class="card-text">Example Collections:<br><i>- Iberia<br>- Balkans<br>- Benelux</i></p>
+                  <p class="card-text">Example Collections:<br><i>- Iberia<br>- Balkans<br>- Benelux</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -1007,7 +1758,8 @@
                 <img alt="Continents" class="card-img-top" src="../static/images/posters/continent.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Continents</h5>
-                  <p class="card-text">Example Collections:<br><i>- North America<br>- Asia<br>- South America</i></p>
+                  <p class="card-text">Example Collections:<br><i>- North America<br>- Asia<br>- South America</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -1037,7 +1789,8 @@
                 <img alt="Aspect Ratios" class="card-img-top" src="../static/images/posters/aspect.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Aspect Ratios</h5>
-                  <p class="card-text">Example Collections:<br><i>- 1.33<br>- 1.65<br>- 2.77</i></p>
+                  <p class="card-text">Example Collections:<br><i>- 1.33<br>- 1.65<br>- 2.77</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -1054,7 +1807,8 @@
                 <img alt="Resolutions" class="card-img-top" src="../static/images/posters/resolution.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Resolutions</h5>
-                  <p class="card-text">Example Collections:<br><i>- 4K Movies<br>- 1080p Movies<br>- 720p Movies</i></p>
+                  <p class="card-text">Example Collections:<br><i>- 4K Movies<br>- 1080p Movies<br>- 720p Movies</i>
+                  </p>
                 </div>
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
@@ -1316,6 +2070,24 @@
   </div>
 </form>
 <script>
+  const chBoxes =
+      document.querySelectorAll('.dropdown-menu input[type="checkbox"]');
+  const dpBtn =
+      document.getElementById('multiSelectDropdown');
+  let mySelectedListItems = [];
+
+  function handleCB() {
+      mySelectedListItems = [];
+      let mySelectedListItemsText = '';
+
+      chBoxes.forEach((checkbox) => {
+          if (checkbox.checked) {
+              mySelectedListItems.push(checkbox.value);
+              mySelectedListItemsText += checkbox.value + ', ';
+          }
+      });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     const cardFooters = document.querySelectorAll('.card-footer');
 
