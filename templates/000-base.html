@@ -46,8 +46,13 @@
 
       // Function to handle jump to action
       function jumpTo(targetPage) {
-        const form = document.getElementById('configForm');
-
+        const form = document.getElementById('configForm') || document.getElementById('final-form');
+        
+        if (!form) {
+          console.error('Form not found');
+          return;
+        }
+    
         // Check form validity
         if (!form.checkValidity()) {
           form.reportValidity();
