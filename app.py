@@ -13,7 +13,7 @@ from plexapi.server import PlexServer
 import pyfiglet
 import secrets
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server, validate_webhook_server
 from modules.output import build_config
 from modules.helpers import get_template_list, get_bits, get_menu_list
 from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
@@ -185,6 +185,10 @@ def validate_anidb():
     data = request.json
     return validate_anidb_server(data)
 
+@app.route('/validate_webhook', methods=['POST'])
+def validate_webhook():
+    data = request.json
+    return validate_webhook_server(data)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
