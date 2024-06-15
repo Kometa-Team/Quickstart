@@ -29,6 +29,51 @@ code {
     height: auto;
 }
 
+/* -------------------- */
+/* FOOTER STYLES        */
+/* -------------------- */
+.footer {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    background-color: #212529;
+    margin-top: 20px;
+    border-top: 1px solid #343a40 ;
+}
+.footer .donate-button {
+    display: inline-block;
+    padding: 8px 16px;
+    font-size: 14px;
+    color: #fff;
+    background-color: #007bff; /* Blue color */
+    border: none;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.footer .donate-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.footer .donate-button i {
+    margin-right: 4px;
+}
+
+/* -------------------- */
+/* SPINNER STYLES       */
+/* -------------------- */
+.jump-spinner-container {
+    position: relative;
+}
+#jump-spinner-icon {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+}
 
 /* -------------------- */
 /* FORM STYLES          */

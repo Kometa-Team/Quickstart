@@ -20,15 +20,6 @@
       href="{{ url_for('static', filename='css/styles.css') }}"
     />
     <style>
-      .jump-spinner-container {
-        position: relative;
-      }
-      #jump-spinner-icon {
-        position: absolute;
-        top: 50%;
-        right: 10px;
-        transform: translateY(-50%);
-      }
     </style>
   </head>
   <body>
@@ -89,7 +80,7 @@
     <div class="header-container">
       <img
         src="{{ url_for('static', filename='images/header.png') }}"
-        alt="Header Image"
+        alt="KOMETA"
         class="header-image"
       />
     </div>
@@ -111,6 +102,10 @@
           {% block content %}{% endblock %}
         </div>
       </div>
+    <div class="footer">
+      <a href="https://github.com/sponsors/meisnate12" class="donate-button" target="_blank">
+        <i class="fa fa-heart"></i> Donate
+      </a>
     </div>
   </body>
 </html>
