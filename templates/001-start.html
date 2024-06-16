@@ -1,34 +1,89 @@
-<!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Start - Kometa YAML Config Wizard</title>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}"/>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"/>
-</head>
-<body>
-<div class="header-container">
-  <img src="{{ url_for('static', filename='images/header.png') }}" alt="Header Image" class="header-image"/>
-</div>
-<form action="/step/010-plex" method="post" id="configForm" name="configForm">
-  <h2>Kometa Configuration Builder</h2>
-  <hr class="hr"/>
-  <center>
-    <img src="{{ url_for('static', filename='images/wizard.webp') }}" alt="Header Image" class="header-image"/>
-  </center>
+{% extends "000-base.html" %} {% block content %}
+<form method="post" id="configForm" name="configForm">
+  <div id="{{page_info['title']}}Section">
+    <div class="row">
+      <div class="col align-self-center">
+        <div class="input-group justify-content-start">
+          <!-- <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
+            <i id="prev-spinner-icon" class="fa fa-arrow-left"></i>
+          </button> -->
+        </div>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>{{ page_info['title'] }}</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end jump-spinner-container">
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span id="jump-to-text">Jump To</span>
+            <i id="jump-spinner-icon" class=""></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+          <button type="submit" class="btn btn-success" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
+            <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row">
+        <div class="col"></div>
+        <div class="col-8">
+          <div class="col align-self-end">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
+                {{ page_info['progress'] }}%
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <hr class="hr">
+    <div class="alert alert-info" role="alert">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance.
+    </div>
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{page_info['title']}} Section</h1>
+          </div>
+          <div class="modal-body">
+            This is some dummy text<br>
+            <br>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
   <div class="form-text" id="pin-info">
-    <p class="fs-2">This wizard will step you through creating a config file for Kometa. Blah blah it's super cool.</p>
-    <p class="fs-3">Here's a thing etc etc.</p>
+    <center>
+      <img src="{{ url_for('static', filename='images/wizard.webp') }}" alt="Header Image" class="header-image"/>
+    </center>
+    <p class="fs-2">This wizard will step you through creating a config file for Kometa.</p>
     <p class="fs-4">You will need some stuff.</p>
-    <p class="fs-5">Once you have gathered that stuff, click "Begin".</p>
-    <p class="fs-6">The end.</p>
+    <p class="fs-5">Once you have gathered that stuff, click "Next" arrow above.</p>
   </div>
-  <div class="d-grid gap-2">
-    <button class="btn btn-primary" type="submit">Click to Start</button>
-  </div>
-</form>
 <form action="/clear_session" method="post" id="clearSessionForm" name="clearSessionForm" style="margin-top: 10px;">
   <div class="d-grid gap-2">
     <button class="btn btn-danger" type="submit" id="clearSessionButton">Clear Session Data</button>
@@ -43,6 +98,4 @@ document.getElementById('clearSessionButton').addEventListener('click', function
   }
 });
 </script>
-
-</body>
-</html>
+{% endblock %}
