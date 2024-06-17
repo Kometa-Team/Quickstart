@@ -143,17 +143,25 @@ def notification_systems_available():
 
     for file in file_list:
         stem, this_num, b = get_bits(file)
+        
         if "notifiarr" in stem:
             notifiarr_data = retrieve_settings(stem)
+            # print(f"Checking Notifiarr settings: {notifiarr_data}")  # Debug print
             try:
-                notifiarr_available = eval(notifiarr_data['valid'])
-            except:
+                notifiarr_available = bool(notifiarr_data['valid'])
+                # print(f"Notifiarr available: {notifiarr_available}")  # Debug print
+            except Exception as e:
+                # print(f"Error checking Notifiarr availability: {e}")  # Debug print
                 notifiarr_available = False
+        
         if "gotify" in stem:
             gotify_data = retrieve_settings(stem)
+            # print(f"Checking Gotify settings: {gotify_data}")  # Debug print
             try:
-                gotify_available = eval(gotify_data['valid'])
-            except:
+                gotify_available = bool(gotify_data['valid'])
+                # print(f"Gotify available: {gotify_available}")  # Debug print
+            except Exception as e:
+                # print(f"Error checking Gotify availability: {e}")  # Debug print
                 gotify_available = False
 
     return notifiarr_available, gotify_available
