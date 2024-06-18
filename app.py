@@ -87,6 +87,7 @@ def step(name):
         header_style = request.form.get('header_style', 'ascii')
     
     page_info['header_style'] = header_style
+    page_info['template_name'] = name
 
     file_list = get_menu_list()
 
@@ -121,7 +122,7 @@ def step(name):
     page_info['notifiarr_available'], page_info['gotify_available'] = notification_systems_available()
     # notifiarr_available = False
     # gotify_available = False
-    
+
     # This should not be based on name; maybe next being empty
     if name == '900-final':
         validated, config_data, yaml_content = build_config(header_style)
