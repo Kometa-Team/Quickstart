@@ -57,25 +57,7 @@
       </div>
     </div>
     <hr class="hr">
-    <div class="alert alert-info" role="alert">
-      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-    </div>
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{page_info['title']}} Section</h1>
-          </div>
-          <div class="modal-body">
-            This is some dummy text<br>
-            <br>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group input-group-lg form-floating">
       <input type="password" class="form-control" id="mdblist_apikey" name="mdblist_apikey" value="{{ data['mdblist']['apikey'] }}" title="MDBList API Key" aria-label="MDBList API Key"><label for="mdblist_apikey">MDBList API Key</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">

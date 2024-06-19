@@ -139,7 +139,7 @@ def notification_systems_available():
     gotify_available = False
     
     templates_dir = os.path.join(app.root_path, 'templates')
-    file_list = sorted(os.listdir(templates_dir))
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
 
     for file in file_list:
         stem, this_num, b = get_bits(file)
