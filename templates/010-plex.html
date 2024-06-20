@@ -101,6 +101,10 @@
       </button>
       <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="plex_validated" name="plex_validated" value="{{ data['validated'] }}" title="">
+      <label for="plex_validated">Plex Validated</label>
+    </div>
     <div id="plexStatusMessage" class="status-message"></div>
     <div class="hidden" id="hidden" style="display:none">
       <div class="form-floating">
@@ -138,6 +142,19 @@
   </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('plex_validated').value;
+    const hiddenSection = document.getElementById("hidden");
+    const plexDbcache = document.getElementById('plexDbcache');
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+      hiddenSection.style.display = "block";
+      plexDbcache.style.display = 'block';
+    }
+  });
+
   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
     const apikeyInput = document.getElementById('plex_token');
     const currentType = apikeyInput.getAttribute("type");
@@ -152,12 +169,14 @@
     const plexStatusMessage = document.getElementById('plexStatusMessage');
     const plexDbcache = document.getElementById('plexDbcache');
     const currentDbCache = document.getElementById('plex_db_cache').value;
-
+    
     if (!plexUrl || !plexToken) {
       plexStatusMessage.textContent = 'Please enter both Plex URL and Token.';
       plexStatusMessage.style.display = 'block';
       return;
     }
+
+    document.getElementById('plex_validated').value = '';
 
     fetch('/validate_plex', {
       method: 'POST',
@@ -171,10 +190,12 @@
     })
     .then(response => response.json())
     .then(data => {
-      if (data.valid) {
+      if (data.validated) {
         const serverDbCache = data.db_cache;
         plexDbcache.textContent = 'Database cache value retrieved from server is: ' + serverDbCache + ' MB';
         plexDbcache.style.color = '#75b798';
+
+        document.getElementById('plex_validated').value = data.validated;
 
         plexStatusMessage.textContent = 'Plex server validated successfully!';
         plexStatusMessage.style.color = '#75b798';

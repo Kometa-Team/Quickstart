@@ -126,6 +126,10 @@
         <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" placeholder="Localhost URL" aria-label="Localhost URL" oninput="checkURLField(this)">
         <button type="button" class="btn btn-success" id="validate_mal_url">Complete Authentication</button>
       </div>
+      <div class="form-floating">
+        <input type="text" class="form-control" id="mal_validated" name="mal_validated" value="{{ data['validated'] }}" title="">
+        <label for="mal_validated">MyAnimeList Validated</label>
+      </div>
       <div id="malStatusMessage" class="status-message"></div>
       <div class="form-group" id="hidden_stuff">
         <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['mal']['authorization']['access_token'] }}" readonly>
@@ -136,6 +140,14 @@
     </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('mal_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
 
   document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
     const apikeyInput = document.getElementById('mal_client_secret');
@@ -218,6 +230,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function()
     .then(response => response.json())
     .then(data => {
         if (data.valid) {
+            document.getElementById('mal_validated').value = true
             malStatusMessage.textContent = 'MyAnimeList credentials validated successfully!';
             malStatusMessage.style.color = 'green';
             document.getElementById('access_token').value = data.mal_authorization_access_token;

@@ -82,6 +82,10 @@
       </button>
       <button class="btn btn-success" id="validateMdblistButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="mdblist_validated" name="mdblist_validated" value="{{ data['validated'] }}" title="">
+      <label for="mdblist_validated">MDBList Validated</label>
+    </div>
     <div id="mdblistStatusMessage" class="status-message"></div>
     <br>
     <div class="form-floating">
@@ -92,6 +96,15 @@
 </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('mdblist_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
+
   async function validateMdblistApikey(apikey) {
       const apiUrl = `https://mdblist.com/api/?apikey=${apikey}&s=test`;
       try {
@@ -125,6 +138,7 @@
 
       validateMdblistApikey(apiKey).then(isValid => {
           if (isValid) {
+              document.getElementById('mdblist_validated').value = true
               mdblistStatusMessage.textContent = "MDBList API key is valid.";
               mdblistStatusMessage.style.color = '#75b798';
           } else {

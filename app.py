@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session, send_file
 from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 from cachelib.file import FileSystemCache
 
 import jsonschema
@@ -12,11 +13,14 @@ from pathlib import Path
 from plexapi.server import PlexServer
 import pyfiglet
 import secrets
+import namesgenerator
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
-from modules.output import build_config
-from modules.helpers import get_template_list, get_bits, get_menu_list
-from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
+import string
+import random
+
+# app.config['RANDOM_ID'] = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+
+basedir = os.path.abspath
 
 # Load JSON Schema
 yaml = YAML(typ='safe', pure=True)
@@ -37,37 +41,38 @@ except requests.RequestException as e:
 
 load_dotenv()
 
-
 app = Flask(__name__)
 
 app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
 
-# SESSION_TYPE = 'cachelib'
-# SESSION_SERIALIZATION_FORMAT = 'json'
-# SESSION_CACHELIB = FileSystemCache(threshold=500, cache_dir="sessions"),
-# app.config.from_object(__name__)
-# Session(app)
+with app.app_context():
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quickstart.db'
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Create the Flask application
-# app = Flask(__name__)
+    db = SQLAlchemy(app)
 
-# Details on the Secret Key: https://flask.palletsprojects.com/en/3.0.x/config/#SECRET_KEY
-# NOTE: The secret key is used to cryptographically-sign the cookies used for storing
-#       the session identifier.
-# app.secret_key = os.getenv('SECRET_KEY', default='BAD_SECRET_KEY')
+    db.create_all()
+    db.session.commit()
+    
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
+from modules.output import build_config
+from modules.helpers import get_template_list, get_bits, get_menu_list
+from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
+from modules.database import reset_data
 
-# Configure Redis for storing the session data on the server-side
 app.config['SESSION_TYPE'] = 'cachelib'
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_USE_SIGNER'] = False
-# app.config['SESSION_REDIS'] = redis.from_url('redis://127.0.0.1:6379')
 
 # Create and initialize the Flask-Session object AFTER `app` has been configured
 server_session = Session(app)
 
 @app.route('/')
 def start():
-    return render_template('001-start.html')
+    session['config_name'] = namesgenerator.get_random_name()
+    page_info = {}
+    page_info['config_name'] = session['config_name']
+    return render_template('001-start.html', page_info=page_info)
 
 
 @app.route('/clear_session', methods=['POST'])
@@ -76,6 +81,17 @@ def clear_session():
     flash('Session storage cleared successfully.', 'success')
     return redirect(url_for('start'))
 
+@app.route('/clear_data/<name>/<section>')
+def clear_data_section(name, section):
+    reset_data(name, section)
+    flash('SQLite storage cleared successfully.', 'success')
+    return redirect(url_for('start'))
+
+@app.route('/clear_data/<name>')
+def clear_data(name):
+    reset_data(name)
+    flash('SQLite storage cleared successfully.', 'success')
+    return redirect(url_for('start'))
 
 @app.route('/step/<name>', methods=['GET', 'POST'])
 def step(name):
@@ -119,19 +135,10 @@ def step(name):
     page_info['plex_valid'], page_info['tmdb_valid'] = check_minimum_settings()
     
     page_info['notifiarr_available'], page_info['gotify_available'] = notification_systems_available()
-    # notifiarr_available = False
-    # gotify_available = False
     
     # This should not be based on name; maybe next being empty
     if name == '900-final':
-        validated, config_data, yaml_content = build_config(header_style)
-        validation_error = None
-
-        try:
-            jsonschema.validate(instance=config_data, schema=schema)
-        except jsonschema.exceptions.ValidationError as e:
-            flash(f'Validation error: {e.message}', 'danger')
-            validation_error = e
+        validated, validation_error, config_data, yaml_content = build_config(header_style)
         
         return render_template('900-final.html', page_info=page_info, data=data, yaml_content=yaml_content, validation_error=validation_error, template_list=file_list)
 

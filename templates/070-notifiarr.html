@@ -82,11 +82,24 @@
       </button>
       <button class="btn btn-success" id="validateNotifiarrButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="notifiarr_validated" name="notifiarr_validated" value="{{ data['validated'] }}" title="">
+      <label for="notifiarr_validated">Notifiarr Validated</label>
+    </div>
     <div id="notifiarrStatusMessage" class="status-message"></div><br>
 </div>
 </form>
 <script>
-    async function validateNotifiarrApikey(apikey) {
+  $(document).ready(function() {
+    const isValidated = document.getElementById('notifiarr_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
+
+  async function validateNotifiarrApikey(apikey) {
         const apiUrl = `https://notifiarr.com/api/v1/user/validate/${apikey}`;
         try {
             const response = await fetch(apiUrl);
@@ -124,6 +137,7 @@
 
       validateNotifiarrApikey(apiKey).then((isValid) => {
         if (isValid) {
+          document.getElementById('notifiarr_validated').value = true
           notifiarrStatusMessage.textContent = "Notifiarr API key is valid.";
           notifiarrStatusMessage.style.color = "#75b798";
         } else {

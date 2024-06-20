@@ -59,7 +59,7 @@ def validate_plex_server(data):
 
     # If PlexServer instance is successfully created and db_cache is retrieved, return success response
     return jsonify({
-        'valid': True,
+        'validated': True,
         'db_cache': db_cache  # Send back the integer value of db_cache
     })
 

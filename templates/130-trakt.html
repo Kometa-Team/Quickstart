@@ -102,11 +102,24 @@
     <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['trakt']['authorization']['refresh_token'] }}" readonly>
     <input type="hidden" class="form-control" id="scope" name="scope" value="{{ data['trakt']['authorization']['scope'] }}" readonly>
     <input type="hidden" class="form-control" id="created_at" name="created_at" value="{{ data['trakt']['authorization']['created_at'] }}" readonly>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="trakt_validated" name="trakt_validated" value="{{ data['validated'] }}" title="">
+      <label for="trakt_validated">Trakt Validated</label>
+    </div>
     <div id="traktStatusMessage" class="status-message"></div>
     <br>
   </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('trakt_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
+
   document.getElementById('toggleClientSecretVisibility').addEventListener('click', function() {
     const apikeyInput = document.getElementById('trakt_client_secret');
     const currentType = apikeyInput.getAttribute('type');
@@ -179,6 +192,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
     .then(response => response.json())
     .then(data => {
         if (data.valid) {
+            document.getElementById('trakt_validated').value = true
             traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
             traktStatusMessage.style.color = '#75b798';
             document.getElementById('access_token').value = data.trakt_authorization_access_token;

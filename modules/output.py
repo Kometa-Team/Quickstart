@@ -18,13 +18,14 @@ def add_border_to_ascii_art(art):
 def section_heading(title):
     return add_border_to_ascii_art(pyfiglet.figlet_format(title))
 
-def clean_section_data(section_data):
-    section_data.pop('iso_639_1_languages', None)
-    section_data.pop('iso_639_2_languages', None)
-    section_data.pop('iso_3166_1_regions', None)
-    section_data.pop('valid', None)
+def clean_section_data(section_data,config_attribute):
+    clean_data = {}
 
-    return section_data
+    for key, value in section_data.items():
+        if key == config_attribute:
+            clean_data[key] = value
+
+    return clean_data
 
 def build_config(header_style='ascii'):
     sections = get_template_list()
@@ -48,10 +49,10 @@ def build_config(header_style='ascii'):
 
         # {'mal': {'authorization': {'code_verifier': 'OEOOZwnH8RWLczgahkUbo__vabgHl7XyvWkDx0twLB4FCaxPY88C9tNXnmxzBq946vSekKbPc3WhW4SwWrq0ld5xKpm27foQx4RXfnXY25iL7Pm0WCCuYkO-iQga69jv', 'localhost_url': '', 'access_token': 'None', 'token_type': 'None', 'expires_in': 'None', 'refresh_token': 'None'}, 'client_id': 'Enter MyAnimeList Client ID', 'client_secret': 'Enter MyAnimeList Client Secret'}, 'valid': True}
         
-        if 'valid' in section_data and section_data['valid']:
+        if 'validated' in section_data and section_data['validated']:
             # it's valid data and needs to end up in the config
             # but first clear some chaff
-            clean_data = clean_section_data(section_data)
+            clean_data = clean_section_data(section_data, config_attribute)
 
             config_data[config_attribute] = clean_data
 
@@ -120,10 +121,6 @@ def build_config(header_style='ascii'):
 
             yaml_content += dump_section(section_art, section_key, section_data)
 
-    # Store the final YAML content in the session
-    yaml_content = yaml_content.replace("'true'", "true")
-    yaml_content = yaml_content.replace("'false'", "false")
-
     print("\n==================================================\n")
     print(f"config_data:\n{config_data}")
     print("\n==================================================\n")
@@ -131,11 +128,12 @@ def build_config(header_style='ascii'):
     print("\n==================================================\n")
 
     validated = False
-    
+    validation_error = None
+
     try:
-        jsonschema.validate(instance=config_data, schema=schema)
+        jsonschema.validate(instance=yaml_content, schema=schema)
         validated = True
     except jsonschema.exceptions.ValidationError as e:
-        validated = False
+        validation_error = e
 
-    return validated, config_data, yaml_content
+    return validated, validation_error, config_data, yaml_content

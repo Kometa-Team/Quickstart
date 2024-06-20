@@ -91,6 +91,10 @@
       </button>
       <button class="btn btn-success" id="validateAnidbButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="anidb_validated" name="anidb_validated" value="{{ data['validated'] }}" title="">
+      <label for="anidb_validated">AniDB Validated</label>
+    </div>
     <div id="anidbStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
       <select class="form-select" id="anidb_language" name="anidb_language">
@@ -107,6 +111,15 @@
   </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('anidb_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
+
   document
     .getElementById("togglePasswordVisibility")
     .addEventListener("click", function () {
@@ -142,6 +155,7 @@
         .then((response) => response.json())
         .then((data) => {
           if (data.valid) {
+            document.getElementById('anidb_validated').value = true
             anidbStatusMessage.textContent = "AniDb credentials are valid.";
             anidbStatusMessage.style.color = "#75b798";
           } else {

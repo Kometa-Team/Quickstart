@@ -86,6 +86,10 @@
       </button>
       <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="sonarr_validated" name="sonarr_validated" value="{{ data['validated'] }}" title="">
+      <label for="sonarr_validated">Sonarr Validated</label>
+    </div>
     <div id="sonarrStatusMessage" class="status-message"></div><br>
     <div class="form-floating">
       <select class="form-select" id="sonarr_root_folder_path" name="sonarr_root_folder_path" value="{{ data['sonarr']['root_folder_path'] }}">
@@ -219,6 +223,15 @@
   </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('sonarr_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
+
   async function validateSonarrApikey(apikey, url) {
       const statusApiUrl = `${url}/api/v3/system/status?apikey=${apikey}`;
       const rootFolderApiUrl = `${url}/api/v3/rootfolder?apikey=${apikey}`;
@@ -233,6 +246,7 @@
           console.log("API Response:", data);
 
           if (response.ok && 'version' in data) {
+              document.getElementById('sonarr_validated').value = true
               console.log("Sonarr API key is valid.");
               sonarrStatusMessage.textContent = "Sonarr API key is valid.";
               sonarrStatusMessage.style.color = '#75b798';
