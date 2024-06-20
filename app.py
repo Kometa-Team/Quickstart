@@ -140,6 +140,8 @@ def step(name):
     if name == '900-final':
         validated, validation_error, config_data, yaml_content = build_config(header_style)
         
+        page_info['yaml_valid'] = validated
+        
         return render_template('900-final.html', page_info=page_info, data=data, yaml_content=yaml_content, validation_error=validation_error, template_list=file_list)
 
     else:

@@ -170,7 +170,7 @@ def validate_trakt_server(data):
 
 def validate_gotify_server(data):
     gotify_url = data.get('gotify_url')
-    gotify_apikey = data.get('gotify_apikey')
+    gotify_token = data.get('gotify_token')
     gotify_url = gotify_url.rstrip('#')
     gotify_url = gotify_url.rstrip('/')
 
@@ -187,7 +187,7 @@ def validate_gotify_server(data):
 
     json={"message": "Kometa Test Message", "title": "Kometa Test"}
 
-    response = requests.post(f"{gotify_url}/message", headers={"X-Gotify-Key": gotify_apikey}, json=json)
+    response = requests.post(f"{gotify_url}/message", headers={"X-Gotify-Key": gotify_token}, json=json)
 
     if response.status_code != 200:
         return jsonify({'valid': False, 'error': f"({response.status_code} [{response.reason}]) {response_json['errorDescription']}"})
