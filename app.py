@@ -103,6 +103,7 @@ def step(name):
         header_style = request.form.get('header_style', 'ascii')
     
     page_info['header_style'] = header_style
+    page_info['template_name'] = name
 
     file_list = get_menu_list()
 
@@ -194,6 +195,10 @@ def validate_anidb():
     data = request.json
     return validate_anidb_server(data)
 
+@app.route('/validate_webhook', methods=['POST'])
+def validate_webhook():
+    data = request.json
+    return validate_webhook_server(data)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

@@ -290,3 +290,20 @@ def validate_anidb_server(data):
         return jsonify({'valid': False, 'error': str(e)})
 
     return jsonify({'valid': False, 'error': 'Unknown error'})
+
+
+def validate_webhook_server(data):
+    webhook_url = data.get('webhook_url')
+    message = data.get('message')
+
+    if not webhook_url:
+        return jsonify({"error": "Webhook URL is required"}), 400
+
+    message_data = {"content": message}
+
+    response = requests.post(webhook_url, json=message_data)
+
+    if response.status_code == 204:
+        return jsonify({"success": "Test message sent successfully! Go and ensure that you see the message on the server side."}), 200
+    else:
+        return jsonify({"error": f"Failed to send message: {response.status_code}, {response.text}"}), 400

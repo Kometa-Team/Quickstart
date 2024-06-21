@@ -20,6 +20,8 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='css/styles.css') }}"
     />
+    <style>
+    </style>
   </head>
   <body>
     <script type="text/javascript">
@@ -28,7 +30,47 @@
           $('#next-spinner-icon').removeClass('fa-arrow-right').addClass('spinner-border spinner-border-sm');
         } else if (type === 'prev') {
           $('#prev-spinner-icon').removeClass('fa-arrow-left').addClass('spinner-border spinner-border-sm');
+        } else if (type === 'jump') {
+          $('#jump-to-text').hide();
+          $('#jump-spinner-icon').addClass('spinner-border spinner-border-sm').show();
         }
+      }
+
+      // Function to handle jump to action
+      function jumpTo(targetPage) {
+        const form = document.getElementById('configForm') || document.getElementById('final-form');
+        
+        if (!form) {
+          console.error('Form not found');
+          return;
+        }
+    
+        // Check form validity
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        // Create FormData object from the form
+        const formData = new FormData(form);
+
+        // Show loading spinner
+        loading('jump');
+
+        // Submit the form data via fetch without the jumpTo field
+        fetch(form.action, {
+          method: 'POST',
+          body: formData
+        }).then(response => {
+          if (response.ok) {
+            // Redirect to the target page after successful form submission
+            window.location.href = '/step/' + targetPage;
+          } else {
+            console.error('Form submission failed:', response.statusText);
+          }
+        }).catch(error => {
+          console.error('Error during form submission:', error);
+        });
       }
     </script>
     <script
@@ -39,7 +81,7 @@
     <div class="header-container">
       <img
         src="{{ url_for('static', filename='images/header.png') }}"
-        alt="Header Image"
+        alt="KOMETA"
         class="header-image"
       />
     </div>
@@ -61,6 +103,10 @@
           {% block content %}{% endblock %}
         </div>
       </div>
+    <div class="footer">
+      <a href="https://github.com/sponsors/meisnate12" class="donate-button" target="_blank">
+        <i class="fa fa-heart"></i> Donate
+      </a>
     </div>
   </body>
 </html>
