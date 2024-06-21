@@ -9,7 +9,7 @@ from .iso_639_1 import iso_639_1_languages  # Importing the languages list
 from .iso_639_2 import iso_639_2_languages  # Importing the languages list
 from .iso_3166_1 import iso_3166_1_regions  # Importing the regions list
 
-from .database import save_section_data, retrieve_section_data
+from .database import save_section_data, retrieve_section_data, reset_data
 
 def extract_names(raw_source):
     source = raw_source
@@ -60,9 +60,6 @@ def save_settings(raw_source, form_data):
         validated = data['validated'] if 'validated' in data else False
 
         save_section_data(name=session['config_name'], section=source_name, validated=validated, user_entered=user_entered, data=data)
-
-        # save under `010-plex`
-        # session[source] = data
 
         print(f"data saved for {source}: {data}")
     else:
@@ -144,12 +141,7 @@ def check_minimum_settings():
     return plex_valid, tmdb_valid
 
 def flush_session_storage():
-    # this needs to use the dynamic template list,
-    # but that needs to be changed to not use the app object
-    template_list = get_template_list()
-    for name in template_list:
-        item = template_list[name]
-        session[item['stem']] = None
+    reset_data(name=session['config_name'])
 
 def notification_systems_available():
     notifiarr_available, notifiarr_user_entered = retrieve_status('notifiarr')
