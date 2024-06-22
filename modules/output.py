@@ -121,10 +121,6 @@ def build_config(header_style='ascii'):
 
             yaml_content += dump_section(section_art, section_key, section_data)
 
-    # Store the final YAML content in the session
-    yaml_content = yaml_content.replace("'true'", "true")
-    yaml_content = yaml_content.replace("'false'", "false")
-
     print("\n==================================================\n")
     print(f"config_data:\n{config_data}")
     print("\n==================================================\n")

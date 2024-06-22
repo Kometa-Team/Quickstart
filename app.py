@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session, send_file
 from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 from cachelib.file import FileSystemCache
 
 import jsonschema
@@ -43,7 +44,6 @@ except requests.RequestException as e:
     schema = None  # or handle the error appropriately
 
 load_dotenv()
-
 
 app = Flask(__name__)
 
@@ -140,9 +140,7 @@ def step(name):
     page_info['plex_valid'], page_info['tmdb_valid'] = check_minimum_settings()
     
     page_info['notifiarr_available'], page_info['gotify_available'] = notification_systems_available()
-    # notifiarr_available = False
-    # gotify_available = False
-
+    
     # This should not be based on name; maybe next being empty
     if name == '900-final':
         validated, validation_error, config_data, yaml_content = build_config(header_style)
