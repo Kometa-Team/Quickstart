@@ -13,9 +13,10 @@
         <h2>{{ page_info['title'] }}</h2>
       </div>
       <div class="col align-self-center">
-        <div class="input-group justify-content-end">
+        <div class="input-group justify-content-end jump-spinner-container">
           <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-            <span>Jump To</span>
+            <span id="jump-to-text">Jump To</span>
+            <i id="jump-spinner-icon" class=""></i>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             {% for file, name in template_list %}
@@ -25,7 +26,7 @@
             </li>
             {% endif %}
             <li>
-              <a class="dropdown-item" href="/step/{{ file.rsplit('.', 1)[0] }}">{{ name }}</a>
+              <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
             <li>
@@ -45,8 +46,7 @@
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
-            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25"
-              aria-valuemin="0" aria-valuemax="100">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
               <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
                 {{ page_info['progress'] }}%
               </div>
@@ -57,88 +57,94 @@
       </div>
     </div>
     <hr class="hr">
-    <div class="alert alert-info" role="alert">
-      <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click Here</a> if you need guidance completing this section.
-    </div>
-    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{ page_info['title'] }} Section</h1>
-          </div>
-          <div class="modal-body">
-            This is some dummy text<br>
-            <br>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+    {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     {% for webhook in ["error", "run_start", "run_end", "changes", "version", "delete"] %}
     <div class="form-floating">
       <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)">
         <option value="">None</option>
-        <option value="notifiarr" {% if data.webhooks[webhook] == 'notifiarr' %}selected{% endif %}>Notifiarr</option>
-        <option value="gotify" {% if data.webhooks[webhook] == 'gotify' %}selected{% endif %}>Gotify</option>
+        <option value="notifiarr" {% if page_info['notifiarr_available'] %}enabled{% else %}disabled{% endif %} {% if data.webhooks[webhook] == 'notifiarr' %}selected{% endif %}>Notifiarr</option>
+        <option value="gotify" {% if page_info['gotify_available'] %}enabled{% else %}disabled{% endif %} {% if data.webhooks[webhook] == 'gotify' %}selected{% endif %}>Gotify</option>
         <option value="custom" {% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}selected{% endif %}>Custom</option>
       </select>
       <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
       <div class="input-group input-group-lg custom-webhook" id="webhooks_{{ webhook }}_custom" style="display: none;">
         <div class="input-group input-group-lg">
           <input type="text" class="form-control custom-webhook-url" placeholder="Enter webhook URL ({{ webhook|replace("_", " ")|title }})"
-                 value="{% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}{{ data.webhooks[webhook] }}{% endif %}">
-          <button class="btn btn-success" type="button">Validate</button>
+                value="{% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}{{ data.webhooks[webhook] }}{% endif %}">
+          <button class="btn btn-success" type="button" onclick="validateWebhook('{{ webhook }}')">Validate</button>
+        </div>
+        <div class="validation-message" id="validation_message_{{ webhook }}" style="display: none; margin-top: 10px;">
+          <div class="alert alert-info" role="alert">
+            Validating...
+          </div>
         </div>
       </div>
     </div>
     {% endfor %}
 
     <script>
-    function showCustomInput(select) {
-      var customInputId = select.id + "_custom";
-      var customInput = $("#" + customInputId);
-      if ($(select).val() === "custom" || $(select).val().startsWith('http')) {
-        customInput.show();
-        customInput.find("input, button").prop("disabled", false);
-      } else {
-        customInput.hide();
-        customInput.find("input").val("");
-        customInput.find("input, button").prop("disabled", true);
-      }
+    function showCustomInput(selectElement) {
+        var customInputId = selectElement.id + '_custom';
+        if (selectElement.value === 'custom') {
+            document.getElementById(customInputId).style.display = 'block';
+        } else {
+            document.getElementById(customInputId).style.display = 'none';
+        }
     }
 
     $(document).ready(function() {
-      var notifiarrAvailable = $('#notifiarr_available').data('notifiarr-available') === "True";
-      var gotifyAvailable = $('#gotify_available').data('gotify-available') === "True";
-
-      $('select.form-select').each(function() {
-        var notifiarrOption = $(this).find('option[value="notifiarr"]');
-        if (!notifiarrAvailable) {
-          notifiarrOption.prop('disabled', true);
-        }
-
-        var gotifyOption = $(this).find('option[value="gotify"]');
-        if (!gotifyAvailable) {
-          gotifyOption.prop('disabled', true);
-        }
-
-        showCustomInput(this);
-      });
-
-      $('#configForm').on('submit', function(e) {
+        // Initial call to showCustomInput to show or hide custom inputs based on initial selection
         $('select.form-select').each(function() {
-          if ($(this).val() === 'custom') {
-            var customInputId = $(this).attr('id') + '_custom';
-            var customUrl = $('#' + customInputId).find('input.custom-webhook-url').val();
-            $(this).append('<option value="' + customUrl + '" selected="selected">' + customUrl + '</option>');
-            $(this).val(customUrl);
-          }
+            showCustomInput(this);
         });
-      });
+
+        document.getElementById("configForm").addEventListener("submit", function (event) {
+            $('select.form-select').each(function() {
+                if ($(this).val() === 'custom') {
+                    var customInputId = $(this).attr('id') + '_custom';
+                    var customUrl = $('#' + customInputId).find('input.custom-webhook-url').val();
+                    if (customUrl) {
+                        $(this).append('<option value="' + customUrl + '" selected="selected">' + customUrl + '</option>');
+                        $(this).val(customUrl);
+                    }
+                }
+            });
+        });
     });
+
+
+    function validateWebhook(webhookType) {
+        var inputGroup = $('#webhooks_' + webhookType + '_custom').find('.input-group');
+        var webhookUrl = inputGroup.find('input.custom-webhook-url').val();
+        var validationMessage = inputGroup.siblings('.validation-message');
+        var webhookTypeFormatted = webhookType.replace(/_/g, " ").replace(/\b\w/g, function (l) { return l.toUpperCase() });
+
+        validationMessage.html('<div class="alert alert-info" role="alert">Validating...</div>');
+        validationMessage.show();
+
+        fetch('/validate_webhook', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                webhook_url: webhookUrl,
+                message: "Test message for " + webhookTypeFormatted + " webhook"
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                validationMessage.html('<div class="alert alert-success" role="alert">' + data.success + '</div>');
+            } else {
+                validationMessage.html('<div class="alert alert-danger" role="alert">' + data.error + '</div>');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            validationMessage.html('<div class="alert alert-danger" role="alert">An error occurred. Please try again.</div>');
+        });
+    }
     </script>
   </div>
 </form>

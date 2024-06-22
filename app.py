@@ -13,7 +13,7 @@ from plexapi.server import PlexServer
 import pyfiglet
 import secrets
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server, validate_webhook_server
 from modules.output import build_config
 from modules.helpers import get_template_list, get_bits, get_menu_list
 from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
@@ -87,6 +87,7 @@ def step(name):
         header_style = request.form.get('header_style', 'ascii')
     
     page_info['header_style'] = header_style
+    page_info['template_name'] = name
 
     file_list = get_menu_list()
 
@@ -121,7 +122,7 @@ def step(name):
     page_info['notifiarr_available'], page_info['gotify_available'] = notification_systems_available()
     # notifiarr_available = False
     # gotify_available = False
-    
+
     # This should not be based on name; maybe next being empty
     if name == '900-final':
         validated, config_data, yaml_content = build_config(header_style)
@@ -185,6 +186,10 @@ def validate_anidb():
     data = request.json
     return validate_anidb_server(data)
 
+@app.route('/validate_webhook', methods=['POST'])
+def validate_webhook():
+    data = request.json
+    return validate_webhook_server(data)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

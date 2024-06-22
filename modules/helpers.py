@@ -123,7 +123,7 @@ def template_record(file, prev, next):
 
 def get_menu_list():
     templates_dir = os.path.join(app.root_path, 'templates')
-    file_list = sorted(os.listdir(templates_dir))
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
     final_list = []
 
     for file in file_list:
@@ -135,7 +135,7 @@ def get_menu_list():
 
 def get_template_list():
     templates_dir = os.path.join(app.root_path, 'templates')
-    file_list = sorted(os.listdir(templates_dir))
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
 
     templates = {}
 
