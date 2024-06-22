@@ -55,29 +55,7 @@ server_session = Session(app)
 
 @app.route('/')
 def start():
-    # generate a new random config name if there isn't one already here
-    try:
-        if not session['config_name']:
-            session['config_name'] = namesgenerator.get_random_name()
-    except:
-        session['config_name'] = namesgenerator.get_random_name()
-
-    page_info = {}
-    page_info['config_name'] = session['config_name']
-    page_info['template_name'] = "start"
-
-    template_list = get_template_list()
-
-    file_list = get_menu_list()
-
-    item = template_list['001']
-    
-    page_info['title'] = item['name']
-    page_info['next_page'] = item['next']
-    page_info['prev_page'] = item['prev']
-
-    return render_template('001-start.html', page_info=page_info, template_list=file_list)
-
+    return redirect(url_for('step', name='001-start'))
 
 @app.route('/clear_session', methods=['POST'])
 def clear_session():
@@ -106,6 +84,13 @@ def step(name):
         save_settings(request.referrer, request.form)
         header_style = request.form.get('header_style', 'ascii')
     
+    try:
+        if not session['config_name']:
+            session['config_name'] = namesgenerator.get_random_name()
+    except:
+        session['config_name'] = namesgenerator.get_random_name()
+
+    page_info['config_name'] = session['config_name']
     page_info['header_style'] = header_style
     page_info['template_name'] = name
 
@@ -125,7 +110,7 @@ def step(name):
         item = template_list[num]
     except:
         # not in there
-        return redirect(url_for('start'))
+        return f"ERROR WITH NAME {name}; stem, num, b: {stem}, {num}, {b}"
     
     page_info['progress'] = round((current_index + 1) / total_steps * 100)
     
