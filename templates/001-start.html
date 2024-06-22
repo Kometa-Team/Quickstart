@@ -66,6 +66,13 @@
     <p class="fs-4">You will need some stuff.</p>
     <p class="fs-5">Once you have gathered that stuff, click "Next" arrow above.</p>
   </div>
+  <div class="form-text" id="name-info">
+    <p class="fs-6">This name is used for saving your config and progress on the server, and allows you to come back and modify an existing config.  You can change it if you wish.</p>
+  </div>
+  <div class="form-floating">
+    <input type="text" class="form-control" id="config_name" name="config_name" value="{{ page_info['config_name'] }}" title="enter a config name if you wish" required="" onkeyup="validate_name(this)">
+    <label for="config_name">config name</label>
+  </div>
 <form action="/clear_session" method="post" id="clearSessionForm" name="clearSessionForm" style="margin-top: 10px;">
   <div class="d-grid gap-2">
     <button class="btn btn-danger" type="submit" id="clearSessionButton">Clear Session Data</button>

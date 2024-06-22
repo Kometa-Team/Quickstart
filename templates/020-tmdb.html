@@ -65,6 +65,10 @@
       </button>
       <button class="btn btn-success" id="validateButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="tmdb_validated" name="tmdb_validated" value="{{ data['validated'] }}" title="">
+      <label for="tmdb_validated">TMDB Validated</label>
+    </div>
     <div id="statusMessage" class="status-message"></div>
     <div class="form-floating">
       <select class="form-select" id="tmdb_language" name="tmdb_language">
@@ -91,6 +95,15 @@
   </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('tmdb_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
+
   // Enable Tooltips
   const tooltipTriggerList = document.querySelectorAll(
     '[data-bs-toggle="tooltip"]'
@@ -129,6 +142,7 @@
       fetch(`https://api.themoviedb.org/3/movie/550?api_key=${apiKey}`)
         .then((response) => {
           if (response.ok) {
+            document.getElementById('tmdb_validated').value = 'true';
             statusMessage.textContent = "API key is valid!";
             statusMessage.style.color = "#75b798";
             return Promise.all([

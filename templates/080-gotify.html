@@ -68,10 +68,23 @@
       </button>
       <button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="gotify_validated" name="gotify_validated" value="{{ data['validated'] }}" title="">
+      <label for="gotify_validated">Gotify Validated</label>
+    </div>
     <div id="gotifyStatusMessage" class="status-message"></div><br>
 </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('gotify_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
+
   // Function to toggle API key visibility
   document
     .getElementById("toggleTokenVisibility")
@@ -133,6 +146,7 @@
         .then((response) => response.json())
         .then((data) => {
           if (data.valid) {
+            document.getElementById('gotify_validated').value = true
             gotifyStatusMessage.textContent =
               "Gotify credentials validated successfully!";
             gotifyStatusMessage.style.color = "green";

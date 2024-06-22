@@ -68,10 +68,22 @@
       </button>
       <button class="btn btn-success" id="validateTautulliButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="tautulli_validated" name="tautulli_validated" value="{{ data['validated'] }}" title="">
+      <label for="tautulli_validated">Tautulli Validated</label>
+    </div>
     <div id="tautulliStatusMessage" class="status-message"></div><br>
   </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('tautulli_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
 
   document
     .getElementById("toggleApikeyVisibility")
@@ -112,6 +124,7 @@
         .then((response) => response.json())
         .then((data) => {
           if (data.valid) {
+            document.getElementById('tautulli_validated').value = true
             tautulliStatusMessage.textContent =
               "Tautulli server validated successfully!";
             tautulliStatusMessage.style.color = "#75b798";

@@ -68,6 +68,10 @@
       </button>
       <button class="btn btn-success" id="validateRadarrButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="radarr_validated" name="radarr_validated" value="{{ data['validated'] }}" title="">
+      <label for="radarr_validated">Radarr Validated</label>
+    </div>
     <div id="radarrStatusMessage" class="status-message"></div>
     <br>
 
@@ -151,6 +155,14 @@
   </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('radarr_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
 
   async function validateRadarrApikey(apikey, url) {
       const statusApiUrl = `${url}/api/v3/system/status?apikey=${apikey}`;
@@ -164,6 +176,7 @@
           const data = await response.json();
   
           if (response.ok && 'version' in data) {
+              document.getElementById('radarr_validated').value = true
               radarrStatusMessage.textContent = "Radarr API key is valid.";
               radarrStatusMessage.style.color = '#75b798';
               radarrStatusMessage.style.display = 'block';

@@ -12,11 +12,18 @@ from pathlib import Path
 from plexapi.server import PlexServer
 import pyfiglet
 import secrets
+import namesgenerator
+
+import string
+import random
 
 from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server, validate_webhook_server
 from modules.output import build_config
 from modules.helpers import get_template_list, get_bits, get_menu_list
 from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
+from modules.database import reset_data
+
+basedir = os.path.abspath
 
 # Load JSON Schema
 yaml = YAML(typ='safe', pure=True)
@@ -40,34 +47,21 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
-
-# SESSION_TYPE = 'cachelib'
-# SESSION_SERIALIZATION_FORMAT = 'json'
-# SESSION_CACHELIB = FileSystemCache(threshold=500, cache_dir="sessions"),
-# app.config.from_object(__name__)
-# Session(app)
-
-# Create the Flask application
-# app = Flask(__name__)
-
-# Details on the Secret Key: https://flask.palletsprojects.com/en/3.0.x/config/#SECRET_KEY
-# NOTE: The secret key is used to cryptographically-sign the cookies used for storing
-#       the session identifier.
-# app.secret_key = os.getenv('SECRET_KEY', default='BAD_SECRET_KEY')
-
-# Configure Redis for storing the session data on the server-side
 app.config['SESSION_TYPE'] = 'cachelib'
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_USE_SIGNER'] = False
-# app.config['SESSION_REDIS'] = redis.from_url('redis://127.0.0.1:6379')
 
-# Create and initialize the Flask-Session object AFTER `app` has been configured
 server_session = Session(app)
 
 @app.route('/')
 def start():
-    return render_template('001-start.html')
+    # generate a new random config name if there isn't one already here
+    if not session['config_name']:
+        session['config_name'] = namesgenerator.get_random_name()
+
+    page_info = {}
+    page_info['config_name'] = session['config_name']
+    return render_template('001-start.html', page_info=page_info)
 
 
 @app.route('/clear_session', methods=['POST'])
@@ -76,6 +70,17 @@ def clear_session():
     flash('Session storage cleared successfully.', 'success')
     return redirect(url_for('start'))
 
+@app.route('/clear_data/<name>/<section>')
+def clear_data_section(name, section):
+    reset_data(name, section)
+    flash('SQLite storage cleared successfully.', 'success')
+    return redirect(url_for('start'))
+
+@app.route('/clear_data/<name>')
+def clear_data(name):
+    reset_data(name)
+    flash('SQLite storage cleared successfully.', 'success')
+    return redirect(url_for('start'))
 
 @app.route('/step/<name>', methods=['GET', 'POST'])
 def step(name):
@@ -125,15 +130,10 @@ def step(name):
 
     # This should not be based on name; maybe next being empty
     if name == '900-final':
-        validated, config_data, yaml_content = build_config(header_style)
-        validation_error = None
-
-        try:
-            jsonschema.validate(instance=config_data, schema=schema)
-        except jsonschema.exceptions.ValidationError as e:
-            flash(f'Validation error: {e.message}', 'danger')
-            validation_error = e
+        validated, validation_error, config_data, yaml_content = build_config(header_style)
         
+        page_info['yaml_valid'] = validated
+                
         return render_template('900-final.html', page_info=page_info, data=data, yaml_content=yaml_content, validation_error=validation_error, template_list=file_list)
 
     else:

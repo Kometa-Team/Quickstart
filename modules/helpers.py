@@ -35,7 +35,11 @@ def build_simple_dict(source, form_data):
             except ValueError:
                 value = value
 
-        data[source][final_key] = value
+        if final_key == 'validated':
+            data[final_key] = value
+        else:
+            data[source][final_key] = value
+
 
     # Special handling for run_order to split and clean it into a list
     if 'run_order' in data[source]:

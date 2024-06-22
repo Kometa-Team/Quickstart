@@ -4,10 +4,12 @@ import secrets
 from ruamel.yaml import YAML
 from flask import current_app as app
 
-from .helpers import build_config_dict, get_template_list, get_bits
+from .helpers import build_config_dict, get_template_list, get_bits, booler
 from .iso_639_1 import iso_639_1_languages  # Importing the languages list
 from .iso_639_2 import iso_639_2_languages  # Importing the languages list
 from .iso_3166_1 import iso_3166_1_regions  # Importing the regions list
+
+from .database import save_section_data, retrieve_section_data, reset_data
 
 def extract_names(raw_source):
     source = raw_source
@@ -53,44 +55,70 @@ def save_settings(raw_source, form_data):
         
         base_data = get_dummy_data(source_name)
 
-        # we know that it is valid at this point
-        data['valid'] = data != base_data
-    
-        # save under `010-plex`
-        session[source] = data
+        user_entered = data != base_data
+
+        validated = data['validated'] if 'validated' in data else False
+
+        save_section_data(name=session['config_name'], section=source_name, validated=validated, user_entered=user_entered, data=data)
 
         print(f"data saved for {source}: {data}")
+    else:
+        session['config_name'] = clean_data['config_name'] if 'config_name' in clean_data else session['config_name']
 
 def retrieve_settings(target):
     # target will be `010-plex`
+    data = {}
 
     # get source from referrer
     source, source_name = extract_names(target)
     # source will be `010-plex`
     # source_name will be `plex`
 
-    data = session.get(source)
+    db_data = retrieve_section_data(name=session['config_name'], section=source_name)
+    # db_data is a tuple of validated, user_entered, data
 
-    if not data:
-        data = get_dummy_data(source_name)
+    data['validated'] = booler(db_data[0])
+    data['user_entered'] = booler(db_data[1])
+    data[source_name] = db_data[2][source_name] if db_data[2] else None
 
-    if target == '020-tmdb':
-        data['iso_639_1_languages'] = iso_639_1_languages
-        data['iso_3166_1_regions'] = iso_3166_1_regions
+    if not data[source_name]:
+        data[source_name] = get_dummy_data(source_name)
 
-    if target == '090-anidb':
-        data['iso_639_1_languages'] = iso_639_1_languages
+    data['code_verifier'] = secrets.token_urlsafe(100)[:128]
+    data['iso_639_1_languages'] = iso_639_1_languages
+    data['iso_3166_1_regions'] = iso_3166_1_regions
+    data['iso_639_1_languages'] = iso_639_1_languages
+    data['iso_639_2_languages'] = iso_639_2_languages
 
-    if target == '150-settings':
-        data['iso_639_2_languages'] = iso_639_2_languages
+    # if source_name == 'mal':
+    #     data['code_verifier'] = secrets.token_urlsafe(100)[:128]
 
-    try:
-        if data['validated']:
-            data['valid'] = True
-    except:
-        data = data
+    # if source_name == 'tmdb':
+    #     data['iso_639_1_languages'] = iso_639_1_languages
+    #     data['iso_3166_1_regions'] = iso_3166_1_regions
+
+    # if source_name == 'anidb':
+    #     data['iso_639_1_languages'] = iso_639_1_languages
+
+    # if target == '150-settings':
+    #     data['iso_639_2_languages'] = iso_639_2_languages
 
     return data
+
+def retrieve_status(target):
+    # target will be `010-plex`
+    # get source from referrer
+    source, source_name = extract_names(target)
+    # source will be `010-plex`
+    # source_name will be `plex`
+
+    db_data = retrieve_section_data(name=session['config_name'], section=source_name)
+    # db_data is a tuple of validated, user_entered, data
+
+    validated = booler(db_data[0])
+    user_entered = booler(db_data[1])
+
+    return validated, user_entered
 
 def get_dummy_data(target):
     
@@ -99,69 +127,24 @@ def get_dummy_data(target):
         base_config = yaml.load(file)
 
     data = {}
-    # dummy data is not valid
-    data['valid'] = False
     try:
-        data[target] = base_config[target]
+        data = base_config[target]
     except:
-        data[target] = {}
-        data[target]['valid'] = False
+        data = {}
 
-
-    if target == 'mal':
-        data['code_verifier'] = secrets.token_urlsafe(100)[:128]
-    
     return data
 
 def check_minimum_settings():
-    plex_settings = retrieve_settings('010-plex')
-    tmdb_settings = retrieve_settings('020-tmdb')
-    
-    try:
-        plex_valid = plex_settings['valid']
-        tmdb_valid = tmdb_settings['valid']
-    except:
-        plex_valid = False
-        tmdb_valid = False
+    plex_valid, plex_user_entered = retrieve_status('plex')
+    tmdb_valid, tmdb_user_entered = retrieve_status('tmdb')
     
     return plex_valid, tmdb_valid
 
 def flush_session_storage():
-    # this needs to use the dynamic template list,
-    # but that needs to be changed to not use the app object
-    template_list = get_template_list()
-    for name in template_list:
-        item = template_list[name]
-        session[item['stem']] = None
+    reset_data(name=session['config_name'])
 
 def notification_systems_available():
-    notifiarr_available = False
-    gotify_available = False
+    notifiarr_available, notifiarr_user_entered = retrieve_status('notifiarr')
+    gotify_available, gotify_user_entered = retrieve_status('gotify')
     
-    templates_dir = os.path.join(app.root_path, 'templates')
-    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
-
-    for file in file_list:
-        stem, this_num, b = get_bits(file)
-        
-        if "notifiarr" in stem:
-            notifiarr_data = retrieve_settings(stem)
-            # print(f"Checking Notifiarr settings: {notifiarr_data}")  # Debug print
-            try:
-                notifiarr_available = bool(notifiarr_data['valid'])
-                # print(f"Notifiarr available: {notifiarr_available}")  # Debug print
-            except Exception as e:
-                # print(f"Error checking Notifiarr availability: {e}")  # Debug print
-                notifiarr_available = False
-        
-        if "gotify" in stem:
-            gotify_data = retrieve_settings(stem)
-            # print(f"Checking Gotify settings: {gotify_data}")  # Debug print
-            try:
-                gotify_available = bool(gotify_data['valid'])
-                # print(f"Gotify available: {gotify_available}")  # Debug print
-            except Exception as e:
-                # print(f"Error checking Gotify availability: {e}")  # Debug print
-                gotify_available = False
-
     return notifiarr_available, gotify_available

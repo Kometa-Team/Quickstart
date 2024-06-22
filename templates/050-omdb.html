@@ -65,6 +65,10 @@
       </button>
       <button class="btn btn-success" id="validateOmdbButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="omdb_validated" name="omdb_validated" value="{{ data['validated'] }}" title="">
+      <label for="omdb_validated">OMDB Validated</label>
+    </div>
     <div id="omdbStatusMessage" class="status-message"></div>
     <br>
     <div class="form-floating">
@@ -75,6 +79,15 @@
 </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('omdb_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
+
   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
       const apikeyInput = document.getElementById('omdb_apikey');
       const currentType = apikeyInput.getAttribute('type');
@@ -113,6 +126,7 @@
 
       validateOmdbapikey(apiKey).then(isValid => {
           if (isValid) {
+              document.getElementById('omdb_validated').value = true
               omdbStatusMessage.textContent = "OMDb API key is valid.";
               omdbStatusMessage.style.color = '#75b798';
           } else {

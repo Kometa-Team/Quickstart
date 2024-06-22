@@ -1,5 +1,6 @@
 Flask
-Flask-Session[cachelib]
+Flask-Session[sqlalchemy]
+Flask-SQLAlchemy
 pyfiglet
 python-dotenv
 plexapi
@@ -8,3 +9,4 @@ iso3166
 requests
 jsonschema
 ruamel.yaml
+namesgenerator

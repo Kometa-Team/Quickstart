@@ -65,10 +65,23 @@
       </button>
       <button class="btn btn-success" id="validateGithubButton" type="button">Validate</button>
     </div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="github_validated" name="github_validated" value="{{ data['validated'] }}" title="">
+      <label for="github_validated">Github Validated</label>
+    </div>
     <div id="githubStatusMessage" class="status-message"></div><br>
   </div>
 </form>
 <script>
+  $(document).ready(function() {
+    const isValidated = document.getElementById('github_validated').value;
+    
+    console.log('Validated: ' + isValidated)
+
+    if (isValidated) {
+    }
+  });
+
   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
     const apikeyInput = document.getElementById('github_token');
     const currentType = apikeyInput.getAttribute('type');
@@ -90,6 +103,7 @@
 
       if (response.ok) {
         const data = await response.json();
+        document.getElementById('github_validated').value = true
         console.log("GitHub token is valid. User: " + data.login);
         return true;
       } else {

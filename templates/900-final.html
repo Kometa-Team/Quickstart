@@ -72,9 +72,9 @@
     </div>
     <div class="form-floating">
       <div class="form-text" id="yaml-content">
-        <br><h5>For your records, here is the YAML that was generated as a result of your inputs.</h5><br>
+        <br><h5>Here is the YAML that was generated as a result of your inputs.</h5><br>
 
-      <div class="alert alert-info" role="alert">
+      <div class="alert alert-info" role="alert" id="no-validation-warning">
         As a reminder, this will most likely not work with Kometa as it has not passed validation.
       </div>
       </div>
@@ -95,6 +95,7 @@ $(document).ready(function() {
   // Fetch the validation status
   var plexValid = $('#plex_valid').data("plex-valid") === "True";
   var tmdbValid = $('#tmdb_valid').data("tmdb-valid") === "True";
+  var yamlValid = $('#yaml_valid').data("yaml-valid") === "True";
   var validationError = $('#validation-error').val().trim();
   // Debugging: Check the values of the meta tags
   // console.log("Plex Valid:", plexValid);
@@ -112,12 +113,16 @@ $(document).ready(function() {
   }
 
   // If there are validation messages, display them
-  if (validationMessages.length > 0) {
+  if (!yamlValid) {
     $('#validation-messages').html(validationMessages.join('<br>')).show();
-    // Hide the download button and textarea
-    $('#download-btn, #final-yaml, #yaml-content, #yaml-warnings, #yaml-warning-msg, #validation-error').addClass('d-none');
-  } else if (!validationError) {
-    $('#download-btn').removeClass('d-none');
+
+    $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').removeClass('d-none');
+    // Hide the download button
+    $('#download-btn').addClass('d-none');
+  } else {
+    $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').addClass('d-none');
+    $('#yaml-content, #final-yaml, #download-btn').removeClass('d-none');
+
   }
 
   // Debugging: Confirm if validation messages div is updated
