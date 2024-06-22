@@ -56,12 +56,27 @@ server_session = Session(app)
 @app.route('/')
 def start():
     # generate a new random config name if there isn't one already here
-    if not session['config_name']:
+    try:
+        if not session['config_name']:
+            session['config_name'] = namesgenerator.get_random_name()
+    except:
         session['config_name'] = namesgenerator.get_random_name()
 
     page_info = {}
     page_info['config_name'] = session['config_name']
-    return render_template('001-start.html', page_info=page_info)
+    page_info['template_name'] = "start"
+
+    template_list = get_template_list()
+
+    file_list = get_menu_list()
+
+    item = template_list['001']
+    
+    page_info['title'] = item['name']
+    page_info['next_page'] = item['next']
+    page_info['prev_page'] = item['prev']
+
+    return render_template('001-start.html', page_info=page_info, template_list=file_list)
 
 
 @app.route('/clear_session', methods=['POST'])
