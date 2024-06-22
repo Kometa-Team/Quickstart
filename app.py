@@ -18,7 +18,11 @@ import namesgenerator
 import string
 import random
 
-# app.config['RANDOM_ID'] = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server, validate_webhook_server
+from modules.output import build_config
+from modules.helpers import get_template_list, get_bits, get_menu_list
+from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
+from modules.database import reset_data
 
 basedir = os.path.abspath
 
@@ -43,36 +47,36 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
-
-with app.app_context():
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quickstart.db'
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-    db = SQLAlchemy(app)
-
-    db.create_all()
-    db.session.commit()
-    
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server
-from modules.output import build_config
-from modules.helpers import get_template_list, get_bits, get_menu_list
-from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
-from modules.database import reset_data
-
 app.config['SESSION_TYPE'] = 'cachelib'
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_USE_SIGNER'] = False
 
-# Create and initialize the Flask-Session object AFTER `app` has been configured
 server_session = Session(app)
 
 @app.route('/')
 def start():
-    session['config_name'] = namesgenerator.get_random_name()
+    # generate a new random config name if there isn't one already here
+    try:
+        if not session['config_name']:
+            session['config_name'] = namesgenerator.get_random_name()
+    except:
+        session['config_name'] = namesgenerator.get_random_name()
+
     page_info = {}
     page_info['config_name'] = session['config_name']
-    return render_template('001-start.html', page_info=page_info)
+    page_info['template_name'] = "start"
+
+    template_list = get_template_list()
+
+    file_list = get_menu_list()
+
+    item = template_list['001']
+    
+    page_info['title'] = item['name']
+    page_info['next_page'] = item['next']
+    page_info['prev_page'] = item['prev']
+
+    return render_template('001-start.html', page_info=page_info, template_list=file_list)
 
 
 @app.route('/clear_session', methods=['POST'])
@@ -142,7 +146,7 @@ def step(name):
         validated, validation_error, config_data, yaml_content = build_config(header_style)
         
         page_info['yaml_valid'] = validated
-        
+                
         return render_template('900-final.html', page_info=page_info, data=data, yaml_content=yaml_content, validation_error=validation_error, template_list=file_list)
 
     else:
