@@ -129,6 +129,7 @@
               "Tautulli server validated successfully!";
             tautulliStatusMessage.style.color = "#75b798";
           } else {
+            document.getElementById('tautulli_validated').value = false
             tautulliStatusMessage.textContent =
               "Failed to validate Tautulli server. Please check your URL and API Key.";
             tautulliStatusMessage.style.color = "#ea868f";

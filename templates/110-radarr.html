@@ -207,6 +207,7 @@
   
               return true;
           } else {
+              document.getElementById('radarr_validated').value = false
               console.log("Invalid Radarr API key. Error:", data.message);
               radarrStatusMessage.textContent = "Radarr API key is invalid.";
               radarrStatusMessage.style.color = '#ea868f';

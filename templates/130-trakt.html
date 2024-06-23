@@ -189,6 +189,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
             document.getElementById("trakt_open_url").disabled = true
             document.getElementById("validate_trakt_pin").disabled = true
         } else {
+            document.getElementById('trakt_validated').value = false
             traktStatusMessage.textContent = data.error;
             traktStatusMessage.style.color = '#ea868f';
         }

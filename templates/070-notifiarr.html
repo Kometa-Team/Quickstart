@@ -124,6 +124,7 @@
           notifiarrStatusMessage.textContent = "Notifiarr API key is valid.";
           notifiarrStatusMessage.style.color = "#75b798";
         } else {
+          document.getElementById('notifiarr_validated').value = false
           notifiarrStatusMessage.textContent = "Notifiarr API key is invalid.";
           notifiarrStatusMessage.style.color = "#ea868f";
         }

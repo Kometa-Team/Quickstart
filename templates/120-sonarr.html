@@ -277,6 +277,7 @@
 
               return true;
           } else {
+              document.getElementById('sonarr_validated').value = false
               console.log("Invalid Sonarr API key. Error:", data.message);
               sonarrStatusMessage.textContent = "Sonarr API key is invalid.";
               sonarrStatusMessage.style.color = '#ea868f';

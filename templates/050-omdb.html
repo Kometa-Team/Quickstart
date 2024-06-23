@@ -130,6 +130,7 @@
               omdbStatusMessage.textContent = "OMDb API key is valid.";
               omdbStatusMessage.style.color = '#75b798';
           } else {
+            document.getElementById('omdb_validated').value = false
               omdbStatusMessage.textContent = "OMDb API key is invalid.";
               omdbStatusMessage.style.color = '#ea868f';
           }

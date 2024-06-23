@@ -4,6 +4,9 @@
 # Ignore sqlite databases
 *.sqlite
 
+# Ignore quickstart database
+quickstart.db
+
 # Ignore Python bytecode cache
 __pycache__/
 

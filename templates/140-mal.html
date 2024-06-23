@@ -223,6 +223,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function()
             document.getElementById("mal_get_localhost_url").disabled = true
             document.getElementById("validate_mal_url").disabled = true
         } else {
+            document.getElementById('mal_validated').value = false
             malStatusMessage.textContent = data.error;
             malStatusMessage.style.color = 'red';
         }
