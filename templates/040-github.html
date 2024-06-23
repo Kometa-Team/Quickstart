@@ -107,6 +107,7 @@
         console.log("GitHub token is valid. User: " + data.login);
         return true;
       } else {
+        document.getElementById('github_validated').value = false
         console.log("Invalid GitHub token. Status:", response.status);
         return false;
       }

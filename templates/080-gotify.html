@@ -151,6 +151,7 @@
               "Gotify credentials validated successfully!";
             gotifyStatusMessage.style.color = "green";
           } else {
+            document.getElementById('gotify_validated').value = false
             gotifyStatusMessage.textContent = data.error;
             gotifyStatusMessage.style.color = "red";
           }

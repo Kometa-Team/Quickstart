@@ -179,6 +179,7 @@
         // Update the input field to match the server's db_cache value
         document.getElementById('plex_db_cache').value = serverDbCache;
       } else {
+        document.getElementById('plex_validated').value = false;
         plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
         plexStatusMessage.style.color = '#ea868f';
       }

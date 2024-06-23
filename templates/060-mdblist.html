@@ -125,6 +125,7 @@
               mdblistStatusMessage.textContent = "MDBList API key is valid.";
               mdblistStatusMessage.style.color = '#75b798';
           } else {
+              document.getElementById('mdblist_validated').value = false
               mdblistStatusMessage.textContent = "MDBList API key is invalid.";
               mdblistStatusMessage.style.color = '#ea868f';
           }

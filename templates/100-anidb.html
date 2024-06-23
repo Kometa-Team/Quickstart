@@ -142,6 +142,7 @@
             anidbStatusMessage.textContent = "AniDb credentials are valid.";
             anidbStatusMessage.style.color = "#75b798";
           } else {
+            document.getElementById('anidb_validated').value = false
             anidbStatusMessage.textContent = `Error: ${data.error}`;
             anidbStatusMessage.style.color = "#ea868f";
           }
