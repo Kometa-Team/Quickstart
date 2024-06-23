@@ -131,7 +131,7 @@ def build_config(header_style='ascii'):
     validation_error = None
 
     try:
-        jsonschema.validate(instance=yaml_content, schema=schema)
+        jsonschema.validate(yaml.load(yaml_content), schema)
         validated = True
     except jsonschema.exceptions.ValidationError as e:
         validation_error = e
