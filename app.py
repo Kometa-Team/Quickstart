@@ -87,8 +87,12 @@ def step(name):
     try:
         if not session['config_name']:
             session['config_name'] = namesgenerator.get_random_name()
+        else:
+            print(f"There's a config name in the session")
     except:
         session['config_name'] = namesgenerator.get_random_name()
+
+    print(f"using config name: {session['config_name']}")
 
     page_info['config_name'] = session['config_name']
     page_info['header_style'] = header_style
@@ -120,7 +124,7 @@ def step(name):
         
     data = retrieve_settings(name)
 
-    print(f"data retrieved for {name}: {data}")
+    print(f"data retrieved for {name}")
 
     page_info['plex_valid'], page_info['tmdb_valid'] = check_minimum_settings()
     

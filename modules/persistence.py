@@ -48,6 +48,11 @@ def save_settings(raw_source, form_data):
     # source will be `010-plex`
     # source_name will be `plex`
     
+    # grab new config name if they entered one:
+    if 'config_name' in form_data:
+        session['config_name'] = form_data['config_name']
+        print(f"recieved config name in form: {session['config_name']}")
+
     clean_data = clean_form_data(form_data)
 
     if len(source) > 0:
@@ -59,11 +64,11 @@ def save_settings(raw_source, form_data):
 
         validated = data['validated'] if 'validated' in data else False
 
+        print(f"saving under config_name: {session['config_name']}")
+        
         save_section_data(name=session['config_name'], section=source_name, validated=validated, user_entered=user_entered, data=data)
 
-        print(f"data saved for {source}: {data}")
-    else:
-        session['config_name'] = clean_data['config_name'] if 'config_name' in clean_data else session['config_name']
+        print(f"data saved for {source}")
 
 def retrieve_settings(target):
     # target will be `010-plex`
