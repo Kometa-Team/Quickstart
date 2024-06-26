@@ -119,7 +119,7 @@ function updateTraktURL() {
     var myURL = "";
     if (trakt_client_id.length == 64)
     {
-        document.getElementById('trakt_validated').value = false
+        document.getElementById('trakt_validated').value = 'false';
         myURL = "https://trakt.tv/oauth/authorize?response_type=code&client_id=" + trakt_client_id + "&redirect_uri=urn:ietf:wg:oauth:2.0:oob";
     }
     console.log("updateTraktURL: " + myURL)
@@ -183,7 +183,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
     .then(data => {
         if (data.valid) {
             hideSpinner('validate')
-            document.getElementById('trakt_validated').value = true
+            document.getElementById('trakt_validated').value = 'true';
             statusMessage.textContent = 'Trakt credentials validated successfully!';
             statusMessage.style.color = '#75b798';
             document.getElementById('access_token').value = data.trakt_authorization_access_token;
@@ -198,7 +198,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
             document.getElementById("validate_trakt_pin").disabled = true
         } else {
             hideSpinner('validate')
-            document.getElementById('trakt_validated').value = false
+            document.getElementById('trakt_validated').value = 'false';
             statusMessage.textContent = data.error;
             statusMessage.style.color = '#ea868f';
         }

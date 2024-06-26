@@ -110,7 +110,7 @@
 
   ["anidb_client", "anidb_version", "anidb_username", "anidb_password"].forEach(field => {
     document.getElementById(field).addEventListener("input", function() {
-      document.getElementById("anidb_validated").value = "false";
+      document.getElementById("anidb_validated").value = 'false';
       document.getElementById("validateButton").disabled = false;
     });
   });

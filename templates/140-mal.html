@@ -129,9 +129,10 @@ function updateMALTargetURL() {
   var myURL = "";
   if (mal_client_id.length == 32)
   {
-    document.getElementById('mal_validated').value = false
+    document.getElementById('mal_validated').value = 'false';
     myURL = "https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=" + mal_client_id + "&code_challenge=" + code_verifier;
   }
+  console.log("updateMALTargetURL: " + myURL)
   document.getElementById('mal_url').value = myURL;
   enableLocalURLButton()
 }
@@ -194,7 +195,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function()
     .then(data => {
         if (data.valid) {
             hideSpinner('validate')
-            document.getElementById('mal_validated').value = true
+            document.getElementById('mal_validated').value = 'true';
             statusMessage.textContent = 'MyAnimeList credentials validated successfully!';
             statusMessage.style.color = 'green';
             document.getElementById('access_token').value = data.mal_authorization_access_token;
@@ -205,7 +206,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function()
             document.getElementById("validate_mal_url").disabled = true
         } else {
             hideSpinner('validate')
-            document.getElementById('mal_validated').value = false
+            document.getElementById('mal_validated').value = 'false';
             statusMessage.textContent = data.error;
             statusMessage.style.color = 'red';
         }
