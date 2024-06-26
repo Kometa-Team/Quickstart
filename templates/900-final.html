@@ -7,21 +7,21 @@
           <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
             <i id="prev-spinner-icon" class="fa fa-arrow-left"></i>
           </button>
-            <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-              <span id="jump-to-text">Jump To</span>
-              <i id="jump-spinner-icon" class=""></i>
-            </button>
+          <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span id="jump-to-text">Jump To</span>
+            <i id="jump-spinner-icon" class=""></i>
+          </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
-              {% if name == 'Final Validation' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li>
-                <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
-              </li>
-              {% if name == 'Start' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
+            {% if name == 'Final Validation' %}
+            <li><hr class="dropdown-divider"></li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li><hr class="dropdown-divider"></li>
+            {% endif %}
             {% endfor %}
           </ul>
         </div>
@@ -57,8 +57,6 @@
       <label for="header-style">Header Style</label>
     </div>
 
-    <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
-    </div>
     <div class="alert alert-danger" role="alert" id="yaml-warning-msg">
       The inputs you entered <b>did not</b> pass validation, a valid config
       <b>could not</b> be generated. Please try again.
@@ -69,72 +67,70 @@
       </div>
       <textarea class="form-control" placeholder="Leave a comment here" id="validation-error" style="height: 300px">{{ validation_error }}</textarea>
     </div>
-    </div>
-    <div class="form-floating">
-      <div class="form-text" id="yaml-content">
-        <br><h5>Here is the YAML that was generated as a result of your inputs.</h5><br>
-
+  </div>
+  <div class="form-floating">
+    <div class="form-text" id="yaml-content">
+      <br><h5>Here is the YAML that was generated as a result of your inputs.</h5><br>
       <div class="alert alert-info" role="alert" id="no-validation-warning">
         As a reminder, this will most likely not work with Kometa as it has not passed validation.
       </div>
-      </div>
-      <textarea readonly id="final-yaml" class="form-control" rows="20">{{ yaml_content }}</textarea>
     </div>
-    {% if yaml_content %}
-      <br>
-      <a href="{{ url_for('download') }}" id="download-btn" class="btn btn-success d-none">Download Config</a>
-    {% endif %}
+    <textarea readonly id="final-yaml" class="form-control" rows="20">{{ yaml_content }}</textarea>
   </div>
+  {% if yaml_content %}
+  <br>
+  <a href="{{ url_for('download') }}" id="download-btn" class="btn btn-success d-none">Download Config</a>
+  {% endif %}
 </form>
 <script>
-$(document).ready(function() {
-  // Debugging: Confirm jQuery is loaded
-  // console.log("jQuery loaded.");
+  $(document).ready(function () {
+    // Debugging: Confirm jQuery is loaded
+    // console.log("jQuery loaded.");
 
-  // Fetch the validation status
-  var plexValid = $('#plex_valid').data("plex-valid") === "True";
-  var tmdbValid = $('#tmdb_valid').data("tmdb-valid") === "True";
-  var yamlValid = $('#yaml_valid').data("yaml-valid") === "True";
-  var validationError = $('#validation-error').val().trim();
-  // Debugging: Check the values of the meta tags
+    // Fetch the validation status
+    var plexValid = $('#plex_valid').data("plex-valid") === "True";
+    var tmdbValid = $('#tmdb_valid').data("tmdb-valid") === "True";
+    var yamlValid = $('#yaml_valid').data("yaml-valid") === "True";
+    var validationError = $('#validation-error').val().trim();
+    // Debugging: Check the values of the meta tags
 
-  var showYAML = plexValid && tmdbValid && yamlValid;
+    var showYAML = plexValid && tmdbValid && yamlValid;
 
-  console.log("Plex Valid:", plexValid);
-  console.log("TMDb Valid:", tmdbValid);
-  console.log("YAML Valid:", yamlValid);
-  console.log("Show YAML:", showYAML);
+    console.log("Plex Valid:", plexValid);
+    console.log("TMDb Valid:", tmdbValid);
+    console.log("YAML Valid:", yamlValid);
+    console.log("Show YAML:", showYAML);
 
-  // Initialize validation messages array
-  var validationMessages = [];
+    // Initialize validation messages array
+    var validationMessages = [];
 
-  // Add messages based on validation status
-  if (!plexValid) {
-    validationMessages.push("Plex settings have not been validated successfully. Please return to that page and hit the validate button and ensure success before returning here.");
-  }
-  if (!tmdbValid) {
-    validationMessages.push("TMDb settings have not been validated successfully. Please return to that page and hit the validate button and ensure success before returning here.");
-  }
+    // Add messages based on validation status
+    if (!plexValid) {
+      validationMessages.push("Plex settings have not been validated successfully. Please return to that page and hit the validate button and ensure success before returning here.");
+    }
+    if (!tmdbValid) {
+      validationMessages.push("TMDb settings have not been validated successfully. Please return to that page and hit the validate button and ensure success before returning here.");
+    }
 
-  // If there are validation messages, display them
-  if (!showYAML) {
-    $('#validation-messages').html(validationMessages.join('<br>')).show();
+    // If there are validation messages, display them
+    if (!showYAML) {
+      $('#validation-messages').html(validationMessages.join('<br>')).show();
 
-    $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').removeClass('d-none');
-    // Hide the download button
-    $('#download-btn').addClass('d-none');
-  } else {
-    $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').addClass('d-none');
-    $('#yaml-content, #final-yaml, #download-btn').removeClass('d-none');
+      $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').removeClass('d-none');
+      // Hide the download button
+      $('#download-btn').addClass('d-none');
+    } else {
+      $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').addClass('d-none');
+      $('#yaml-content, #final-yaml, #download-btn').removeClass('d-none');
 
-  }
+    }
 
-  // Debugging: Confirm if validation messages div is updated
-  // console.log("Validation Messages:", $('#validation-messages').html());
-});
+    // Debugging: Confirm if validation messages div is updated
+    // console.log("Validation Messages:", $('#validation-messages').html());
+  });
 
-  document.getElementById('header-style').addEventListener('change', function() {
-  document.getElementById('final-form').submit();
-});
+  document.getElementById('header-style').addEventListener('change', function () {
+    document.getElementById('final-form').submit();
+  });
 </script>
 {% endblock %}
