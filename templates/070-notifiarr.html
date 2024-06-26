@@ -78,15 +78,20 @@
 
 <script>
   $(document).ready(function() {
-    const validateButton = document.getElementById('validateButton');
     const isValidated = document.getElementById('notifiarr_validated').value.toLowerCase();
-    const apiKeyInput = document.getElementById('notifiarr_apikey');
+    const validateButton = document.getElementById('validateButton');
+    
+    console.log('Validated: ' + isValidated)
 
-    validateButton.disabled = (isValidated === 'true');
-
-    apiKeyInput.addEventListener('input', function () {
+    if (isValidated === 'true') {
+      validateButton.disabled = true;
+    } else {
       validateButton.disabled = false;
-      document.getElementById('statusMessage').style.display = 'none';
+    }
+
+    document.getElementById('notifiarr_apikey').addEventListener('input', function() {
+      document.getElementById('notifiarr_validated').value = 'false';
+      validateButton.disabled = false;
     });
   });
 

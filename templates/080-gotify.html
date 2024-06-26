@@ -79,17 +79,27 @@
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('gotify_validated').value.toLowerCase() === 'true';
-
+    const isValidated = document.getElementById('gotify_validated').value.toLowerCase();
+    const validateButton = document.getElementById('validateButton');
+    
     console.log('Validated: ' + isValidated)
 
-    const validateButton = document.getElementById('validateButton');
-    validateButton.disabled = isValidated;
+    if (isValidated === 'true') {
+      validateButton.disabled = true;
+    } else {
+      validateButton.disabled = false;
+    }
 
     document.getElementById('gotify_token').addEventListener('input', function() {
-      document.getElementById('gotify_validated').value = '';
+      document.getElementById('gotify_validated').value = 'false';
       validateButton.disabled = false;
     });
+    
+    document.getElementById('gotify_url').addEventListener('input', function() {
+      document.getElementById('gotify_validated').value = 'false';
+      validateButton.disabled = false;
+    });
+
   });
 
   // Function to toggle API key visibility
