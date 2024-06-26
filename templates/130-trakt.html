@@ -26,7 +26,7 @@
             </li>
             {% endif %}
             <li>
-              <a class="dropdown-item" href="#" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
+              <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
             </li>
             {% if name == 'Start' %}
             <li>
