@@ -66,33 +66,38 @@
       <button class="btn btn-secondary" id="toggleTokenVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="validateGotifyButton" type="button">Validate</button>
+      <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="gotify_validated" name="gotify_validated" value="{{ data['validated'] }}" title="">
       <label for="gotify_validated">Gotify Validated</label>
     </div>
-    <div id="gotifyStatusMessage" class="status-message"></div><br>
+    <div id="statusMessage" class="status-message"></div><br>
 </div>
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('gotify_validated').value;
-    
+    const isValidated = document.getElementById('gotify_validated').value.toLowerCase() === 'true';
+
     console.log('Validated: ' + isValidated)
 
-    if (isValidated) {
-    }
+    const validateButton = document.getElementById('validateButton');
+    validateButton.disabled = isValidated;
+
+    document.getElementById('gotify_token').addEventListener('input', function() {
+      document.getElementById('gotify_validated').value = '';
+      validateButton.disabled = false;
+    });
   });
 
   // Function to toggle API key visibility
-  document
-    .getElementById("toggleTokenVisibility")
-    .addEventListener("click", function () {
-      const tokenInput = document.getElementById("gotify_token");
-      const currentType = tokenInput.getAttribute("type");
-      tokenInput.setAttribute("type", currentType === "password" ? "text" : "password");
-      this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  document.getElementById("toggleTokenVisibility").addEventListener("click", function () {
+    const tokenInput = document.getElementById("gotify_token");
+    const currentType = tokenInput.getAttribute("type");
+    tokenInput.setAttribute("type", currentType === "password" ? "text" : "password");
+    this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
   });
 
   // Function to validate Gotify API key
@@ -116,54 +121,50 @@
   }
 
   // Event listener for the validate button
-  document
-    .getElementById("validateGotifyButton")
-    .addEventListener("click", function () {
-      const gotify_url = document.getElementById("gotify_url").value;
-      const gotify_token = document.getElementById("gotify_token").value;
-      const gotifyStatusMessage = document.getElementById(
-        "gotifyStatusMessage"
-      );
+  document.getElementById("validateButton").addEventListener("click", function () {
+    const gotify_url = document.getElementById("gotify_url").value;
+    const gotify_token = document.getElementById("gotify_token").value;
+    const statusMessage = document.getElementById("statusMessage");
 
-      if (!gotify_url || !gotify_token) {
-        gotifyStatusMessage.textContent =
-          "Please enter both Gotify URL and Token.";
-        gotifyStatusMessage.style.color = "#ea868f";
-        gotifyStatusMessage.style.display = "block";
-        return;
-      }
+    statusMessage.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Validating...';
+    statusMessage.style.display = "block";
 
-      fetch("/validate_gotify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          gotify_url: gotify_url,
-          gotify_token: gotify_token,
-        }),
+    if (!gotify_url || !gotify_token) {
+      statusMessage.textContent = "Please enter both Gotify URL and Token.";
+      statusMessage.style.color = "#ea868f";
+      return;
+    }
+
+    fetch("/validate_gotify", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        gotify_url: gotify_url,
+        gotify_token: gotify_token,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.valid) {
+          document.getElementById('gotify_validated').value = 'true';
+          statusMessage.textContent = "Gotify credentials validated successfully!";
+          statusMessage.style.color = "green";
+        } else {
+          document.getElementById('gotify_validated').value = 'false';
+          statusMessage.textContent = data.error;
+          statusMessage.style.color = "red";
+        }
+        document.getElementById('validateButton').disabled = data.valid;
+        statusMessage.style.display = "block";
       })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.valid) {
-            document.getElementById('gotify_validated').value = true
-            gotifyStatusMessage.textContent =
-              "Gotify credentials validated successfully!";
-            gotifyStatusMessage.style.color = "green";
-          } else {
-            document.getElementById('gotify_validated').value = false
-            gotifyStatusMessage.textContent = data.error;
-            gotifyStatusMessage.style.color = "red";
-          }
-          gotifyStatusMessage.style.display = "block";
-        })
-        .catch((error) => {
-          console.error("Error validating Gotify credentials:", error);
-          gotifyStatusMessage.textContent =
-            "An error occurred while validating Gotify credentials.";
-          gotifyStatusMessage.style.color = "red";
-          gotifyStatusMessage.style.display = "block";
-        });
-    });
+      .catch((error) => {
+        console.error("Error validating Gotify credentials:", error);
+        statusMessage.textContent = "An error occurred while validating Gotify credentials.";
+        statusMessage.style.color = "red";
+        statusMessage.style.display = "block";
+      });
+  });
 </script>
 {% endblock %}

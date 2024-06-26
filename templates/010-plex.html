@@ -68,13 +68,15 @@
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="validatePlexButton" type="button">Validate</button>
+      <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="plex_validated" name="plex_validated" value="{{ data['validated'] }}" title="">
       <label for="plex_validated">Plex Validated</label>
     </div>
-    <div id="plexStatusMessage" class="status-message"></div>
+    <div id="statusMessage" class="status-message"></div>
     <div class="hidden" id="hidden" style="display:none">
       <div class="form-floating">
         <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" value="{{ data['plex']['db_cache'] }}" title="Set the size of the Plex Database Cache (in Megabytes), default is 40" min="40" required="">
@@ -112,16 +114,33 @@
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('plex_validated').value;
+    const validateButton = document.getElementById('validateButton');
+    const isValidated = document.getElementById('plex_validated').value.toLowerCase();
     const hiddenSection = document.getElementById("hidden");
     const plexDbcache = document.getElementById('plexDbcache');
-    
-    console.log('Validated: ' + isValidated)
 
-    if (isValidated) {
+    validateButton.disabled = (isValidated === 'true');
+    
+    console.log('Validated: ' + isValidated);
+
+    if (isValidated === 'true') {
       hiddenSection.style.display = "block";
       plexDbcache.style.display = 'block';
     }
+
+    // Enable the validate button and set plex_validated to false if the Plex token or URL is changed
+    const plexTokenInput = document.getElementById('plex_token');
+    const plexUrlInput = document.getElementById('plex_url');
+
+    plexTokenInput.addEventListener('input', function() {
+      validateButton.disabled = false;
+      document.getElementById('plex_validated').value = 'false';
+    });
+
+    plexUrlInput.addEventListener('input', function() {
+      validateButton.disabled = false;
+      document.getElementById('plex_validated').value = 'false';
+    });
   });
 
   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
@@ -132,42 +151,43 @@
   });
 
   // Plex validation script
-  document.getElementById('validatePlexButton').addEventListener('click', function() {
+  document.getElementById('validateButton').addEventListener('click', function() {
     const plexUrl = document.getElementById('plex_url').value;
     const plexToken = document.getElementById('plex_token').value;
-    const plexStatusMessage = document.getElementById('plexStatusMessage');
+    const statusMessage = document.getElementById('statusMessage');
     const plexDbcache = document.getElementById('plexDbcache');
     const currentDbCache = document.getElementById('plex_db_cache').value;
-    
+
     if (!plexUrl || !plexToken) {
-      plexStatusMessage.textContent = 'Please enter both Plex URL and Token.';
-      plexStatusMessage.style.display = 'block';
+      statusMessage.textContent = 'Please enter both Plex URL and Token.';
+      statusMessage.style.display = 'block';
       return;
     }
 
     document.getElementById('plex_validated').value = '';
+    showSpinner('validate');
+    validateButton.disabled = true;
 
     fetch('/validate_plex', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        plex_url: plexUrl,
-        plex_token: plexToken
-      })
+      body: JSON.stringify({ plex_url: plexUrl, plex_token: plexToken })
     })
     .then(response => response.json())
     .then(data => {
+      hideSpinner('validate');
+      validateButton.disabled = false;
       if (data.validated) {
         const serverDbCache = data.db_cache;
         plexDbcache.textContent = 'Database cache value retrieved from server is: ' + serverDbCache + ' MB';
         plexDbcache.style.color = '#75b798';
 
-        document.getElementById('plex_validated').value = data.validated;
+        document.getElementById('plex_validated').value = 'true';
 
-        plexStatusMessage.textContent = 'Plex server validated successfully!';
-        plexStatusMessage.style.color = '#75b798';
+        statusMessage.textContent = 'Plex server validated successfully!';
+        statusMessage.style.color = '#75b798';
         var hiddenSection = document.getElementById("hidden");
         hiddenSection.style.display = "block";
 
@@ -179,17 +199,20 @@
         // Update the input field to match the server's db_cache value
         document.getElementById('plex_db_cache').value = serverDbCache;
       } else {
+        hideSpinner('validate');
         document.getElementById('plex_validated').value = false;
-        plexStatusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
-        plexStatusMessage.style.color = '#ea868f';
+        statusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
+        statusMessage.style.color = '#ea868f';
       }
-      plexStatusMessage.style.display = 'block';
+      statusMessage.style.display = 'block';
     })
     .catch(error => {
+      hideSpinner('validate');
       console.error('Error:', error);
-      plexStatusMessage.textContent = 'An error occurred during validation. Please try again later.';
-      plexStatusMessage.style.color = '#ea868f';
-      plexStatusMessage.style.display = 'block';
+      validateButton.disabled = false;
+      statusMessage.textContent = 'Error occurred during validation.';
+      statusMessage.style.color = '#ea868f';
+      statusMessage.style.display = 'block';
     });
   });
 </script>

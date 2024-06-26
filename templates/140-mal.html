@@ -70,50 +70,25 @@
       <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exampleModal2">Authorize</button>
-    </div>
-    <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModal2" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div class="alert alert-danger" role="alert">
-              Please read the below warning
-            </div>
-            Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br>
-            <br>
-            <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br>
-            <br>
-            Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing the
-            <code>Complete Authentication</code>.
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button class="btn btn-success" id="mal_get_localhost_url" type="button" data-bs-dismiss="modal">Authorize</button>
-          </div>
-        </div>
-      </div>
+      <button class="btn btn-success" id="mal_get_localhost_url" type="button">
+        Authorize <i id="validate-spinner-icon2" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
     <div class="form-floating">
-      <div class="alert alert-dark" role="alert">
-        Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br>
-        <br>
-        <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br>
-        <br>
-        Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing
-        <code>Complete Authentication</code>.
-      </div>
     </div>
     <div class="form-group" id="localhost_url">
       <div class="input-group input-group-lg">
         <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" placeholder="Localhost URL" aria-label="Localhost URL" oninput="checkURLField(this)">
-        <button type="button" class="btn btn-success" id="validate_mal_url">Complete Authentication</button>
+        <button type="button" class="btn btn-success" id="validate_mal_url">
+          Complete Authentication <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        </button>
       </div>
       <div class="form-floating">
         <input type="text" class="form-control" id="mal_validated" name="mal_validated" value="{{ data['validated'] }}" title="">
         <label for="mal_validated">MyAnimeList Validated</label>
       </div>
-      <div id="malStatusMessage" class="status-message"></div>
+      <div id="statusMessage" class="status-message"></div>
       <div class="form-group" id="hidden_stuff">
         <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['mal']['authorization']['access_token'] }}" readonly>
         <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['mal']['authorization']['access_token'] }}" readonly>
@@ -142,7 +117,8 @@
   document.getElementById('mal_get_localhost_url').addEventListener('click', function() {
     var url = document.getElementById('mal_url').value;
     if(url) {
-        window.open(url, '_blank').focus();
+      showSpinner('retrieve')
+      window.open(url, '_blank').focus();
     }
   });
 
@@ -152,6 +128,7 @@ function updateMALTargetURL() {
   var myURL = "";
   if (mal_client_id.length == 32)
   {
+    document.getElementById('mal_validated').value = false
     myURL = "https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=" + mal_client_id + "&code_challenge=" + code_verifier;
   }
   document.getElementById('mal_url').value = myURL;
@@ -190,14 +167,16 @@ document.getElementById('validate_mal_url').addEventListener('click', function()
     const malVerifier = document.getElementById('mal_code_verifier').value;
     const malLocalhostURL = document.getElementById('mal_localhost_url').value;
 
-    const malStatusMessage = document.getElementById('malStatusMessage');
+    const statusMessage = document.getElementById('statusMessage');
 
     if (!malClient || !malSecret || !malVerifier || !malLocalhostURL) {
-        malStatusMessage.textContent = 'ID, secret, and localhost URL are all required.';
-        malStatusMessage.style.display = 'block';
+      statusMessage.textContent = 'ID, secret, and localhost URL are all required.';
+      statusMessage.style.display = 'block';
         return;
     }
-
+    
+    showSpinner('validate')
+    hideSpinner('retrieve')
     fetch('/validate_mal', {
         method: 'POST',
         headers: {
@@ -213,9 +192,10 @@ document.getElementById('validate_mal_url').addEventListener('click', function()
     .then(response => response.json())
     .then(data => {
         if (data.valid) {
+            hideSpinner('validate')
             document.getElementById('mal_validated').value = true
-            malStatusMessage.textContent = 'MyAnimeList credentials validated successfully!';
-            malStatusMessage.style.color = 'green';
+            statusMessage.textContent = 'MyAnimeList credentials validated successfully!';
+            statusMessage.style.color = 'green';
             document.getElementById('access_token').value = data.mal_authorization_access_token;
             document.getElementById('token_type').value = data.mal_authorization_token_type;
             document.getElementById('expires_in').value = data.mal_authorization_expires_in;
@@ -223,17 +203,19 @@ document.getElementById('validate_mal_url').addEventListener('click', function()
             document.getElementById("mal_get_localhost_url").disabled = true
             document.getElementById("validate_mal_url").disabled = true
         } else {
+            hideSpinner('validate')
             document.getElementById('mal_validated').value = false
-            malStatusMessage.textContent = data.error;
-            malStatusMessage.style.color = 'red';
+            statusMessage.textContent = data.error;
+            statusMessage.style.color = 'red';
         }
-        malStatusMessage.style.display = 'block';
+        statusMessage.style.display = 'block';
     })
     .catch(error => {
+        hideSpinner('validate')
         console.error('Error validating MAL credentials:', error);
-        malStatusMessage.textContent = 'An error occurred while validating MAL credentials.';
-        malStatusMessage.style.color = 'red';
-        malStatusMessage.style.display = 'block';
+        statusMessage.textContent = 'An error occurred while validating MAL credentials.';
+        statusMessage.style.color = 'red';
+        statusMessage.style.display = 'block';
     });
 });
 </script>

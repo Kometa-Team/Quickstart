@@ -72,13 +72,15 @@
       <button class="btn btn-secondary" id="togglePasswordVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="validateAnidbButton" type="button">Validate</button>
+      <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="anidb_validated" name="anidb_validated" value="{{ data['validated'] }}" title="">
       <label for="anidb_validated">AniDB Validated</label>
     </div>
-    <div id="anidbStatusMessage" class="status-message"></div><br>
+    <div id="statusMessage" class="status-message"></div><br>
     <div class="form-floating">
       <select class="form-select" id="anidb_language" name="anidb_language">
         <option value="">Select Language</option>
@@ -95,66 +97,75 @@
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('anidb_validated').value;
+    const isValidated = document.getElementById('anidb_validated').value.toLowerCase();
     
     console.log('Validated: ' + isValidated)
 
-    if (isValidated) {
+    if (isValidated === 'true') {
+      document.getElementById("validateButton").disabled = true;
+    } else {
+      document.getElementById("validateButton").disabled = false;
     }
   });
 
-  document
-    .getElementById("togglePasswordVisibility")
-    .addEventListener("click", function () {
-      const passwordInput = document.getElementById("anidb_password");
-      const currentType = passwordInput.getAttribute("type");
-      passwordInput.setAttribute("type", currentType === "password" ? "text" : "password");
-      this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  ["anidb_client", "anidb_version", "anidb_username", "anidb_password"].forEach(field => {
+    document.getElementById(field).addEventListener("input", function() {
+      document.getElementById("anidb_validated").value = "false";
+      document.getElementById("validateButton").disabled = false;
+    });
   });
 
-  document
-    .getElementById("validateAnidbButton")
-    .addEventListener("click", function () {
-      const username = document.getElementById("anidb_username").value;
-      const password = document.getElementById("anidb_password").value;
-      const client = document.getElementById("anidb_client").value;
-      const clientver = document.getElementById("anidb_version").value;
-      const anidbStatusMessage = document.getElementById("anidbStatusMessage");
+  document.getElementById("togglePasswordVisibility").addEventListener("click", function() {
+    const passwordInput = document.getElementById("anidb_password");
+    const currentType = passwordInput.getAttribute("type");
+    passwordInput.setAttribute("type", currentType === "password" ? "text" : "password");
+    this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  });
 
-      if (!username || !password || !client || !clientver) {
-        anidbStatusMessage.textContent = "Please enter all required fields.";
-        anidbStatusMessage.style.color = "#ea868f";
-        anidbStatusMessage.style.display = "block";
-        return;
+  document.getElementById("validateButton").addEventListener("click", function() {
+    const username = document.getElementById("anidb_username").value;
+    const password = document.getElementById("anidb_password").value;
+    const client = document.getElementById("anidb_client").value;
+    const clientver = document.getElementById("anidb_version").value;
+    const statusMessage = document.getElementById("statusMessage");
+
+    if (!username || !password || !client || !clientver) {
+      statusMessage.textContent = "Please enter all required fields.";
+      statusMessage.style.color = "#ea868f";
+      statusMessage.style.display = "block";
+      return;
+    }
+
+    fetch("/validate_anidb", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, password, client, clientver }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.valid) {
+        document.getElementById('anidb_validated').value = 'true';
+        statusMessage.textContent = "AniDb credentials are valid.";
+        statusMessage.style.color = "#75b798";
+        document.getElementById("validateButton").disabled = 'true';
+      } else {
+        document.getElementById('anidb_validated').value = 'false';
+        statusMessage.textContent = `Error: ${data.error}`;
+        statusMessage.style.color = "#ea868f";
+        document.getElementById("validateButton").disabled = 'false';
       }
-
-      fetch("/validate_anidb", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password, client, clientver }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.valid) {
-            document.getElementById('anidb_validated').value = true
-            anidbStatusMessage.textContent = "AniDb credentials are valid.";
-            anidbStatusMessage.style.color = "#75b798";
-          } else {
-            document.getElementById('anidb_validated').value = false
-            anidbStatusMessage.textContent = `Error: ${data.error}`;
-            anidbStatusMessage.style.color = "#ea868f";
-          }
-          anidbStatusMessage.style.display = "block";
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-          anidbStatusMessage.textContent =
-            "Error validating AniDb credentials.";
-          anidbStatusMessage.style.color = "#ea868f";
-          anidbStatusMessage.style.display = "block";
-        });
+      statusMessage.style.display = "block";
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      statusMessage.textContent = "Error validating AniDb credentials.";
+      statusMessage.style.color = "#ea868f";
+      statusMessage.style.display = "block";
+      document.getElementById("validateButton").disabled = false;
     });
+  });
+
 </script>
 {% endblock %}

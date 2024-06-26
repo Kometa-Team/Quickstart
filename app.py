@@ -18,7 +18,7 @@ import namesgenerator
 import string
 import random
 
-from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server, validate_webhook_server
+from modules.validations import validate_iso3166_1, validate_iso639_1, validate_plex_server, validate_tautulli_server, validate_trakt_server, validate_mal_server, validate_anidb_server, validate_gotify_server, validate_webhook_server, validate_radarr_server, validate_sonarr_server, validate_omdb_server, validate_github_server, validate_tmdb_server, validate_mdblist_server, validate_notifiarr_server
 from modules.output import build_config
 from modules.helpers import get_template_list, get_bits, get_menu_list
 from modules.persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
@@ -193,5 +193,75 @@ def validate_webhook():
     data = request.json
     return validate_webhook_server(data)
 
+@app.route('/validate_radarr', methods=['POST'])
+def validate_radarr():
+    data = request.json
+    result = validate_radarr_server(data)
+
+    if result.get_json().get('valid'):
+        return jsonify(result.get_json())
+    else:
+        return jsonify(result.get_json()), 400
+
+@app.route('/validate_sonarr', methods=['POST'])
+def validate_sonarr():
+    data = request.json
+    result = validate_sonarr_server(data)
+
+    if result.get_json().get('valid'):
+        return jsonify(result.get_json())
+    else:
+        return jsonify(result.get_json()), 400
+
+@app.route('/validate_omdb', methods=['POST'])
+def validate_omdb():
+    data = request.json
+    result = validate_omdb_server(data)
+
+    if result.get_json().get('valid'):
+        return jsonify(result.get_json())
+    else:
+        return jsonify(result.get_json()), 400
+
+@app.route('/validate_github', methods=['POST'])
+def validate_github():
+    data = request.json
+    result = validate_github_server(data)
+
+    if result.get_json().get('valid'):
+        return jsonify(result.get_json())
+    else:
+        return jsonify(result.get_json()), 400
+
+@app.route('/validate_tmdb', methods=['POST'])
+def validate_tmdb():
+    data = request.json
+    result = validate_tmdb_server(data)
+
+    if result.get_json().get('valid'):
+        return jsonify(result.get_json())
+    else:
+        return jsonify(result.get_json()), 400
+    
+@app.route('/validate_mdblist', methods=['POST'])
+def validate_mdblist():
+    data = request.json
+    result = validate_mdblist_server(data)
+
+    if result.get_json().get('valid'):
+        return jsonify(result.get_json())
+    else:
+        return jsonify(result.get_json()), 400
+
+@app.route('/validate_notifiarr', methods=['POST'])
+def validate_notifiarr():
+    data = request.json
+    result = validate_notifiarr_server(data)
+
+    if result.get_json().get('valid'):
+        return jsonify(result.get_json())
+    else:
+        return jsonify(result.get_json()), 400
+    
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

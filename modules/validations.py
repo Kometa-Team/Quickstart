@@ -307,3 +307,161 @@ def validate_webhook_server(data):
         return jsonify({"success": "Test message sent successfully! Go and ensure that you see the message on the server side."}), 200
     else:
         return jsonify({"error": f"Failed to send message: {response.status_code}, {response.text}"}), 400
+
+
+def validate_radarr_server(data):
+    radarr_url = data.get('radarr_url')
+    radarr_apikey = data.get('radarr_token')
+
+    status_api_url = f"{radarr_url}/api/v3/system/status?apikey={radarr_apikey}"
+    root_folder_api_url = f"{radarr_url}/api/v3/rootfolder?apikey={radarr_apikey}"
+    quality_profile_api_url = f"{radarr_url}/api/v3/qualityprofile?apikey={radarr_apikey}"
+
+    try:
+        # Validate API key by checking system status
+        response = requests.get(status_api_url)
+        response.raise_for_status()
+        status_data = response.json()
+
+        if 'version' not in status_data:
+            app.logger.error("Radarr connection failed. Invalid response data.")
+            return jsonify({'valid': False, 'error': 'Invalid Radarr URL or Apikey'})
+
+        # Fetch root folders
+        response = requests.get(root_folder_api_url)
+        response.raise_for_status()
+        root_folders = response.json()
+
+        # Fetch quality profiles
+        response = requests.get(quality_profile_api_url)
+        response.raise_for_status()
+        quality_profiles = response.json()
+
+        app.logger.info("Radarr connection successful.")
+
+        return jsonify({
+            'valid': True,
+            'root_folders': root_folders,
+            'quality_profiles': quality_profiles
+        })
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error validating Radarr connection: {e}")
+        flash(f'Invalid Radarr URL or API Key: {str(e)}', 'error')
+        return jsonify({'valid': False, 'error': f'Invalid Radarr URL or Apikey: {str(e)}'})
+
+
+def validate_sonarr_server(data):
+    sonarr_url = data.get('sonarr_url')
+    sonarr_apikey = data.get('sonarr_token')
+
+    status_api_url = f"{sonarr_url}/api/v3/system/status?apikey={sonarr_apikey}"
+    root_folder_api_url = f"{sonarr_url}/api/v3/rootfolder?apikey={sonarr_apikey}"
+    quality_profile_api_url = f"{sonarr_url}/api/v3/qualityprofile?apikey={sonarr_apikey}"
+    language_profile_api_url = f"{sonarr_url}/api/v3/language?apikey={sonarr_apikey}"
+    
+    try:
+        # Validate API key by checking system status
+        response = requests.get(status_api_url)
+        response.raise_for_status()
+        status_data = response.json()
+
+        if 'version' not in status_data:
+            app.logger.error("Sonarr connection failed. Invalid response data.")
+            return jsonify({'valid': False, 'error': 'Invalid Sonarr URL or Apikey'})
+
+        # Fetch root folders
+        response = requests.get(root_folder_api_url)
+        response.raise_for_status()
+        root_folders = response.json()
+
+        # Fetch quality profiles
+        response = requests.get(quality_profile_api_url)
+        response.raise_for_status()
+        quality_profiles = response.json()
+
+        # Fetch quality profiles
+        response = requests.get(language_profile_api_url)
+        response.raise_for_status()
+        language_profiles = response.json()
+
+        app.logger.info("Sonarr connection successful.")
+
+        return jsonify({
+            'valid': True,
+            'root_folders': root_folders,
+            'quality_profiles': quality_profiles,
+            'language_profiles': language_profiles
+        })
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error validating Sonarr connection: {e}")
+        flash(f'Invalid Sonarr URL or API Key: {str(e)}', 'error')
+        return jsonify({'valid': False, 'error': f'Invalid Sonarr URL or Apikey: {str(e)}'})
+
+
+def validate_omdb_server(data):
+    omdb_apikey = data.get('omdb_apikey')
+
+    api_url = f"http://www.omdbapi.com/?apikey={omdb_apikey}&s=test"
+    try:
+        response = requests.get(api_url)
+        data = response.json()
+        if data.get("Response") == "True" or data.get("Error") == "Movie not found!":
+            return jsonify({"valid": True, "message": "OMDb API key is valid"})
+        else:
+            return jsonify({"valid": False, "message": data.get("Error", "Invalid API key")})
+    except Exception as e:
+        print(f"Error validating OMDb connection: {e}")
+        flash(f'Invalid OMDb API Key: {str(e)}', 'error')
+        return jsonify({"valid": False, "message": str(e)})
+
+
+def validate_github_server(data):
+    github_token = data.get('github_token')
+
+    api_url = "https://api.github.com/user"
+    headers = {
+        "Authorization": f"token {github_token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    try:
+        response = requests.get(api_url, headers=headers)
+        if response.status_code == 200:
+            user_data = response.json()
+            return jsonify({"valid": True, "message": f"GitHub token is valid. User: {user_data.get('login')}"})
+        else:
+            return jsonify({"valid": False, "message": "Invalid GitHub token"}), 400
+    except Exception as e:
+        return jsonify({"valid": False, "message": str(e)})
+
+
+def validate_tmdb_server(data):
+    api_key = data.get('tmdb_apikey')
+    
+    # Validate the API key
+    movie_response = requests.get(f'https://api.themoviedb.org/3/movie/550?api_key={api_key}')
+    if movie_response.status_code == 200:
+        return jsonify({'valid': True, 'message': 'API key is valid!'})        
+    else:
+        return jsonify({'valid': False, 'message': 'Invalid API key'})
+
+
+def validate_mdblist_server(data):
+    api_key = data.get('mdblist_apikey')
+
+    response = requests.get(f'https://mdblist.com/api/?apikey={api_key}&s=test')
+    if response.status_code == 200 and response.json().get('response') == True:
+        return jsonify({'valid': True, 'message': 'API key is valid!'})
+    else:
+        return jsonify({'valid': False, 'message': 'Invalid API key'})
+    
+def validate_notifiarr_server(data):
+    api_key = data.get('notifiarr_apikey')
+
+    response = requests.get(f'https://notifiarr.com/api/v1/user/validate/{api_key}')
+    if response.status_code == 200 and response.json().get('result') == "success":
+        return jsonify({'valid': True, 'message': 'API key is valid!'})
+    else:
+        return jsonify({'valid': False, 'message': 'Invalid API key'})
+    

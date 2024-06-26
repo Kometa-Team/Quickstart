@@ -66,7 +66,9 @@
       <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret" value="{{ data['trakt']['client_secret'] }}" title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"><label for="client_secret">Client Secret</label>
       <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">
         <i class="fas fa-eye"></i>
-      </button><button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">Retrieve PIN</button>
+      </button><button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">
+        Retrieve PIN <i id="validate-spinner-icon2" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
     <div class="form-text" id="pin-info">
@@ -77,7 +79,9 @@
     </div>
     <div class="input-group input-group-lg" id="urlField">
       <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)">
-      <button class="btn btn-success" type="button" id="validate_trakt_pin">Validate PIN</button>
+      <button class="btn btn-success" type="button" id="validate_trakt_pin">
+        Validate PIN <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['trakt']['authorization']['access_token'] }}" readonly>
     <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['trakt']['authorization']['token_type'] }}" readonly>
@@ -89,7 +93,7 @@
       <input type="text" class="form-control" id="trakt_validated" name="trakt_validated" value="{{ data['validated'] }}" title="">
       <label for="trakt_validated">Trakt Validated</label>
     </div>
-    <div id="traktStatusMessage" class="status-message"></div>
+    <div id="statusMessage" class="status-message"></div>
     <br>
   </div>
 </form>
@@ -115,6 +119,7 @@ function updateTraktURL() {
     var myURL = "";
     if (trakt_client_id.length == 64)
     {
+        document.getElementById('trakt_validated').value = false
         myURL = "https://trakt.tv/oauth/authorize?response_type=code&client_id=" + trakt_client_id + "&redirect_uri=urn:ietf:wg:oauth:2.0:oob";
     }
     console.log("updateTraktURL: " + myURL)
@@ -125,6 +130,7 @@ function updateTraktURL() {
 function openTraktUrl() {
     var url = document.getElementById('trakt_url').value;
     if(url) {
+        showSpinner('retrieve')
         window.open(url, '_blank').focus();
     }
 }
@@ -153,14 +159,15 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
     const traktClient = document.getElementById('trakt_client_id').value;
     const traktSecret = document.getElementById('trakt_client_secret').value;
     const traktPin = document.getElementById('trakt_pin').value;
-    const traktStatusMessage = document.getElementById('traktStatusMessage');
+    const statusMessage = document.getElementById('statusMessage');
 
     if (!traktClient || !traktSecret || !traktPin) {
-        traktStatusMessage.textContent = 'ID, secret, and PIN and all required.';
-        traktStatusMessage.style.display = 'block';
+        statusMessage.textContent = 'ID, secret, and PIN and all required.';
+        statusMessage.style.display = 'block';
         return;
     }
-
+    showSpinner('validate')
+    hideSpinner('retrieve')
     fetch('/validate_trakt', {
         method: 'POST',
         headers: {
@@ -175,9 +182,10 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
     .then(response => response.json())
     .then(data => {
         if (data.valid) {
+            hideSpinner('validate')
             document.getElementById('trakt_validated').value = true
-            traktStatusMessage.textContent = 'Trakt credentials validated successfully!';
-            traktStatusMessage.style.color = '#75b798';
+            statusMessage.textContent = 'Trakt credentials validated successfully!';
+            statusMessage.style.color = '#75b798';
             document.getElementById('access_token').value = data.trakt_authorization_access_token;
             document.getElementById('token_type').value = data.trakt_authorization_token_type;
             document.getElementById('expires_in').value = data.trakt_authorization_expires_in;
@@ -189,17 +197,19 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
             document.getElementById("trakt_open_url").disabled = true
             document.getElementById("validate_trakt_pin").disabled = true
         } else {
+            hideSpinner('validate')
             document.getElementById('trakt_validated').value = false
-            traktStatusMessage.textContent = data.error;
-            traktStatusMessage.style.color = '#ea868f';
+            statusMessage.textContent = data.error;
+            statusMessage.style.color = '#ea868f';
         }
-        traktStatusMessage.style.display = 'block';
+        statusMessage.style.display = 'block';
     })
     .catch(error => {
+        hideSpinner('validate')
         console.error('Error validating Trakt credentials:', error);
-        traktStatusMessage.textContent = 'An error occurred while validating Trakt credentials.';
-        traktStatusMessage.style.color = '#ea868f';
-        traktStatusMessage.style.display = 'block';
+        statusMessage.textContent = 'An error occurred while validating Trakt credentials.';
+        statusMessage.style.color = '#ea868f';
+        statusMessage.style.display = 'block';
     });
 });
 </script>

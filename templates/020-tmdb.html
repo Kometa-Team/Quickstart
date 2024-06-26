@@ -59,11 +59,14 @@
     <hr class="hr">
     {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group input-group-lg form-floating">
-      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" value="{{ data['tmdb']['apikey'] }}" title="API Key" aria-label="TMDb API Key"><label for="tmdb_apikey">TMDB API Key</label>
+      <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey" value="{{ data['tmdb']['apikey'] }}" title="API Key" aria-label="TMDb API Key">
+      <label for="tmdb_apikey">TMDB API Key</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="validateButton" type="button">Validate</button>
+      <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="tmdb_validated" name="tmdb_validated" value="{{ data['validated'] }}" title="">
@@ -88,7 +91,6 @@
       </select>
       <label for="tmdb_region">Region</label>
     </div>
-
     <div class="form-floating">
       <input type="number" class="form-control" id="tmdb_cache_expiration" name="tmdb_cache_expiration" value="{{ data['tmdb']['cache_expiration'] }}" min="0"><label for="tmdb_cache_expiration">Cache Expiration (in days)</label>
     </div>
@@ -96,42 +98,25 @@
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('tmdb_validated').value;
+    const isValidated = document.getElementById('tmdb_validated').value.toLowerCase();
+    const validateButton = document.getElementById('validateButton');
     
     console.log('Validated: ' + isValidated)
 
-    if (isValidated) {
+    if (isValidated === 'true') {
+      validateButton.disabled = true;
+    } else {
+      validateButton.disabled = false;
     }
-  });
 
-  // Enable Tooltips
-  const tooltipTriggerList = document.querySelectorAll(
-    '[data-bs-toggle="tooltip"]'
-  );
-  const tooltipList = [...tooltipTriggerList].map(
-    (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
-  );
+    document.getElementById('tmdb_apikey').addEventListener('input', function() {
+      document.getElementById('tmdb_validated').value = 'false';
+      validateButton.disabled = false;
+    });
 
-  document
-    .getElementById("toggleApikeyVisibility")
-    .addEventListener("click", function () {
-      const apikeyInput = document.getElementById("tmdb_apikey");
-      const currentType = apikeyInput.getAttribute("type");
-      apikeyInput.setAttribute("type", currentType === "password" ? "text" : "password");
-      this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
-  });
-
-  function sortByEnglishName(data) {
-    return data.sort((a, b) => a.english_name.localeCompare(b.english_name));
-  }
-
-  document
-    .getElementById("validateButton")
-    .addEventListener("click", function () {
-      const apiKey = document.getElementById("tmdb_apikey").value;
-      const statusMessage = document.getElementById("statusMessage");
-      const languageSelect = document.getElementById("tmdb_language");
-      const regionSelect = document.getElementById("tmdb_region");
+    document.getElementById('validateButton').addEventListener('click', function() {
+      const apiKey = document.getElementById('tmdb_apikey').value;
+      const statusMessage = document.getElementById('statusMessage');
 
       if (!apiKey) {
         statusMessage.textContent = "Please enter an API key.";
@@ -139,41 +124,50 @@
         return;
       }
 
-      fetch(`https://api.themoviedb.org/3/movie/550?api_key=${apiKey}`)
-        .then((response) => {
-          if (response.ok) {
-            document.getElementById('tmdb_validated').value = 'true';
-            statusMessage.textContent = "API key is valid!";
-            statusMessage.style.color = "#75b798";
-            return Promise.all([
-              fetch(
-                `https://api.themoviedb.org/3/configuration/languages?api_key=${apiKey}`
-              ),
-              fetch(
-                `https://api.themoviedb.org/3/watch/providers/regions?api_key=${apiKey}`
-              ),
-            ]);
-          } else {
-            document.getElementById('tmdb_validated').value = 'false';
-            throw new Error("Invalid API key");
-          }
-        })
-        .catch((error) => {
-          statusMessage.textContent = error.message;
+      showSpinner('validate');
+
+      fetch('/validate_tmdb', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tmdb_apikey: apiKey})
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.valid) {
+          console.log("valid")
+          hideSpinner('validate');
+          document.getElementById('tmdb_validated').value = 'true';
+          statusMessage.textContent = "API key is valid!";
+          statusMessage.style.color = "#75b798";
+          document.getElementById('validateButton').disabled = true;
+        } else {
+          console.log("NOT valid")
+          document.getElementById('tmdb_validated').value = 'false';
+          statusMessage.textContent = "Failed to validate Tautulli server. Please check your URL and API Key.";
           statusMessage.style.color = "#ea868f";
-        })
-        .finally(() => {
-          statusMessage.style.display = "block";
-        });
+        }
+        statusMessage.style.display = "block";
+      })
+      .catch(error => {
+        console.error("Error validating TMDb server:", error);
+        statusMessage.textContent = 'An error occurred. Please try again.';
+        statusMessage.style.color = "#ea868f";
+        statusMessage.style.display = "block";
+      })
+      .finally(() => {
+        hideSpinner('validate');
+        statusMessage.style.display = "block";
+      });
     });
 
-  document
-    .getElementById("configForm")
-    .addEventListener("submit", function (event) {
-      const apiKeyInput = document.getElementById("tmdb_apikey");
-      if (!apiKeyInput.value) {
-        apiKeyInput.value = "";
-      }
+    document.getElementById('toggleApikeyVisibility').addEventListener('click', function () {
+      const apikeyInput = document.getElementById('tmdb_apikey');
+      const currentType = apikeyInput.getAttribute('type');
+      apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+      this.innerHTML = currentType === 'password' ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
     });
+  });
 </script>
 {% endblock %}

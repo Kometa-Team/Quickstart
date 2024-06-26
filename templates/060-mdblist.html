@@ -59,94 +59,109 @@
     <hr class="hr">
     {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group input-group-lg form-floating">
-      <input type="password" class="form-control" id="mdblist_apikey" name="mdblist_apikey" value="{{ data['mdblist']['apikey'] }}" title="MDBList API Key" aria-label="MDBList API Key"><label for="mdblist_apikey">MDBList API Key</label>
+      <input type="password" class="form-control" id="mdblist_apikey" name="mdblist_apikey" value="{{ data['mdblist']['apikey'] }}" title="MDBList API Key" aria-label="MDBList API Key">
+      <label for="mdblist_apikey">MDBList API Key</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="validateMdblistButton" type="button">Validate</button>
+      <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="mdblist_validated" name="mdblist_validated" value="{{ data['validated'] }}" title="">
       <label for="mdblist_validated">MDBList Validated</label>
     </div>
-    <div id="mdblistStatusMessage" class="status-message"></div>
+    <div id="statusMessage" class="status-message"></div>
     <br>
     <div class="form-floating">
       <input type="number" class="form-control" id="mdblist_cache_expiration" name="mdblist_cache_expiration" value="{{ data['mdblist']['cache_expiration'] }}" min="0">
       <label for="mdblist_cache_expiration">Cache Expiration (in days)</label>
     </div>
   </div>
-</div>
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('mdblist_validated').value;
+    const isValidated = document.getElementById('mdblist_validated').value.toLowerCase();
+    const validateButton = document.getElementById('validateButton');
     
     console.log('Validated: ' + isValidated)
 
-    if (isValidated) {
+    if (isValidated === 'true') {
+      validateButton.disabled = true;
+    } else {
+      validateButton.disabled = false;
     }
-  });
 
-  async function validateMdblistApikey(apikey) {
-      const apiUrl = `https://mdblist.com/api/?apikey=${apikey}&s=test`;
-      try {
-          const response = await fetch(apiUrl);
-          const data = await response.json();
-          console.log("API Response:", data);  // Log the entire response
+    document.getElementById('mdblist_apikey').addEventListener('input', function() {
+      document.getElementById('mdblist_validated').value = 'false';
+      validateButton.disabled = false;
+    });
 
-          if (data.response === true) {
-              console.log("MDBList API key is valid.");
-              return true;
-          } else {
-              console.log("Invalid MDBList API key. Error:", data.Error);
-              return false;
-          }
-      } catch (error) {
-          console.error("Error validating MDBList apikey:", error);
-          return false;
-      }
-  }
-
-  document.getElementById('validateMdblistButton').addEventListener('click', function() {
+    document.getElementById('validateButton').addEventListener('click', function() {
       const apiKey = document.getElementById('mdblist_apikey').value;
-      const mdblistStatusMessage = document.getElementById('mdblistStatusMessage');
+      const statusMessage = document.getElementById('statusMessage');
 
       if (!apiKey) {
-          mdblistStatusMessage.textContent = 'Please enter an MDBList API key.';
-          mdblistStatusMessage.style.color = '#ea868f';
-          mdblistStatusMessage.style.display = 'block';
-          return;
+        statusMessage.textContent = "Please enter an API key.";
+        statusMessage.style.display = "block";
+        return;
       }
 
-      validateMdblistApikey(apiKey).then(isValid => {
-          if (isValid) {
-              document.getElementById('mdblist_validated').value = true
-              mdblistStatusMessage.textContent = "MDBList API key is valid.";
-              mdblistStatusMessage.style.color = '#75b798';
-          } else {
-              document.getElementById('mdblist_validated').value = false
-              mdblistStatusMessage.textContent = "MDBList API key is invalid.";
-              mdblistStatusMessage.style.color = '#ea868f';
-          }
-          mdblistStatusMessage.style.display = 'block';
-      });
-  });
+      showSpinner('validate');
 
-  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+      fetch('/validate_mdblist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ mdblist_apikey: apiKey})
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.valid) {
+          console.log("valid")
+          hideSpinner('validate');
+          document.getElementById('mdblist_validated').value = 'true';
+          statusMessage.textContent = "API key is valid!";
+          statusMessage.style.color = "#75b798";
+          document.getElementById('validateButton').disabled = true;
+        } else {
+          console.log("NOT valid")
+          document.getElementById('mdblist_validated').value = 'false';
+          statusMessage.textContent = "Failed to validate MDBList server. Please check your URL and API Key.";
+          statusMessage.style.color = "#ea868f";
+        }
+        statusMessage.style.display = "block";
+      })
+      .catch(error => {
+        console.error("Error validating MDBList server:", error);
+        statusMessage.textContent = 'An error occurred. Please try again.';
+        statusMessage.style.color = "#ea868f";
+        statusMessage.style.display = "block";
+      })
+      .finally(() => {
+        hideSpinner('validate');
+        statusMessage.style.display = "block";
+      });
+    });
+
+    document.getElementById('toggleApikeyVisibility').addEventListener('click', function () {
       const apikeyInput = document.getElementById('mdblist_apikey');
       const currentType = apikeyInput.getAttribute('type');
-      apikeyInput.setAttribute("type", currentType === "password" ? "text" : "password");
-      this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+      apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+      this.innerHTML = currentType === 'password' ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+    });
   });
 
   document.getElementById('configForm').addEventListener('submit', function(event) {
-      const apiKeyInput = document.getElementById('mdblist_apikey');
-      const cacheExpiration = document.getElementById('mdblist_cache_expiration');
-      if (!apiKeyInput.value) {
-          apiKeyInput.value = '';
-          cacheExpiration.value = '1';
-      }
+    const apiKeyInput = document.getElementById('mdblist_apikey');
+    const cacheExpiration = document.getElementById('mdblist_cache_expiration');
+    if (!apiKeyInput.value) {
+      apiKeyInput.value = '';
+      cacheExpiration.value = '1';
+    }
   });
+
 </script>
 {% endblock %}
