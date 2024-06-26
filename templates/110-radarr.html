@@ -46,7 +46,8 @@
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
-            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25"
+              aria-valuemin="0" aria-valuemax="100">
               <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
                 {{ page_info['progress'] }}%
               </div>
@@ -59,24 +60,31 @@
     <hr class="hr">
     {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_url" name="radarr_url" value="{{ data['radarr']['url'] }}"><label for="radarr_url">Radarr URL (including URL Base if set)</label>
+      <input type="text" class="form-control" id="radarr_url" name="radarr_url"
+        value="{{ data['radarr']['url'] }}"><label for="radarr_url">Radarr URL (including URL Base if set)</label>
     </div>
     <div class="input-group input-group-lg form-floating">
-      <input type="password" class="form-control" id="radarr_token" name="radarr_token" value="{{ data['radarr']['token'] }}" title="Token" aria-label="Token"><label for="radarr_token">Radarr API Key</label>
+      <input type="password" class="form-control" id="radarr_token" name="radarr_token"
+        value="{{ data['radarr']['token'] }}" title="Token" aria-label="Token"><label for="radarr_token">Radarr API
+        Key</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="validateRadarrButton" type="button">Validate</button>
+      <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_validated" name="radarr_validated" value="{{ data['validated'] }}" title="">
+      <input type="text" class="form-control" id="radarr_validated" name="radarr_validated"
+        value="{{ data['validated'] }}" title="">
       <label for="radarr_validated">Radarr Validated</label>
     </div>
-    <div id="radarrStatusMessage" class="status-message"></div>
+    <div id="statusMessage" class="status-message"></div>
     <br>
 
     <div class="form-floating">
-      <select class="form-select" id="radarr_root_folder_path" name="radarr_root_folder_path" value="{{ data['radarr']['root_folder_path'] }}">
+      <select class="form-select" id="radarr_root_folder_path" name="radarr_root_folder_path"
+        value="{{ data['radarr']['root_folder_path'] }}">
         <option value="">
           Select Root Folder Path
         </option>
@@ -85,8 +93,8 @@
     </div>
 
     <div class="form-floating">
-      </select>
-      <select class="form-select" id="radarr_quality_profile" name="radarr_quality_profile" value="{{ data['radarr']['quality_profile'] }}">
+      <select class="form-select" id="radarr_quality_profile" name="radarr_quality_profile"
+        value="{{ data['radarr']['quality_profile'] }}">
         <option value="">
           Select Quality Profile
         </option>
@@ -97,58 +105,72 @@
     <div class="form-floating">
       <select class="form-select" id="radarr_availability" name="radarr_availability">
         <option value="" selected disabled>Select Availability</option>
-        <option value="announced" {% if data['radarr']['availability'] == 'announced' %}selected{% endif %}>Announced (default)</option>
-        <option value="cinemas" {% if data['radarr']['availability'] == 'cinemas' %}selected{% endif %}>Cinemas</option>
-        <option value="released" {% if data['radarr']['availability'] == 'released' %}selected{% endif %}>Released</option>
-        <option value="db" {% if data['radarr']['availability'] == 'db' %}selected{% endif %}>DB</option>
+        <option value="announced" {% if data['radarr']['availability']=='announced' %}selected{% endif %}>Announced
+          (default)</option>
+        <option value="cinemas" {% if data['radarr']['availability']=='cinemas' %}selected{% endif %}>Cinemas</option>
+        <option value="released" {% if data['radarr']['availability']=='released' %}selected{% endif %}>Released
+        </option>
+        <option value="db" {% if data['radarr']['availability']=='db' %}selected{% endif %}>DB</option>
       </select>
       <label for="radarr_availability">Select Availability</label>
     </div>
 
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" value="{{ data['radarr']['tag'] }}" placeholder="">
+      <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" value="{{ data['radarr']['tag'] }}"
+        placeholder="">
       <label for="radarr_tag">Tag to apply to added media</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path" value="{{ data['radarr']['radarr_path'] }}" placeholder="">
+      <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path"
+        value="{{ data['radarr']['radarr_path'] }}" placeholder="">
       <label for="radarr_radarr_path">Radarr Path</label>
     </div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path" value="{{ data['radarr']['plex_path'] }}" placeholder="">
+      <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path"
+        value="{{ data['radarr']['plex_path'] }}" placeholder="">
       <label for="radarr_plex_path">Plex Path</label>
     </div>
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="radarr_monitor" id="radarr_monitor" value="true" {% if data['radarr']['monitor']|string|lower == 'true' %}checked{% endif %}>
+      <input class="form-check-input" type="checkbox" name="radarr_monitor" id="radarr_monitor" value="true" {% if
+        data['radarr']['monitor']|string|lower=='true' %}checked{% endif %}>
       <input type="hidden" name="radarr_monitor" value="false">
       <label class="form-check-label" for="radarr_monitor">Monitor media when added</label>
     </div>
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="radarr_search" id="radarr_search" value="true" {% if data['radarr']['search']|string|lower == 'true' %}checked{% endif %}>
+      <input class="form-check-input" type="checkbox" name="radarr_search" id="radarr_search" value="true" {% if
+        data['radarr']['search']|string|lower=='true' %}checked{% endif %}>
       <input type="hidden" name="radarr_search" value="false">
       <label class="form-check-label" for="radarr_search">Search media when added</label>
     </div>
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="radarr_add_missing" id="radarr_add_missing" value="true" {% if data['radarr']['add_missing']|string|lower == 'true' %}checked{% endif %}>
+      <input class="form-check-input" type="checkbox" name="radarr_add_missing" id="radarr_add_missing" value="true" {%
+        if data['radarr']['add_missing']|string|lower=='true' %}checked{% endif %}>
       <input type="hidden" name="radarr_add_missing" value="false">
       <label class="form-check-label" for="radarr_add_missing">Add missing media from collections</label>
     </div>
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="radarr_add_existing" id="radarr_add_existing" value="true" {% if data['radarr']['add_existing']|string|lower == 'true' %}checked{% endif %}>
+      <input class="form-check-input" type="checkbox" name="radarr_add_existing" id="radarr_add_existing" value="true"
+        {% if data['radarr']['add_existing']|string|lower=='true' %}checked{% endif %}>
       <input type="hidden" name="radarr_add_existing" value="false">
       <label class="form-check-label" for="radarr_add_existing">Add existing media from collections</label>
     </div>
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="radarr_upgrade_existing" id="radarr_upgrade_existing" value="true" {% if data['radarr']['upgrade_existing']|string|lower == 'true' %}checked{% endif %}>
+      <input class="form-check-input" type="checkbox" name="radarr_upgrade_existing" id="radarr_upgrade_existing"
+        value="true" {% if data['radarr']['upgrade_existing']|string|lower=='true' %}checked{% endif %}>
       <input type="hidden" name="radarr_upgrade_existing" value="false">
-      <label class="form-check-label" for="radarr_upgrade_existing">Upgrade existing media from collections to the Quality Profile</label>
+      <label class="form-check-label" for="radarr_upgrade_existing">Upgrade existing media from collections to the
+        Quality Profile</label>
     </div>
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="radarr_monitor_existing" id="radarr_monitor_existing" value="true" {% if data['radarr']['monitor_existing']|string|lower == 'true' %}checked{% endif %}>
+      <input class="form-check-input" type="checkbox" name="radarr_monitor_existing" id="radarr_monitor_existing"
+        value="true" {% if data['radarr']['monitor_existing']|string|lower=='true' %}checked{% endif %}>
       <input type="hidden" name="radarr_monitor_existing" value="false">
-      <label class="form-check-label" for="radarr_monitor_existing">Set existing media from collections to monitored</label>
+      <label class="form-check-label" for="radarr_monitor_existing">Set existing media from collections to
+        monitored</label>
     </div>
     <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" name="radarr_ignore_cache" id="radarr_ignore_cache" value="true" {% if data['radarr']['ignore_cache']|string|lower == 'true' %}checked{% endif %}>
+      <input class="form-check-input" type="checkbox" name="radarr_ignore_cache" id="radarr_ignore_cache" value="true"
+        {% if data['radarr']['ignore_cache']|string|lower=='true' %}checked{% endif %}>
       <input type="hidden" name="radarr_ignore_cache" value="false">
       <label class="form-check-label" for="radarr_ignore_cache">Ignore Kometa's cache when adding media</label>
     </div>
@@ -156,101 +178,100 @@
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('radarr_validated').value;
+    const isValidated = document.getElementById('radarr_validated').value.toLowerCase();
     
     console.log('Validated: ' + isValidated)
 
-    if (isValidated) {
+    if (isValidated === 'true') {
+      document.getElementById("validateButton").disabled = true;
+    } else {
+      document.getElementById("validateButton").disabled = false;
     }
   });
 
-  async function validateRadarrApikey(apikey, url) {
-      const statusApiUrl = `${url}/api/v3/system/status?apikey=${apikey}`;
-      const rootFolderApiUrl = `${url}/api/v3/rootfolder?apikey=${apikey}`;
-      const qualityProfileApiUrl = `${url}/api/v3/qualityprofile?apikey=${apikey}`;
-      const radarrStatusMessage = document.getElementById('radarrStatusMessage');
-  
-      try {
-          // Validate API key
-          const response = await fetch(statusApiUrl);
-          const data = await response.json();
-  
-          if (response.ok && 'version' in data) {
-              document.getElementById('radarr_validated').value = true
-              radarrStatusMessage.textContent = "Radarr API key is valid.";
-              radarrStatusMessage.style.color = '#75b798';
-              radarrStatusMessage.style.display = 'block';
-  
-              // Fetch and populate root folders
-              const rootFolderResponse = await fetch(rootFolderApiUrl);
-              const rootFolders = await rootFolderResponse.json();
-              const rootFolderSelect = document.getElementById('radarr_root_folder_path');
-              rootFolderSelect.innerHTML = '<option value="">Select Root Folder</option>';
-              rootFolders.forEach(folder => {
-                  const option = document.createElement('option');
-                  option.value = folder.path;
-                  option.textContent = folder.path;
-                  rootFolderSelect.appendChild(option);
-              });
-  
-              // Fetch and populate quality profiles
-              const qualityProfileResponse = await fetch(qualityProfileApiUrl);
-              const qualityProfiles = await qualityProfileResponse.json();
-              const qualityProfileSelect = document.getElementById('radarr_quality_profile');
-              qualityProfileSelect.innerHTML = '<option value="">Select Quality Profile</option>';
-              qualityProfiles.forEach(profile => {
-                  const option = document.createElement('option');
-                  option.value = profile.name;
-                  option.textContent = profile.name;
-                  qualityProfileSelect.appendChild(option);
-              });
-  
-              return true;
-          } else {
-              document.getElementById('radarr_validated').value = false
-              console.log("Invalid Radarr API key. Error:", data.message);
-              radarrStatusMessage.textContent = "Radarr API key is invalid.";
-              radarrStatusMessage.style.color = '#ea868f';
-              radarrStatusMessage.style.display = 'block';
-              return false;
-          }
-      } catch (error) {
-          console.error("Error validating Radarr API key:", error);
-          radarrStatusMessage.textContent = 'Error validating Radarr API key.';
-          radarrStatusMessage.style.color = '#ea868f';
-          radarrStatusMessage.style.display = 'block';
-          return false;
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('validateButton').addEventListener('click', validateRadarrApi);
+    document.getElementById('toggleApikeyVisibility').addEventListener('click', toggleApiKeyVisibility);
+  });
+
+  document.getElementById('radarr_token').addEventListener('input', function() {
+    document.getElementById('radarr_validated').value = 'false';
+    validateButton.disabled = false;
+  });
+
+  document.getElementById('radarr_url').addEventListener('input', function() {
+    document.getElementById('radarr_validated').value = 'false';
+    validateButton.disabled = false;
+  });
+
+  function validateRadarrApi() {
+    const radarr_url = document.getElementById("radarr_url").value;
+    const radarr_token = document.getElementById("radarr_token").value;
+    const statusMessage = document.getElementById("statusMessage");
+
+    showSpinner('validate');
+
+    fetch("/validate_radarr", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ radarr_url, radarr_token }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.valid) {
+          hideSpinner('validate');
+          document.getElementById('radarr_validated').value = 'true';
+          statusMessage.textContent = "Radarr API key is valid.";
+          statusMessage.style.color = "#75b798";
+          statusMessage.style.display = 'block';
+          document.getElementById("validateButton").disabled = true;
+
+          populateDropdown('radarr_root_folder_path', data.root_folders, 'path', 'path');
+          populateDropdown('radarr_quality_profile', data.quality_profiles, 'name', 'name');
+        } else {
+          hideSpinner('validate');
+          document.getElementById('radarr_validated').value = 'false';
+          console.log("Invalid Radarr API key. Error:", data.message);
+          statusMessage.textContent = "Radarr API key is invalid.";
+          statusMessage.style.color = '#ea868f';
+          statusMessage.style.display = 'block';
+        }
+      })
+      .catch(error => {
+        hideSpinner('validate');
+        console.error("Error validating Radarr API key:", error);
+        statusMessage.textContent = 'Error validating Radarr API key.';
+        statusMessage.style.color = '#ea868f';
+        statusMessage.style.display = 'block';
+        document.getElementById('radarr_validated').value = 'false';
+      });
+}
+
+function populateDropdown(elementId, data, valueField, textField) {
+    const dropdown = document.getElementById(elementId);
+    dropdown.innerHTML = '<option value="">Select an option</option>';
+
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item[valueField];
+        option.textContent = item[textField];
+        dropdown.appendChild(option);
+    });
+}
+  function toggleApiKeyVisibility() {
+    let apiKeyInput = document.getElementById('radarr_token');
+    let toggleButton = document.getElementById('toggleApikeyVisibility');
+    if (apiKeyInput && toggleButton) {
+      if (apiKeyInput.type === 'password') {
+        apiKeyInput.type = 'text';
+        toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+      } else {
+        apiKeyInput.type = 'password';
+        toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
       }
+    }
   }
-
-  document.getElementById('validateRadarrButton').addEventListener('click', function() {
-      const apiKey = document.getElementById('radarr_token').value;
-      const url = document.getElementById('radarr_url').value;
-      const radarrStatusMessage = document.getElementById('radarrStatusMessage');
-
-      if (!apiKey || !url) {
-          radarrStatusMessage.textContent = 'Please enter the Radarr API key and URL.';
-          radarrStatusMessage.style.color = '#ea868f';
-          radarrStatusMessage.style.display = 'block';
-          return;
-      }
-
-      validateRadarrApikey(apiKey, url);
-  });
-
-  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-      const apikeyInput = document.getElementById('radarr_token');
-      const currentType = apikeyInput.getAttribute('type');
-      apikeyInput.setAttribute("type", currentType === "password" ? "text" : "password");
-      this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
-  });
-
-  // Clear API token on form submission to avoid unintentional persistence
-  document.getElementById('configForm').addEventListener('submit', function(event) {
-      const apiKeyInput = document.getElementById('radarr_token');
-      if (!apiKeyInput.value) {
-          apiKeyInput.value = '';
-      }
-  });
 </script>
 {% endblock %}

@@ -8,8 +8,15 @@
         <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{page_info['title']}} Section</h1>
       </div>
       <div class="modal-body">
-        This is some dummy text<br>
+        <div class="alert alert-danger" role="alert">
+          Please read the below warning
+        </div>
+        Once you hit "Authorize" you will be taken to the MyAnimeList website to Authorize the connection.<br>
         <br>
+        <b>When you press "Allow" on the MyAnimeList page, you will be redirected to a page that does not load - this is expected.</b><br>
+        <br>
+        Copy the URL from the page that does not load, then come back to this page. Paste the URL into the `Localhost URL` box before pressing the
+        <code>Complete Authentication</code>.
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>

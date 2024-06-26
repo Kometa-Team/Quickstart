@@ -59,95 +59,105 @@
     <hr class="hr">
     {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group input-group-lg form-floating">
-      <input type="password" class="form-control" id="notifiarr_apikey" name="notifiarr_apikey" value="{{ data['notifiarr']['apikey'] }}" title="Notifiarr API Key" aria-label="Notifiarr API Key"><label for="notifiarr_apikey">Notifiarr API Key</label>
+      <input type="password" class="form-control" id="notifiarr_apikey" name="notifiarr_apikey" value="{{ data['notifiarr']['apikey'] }}" title="Notifiarr API Key" aria-label="Notifiarr API Key">
+      <label for="notifiarr_apikey">Notifiarr API Key</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="validateNotifiarrButton" type="button">Validate</button>
+      <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="notifiarr_validated" name="notifiarr_validated" value="{{ data['validated'] }}" title="">
       <label for="notifiarr_validated">Notifiarr Validated</label>
     </div>
-    <div id="notifiarrStatusMessage" class="status-message"></div><br>
-</div>
+    <div id="statusMessage" class="status-message"></div><br>
+  </div>
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('notifiarr_validated').value;
+    const isValidated = document.getElementById('notifiarr_validated').value.toLowerCase();
+    const validateButton = document.getElementById('validateButton');
     
     console.log('Validated: ' + isValidated)
 
-    if (isValidated) {
+    if (isValidated === 'true') {
+      validateButton.disabled = true;
+    } else {
+      validateButton.disabled = false;
     }
+
+    document.getElementById('notifiarr_apikey').addEventListener('input', function() {
+      document.getElementById('notifiarr_validated').value = 'false';
+      validateButton.disabled = false;
+    });
   });
 
   async function validateNotifiarrApikey(apikey) {
-        const apiUrl = `https://notifiarr.com/api/v1/user/validate/${apikey}`;
-        try {
-            const response = await fetch(apiUrl);
-            const data = await response.json();
-            console.log("API Response:", data);
+    const apiUrl = `/validate_notifiarr`;
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ notifiarr_apikey: apikey }),
+    });
 
-      if (data.result === "success") {
-        console.log("Notifiarr API key is valid.");
-        return true;
-      } else {
-        console.log("Invalid Notifiarr API key. Error:", data.Error);
-        return false;
-      }
-    } catch (error) {
-      console.error("Error validating Notifiarr apikey:", error);
+    if (response.ok) {
+      const data = await response.json();
+      return data.valid;
+    } else {
+      const errorData = await response.json();
+      console.error("Error validating Notifiarr apikey:", errorData.message);
       return false;
     }
   }
 
-  document
-    .getElementById("validateNotifiarrButton")
-    .addEventListener("click", function () {
-      const apiKey = document.getElementById("notifiarr_apikey").value;
-      const notifiarrStatusMessage = document.getElementById(
-        "notifiarrStatusMessage"
-      );
+  document.getElementById('validateButton').addEventListener('click', function() {
+    const apiKey = document.getElementById('notifiarr_apikey').value;
+    const statusMessage = document.getElementById('statusMessage');
+    const spinner = document.getElementById('validate-spinner-icon');
 
-      if (!apiKey) {
-        notifiarrStatusMessage.textContent =
-          "Please enter a Notifiarr API key.";
-        notifiarrStatusMessage.style.color = "#ea868f";
-        notifiarrStatusMessage.style.display = "block";
-        return;
+    if (!apiKey) {
+      statusMessage.textContent = 'Please enter a Notifiarr API key.';
+      statusMessage.style.color = '#ea868f';
+      statusMessage.style.display = 'block';
+      return;
+    }
+
+    validateButton.disabled = true;
+    spinner.style.display = 'inline-block';
+
+    validateNotifiarrApikey(apiKey).then(isValid => {
+      spinner.style.display = 'none';
+      if (isValid) {
+        document.getElementById('notifiarr_validated').value = 'true';
+        statusMessage.textContent = 'Notifiarr API key is valid.';
+        statusMessage.style.color = '#75b798';
+        validateButton.disabled = true;
+      } else {
+        document.getElementById('notifiarr_validated').value = 'false';
+        statusMessage.textContent = 'Notifiarr API key is invalid.';
+        statusMessage.style.color = '#ea868f';
+        validateButton.disabled = false;
       }
-
-      validateNotifiarrApikey(apiKey).then((isValid) => {
-        if (isValid) {
-          document.getElementById('notifiarr_validated').value = true
-          notifiarrStatusMessage.textContent = "Notifiarr API key is valid.";
-          notifiarrStatusMessage.style.color = "#75b798";
-        } else {
-          document.getElementById('notifiarr_validated').value = false
-          notifiarrStatusMessage.textContent = "Notifiarr API key is invalid.";
-          notifiarrStatusMessage.style.color = "#ea868f";
-        }
-        notifiarrStatusMessage.style.display = "block";
-      });
+      statusMessage.style.display = 'block';
     });
+  });
 
-    document
-    .getElementById("toggleApikeyVisibility")
-    .addEventListener("click", function () {
-      const apikeyInput = document.getElementById("notifiarr_apikey");
-      const currentType = apikeyInput.getAttribute("type");
-      apikeyInput.setAttribute("type", currentType === "password" ? "text" : "password");
-      this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
-    });
+  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
+    const apikeyInput = document.getElementById('notifiarr_apikey');
+    const currentType = apikeyInput.getAttribute('type');
+    apikeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password');
+    this.innerHTML = currentType === 'password' ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  });
 
-  document
-    .getElementById("configForm")
-    .addEventListener("submit", function (event) {
-      const apiKeyInput = document.getElementById("notifiarr_apikey");
-      if (!apiKeyInput.value) {
-        apiKeyInput.value = "";
-      }
-    });
+  document.getElementById('configForm').addEventListener('submit', function(event) {
+    const apiKeyInput = document.getElementById('notifiarr_apikey');
+    if (!apiKeyInput.value) {
+      apiKeyInput.value = '';
+    }
+  });
 </script>
 {% endblock %}

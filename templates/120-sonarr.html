@@ -66,13 +66,15 @@
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="validateSonarrButton" type="button">Validate</button>
+      <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="sonarr_validated" name="sonarr_validated" value="{{ data['validated'] }}" title="">
       <label for="sonarr_validated">Sonarr Validated</label>
     </div>
-    <div id="sonarrStatusMessage" class="status-message"></div><br>
+    <div id="statusMessage" class="status-message"></div><br>
     <div class="form-floating">
       <select class="form-select" id="sonarr_root_folder_path" name="sonarr_root_folder_path" value="{{ data['sonarr']['root_folder_path'] }}">
         <option value="">
@@ -206,113 +208,97 @@
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('sonarr_validated').value;
+    const isValidated = document.getElementById('sonarr_validated').value.toLowerCase();
     
     console.log('Validated: ' + isValidated)
 
-    if (isValidated) {
+    if (isValidated === 'true') {
+      document.getElementById("validateButton").disabled = true;
+    } else {
+      document.getElementById("validateButton").disabled = false;
     }
   });
 
-  async function validateSonarrApikey(apikey, url) {
-      const statusApiUrl = `${url}/api/v3/system/status?apikey=${apikey}`;
-      const rootFolderApiUrl = `${url}/api/v3/rootfolder?apikey=${apikey}`;
-      const qualityProfileApiUrl = `${url}/api/v3/qualityprofile?apikey=${apikey}`;
-      const languageProfileApiUrl = `${url}/api/v3/language?apikey=${apikey}`;
-      const sonarrStatusMessage = document.getElementById('sonarrStatusMessage');
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('validateButton').addEventListener('click', validateSonarrApi);
+    document.getElementById('toggleApikeyVisibility').addEventListener('click', toggleApiKeyVisibility);
+  });
 
-      try {
-          // Validate API key
-          const response = await fetch(statusApiUrl);
-          const data = await response.json();
-          console.log("API Response:", data);
+  document.getElementById('sonarr_token').addEventListener('input', function() {
+    document.getElementById('sonarr_validated').value = 'false';
+    validateButton.disabled = false;
+  });
 
-          if (response.ok && 'version' in data) {
-              document.getElementById('sonarr_validated').value = true
-              console.log("Sonarr API key is valid.");
-              sonarrStatusMessage.textContent = "Sonarr API key is valid.";
-              sonarrStatusMessage.style.color = '#75b798';
-              sonarrStatusMessage.style.display = 'block';
+  document.getElementById('sonarr_url').addEventListener('input', function() {
+    document.getElementById('sonarr_validated').value = 'false';
+    validateButton.disabled = false;
+  });
 
-              // Fetch and populate root folders
-              const rootFolderResponse = await fetch(rootFolderApiUrl);
-              const rootFolders = await rootFolderResponse.json();
-              const rootFolderSelect = document.getElementById('sonarr_root_folder_path');
-              rootFolderSelect.innerHTML = '<option value="">Select Root Folder</option>';
-              rootFolders.forEach(folder => {
-                  const option = document.createElement('option');
-                  option.value = folder.path;
-                  option.textContent = folder.path;
-                  rootFolderSelect.appendChild(option);
-              });
+  function validateSonarrApi() {
+    const sonarr_url = document.getElementById("sonarr_url").value;
+    const sonarr_token = document.getElementById("sonarr_token").value;
+    const statusMessage = document.getElementById("statusMessage");
 
-              // Fetch and populate quality profiles
-              const qualityProfileResponse = await fetch(qualityProfileApiUrl);
-              const qualityProfiles = await qualityProfileResponse.json();
-              const qualityProfileSelect = document.getElementById('sonarr_quality_profile');
-              qualityProfileSelect.innerHTML = '<option value="">Select Quality Profile</option>';
-              qualityProfiles.forEach(profile => {
-                  const option = document.createElement('option');
-                  option.value = profile.name;
-                  option.textContent = profile.name;
-                  qualityProfileSelect.appendChild(option);
-              });
+    fetch("/validate_sonarr", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sonarr_url, sonarr_token }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.valid) {
+          document.getElementById('sonarr_validated').value = 'true';
+          statusMessage.textContent = "Sonarr API key is valid.";
+          statusMessage.style.color = "#75b798";
+          statusMessage.style.display = 'block';
+          document.getElementById("validateButton").disabled = true;
 
-              // Fetch and populate language profiles
-              const languageProfileResponse = await fetch(languageProfileApiUrl);
-              const languageProfiles = await languageProfileResponse.json();
-              const languageProfileSelect = document.getElementById('sonarr_language_profile');
-              languageProfileSelect.innerHTML = '<option value="">Select Language Profile</option>';
-              languageProfiles
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .forEach(profile => {
-                      const option = document.createElement('option');
-                      option.value = profile.name;
-                      option.textContent = profile.name;
-                      if (profile.name === 'English') {
-                          option.selected = true;
-                      }
-                      languageProfileSelect.appendChild(option);
-                  });
+          populateDropdown('sonarr_root_folder_path', data.root_folders, 'path', 'path');
+          populateDropdown('sonarr_quality_profile', data.quality_profiles, 'name', 'name');
+          populateDropdown('sonarr_language_profile', data.language_profiles, 'name', 'name');
+        } else {
+          document.getElementById('sonarr_validated').value = 'false';
+          console.log("Invalid Sonarr API key. Error:", data.message);
+          statusMessage.textContent = "Sonarr API key is invalid.";
+          statusMessage.style.color = '#ea868f';
+          statusMessage.style.display = 'block';
+        }
+      })
+      .catch(error => {
+        console.error("Error validating Sonarr API key:", error);
+        statusMessage.textContent = 'Error validating Sonarr API key.';
+        statusMessage.style.color = '#ea868f';
+        statusMessage.style.display = 'block';
+        document.getElementById('sonarr_validated').value = 'false';
+      });
+}
 
-              return true;
-          } else {
-              document.getElementById('sonarr_validated').value = false
-              console.log("Invalid Sonarr API key. Error:", data.message);
-              sonarrStatusMessage.textContent = "Sonarr API key is invalid.";
-              sonarrStatusMessage.style.color = '#ea868f';
-              sonarrStatusMessage.style.display = 'block';
-              return false;
-          }
-      } catch (error) {
-          console.error("Error validating Sonarr apikey:", error);
-          sonarrStatusMessage.textContent = 'Error validating Sonarr API key.';
-          sonarrStatusMessage.style.color = '#ea868f';
-          sonarrStatusMessage.style.display = 'block';
-          return false;
+function populateDropdown(elementId, data, valueField, textField) {
+    const dropdown = document.getElementById(elementId);
+    dropdown.innerHTML = '<option value="">Select an option</option>';
+
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item[valueField];
+        option.textContent = item[textField];
+        dropdown.appendChild(option);
+    });
+}
+  function toggleApiKeyVisibility() {
+    let apiKeyInput = document.getElementById('sonarr_token');
+    let toggleButton = document.getElementById('toggleApikeyVisibility');
+    if (apiKeyInput && toggleButton) {
+      if (apiKeyInput.type === 'password') {
+        apiKeyInput.type = 'text';
+        toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>';
+      } else {
+        apiKeyInput.type = 'password';
+        toggleButton.innerHTML = '<i class="fas fa-eye"></i>';
       }
+    }
   }
 
-  document.getElementById('validateSonarrButton').addEventListener('click', function() {
-      const apiKey = document.getElementById('sonarr_token').value;
-      const url = document.getElementById('sonarr_url').value;
-      const sonarrStatusMessage = document.getElementById('sonarrStatusMessage');
-
-      if (!apiKey || !url) {
-          sonarrStatusMessage.textContent = 'Please enter the Sonarr API key and URL.';
-          sonarrStatusMessage.style.color = '#ea868f';
-          sonarrStatusMessage.style.display = 'block';
-          return;
-      }
-
-      validateSonarrApikey(apiKey, url);
-  });
-
-  document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
-      const apikeyInput = document.getElementById('sonarr_token');
-      const currentType = apikeyInput.getAttribute('type');
-      apikeyInput.setAttribute("type", currentType === "password" ? "text" : "password");
-      this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
-  });
 </script>
 {% endblock %}

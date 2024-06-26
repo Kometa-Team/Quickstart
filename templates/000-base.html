@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{ page_info['title'] }} - Kometa YAML Config Wizard</title>
     <!-- Include font-awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <!-- Include jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" />
@@ -24,55 +24,93 @@
     </style>
   </head>
   <body>
-    <script type="text/javascript">
-      function loading(type) {
-        if (type === 'next') {
-          $('#next-spinner-icon').removeClass('fa-arrow-right').addClass('spinner-border spinner-border-sm');
-        } else if (type === 'prev') {
-          $('#prev-spinner-icon').removeClass('fa-arrow-left').addClass('spinner-border spinner-border-sm');
-        } else if (type === 'jump') {
-          $('#jump-to-text').hide();
-          $('#jump-spinner-icon').addClass('spinner-border spinner-border-sm').show();
-        }
-      }
+  <script type="text/javascript">
 
-      // Function to handle jump to action
-      function jumpTo(targetPage) {
-        const form = document.getElementById('configForm') || document.getElementById('final-form');
+  function loading(action) {
+    console.log("action:", action);
+
+    let spinnerIcon;
+    switch (action) {
+        case 'prev':
+            spinnerIcon = document.getElementById('prev-spinner-icon');
+            break;
+        case 'next':
+            spinnerIcon = document.getElementById('next-spinner-icon');
+            break;
+        case 'jump':
+            spinnerIcon = document.getElementById('next-spinner-icon') || document.getElementById('prev-spinner-icon');
+            break;
+        default:
+            console.error("Unsupported action:", action);
+            return;
+    }
+
+    if (spinnerIcon) {
+        spinnerIcon.classList.remove('fa-arrow-left', 'fa-arrow-right');
+        // spinnerIcon.classList.add('fa-spinner', 'fa-pulse', 'fa-fw');
+        spinnerIcon.classList.add('spinner-border', 'spinner-border-sm')
+    } else {
+        console.error("Spinner icon not found for action:", action);
+    }
+}
+
+  // Function to show the spinner on validate
+  function showSpinner(action) {
+    if (action === 'validate') {
+        document.getElementById('validate-spinner-icon').style.display = 'inline-block';
+    }
+    if (action === 'retrieve') {
+        document.getElementById('validate-spinner-icon2').style.display = 'inline-block';
+    }
+  }
+  
+  // Function to hide the spinner on validate
+  function hideSpinner(action) {
+    if (action === 'validate') {
+      document.getElementById('validate-spinner-icon').style.display = 'none';
+  }
+  if (action === 'retrieve') {
+    document.getElementById('validate-spinner-icon2').style.display = 'none';
+  }
+}
+
+  // Function to handle jump to action
+  function jumpTo(targetPage) {
+    const form = document.getElementById('configForm') || document.getElementById('final-form');
         
-        if (!form) {
-          console.error('Form not found');
-          return;
-        }
+    if (!form) {
+      console.error('Form not found');
+      return;
+    }
     
-        // Check form validity
-        if (!form.checkValidity()) {
-          form.reportValidity();
-          return;
-        }
+    // Check form validity
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
 
-        // Create FormData object from the form
-        const formData = new FormData(form);
+    // Create FormData object from the form
+    const formData = new FormData(form);
 
-        // Show loading spinner
-        loading('jump');
+    // Show loading spinner
+    loading('jump');
 
-        // Submit the form data via fetch without the jumpTo field
-        fetch(form.action, {
-          method: 'POST',
-          body: formData
-        }).then(response => {
-          if (response.ok) {
-            // Redirect to the target page after successful form submission
-            window.location.href = '/step/' + targetPage;
-          } else {
-            console.error('Form submission failed:', response.statusText);
-          }
-        }).catch(error => {
-          console.error('Error during form submission:', error);
-        });
+    // Submit the form data via fetch without the jumpTo field
+    fetch(form.action, {
+      method: 'POST',
+      body: formData
+    }).then(response => {
+      if (response.ok) {
+        // Redirect to the target page after successful form submission
+        window.location.href = '/step/' + targetPage;
+      } else {
+        console.error('Form submission failed:', response.statusText);
       }
-    </script>
+    }).catch(error => {
+      console.error('Error during form submission:', error);
+    });
+  }
+  </script>
     <script
       type="text/javascript"
       src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"
@@ -87,19 +125,6 @@
     </div>
     <div class="container">
       <div class="content-wrapper">
-        <!-- {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <ul class="flashes">
-                    {% for message in messages %}
-                        <li>{{ message }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        {% endwith %}
-        <div id="loading">
-          <img height=100 width=100 src="{{ url_for('static', filename='loadingimage.gif') }}" />
-        </div>
-        <div id="content"> -->
           {% block content %}{% endblock %}
         </div>
       </div>

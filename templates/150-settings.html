@@ -239,9 +239,9 @@
                             </div>
 
                             <div class="form-check form-switch">
-                              <input class="form-check-input" type="checkbox" id="show_missing" name="show_missing" value="true" {% if data['settings']['show_missing']|string|lower == 'true' %}checked{% endif %}>
-                              <input type="hidden" name="show_missing" value="false">
-                              <label class="form-check-label" for="show_missing">Show Missing</label>
+                                <input class="form-check-input" type="checkbox" id="show_missing" name="show_missing" value="true" {% if data['settings']['show_missing']|string|lower == 'true' %}checked{% endif %}>
+                                <input type="hidden" name="show_missing" value="false">
+                                <label class="form-check-label" for="show_missing">Show Missing</label>
                             </div>
 
                             <div class="form-check form-switch">
@@ -257,18 +257,18 @@
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" min="0" value="{{ data['settings']['run_again_delay'] }}">
-                              <label for="run_again_delay">Run Again Delay (minutes)</label>
+                                <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" min="0" value="{{ data['settings']['run_again_delay'] }}">
+                                <label for="run_again_delay">Run Again Delay (minutes)</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users" value="{{ data['settings']['playlist_sync_to_users'] }}">
-                              <label for="playlist_sync_to_users">Playlist Sync to Users (all, or comma-separated)</label>
+                                <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users" value="{{ data['settings']['playlist_sync_to_users'] }}">
+                                <label for="playlist_sync_to_users">Playlist Sync to Users (all, or comma-separated)</label>
                             </div>
 
                             <div class="form-floating mb-3">
-                              <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users" placeholder="" value="{{ data['settings']['playlist_exclude_users'] }}">
-                              <label for="playlist_exclude_users">Playlist Exclude Users (comma-separated)</label>
+                                <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users" placeholder="" value="{{ data['settings']['playlist_exclude_users'] }}">
+                                <label for="playlist_exclude_users">Playlist Exclude Users (comma-separated)</label>
                             </div>
 
                             <div class="form-check form-switch">
@@ -407,6 +407,18 @@
                 </div>
             </div>
         </div>
-    </div>
+        <div class="form-floating">
+            <input type="text" class="form-control" id="settings_validated" name="settings_validated" value="{{ data['validated'] }}" title="">
+            <label for="settings_validated">Settings Validated</label>
+        </div>
+            <div id="statusMessage" class="status-message"></div><br>
+        </div>
 </form>
+<script>
+        $(document).ready(function() {
+            const isValidated = document.getElementById('settings_validated').value.toLowerCase();
+
+            console.log('Validated: ' + isValidated)
+        });
+</script>
 {% endblock %}

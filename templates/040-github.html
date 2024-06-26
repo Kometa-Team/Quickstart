@@ -59,27 +59,39 @@
     <hr class="hr">
     {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group input-group-lg form-floating">
-      <input type="password" class="form-control" id="github_token" name="github_token" value="{{ data['github']['token'] }}" title="GitHub Token" aria-label="GitHub Token"><label for="github_token">GitHub Personal Access Token</label>
+      <input type="password" class="form-control" id="github_token" name="github_token" value="{{ data['github']['token'] }}" title="GitHub Token" aria-label="GitHub Token">
+      <label for="github_token">GitHub Personal Access Token</label>
       <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="validateGithubButton" type="button">Validate</button>
+      <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="github_validated" name="github_validated" value="{{ data['validated'] }}" title="">
-      <label for="github_validated">Github Validated</label>
+      <label for="github_validated">GitHub Validated</label>
     </div>
-    <div id="githubStatusMessage" class="status-message"></div><br>
+    <div id="statusMessage" class="status-message"></div><br>
   </div>
 </form>
 <script>
   $(document).ready(function() {
-    const isValidated = document.getElementById('github_validated').value;
+    const isValidated = document.getElementById('github_validated').value.toLowerCase() === 'true';
+    const validateButton = document.getElementById('validateButton');
     
     console.log('Validated: ' + isValidated)
 
     if (isValidated) {
+      validateButton.disabled = true;
+    } else {
+      validateButton.disabled = false;
     }
+
+    document.getElementById('github_token').addEventListener('input', function() {
+      document.getElementById('github_validated').value = 'false';
+      validateButton.disabled = false;
+    });
   });
 
   document.getElementById('toggleApikeyVisibility').addEventListener('click', function() {
@@ -89,68 +101,55 @@
     this.innerHTML = currentType === "password" ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
   });
 
-  async function validateGitHubToken(token) {
-    const apiUrl = "https://api.github.com/user";
+  document.getElementById('validateButton').addEventListener('click', function() {
+    const apiKey = document.getElementById('github_token').value;
+    const statusMessage = document.getElementById('statusMessage');
 
-    try {
-      const response = await fetch(apiUrl, {
-        method: "GET",
-        headers: {
-          Authorization: `token ${token}`,
-          Accept: "application/vnd.github.v3+json",
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        document.getElementById('github_validated').value = true
-        console.log("GitHub token is valid. User: " + data.login);
-        return true;
-      } else {
-        document.getElementById('github_validated').value = false
-        console.log("Invalid GitHub token. Status:", response.status);
-        return false;
-      }
-    } catch (error) {
-      console.error("Error validating GitHub token:", error);
-      return false;
+    if (!apiKey) {
+      statusMessage.textContent = 'Please enter a GitHub Personal Access Token.';
+      statusMessage.style.color = '#ea868f';
+      statusMessage.style.display = 'block';
+      return;
     }
-  }
 
-  document
-    .getElementById("validateGithubButton")
-    .addEventListener("click", function () {
-      const apiKey = document.getElementById("github_token").value;
-      const githubStatusMessage = document.getElementById(
-        "githubStatusMessage"
-      );
+    showSpinner('validate');
 
-      if (!apiKey) {
-        githubStatusMessage.textContent =
-          "Please enter an GitHub Personal Access Token.";
-        githubStatusMessage.style.display = "block";
-        return;
+    fetch("/validate_github", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ github_token: apiKey }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.valid) {
+        hideSpinner('validate');
+        statusMessage.textContent = data.message;
+        statusMessage.style.color = '#75b798';
+        document.getElementById('validateButton').disabled = true;
+        document.getElementById('github_validated').value = 'true';
+      } else {
+        statusMessage.textContent = data.message;
+        statusMessage.style.color = '#ea868f';
       }
-
-      validateGitHubToken(apiKey).then((isValid) => {
-        if (isValid) {
-          githubStatusMessage.textContent = "GitHub token is valid.";
-          githubStatusMessage.style.color = "#75b798";
-        } else {
-          githubStatusMessage.textContent = "GitHub token is invalid.";
-          githubStatusMessage.style.color = "#ea868f";
-        }
-      });
-      githubStatusMessage.style.display = "block";
+      statusMessage.style.display = 'block';
+    })
+    .catch(error => {
+      hideSpinner('validate');
+      statusMessage.textContent = 'Error validating GitHub token.';
+      statusMessage.style.color = '#ea868f';
+      statusMessage.style.display = 'block';
+      document.getElementById('github_validated').value = 'false';
     });
+  });
 
-  document
-    .getElementById("configForm")
-    .addEventListener("submit", function (event) {
-      const apiKeyInput = document.getElementById("github_token");
-      if (!apiKeyInput.value) {
-        apiKeyInput.value = "";
-      }
-    });
+
+  document.getElementById('configForm').addEventListener('submit', function(event) {
+    const apiKeyInput = document.getElementById('github_token');
+    if (!apiKeyInput.value) {
+      apiKeyInput.value = '';
+    }
+  });
 </script>
 {% endblock %}

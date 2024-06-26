@@ -10,7 +10,7 @@
             <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
               <span id="jump-to-text">Jump To</span>
               <i id="jump-spinner-icon" class=""></i>
-            </button>  
+            </button>
           <ul class="dropdown-menu">
             {% for file, name in template_list %}
               {% if name == 'Final Validation' %}
@@ -65,7 +65,7 @@
     </div>
     <div class="form-floating">
       <div class="form-text" id="yaml-warnings">
-        <h5>The below error(s) occurred validating your inputs.</h5><br>
+        <h5>These error(s) occurred while validating your config:</h5><br>
       </div>
       <textarea class="form-control" placeholder="Leave a comment here" id="validation-error" style="height: 300px">{{ validation_error }}</textarea>
     </div>
@@ -86,7 +86,6 @@
     {% endif %}
   </div>
 </form>
-
 <script>
 $(document).ready(function() {
   // Debugging: Confirm jQuery is loaded
@@ -119,7 +118,11 @@ $(document).ready(function() {
 
   // If there are validation messages, display them
   if (!showYAML) {
-    $('#validation-messages').html(validationMessages.join('<br>')).show();
+    if (validationMessages.length > 0) {
+      $('#validation-messages').html(validationMessages.join('<br>')).show();
+    } else {
+      $('#validation-messages').html('').hide();
+    }
 
     $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').removeClass('d-none');
     // Hide the download button
