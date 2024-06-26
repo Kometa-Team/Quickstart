@@ -81,7 +81,10 @@
       </div>
     </div>
     {% endfor %}
-
+    <div class="form-floating">
+      <input type="text" class="form-control" id="webhooks_validated" name="webhooks_validated" value="{{ data['validated'] }}" title="">
+      <label for="webhooks_validated">Webhooks Validated</label>
+    </div>
     <script>
     function showCustomInput(selectElement) {
         var customInputId = selectElement.id + '_custom';
@@ -94,6 +97,10 @@
 
     $(document).ready(function() {
         // Initial call to showCustomInput to show or hide custom inputs based on initial selection
+        const isValidated = document.getElementById('webhooks_validated').value.toLowerCase();
+
+        console.log('Validated: ' + isValidated)
+
         $('select.form-select').each(function() {
             showCustomInput(this);
         });
