@@ -57,15 +57,17 @@
       <label for="header-style">Header Style</label>
     </div>
 
+    <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
+    </div>
     <div class="alert alert-danger" role="alert" id="yaml-warning-msg">
       The inputs you entered <b>did not</b> pass validation, a valid config
       <b>could not</b> be generated. Please try again.
     </div>
     <div class="form-floating">
       <div class="form-text" id="yaml-warnings">
-        <h5>The YAML validator produced this output while processing this config:</h5><br>
+        <h5>These error(s) occurred while validating your config:</h5><br>
       </div>
-      <textarea class="form-control" placeholder="" id="validation-error" style="height: 300px">{{ validation_error }}</textarea>
+      <textarea class="form-control" placeholder="Leave a comment here" id="validation-error" style="height: 300px">{{ validation_error }}</textarea>
     </div>
     </div>
     <div class="form-floating">
@@ -116,7 +118,11 @@ $(document).ready(function() {
 
   // If there are validation messages, display them
   if (!showYAML) {
-    $('#validation-messages').html(validationMessages.join('<br>')).show();
+    if (validationMessages.length > 0) {
+      $('#validation-messages').html(validationMessages.join('<br>')).show();
+    } else {
+      $('#validation-messages').html('').hide();
+    }
 
     $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').removeClass('d-none');
     // Hide the download button
