@@ -55,24 +55,14 @@
 }
 
   // Function to show the spinner on validate
-  function showSpinner(action) {
-    if (action === 'validate') {
-        document.getElementById('validate-spinner-icon').style.display = 'inline-block';
-    }
-    if (action === 'retrieve') {
-        document.getElementById('validate-spinner-icon2').style.display = 'inline-block';
-    }
+    function showSpinner(webhookType) {
+    document.getElementById(`spinner_${webhookType}`).style.display = 'inline-block';
   }
-  
-  // Function to hide the spinner on validate
-  function hideSpinner(action) {
-    if (action === 'validate') {
-      document.getElementById('validate-spinner-icon').style.display = 'none';
+
+    // Function to hide the spinner on validate
+  function hideSpinner(webhookType) {
+    document.getElementById(`spinner_${webhookType}`).style.display = 'none';
   }
-  if (action === 'retrieve') {
-    document.getElementById('validate-spinner-icon2').style.display = 'none';
-  }
-}
 
   // Function to handle jump to action
   function jumpTo(targetPage) {

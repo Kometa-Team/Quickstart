@@ -71,7 +71,7 @@
         <i class="fas fa-eye"></i>
       </button>
       <button class="btn btn-success" id="mal_get_localhost_url" type="button">
-        Authorize <i id="validate-spinner-icon2" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        Authorize <i id="spinner_retrieve" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
     <input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
@@ -81,7 +81,7 @@
       <div class="input-group input-group-lg">
         <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" placeholder="Localhost URL" aria-label="Localhost URL" oninput="checkURLField(this)">
         <button type="button" class="btn btn-success" id="validate_mal_url">
-          Complete Authentication <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+          Complete Authentication <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
         </button>
       </div>
       <div class="form-floating">

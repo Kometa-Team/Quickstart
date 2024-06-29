@@ -67,7 +67,7 @@
         <i class="fas fa-eye"></i>
       </button>
       <button class="btn btn-success" id="validateButton" type="button">
-        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
     <div class="form-floating">
@@ -239,6 +239,8 @@
     const sonarr_token = document.getElementById("sonarr_token").value;
     const statusMessage = document.getElementById("statusMessage");
 
+    showSpinner('validate');
+
     fetch("/validate_sonarr", {
       method: "POST",
       headers: {
@@ -249,6 +251,7 @@
     .then((response) => response.json())
     .then((data) => {
       if (data.valid) {
+          hideSpinner('validate')
           document.getElementById('sonarr_validated').value = 'true';
           statusMessage.textContent = "Sonarr API key is valid.";
           statusMessage.style.color = "#75b798";
@@ -259,6 +262,7 @@
           populateDropdown('sonarr_quality_profile', data.quality_profiles, 'name', 'name');
           populateDropdown('sonarr_language_profile', data.language_profiles, 'name', 'name');
         } else {
+          hideSpinner('validate');
           document.getElementById('sonarr_validated').value = 'false';
           console.log("Invalid Sonarr API key. Error:", data.message);
           statusMessage.textContent = "Sonarr API key is invalid.";
@@ -267,6 +271,7 @@
         }
       })
       .catch(error => {
+        hideSpinner('validate')
         console.error("Error validating Sonarr API key:", error);
         statusMessage.textContent = 'Error validating Sonarr API key.';
         statusMessage.style.color = '#ea868f';
