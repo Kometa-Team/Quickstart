@@ -73,7 +73,7 @@
         <i class="fas fa-eye"></i>
       </button>
       <button class="btn btn-success" id="validateButton" type="button">
-        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
     <div class="form-floating">
@@ -136,6 +136,7 @@
       return;
     }
 
+    showSpinner('validate');
     fetch("/validate_anidb", {
       method: "POST",
       headers: {
@@ -146,11 +147,13 @@
     .then((response) => response.json())
     .then((data) => {
       if (data.valid) {
+        hideSpinner('validate');
         document.getElementById('anidb_validated').value = 'true';
         statusMessage.textContent = "AniDb credentials are valid.";
         statusMessage.style.color = "#75b798";
         document.getElementById("validateButton").disabled = 'true';
       } else {
+        hideSpinner('validate');
         document.getElementById('anidb_validated').value = 'false';
         statusMessage.textContent = `Error: ${data.error}`;
         statusMessage.style.color = "#ea868f";
@@ -159,6 +162,7 @@
       statusMessage.style.display = "block";
     })
     .catch((error) => {
+      hideSpinner('validate');
       console.error("Error:", error);
       statusMessage.textContent = "Error validating AniDb credentials.";
       statusMessage.style.color = "#ea868f";

@@ -67,7 +67,7 @@
       <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button><button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">
-        Retrieve PIN <i id="validate-spinner-icon2" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        Retrieve PIN <i id="spinner_retrieve" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
     <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
@@ -80,7 +80,7 @@
     <div class="input-group input-group-lg" id="urlField">
       <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)">
       <button class="btn btn-success" type="button" id="validate_trakt_pin">
-        Validate PIN <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        Validate PIN <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
     <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['trakt']['authorization']['access_token'] }}" readonly>

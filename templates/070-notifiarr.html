@@ -65,7 +65,7 @@
         <i class="fas fa-eye"></i>
       </button>
       <button class="btn btn-success" id="validateButton" type="button">
-        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
     <div class="form-floating">
@@ -95,6 +95,7 @@
   });
 
   async function validateNotifiarrApikey(apikey) {
+    showSpinner('validate');
     const apiUrl = `/validate_notifiarr`;
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -105,9 +106,11 @@
     });
 
     if (response.ok) {
+      hideSpinner('validate');
       const data = await response.json();
       return data.valid;
     } else {
+      hideSpinner('validate');
       const errorData = await response.json();
       console.error("Error validating Notifiarr apikey:", errorData.message);
       return false;
@@ -117,7 +120,6 @@
   document.getElementById('validateButton').addEventListener('click', function() {
     const apiKey = document.getElementById('notifiarr_apikey').value;
     const statusMessage = document.getElementById('statusMessage');
-    const spinner = document.getElementById('validate-spinner-icon');
 
     if (!apiKey) {
       statusMessage.textContent = 'Please enter a Notifiarr API key.';
@@ -127,10 +129,8 @@
     }
 
     validateButton.disabled = true;
-    spinner.style.display = 'inline-block';
 
     validateNotifiarrApikey(apiKey).then(isValid => {
-      spinner.style.display = 'none';
       if (isValid) {
         document.getElementById('notifiarr_validated').value = 'true';
         statusMessage.textContent = 'Notifiarr API key is valid.';

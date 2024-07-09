@@ -70,8 +70,11 @@
       <div class="input-group input-group-lg custom-webhook" id="webhooks_{{ webhook }}_custom" style="display: none;">
         <div class="input-group input-group-lg">
           <input type="text" class="form-control custom-webhook-url" placeholder="Enter webhook URL ({{ webhook|replace("_", " ")|title }})"
-                value="{% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}{{ data.webhooks[webhook] }}{% endif %}">
-          <button class="btn btn-success" type="button" onclick="validateWebhook('{{ webhook }}')">Validate</button>
+            value="{% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}{{ data.webhooks[webhook] }}{% endif %}"
+            oninput="setWebhookValidated(false, '{{ webhook }}')">
+          <button class="btn btn-success validate-button" type="button" onclick="validateWebhook('{{ webhook }}')">
+            Validate <i id="spinner_{{ webhook }}" class="spinner-border spinner-border-sm" role="status" style="display:none;"></i>
+          </button>
         </div>
         <div class="validation-message" id="validation_message_{{ webhook }}" style="display: none; margin-top: 10px;">
           <div class="alert alert-info" role="alert">
@@ -81,78 +84,128 @@
       </div>
     </div>
     {% endfor %}
-    <div class="form-floating">
+        <div class="form-floating">
       <input type="text" class="form-control" id="webhooks_validated" name="webhooks_validated" value="{{ data['validated'] }}" title="">
       <label for="webhooks_validated">Webhooks Validated</label>
     </div>
-    <script>
-    function showCustomInput(selectElement) {
-        var customInputId = selectElement.id + '_custom';
-        if (selectElement.value === 'custom') {
-            document.getElementById(customInputId).style.display = 'block';
-        } else {
-            document.getElementById(customInputId).style.display = 'none';
-        }
-    }
+  <script>
+      const validatedWebhooks = {};
+      
+      function setWebhookValidated(state, webhookType = null) {
+          document.getElementById('webhooks_validated').value = state ? 'true' : 'false';
+      
+          if (webhookType) {
+              // Enable the validate button if the URL changes and validation is false
+              const validateButton = document.querySelector(`#webhooks_${webhookType}_custom .validate-button`);
+              if (validateButton) {
+                  validateButton.disabled = state;
+              }
+          }
+      }
+      
+      function showCustomInput(selectElement, isValidated) {
+          var customInputId = selectElement.id + '_custom';
+          if (selectElement.value === 'custom') {
+              document.getElementById(customInputId).style.display = 'block';
+              if (isValidated === true) {
+                  setWebhookValidated(true, selectElement.id);
+              } else {
+                  setWebhookValidated(false, selectElement.id);
+              }
+          } else {
+              document.getElementById(customInputId).style.display = 'none';
+              validatedWebhooks[selectElement.id] = true;
+              updateValidationState();
+          }
+      }
+      
+      function updateValidationState() {
+          const allValid = Object.values(validatedWebhooks).every(state => state === true);
+          setWebhookValidated(allValid);
+      }
+      
+      $(document).ready(function() {
+          const isValidated = document.getElementById('webhooks_validated').value.toLowerCase() === 'true';
+          console.log('Validated: ' + isValidated);
+      
+          $('select.form-select').each(function() {
+              const selectElement = this;
+              const customInputId = selectElement.id + '_custom';
+              const customUrl = $('#' + customInputId).find('input.custom-webhook-url').val();
+      
+              showCustomInput(selectElement, isValidated);
+      
+              if (selectElement.value === 'custom' && customUrl) {
+                  validatedWebhooks[selectElement.id] = isValidated;
+              } else {
+                  validatedWebhooks[selectElement.id] = true;
+              }
+          });
+      
+          if (isValidated === true) {
+              $('.validate-button').prop('disabled', true);
+          } else {
+              $('.validate-button').prop('disabled', false);
+          }
+      
+          document.getElementById("configForm").addEventListener("submit", function (event) {
+              $('select.form-select').each(function() {
+                  if ($(this).val() === 'custom') {
+                      var customInputId = $(this).attr('id') + '_custom';
+                      var customUrl = $('#' + customInputId).find('input.custom-webhook-url').val();
+                      if (customUrl) {
+                          $(this).append('<option value="' + customUrl + '" selected="selected">' + customUrl + '</option>');
+                          $(this).val(customUrl);
+                      }
+                  }
+              });
+          });
+      });
+      
+      function validateWebhook(webhookType) {
+          var inputGroup = $('#webhooks_' + webhookType + '_custom').find('.input-group');
+          var webhookUrl = inputGroup.find('input.custom-webhook-url').val();
+          var validationMessage = inputGroup.siblings('.validation-message');
+          var validateButton = inputGroup.find('.validate-button');
+          var webhookTypeFormatted = webhookType.replace(/_/g, " ").replace(/\b\w/g, function (l) { return l.toUpperCase() });
 
-    $(document).ready(function() {
-        // Initial call to showCustomInput to show or hide custom inputs based on initial selection
-        const isValidated = document.getElementById('webhooks_validated').value.toLowerCase();
-
-        console.log('Validated: ' + isValidated)
-
-        $('select.form-select').each(function() {
-            showCustomInput(this);
-        });
-
-        document.getElementById("configForm").addEventListener("submit", function (event) {
-            $('select.form-select').each(function() {
-                if ($(this).val() === 'custom') {
-                    var customInputId = $(this).attr('id') + '_custom';
-                    var customUrl = $('#' + customInputId).find('input.custom-webhook-url').val();
-                    if (customUrl) {
-                        $(this).append('<option value="' + customUrl + '" selected="selected">' + customUrl + '</option>');
-                        $(this).val(customUrl);
-                    }
-                }
-            });
-        });
-    });
-
-
-    function validateWebhook(webhookType) {
-        var inputGroup = $('#webhooks_' + webhookType + '_custom').find('.input-group');
-        var webhookUrl = inputGroup.find('input.custom-webhook-url').val();
-        var validationMessage = inputGroup.siblings('.validation-message');
-        var webhookTypeFormatted = webhookType.replace(/_/g, " ").replace(/\b\w/g, function (l) { return l.toUpperCase() });
-
-        validationMessage.html('<div class="alert alert-info" role="alert">Validating...</div>');
-        validationMessage.show();
-
-        fetch('/validate_webhook', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                webhook_url: webhookUrl,
-                message: "Test message for " + webhookTypeFormatted + " webhook"
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                validationMessage.html('<div class="alert alert-success" role="alert">' + data.success + '</div>');
-            } else {
-                validationMessage.html('<div class="alert alert-danger" role="alert">' + data.error + '</div>');
-            }
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-            validationMessage.html('<div class="alert alert-danger" role="alert">An error occurred. Please try again.</div>');
-        });
-    }
-    </script>
-  </div>
+          showSpinner2(webhookType);
+          validationMessage.html('<div class="alert alert-info" role="alert">Validating...</div>');
+          validationMessage.show();
+      
+          fetch('/validate_webhook', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  webhook_url: webhookUrl,
+                  message: "Test message for " + webhookTypeFormatted + " webhook"
+              })
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  hideSpinner2(webhookType);
+                  validationMessage.html('<div class="alert alert-success" role="alert">' + data.success + '</div>');
+                  validateButton.prop('disabled', true);
+                  validatedWebhooks['webhooks_' + webhookType] = true;
+              } else {
+                  hideSpinner2(webhookType);
+                  validationMessage.html('<div class="alert alert-danger" role="alert">' + data.error + '</div>');
+                  validatedWebhooks['webhooks_' + webhookType] = false;
+              }
+              updateValidationState();
+          })
+          .catch((error) => {
+              hideSpinner2(webhookType);
+              console.error('Error:', error);
+              validationMessage.html('<div class="alert alert-danger" role="alert">An error occurred. Please try again.</div>');
+              validatedWebhooks['webhooks_' + webhookType] = false;
+              updateValidationState();
+          });
+      }
+      </script>
+</div>
 </form>
 {% endblock %}

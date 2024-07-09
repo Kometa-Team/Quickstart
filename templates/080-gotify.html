@@ -67,7 +67,7 @@
         <i class="fas fa-eye"></i>
       </button>
       <button class="btn btn-success" id="validateButton" type="button">
-        Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
     <div class="form-floating">
@@ -134,16 +134,14 @@
   document.getElementById("validateButton").addEventListener("click", function () {
     const gotify_url = document.getElementById("gotify_url").value;
     const gotify_token = document.getElementById("gotify_token").value;
-    const statusMessage = document.getElementById("statusMessage");
-
-    statusMessage.innerHTML = '<i class="spinner-border spinner-border-sm"></i> Validating...';
-    statusMessage.style.display = "block";
 
     if (!gotify_url || !gotify_token) {
       statusMessage.textContent = "Please enter both Gotify URL and Token.";
       statusMessage.style.color = "#ea868f";
       return;
     }
+
+    showSpinner('validate');
 
     fetch("/validate_gotify", {
       method: "POST",
@@ -158,10 +156,12 @@
       .then((response) => response.json())
       .then((data) => {
         if (data.valid) {
+          hideSpinner('validate');
           document.getElementById('gotify_validated').value = 'true';
           statusMessage.textContent = "Gotify credentials validated successfully!";
           statusMessage.style.color = "green";
         } else {
+          hideSpinner('validate');
           document.getElementById('gotify_validated').value = 'false';
           statusMessage.textContent = data.error;
           statusMessage.style.color = "red";
@@ -170,6 +170,7 @@
         statusMessage.style.display = "block";
       })
       .catch((error) => {
+        hideSpinner('validate');
         console.error("Error validating Gotify credentials:", error);
         statusMessage.textContent = "An error occurred while validating Gotify credentials.";
         statusMessage.style.color = "red";
