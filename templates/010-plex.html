@@ -72,6 +72,10 @@
         Validate <i id="validate-spinner-icon" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
+    <input type="hidden" class="form-control" id="user_list" name="user_list" value="{{ data['plex']['user_list'] }}" title="">
+    <input type="hidden" class="form-control" id="music_libraries" name="music_libraries" value="{{ data['plex']['music_libraries'] }}" title="">
+    <input type="hidden" class="form-control" id="movie_libraries" name="movie_libraries" value="{{ data['plex']['movie_libraries'] }}" title="">
+    <input type="hidden" class="form-control" id="show_libraries" name="show_libraries" value="{{ data['plex']['show_libraries'] }}" title="">
     <div class="form-floating">
       <input type="text" class="form-control" id="plex_validated" name="plex_validated" value="{{ data['validated'] }}" title="">
       <label for="plex_validated">Plex Validated</label>
@@ -177,9 +181,9 @@
     })
     .then(response => response.json())
     .then(data => {
-      hideSpinner('validate');
-      validateButton.disabled = false;
       if (data.validated) {
+        hideSpinner('validate');
+        validateButton.disabled = true;
         const serverDbCache = data.db_cache;
         plexDbcache.textContent = 'Database cache value retrieved from server is: ' + serverDbCache + ' MB';
         plexDbcache.style.color = '#75b798';
@@ -198,8 +202,13 @@
 
         // Update the input field to match the server's db_cache value
         document.getElementById('plex_db_cache').value = serverDbCache;
+        document.getElementById('user_list').value = data.user_list;
+        document.getElementById('music_libraries').value = data.music_libraries;
+        document.getElementById('movie_libraries').value = data.movie_libraries;
+        document.getElementById('show_libraries').value = data.show_libraries;
       } else {
         hideSpinner('validate');
+        validateButton.disabled = false;
         document.getElementById('plex_validated').value = false;
         statusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.';
         statusMessage.style.color = '#ea868f';

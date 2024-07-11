@@ -52,6 +52,19 @@ def validate_plex_server(data):
         if db_cache is None:
             raise Exception("Unable to retrieve db_cache from Plex settings.")
 
+        # Retrieve user list with only usernames
+        user_list = [user.title for user in plex.myPlexAccount().users()]
+        app.logger.info(f"User list retrieved from Plex: {user_list}")
+
+        # Retrieve library sections
+        music_libraries = [section.title for section in plex.library.sections() if section.type == 'artist']
+        movie_libraries = [section.title for section in plex.library.sections() if section.type == 'movie']
+        show_libraries = [section.title for section in plex.library.sections() if section.type == 'show']
+        
+        app.logger.info(f"Music libraries: {music_libraries}")
+        app.logger.info(f"Movie libraries: {movie_libraries}")
+        app.logger.info(f"Show libraries: {show_libraries}")
+
     except Exception as e:
         app.logger.error(f'Error validating Plex server: {str(e)}')
         flash(f'Invalid Plex URL or Token: {str(e)}', 'error')
@@ -60,7 +73,11 @@ def validate_plex_server(data):
     # If PlexServer instance is successfully created and db_cache is retrieved, return success response
     return jsonify({
         'validated': True,
-        'db_cache': db_cache  # Send back the integer value of db_cache
+        'db_cache': db_cache,  # Send back the integer value of db_cache
+        'user_list': user_list,
+        'music_libraries': music_libraries,
+        'movie_libraries': movie_libraries,
+        'show_libraries': show_libraries
     })
 
 
