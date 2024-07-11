@@ -626,9 +626,9 @@
       alert('Please enter a valid asset directory path.');
       return false; // Prevent form submission
     }
-
+  
     // Validate CSV list fields
-    const csvFields = ['playlist_sync_to_users', 'ignore_ids', 'ignore_imdb_ids', 'playlist_exclude_users']; // Replace with actual IDs of CSV fields
+    const csvFields = ['playlist_sync_to_users', 'playlist_exclude_users'];
     for (let fieldId of csvFields) {
       let fieldValue = document.getElementById(fieldId).value.trim();
       if (!validateCSVList(fieldValue)) {
@@ -636,9 +636,58 @@
         return false; // Prevent form submission
       }
     }
-
+  
+    // Validate ignore_ids to be numeric
+    let ignoreIds = document.getElementById('ignore_ids').value.trim();
+    if (ignoreIds && !validateNumericCSV(ignoreIds)) {
+      alert('Please enter a valid CSV list of numeric IDs for ignore_ids.');
+      return false; // Prevent form submission
+    }
+  
+    // Validate ignore_imdb_ids to start with tt followed by numbers
+    let ignoreImdbIds = document.getElementById('ignore_imdb_ids').value.trim();
+    if (ignoreImdbIds && !validateIMDBCSV(ignoreImdbIds)) {
+      alert('Please enter a valid CSV list of IMDb IDs for ignore_imdb_ids (starting with tt followed by numbers).');
+      return false; // Prevent form submission
+    }
+  
+    // Validate custom_repo to be a valid URL
+    let customRepo = document.getElementById('custom_repo').value.trim();
+    if (customRepo && customRepo.toLowerCase() !== "none" && !validateURL(customRepo)) {
+      alert('Please enter a valid URL for custom_repo.');
+      return false; // Prevent form submission
+    }
+  
     // Additional form validation logic can go here if needed
     return true; // Allow form submission
+  }
+  
+  function validatePath(input) {
+    const pathRegex = /^(?:[a-zA-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*|\\{2}[^\\/:*?"<>|\r\n]+(?:\\[^\\/:*?"<>|\r\n]+)*|(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]+|\/(?:[^\/]+\/)*[^\/]*|\.{1,2}(?:\/[^\/]*)*|(?:[^\/]+\/)*[^\/]*)$/;
+    return pathRegex.test(input);
+  }
+  
+  function validateCSVList(input) {
+    if (!input) {
+      return true;
+    }
+    const csvRegex = /^(\s*[a-zA-Z0-9-_.]+\s*)(,\s*[a-zA-Z0-9-_.]+\s*)*$/;
+    return csvRegex.test(input);
+  }
+  
+  function validateNumericCSV(input) {
+    const numericCSVRegex = /^(\s*\d+\s*)(,\s*\d+\s*)*$/;
+    return numericCSVRegex.test(input);
+  }
+  
+  function validateIMDBCSV(input) {
+    const imdbCSVRegex = /^(\s*tt\d+\s*)(,\s*tt\d+\s*)*$/;
+    return imdbCSVRegex.test(input);
+  }
+  
+  function validateURL(input) {
+    const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i;
+    return urlRegex.test(input);
   }
 </script>
 {% endblock %}
