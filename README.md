@@ -36,6 +36,8 @@ git pull
 .\venv\scripts\activate.ps1
 python -m pip install --upgrade pip
 pip install -r .\requirements.txt
+pre-commit install
+pre-commit autoupdate
 ```
 
 There is a `.envrc` in the project, so if you are using a linux-alike and install `direnv`, then just entering the project directory in your shell will do all the above for you and leave you ready to run `python app.py`.
