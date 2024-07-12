@@ -123,6 +123,7 @@ def step(name):
     page_info['prev_page'] = item['prev']
         
     data = retrieve_settings(name)
+    plex_data = retrieve_settings('010-plex')
 
     print(f"data retrieved for {name}")
 
@@ -139,7 +140,7 @@ def step(name):
         return render_template('900-final.html', page_info=page_info, data=data, yaml_content=yaml_content, validation_error=validation_error, template_list=file_list)
 
     else:
-        return render_template(name + '.html', page_info=page_info, data=data, template_list=file_list)
+        return render_template(name + '.html', page_info=page_info, data=data, plex_data=plex_data, template_list=file_list)
 
 @app.route('/download')
 def download():
