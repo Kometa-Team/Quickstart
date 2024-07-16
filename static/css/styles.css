@@ -88,8 +88,8 @@ form, #final-form { /* Combined similar selectors */
 }
 
 .form-container {
-    display: flex; 
-    max-width: 800px; 
+    display: flex;
+    max-width: 800px;
     margin: auto;
 }
 
@@ -100,7 +100,7 @@ form, #final-form { /* Combined similar selectors */
 }
 
 #final-yaml {
-    width: 100%; 
+    width: 100%;
     min-height: 400px;
     font-family: monospace;
 }
@@ -124,14 +124,14 @@ label {
     --bs-accordion-bg: #191d20;
 }
 
-.accordion-body, 
+.accordion-body,
 .card-group { /* Combined similar selectors */
     background-color: #212529;
     padding-top: 10px; /* Added consistent padding to card group */
     padding-bottom: 10px;
 }
 
-.form-select, 
+.form-select,
 .form-floating > .form-select {
 
     margin-top: 1rem;
@@ -203,7 +203,7 @@ label {
 /* -------------------- */
 
 .tooltip-inner {
-    background-color: #fff; 
+    background-color: #fff;
     color: #000;
     border: 1px solid #000;
 }

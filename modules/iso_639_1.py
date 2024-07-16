@@ -182,5 +182,5 @@ iso_639_1_languages = [
     ("yi", "Yiddish"),
     ("yo", "Yoruba"),
     ("za", "Zhuang, Chuang"),
-    ("zu", "Zulu")
+    ("zu", "Zulu"),
 ]

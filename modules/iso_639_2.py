@@ -30,7 +30,10 @@ iso_639_2_languages = [
     ("cre", "Cree (cre)"),
     ("ces", "Czech (ces)"),
     ("cze", "Czech (cze)"),
-    ("chu", "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic (chu)"),
+    (
+        "chu",
+        "Church Slavic; Old Slavonic; Church Slavonic; Old Bulgarian; Old Church Slavonic (chu)",
+    ),
     ("chv", "Chuvash (chv)"),
     ("cor", "Cornish (cor)"),
     ("cym", "Welsh (cym)"),
@@ -195,5 +198,5 @@ iso_639_2_languages = [
     ("yid", "Yiddish (yid)"),
     ("yor", "Yoruba (yor)"),
     ("zha", "Zhuang; Chuang (zha)"),
-    ("zul", "Zulu (zul)")
+    ("zul", "Zulu (zul)"),
 ]

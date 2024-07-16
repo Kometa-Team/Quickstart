@@ -1039,27 +1039,8 @@
       </div>
     </div>
 </form>
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const cardFooters = document.querySelectorAll('.card-footer');
-
-    cardFooters.forEach(cardFooter => {
-      const checkbox = cardFooter.querySelector('input[type="checkbox"]');
-      const button = cardFooter.querySelector('button');
-
-      if (checkbox && button) { // Ensure both elements exist
-        checkbox.addEventListener('change', function () {
-          button.disabled = !this.checked;
-        });
-
-        // Initial State: Check if the button should be disabled on load
-        button.disabled = !checkbox.checked;
-      }
-    });
-  });
-
-  function library_select() {
-      var T = document.getElementById("library_select");
-      T.style.display = "block";  // <-- Set it to block
-  }
-</script>{% endblock %}
+<script
+type="text/javascript"
+src="{{ url_for('static', filename='local-js/016-showlib.js') }}"
+></script>
+{% endblock %}

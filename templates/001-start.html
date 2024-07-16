@@ -78,22 +78,8 @@
     <button class="btn btn-danger" type="submit" id="clearSessionButton">Clear Session Data</button>
   </div>
 </form>
-<script>
-document.getElementById('clearSessionButton').addEventListener('click', function(event) {
-  event.preventDefault();
-  if (confirm('Are you sure you want to clear the session data? This action cannot be undone.')) {
-    document.getElementById('clearSessionForm').submit();
-  }
-});
-
-function validate_name(select) {
-  text = select.value
-
-  text = text.toLowerCase();
-
-  text = text.replace(/[^a-z0-9_]/g, '');
-
-  select.value = text
-}
-</script>
+<script
+type="text/javascript"
+src="{{ url_for('static', filename='local-js/001-start.js') }}"
+></script>
 {% endblock %}

@@ -3,22 +3,32 @@ import jsonschema
 import pyfiglet
 from ruamel.yaml import YAML
 
-from .persistence import save_settings, retrieve_settings, check_minimum_settings, flush_session_storage, notification_systems_available
+from .persistence import (
+    save_settings,
+    retrieve_settings,
+    check_minimum_settings,
+    flush_session_storage,
+    notification_systems_available,
+)
 from .helpers import build_config_dict, get_template_list, get_bits
 
+
 def add_border_to_ascii_art(art):
-    lines = art.split('\n')
+    lines = art.split("\n")
     lines = lines[:-1]
     width = max(len(line) for line in lines)
     border_line = "#" * (width + 4)
-    bordered_art = [border_line] + [f"# {line.ljust(width)} #" for line in lines] + [border_line]
-    return '\n'.join(bordered_art)
+    bordered_art = (
+        [border_line] + [f"# {line.ljust(width)} #" for line in lines] + [border_line]
+    )
+    return "\n".join(bordered_art)
 
 
 def section_heading(title):
     return add_border_to_ascii_art(pyfiglet.figlet_format(title))
 
-def clean_section_data(section_data,config_attribute):
+
+def clean_section_data(section_data, config_attribute):
     clean_data = {}
 
     for key, value in section_data.items():
@@ -27,29 +37,32 @@ def clean_section_data(section_data,config_attribute):
 
     return clean_data
 
-def build_config(header_style='ascii'):
+
+def build_config(header_style="ascii"):
     sections = get_template_list()
 
     config_data = {}
     header_art = {}
-    
+
     for name in sections:
         item = sections[name]
         # {'num': '001', 'file': '001-start.html', 'stem': '001-start', 'name': 'Start', 'raw_name': 'start', 'next': '010-plex', 'prev': '001-start'}
-        persistence_key = item['stem']
-        config_attribute = item['raw_name']
-        if header_style == 'ascii':
-            header_art[config_attribute] = section_heading(item['name'])
-        elif header_style == 'divider':
-            header_art[config_attribute] = "#==================== " + item['name'] + " ====================#"
+        persistence_key = item["stem"]
+        config_attribute = item["raw_name"]
+        if header_style == "ascii":
+            header_art[config_attribute] = section_heading(item["name"])
+        elif header_style == "divider":
+            header_art[config_attribute] = (
+                "#==================== " + item["name"] + " ====================#"
+            )
         else:
-            header_art[config_attribute] = ''
-		
+            header_art[config_attribute] = ""
+
         section_data = retrieve_settings(persistence_key)
 
         # {'mal': {'authorization': {'code_verifier': 'OEOOZwnH8RWLczgahkUbo__vabgHl7XyvWkDx0twLB4FCaxPY88C9tNXnmxzBq946vSekKbPc3WhW4SwWrq0ld5xKpm27foQx4RXfnXY25iL7Pm0WCCuYkO-iQga69jv', 'localhost_url': '', 'access_token': 'None', 'token_type': 'None', 'expires_in': 'None', 'refresh_token': 'None'}, 'client_id': 'Enter MyAnimeList Client ID', 'client_secret': 'Enter MyAnimeList Client Secret'}, 'valid': True}
-        
-        if 'validated' in section_data and section_data['validated']:
+
+        if "validated" in section_data and section_data["validated"]:
             # it's valid data and needs to end up in the config
             # but first clear some chaff
             clean_data = clean_section_data(section_data, config_attribute)
@@ -62,9 +75,9 @@ def build_config(header_style='ascii'):
     )
 
     # Configure the YAML instance
-    yaml = YAML(typ='safe', pure=True)
+    yaml = YAML(typ="safe", pure=True)
 
-    with open('json-schema/config-schema.json', 'r') as file:
+    with open("json-schema/config-schema.json", "r") as file:
         schema = yaml.load(file)
 
     yaml.default_flow_style = False
@@ -72,7 +85,7 @@ def build_config(header_style='ascii'):
 
     # Prepare the final YAML content
     yaml_content = (
-        '# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n'
+        "# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n"
         f"{section_heading('KOMETA') if header_style == 'ascii' else ('#==================== KOMETA ====================#' if header_style == 'divider' else '')}\n\n"
         f"{header_comment}\n\n"
         "libraries:\n\n"
@@ -82,13 +95,13 @@ def build_config(header_style='ascii'):
         # Convert 'true' and 'false' strings to boolean values
         #  this should be handled in the persistence
         for key, value in data.items():
-            if value == 'true':
+            if value == "true":
                 data[key] = True
-            elif value == 'false':
+            elif value == "false":
                 data[key] = False
-        
+
         # Remove 'valid' key if present
-        data = {k: v for k, v in data.items() if k != 'valid'}
+        data = {k: v for k, v in data.items() if k != "valid"}
 
         yaml = YAML()
 
@@ -97,21 +110,21 @@ def build_config(header_style='ascii'):
             return f"{title}\n{stream.getvalue().strip()}\n\n"
 
     ordered_sections = [
-        ('settings', '150-settings'),
-        ('webhooks', '140-webhooks'),
-        ('plex', '010-plex'),
-        ('tmdb', '020-tmdb'),
-        ('tautulli', '030-tautulli'),
-        ('github', '040-github'),
-        ('omdb', '050-omdb'),
-        ('mdblist', '060-mdblist'),
-        ('notifiarr', '070-notifiarr'),
-        ('gotify', '080-gotify'),
-        ('anidb', '090-anidb'),
-        ('radarr', '100-radarr'),
-        ('sonarr', '110-sonarr'),
-        ('trakt', '120-trakt'),
-        ('mal', '130-mal')
+        ("settings", "150-settings"),
+        ("webhooks", "140-webhooks"),
+        ("plex", "010-plex"),
+        ("tmdb", "020-tmdb"),
+        ("tautulli", "030-tautulli"),
+        ("github", "040-github"),
+        ("omdb", "050-omdb"),
+        ("mdblist", "060-mdblist"),
+        ("notifiarr", "070-notifiarr"),
+        ("gotify", "080-gotify"),
+        ("anidb", "090-anidb"),
+        ("radarr", "100-radarr"),
+        ("sonarr", "110-sonarr"),
+        ("trakt", "120-trakt"),
+        ("mal", "130-mal"),
     ]
 
     for section_key, section_stem in ordered_sections:
