@@ -23,7 +23,7 @@ Or how to call it to run from the venv if you have closed the powershell prompt.
 
 `.\venv\scripts\python app.py`
 
-Which will look like this and then open up your favorite browswer and navigate to the listed URLs:
+Which will look like this and then open up your favorite browser and navigate to the listed URLs:
 ![image](./static/images/running-in-pwsh.png)
 
 Note: Updates can then be performed pretty easily by opening up your Windows powershell prompt into the `pyprogs` directory and performing the following commands:
@@ -36,6 +36,7 @@ git pull
 .\venv\scripts\activate.ps1
 python -m pip install --upgrade pip
 pip install -r .\requirements.txt
+pre-commit autoupdate
 ```
 
 There is a `.envrc` in the project, so if you are using a linux-alike and install `direnv`, then just entering the project directory in your shell will do all the above for you and leave you ready to run `python app.py`.

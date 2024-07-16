@@ -1,0 +1,142 @@
+{% extends "000-base.html" %} {% block content %}
+<form method="post" id="configForm" name="configForm">
+  <div id="{{page_info['title']}}Section">
+    <div class="row">
+      <div class="col align-self-center">
+        <div class="input-group justify-content-start">
+          <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
+            <i id="prev-spinner-icon" class="fa fa-arrow-left"></i>
+          </button>
+        </div>
+      </div>
+      <div class="col-6 align-self-center text-center">
+        <h2>{{ page_info['title'] }}</h2>
+      </div>
+      <div class="col align-self-center">
+        <div class="input-group justify-content-end jump-spinner-container">
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span id="jump-to-text">Jump To</span>
+            <i id="jump-spinner-icon" class=""></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+          <button type="submit" class="btn btn-success" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
+            <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="container text-center">
+      <div class="row">
+        <div class="col"></div>
+        <div class="col-8">
+          <div class="col align-self-end">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
+                {{ page_info['progress'] }}%
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col"></div>
+      </div>
+    </div>
+    <hr class="hr">
+    {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+    <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
+    </div>
+    <div id="libraries-container" style="display: none;">
+      <div class="form-floating">
+        <label for="libraries">Select Movie Libraries:</label><br><br>
+        {% set movie_libraries = plex_data['plex']['movie_libraries'].split(',') if plex_data['plex']['movie_libraries'] else [] %}
+        {% for library in movie_libraries %}
+        <div class="form-check form-switch">
+          <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
+          <label class="form-check-label" for="library_{{ library }}">{{ library }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="form-floating">
+        <label for="libraries">Select Show Libraries:</label><br><br>
+        {% set show_libraries = plex_data['plex']['show_libraries'].split(',') if plex_data['plex']['show_libraries'] else [] %}
+        {% for library in show_libraries %}
+        <div class="form-check form-switch">
+          <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
+          <label class="form-check-label" for="library_{{ library }}">{{ library }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="form-floating">
+        <input type="text" class="form-control" id="template_variables" name="template_variables" value="{{ data['playlist_files']['template_variables'] }}" readonly>
+        <label for="template_variables">Selected Libraries</label>
+      </div>
+    </div>
+    <div class="input-group input-group-lg form-floating"></div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="playlist_files_validated" name="playlist_files_validated" value="{{ data['validated'] }}" title="">
+      <label for="playlist_files_validated">Playlist Validated</label>
+    </div>
+    <div id="statusMessage" class="status-message"></div><br>
+  </div>
+</form>
+<script>
+  $(document).ready(function() {
+    var plexValid = $('#plex_valid').data("plex-valid") === "True";
+    console.log("Plex Valid:", plexValid);
+    // Initialize validation messages array
+    var validationMessages = [];
+
+    // Add messages based on validation status
+    if (!plexValid) {
+      validationMessages.push("Plex settings have not been validated successfully. Please return to that page and hit the validate button and ensure success before returning here.");
+      // Hide the libraries container if plex is not valid
+      $('#libraries-container').hide();
+    } else {
+      // Show the libraries container if plex is valid
+      $('#libraries-container').show();
+    }
+
+    // If there are validation messages, display them
+    if (validationMessages.length > 0) {
+      $('#validation-messages').html(validationMessages.join('<br>')).show();
+    } else {
+      $('#validation-messages').html('').hide();
+    }
+
+    // Initialize checkboxes based on the hidden input field value
+    const templateVariables = document.getElementById('template_variables').value.split(',').map(item => item.trim());
+    $('.library-checkbox').each(function() {
+      if (templateVariables.includes($(this).val())) {
+        $(this).prop('checked', true);
+      }
+    });
+
+    // Update hidden input field when checkboxes are changed
+    $('.library-checkbox').change(function() {
+      let selectedLibraries = [];
+      $('.library-checkbox:checked').each(function() {
+        selectedLibraries.push($(this).val());
+      });
+      document.getElementById('template_variables').value = selectedLibraries.join(', ');
+    });
+
+    const isValidated = document.getElementById('playlist_files_validated').value.toLowerCase();
+    console.log('Validated: ' + isValidated)
+  });
+</script>
+{% endblock %}
