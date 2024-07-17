@@ -4,21 +4,24 @@ import sqlite3
 import pickle
 from .helpers import booler
 
+
 def persisted_section_table_create():
-    return '''CREATE TABLE IF NOT EXISTS section_data (
-                                        name TEXT NOT NULL, 
+    return """CREATE TABLE IF NOT EXISTS section_data (
+                                        name TEXT NOT NULL,
                                         section TEXT NOT NULL,
                                         validated BOOLEAN NOT NULL,
                                         user_entered BOOLEAN NOT NULL,
                                         data TEXT,
                                         PRIMARY KEY (name, section)
-                                        );'''
+                                        );"""
 
-def save_section_data(section, validated, user_entered, data, name='default'):
+
+def save_section_data(section, validated, user_entered, data, name="default"):
     try:
-        sqliteConnection = sqlite3.connect('quickstart.sqlite',
-                                           detect_types=sqlite3.PARSE_DECLTYPES |
-                                                        sqlite3.PARSE_COLNAMES)
+        sqliteConnection = sqlite3.connect(
+            "quickstart.sqlite",
+            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
+        )
 
         cursor = sqliteConnection.cursor()
 
@@ -30,7 +33,7 @@ def save_section_data(section, validated, user_entered, data, name='default'):
 
         # insert a new record or ignore an existing record
         sqlite_insert_with_param = """INSERT OR IGNORE INTO 'section_data'
-                          ('name', 'section', 'validated', 'user_entered', 'data') 
+                          ('name', 'section', 'validated', 'user_entered', 'data')
                           VALUES (?, ?, ?, ?, ?);"""
 
         pickled_data = pickle.dumps(data)
@@ -58,14 +61,16 @@ def save_section_data(section, validated, user_entered, data, name='default'):
     except sqlite3.Error as error:
         print("Error while working with SQLite", error)
     finally:
-        if (sqliteConnection):
+        if sqliteConnection:
             sqliteConnection.close()
+
 
 def retrieve_section_data(name, section):
     try:
-        sqliteConnection = sqlite3.connect('quickstart.sqlite',
-                                           detect_types=sqlite3.PARSE_DECLTYPES |
-                                                        sqlite3.PARSE_COLNAMES)
+        sqliteConnection = sqlite3.connect(
+            "quickstart.sqlite",
+            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
+        )
         cursor = sqliteConnection.cursor()
 
         sqlite_create_table_query = persisted_section_table_create()
@@ -95,27 +100,31 @@ def retrieve_section_data(name, section):
     except sqlite3.Error as error:
         print("Error while working with SQLite", error)
     finally:
-        if (sqliteConnection):
+        if sqliteConnection:
             sqliteConnection.close()
 
     return validated, user_entered, data
 
+
 def reset_data(name, section=None):
     try:
-        sqliteConnection = sqlite3.connect('quickstart.sqlite',
-                                           detect_types=sqlite3.PARSE_DECLTYPES |
-                                                        sqlite3.PARSE_COLNAMES)
+        sqliteConnection = sqlite3.connect(
+            "quickstart.sqlite",
+            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
+        )
         cursor = sqliteConnection.cursor()
 
         if section:
-            sqlite_delete_query = """DELETE from section_data where name == ? AND section == ?"""
+            sqlite_delete_query = (
+                """DELETE from section_data where name == ? AND section == ?"""
+            )
 
             data_tuple = (name, section)
         else:
             sqlite_delete_query = """DELETE from section_data where name == ?"""
 
-            data_tuple = (name)
-        
+            data_tuple = name
+
         cursor.execute(sqlite_delete_query, data_tuple)
 
         sqliteConnection.commit()
@@ -125,6 +134,5 @@ def reset_data(name, section=None):
     except sqlite3.Error as error:
         print("Error while working with SQLite", error)
     finally:
-        if (sqliteConnection):
+        if sqliteConnection:
             sqliteConnection.close()
-
