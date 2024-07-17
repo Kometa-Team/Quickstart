@@ -45,6 +45,10 @@
           {% block content %}{% endblock %}
       </div>
     </div>
+    <script
+      type="text/javascript"
+      src="{{ url_for('static', filename='local-js/' + page_info['template_name'] + '.js') }}"
+    ></script>
     <div class="footer">
       <a href="https://github.com/sponsors/meisnate12" class="donate-button" target="_blank">
         <i class="fa fa-heart"></i> Donate

@@ -110,22 +110,22 @@ def build_config(header_style="ascii"):
             return f"{title}\n{stream.getvalue().strip()}\n\n"
 
     ordered_sections = [
-        ('playlist_files', '160-playlist_files'),
-        ('settings', '150-settings'),
-        ('webhooks', '140-webhooks'),
-        ('plex', '010-plex'),
-        ('tmdb', '020-tmdb'),
-        ('tautulli', '030-tautulli'),
-        ('github', '040-github'),
-        ('omdb', '050-omdb'),
-        ('mdblist', '060-mdblist'),
-        ('notifiarr', '070-notifiarr'),
-        ('gotify', '080-gotify'),
-        ('anidb', '090-anidb'),
-        ('radarr', '100-radarr'),
-        ('sonarr', '110-sonarr'),
-        ('trakt', '120-trakt'),
-        ('mal', '130-mal')
+        ("playlist_files", "160-playlist_files"),
+        ("settings", "150-settings"),
+        ("webhooks", "140-webhooks"),
+        ("plex", "010-plex"),
+        ("tmdb", "020-tmdb"),
+        ("tautulli", "030-tautulli"),
+        ("github", "040-github"),
+        ("omdb", "050-omdb"),
+        ("mdblist", "060-mdblist"),
+        ("notifiarr", "070-notifiarr"),
+        ("gotify", "080-gotify"),
+        ("anidb", "090-anidb"),
+        ("radarr", "100-radarr"),
+        ("sonarr", "110-sonarr"),
+        ("trakt", "120-trakt"),
+        ("mal", "130-mal"),
     ]
 
     for section_key, section_stem in ordered_sections:

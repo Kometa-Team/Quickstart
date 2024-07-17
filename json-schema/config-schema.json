@@ -304,7 +304,7 @@
             "required": [
                 "url",
                 "token"
-                
+
             ],
             "title": "gotify"
         },
@@ -432,7 +432,7 @@
             ],
             "dependentRequired": {
                 "add_existing": ["sonarr_path", "plex_path"]
-            },            
+            },
             "title": "sonarr"
         },
         "sonarr-api-lib": {
@@ -502,7 +502,7 @@
             "required": [],
             "dependentRequired": {
                 "add_existing": ["sonarr_path", "plex_path"]
-            },            
+            },
             "title": "sonarr"
         },
         "radarr-api": {
@@ -566,7 +566,7 @@
             ],
             "dependentRequired": {
                 "add_existing": ["radarr_path", "plex_path"]
-            },            
+            },
             "title": "radarr"
         },
         "radarr-api-lib": {
@@ -625,7 +625,7 @@
             "required": [],
             "dependentRequired": {
                 "add_existing": ["radarr_path", "plex_path"]
-            },            
+            },
             "title": "radarr"
         },
         "settings": {
@@ -1172,7 +1172,7 @@
             "type": "object",
             "additionalProperties": false,
             "patternProperties": {
-                "^(?!plex|tmdb|tautulli|webhooks|omdb|mdblist|notifiarr|gotify|anidb|radarr|sonarr|trakt|mal).+$": { 
+                "^(?!plex|tmdb|tautulli|webhooks|omdb|mdblist|notifiarr|gotify|anidb|radarr|sonarr|trakt|mal).+$": {
                     "additionalProperties": false,
                     "properties": {
                         "metadata_files": {
@@ -1435,17 +1435,17 @@
                 },
                 "mass_audience_rating_update": {
                     "anyOf": [
-                        { 
+                        {
                             "type": "number"
                         },
-                        { 
+                        {
                             "type": "string",
                             "enum": ["tmdb","imdb","trakt_user","omdb","mdb","mdb_average","mdb_imdb","mdb_metacritic","mdb_metacriticuser","mdb_trakt","mdb_tomatoes","mdb_tomatoesaudience","mdb_tmdb","mdb_letterboxd","mdb_myanimelist","anidb_rating","anidb_average","anidb_score","mal","lock","unlock","remove","reset"]
                         },
-                        { 
-                            "type": "array", 
-                            "uniqueItems": true, 
-                            "items": 
+                        {
+                            "type": "array",
+                            "uniqueItems": true,
+                            "items":
                             {
                                 "anyOf": [
                                     {"enum": ["tmdb","imdb","trakt_user","omdb","mdb","mdb_average","mdb_imdb","mdb_metacritic","mdb_metacriticuser","mdb_trakt","mdb_tomatoes","mdb_tomatoesaudience","mdb_tmdb","mdb_letterboxd","mdb_myanimelist","anidb_rating","anidb_average","anidb_score","mal","lock","unlock","remove","reset"]},
@@ -1457,17 +1457,17 @@
                 },
                 "mass_critic_rating_update": {
                     "anyOf": [
-                        { 
+                        {
                             "type": "number"
                         },
-                        { 
+                        {
                             "type": "string",
                             "enum": ["tmdb","imdb","trakt_user","omdb","mdb","mdb_average","mdb_imdb","mdb_metacritic","mdb_metacriticuser","mdb_trakt","mdb_tomatoes","mdb_tomatoesaudience","mdb_tmdb","mdb_letterboxd","mdb_myanimelist","anidb_rating","anidb_average","anidb_score","mal","lock","unlock","remove","reset"]
                         },
-                        { 
-                            "type": "array", 
-                            "uniqueItems": true, 
-                            "items": 
+                        {
+                            "type": "array",
+                            "uniqueItems": true,
+                            "items":
                             {
                                 "anyOf": [
                                     {"enum": ["tmdb","imdb","trakt_user","omdb","mdb","mdb_average","mdb_imdb","mdb_metacritic","mdb_metacriticuser","mdb_trakt","mdb_tomatoes","mdb_tomatoesaudience","mdb_tmdb","mdb_letterboxd","mdb_myanimelist","anidb_rating","anidb_average","anidb_score","mal","lock","unlock","remove","reset"]},
@@ -1479,17 +1479,17 @@
                 },
                 "mass_user_rating_update": {
                     "anyOf": [
-                        { 
+                        {
                             "type": "number"
                         },
-                        { 
+                        {
                             "type": "string",
                             "enum": ["tmdb","imdb","trakt_user","omdb","mdb","mdb_average","mdb_imdb","mdb_metacritic","mdb_metacriticuser","mdb_trakt","mdb_tomatoes","mdb_tomatoesaudience","mdb_tmdb","mdb_letterboxd","mdb_myanimelist","anidb_rating","anidb_average","anidb_score","mal","lock","unlock","remove","reset"]
                         },
-                        { 
-                            "type": "array", 
-                            "uniqueItems": true, 
-                            "items": 
+                        {
+                            "type": "array",
+                            "uniqueItems": true,
+                            "items":
                             {
                                 "anyOf": [
                                     {"enum": ["tmdb","imdb","trakt_user","omdb","mdb","mdb_average","mdb_imdb","mdb_metacritic","mdb_metacriticuser","mdb_trakt","mdb_tomatoes","mdb_tomatoesaudience","mdb_tmdb","mdb_letterboxd","mdb_myanimelist","anidb_rating","anidb_average","anidb_score","mal","lock","unlock","remove","reset"]},
@@ -1501,17 +1501,17 @@
                 },
                 "mass_episode_audience_rating_update": {
                     "anyOf": [
-                        { 
+                        {
                             "type": "number"
                         },
-                        { 
+                        {
                             "type": "string",
                             "enum": ["tmdb","imdb","lock","remove","reset","unlock"]
                         },
-                        { 
-                            "type": "array", 
-                            "uniqueItems": true, 
-                            "items": 
+                        {
+                            "type": "array",
+                            "uniqueItems": true,
+                            "items":
                             {
                                 "anyOf": [
                                     {"enum": ["tmdb","imdb","lock","remove","reset","unlock"]},
@@ -1523,17 +1523,17 @@
                 },
                 "mass_episode_critic_rating_update": {
                     "anyOf": [
-                        { 
+                        {
                             "type": "number"
                         },
-                        { 
+                        {
                             "type": "string",
                             "enum": ["tmdb","imdb","lock","remove","reset","unlock"]
                         },
-                        { 
-                            "type": "array", 
-                            "uniqueItems": true, 
-                            "items": 
+                        {
+                            "type": "array",
+                            "uniqueItems": true,
+                            "items":
                             {
                                 "anyOf": [
                                     {"enum": ["tmdb","imdb","lock","remove","reset","unlock"]},
@@ -1545,17 +1545,17 @@
                 },
                 "mass_episode_user_rating_update": {
                     "anyOf": [
-                        { 
+                        {
                             "type": "number"
                         },
-                        { 
+                        {
                             "type": "string",
                             "enum": ["tmdb","imdb","lock","remove","reset","unlock"]
                         },
-                        { 
-                            "type": "array", 
-                            "uniqueItems": true, 
-                            "items": 
+                        {
+                            "type": "array",
+                            "uniqueItems": true,
+                            "items":
                             {
                                 "anyOf": [
                                     {"enum": ["tmdb","imdb","lock","remove","reset","unlock"]},
@@ -1736,7 +1736,7 @@
                 "rating2": { "type": "string", "enum": ["critic", "audience", "user"] },
                 "rating2_image": { "type": "string", "enum": ["anidb", "imdb", "letterboxd", "tmdb", "metacritic", "rt_popcorn", "rt_tomato", "trakt", "mal", "mdb", "star"] },
                 "rating2_font": { "type": "string" },
-                "rating2_font_size": { "type": "integer", "minimum": 1 },        
+                "rating2_font_size": { "type": "integer", "minimum": 1 },
                 "rating3": { "type": "string", "enum": ["critic", "audience", "user"] },
                 "rating3_image": { "type": "string", "enum": ["anidb", "imdb", "letterboxd", "tmdb", "metacritic", "rt_popcorn", "rt_tomato", "trakt", "mal", "mdb", "star"] },
                 "rating3_font": { "type": "string" },
@@ -1796,7 +1796,7 @@
             "required": [
             ],
             "dependentRequired": {
-            },            
+            },
             "title": "template_variables"
         },
         "template-variables-playlists": {
@@ -1807,7 +1807,7 @@
             "required": [
             ],
             "dependentRequired": {
-            },            
+            },
             "title": "template_variables"
         }
     }

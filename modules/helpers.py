@@ -74,16 +74,16 @@ def user_visible_name(raw_name):
     if raw_name == "tmdb" or raw_name == "omdb":
         # Capitalize the whole thing
         formatted_name = raw_name.upper()
-    elif raw_name == 'mal':
-        formatted_name = 'MyAnimeList'
-    elif raw_name == 'mdblist':
-        formatted_name = 'MDBList'
-    elif raw_name == 'anidb':
-        formatted_name = 'AniDB'
-    elif raw_name == 'playlist_files':
-        formatted_name = 'Playlist'
-    elif raw_name == 'final':
-        formatted_name = 'Final Validation'
+    elif raw_name == "mal":
+        formatted_name = "MyAnimeList"
+    elif raw_name == "mdblist":
+        formatted_name = "MDBList"
+    elif raw_name == "anidb":
+        formatted_name = "AniDB"
+    elif raw_name == "playlist_files":
+        formatted_name = "Playlist"
+    elif raw_name == "final":
+        formatted_name = "Final Validation"
     else:
         # Capitalize the first letter
         formatted_name = raw_name.capitalize()
