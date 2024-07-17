@@ -82,8 +82,16 @@
         {% endfor %}
       </div>
       <div class="form-floating">
-        <input type="text" class="form-control" id="template_variables" name="template_variables" value="{{ data['playlist_files']['template_variables'] }}" readonly>
-        <label for="template_variables">Selected Libraries</label>
+        <input type="hidden" class="form-control" id="default" name="default" value="playlist" readonly>
+        <label for="default">- default: playlist</label>
+      </div>
+      <div class="form-floating">
+        <input type="hidden" class="form-control" id="template_variables" name="template_variables" value="" readonly>
+        <label for="template_variables">template_variables</label>
+      </div>
+      <div class="form-floating">
+        <input type="text" class="form-control" id="libraries" name="libraries" value="{{ data['playlist_files']['libraries'] }}" readonly>
+        <label for="libraries">Selected Libraries</label>
       </div>
     </div>
     <div class="input-group input-group-lg form-floating"></div>

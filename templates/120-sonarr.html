@@ -76,7 +76,7 @@
     </div>
     <div id="statusMessage" class="status-message"></div><br>
     <div class="form-floating">
-      <select class="form-select" id="sonarr_root_folder_path" name="sonarr_root_folder_path" value="{{ data['sonarr']['root_folder_path'] }}">
+      <select class="form-select" id="sonarr_root_folder_path" name="sonarr_root_folder_path">
         <option value="">
           Select Root Folder Path
         </option>
@@ -114,9 +114,8 @@
       </select>
       <label for="sonarr_monitor">Monitor</label>
     </div>
-
     <div class="form-floating">
-      <select class="form-select" id="sonarr_quality_profile" value="{{ data['sonarr']['quality_profile'] }}" name="sonarr_quality_profile" value="{{ data['sonarr']['quality_profile'] }}">
+      <select class="form-select" id="sonarr_quality_profile" name="sonarr_quality_profile">
         <option value="">
           Select Quality Profile
         </option>
@@ -125,7 +124,7 @@
     </div>
 
     <div class="form-floating">
-        <select class="form-select" id="sonarr_language_profile" value="{{ data['sonarr']['language_profile'] }}" name="sonarr_language_profile" value="{{ data['sonarr']['language_profile'] }}">
+        <select class="form-select" id="sonarr_language_profile" name="sonarr_language_profile">
         <option value="">
           Select Language Profile
         </option>
@@ -158,12 +157,6 @@
     <div class="form-floating">
       <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path" value="{{ data['sonarr']['plex_path'] }}" placeholder=""> <label for="sonarr_plex_path">Plex Path</label>
     </div>
-
-
-
-
-
-
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" name="sonarr_search" id="sonarr_search" value="true" {% if data['sonarr']['search']|string|lower == 'true' %}checked{% endif %}>
       <input type="hidden" name="sonarr_search" value="false">
@@ -206,4 +199,10 @@
     </div>
   </div>
 </form>
+<script>
+  // Pass the initial values from Jinja to JavaScript
+  const initialSonarrRootFolderPath = "{{ data['sonarr']['root_folder_path'] }}";
+  const initialSonarrQualityProfile = "{{ data['sonarr']['quality_profile'] }}";
+  const initialSonarrLanguageProfile = "{{ data['sonarr']['language_profile'] }}";
+</script>
 {% endblock %}
