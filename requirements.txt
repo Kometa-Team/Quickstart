@@ -1,6 +1,6 @@
 Flask
-Flask-Session[sqlalchemy]
-Flask-SQLAlchemy
+Flask-Session
+gunicorn
 iso-639
 iso3166
 jsonschema
