@@ -11,7 +11,7 @@ libraries:
       sep_style: purple                               # use the purple separators globally for this library
       collection_mode: hide                         # hide the collections within the "library" tab in Plex.
       placeholder_imdb_id: tt8579674                # 1917 (2019) placeholder id for the separators, avoids a plex bug.
-      ignore_ids: 
+      ignore_ids:
       - 1230
       - 3450
       - 6780
@@ -73,8 +73,8 @@ libraries:
     - default: separator_chart                          # An "index card"
     - default: basic                                    # Some basic chart collections
     - default: tmdb                                     # TMDb Charts (Popular, Trending, etc.)
-    - default: audio_language                           # English, French, Arabic, German, etc. audio language 
-    - default: resolution                               # 4K HDR, 1080P FHD, etc. with the standards style 
+    - default: audio_language                           # English, French, Arabic, German, etc. audio language
+    - default: resolution                               # 4K HDR, 1080P FHD, etc. with the standards style
       # template_variables:
       #   style: standards
     - default: studio                                   # DreamWorks Studios, Lucasfilm Ltd, etc.
@@ -118,11 +118,11 @@ libraries:
       asset_directory: config/assets
 
     operations:
-      mass_audience_rating_update: 
+      mass_audience_rating_update:
       - mdb_average
       - imdb
       - 2.0
-      mass_episode_audience_rating_update: 
+      mass_episode_audience_rating_update:
       - tmdb
       - imdb
       - 2.0
@@ -131,9 +131,9 @@ libraries:
       genre_mapper:
         Anime: Animation
         Children: Family
-        Foo: 
+        Foo:
       content_rating_mapper:
-        PG: Y-10 
+        PG: Y-10
         "PG-13": Y-10
         R:
       metadata_backup:
@@ -145,7 +145,7 @@ libraries:
         add_blank_entries: false
 
   New-Style Movies:                                 # Must match a library name in your Plex
-    run_order: 
+    run_order:
     - collections
     - metadata
     - operations
@@ -159,7 +159,7 @@ libraries:
       sep_style: purple                               # use the purple separators globally for this library
       collection_mode: hide                         # hide the collections within the "library" tab in Plex.
       placeholder_imdb_id: tt8579674                # 1917 (2019) placeholder id for the separators, avoids a plex bug.
-      ignore_ids: 
+      ignore_ids:
       - 1230
       - 3450
       - 6780
@@ -221,8 +221,8 @@ libraries:
     - default: separator_chart                          # An "index card"
     - default: basic                                    # Some basic chart collections
     - default: tmdb                                     # TMDb Charts (Popular, Trending, etc.)
-    - default: audio_language                           # English, French, Arabic, German, etc. audio language 
-    - default: resolution                               # 4K HDR, 1080P FHD, etc. with the standards style 
+    - default: audio_language                           # English, French, Arabic, German, etc. audio language
+    - default: resolution                               # 4K HDR, 1080P FHD, etc. with the standards style
       # template_variables:
       #   style: standards
     - default: studio                                   # DreamWorks Studios, Lucasfilm Ltd, etc.
@@ -331,8 +331,8 @@ libraries:
     - default: separator_chart                          # An "index card"
     - default: basic                                    # Some basic chart collections
     - default: tmdb                                     # TMDb Charts (Popular, Trending, etc.)
-    - default: audio_language                           # English, French, Arabic, German, etc. audio language 
-    - default: resolution                               # 4K HDR, 1080P FHD, etc. with the standards style 
+    - default: audio_language                           # English, French, Arabic, German, etc. audio language
+    - default: resolution                               # 4K HDR, 1080P FHD, etc. with the standards style
       # template_variables:
       #   style: standards
     - default: network                                  # ABC, CBC, NBC, FOX, etc.
@@ -370,7 +370,7 @@ libraries:
     - default: ribbon                                   # Used for ribbon in bottom right on show
     - default: status                                   # Airing, Returning, Ended, Canceled on show
     - default: versions                                 # Will show duplicates for that media item on show and episode
-    - default: versions                                 
+    - default: versions
       # template_variables:
       #   overlay_level: episode
     - default: video_format                             # Remux, DVD, Blu-Ray, etc. in bottom left on show, episode, and season
@@ -405,7 +405,7 @@ playlist_files:
 settings:
   cache: true
   cache_expiration: 60
-  asset_directory: 
+  asset_directory:
   - config/assets
   asset_folders: true
   asset_depth: 0
