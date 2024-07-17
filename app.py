@@ -10,7 +10,6 @@ from flask import (
     send_file,
 )
 from flask_session import Session
-from flask_sqlalchemy import SQLAlchemy
 from cachelib.file import FileSystemCache
 
 import jsonschema
@@ -81,6 +80,9 @@ load_dotenv()
 app = Flask(__name__)
 
 app.config["SESSION_TYPE"] = "cachelib"
+app.config["SESSION_CACHELIB"] = FileSystemCache(
+    cache_dir="flask_session", threshold=500
+)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
