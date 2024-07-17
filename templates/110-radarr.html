@@ -83,8 +83,7 @@
     <br>
 
     <div class="form-floating">
-      <select class="form-select" id="radarr_root_folder_path" name="radarr_root_folder_path"
-        value="{{ data['radarr']['root_folder_path'] }}">
+      <select class="form-select" id="radarr_root_folder_path" name="radarr_root_folder_path">
         <option value="">
           Select Root Folder Path
         </option>
@@ -93,8 +92,7 @@
     </div>
 
     <div class="form-floating">
-      <select class="form-select" id="radarr_quality_profile" name="radarr_quality_profile"
-        value="{{ data['radarr']['quality_profile'] }}">
+      <select class="form-select" id="radarr_quality_profile" name="radarr_quality_profile">
         <option value="">
           Select Quality Profile
         </option>
@@ -176,4 +174,9 @@
     </div>
   </div>
 </form>
+<script>
+  // Pass the initial values from Jinja to JavaScript
+  const initialRadarrRootFolderPath = "{{ data['radarr']['root_folder_path'] }}";
+  const initialRadarrQualityProfile = "{{ data['radarr']['quality_profile'] }}";
+</script>
 {% endblock %}
