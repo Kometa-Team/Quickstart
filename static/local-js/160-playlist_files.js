@@ -3,6 +3,7 @@
 $(document).ready(function () {
   const plexValid = $('#plex_valid').data('plex-valid') === 'True'
   console.log('Plex Valid:', plexValid)
+
   // Initialize validation messages array
   const validationMessages = []
 
@@ -24,9 +25,10 @@ $(document).ready(function () {
   }
 
   // Initialize checkboxes based on the hidden input field value
-  const templateVariables = document.getElementById('template_variables').value.split(',').map(item => item.trim())
+  const selectedLibraries = document.getElementById('libraries').value.split(',').map(item => item.trim())
+  console.log('Selected Libraries:', selectedLibraries)
   $('.library-checkbox').each(function () {
-    if (templateVariables.includes($(this).val())) {
+    if (selectedLibraries.includes($(this).val())) {
       $(this).prop('checked', true)
     }
   })
@@ -37,7 +39,7 @@ $(document).ready(function () {
     $('.library-checkbox:checked').each(function () {
       selectedLibraries.push($(this).val())
     })
-    document.getElementById('template_variables').value = selectedLibraries.join(', ')
+    document.getElementById('libraries').value = selectedLibraries.join(', ')
   })
 
   const isValidated = document.getElementById('playlist_files_validated').value.toLowerCase()
