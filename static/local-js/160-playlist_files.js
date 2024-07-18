@@ -40,42 +40,16 @@ $(document).ready(function () {
       selectedLibraries.push($(this).val())
     })
     document.getElementById('libraries').value = selectedLibraries.join(', ')
-    setSettingsValidated(false)
+    setSettingsValidated(selectedLibraries.length > 0)
   })
 
   const isValidated = document.getElementById('playlist_files_validated').value.toLowerCase()
   console.log('Validated: ' + isValidated)
 
-  if (isValidated === 'true') {
-    document.getElementById('validateSettingsButton').disabled = true
-  } else {
-    document.getElementById('validateSettingsButton').disabled = false
-  }
-})
-
-document.addEventListener('DOMContentLoaded', function () {
-  const validateSettingsButton = document.getElementById('validateSettingsButton')
-
-  validateSettingsButton.addEventListener('click', function () {
-    if (validateForm()) {
-      setSettingsValidated(true)
-      this.disabled = true
-    }
-  })
+  setSettingsValidated(isValidated === 'true')
 })
 
 function setSettingsValidated (isValid) {
   const settingsValidatedInput = document.getElementById('playlist_files_validated')
   settingsValidatedInput.value = isValid ? 'true' : 'false'
-  document.getElementById('validateSettingsButton').disabled = isValid
-}
-
-function validateForm () {
-  const selectedLibraries = document.getElementById('libraries').value.trim()
-  if (!selectedLibraries) {
-    return false // Prevent form submission if no libraries are selected
-  }
-
-  // Additional form validation logic can go here if needed
-  return true // Allow form submission
 }
