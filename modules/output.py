@@ -33,7 +33,14 @@ def clean_section_data(section_data, config_attribute):
 
     for key, value in section_data.items():
         if key == config_attribute:
-            clean_data[key] = value
+            if isinstance(value, dict):
+                clean_sub_data = {}
+                for sub_key, sub_value in value.items():
+                    if not sub_key.startswith("tmp_"):
+                        clean_sub_data[sub_key] = sub_value
+                clean_data[key] = clean_sub_data
+            else:
+                clean_data[key] = value
 
     return clean_data
 

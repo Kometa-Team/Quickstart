@@ -310,7 +310,7 @@
                             All Users
                           </label>
                         </div>
-                        {% set user_list = plex_data['plex']['user_list'].split(',') if plex_data['plex']['user_list'] else [] %}
+                        {% set user_list = plex_data['plex']['tmp_user_list'].split(',') if plex_data['plex']['tmp_user_list'] else [] %}
                         {% for username in user_list %}
                         <div class="form-check">
                           <input class="form-check-input sync-user-checkbox" type="checkbox" value="{{ username }}" id="sync_user_{{ loop.index }}">
@@ -343,7 +343,7 @@
                     </div>
                     <div class="modal-body">
                       <div id="excludeUserListForm">
-                        {% set user_list = plex_data['plex']['user_list'].split(',') if plex_data['plex']['user_list'] else [] %}
+                        {% set user_list = plex_data['plex']['tmp_user_list'].split(',') if plex_data['plex']['tmp_user_list'] else [] %}
                         {% for username in user_list %}
                         <div class="form-check">
                           <input class="form-check-input exclude-user-checkbox" type="checkbox" value="{{ username }}" id="exclude_user_{{ loop.index }}">
