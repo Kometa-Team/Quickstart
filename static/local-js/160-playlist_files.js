@@ -44,4 +44,11 @@ $(document).ready(function () {
 
   const isValidated = document.getElementById('playlist_files_validated').value.toLowerCase()
   console.log('Validated: ' + isValidated)
+
+  setSettingsValidated(isValidated === 'true')
 })
+
+function setSettingsValidated (isValid) {
+  const settingsValidatedInput = document.getElementById('playlist_files_validated')
+  settingsValidatedInput.value = isValid ? 'true' : 'false'
+}
