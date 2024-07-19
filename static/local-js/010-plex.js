@@ -4,7 +4,7 @@ $(document).ready(function () {
   const validateButton = document.getElementById('validateButton')
   const isValidated = document.getElementById('plex_validated').value.toLowerCase()
   const hiddenSection = document.getElementById('hidden')
-  const plexDbcache = document.getElementById('plexDbcache')
+  const plexDbCache = document.getElementById('plexDbCache')
 
   validateButton.disabled = (isValidated === 'true')
 
@@ -12,7 +12,7 @@ $(document).ready(function () {
 
   if (isValidated === 'true') {
     hiddenSection.style.display = 'block'
-    plexDbcache.style.display = 'block'
+    plexDbCache.style.display = 'block'
   }
 
   // Enable the validate button and set plex_validated to false if the Plex token or URL is changed
@@ -42,7 +42,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
   const plexUrl = document.getElementById('plex_url').value
   const plexToken = document.getElementById('plex_token').value
   const statusMessage = document.getElementById('statusMessage')
-  const plexDbcache = document.getElementById('plexDbcache')
+  const plexDbCache = document.getElementById('plexDbCache')
   const currentDbCache = document.getElementById('plex_db_cache').value
 
   if (!plexUrl || !plexToken) {
@@ -68,8 +68,8 @@ document.getElementById('validateButton').addEventListener('click', function () 
         hideSpinner('validate')
         validateButton.disabled = true
         const serverDbCache = data.db_cache
-        plexDbcache.textContent = 'Database cache value retrieved from server is: ' + serverDbCache + ' MB'
-        plexDbcache.style.color = '#75b798'
+        plexDbCache.textContent = 'Database cache value retrieved from server is: ' + serverDbCache + ' MB'
+        plexDbCache.style.color = '#75b798'
 
         document.getElementById('plex_validated').value = 'true'
 
@@ -78,17 +78,17 @@ document.getElementById('validateButton').addEventListener('click', function () 
         const hiddenSection = document.getElementById('hidden')
         hiddenSection.style.display = 'block'
 
-        if (currentDbCache !== serverDbCache) {
-          plexDbcache.textContent += 'Warning: The value in the input box (' + currentDbCache + ' MB) does not match the value retrieved from the server (' + serverDbCache + ' MB).'
-          plexDbcache.style.color = '#ea868f'
+        if (Number(currentDbCache) !== serverDbCache) {
+          plexDbCache.textContent += '.\nWarning: The value in the input box (' + currentDbCache + ' MB) does not match the value retrieved from the server (' + serverDbCache + ' MB).'
+          plexDbCache.style.color = '#ea868f'
         }
 
         // Update the input field to match the server's db_cache value
         document.getElementById('plex_db_cache').value = serverDbCache
-        document.getElementById('user_list').value = data.user_list
-        document.getElementById('music_libraries').value = data.music_libraries
-        document.getElementById('movie_libraries').value = data.movie_libraries
-        document.getElementById('show_libraries').value = data.show_libraries
+        document.getElementById('tmp_user_list').value = data.user_list
+        document.getElementById('tmp_music_libraries').value = data.music_libraries
+        document.getElementById('tmp_movie_libraries').value = data.movie_libraries
+        document.getElementById('tmp_show_libraries').value = data.show_libraries
       } else {
         hideSpinner('validate')
         validateButton.disabled = false

@@ -72,10 +72,10 @@
         Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
-    <input type="hidden" class="form-control" id="user_list" name="user_list" value="{{ data['plex']['user_list'] }}" title="">
-    <input type="hidden" class="form-control" id="music_libraries" name="music_libraries" value="{{ data['plex']['music_libraries'] }}" title="">
-    <input type="hidden" class="form-control" id="movie_libraries" name="movie_libraries" value="{{ data['plex']['movie_libraries'] }}" title="">
-    <input type="hidden" class="form-control" id="show_libraries" name="show_libraries" value="{{ data['plex']['show_libraries'] }}" title="">
+    <input type="hidden" class="form-control" id="tmp_user_list" name="tmp_user_list" value="{{ data['plex']['tmp_user_list'] }}" title="">
+    <input type="hidden" class="form-control" id="tmp_music_libraries" name="tmp_music_libraries" value="{{ data['plex']['tmp_music_libraries'] }}" title="">
+    <input type="hidden" class="form-control" id="tmp_movie_libraries" name="tmp_movie_libraries" value="{{ data['plex']['tmp_movie_libraries'] }}" title="">
+    <input type="hidden" class="form-control" id="tmp_show_libraries" name="tmp_show_libraries" value="{{ data['plex']['tmp_show_libraries'] }}" title="">
     <div class="form-floating">
       <input type="text" class="form-control" id="plex_validated" name="plex_validated" value="{{ data['validated'] }}" title="">
       <label for="plex_validated">Plex Validated</label>
@@ -86,7 +86,7 @@
         <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" value="{{ data['plex']['db_cache'] }}" title="Set the size of the Plex Database Cache (in Megabytes), default is 40" min="40" required="">
         <label for="plex_db_cache">Database Cache Size (in mb)</label>
       </div>
-      <div id="plexDbcache" class="status-message"></div>
+      <div id="plexDbCache" class="status-message"></div>
       <div class="form-floating">
         <input type="number" class="form-control" id="plex_timeout" name="plex_timeout" value="{{ data['plex']['timeout'] }}" title="Amount of seconds to wait for Plex to respond, default is 60" min="60" required="">
         <label for="plex_timeout">Timeout (in seconds)</label>

@@ -33,7 +33,14 @@ def clean_section_data(section_data, config_attribute):
 
     for key, value in section_data.items():
         if key == config_attribute:
-            clean_data[key] = value
+            if isinstance(value, dict):
+                clean_sub_data = {}
+                for sub_key, sub_value in value.items():
+                    if not sub_key.startswith("tmp_"):
+                        clean_sub_data[sub_key] = sub_value
+                clean_data[key] = clean_sub_data
+            else:
+                clean_data[key] = value
 
     return clean_data
 
@@ -88,7 +95,8 @@ def build_config(header_style="ascii"):
         "# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n"
         f"{section_heading('KOMETA') if header_style == 'ascii' else ('#==================== KOMETA ====================#' if header_style == 'divider' else '')}\n\n"
         f"{header_comment}\n\n"
-        "libraries:\n\n"
+        # add this line below once we have proper libraries being added to the config
+        # "libraries:\n\n"
     )
 
     def dump_section(title, name, data):

@@ -63,7 +63,7 @@
     <div id="libraries-container" style="display: none;">
       <div class="form-floating">
         <label for="libraries">Select Movie Libraries:</label><br><br>
-        {% set movie_libraries = plex_data['plex']['movie_libraries'].split(',') if plex_data['plex']['movie_libraries'] else [] %}
+        {% set movie_libraries = plex_data['plex']['tmp_movie_libraries'].split(',')|sort if plex_data['plex']['tmp_movie_libraries'] else [] %}
         {% for library in movie_libraries %}
         <div class="form-check form-switch">
           <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
@@ -73,7 +73,7 @@
       </div>
       <div class="form-floating">
         <label for="libraries">Select Show Libraries:</label><br><br>
-        {% set show_libraries = plex_data['plex']['show_libraries'].split(',') if plex_data['plex']['show_libraries'] else [] %}
+        {% set show_libraries = plex_data['plex']['tmp_show_libraries'].split(',')|sort if plex_data['plex']['tmp_show_libraries'] else [] %}
         {% for library in show_libraries %}
         <div class="form-check form-switch">
           <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
@@ -86,7 +86,7 @@
         <label for="default">- default: playlist</label>
       </div>
       <div class="form-floating">
-        <input type="hidden" class="form-control" id="template_variables" name="template_variables" value="" readonly>
+        <input type="hidden" class="form-control" id="template_variables" name="template_variables" value="{{ data['playlist_files']['template_variables'] }}" readonly>
         <label for="template_variables">template_variables</label>
       </div>
       <div class="form-floating">
@@ -96,7 +96,7 @@
     </div>
     <div class="input-group input-group-lg form-floating"></div>
     <div class="form-floating">
-      <input type="text" class="form-control" id="playlist_files_validated" name="playlist_files_validated" value="{{ data['validated'] }}" title="">
+      <input type="text" class="form-control" id="playlist_files_validated" name="playlist_files_validated" value="{{ data['validated'] }}" title="" readonly>
       <label for="playlist_files_validated">Playlist Validated</label>
     </div>
     <div id="statusMessage" class="status-message"></div><br>

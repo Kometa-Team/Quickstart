@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const saveSyncChangesButton = document.getElementById('saveSyncChangesButton')
   const saveExcludeChangesButton = document.getElementById('saveExcludeChangesButton')
+  const validateSettingsButton = document.getElementById('validateSettingsButton')
 
   saveSyncChangesButton.addEventListener('click', function () {
     const selectedUsers = []
@@ -23,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const csvUsers = selectedUsers.join(', ')
     document.getElementById('playlist_sync_to_users').value = csvUsers
     $('#syncUsersModal').modal('hide')
+    setSettingsValidated(false)
   })
 
   saveExcludeChangesButton.addEventListener('click', function () {
@@ -36,7 +38,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const csvUsers = selectedUsers.join(', ')
     document.getElementById('playlist_exclude_users').value = csvUsers
     $('#excludeUsersModal').modal('hide')
+    setSettingsValidated(false)
   })
+
+  validateSettingsButton.addEventListener('click', function () {
+    if (validateForm()) {
+      setSettingsValidated(true)
+      this.disabled = true
+    }
+  })
+
+  function setSettingsValidated (isValid) {
+    const settingsValidatedInput = document.getElementById('settings_validated')
+    settingsValidatedInput.value = isValid ? 'true' : 'false'
+    validateSettingsButton.disabled = isValid
+  }
 
   const syncAllUsersCheckbox = document.getElementById('sync_all_users')
   syncAllUsersCheckbox.addEventListener('change', function () {
@@ -46,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
         checkbox.checked = false
       })
     }
+    setSettingsValidated(false)
   })
 
   const syncUserCheckboxes = document.querySelectorAll('#syncUserListForm input[type="checkbox"]:not(#sync_all_users)')
@@ -54,6 +71,14 @@ document.addEventListener('DOMContentLoaded', function () {
       if (this.checked) {
         syncAllUsersCheckbox.checked = false
       }
+      setSettingsValidated(false)
+    })
+  })
+
+  // Add change event listeners to all inputs and selects to detect changes
+  document.querySelectorAll('input, select, textarea').forEach(element => {
+    element.addEventListener('change', function () {
+      setSettingsValidated(false)
     })
   })
 })
@@ -61,6 +86,12 @@ document.addEventListener('DOMContentLoaded', function () {
 $(document).ready(function () {
   const isValidated = document.getElementById('settings_validated').value.toLowerCase()
   console.log('Validated: ' + isValidated)
+
+  if (isValidated === 'true') {
+    document.getElementById('validateSettingsButton').disabled = true
+  } else {
+    document.getElementById('validateSettingsButton').disabled = false
+  }
 })
 
 function validatePath (input) {
@@ -88,9 +119,35 @@ function validateCSVList (input) {
 }
 
 /* eslint-disable no-unused-vars */
+function validateNumericCSV (input) {
+  if (!input || input.toLowerCase() === 'none') {
+    return true
+  }
+  const numericCSVRegex = /^(\s*\d+\s*)(,\s*\d+\s*)*$/
+  return numericCSVRegex.test(input)
+}
+
+function validateIMDBCSV (input) {
+  if (!input || input.toLowerCase() === 'none') {
+    return true
+  }
+  const imdbCSVRegex = /^(\s*tt\d{7}\s*)(,\s*tt\d{7}\s*)*$/
+  return imdbCSVRegex.test(input)
+}
+
+function validateURL (input) {
+  if (!input || input.toLowerCase() === 'none') {
+    return true
+  }
+  const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/
+  return urlRegex.test(input)
+}
+
 function validateForm () {
   const assetDirectoryInput = document.getElementById('asset_directory').value.trim()
-  if (!validatePath(assetDirectoryInput)) {
+
+  // Check if assetDirectoryInput is null or empty
+  if (!assetDirectoryInput || assetDirectoryInput.toLowerCase() === 'none' || !validatePath(assetDirectoryInput)) {
     alert('Please enter a valid asset directory path.')
     return false // Prevent form submission
   }
@@ -107,40 +164,25 @@ function validateForm () {
 
   // Validate ignore_ids to be numeric
   const ignoreIds = document.getElementById('ignore_ids').value.trim()
-  if (ignoreIds && !validateNumericCSV(ignoreIds)) {
+  if (ignoreIds && ignoreIds.toLower !== 'none' && !validateNumericCSV(ignoreIds)) {
     alert('Please enter a valid CSV list of numeric IDs for ignore_ids.')
     return false // Prevent form submission
   }
 
   // Validate ignore_imdb_ids to start with tt followed by numbers
   const ignoreImdbIds = document.getElementById('ignore_imdb_ids').value.trim()
-  if (ignoreImdbIds && !validateIMDBCSV(ignoreImdbIds)) {
-    alert('Please enter a valid CSV list of IMDb IDs for ignore_imdb_ids (starting with tt followed by numbers).')
+  if (ignoreImdbIds && ignoreImdbIds.toLower !== 'none' && !validateIMDBCSV(ignoreImdbIds)) {
+    alert('Please enter a valid CSV list of IMDb IDs for ignore_imdb_ids (starting with tt followed by 7 digits).')
     return false // Prevent form submission
   }
 
   // Validate custom_repo to be a valid URL
   const customRepo = document.getElementById('custom_repo').value.trim()
-  if (customRepo && customRepo.toLowerCase() !== 'none' && !validateURL(customRepo)) {
+  if (customRepo && customRepo.toLower !== 'none' && !validateURL(customRepo)) {
     alert('Please enter a valid URL for custom_repo.')
     return false // Prevent form submission
   }
 
   // Additional form validation logic can go here if needed
   return true // Allow form submission
-}
-
-function validateNumericCSV (input) {
-  const numericCSVRegex = /^(\s*\d+\s*)(,\s*\d+\s*)*$/
-  return numericCSVRegex.test(input)
-}
-
-function validateIMDBCSV (input) {
-  const imdbCSVRegex = /^(\s*tt\d+\s*)(,\s*tt\d+\s*)*$/
-  return imdbCSVRegex.test(input)
-}
-
-function validateURL (input) {
-  const urlRegex = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i
-  return urlRegex.test(input)
 }
