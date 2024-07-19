@@ -40,7 +40,6 @@ $(document).ready(function () {
       selectedLibraries.push($(this).val())
     })
     document.getElementById('libraries').value = selectedLibraries.join(', ')
-    setSettingsValidated(selectedLibraries.length > 0)
   })
 
   const isValidated = document.getElementById('playlist_files_validated').value.toLowerCase()
