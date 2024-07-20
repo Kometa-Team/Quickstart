@@ -1,4 +1,5 @@
 import os
+import re
 from flask import current_app as app
 from pathlib import Path
 
@@ -64,8 +65,9 @@ def belongs_in_template_list(file):
     return (
         file.endswith(".html")
         and file != "000-base.html"
+        and file != "000-library_template.html"
         and file[:3].isdigit()
-        and file[3] == "-"
+        # and file[3] == "-"
         and not file.startswith("999-")
     )
 
@@ -82,6 +84,8 @@ def user_visible_name(raw_name):
         formatted_name = "AniDB"
     elif raw_name == "playlist_files":
         formatted_name = "Playlist"
+    elif raw_name == "library_selection":
+        formatted_name = "Select Libraries"
     elif raw_name == "final":
         formatted_name = "Final Validation"
     else:
@@ -106,19 +110,11 @@ def get_bits(file):
     return file_stem, num, raw_name
 
 
-def get_next(file_list, file):
-    stem, cmp_num, b = get_bits(file)
-    cmp_num = int(cmp_num)
-    if stem == "900-final":
-        return ""
-
-    for item in file_list:
-        stem, this_num, b = get_bits(item)
-        this_num = int(this_num)
-        if this_num > cmp_num:
-            return stem
-
-    return "900-final"
+def get_next(file_list, current_file):
+    current_index = file_list.index(current_file)
+    if current_index + 1 < len(file_list):
+        return file_list[current_index + 1].rsplit(".", 1)[0]
+    return None
 
 
 def template_record(file, prev, next):
@@ -161,14 +157,34 @@ def get_template_list():
     )
 
     templates = {}
-
+    type_counter = {
+        "012": 0,
+        "013": 0,
+        "014": 0,
+    }  # Counters for movie, show, music types
     prev_item = "001-start"
+
     for file in file_list:
         if belongs_in_template_list(file):
+            match = re.match(
+                r"^(\d+)-", file
+            )  # Match any length of digits followed by '-'
+            if match:
+                file_prefix = match.group(1)
+            else:
+                continue  # Skip files that do not match the pattern
+
+            if file_prefix in type_counter:
+                type_counter[file_prefix] += 1
+                num = f"{file_prefix}{type_counter[file_prefix]:02d}"
+            else:
+                num = file_prefix
+
             next = get_next(file_list, file)
             prev = prev_item
             rec = template_record(file, prev, next)
-            templates[rec["num"]] = rec
+            rec["num"] = num  # Update the num to include the counter
+            templates[num] = rec
             prev_item = rec["stem"]
 
     return templates

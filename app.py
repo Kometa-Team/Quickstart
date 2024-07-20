@@ -88,6 +88,146 @@ app.config["SESSION_USE_SIGNER"] = False
 
 server_session = Session(app)
 
+TEMPLATES_DIR = "templates"
+
+
+# Function to create a template file
+def create_template_file(library_name, prefix):
+    template_filename = f"{prefix}-{library_name.replace(' ', '_')}.html"
+    template_path = os.path.join(TEMPLATES_DIR, template_filename)
+    if not os.path.exists(template_path):
+        with open(template_path, "w") as f:
+            f.write(f"<!-- Template for {library_name} -->\n")
+            f.write(f"<h1>{library_name} Library</h1>")
+    return template_filename
+
+
+# Function to delete a template file
+def delete_template_file(library_name, prefix):
+    template_filename = f"{prefix}-{library_name.replace(' ', '_')}.html"
+    template_path = os.path.join(TEMPLATES_DIR, template_filename)
+    if os.path.exists(template_path):
+        os.remove(template_path)
+
+
+@app.route("/update_libraries", methods=["POST"])
+def update_libraries():
+    try:
+        data = request.get_json()
+        app.logger.info("Received data: %s", data)  # Log the received data
+
+        selected_libraries = data.get("libraries", [])
+        template_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), TEMPLATES_DIR
+        )
+
+        # Define the template content with required blocks
+        template_content = "{% extends '000-library_template.html' %} {% block content %}{% endblock %}"
+        template_content = """{% extends '000-base.html' %} {% block content %}
+<form method="post" id="configForm" name="configForm">
+<div id="{{page_info['title']}}Section">
+    <div class="row">
+        <div class="col align-self-center">
+            <div class="input-group justify-content-start">
+                <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
+                    <i id="prev-spinner-icon" class="fa fa-arrow-left"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-6 align-self-center text-center">
+            <h2>{{ page_info['title'] }}</h2>
+        </div>
+        <div class="col align-self-center">
+            <div class="input-group justify-content-end jump-spinner-container">
+                <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span id="jump-to-text">Jump To</span>
+                    <i id="jump-spinner-icon" class=""></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {% for file, name in template_list %}
+                    {% if name == 'Final Validation' %}
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
+                    </li>
+                    {% if name == 'Start' %}
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                <button type="submit" class="btn btn-success" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
+                    <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="container text-center">
+        <div class="row">
+            <div class="col"></div>
+            <div class="col-8">
+                <div class="col align-self-end">
+                    <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25"
+                        aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
+                            {{ page_info['progress'] }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col"></div>
+        </div>
+    </div>
+    <hr class="hr">
+    {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+</div>
+</form>
+{% endblock %}
+"""
+
+        # Gather a list of existing template files that match the patterns
+        existing_files = [
+            filename
+            for filename in os.listdir(template_dir)
+            if filename.startswith("012")
+            or filename.startswith("013")
+            or filename.startswith("014")
+        ]
+
+        # Determine which files to delete
+        files_to_delete = existing_files
+
+        # Delete the files that are not in the selected libraries
+        for filename in files_to_delete:
+            os.remove(os.path.join(template_dir, filename))
+
+        # Generate new template files based on the selected libraries
+        counters = {"movie": 1, "show": 1, "music": 1}
+        for library in selected_libraries:
+            library_name = library["name"]
+            library_type = library["type"]
+            prefix = {"movie": "012", "show": "013", "music": "014"}.get(
+                library_type, "012"
+            )
+
+            filename = f"{prefix}{counters[library_type]:02d}-{library_name.replace(' ', '_')}.html"
+            counters[library_type] += 1
+
+            filepath = os.path.join(template_dir, filename)
+            if not os.path.exists(filepath):
+                with open(filepath, "w") as f:
+                    f.write(template_content)
+
+        return jsonify({"status": "success"})
+
+    except Exception as e:
+        app.logger.error("Error updating libraries: %s", str(e))
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 @app.route("/")
 def start():
