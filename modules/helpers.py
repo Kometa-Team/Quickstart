@@ -66,6 +66,9 @@ def belongs_in_template_list(file):
         file.endswith(".html")
         and file != "000-base.html"
         and file != "000-library_template.html"
+        and file != "000-movielib-defaults.html"
+        and file != "000-showlib-defaults.html"
+        and file != "000-musiclib-defaults.html"
         and file[:3].isdigit()
         # and file[3] == "-"
         and not file.startswith("999-")

@@ -58,9 +58,6 @@ function jumpTo (targetPage) {
   // Show loading spinner
   loading('jump')
 
-  // Append the targetPage to the form data
-  formData.append('jump_to', targetPage)
-
   // Submit the form data via fetch without the jumpTo field
   fetch(form.action, {
     method: 'POST',
