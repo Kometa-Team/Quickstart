@@ -89,11 +89,18 @@ app.config["SESSION_USE_SIGNER"] = False
 server_session = Session(app)
 
 TEMPLATES_DIR = "templates"
+STATIC_JS_DIR = "static\\local-js"
 
 
 def read_template_file(file_path):
     with open(file_path, "r", encoding="utf-8") as file:
         return file.read()
+
+
+def format_library_name(library_name):
+    words = library_name.split()
+    formatted_words = [words[0].capitalize()] + [word.lower() for word in words[1:]]
+    return "_".join(formatted_words)
 
 
 @app.route("/update_libraries", methods=["POST"])
@@ -106,20 +113,40 @@ def update_libraries():
         template_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), TEMPLATES_DIR
         )
+        static_js_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), STATIC_JS_DIR
+        )
+        js_template_content = read_template_file(
+            os.path.join(static_js_dir, "000-library-template.js")
+        )
 
         # Check existing templates and remove those not in selected_libraries
-        existing_files = {
+        existing_files_html = {
             filename
             for filename in os.listdir(template_dir)
             if filename.startswith(("012", "013", "014"))
         }
 
         # Determine which files to delete
-        files_to_delete = existing_files
+        files_to_delete = existing_files_html
 
         # Delete the files that are not in the selected libraries
         for filename in files_to_delete:
             os.remove(os.path.join(template_dir, filename))
+
+        # Check existing templates and remove those not in selected_libraries
+        existing_files_js = {
+            filename
+            for filename in os.listdir(static_js_dir)
+            if filename.startswith(("012", "013", "014"))
+        }
+
+        # Determine which files to delete
+        files_to_delete = existing_files_js
+
+        # Delete the files that are not in the selected libraries
+        for filename in files_to_delete:
+            os.remove(os.path.join(static_js_dir, filename))
 
         # Read the template contents from the provided files
         movie_template_content = read_template_file(
@@ -137,26 +164,37 @@ def update_libraries():
         for library in selected_libraries:
             library_name = library["name"]
             library_type = library["type"]
+            formatted_library_name = format_library_name(library_name)
 
             type_counters[library_type] += 1
             if library_type == "movie":
-                filename = f"012{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.html"
+                filename_html = f"012{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.html"
                 template_content = movie_template_content
+                filename_js = f"012{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.js"
             elif library_type == "show":
-                filename = f"013{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.html"
+                filename_html = f"013{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.html"
                 template_content = show_template_content
+                filename_js = f"013{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.js"
             elif library_type == "music":
-                filename = f"014{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.html"
+                filename_html = f"014{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.html"
                 template_content = music_template_content
+                filename_js = f"014{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.js"
             else:
                 continue  # Skip if the library type is unknown
 
-            filepath = os.path.join(template_dir, filename)
-            if not os.path.exists(filepath):
-                with open(
-                    filepath, "w", encoding="utf-8"
-                ) as f:  # Specify encoding here as well
+            filepath_html = os.path.join(template_dir, filename_html)
+            filepath_js = os.path.join(static_js_dir, filename_js)
+
+            if not os.path.exists(filepath_html):
+                with open(filepath_html, "w", encoding="utf-8") as f:
                     f.write(template_content)
+
+            if not os.path.exists(filepath_js):
+                js_content = js_template_content.replace(
+                    "LibraryName", formatted_library_name
+                )
+                with open(filepath_js, "w", encoding="utf-8") as f:
+                    f.write(js_content)
 
         return jsonify({"status": "success"})
 

@@ -2053,6 +2053,12 @@
         </div>
       </div>
     </div>
+    <div class="input-group input-group-lg form-floating"></div>
+    <div class="form-floating">
+      <input type="text" class="form-control" id="{{page_info['title']}}_validated" name="{{page_info['title']}}_validated" value="{{ data['validated'] }}" title="">
+      <label for="{{page_info['title']}}_validated">{{page_info['title']}} Validated</label>
+    </div>
+    <div id="statusMessage" class="status-message"></div><br>
   </div>
 </form>
 {% endblock %}
