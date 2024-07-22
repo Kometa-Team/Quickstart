@@ -95,8 +95,6 @@ def build_config(header_style="ascii"):
         "# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n"
         f"{section_heading('KOMETA') if header_style == 'ascii' else ('#==================== KOMETA ====================#' if header_style == 'divider' else '')}\n\n"
         f"{header_comment}\n\n"
-        # add this line below once we have proper libraries being added to the config
-        # "libraries:\n\n"
     )
 
     def dump_section(title, name, data):
