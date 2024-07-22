@@ -1,11 +1,11 @@
 {% extends "000-base.html" %} {% block content %}
-<form id="configForm" method="post" name="configForm">
+<form method="post" id="configForm" name="configForm">
   <div id="{{page_info['title']}}Section">
     <div class="row">
       <div class="col align-self-center">
         <div class="input-group justify-content-start">
-          <button class="btn btn-secondary" formaction="/step/{{ page_info['prev_page'] }}" onclick="loading('prev')" type="submit">
-            <i class="fa fa-arrow-left" id="prev-spinner-icon"></i>
+          <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
+            <i id="prev-spinner-icon" class="fa fa-arrow-left"></i>
           </button>
         </div>
       </div>
@@ -14,11 +14,13 @@
       </div>
       <div class="col align-self-center">
         <div class="input-group justify-content-end jump-spinner-container">
-          <button aria-expanded="false" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" type="button">
-            <span id="jump-to-text">Jump To</span> <i class="" id="jump-spinner-icon"></i>
+          <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+            <span id="jump-to-text">Jump To</span>
+            <i id="jump-spinner-icon" class=""></i>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            {% for file, name in template_list %} {% if name == 'Final Validation' %}
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
             <li>
               <hr class="dropdown-divider">
             </li>
@@ -30,10 +32,11 @@
             <li>
               <hr class="dropdown-divider">
             </li>
-            {% endif %} {% endfor %}
+            {% endif %}
+            {% endfor %}
           </ul>
-          <button class="btn btn-success" formaction="/step/{{ page_info['next_page'] }}" onclick="loading('next')" type="submit">
-            <i class="fa fa-arrow-right" id="next-spinner-icon"></i>
+          <button type="submit" class="btn btn-success" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
+            <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
           </button>
         </div>
       </div>
@@ -43,7 +46,7 @@
         <div class="col"></div>
         <div class="col-8">
           <div class="col align-self-end">
-            <div aria-label="Example with label" aria-valuemax="100" aria-valuemin="0" aria-valuenow="25" class="progress" role="progressbar">
+            <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">
               <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
                 {{ page_info['progress'] }}%
               </div>
