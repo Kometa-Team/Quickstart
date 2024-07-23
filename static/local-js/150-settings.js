@@ -131,7 +131,7 @@ function validateIMDBCSV (input) {
   if (!input || input.toLowerCase() === 'none') {
     return true
   }
-  const imdbCSVRegex = /^(\s*tt\d{7}\s*)(,\s*tt\d{7}\s*)*$/
+  const imdbCSVRegex = /^(\s*tt\d{7,}\s*)(,\s*tt\d{7,}\s*)*$/
   return imdbCSVRegex.test(input)
 }
 
@@ -172,7 +172,7 @@ function validateForm () {
   // Validate ignore_imdb_ids to start with tt followed by numbers
   const ignoreImdbIds = document.getElementById('ignore_imdb_ids').value.trim()
   if (ignoreImdbIds && ignoreImdbIds.toLower !== 'none' && !validateIMDBCSV(ignoreImdbIds)) {
-    alert('Please enter a valid CSV list of IMDb IDs for ignore_imdb_ids (starting with tt followed by 7 digits).')
+    alert('Please enter a valid CSV list of IMDb IDs for ignore_imdb_ids (starting with tt followed by at least 7 digits).')
     return false // Prevent form submission
   }
 

@@ -38,3 +38,11 @@ logs/
 
 # Ignore macOS system files
 .DS_Store
+
+# Ignore plex dynamic library files
+012*-*.html
+013*-*.html
+014*-*.html
+012*-*.js
+013*-*.js
+014*-*.js

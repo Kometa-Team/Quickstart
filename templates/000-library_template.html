@@ -1,0 +1,64 @@
+{% extends '000-base.html' %} {% block content %}
+<form method="post" id="configForm" name="configForm">
+<div id="{{page_info['title']}}Section">
+    <div class="row">
+        <div class="col align-self-center">
+            <div class="input-group justify-content-start">
+                <button type="submit" class="btn btn-secondary" onclick="loading('prev')" formaction="/step/{{ page_info['prev_page'] }}">
+                    <i id="prev-spinner-icon" class="fa fa-arrow-left"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-6 align-self-center text-center">
+            <h2>{{ page_info['title'] }}</h2>
+        </div>
+        <div class="col align-self-center">
+            <div class="input-group justify-content-end jump-spinner-container">
+                <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span id="jump-to-text">Jump To</span>
+                    <i id="jump-spinner-icon" class=""></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {% for file, name in template_list %}
+                    {% if name == 'Final Validation' %}
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    {% endif %}
+                    <li>
+                        <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
+                    </li>
+                    {% if name == 'Start' %}
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+                <button type="submit" class="btn btn-success" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
+                    <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="container text-center">
+        <div class="row">
+            <div class="col"></div>
+            <div class="col-8">
+                <div class="col align-self-end">
+                    <div class="progress" role="progressbar" aria-label="Example with label" aria-valuenow="25"
+                        aria-valuemin="0" aria-valuemax="100">
+                        <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
+                            {{ page_info['progress'] }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col"></div>
+        </div>
+    </div>
+    <hr class="hr">
+    {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+</div>
+</form>
+{% endblock %}
