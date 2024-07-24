@@ -68,7 +68,6 @@ def belongs_in_template_list(file):
         and file != "000-library_template.html"
         and file != "000-movielib-defaults.html"
         and file != "000-showlib-defaults.html"
-        and file != "000-musiclib-defaults.html"
         and file[:3].isdigit()
         # and file[3] == "-"
         and not file.startswith("999-")
@@ -163,8 +162,7 @@ def get_template_list():
     type_counter = {
         "012": 0,
         "013": 0,
-        "014": 0,
-    }  # Counters for movie, show, music types
+    }  # Counters for movie, show types
     prev_item = "001-start"
 
     for file in file_list:

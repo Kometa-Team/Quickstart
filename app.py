@@ -124,7 +124,7 @@ def update_libraries():
         existing_files_html = {
             filename
             for filename in os.listdir(template_dir)
-            if filename.startswith(("012", "013", "014"))
+            if filename.startswith(("012", "013"))
         }
 
         # Determine which files to delete
@@ -138,7 +138,7 @@ def update_libraries():
         existing_files_js = {
             filename
             for filename in os.listdir(static_js_dir)
-            if filename.startswith(("012", "013", "014"))
+            if filename.startswith(("012", "013"))
         }
 
         # Determine which files to delete
@@ -155,11 +155,8 @@ def update_libraries():
         show_template_content = read_template_file(
             os.path.join(template_dir, "000-showlib-defaults.html")
         )
-        music_template_content = read_template_file(
-            os.path.join(template_dir, "000-musiclib-defaults.html")
-        )
 
-        type_counters = {"movie": 0, "show": 0, "music": 0}
+        type_counters = {"movie": 0, "show": 0}
 
         for library in selected_libraries:
             library_name = library["name"]
@@ -175,10 +172,6 @@ def update_libraries():
                 filename_html = f"013{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.html"
                 template_content = show_template_content
                 filename_js = f"013{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.js"
-            elif library_type == "music":
-                filename_html = f"014{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.html"
-                template_content = music_template_content
-                filename_js = f"014{type_counters[library_type]:02d}-{library_name.replace(' ', '_')}.js"
             else:
                 continue  # Skip if the library type is unknown
 
