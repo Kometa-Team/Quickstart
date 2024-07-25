@@ -80,16 +80,6 @@
         </div>
         {% endfor %}
       </div>
-      <div class="form-floating">
-        <label for="libraries">Select Music Libraries:</label><br><br>
-        {% set music_libraries = plex_data['plex']['tmp_music_libraries'].split(',')|sort if plex_data['plex']['tmp_music_libraries'] else [] %}
-        {% for library in music_libraries %}
-        <div class="form-check form-switch">
-          <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" data-type="music" id="library_{{ library }}">
-          <label class="form-check-label" for="library_{{ library }}">{{ library }}</label>
-        </div>
-        {% endfor %}
-      </div>
     </div>
     <div class="form-floating">
       <input type="text" class="form-control" id="libraries" name="libraries" value="{{ data['library_selection']['libraries'] }}" readonly>
