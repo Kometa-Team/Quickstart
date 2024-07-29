@@ -79,7 +79,6 @@ $(document).ready(function () {
       const result = await response.json()
       console.log('Libraries updated successfully:', result)
       generateTabs(selectedLibraries)
-      // document.getElementById('configForm').submit()
     } catch (error) {
       console.error('Error updating libraries:', error)
     }
@@ -126,7 +125,6 @@ function generateTabs (selectedLibraries) {
 }
 
 const chBoxes = document.querySelectorAll('.dropdown-menu input[type="checkbox"]')
-// const dpBtn = document.getElementById('multiSelectDropdown')
 let mySelectedListItems = []
 
 /* eslint-disable no-unused-vars */
