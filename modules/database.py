@@ -4,6 +4,13 @@ import sqlite3
 import pickle
 from .helpers import booler
 
+# Determine the root path of the project directory
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_DIR = os.path.join(ROOT_DIR, "config")
+DATABASE_PATH = os.path.join(CONFIG_DIR, "quickstart.sqlite")
+# Ensure the config directory exists
+os.makedirs(CONFIG_DIR, exist_ok=True)
+
 
 def persisted_section_table_create():
     return """CREATE TABLE IF NOT EXISTS section_data (
@@ -19,7 +26,7 @@ def persisted_section_table_create():
 def save_section_data(section, validated, user_entered, data, name="default"):
     try:
         sqliteConnection = sqlite3.connect(
-            "quickstart.sqlite",
+            DATABASE_PATH,
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
         )
 
@@ -66,11 +73,17 @@ def save_section_data(section, validated, user_entered, data, name="default"):
 
 
 def retrieve_section_data(name, section):
+    sqliteConnection = None  # Initialize the sqliteConnection variable
     try:
-        sqliteConnection = sqlite3.connect(
-            "quickstart.sqlite",
-            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
-        )
+        try:
+            sqliteConnection = sqlite3.connect(
+                DATABASE_PATH,
+                detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
+            )
+        except sqlite3.Error as error:
+            print("Error while connecting to SQLite", error)
+            return False, False, None
+
         cursor = sqliteConnection.cursor()
 
         sqlite_create_table_query = persisted_section_table_create()
@@ -109,7 +122,7 @@ def retrieve_section_data(name, section):
 def reset_data(name, section=None):
     try:
         sqliteConnection = sqlite3.connect(
-            "quickstart.sqlite",
+            DATABASE_PATH,
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
         )
         cursor = sqliteConnection.cursor()
