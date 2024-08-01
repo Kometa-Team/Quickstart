@@ -89,6 +89,21 @@ $(document).ready(function () {
 
   // Initial call to generate tabs on page load
   generateTabs(selectedLibraries)
+
+  // Enable customize buttons when "Enable" checkbox is checked
+  document.querySelectorAll('.card-footer').forEach(cardFooter => {
+    const checkbox = cardFooter.querySelector('input[type="checkbox"]')
+    const button = cardFooter.querySelector('button')
+
+    if (checkbox && button) { // Ensure both elements exist
+      checkbox.addEventListener('change', function () {
+        button.disabled = !this.checked
+      })
+
+      // Initial State: Check if the button should be disabled on load
+      button.disabled = !checkbox.checked
+    }
+  })
 })
 
 // Function to validate that at least one library is selected
@@ -110,20 +125,21 @@ function generateTabs (selectedLibraries) {
     const showClass = index === 0 ? 'show active' : ''
 
     tabsContainer.append(`
-            <li class="nav-item">
-                <a class="nav-link ${isActive}" id="${tabId}-tab" data-toggle="tab" href="#${tabId}" role="tab" aria-controls="${tabId}" aria-selected="true">${library.name}</a>
-            </li>
-        `)
+      <li class="nav-item">
+        <a class="nav-link ${isActive}" id="${tabId}-tab" data-toggle="tab" href="#${tabId}" role="tab" aria-controls="${tabId}" aria-selected="true">${library.name}</a>
+      </li>
+    `)
 
     contentContainer.append(`
-            <div class="tab-pane fade ${showClass}" id="${tabId}" role="tabpanel" aria-labelledby="${tabId}-tab">
-                <!-- Include content for ${library.name} here -->
-                ${library.type === 'movie' ? $('#movie-template').html() : $('#show-template').html()}
-            </div>
-        `)
+      <div class="tab-pane fade ${showClass}" id="${tabId}" role="tabpanel" aria-labelledby="${tabId}-tab">
+        <!-- Include content for ${library.name} here -->
+        ${library.type === 'movie' ? $('#movie-template').html() : $('#show-template').html()}
+      </div>
+    `)
   })
 }
 
+// Function to handle checkboxes in the dropdown menu
 const chBoxes = document.querySelectorAll('.dropdown-menu input[type="checkbox"]')
 let mySelectedListItems = []
 
@@ -140,24 +156,6 @@ function handleCB () {
   })
 }
 /* eslint-enable no-unused-vars */
-
-document.addEventListener('DOMContentLoaded', function () {
-  const cardFooters = document.querySelectorAll('.card-footer')
-
-  cardFooters.forEach(cardFooter => {
-    const checkbox = cardFooter.querySelector('input[type="checkbox"]')
-    const button = cardFooter.querySelector('button')
-
-    if (checkbox && button) { // Ensure both elements exist
-      checkbox.addEventListener('change', function () {
-        button.disabled = !this.checked
-      })
-
-      // Initial State: Check if the button should be disabled on load
-      button.disabled = !checkbox.checked
-    }
-  })
-})
 
 /* eslint-disable no-unused-vars */
 function librarySelect () {
