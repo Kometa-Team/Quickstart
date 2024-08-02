@@ -79,6 +79,7 @@ $(document).ready(function () {
       const result = await response.json()
       console.log('Libraries updated successfully:', result)
       generateTabs(selectedLibraries)
+      reapplyEventListeners() // Reapply event listeners after updating libraries
     } catch (error) {
       console.error('Error updating libraries:', error)
     }
@@ -91,19 +92,7 @@ $(document).ready(function () {
   generateTabs(selectedLibraries)
 
   // Enable customize buttons when "Enable" checkbox is checked
-  document.querySelectorAll('.card-footer').forEach(cardFooter => {
-    const checkbox = cardFooter.querySelector('input[type="checkbox"]')
-    const button = cardFooter.querySelector('button')
-
-    if (checkbox && button) { // Ensure both elements exist
-      checkbox.addEventListener('change', function () {
-        button.disabled = !this.checked
-      })
-
-      // Initial State: Check if the button should be disabled on load
-      button.disabled = !checkbox.checked
-    }
-  })
+  reapplyEventListeners()
 })
 
 // Function to validate that at least one library is selected
@@ -173,4 +162,21 @@ function validateForm () {
   }
 
   return true // Allow form submission
+}
+
+// Function to reapply event listeners
+function reapplyEventListeners () {
+  document.querySelectorAll('.card-footer').forEach(cardFooter => {
+    const checkbox = cardFooter.querySelector('input[type="checkbox"]')
+    const button = cardFooter.querySelector('button')
+
+    if (checkbox && button) { // Ensure both elements exist
+      checkbox.addEventListener('change', function () {
+        button.disabled = !this.checked
+      })
+
+      // Initial State: Check if the button should be disabled on load
+      button.disabled = !checkbox.checked
+    }
+  })
 }
