@@ -103,7 +103,7 @@
 <div id="movie-template" style="display: none;">
     <h3>Movie Library Configuration</h3>
     <!-- Include your form inputs and accordions for movies here -->
-    <div class="accordion" id="movieAccordion">
+    <div class="accordion" id="LIBID_movieAccordion">
         <!-- Movie Library Accordion Content -->
       <div class="accordion-item">
         <h2 class="accordion-header">
@@ -114,7 +114,7 @@
         <div class="accordion-collapse collapse" data-bs-parent="#accordionExample" id="collapseAward">
           <div class="accordion-body">
             <div class="card-group">
-              <div class="card" id="separator_award">
+              <div class="card" id="separator_award_LIBID">
                 <img alt="Award Separator" class="card-img-top" src="../static/images/posters/separator_award.jpg">
                 <div class="card-body">
                   <h5 class="card-title">Award Separator</h5>
@@ -123,14 +123,14 @@
                 <div class="card-footer">
                   <div class="input-group mb-3 small">
                     <div class="input-group-text">
-                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="separator_award_checkbox" type="checkbox" value=""> Enable
+                      <input aria-label="Checkbox for following text input" class="form-check-input mt-0" id="separator_award_checkbox_LIBID" type="checkbox" value=""> Enable
                     </div>
-                    <button class="btn btn-primary btn-sm" data-bs-target="#separator_award_modal" data-bs-toggle="modal" disabled id="separator_award_button" type="button">Customize
+                    <button class="btn btn-primary btn-sm" data-bs-target="#separator_award_modal_LIBID" data-bs-toggle="modal" disabled id="separator_award_button_LIBID" type="button">Customize
                     </button>
                   </div>
                 </div>
               </div>
-              <div aria-hidden="true" aria-labelledby="separator_award_modal" class="modal fade" id="separator_award_modal" tabindex="-1">
+              <div aria-hidden="true" aria-labelledby="separator_award_modal_LIBID" class="modal fade" id="separator_award_modal_LIBID" tabindex="-1">
                 <div class="modal-dialog">
                   <div class="modal-content">
                     <div class="modal-header">
@@ -140,8 +140,8 @@
                     <div class="modal-body">
                       <form>
                         <div class="form-group">
-                          <label for="sep_style">Separator Style:</label>
-                          <select class="form-control" id="separator_award_sep_style">
+                          <label for="separator_award_sep_style_LIBID">Separator Style:</label>
+                          <select class="form-control" id="separator_award_sep_style_LIBID">
                             <option value="orig">Original</option>
                             <option value="amethyst">Amethyst</option>
                             <option value="aqua">Aqua</option>
@@ -167,20 +167,20 @@
                           </select>
                         </div>
                         <div class="form-group">
-                          <label for="placeholder_tmdb_movie">Placeholder TMDb Movie ID:</label>
-                          <input class="form-control" id="separator_award_placeholder_tmdb_movie" type="text">
+                          <label for="separator_award_placeholder_tmdb_movie_LIBID">Placeholder TMDb Movie ID:</label>
+                          <input class="form-control" id="separator_award_placeholder_tmdb_movie_LIBID" type="text">
                         </div>
                         <div class="form-group">
-                          <label for="placeholder_tvdb_show">Placeholder TVDb Show ID:</label>
-                          <input class="form-control" id="separator_award_placeholder_tvdb_show" type="text">
+                          <label for="separator_award_placeholder_tvdb_show_LIBID">Placeholder TVDb Show ID:</label>
+                          <input class="form-control" id="separator_award_placeholder_tvdb_show_LIBID" type="text">
                         </div>
                         <div class="form-group">
-                          <label for="placeholder_imdb_id">Placeholder IMDb ID:</label>
-                          <input class="form-control" id="separator_award_placeholder_imdb_id" type="text">
+                          <label for="separator_award_placeholder_imdb_id_LIBID">Placeholder IMDb ID:</label>
+                          <input class="form-control" id="separator_award_placeholder_imdb_id_LIBID" type="text">
                         </div>
                         <div class="form-group">
-                          <label for="collection_mode">Collection Mode:</label>
-                          <select class="form-control" id="separator_award_collection_mode">
+                          <label for="separator_award_collection_mode_LIBID">Collection Mode:</label>
+                          <select class="form-control" id="separator_award_collection_mode_LIBID">
                             <option value="default">Library Default</option>
                             <option value="hide">Hide Collection</option>
                             <option value="hide_items">Hide Items</option>
