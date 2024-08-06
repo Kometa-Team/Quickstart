@@ -1,4 +1,4 @@
-/* global $, alert */
+/* global $ alert */
 
 $(document).ready(function () {
   const plexValid = $('#plex_valid').data('plex-valid') === 'True'
@@ -78,7 +78,8 @@ $(document).ready(function () {
 
       const result = await response.json()
       console.log('Libraries updated successfully:', result)
-      document.getElementById('configForm').submit()
+      generateTabs(selectedLibraries)
+      reapplyEventListeners() // Reapply event listeners after updating libraries
     } catch (error) {
       console.error('Error updating libraries:', error)
     }
@@ -86,12 +87,71 @@ $(document).ready(function () {
 
   const isValidated = document.getElementById('library_selection_validated').value.toLowerCase()
   console.log('Validated: ' + isValidated)
+
+  // Initial call to generate tabs on page load
+  generateTabs(selectedLibraries)
+
+  // Enable customize buttons when "Enable" checkbox is checked
+  reapplyEventListeners()
 })
 
 // Function to validate that at least one library is selected
 function validateLibrarySelection (selectedLibraries) {
   return selectedLibraries.length > 0
 }
+
+// Generate tabs and content
+function generateTabs (selectedLibraries) {
+  const tabsContainer = $('#tabs')
+  const contentContainer = $('#tab-content')
+
+  tabsContainer.empty()
+  contentContainer.empty()
+
+  selectedLibraries.forEach((library, index) => {
+    const tabId = `tab-${library.name.replace(' ', '-')}`
+    const isActive = index === 0 ? 'active' : ''
+    const showClass = index === 0 ? 'show active' : ''
+
+    tabsContainer.append(`
+      <li class="nav-item">
+        <a class="nav-link ${isActive}" id="${tabId}-tab" data-toggle="tab" href="#${tabId}" role="tab" aria-controls="${tabId}" aria-selected="true">${library.name}</a>
+      </li>
+    `)
+
+    contentContainer.append(`
+      <div class="tab-pane fade ${showClass}" id="${tabId}" role="tabpanel" aria-labelledby="${tabId}-tab">
+        <!-- Include content for ${library.name} here -->
+        ${library.type === 'movie' ? $('#movie-template').html() : $('#show-template').html()}
+      </div>
+    `)
+  })
+}
+
+// Function to handle checkboxes in the dropdown menu
+const chBoxes = document.querySelectorAll('.dropdown-menu input[type="checkbox"]')
+let mySelectedListItems = []
+
+/* eslint-disable no-unused-vars */
+function handleCB () {
+  mySelectedListItems = []
+  let mySelectedListItemsText = ''
+
+  chBoxes.forEach((checkbox) => {
+    if (checkbox.checked) {
+      mySelectedListItems.push(checkbox.value)
+      mySelectedListItemsText += checkbox.value + ', '
+    }
+  })
+}
+/* eslint-enable no-unused-vars */
+
+/* eslint-disable no-unused-vars */
+function librarySelect () {
+  const T = document.getElementById('library_select')
+  T.style.display = 'block' // <-- Set it to block
+}
+/* eslint-enable no-unused-vars */
 
 /* eslint-disable no-unused-vars, camelcase */
 function validateForm () {
@@ -102,4 +162,21 @@ function validateForm () {
   }
 
   return true // Allow form submission
+}
+
+// Function to reapply event listeners
+function reapplyEventListeners () {
+  document.querySelectorAll('.card-footer').forEach(cardFooter => {
+    const checkbox = cardFooter.querySelector('input[type="checkbox"]')
+    const button = cardFooter.querySelector('button')
+
+    if (checkbox && button) { // Ensure both elements exist
+      checkbox.addEventListener('change', function () {
+        button.disabled = !this.checked
+      })
+
+      // Initial State: Check if the button should be disabled on load
+      button.disabled = !checkbox.checked
+    }
+  })
 }
