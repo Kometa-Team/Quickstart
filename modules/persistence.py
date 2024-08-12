@@ -54,7 +54,7 @@ def save_settings(raw_source, form_data):
     # grab new config name if they entered one:
     if "config_name" in form_data:
         session["config_name"] = form_data["config_name"]
-        print(f"recieved config name in form: {session['config_name']}")
+        print(f"received config name in form: {session['config_name']}")
 
     clean_data = clean_form_data(form_data)
 
