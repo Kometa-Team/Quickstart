@@ -52,17 +52,19 @@ $(document).ready(function () {
         type: $(this).data('type')
       })
     })
+
+    if (!validateLibrarySelection(selectedLibraries)) {
+      alert('Please select at least one library.')
+      $(this).prop('checked', true) // Prevent unselecting the last toggle
+      return
+    }
+
     document.getElementById('libraries').value = JSON.stringify(selectedLibraries)
     updateLibraries(selectedLibraries)
   })
 
   // Function to update libraries and create/delete template files
   async function updateLibraries (selectedLibraries) {
-    if (!validateLibrarySelection(selectedLibraries)) {
-      alert('Please select at least one library.')
-      return
-    }
-
     try {
       const response = await fetch('/update_libraries', {
         method: 'POST',
@@ -105,13 +107,19 @@ function generateTabs (selectedLibraries) {
   const tabsContainer = $('#tabs')
   const contentContainer = $('#tab-content')
 
+  // Clear existing tabs and content
   tabsContainer.empty()
   contentContainer.empty()
 
-  selectedLibraries.forEach((library, index) => {
-    const tabId = `tab-${library.name.replace(' ', '-')}`
-    const isActive = index === 0 ? 'active' : ''
-    const showClass = index === 0 ? 'show active' : ''
+  selectedLibraries.forEach((library) => {
+    const libPrefix = library.type === 'movie' ? 'mov' : 'sho'
+    const libraryId = library.name.replace(/ /g, '-')
+    const tabId = `${libPrefix}-${libraryId}-libname`
+    const isActive = tabsContainer.children().length === 0 ? 'active' : ''
+    const showClass = tabsContainer.children().length === 0 ? 'show active' : ''
+
+    const contentHtml = (library.type === 'movie' ? $('#movie-template').html() : $('#show-template').html())
+      .replace(/LIBID/g, `${libPrefix}-${libraryId}`)
 
     tabsContainer.append(`
       <li class="nav-item">
@@ -121,8 +129,7 @@ function generateTabs (selectedLibraries) {
 
     contentContainer.append(`
       <div class="tab-pane fade ${showClass}" id="${tabId}" role="tabpanel" aria-labelledby="${tabId}-tab">
-        <!-- Include content for ${library.name} here -->
-        ${library.type === 'movie' ? $('#movie-template').html() : $('#show-template').html()}
+        ${contentHtml}
       </div>
     `)
   })
@@ -146,24 +153,7 @@ function handleCB () {
 }
 /* eslint-enable no-unused-vars */
 
-/* eslint-disable no-unused-vars */
-function librarySelect () {
-  const T = document.getElementById('library_select')
-  T.style.display = 'block' // <-- Set it to block
-}
-/* eslint-enable no-unused-vars */
-
 /* eslint-disable no-unused-vars, camelcase */
-function validateForm () {
-  const selectedLibraries = JSON.parse(document.getElementById('libraries').value.trim())
-  if (!validateLibrarySelection(selectedLibraries)) {
-    alert('Please select at least one library.')
-    return false
-  }
-
-  return true // Allow form submission
-}
-
 // Function to reapply event listeners
 function reapplyEventListeners () {
   document.querySelectorAll('.card-footer').forEach(cardFooter => {
@@ -179,4 +169,15 @@ function reapplyEventListeners () {
       button.disabled = !checkbox.checked
     }
   })
+}
+
+/* eslint-disable no-unused-vars */
+function validateForm () {
+  const selectedLibraries = JSON.parse(document.getElementById('libraries').value.trim())
+  if (!validateLibrarySelection(selectedLibraries)) {
+    alert('Please select at least one library.')
+    return false
+  }
+
+  return true // Allow form submission
 }
