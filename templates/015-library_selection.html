@@ -122,7 +122,7 @@
                             <div class="card-footer">
                                 <div class="input-group mb-3 small">
                                     <div class="input-group-text">
-                                        {% set checkbox_id = 'separator_award_checkbox_mov-' ~ library %}
+                                        {% set checkbox_id = 'separator_award_checkbox_LIBID' %}
                                         <input class="form-check-input" type="checkbox" id="{{ checkbox_id }}" name="{{ checkbox_id }}" value="true"
                                         {% if data['library_selection'][checkbox_id]|string|lower=='true' %}checked{% endif %}> Enable
                                     </div>
@@ -141,7 +141,7 @@
                                     <div class="modal-body">
                                             <div class="form-group">
                                                 <label for="separator_award_sep_style_LIBID">Separator Style:</label>
-                                                <select class="form-control" id="separator_award_sep_style_LIBID">
+                                                <select class="form-control" id="separator_award_sep_style_LIBID" name="separator_award_sep_style_LIBID">
                                                     <option value="orig">Original</option>
                                                     <option value="amethyst">Amethyst</option>
                                                     <option value="aqua">Aqua</option>
@@ -168,19 +168,19 @@
                                             </div>
                                             <div class="form-group">
                                                 <label for="separator_award_placeholder_tmdb_movie_LIBID">Placeholder TMDb Movie ID:</label>
-                                                <input class="form-control" id="separator_award_placeholder_tmdb_movie_LIBID" type="text">
+                                                <input class="form-control" id="separator_award_placeholder_tmdb_movie_LIBID" name="separator_award_placeholder_tmdb_movie_LIBID" type="text">
                                             </div>
                                             <div class="form-group">
                                                 <label for="separator_award_placeholder_tvdb_show_LIBID">Placeholder TVDb Show ID:</label>
-                                                <input class="form-control" id="separator_award_placeholder_tvdb_show_LIBID" type="text">
+                                                <input class="form-control" id="separator_award_placeholder_tvdb_show_LIBID" name="separator_award_placeholder_tvdb_show_LIBID" type="text">
                                             </div>
                                             <div class="form-group">
                                                 <label for="separator_award_placeholder_imdb_id_LIBID">Placeholder IMDb ID:</label>
-                                                <input class="form-control" id="separator_award_placeholder_imdb_id_LIBID" type="text">
+                                                <input class="form-control" id="separator_award_placeholder_imdb_id_LIBID" name="separator_award_placeholder_imdb_id_LIBID" type="text">
                                             </div>
                                             <div class="form-group">
                                                 <label for="separator_award_collection_mode_LIBID">Collection Mode:</label>
-                                                <select class="form-control" id="separator_award_collection_mode_LIBID">
+                                                <select class="form-control" id="separator_award_collection_mode_LIBID" name="separator_award_collection_mode_LIBID">
                                                     <option value="default">Library Default</option>
                                                     <option value="hide">Hide Collection</option>
                                                     <option value="hide_items">Hide Items</option>
@@ -207,7 +207,7 @@
                             <div class="card-footer">
                                 <div class="input-group mb-3 small">
                                     <div class="input-group-text">
-                                        {% set checkbox_id = 'oscars_checkbox_mov-' ~ library %}
+                                        {% set checkbox_id = 'oscars_checkbox_LIBID' %}
                                         <input class="form-check-input" type="checkbox" id="{{ checkbox_id }}" name="{{ checkbox_id }}" value="true"
                                         {% if data['library_selection'][checkbox_id]|string|lower=='true' %}checked{% endif %}> Enable
                                     </div>
@@ -281,7 +281,7 @@
                             <div class="card-footer">
                                 <div class="input-group mb-3 small">
                                     <div class="input-group-text">
-                                        {% set checkbox_id = 'berlinale_checkbox_mov-' ~ library %}
+                                        {% set checkbox_id = 'berlinale_checkbox_LIBID' %}
                                         <input class="form-check-input" type="checkbox" id="{{ checkbox_id }}" name="{{ checkbox_id }}" value="true"
                                         {% if data['library_selection'][checkbox_id]|string|lower=='true' %}checked{% endif %}> Enable
                                     </div>
@@ -291,15 +291,14 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div aria-hidden="true" aria-labelledby="berlinale_modal_LIBID" class="modal fade" id="berlinale_modal_LIBID" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h1 class="modal-title fs-5">Berlin Film Festival Awards</h1>
-                                    <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
-                                </div>
-                                <div class="modal-body">
+                        <div aria-hidden="true" aria-labelledby="berlinale_modal_LIBID" class="modal fade" id="berlinale_modal_LIBID" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5">Berlin Film Festival Awards</h1>
+                                        <button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"></button>
+                                    </div>
+                                    <div class="modal-body">
                                         <div class="mb-3" id="berlinaleOptions_LIBID">
                                             <h6>Enabled Collections</h6>
                                             <div class="dropdown">
@@ -332,12 +331,13 @@
                                                 </select>
                                             </div>
                                         </div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
-                                        Close
-                                    </button>
-                                    <button class="btn btn-primary" type="button">Save changes</button>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">
+                                            Close
+                                        </button>
+                                        <button class="btn btn-primary" type="button">Save changes</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -363,7 +363,7 @@
                             <div class="card-footer">
                                 <div class="input-group mb-3 small">
                                     <div class="input-group-text">
-                                        {% set checkbox_id = 'separator_chart_checkbox_mov-' ~ library %}
+                                        {% set checkbox_id = 'separator_chart_checkbox_LIBID' %}
                                         <input class="form-check-input" type="checkbox" id="{{ checkbox_id }}" name="{{ checkbox_id }}" value="true"
                                         {% if data['library_selection'][checkbox_id]|string|lower=='true' %}checked{% endif %}> Enable
                                     </div>
@@ -497,7 +497,7 @@
                             <div class="card-footer">
                                 <div class="input-group mb-3 small">
                                     <div class="input-group-text">
-                                        {% set checkbox_id = 'show_separator_award_checkbox_sho-' ~ library %}
+                                        {% set checkbox_id = 'show_separator_award_checkbox_LIBID' %}
                                         <input class="form-check-input" type="checkbox" id="{{ checkbox_id }}" name="{{ checkbox_id }}" value="true"
                                         {% if data['library_selection'][checkbox_id]|string|lower=='true' %}checked{% endif %}> Enable
                                     </div>
@@ -595,7 +595,7 @@
                             <div class="card-footer">
                                 <div class="input-group mb-3 small">
                                     <div class="input-group-text">
-                                        {% set checkbox_id = 'show_separator_chart_checkbox_sho-' ~ library %}
+                                        {% set checkbox_id = 'show_separator_chart_checkbox_LIBID' %}
                                         <input class="form-check-input" type="checkbox" id="{{ checkbox_id }}" name="{{ checkbox_id }}" value="true"
                                         {% if data['library_selection'][checkbox_id]|string|lower=='true' %}checked{% endif %}> Enable
                                     </div>
@@ -720,7 +720,7 @@
                             <div class="card-footer">
                                 <div class="input-group mb-3 small">
                                     <div class="input-group-text">
-                                        {% set checkbox_id = 'show_genre_checkbox_sho-' ~ library %}
+                                        {% set checkbox_id = 'show_genre_checkbox_LIBID' %}
                                         <input class="form-check-input" type="checkbox" id="{{ checkbox_id }}" name="{{ checkbox_id }}" value="true"
                                         {% if data['library_selection'][checkbox_id]|string|lower=='true' %}checked{% endif %}> Enable
                                     </div>
@@ -737,4 +737,5 @@
     </div>
 </div>
 </form>
+
 {% endblock %}
