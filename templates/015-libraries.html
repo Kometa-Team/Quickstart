@@ -617,57 +617,66 @@
                   data-bs-parent="#mov-contentRatingCollectionsAccordion">
                   <div class="accordion-body">
                     <!-- Content Rating Collection Toggles -->
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_us"
-                        name="mov-collection_content_rating_us" value="true" {% if
-                        data['libraries']['mov-collection_content_rating_us']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-collection_content_rating_us" value="false">
-                      <label class="form-check-label" for="mov-collection_content_rating_us">Content Rating US</label>
-                    </div>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_uk"
-                        name="mov-collection_content_rating_uk" value="true" {% if
-                        data['libraries']['mov-collection_content_rating_uk']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-collection_content_rating_uk" value="false">
-                      <label class="form-check-label" for="mov-collection_content_rating_uk">Content Rating UK</label>
-                    </div>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_nz"
-                        name="mov-collection_content_rating_nz" value="true" {% if
-                        data['libraries']['mov-collection_content_rating_nz']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-collection_content_rating_nz" value="false">
-                      <label class="form-check-label" for="mov-collection_content_rating_nz">Content Rating NZ</label>
-                    </div>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_au"
-                        name="mov-collection_content_rating_au" value="true" {% if
-                        data['libraries']['mov-collection_content_rating_au']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-collection_content_rating_au" value="false">
-                      <label class="form-check-label" for="mov-collection_content_rating_au">Content Rating AU</label>
-                    </div>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_de"
-                        name="mov-collection_content_rating_de" value="true" {% if
-                        data['libraries']['mov-collection_content_rating_de']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-collection_content_rating_de" value="false">
-                      <label class="form-check-label" for="mov-collection_content_rating_de">Content Rating DE</label>
-                    </div>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_cs"
-                        name="mov-collection_content_rating_cs" value="true" {% if
-                        data['libraries']['mov-collection_content_rating_cs']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-collection_content_rating_cs" value="false">
-                      <label class="form-check-label" for="mov-collection_content_rating_cs">Content Rating
-                        Commonsense</label>
-                    </div>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_mal"
-                        name="mov-collection_content_rating_mal" value="true" {% if
-                        data['libraries']['mov-collection_content_rating_mal']|string|lower=='true' %}checked{% endif
-                        %}>
-                      <input type="hidden" name="mov-collection_content_rating_mal" value="false">
-                      <label class="form-check-label" for="mov-collection_content_rating_mal">Content Rating MAL</label>
-                    </div>
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_us"
+                          name="mov-collection_content_rating_us" value="true" {% if data['libraries']['mov-collection_content_rating_us']|string|lower=='true' %}checked{% endif %}>
+                        <input type="hidden" name="mov-collection_content_rating_us" value="false">
+                        <div class="d-flex align-items-center">
+                          <label class="form-check-label me-3" for="mov-collection_content_rating_us">
+                            <a href="https://kometa.wiki/en/latest/defaults/movie/content_rating_us">US Content Ratings</a>
+                          </label>
+                          <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/moviecontent_rating_us.png" height="200" style="opacity: 1;">'></i>
+                        </div>
+                      </div>
+
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_uk"
+                          name="mov-collection_content_rating_uk" value="true" {% if data['libraries']['mov-collection_content_rating_uk']|string|lower=='true' %}checked{% endif %}>
+                        <input type="hidden" name="mov-collection_content_rating_uk" value="false">
+                        <div class="d-flex align-items-center">
+                          <label class="form-check-label me-3" for="mov-collection_content_rating_uk">
+                            <a href="https://kometa.wiki/en/latest/defaults/both/content_rating_uk">UK Content Ratings</a>
+                          </label>
+                          <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/content_rating_uk.png" height="200" style="opacity: 1;">'></i>
+                        </div>
+                      </div>
+
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_de"
+                          name="mov-collection_content_rating_de" value="true" {% if data['libraries']['mov-collection_content_rating_de']|string|lower=='true' %}checked{% endif %}>
+                        <input type="hidden" name="mov-collection_content_rating_de" value="false">
+                        <div class="d-flex align-items-center">
+                          <label class="form-check-label me-3" for="mov-collection_content_rating_de">
+                            <a href="https://kometa.wiki/en/latest/defaults/both/content_rating_de">DE Content Ratings</a>
+                          </label>
+                          <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/content_rating_de.png" height="200" style="opacity: 1;">'></i>
+                        </div>
+                      </div>
+
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_mal"
+                          name="mov-collection_content_rating_mal" value="true" {% if data['libraries']['mov-collection_content_rating_mal']|string|lower=='true' %}checked{% endif %}>
+                        <input type="hidden" name="mov-collection_content_rating_mal" value="false">
+                        <div class="d-flex align-items-center">
+                          <label class="form-check-label me-3" for="mov-collection_content_rating_mal">
+                            <a href="https://kometa.wiki/en/latest/defaults/both/content_rating_mal">MyAnimeList Content Ratings</a>
+                          </label>
+                          <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/content_rating_mal.png" height="200" style="opacity: 1;">'></i>
+                        </div>
+                      </div>
+
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_cs"
+                          name="mov-collection_content_rating_cs" value="true" {% if data['libraries']['mov-collection_content_rating_cs']|string|lower=='true' %}checked{% endif %}>
+                        <input type="hidden" name="mov-collection_content_rating_cs" value="false">
+                        <div class="d-flex align-items-center">
+                          <label class="form-check-label me-3" for="mov-collection_content_rating_cs">
+                            <a href="https://kometa.wiki/en/latest/defaults/both/content_rating_cs">Common Sense Media Content Ratings</a>
+                          </label>
+                          <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/content_rating_cs.png" height="200" style="opacity: 1;">'></i>
+                        </div>
+                      </div>
+
                   </div>
                 </div>
               </div>
@@ -688,25 +697,40 @@
                     <!-- Location Collection Toggles -->
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_country"
-                        name="mov-collection_country" value="true" {% if
-                        data['libraries']['mov-collection_country']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_country" value="true" {% if data['libraries']['mov-collection_country']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_country" value="false">
-                      <label class="form-check-label" for="mov-collection_country">Country</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_country">
+                          <a href="https://kometa.wiki/en/latest/defaults/movie/country">Countries</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/country1.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_region"
-                        name="mov-collection_region" value="true" {% if
-                        data['libraries']['mov-collection_region']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_region" value="true" {% if data['libraries']['mov-collection_region']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_region" value="false">
-                      <label class="form-check-label" for="mov-collection_region">Region</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_region">
+                          <a href="https://kometa.wiki/en/latest/defaults/movie/region">Regions</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/region1.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_continent"
-                        name="mov-collection_continent" value="true" {% if
-                        data['libraries']['mov-collection_continent']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_continent" value="true" {% if data['libraries']['mov-collection_continent']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_continent" value="false">
-                      <label class="form-check-label" for="mov-collection_continent">Continent</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_continent">
+                          <a href="https://kometa.wiki/en/latest/defaults/movie/continent">Continents</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/continent1.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                   </div>
                 </div>
               </div>
@@ -726,32 +750,52 @@
                     <!-- Media Collection Toggles -->
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_aspect"
-                        name="mov-collection_aspect" value="true" {% if
-                        data['libraries']['mov-collection_aspect']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_aspect" value="true" {% if data['libraries']['mov-collection_aspect']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_aspect" value="false">
-                      <label class="form-check-label" for="mov-collection_aspect">Aspect</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_aspect">
+                          <a href="https://kometa.wiki/en/latest/defaults/both/aspect">Aspect Ratios</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/aspect.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_resolution"
-                        name="mov-collection_resolution" value="true" {% if
-                        data['libraries']['mov-collection_resolution']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_resolution" value="true" {% if data['libraries']['mov-collection_resolution']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_resolution" value="false">
-                      <label class="form-check-label" for="mov-collection_resolution">Resolution</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_resolution">
+                          <a href="https://kometa.wiki/en/latest/defaults/both/resolution">Resolutions</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/resolution.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_audio_language"
-                        name="mov-collection_audio_language" value="true" {% if
-                        data['libraries']['mov-collection_audio_language']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_audio_language" value="true" {% if data['libraries']['mov-collection_audio_language']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_audio_language" value="false">
-                      <label class="form-check-label" for="mov-collection_audio_language">Audio Language</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_audio_language">
+                          <a href="https://kometa.wiki/en/latest/defaults/both/audio_language">Audio Languages</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/audio_language.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_subtitle_language"
-                        name="mov-collection_subtitle_language" value="true" {% if
-                        data['libraries']['mov-collection_subtitle_language']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_subtitle_language" value="true" {% if data['libraries']['mov-collection_subtitle_language']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_subtitle_language" value="false">
-                      <label class="form-check-label" for="mov-collection_subtitle_language">Subtitle Language</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_subtitle_language">
+                          <a href="https://kometa.wiki/en/latest/defaults/both/subtitle_language">Subtitle Languages</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/subtitle_language.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                   </div>
                 </div>
               </div>
@@ -772,18 +816,28 @@
                     <!-- Production Collection Toggles -->
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_streaming"
-                        name="mov-collection_streaming" value="true" {% if
-                        data['libraries']['mov-collection_streaming']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_streaming" value="true" {% if data['libraries']['mov-collection_streaming']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_streaming" value="false">
-                      <label class="form-check-label" for="mov-collection_streaming">Streaming</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_streaming">
+                          <a href="https://kometa.wiki/en/latest/defaults/both/streaming">Streaming</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/streaming.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_studio"
-                        name="mov-collection_studio" value="true" {% if
-                        data['libraries']['mov-collection_studio']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_studio" value="true" {% if data['libraries']['mov-collection_studio']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_studio" value="false">
-                      <label class="form-check-label" for="mov-collection_studio">Studio</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_studio">
+                          <a href="https://kometa.wiki/en/latest/defaults/both/studio">Studios</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/studio.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                   </div>
                 </div>
               </div>
@@ -803,32 +857,52 @@
                     <!-- People Collection Toggles -->
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_actor"
-                        name="mov-collection_actor" value="true" {% if
-                        data['libraries']['mov-collection_actor']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_actor" value="true" {% if data['libraries']['mov-collection_actor']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_actor" value="false">
-                      <label class="form-check-label" for="mov-collection_actor">Actor</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_actor">
+                          <a href="https://kometa.wiki/en/latest/defaults/both/actor">Actors</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/person_signature.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_director"
-                        name="mov-collection_director" value="true" {% if
-                        data['libraries']['mov-collection_director']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_director" value="true" {% if data['libraries']['mov-collection_director']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_director" value="false">
-                      <label class="form-check-label" for="mov-collection_director">Director</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_director">
+                          <a href="https://kometa.wiki/en/latest/defaults/movie/director">Directors</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/person_signature.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_producer"
-                        name="mov-collection_producer" value="true" {% if
-                        data['libraries']['mov-collection_producer']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_producer" value="true" {% if data['libraries']['mov-collection_producer']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_producer" value="false">
-                      <label class="form-check-label" for="mov-collection_producer">Producer</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_producer">
+                          <a href="https://kometa.wiki/en/latest/defaults/movie/producer">Producers</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/person_signature.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_writer"
-                        name="mov-collection_writer" value="true" {% if
-                        data['libraries']['mov-collection_writer']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_writer" value="true" {% if data['libraries']['mov-collection_writer']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_writer" value="false">
-                      <label class="form-check-label" for="mov-collection_writer">Writer</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_writer">
+                          <a href="https://kometa.wiki/en/latest/defaults/movie/writer">Writers</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/person_signature.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                   </div>
                 </div>
               </div>
@@ -848,24 +922,38 @@
                     <!-- Time Collection Toggles -->
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_seasonal"
-                        name="mov-collection_seasonal" value="true" {% if
-                        data['libraries']['mov-collection_seasonal']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_seasonal" value="true" {% if data['libraries']['mov-collection_seasonal']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_seasonal" value="false">
-                      <label class="form-check-label" for="mov-collection_seasonal">Seasonal</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_seasonal">
+                          <a href="https://kometa.wiki/en/latest/defaults/movie/seasonal">Seasonal</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/seasonal.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_year"
-                        name="mov-collection_year" value="true" {% if
-                        data['libraries']['mov-collection_year']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_year" value="true" {% if data['libraries']['mov-collection_year']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_year" value="false">
-                      <label class="form-check-label" for="mov-collection_year">Year</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_year">
+                          <a href="https://kometa.wiki/en/latest/defaults/both/year">Years</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/year.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
+
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="mov-collection_decade"
-                        name="mov-collection_decade" value="true" {% if
-                        data['libraries']['mov-collection_decade']|string|lower=='true' %}checked{% endif %}>
+                        name="mov-collection_decade" value="true" {% if data['libraries']['mov-collection_decade']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="mov-collection_decade" value="false">
-                      <label class="form-check-label" for="mov-collection_decade">Decade</label>
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-collection_decade">
+                          <a href="https://kometa.wiki/en/latest/defaults/movie/decade">Decades</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/decade.png" height="200" style="opacity: 1;">'></i>
+                      </div>
                     </div>
                   </div>
                 </div>
