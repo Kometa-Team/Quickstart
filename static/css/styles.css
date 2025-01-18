@@ -215,3 +215,7 @@ div#loading {
     text-align: center;
     cursor: wait;
     }
+
+.tooltip.show {
+    opacity: 1.0 !important;
+}

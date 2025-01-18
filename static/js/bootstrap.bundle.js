@@ -6312,3 +6312,8 @@
 
 }));
 //# sourceMappingURL=bootstrap.bundle.js.map
+
+$('a[data-toggle="tooltip"]').tooltip({
+    placement: 'bottom',
+    html: true
+});
