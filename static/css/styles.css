@@ -219,3 +219,30 @@ div#loading {
 .tooltip.show {
     opacity: 1.0 !important;
 }
+
+.mt-4 {
+    margin-top: 0 !important;
+
+
+.nav-button {
+    background-color: #00bc8c !important;
+    color: white !important;
+    border-color: #00bc8c !important;
+}
+.nav-button:hover {
+    background-color: #019c75 !important;
+    border-color: #019c75 !important;
+}}
+
+.form-check-input:checked {
+    background-color: #00bc8c;
+    border-color: #0f5132;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: transparent;
+}
+
+a {
+    color: rgb(255 255 255 / 70%);
+}
