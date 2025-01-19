@@ -654,6 +654,31 @@
                       </div>
 
                       <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_au"
+                          name="mov-collection_content_rating_au" value="true" {% if data['libraries']['mov-collection_content_rating_au']|string|lower=='true' %}checked{% endif %}>
+                        <input type="hidden" name="mov-collection_content_rating_au" value="false">
+                        <div class="d-flex align-items-center">
+                          <label class="form-check-label me-3" for="mov-collection_content_rating_au">
+                            <a href="https://kometa.wiki/en/latest/defaults/both/content_rating_au">AU Content Ratings</a>
+                          </label>
+                          <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/content_rating_au.png" height="200" style="opacity: 1;">'></i>
+                        </div>
+                      </div>
+
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_nz"
+                          name="mov-collection_content_rating_nz" value="true" {% if data['libraries']['mov-collection_content_rating_nz']|string|lower=='true' %}checked{% endif %}>
+                        <input type="hidden" name="mov-collection_content_rating_nz" value="false">
+                        <div class="d-flex align-items-center">
+                          <label class="form-check-label me-3" for="mov-collection_content_rating_nz">
+                            <a href="https://kometa.wiki/en/latest/defaults/both/content_rating_nz">NZ Content Ratings</a>
+                          </label>
+                          <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/content_rating_nz.png" height="200" style="opacity: 1;">'></i>
+                        </div>
+                      </div>
+
+
+                      <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_mal"
                           name="mov-collection_content_rating_mal" value="true" {% if data['libraries']['mov-collection_content_rating_mal']|string|lower=='true' %}checked{% endif %}>
                         <input type="hidden" name="mov-collection_content_rating_mal" value="false">
@@ -1077,6 +1102,30 @@
                           <a href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_de/">DE Content Ratings</a>
                         </label>
                         <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/content_rating_de.png" height="300" style="opacity: 1;">'></i>
+                      </div>
+                    </div>
+
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="mov-overlay_content_rating_au"
+                        name="mov-overlay_content_rating_au" value="true" {% if data['libraries']['mov-overlay_content_rating_au']|string|lower=='true' %}checked{% endif %}>
+                      <input type="hidden" name="mov-overlay_content_rating_au" value="false">
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-overlay_content_rating_au">
+                          <a href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_au/">AU Content Ratings</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/content_rating_au.png" height="300" style="opacity: 1;">'></i>
+                      </div>
+                    </div>
+
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="mov-overlay_content_rating_nz"
+                        name="mov-overlay_content_rating_nz" value="true" {% if data['libraries']['mov-overlay_content_rating_nz']|string|lower=='true' %}checked{% endif %}>
+                      <input type="hidden" name="mov-overlay_content_rating_nz" value="false">
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="mov-overlay_content_rating_nz">
+                          <a href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_nz/">NZ Content Ratings</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/content_rating_nz.png" height="300" style="opacity: 1;">'></i>
                       </div>
                     </div>
 
@@ -1749,6 +1798,30 @@
                       </div>
 
                       <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="sho-collection_content_rating_au"
+                          name="sho-collection_content_rating_au" value="true" {% if data['libraries']['sho-collection_content_rating_au']|string|lower=='true' %}checked{% endif %}>
+                        <input type="hidden" name="sho-collection_content_rating_au" value="false">
+                        <div class="d-flex align-items-center">
+                          <label class="form-check-label me-3" for="sho-collection_content_rating_au">
+                            <a href="https://kometa.wiki/en/latest/defaults/both/content_rating_au">AU Content Ratings</a>
+                          </label>
+                          <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/content_rating_au.png" height="200" style="opacity: 1;">'></i>
+                        </div>
+                      </div>
+
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="sho-collection_content_rating_nz"
+                          name="sho-collection_content_rating_nz" value="true" {% if data['libraries']['sho-collection_content_rating_nz']|string|lower=='true' %}checked{% endif %}>
+                        <input type="hidden" name="sho-collection_content_rating_nz" value="false">
+                        <div class="d-flex align-items-center">
+                          <label class="form-check-label me-3" for="sho-collection_content_rating_nz">
+                            <a href="https://kometa.wiki/en/latest/defaults/both/content_rating_nz">NZ Content Ratings</a>
+                          </label>
+                          <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/images/content_rating_nz.png" height="200" style="opacity: 1;">'></i>
+                        </div>
+                      </div>
+
+                      <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="sho-collection_content_rating_mal"
                           name="sho-collection_content_rating_mal" value="true" {% if data['libraries']['sho-collection_content_rating_mal']|string|lower=='true' %}checked{% endif %}>
                         <input type="hidden" name="sho-collection_content_rating_mal" value="false">
@@ -2150,6 +2223,30 @@
                           <a href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_de/">DE Content Ratings</a>
                         </label>
                         <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/content_rating_de.png" height="300" style="opacity: 1;">'></i>
+                      </div>
+                    </div>
+
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="sho-overlay_content_rating_au"
+                        name="sho-overlay_content_rating_au" value="true" {% if data['libraries']['sho-overlay_content_rating_au']|string|lower=='true' %}checked{% endif %}>
+                      <input type="hidden" name="sho-overlay_content_rating_au" value="false">
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="sho-overlay_content_rating_au">
+                          <a href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_au/">AU Content Ratings</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/content_rating_au.png" height="300" style="opacity: 1;">'></i>
+                      </div>
+                    </div>
+
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="sho-overlay_content_rating_nz"
+                        name="sho-overlay_content_rating_nz" value="true" {% if data['libraries']['sho-overlay_content_rating_nz']|string|lower=='true' %}checked{% endif %}>
+                      <input type="hidden" name="sho-overlay_content_rating_nz" value="false">
+                      <div class="d-flex align-items-center">
+                        <label class="form-check-label me-3" for="sho-overlay_content_rating_nz">
+                          <a href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_nz/">NZ Content Ratings</a>
+                        </label>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/content_rating_nz.png" height="300" style="opacity: 1;">'></i>
                       </div>
                     </div>
 
