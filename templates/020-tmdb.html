@@ -4,7 +4,7 @@
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="tmdb_apikey" name="tmdb_apikey"
-               value="{{ data['tmdb']['apikey'] }}" title="API Key"
+               value="{{ data['tmdb']['apikey']  or '' }}" title="API Key"
                aria-label="TMDb API Key" required="">
         <label for="tmdb_apikey">TMDb API Key</label>
       </div>

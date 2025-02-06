@@ -2,13 +2,13 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="plex_url" name="plex_url" value="{{ data['plex']['url'] }}" title="Plex URL" required="">
+      <input type="text" class="form-control" id="plex_url" name="plex_url" value="{{ data['plex']['url']  or '' }}" title="Plex URL" required="">
       <label for="plex_url">Plex URL<span class="text-info ms-2">(e.g. http://127.0.0.1:32400)</span></label>
     </div>
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="plex_token" name="plex_token"
-               value="{{ data['plex']['token'] }}" title="Token"
+               value="{{ data['plex']['url']  or '' }}" title="Token"
                aria-label="Plex Token" required="">
         <label for="plex_token">Plex Token</label>
       </div>
