@@ -13,25 +13,13 @@ from flask_session import Session
 from cachelib.file import FileSystemCache
 
 
-import jsonschema
-import requests
 import io
-import sys
-from ruamel.yaml import YAML
 import os
 from dotenv import load_dotenv
-from pathlib import Path
-from plexapi.server import PlexServer
-import pyfiglet
-import secrets
 import namesgenerator
 
-import string
-import random
 
 from modules.validations import (
-    validate_iso3166_1,
-    validate_iso639_1,
     validate_plex_server,
     validate_tautulli_server,
     validate_trakt_server,
@@ -182,13 +170,10 @@ def step(name):
 
     stem, num, b = get_bits(name)
 
-    current_index = -1
-    item = None
-
     try:
         current_index = list(template_list).index(num)
         item = template_list[num]
-    except:
+    except (ValueError, IndexError, KeyError):
         return f"ERROR WITH NAME {name}; stem, num, b: {stem}, {num}, {b}"
 
     page_info["progress"] = round((current_index + 1) / total_steps * 100)
@@ -444,7 +429,7 @@ if __name__ == "__main__":
     debug_mode = args.debug if args.debug else env_debug
 
     print(
-        f"[INFO] testRunning on port {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
+        f"[INFO] Running on port {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
     )
 
     app.run(host="0.0.0.0", port=port, debug=debug_mode)

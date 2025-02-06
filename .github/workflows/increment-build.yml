@@ -186,7 +186,7 @@ jobs:
           title: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
           url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/commit/${{ needs.increment-build.outputs.commit-hash }}
           description: ${{ needs.increment-build.outputs.commit-msg }}
-          message: "<@&1079103365604184074> - An update to ${{ vars.NAME }} has been published and is available to users of the **develop** branch."
+          message: "${{ vars.DEVELOP_ROLE }} - An update to ${{ vars.NAME }} has been published and is available to users of the **develop** branch."
           color: ${{ vars.COLOR_SUCCESS }}
           username: ${{ vars.BOT_NAME }}
           avatar_url: ${{ vars.BOT_IMAGE }}
