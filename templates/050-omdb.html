@@ -4,7 +4,7 @@
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="omdb_apikey" name="omdb_apikey"
-               value="{{ data['omdb']['apikey'] }}" title="OMDb API Key"
+               value="{{ data['omdb']['apikey']  or '' }}" title="OMDb API Key"
                aria-label="OMDb API Key">
         <label for="omdb_apikey">OMDb API Key</label>
       </div>

@@ -2,12 +2,12 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="gotify_url" name="gotify_url" value="{{ data['gotify']['url'] }}" title="Gotify URL"><label for="gotify_url">Gotify URL<span class="text-info ms-2">(e.g. http://192.168.1.12:1234)</span></label>
+      <input type="text" class="form-control" id="gotify_url" name="gotify_url" value="{{ data['gotify']['url']  or '' }}" title="Gotify URL"><label for="gotify_url">Gotify URL<span class="text-info ms-2">(e.g. http://192.168.1.12:1234)</span></label>
     </div>
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="gotify_token" name="gotify_token"
-               value="{{ data['gotify']['token'] }}" title="API Key"
+               value="{{ data['gotify']['token']  or '' }}" title="API Key"
                aria-label="API Key">
         <label for="gotify_token">Gotify API Key</label>
       </div>

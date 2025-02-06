@@ -460,8 +460,8 @@ webhooks:                        # Can be individually specified per library as 
   run_end:
   changes:
 plex:                            # Can be individually specified per library as well; REQUIRED for the script to run
-  url: http://192.168.1.12:32400
-  token: Enter Plex Token
+  url:
+  token:
   timeout: 60
   db_cache: 40
   clean_bundles: false
@@ -469,39 +469,39 @@ plex:                            # Can be individually specified per library as 
   optimize: false
   verify_ssl: true
 tmdb:                            # REQUIRED for the script to run
-  apikey: Enter TMDb API Key
+  apikey:
   language: en
   cache_expiration: 60
 tautulli:                        # Can be individually specified per library as well
-  url: http://192.168.1.12:8181
-  apikey: Enter Tautulli API Key
+  url:
+  apikey:
 github:
-  token: Enter GitHub Personal Access Token
+  token:
 omdb:
-  apikey: Enter OMDb API Key
+  apikey:
   cache_expiration: 60
 mdblist:
-  apikey: Enter MDBList API Key
+  apikey:
   cache_expiration: 60
 notifiarr:
-  apikey: Enter Notifiarr API Key
+  apikey:
 gotify:
-  url: http://192.168.1.12:80
-  token: Enter Gotify Token
+  url:
+  token:
 ntfy:
-  url: http://192.168.1.12:80
-  token: Enter ntfy Access Token
-  topic: Enter ntfy Topic
+  url:
+  token:
+  topic:
 anidb:                           # Not required for AniDB builders unless you want mature content
-  username: Enter AniDB Username
-  password: Enter AniDB Password
-  client: Enter AniDB Client
+  username:
+  password:
+  client:
   version: 1
   language: en
   cache_expiration: 60
 radarr:                          # Can be individually specified per library as well
-  url: http://192.168.1.12:7878
-  token: Enter Radarr API Key
+  url:
+  token:
   add_missing: false
   add_existing: false
   root_folder_path: S:/Movies
@@ -513,8 +513,8 @@ radarr:                          # Can be individually specified per library as 
   radarr_path:
   plex_path:
 sonarr:                          # Can be individually specified per library as well
-  url: http://192.168.1.12:8989
-  token: Enter Sonarr API Key
+  url:
+  token:
   add_missing: false
   add_existing: false
   root_folder_path: "S:/TV Shows"
@@ -529,8 +529,8 @@ sonarr:                          # Can be individually specified per library as 
   sonarr_path:
   plex_path:
 trakt:
-  client_id: Enter Trakt Client ID
-  client_secret: Enter Trakt Client Secret
+  client_id:
+  client_secret:
   pin:
   authorization:
     # everything below is autofilled by the script
@@ -541,8 +541,8 @@ trakt:
     scope: public
     created_at:
 mal:
-  client_id: Enter MyAnimeList Client ID
-  client_secret: Enter MyAnimeList Client Secret
+  client_id:
+  client_secret:
   authorization:
     # everything below is autofilled by the script
     access_token:

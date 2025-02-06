@@ -4,7 +4,7 @@
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="mdblist_apikey" name="mdblist_apikey"
-               value="{{ data['mdblist']['apikey'] }}" title="MDBList API Key"
+               value="{{ data['mdblist']['apikey']  or '' }}" title="MDBList API Key"
                aria-label="MDBList API Key">
         <label for="mdblist_apikey">MDBList API Key</label>
       </div>
