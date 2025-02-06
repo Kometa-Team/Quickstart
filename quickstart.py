@@ -12,12 +12,10 @@ from flask import (
 from flask_session import Session
 from cachelib.file import FileSystemCache
 
-
 import io
 import os
 from dotenv import load_dotenv
 import namesgenerator
-
 
 from modules.validations import (
     validate_plex_server,
