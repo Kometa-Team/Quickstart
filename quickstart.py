@@ -444,7 +444,7 @@ if __name__ == "__main__":
     debug_mode = args.debug if args.debug else env_debug
 
     print(
-        f"[INFO] Running on port {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
+        f"[INFO] testRunning on port {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
     )
 
     app.run(host="0.0.0.0", port=port, debug=debug_mode)
