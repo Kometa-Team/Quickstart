@@ -8,7 +8,7 @@ jobs:
 
   tag-cleanup:
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'docker') == false
+    if: github.event.action == 'closed' || contains(github.event.pull_request.labels.*.name, 'docker') == false
     steps:
 
       - name: Get Tag Name
