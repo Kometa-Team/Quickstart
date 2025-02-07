@@ -9,7 +9,7 @@ $(document).ready(function () {
   console.log('Validated: ' + isValidated)
 
   // Set initial visibility based on API key value
-  if (tokenInput.value.trim() === 'Enter ntfy Access Token') {
+  if (tokenInput.value.trim() === '') {
     tokenInput.setAttribute('type', 'text') // Show placeholder text
     toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Set eye-slash icon
   } else {

@@ -10,7 +10,7 @@ $(document).ready(function () {
   console.log('Validated:', isValidated)
 
   // Set initial visibility based on password value
-  if (passwordInput.value.trim() === 'Enter AniDB Password') {
+  if (passwordInput.value.trim() === '') {
     passwordInput.setAttribute('type', 'text') // Show placeholder text
     toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Show eye-slash
   } else {

@@ -19,7 +19,7 @@ $(document).ready(function () {
   }
 
   // 🔥 Set initial visibility based on token value
-  if (plexTokenInput.value.trim() === 'Enter Plex Token') {
+  if (plexTokenInput.value.trim() === '') {
     plexTokenInput.setAttribute('type', 'text') // Show placeholder text
     toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Set eye-slash icon
   } else {

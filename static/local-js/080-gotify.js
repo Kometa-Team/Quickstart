@@ -9,7 +9,7 @@ $(document).ready(function () {
   console.log('Validated: ' + isValidated)
 
   // Set initial visibility based on API key value
-  if (gotifyTokenInput.value.trim() === 'Enter Gotify Token') {
+  if (gotifyTokenInput.value.trim() === '') {
     gotifyTokenInput.setAttribute('type', 'text') // Show placeholder text
     toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Set eye icon
   } else {

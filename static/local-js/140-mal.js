@@ -10,7 +10,7 @@ $(document).ready(function () {
   console.log('Validated:', isValidated)
 
   // Ensure initial visibility based on input value
-  if (clientSecretInput.value.trim() === 'Enter MyAnimeList Client Secret') {
+  if (clientSecretInput.value.trim() === '') {
     clientSecretInput.setAttribute('type', 'text') // Show placeholder text
     toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Show eye-slash
   } else {

@@ -10,7 +10,7 @@ $(document).ready(function () {
   console.log('Validated:', isValidated)
 
   // Set initial visibility based on Client Secret value
-  if (traktClientSecretInput.value.trim() === 'Enter Trakt Client Secret') {
+  if (traktClientSecretInput.value.trim() === '') {
     traktClientSecretInput.setAttribute('type', 'text') // Show placeholder text
     toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Show eye-slash
   } else {

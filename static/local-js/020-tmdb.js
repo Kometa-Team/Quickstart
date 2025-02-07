@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
   console.log('Validated: ' + tmdbValidatedInput.value)
 
   // Set initial visibility based on API key value
-  if (apiKeyInput.value.trim() === 'Enter TMDb API Key') {
+  if (apiKeyInput.value.trim() === '') {
     apiKeyInput.setAttribute('type', 'text') // Show placeholder text
     toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Set eye-slash icon
   } else {
