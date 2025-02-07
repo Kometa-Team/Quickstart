@@ -198,6 +198,9 @@ def step(name):
         data["libraries"]["sho-template_variables"] = {}
 
     if app.config["QS_DEBUG"]:
+        print(
+            f"[DEBUG] ************************************************************************"
+        )
         print(f"[DEBUG] Data retrieved for {name}")
 
     (
