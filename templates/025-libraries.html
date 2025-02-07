@@ -1020,9 +1020,8 @@
                   <div class="accordion-body">
                     <!-- Content Rating Overlay Toggles -->
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-overlay_content_rating_us_movie"
-                        name="mov-overlay_content_rating_us_movie" value="true" {% if data['libraries']['mov-overlay_content_rating_us_movie']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-overlay_content_rating_us_movie" value="false">
+                      <input class="form-check-input" type="radio" id="mov-overlay_content_rating_us_movie"
+                        name="mov-content-rating-group" value="us_movie" {% if data['libraries']['mov-attribute_selected_content_rating'] == 'us_movie' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="mov-overlay_content_rating_us_movie">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_us_movie/">US Content Ratings</a>
@@ -1032,9 +1031,8 @@
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-overlay_content_rating_uk"
-                        name="mov-overlay_content_rating_uk" value="true" {% if data['libraries']['mov-overlay_content_rating_uk']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-overlay_content_rating_uk" value="false">
+                      <input class="form-check-input" type="radio" id="mov-overlay_content_rating_uk"
+                        name="mov-content-rating-group" value="uk" {% if data['libraries']['mov-attribute_selected_content_rating'] == 'uk' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="mov-overlay_content_rating_uk">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_uk/">UK Content Ratings</a>
@@ -1044,9 +1042,8 @@
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-overlay_content_rating_de"
-                        name="mov-overlay_content_rating_de" value="true" {% if data['libraries']['mov-overlay_content_rating_de']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-overlay_content_rating_de" value="false">
+                      <input class="form-check-input" type="radio" id="mov-overlay_content_rating_de"
+                        name="mov-content-rating-group" value="de" {% if data['libraries']['mov-attribute_selected_content_rating'] == 'de' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="mov-overlay_content_rating_de">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_de/">DE Content Ratings</a>
@@ -1056,9 +1053,8 @@
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-overlay_content_rating_au"
-                        name="mov-overlay_content_rating_au" value="true" {% if data['libraries']['mov-overlay_content_rating_au']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-overlay_content_rating_au" value="false">
+                      <input class="form-check-input" type="radio" id="mov-overlay_content_rating_au"
+                        name="mov-content-rating-group" value="au" {% if data['libraries']['mov-attribute_selected_content_rating'] == 'au' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="mov-overlay_content_rating_au">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_au/">AU Content Ratings</a>
@@ -1068,9 +1064,8 @@
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-overlay_content_rating_nz"
-                        name="mov-overlay_content_rating_nz" value="true" {% if data['libraries']['mov-overlay_content_rating_nz']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-overlay_content_rating_nz" value="false">
+                      <input class="form-check-input" type="radio" id="mov-overlay_content_rating_nz"
+                        name="mov-content-rating-group" value="nz" {% if data['libraries']['mov-attribute_selected_content_rating'] == 'nz' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="mov-overlay_content_rating_nz">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_nz/">NZ Content Ratings</a>
@@ -1080,9 +1075,8 @@
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="mov-overlay_commonsense"
-                        name="mov-overlay_commonsense" value="true" {% if data['libraries']['mov-overlay_commonsense']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="mov-overlay_commonsense" value="false">
+                      <input class="form-check-input" type="radio" id="mov-overlay_commonsense"
+                        name="mov-content-rating-group" value="commonsense" {% if data['libraries']['mov-attribute_selected_content_rating'] == 'commonsense' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="mov-overlay_commonsense">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/commonsense/">Common Sense Age Rating</a>
@@ -1090,6 +1084,8 @@
                         <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/commonsense.png" height="300" style="opacity: 1;">'></i>
                       </div>
                     </div>
+
+                    <input type="hidden" id="mov-attribute_selected_content_rating" name="mov-attribute_selected_content_rating" value="{{ data['libraries']['mov-attribute_selected_content_rating']|default('') }}">
 
                   </div>
                 </div>
@@ -2258,21 +2254,19 @@
                   <div class="accordion-body">
                     <!-- Content Rating Overlay Toggles -->
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="sho-overlay_content_rating_us_show"
-                        name="sho-overlay_content_rating_us_show" value="true" {% if data['libraries']['sho-overlay_content_rating_us_show']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="sho-overlay_content_rating_us_show" value="false">
+                      <input class="form-check-input" type="radio" id="sho-overlay_content_rating_us_movie"
+                        name="sho-content-rating-group" value="us_show" {% if data['libraries']['sho-attribute_selected_content_rating'] == 'us_show' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
-                        <label class="form-check-label me-3" for="sho-overlay_content_rating_us_show">
+                        <label class="form-check-label me-3" for="sho-overlay_content_rating_us_movie">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_us_show/">US Content Ratings</a>
                         </label>
-                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/content_rating_us_show.png" height="300" style="opacity: 1;">'></i>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/content_rating_us_movie.png" height="300" style="opacity: 1;">'></i>
                       </div>
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="sho-overlay_content_rating_uk"
-                        name="sho-overlay_content_rating_uk" value="true" {% if data['libraries']['sho-overlay_content_rating_uk']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="sho-overlay_content_rating_uk" value="false">
+                      <input class="form-check-input" type="radio" id="sho-overlay_content_rating_uk"
+                        name="sho-content-rating-group" value="uk" {% if data['libraries']['sho-attribute_selected_content_rating'] == 'uk' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="sho-overlay_content_rating_uk">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_uk/">UK Content Ratings</a>
@@ -2282,9 +2276,8 @@
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="sho-overlay_content_rating_de"
-                        name="sho-overlay_content_rating_de" value="true" {% if data['libraries']['sho-overlay_content_rating_de']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="sho-overlay_content_rating_de" value="false">
+                      <input class="form-check-input" type="radio" id="sho-overlay_content_rating_de"
+                        name="sho-content-rating-group" value="de" {% if data['libraries']['sho-attribute_selected_content_rating'] == 'de' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="sho-overlay_content_rating_de">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_de/">DE Content Ratings</a>
@@ -2294,9 +2287,8 @@
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="sho-overlay_content_rating_au"
-                        name="sho-overlay_content_rating_au" value="true" {% if data['libraries']['sho-overlay_content_rating_au']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="sho-overlay_content_rating_au" value="false">
+                      <input class="form-check-input" type="radio" id="sho-overlay_content_rating_au"
+                        name="sho-content-rating-group" value="au" {% if data['libraries']['sho-attribute_selected_content_rating'] == 'au' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="sho-overlay_content_rating_au">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_au/">AU Content Ratings</a>
@@ -2306,9 +2298,8 @@
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="sho-overlay_content_rating_nz"
-                        name="sho-overlay_content_rating_nz" value="true" {% if data['libraries']['sho-overlay_content_rating_nz']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="sho-overlay_content_rating_nz" value="false">
+                      <input class="form-check-input" type="radio" id="sho-overlay_content_rating_nz"
+                        name="sho-content-rating-group" value="nz" {% if data['libraries']['sho-attribute_selected_content_rating'] == 'nz' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="sho-overlay_content_rating_nz">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/content_rating_nz/">NZ Content Ratings</a>
@@ -2318,9 +2309,8 @@
                     </div>
 
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="sho-overlay_commonsense"
-                        name="sho-overlay_commonsense" value="true" {% if data['libraries']['sho-overlay_commonsense']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="sho-overlay_commonsense" value="false">
+                      <input class="form-check-input" type="radio" id="sho-overlay_commonsense"
+                        name="sho-content-rating-group" value="commonsense" {% if data['libraries']['sho-attribute_selected_content_rating'] == 'commonsense' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
                         <label class="form-check-label me-3" for="sho-overlay_commonsense">
                           <a target="_blank" href="https://kometa.wiki/en/latest/defaults/overlays/commonsense/">Common Sense Age Rating</a>
@@ -2328,6 +2318,8 @@
                         <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/latest/defaults/overlays/images/commonsense.png" height="300" style="opacity: 1;">'></i>
                       </div>
                     </div>
+
+                    <input type="hidden" id="sho-attribute_selected_content_rating" name="sho-attribute_selected_content_rating" value="{{ data['libraries']['sho-attribute_selected_content_rating']|default('') }}">
 
                   </div>
                 </div>

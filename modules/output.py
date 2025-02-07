@@ -71,6 +71,35 @@ def build_libraries_section(
     def add_entry(library_name, library_type, collections, overlays, attributes):
         entry = {}
 
+        # Ensure overlay_files are added if any are selected
+        overlay_files = [
+            {"default": overlay.replace(f"{library_type}-overlay_", "")}
+            for overlay, selected in overlays.items()
+            if selected
+        ]
+
+        # ✅ NEW: Add selected_content_rating to overlays
+        selected_content_rating_key = (
+            f"{library_type}-attribute_selected_content_rating"
+        )
+        selected_content_rating = attributes.get(selected_content_rating_key)
+
+        if selected_content_rating not in [None, "", "None", False]:
+            if selected_content_rating == "commonsense":
+                overlay_files.append({"default": "commonsense"})
+            else:
+                overlay_files.append(
+                    {"default": f"content_rating_{selected_content_rating}"}
+                )
+
+            if app.config["QS_DEBUG"]:
+                print(
+                    f"[DEBUG] Added selected_content_rating: {overlay_files[-1]['default']} to overlay_files"
+                )
+
+        if overlay_files:
+            entry["overlay_files"] = overlay_files
+
         # Ensure collection_files are added if any are selected
         collection_files = [
             {"default": collection.replace(f"{library_type}-collection_", "")}
@@ -79,15 +108,6 @@ def build_libraries_section(
         ]
         if collection_files:
             entry["collection_files"] = collection_files
-
-        # Ensure overlay_files are added if any are selected
-        overlay_files = [
-            {"default": overlay.replace(f"{library_type}-overlay_", "")}
-            for overlay, selected in overlays.items()
-            if selected
-        ]
-        if overlay_files:
-            entry["overlay_files"] = overlay_files
 
         # Retrieve template variables properly
         template_vars = {}

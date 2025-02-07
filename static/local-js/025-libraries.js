@@ -2,22 +2,28 @@
 
 document.addEventListener('DOMContentLoaded', function () {
   function updateHiddenInputs (prefix) {
-    const form = document.getElementById('configForm') // Ensure form exists
+    const form = document.getElementById('configForm')
     if (!form) {
       console.error("[ERROR] Form element 'configForm' not found!")
-      return // Stop execution if form is missing
+      return
     }
 
     const useSeparatorsDropdown = document.getElementById(`${prefix}-attribute_use_separators`)
     let useSeparatorsInput = document.getElementById(`${prefix}-template_variables_use_separators`)
     let sepStyleInput = document.getElementById(`${prefix}-template_variables_sep_style`)
 
-    // Get related toggles
+    // Get related separator toggles
     const chartSeparatorToggle = document.getElementById(`${prefix}-collection_separator_chart`)
     const awardSeparatorToggle = document.getElementById(`${prefix}-collection_separator_award`)
 
+    // **New Logic: Check if any other award/chart toggles are enabled**
+    const awardTogglesChecked = $(`#${prefix}-awardCollectionsAccordion input[type="checkbox"]:checked`).not(`#${prefix}-collection_separator_award`).length > 0
+    const chartTogglesChecked = $(`#${prefix}-chartCollectionsAccordion input[type="checkbox"]:checked`).not(`#${prefix}-collection_separator_chart`).length > 0
+
     // Debugging Logs
     console.log(`[DEBUG] ${prefix}-attribute_use_separators changed to:`, useSeparatorsDropdown?.value)
+    console.log(`[DEBUG] Award Toggles Checked: ${awardTogglesChecked}`)
+    console.log(`[DEBUG] Chart Toggles Checked: ${chartTogglesChecked}`)
     console.log('[DEBUG] Chart Separator Toggle Exists:', !!chartSeparatorToggle)
     console.log('[DEBUG] Award Separator Toggle Exists:', !!awardSeparatorToggle)
 
@@ -43,34 +49,49 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     sepStyleInput.value = isEnabled ? selectedValue : ''
 
-    // Fix: Enable/Disable & Check/Uncheck Chart & Award Separator Toggles
-    if (chartSeparatorToggle && awardSeparatorToggle) {
-      chartSeparatorToggle.disabled = !isEnabled
-      awardSeparatorToggle.disabled = !isEnabled
-
-      if (isEnabled) {
-        chartSeparatorToggle.checked = true
-        awardSeparatorToggle.checked = true
-      } else {
-        chartSeparatorToggle.checked = false
-        awardSeparatorToggle.checked = false
-      }
-
-      // Debugging
-      console.log('[DEBUG] Chart Separator Toggle is now:', chartSeparatorToggle.checked)
+    // **Enable/Disable Award Separator Toggle**
+    if (awardSeparatorToggle) {
+      awardSeparatorToggle.disabled = !isEnabled || !awardTogglesChecked // Enable only if separators are enabled and an award toggle is checked
+      awardSeparatorToggle.checked = isEnabled && awardTogglesChecked // Auto-check if conditions met
       console.log('[DEBUG] Award Separator Toggle is now:', awardSeparatorToggle.checked)
     }
+
+    // **Enable/Disable Chart Separator Toggle**
+    if (chartSeparatorToggle) {
+      chartSeparatorToggle.disabled = !isEnabled || !chartTogglesChecked // Enable only if separators are enabled and a chart toggle is checked
+      chartSeparatorToggle.checked = isEnabled && chartTogglesChecked // Auto-check if conditions met
+      console.log('[DEBUG] Chart Separator Toggle is now:', chartSeparatorToggle.checked)
+    }
+
+    // updateValidationState() // ✅ Ensure validation updates when separators change
+  }
+
+  // Function to update separator toggles dynamically when a checkbox is clicked
+  function attachToggleListeners (prefix) {
+    // Attach event listeners to award checkboxes
+    $(`#${prefix}-awardCollectionsAccordion input[type="checkbox"]`).change(function () {
+      console.log(`[DEBUG] Award Collection Checkbox Changed: ${this.id}`)
+      updateHiddenInputs(prefix)
+    })
+
+    // Attach event listeners to chart checkboxes
+    $(`#${prefix}-chartCollectionsAccordion input[type="checkbox"]`).change(function () {
+      console.log(`[DEBUG] Chart Collection Checkbox Changed: ${this.id}`)
+      updateHiddenInputs(prefix)
+    })
   }
 
   // Apply for both Movies (mov) and Shows (sho)
-  ['mov', 'sho'].forEach(prefix => {
+  ['mov', 'sho'].forEach((prefix) => {
     const dropdown = document.getElementById(`${prefix}-attribute_use_separators`)
     if (dropdown) {
       dropdown.addEventListener('change', function () {
         console.log(`[DEBUG] ${prefix}-attribute_use_separators dropdown changed`)
         updateHiddenInputs(prefix)
+        // updateValidationState() // ✅ Ensure validation updates when separators change
       })
       updateHiddenInputs(prefix) // Run once on load
+      attachToggleListeners(prefix) // Attach listeners for dynamic changes
     } else {
       console.error(`[ERROR] Dropdown ${prefix}-attribute_use_separators not found!`)
     }
@@ -78,29 +99,44 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Updated Form Submission Logic
   $('#configForm').submit(function () {
-    ['mov', 'sho'].forEach(prefix => {
-      const useSeparatorsDropdown = document.getElementById(`${prefix}-attribute_use_separators`)
-      const useSeparatorsValue = useSeparatorsDropdown ? useSeparatorsDropdown.value : 'none'
+    console.log('[DEBUG] Form submission triggered.')
+    /* eslint-disable no-unexpected-multiline, no-sequences */
+      ['mov', 'sho'].forEach((prefix) => {
+        const useSeparatorsDropdown = document.getElementById(`${prefix}-attribute_use_separators`)
+        const useSeparatorsValue = useSeparatorsDropdown ? useSeparatorsDropdown.value : 'none'
 
-      $('input[name="' + prefix + '-template_variables[use_separators]"]').val(useSeparatorsValue !== 'none' ? 'true' : 'false')
-      $('input[name="' + prefix + '-template_variables[sep_style]"]').val(useSeparatorsValue !== 'none' ? useSeparatorsValue : '')
+        console.log(`[DEBUG] Storing separator values for ${prefix}:`, useSeparatorsValue)
+        /* eslint-enable no-unexpected-multiline, no-sequences */
 
-      $('input[name="' + prefix + '-collection_separator_award"]').val($('#' + prefix + '-collection_separator_award').prop('checked') ? 'true' : 'false')
-      $('input[name="' + prefix + '-collection_separator_chart"]').val($('#' + prefix + '-collection_separator_chart').prop('checked') ? 'true' : 'false')
-    })
+        $('input[name="' + prefix + '-template_variables[use_separators]"]').val(
+          useSeparatorsValue !== 'none' ? 'true' : 'false'
+        )
+        $('input[name="' + prefix + '-template_variables[sep_style]"]').val(
+          useSeparatorsValue !== 'none' ? useSeparatorsValue : ''
+        )
+
+        $('input[name="' + prefix + '-collection_separator_award"]').val(
+          $('#' + prefix + '-collection_separator_award').prop('checked') ? 'true' : 'false'
+        )
+        $('input[name="' + prefix + '-collection_separator_chart"]').val(
+          $('#' + prefix + '-collection_separator_chart').prop('checked') ? 'true' : 'false'
+        )
+      })
+
+    updateValidationState() // ✅ Ensure validation updates on form submission
   })
 })
 
 /* eslint-disable camelcase */
 $(document).ready(function () {
+  console.log('[DEBUG] Document ready event triggered.')
   const mov_awardSeparatorToggle = $('#mov-collection_separator_award')
   const mov_chartSeparatorToggle = $('#mov-collection_separator_chart')
   const sho_awardSeparatorToggle = $('#sho-collection_separator_award')
   const sho_chartSeparatorToggle = $('#sho-collection_separator_chart')
   const plexValid = $('#plex_valid').data('plex-valid') === 'True'
-  console.log('Plex Valid:', plexValid)
+  console.log('[DEBUG] Plex Valid:', plexValid)
 
-  // Show or hide the libraries container based on Plex validation
   if (!plexValid) {
     $('#all-accordions-container').hide()
     showValidationMessage(
@@ -108,7 +144,7 @@ $(document).ready(function () {
       'danger'
     )
     disableNavigation()
-    return // Exit early since we cannot proceed without Plex validation
+    return
   } else {
     $('#all-accordions-container').show()
   }
@@ -130,105 +166,172 @@ $(document).ready(function () {
 
   // Attach change listeners to library and accordion checkboxes
   $('.library-checkbox, .accordion-item input[type="checkbox"]').change(function () {
-    updateValidationState()
+    console.log('[DEBUG] Checkbox state changed.')
+    updateValidationState() // ✅ Ensure validation updates when checkboxes change
   })
-
-  // Initial validation check
-  updateValidationState()
 
   // Ensure values are stored properly before form submission
   $('#configForm').submit(function () {
-    $('input[name="mov-collection_separator_award"]').val(mov_awardSeparatorToggle.prop('checked') ? 'true' : 'false')
-    $('input[name="mov-collection_separator_chart"]').val(mov_chartSeparatorToggle.prop('checked') ? 'true' : 'false')
-    $('input[name="sho-collection_separator_award"]').val(sho_awardSeparatorToggle.prop('checked') ? 'true' : 'false')
-    $('input[name="sho-collection_separator_chart"]').val(sho_chartSeparatorToggle.prop('checked') ? 'true' : 'false')
+    $('input[name="mov-collection_separator_award"]').val(
+      mov_awardSeparatorToggle.prop('checked') ? 'true' : 'false'
+    )
+    $('input[name="mov-collection_separator_chart"]').val(
+      mov_chartSeparatorToggle.prop('checked') ? 'true' : 'false'
+    )
+    $('input[name="sho-collection_separator_award"]').val(
+      sho_awardSeparatorToggle.prop('checked') ? 'true' : 'false'
+    )
+    $('input[name="sho-collection_separator_chart"]').val(
+      sho_chartSeparatorToggle.prop('checked') ? 'true' : 'false'
+    )
   })
-  /* eslint-enable camelcase */
 
-  function updateValidationState () {
-    const selectedMovieLibraries = getSelectedLibraries('mov-library_')
-    const selectedShowLibraries = getSelectedLibraries('sho-library_')
-    const isValid = validateForm()
+  // Allow unselecting content rating radio buttons
+  document.querySelectorAll('input[type="radio"][name$="-content-rating-group"]').forEach(radio => {
+    radio.addEventListener('click', function () {
+      console.log(`[DEBUG] Radio button clicked: ${this.name} -> ${this.value}`)
 
-    // Update libraries input value
-    $('#libraries').val([...selectedMovieLibraries, ...selectedShowLibraries].join(', '))
-    $('#libraries_validated').val(isValid ? 'true' : 'false')
+      if (this.checked && this.dataset.wasChecked === 'true') {
+        this.checked = false
+        this.dataset.wasChecked = 'false'
 
-    if (isValid) {
-      showValidationMessage('Validation successful! You may proceed.', 'success')
-      enableNavigation()
-    } else {
-      showValidationMessage(
-        'You must select at least one library and at least one corresponding accordion item.',
-        'danger'
-      )
-      disableNavigation(false) // Allow interaction with the accordions
-    }
-  }
+        const hiddenInputName = this.name.replace('-content-rating-group', '-attribute_selected_content_rating')
+        const hiddenInput = document.querySelector(`input[name="${hiddenInputName}"]`)
+        if (hiddenInput) {
+          hiddenInput.value = ''
+        }
+        console.log('[DEBUG] Unselected radio button:', this.name)
+      } else {
+        document.querySelectorAll(`input[name="${this.name}"]`).forEach(r => { r.dataset.wasChecked = 'false' })
+        this.dataset.wasChecked = 'true'
 
-  function validateForm () {
-    // Check movie libraries and accordions
-    const movieLibrarySelected = $('[id^="mov-library_"]:checked').length > 0
-    const movieAccordionSelected = $('#accordionMovies .accordion-item input[type="checkbox"]:checked').length > 0
+        let selectedValue = this.value
 
-    // Check show libraries and accordions
-    const showLibrarySelected = $('[id^="sho-library_"]:checked').length > 0
-    const showAccordionSelected = $('#accordionShows .accordion-item input[type="checkbox"]:checked').length > 0
+        // 🔥 Fix: Ensure Common Sense gets stored as 'commonsense' instead of 'content_rating_commonsense'
+        if (selectedValue === 'content_rating_commonsense') {
+          selectedValue = 'commonsense'
+        }
 
-    // Determine if movies and shows are independently valid
-    const moviesValid = !movieLibrarySelected || movieAccordionSelected // Movie valid if no library or accordion selected
-    const showsValid = !showLibrarySelected || showAccordionSelected // Show valid if no library or accordion selected
+        const hiddenInputName = this.name.replace('-content-rating-group', '-attribute_selected_content_rating')
+        const hiddenInput = document.querySelector(`input[name="${hiddenInputName}"]`)
+        if (hiddenInput) {
+          hiddenInput.value = selectedValue
+        }
+        console.log(`[DEBUG] Selected radio button: ${this.name} -> ${selectedValue}`)
+      }
 
-    // Validate that at least one library is selected
-    const atLeastOneLibrarySelected = movieLibrarySelected || showLibrarySelected
-    const librariesValid = moviesValid && showsValid
+      updateValidationState() // ✅ Ensure validation updates when radio selection changes
+    })
+  })
 
-    // Debug logs for validation state
-    console.log('Validation Debug Logs:')
-    console.log('  Movie Library Selected:', movieLibrarySelected)
-    console.log('  Movie Accordion Selected:', movieAccordionSelected)
-    console.log('  Show Library Selected:', showLibrarySelected)
-    console.log('  Show Accordion Selected:', showAccordionSelected)
-    console.log('  Movies Valid:', moviesValid)
-    console.log('  Shows Valid:', showsValid)
-    console.log('  At Least One Library Selected:', atLeastOneLibrarySelected)
-    console.log('  Libraries Valid:', librariesValid)
-    console.log('  Final Validation Result:', atLeastOneLibrarySelected && librariesValid)
-
-    return atLeastOneLibrarySelected && librariesValid
-  }
-
-  function getSelectedLibraries (prefix) {
-    return $(`[id^="${prefix}"]:checked`).map(function () {
-      return $(this).val()
-    }).get()
-  }
-
-  function showValidationMessage (message, type) {
-    const validationBox = $('#validation-messages')
-    validationBox
-      .html(message)
-      .removeClass('alert-danger alert-success')
-      .addClass(`alert-${type}`)
-      .show()
-  }
-
-  function disableNavigation (lockAccordions = true) {
-    // Disable the Jump To and Next buttons
-    $('#configForm .dropdown-toggle').prop('disabled', true) // Jump To dropdown
-    $('#configForm button[onclick*="next"]').prop('disabled', true) // Next button
-
-    // Keep the Previous button enabled at all times
-    $('#configForm button[onclick*="prev"]').prop('disabled', false) // Enable Previous button
-
-    // Handle accordions based on the lockAccordions flag
-    if (!lockAccordions) {
-      $('.accordion-button').prop('disabled', false) // Keep accordions interactive
-    }
-  }
-
-  function enableNavigation () {
-    $('#configForm button').prop('disabled', false)
-    $('#configForm .dropdown-toggle').prop('disabled', false)
-  }
+  updateValidationState()
 })
+
+$(document).on('change', '[id^="mov-library_"], [id^="sho-library_"], #accordionMovies input[type="checkbox"], #accordionShows input[type="checkbox"]', function () {
+  validateForm() // Re-run validation when a selection is made
+})
+
+/* eslint-enable camelcase */
+
+function updateValidationState () {
+  console.log('[DEBUG] Running validation state update.')
+  const selectedMovieLibraries = getSelectedLibraries('mov-library_')
+  const selectedShowLibraries = getSelectedLibraries('sho-library_')
+  const isValid = validateForm()
+
+  $('#libraries').val([...selectedMovieLibraries, ...selectedShowLibraries].join(', '))
+  $('#libraries_validated').val(isValid ? 'true' : 'false')
+
+  if (isValid) {
+    showValidationMessage('Validation successful! You may proceed.', 'success')
+    enableNavigation()
+  } else {
+    showValidationMessage('You must select at least one library and at least one corresponding accordion item.', 'danger')
+    disableNavigation(false)
+  }
+}
+
+function validateForm () {
+  console.log('[DEBUG] Running validateForm...')
+
+  // **Movies Section Validation**
+  const movieLibrarySelected = $('[id^="mov-library_"]:checked').length > 0
+  const selectedMovieToggles = $('#accordionMovies .accordion-item input:checked')
+    .map(function () {
+      const id = $(this).attr('id')
+      return id && id.startsWith('mov-') ? id : null // Only return IDs that start with "mov-"
+    })
+    .get()
+
+  const movieAccordionSelected = selectedMovieToggles.length > 0
+
+  // **TV Shows Section Validation**
+  const showLibrarySelected = $('[id^="sho-library_"]:checked').length > 0
+  const selectedShowToggles = $('#accordionShows .accordion-item input:checked')
+    .map(function () {
+      const id = $(this).attr('id')
+      return id && id.startsWith('sho-') ? id : null // Only return IDs that start with "sho-"
+    })
+    .get()
+
+  const showAccordionSelected = selectedShowToggles.length > 0
+
+  // **Validation Logic**
+  const moviesValid = !movieLibrarySelected || movieAccordionSelected // Movie valid if library selected and at least one accordion toggle is checked
+  const showsValid = !showLibrarySelected || showAccordionSelected // Show valid if library selected and at least one accordion toggle is checked
+  const atLeastOneLibrarySelected = movieLibrarySelected || showLibrarySelected
+  const librariesValid = moviesValid && showsValid
+
+  // **Debug Logs**
+  console.log('===== VALIDATION DEBUG LOGS =====')
+  console.log('  Movie Library Selected:', movieLibrarySelected)
+  console.log('  Movie Accordion Selected:', movieAccordionSelected)
+  console.log('  Selected Movie Toggles:', selectedMovieToggles)
+  console.log('  Show Library Selected:', showLibrarySelected)
+  console.log('  Show Accordion Selected:', showAccordionSelected)
+  console.log('  Selected Show Toggles:', selectedShowToggles)
+  console.log('  Movies Valid:', moviesValid)
+  console.log('  Shows Valid:', showsValid)
+  console.log('  At Least One Library Selected:', atLeastOneLibrarySelected)
+  console.log('  Libraries Valid:', librariesValid)
+  console.log('  Final Validation Result:', atLeastOneLibrarySelected && librariesValid)
+  console.log('=================================')
+
+  return atLeastOneLibrarySelected && librariesValid
+}
+
+function getSelectedLibraries (prefix) {
+  return $(`[id^="${prefix}"]:checked`)
+    .map(function () {
+      return $(this).val()
+    })
+    .get()
+}
+
+function showValidationMessage (message, type) {
+  const validationBox = $('#validation-messages')
+  validationBox
+    .html(message)
+    .removeClass('alert-danger alert-success')
+    .addClass(`alert-${type}`)
+    .show()
+}
+
+function disableNavigation (lockAccordions = true) {
+  // Disable the Jump To and Next buttons
+  $('#configForm .dropdown-toggle').prop('disabled', true) // Jump To dropdown
+  $('#configForm button[onclick*="next"]').prop('disabled', true) // Next button
+
+  // Keep the Previous button enabled at all times
+  $('#configForm button[onclick*="prev"]').prop('disabled', false) // Enable Previous button
+
+  // Handle accordions based on the lockAccordions flag
+  if (!lockAccordions) {
+    $('.accordion-button').prop('disabled', false) // Keep accordions interactive
+  }
+}
+
+function enableNavigation () {
+  $('#configForm button').prop('disabled', false)
+  $('#configForm .dropdown-toggle').prop('disabled', false)
+}
