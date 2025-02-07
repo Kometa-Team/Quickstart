@@ -2,13 +2,13 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" value="{{ data['trakt']['client_id']  or '' }}" oninput="updateTraktURL(this)">
+      <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id" value="{{ data['trakt']['client_id'] if data['trakt']['client_id'] and 'Enter Trakt Client ID' not in data['trakt']['client_id'] else '' }}" oninput="updateTraktURL(this)">
       <label for="trakt_client_id">Client ID</label>
     </div>
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret"
-               value="{{ data['trakt']['client_secret']  or '' }}" title="Client Secret"
+               value="{{ data['trakt']['client_secret'] if data['trakt']['client_secret'] and 'Enter Trakt Client Secret' not in data['trakt']['client_secret'] else '' }}" title="Client Secret"
                aria-label="Client Secret" oninput="updateTraktURL(this)">
         <label for="trakt_client_secret">Client Secret</label>
       </div>

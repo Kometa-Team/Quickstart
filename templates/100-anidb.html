@@ -2,18 +2,18 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="anidb_client" name="anidb_client" value="{{ data['anidb']['client']  or '' }}" title=""><label for="anidb_client">AniDb Client</label>
+      <input type="text" class="form-control" id="anidb_client" name="anidb_client" value="{{ data['anidb']['client'] if data['anidb']['client'] and 'Enter AniDB Client' not in data['anidb']['client'] else '' }}" title=""><label for="anidb_client">AniDb Client</label>
     </div>
     <div class="form-floating mb-2">
       <input type="number" class="form-control" id="anidb_version" name="anidb_version" value="{{ data['anidb']['version'] }}" min="1" max="1"><label for="anidb_version">Client Version</label>
     </div>
     <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="anidb_username" name="anidb_username" value="{{ data['anidb']['username']  or '' }}" title=""><label for="anidb_username">Username</label>
+      <input type="text" class="form-control" id="anidb_username" name="anidb_username" value="{{ data['anidb']['username'] if data['anidb']['username'] and 'Enter AniDB Username' not in data['anidb']['username'] else '' }}" title=""><label for="anidb_username">Username</label>
     </div>
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="anidb_password" name="anidb_password"
-               value="{{ data['anidb']['password']  or '' }}" title="Password"
+               value="{{ data['anidb']['password'] if data['anidb']['password'] and 'Enter AniDB Password' not in data['anidb']['password'] else '' }}" title="Password"
                aria-label="Password">
         <label for="anidb_password">AniDB Password</label>
       </div>

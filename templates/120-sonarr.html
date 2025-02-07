@@ -2,12 +2,12 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" title="Sonarr URL" value="{{ data['sonarr']['url']  or '' }}"><label for="sonarr_url">Sonarr URL (including URL Base if set)<span class="text-info ms-2">(e.g. http://192.168.1.100:8989)</span></label>
+      <input type="text" class="form-control" id="sonarr_url" name="sonarr_url" title="Sonarr URL" value="{{ data['sonarr']['url'] if data['sonarr']['url'] and 'http://192.168.1.12:8989' not in data['sonarr']['url'] else '' }}"><label for="sonarr_url">Sonarr URL (including URL Base if set)<span class="text-info ms-2">(e.g. http://192.168.1.100:8989)</span></label>
     </div>
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="sonarr_token" name="sonarr_token"
-               value="{{ data['sonarr']['token']  or '' }}" title="Token"
+               value="{{ data['sonarr']['token'] if data['sonarr']['token'] and 'Enter Sonarr API Key' not in data['sonarr']['token'] else '' }}" title="Token"
                aria-label="Token">
         <label for="sonarr_token">Sonarr API Key</label>
       </div>

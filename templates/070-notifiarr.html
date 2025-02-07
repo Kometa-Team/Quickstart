@@ -4,7 +4,7 @@
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="notifiarr_apikey" name="notifiarr_apikey"
-               value="{{ data['notifiarr']['apikey']  or '' }}" title="Notifiarr API Key"
+               value="{{ data['notifiarr']['apikey'] if data['notifiarr']['apikey'] and 'Enter Notifiarr API Key' not in data['notifiarr']['apikey'] else '' }}" title="Notifiarr API Key"
                aria-label="Notifiarr API Key">
         <label for="notifiarr_apikey">Notifiarr API Key</label>
       </div>

@@ -4,7 +4,7 @@
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="github_token" name="github_token"
-               value="{{ data['github']['token']  or '' }}" title="GitHub Token"
+               value="{{ data['github']['token'] if data['github']['token'] and 'Enter GitHub Personal Access Token' not in data['github']['token'] else '' }}" title="GitHub Token"
                aria-label="GitHub Token">
         <label for="github_token">GitHub Personal Access Token</label>
       </div>

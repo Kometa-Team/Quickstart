@@ -2,12 +2,12 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="ntfy_url" name="ntfy_url" value="{{ data['ntfy']['url']  or '' }}" title="Enter your ntfy server URL"><label for="ntfy_url">ntfy URL<span class="text-info ms-2">(e.g. https://ntfy.sh)</span></label>
+      <input type="text" class="form-control" id="ntfy_url" name="ntfy_url" value="{{ data['ntfy']['url'] if data['ntfy']['url'] and 'http://192.168.1.12:80' not in data['ntfy']['url'] else '' }}" title="Enter your ntfy server URL"><label for="ntfy_url">ntfy URL<span class="text-info ms-2">(e.g. https://ntfy.sh)</span></label>
     </div>
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="ntfy_token" name="ntfy_token"
-               value="{{ data['ntfy']['token']  or '' }}" title="API Key"
+               value="{{ data['ntfy']['token'] if data['ntfy']['token'] and 'Enter ntfy Access Token' not in data['ntfy']['token'] else '' }}" title="API Key"
                aria-label="API Key">
         <label for="ntfy_token">ntfy API Key</label>
       </div>
@@ -20,7 +20,7 @@
     </div>
 
     <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="ntfy_topic" name="ntfy_topic" value="{{ data['ntfy']['topic']  or '' }}" title="Enter your ntfy topic"><label for="ntfy_url">ntfy Topic<span class="text-info ms-2">(e.g. mykometanotifications)</span></label>
+      <input type="text" class="form-control" id="ntfy_topic" name="ntfy_topic" value="{{ data['ntfy']['topic'] if data['ntfy']['topic'] and 'Enter ntfy Topic' not in data['ntfy']['topic'] else '' }}" title="Enter your ntfy topic"><label for="ntfy_url">ntfy Topic<span class="text-info ms-2">(e.g. mykometanotifications)</span></label>
     </div>
 
     <div class="form-floating" style="display:none;">

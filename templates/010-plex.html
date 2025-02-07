@@ -2,13 +2,13 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="plex_url" name="plex_url" value="{{ data['plex']['url']  or '' }}" title="Plex URL" required="">
+      <input type="text" class="form-control" id="plex_url" name="plex_url" value="{{ data['plex']['url'] if data['plex']['url'] and 'http://192.168.1.12:32400' not in data['plex']['url'] else '' }}" required>
       <label for="plex_url">Plex URL<span class="text-info ms-2">(e.g. http://127.0.0.1:32400)</span></label>
     </div>
     <div class="input-group mb-2">
       <div class="form-floating flex-grow-1">
         <input type="password" class="form-control" id="plex_token" name="plex_token"
-               value="{{ data['plex']['url']  or '' }}" title="Token"
+               value="{{ data['plex']['token'] if data['plex']['token'] and 'Enter Plex Token' not in data['plex']['token'] else '' }}" title="Token"
                aria-label="Plex Token" required="">
         <label for="plex_token">Plex Token</label>
       </div>
@@ -27,10 +27,12 @@
     <input type="hidden" class="form-control" id="tmp_music_libraries" name="tmp_music_libraries" value="{{ data['plex']['tmp_music_libraries'] }}" title="">
     <input type="hidden" class="form-control" id="tmp_movie_libraries" name="tmp_movie_libraries" value="{{ data['plex']['tmp_movie_libraries'] }}" title="">
     <input type="hidden" class="form-control" id="tmp_show_libraries" name="tmp_show_libraries" value="{{ data['plex']['tmp_show_libraries'] }}" title="">
+
     <div class="form-floating" style="display:none;">
       <input type="text" class="form-control" id="plex_validated" name="plex_validated" value="{{ data['validated'] }}" title="">
       <label for="plex_validated">Plex Validated</label>
     </div>
+
     <div id="statusMessage" class="status-message"></div>
     <div class="hidden" id="hidden" style="display:none">
       <div class="form-floating mb-2">
