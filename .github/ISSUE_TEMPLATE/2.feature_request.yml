@@ -1,8 +1,7 @@
 name: Feature Request
 description: Post here if you have an idea about how to improve the script.
 title: '[Feature]: '
-labels: ['enhancement']
-assignees: ['meisnate12']
+type: 'Feature'
 
 body:
   - type: markdown
