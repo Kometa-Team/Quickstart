@@ -2,18 +2,22 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group mb-2">
-      <div class="form-floating flex-grow-1">
+        <span class="input-group-text" id="omdb_apikey_text">
+            OMDb API Key
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                title="Enter your OMDb API Key to allow Quickstart to authenticate with OMDb.">
+                <i class="bi bi-info-circle-fill"></i>
+            </span>
+        </span>
         <input type="password" class="form-control" id="omdb_apikey" name="omdb_apikey"
-               value="{{ data['omdb']['apikey'] if data['omdb']['apikey'] and 'Enter OMDb API Key' not in data['omdb']['apikey'] else '' }}" title="OMDb API Key"
-               aria-label="OMDb API Key">
-        <label for="omdb_apikey">OMDb API Key</label>
-      </div>
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
-        <i class="fas fa-eye"></i>
-      </button>
-      <button class="btn btn-success" id="validateButton" type="button">
-        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-      </button>
+            value="{{ data['omdb']['apikey'] if data['omdb']['apikey'] and 'Enter OMDb API Key' not in data['omdb']['apikey'] else '' }}"
+            aria-describedby="omdb_apikey_text">
+        <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button">
+            <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn btn-outline-success" id="validateButton" type="button">
+            Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        </button>
     </div>
 
 
@@ -21,12 +25,21 @@
       <input type="text" class="form-control" id="omdb_validated" name="omdb_validated" value="{{ data['validated'] }}" title="">
       <label for="omdb_validated">OMDb Validated</label>
     </div>
-    <div id="statusMessage" class="status-message"></div>
-    <br>
-    <div class="form-floating mb-2">
-      <input type="number" class="form-control" id="omdb_cache_expiration" name="omdb_cache_expiration" value="{{ data['omdb']['cache_expiration'] }}" min="0">
-      <label for="omdb_cache_expiration">Cache Expiration (in days)</label>
+    <div id="statusMessage" class="status-message mb-2"></div>
+
+    <div class="input-group mb-2">
+        <span class="input-group-text" id="omdb_cache_expiration_text">
+            Cache Expiration (in days)
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                title="Set the duration in days for the OMDb API cache expiration.">
+                <i class="bi bi-info-circle-fill"></i>
+            </span>
+        </span>
+        <input type="number" class="form-control" id="omdb_cache_expiration" name="omdb_cache_expiration"
+            value="{{ data['omdb']['cache_expiration'] }}" min="0"
+            title="Set the number of days the OMDb API cache will be valid before expiring.">
     </div>
+
   </div>
 </form>
 {% endblock %}

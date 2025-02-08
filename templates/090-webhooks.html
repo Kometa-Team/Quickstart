@@ -3,29 +3,66 @@
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     {% for webhook in ["error", "run_start", "run_end", "changes", "version", "delete"] %}
     <div class="form-floating mb-2">
-      <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)">
-        <option value="">None</option>
-        <option value="notifiarr" {% if page_info['notifiarr_available'] %}enabled{% else %}disabled{% endif %} {% if data.webhooks[webhook] == 'notifiarr' %}selected{% endif %}>Notifiarr</option>
-        <option value="gotify" {% if page_info['gotify_available'] %}enabled{% else %}disabled{% endif %} {% if data.webhooks[webhook] == 'gotify' %}selected{% endif %}>Gotify</option>
-        <option value="ntfy" {% if page_info['ntfy_available'] %}enabled{% else %}disabled{% endif %} {% if data.webhooks[webhook] == 'ntfy' %}selected{% endif %}>ntfy</option>
-        <option value="custom" {% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}selected{% endif %}>Custom</option>
-      </select>
-      <label for="webhooks_{{ webhook }}">{{ webhook|replace("_", " ")|title }} Webhook Details</label>
-      <div class="input-group custom-webhook" id="webhooks_{{ webhook }}_custom" style="display: none;">
-        <div class="input-group">
-          <input type="text" class="form-control custom-webhook-url" placeholder="Enter webhook URL ({{ webhook|replace("_", " ")|title }})"
-            value="{% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}{{ data.webhooks[webhook] }}{% endif %}"
-            oninput="setWebhookValidated(false, '{{ webhook }}')">
-          <button class="btn btn-success validate-button" type="button" onclick="validateWebhook('{{ webhook }}')">
-            Validate <i id="spinner_{{ webhook }}" class="spinner-border spinner-border-sm" role="status" style="display:none;"></i>
-          </button>
+        <div class="input-group mb-2">
+          <span class="input-group-text" id="webhook_title_{{ webhook }}">
+            {{ webhook|replace('_', ' ')|title }} Webhook
+          </span>
+          <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)" aria-label="{{ webhook|replace('_', ' ')|title }} Webhook Selection">
+            <option value="">None</option>
+            <option value="notifiarr"
+                    {% if page_info['notifiarr_available'] %}enabled{% else %}disabled{% endif %}
+                    {% if data.webhooks[webhook] == 'notifiarr' %}selected{% endif %}
+                    data-bs-toggle="tooltip" data-bs-placement="right"
+                    title="Select Notifiarr for receiving notifications from the Notifiarr service.">
+              Notifiarr
+            </option>
+            <option value="gotify"
+                    {% if page_info['gotify_available'] %}enabled{% else %}disabled{% endif %}
+                    {% if data.webhooks[webhook] == 'gotify' %}selected{% endif %}
+                    data-bs-toggle="tooltip" data-bs-placement="right"
+                    title="Select Gotify to use Gotify as the notification service.">
+              Gotify
+            </option>
+            <option value="ntfy"
+                    {% if page_info['ntfy_available'] %}enabled{% else %}disabled{% endif %}
+                    {% if data.webhooks[webhook] == 'ntfy' %}selected{% endif %}
+                    data-bs-toggle="tooltip" data-bs-placement="right"
+                    title="Select ntfy to use ntfy.sh for push notifications.">
+              ntfy
+            </option>
+            <option value="custom"
+                    {% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}selected{% endif %}
+                    data-bs-toggle="tooltip" data-bs-placement="right"
+                    title="Select Custom if you have a custom webhook URL for notifications.">
+              Custom
+            </option>
+          </select>
         </div>
-        <div class="validation-message" id="validation_message_{{ webhook }}" style="display: none; margin-top: 10px;">
-          <div class="alert alert-info" role="alert">
-            Validating...
-          </div>
+
+    <div class="input-group custom-webhook" id="webhooks_{{ webhook }}_custom" style="display: none;">
+      <div class="input-group mb-2">
+        <span class="input-group-text" id="webhooks_{{ webhook }}_text">
+          {{ webhook|replace('_', ' ')|title }} Webhook URL
+          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                title="Enter the webhook URL to receive notifications for {{ webhook|replace('_', ' ')|title }}.">
+            <i class="bi bi-info-circle-fill"></i>
+          </span>
+        </span>
+        <input type="text" class="form-control custom-webhook-url"
+               value="{% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}{{ data.webhooks[webhook] }}{% endif %}"
+               oninput="setWebhookValidated(false, '{{ webhook }}')"
+               aria-describedby="webhooks_{{ webhook }}_text">
+        <button class="btn btn-success validate-button" type="button" onclick="validateWebhook('{{ webhook }}')">
+          Validate <i id="spinner_{{ webhook }}" class="spinner-border spinner-border-sm" role="status" style="display:none;"></i>
+        </button>
+      </div>
+      <div class="validation-message" id="validation_message_{{ webhook }}" style="display: none; margin-top: 10px;">
+        <div class="alert alert-info" role="alert">
+          Validating...
         </div>
       </div>
+    </div>
+
     </div>
     {% endfor %}
     <div class="form-floating" style="display:none;">

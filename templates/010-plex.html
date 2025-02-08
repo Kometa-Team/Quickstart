@@ -1,72 +1,126 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="plex_url" name="plex_url" value="{{ data['plex']['url'] if data['plex']['url'] and 'http://192.168.1.12:32400' not in data['plex']['url'] else '' }}" required>
-      <label for="plex_url">Plex URL<span class="text-info ms-2">(e.g. http://127.0.0.1:32400)</span></label>
+    <div class="input-group mb-2">
+        <span class="input-group-text" id="plex_url_text" style="width: 130px;">
+        Plex URL
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
+            title="You must provide the direct address you use to access your server, including the port. You cannot use https://app.plex.tv<br><br>
+            <b>NOTE:</b> If Plex, Quickstart or Kometa are running in Docker, they must be on the same Docker network (e.g., a user-defined bridge network) for the containers to communicate.">
+        <i class="bi bi-info-circle-fill"></i>
+        </span>
+        </span>
+        <input type="text" class="form-control" id="plex_url" name="plex_url"
+            value="{{ data['plex']['url'] if data['plex']['url'] and 'http://192.168.1.12:32400' not in data['plex']['url'] else '' }}"
+            aria-describedby="plex_url_text" required>
     </div>
     <div class="input-group mb-2">
-      <div class="form-floating flex-grow-1">
+        <span class="input-group-text" id="plex_token_text" style="width: 130px;">
+        Plex Token
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
+            title="Your token may change if you sign out of your devices, <b>do not</b> use the token that is found in Preferences.xml<br><br>
+            If you do not know how to get your token, search Plex's guidance on finding an authentication token / X-Plex-Token">
+        <i class="bi bi-info-circle-fill"></i>
+        </span>
+        </span>
         <input type="password" class="form-control" id="plex_token" name="plex_token"
-               value="{{ data['plex']['token'] if data['plex']['token'] and 'Enter Plex Token' not in data['plex']['token'] else '' }}" title="Token"
-               aria-label="Plex Token" required="">
-        <label for="plex_token">Plex Token</label>
-      </div>
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
+            value="{{ data['plex']['token'] if data['plex']['token'] and 'Enter Plex Token' not in data['plex']['token'] else '' }}"
+            aria-describedby="plex_url_text" required>
+        <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button">
         <i class="fas fa-eye"></i>
-      </button>
-      <button class="btn btn-success" id="validateButton" type="button">
+        </button>
+        <button class="btn btn-outline-success" id="validateButton" type="button">
         Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-      </button>
+        </button>
     </div>
-
-
-
-
     <input type="hidden" class="form-control" id="tmp_user_list" name="tmp_user_list" value="{{ data['plex']['tmp_user_list'] }}" title="">
     <input type="hidden" class="form-control" id="tmp_music_libraries" name="tmp_music_libraries" value="{{ data['plex']['tmp_music_libraries'] }}" title="">
     <input type="hidden" class="form-control" id="tmp_movie_libraries" name="tmp_movie_libraries" value="{{ data['plex']['tmp_movie_libraries'] }}" title="">
     <input type="hidden" class="form-control" id="tmp_show_libraries" name="tmp_show_libraries" value="{{ data['plex']['tmp_show_libraries'] }}" title="">
-
     <div class="form-floating" style="display:none;">
-      <input type="text" class="form-control" id="plex_validated" name="plex_validated" value="{{ data['validated'] }}" title="">
-      <label for="plex_validated">Plex Validated</label>
+        <input type="text" class="form-control" id="plex_validated" name="plex_validated" value="{{ data['validated'] }}" title="">
+        <label for="plex_validated">Plex Validated</label>
     </div>
-
-    <div id="statusMessage" class="status-message"></div>
-    <div class="hidden" id="hidden" style="display:none">
-      <div class="form-floating mb-2">
-        <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache" value="{{ data['plex']['db_cache'] }}" title="Set the size of the Plex Database Cache (in Megabytes), default is 40" min="40" required="">
-        <label for="plex_db_cache">Database Cache Size (in mb)<span class="text-info ms-2">(value obtained automatically from Plex)</span></label>
-      </div>
-      <div id="plexDbCache" class="status-message"></div>
-      <div class="form-floating mb-2">
-        <input type="number" class="form-control" id="plex_timeout" name="plex_timeout" value="{{ data['plex']['timeout'] }}" title="Amount of seconds to wait for Plex to respond, default is 60" min="60" required="">
-        <label for="plex_timeout">Timeout (in seconds)</label>
-      </div>
-
-      <!-- Checkbox handling -->
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="plex_verify_ssl" id="plex_verify_ssl" value="true" {% if data['plex']['verify_ssl']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="plex_verify_ssl" value="false">
-        <label class="form-check-label" for="plex_verify_ssl">Verify SSL</label>
-      </div>
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="plex_clean_bundles" id="plex_clean_bundles" value="true" {% if data['plex']['clean_bundles']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="plex_clean_bundles" value="false">
-        <label class="form-check-label" for="plex_clean_bundles">Clean bundles</label>
-      </div>
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="plex_empty_trash" id="plex_empty_trash" value="true" {% if data['plex']['empty_trash']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="plex_empty_trash" value="false">
-        <label class="form-check-label" for="plex_empty_trash">Empty trash</label>
-      </div>
-      <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="plex_optimize" id="plex_optimize" value="true" {% if data['plex']['optimize']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="plex_optimize" value="false">
-        <label class="form-check-label" for="plex_optimize">Optimize Database</label>
-      </div>
+    <div id="statusMessage" class="status-message mb-2"></div>
+    <div class="hidden" id="hidden" style="display:none;">
+        <div class="row">
+            <div class="col">
+                <div class="input-group mb-2">
+                    <span class="input-group-text" id="plex_db_cache_text">
+                    Cache Size (MB)
+                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
+                        title="Set the size of the main database cache, in MB. The default value is 40 and should be sufficient for just about every user. Increasing much beyond the default value is likely to only benefit users with extremely large media collections (as in, hundreds of thousands of episodes or movies).<br><br>
+                        <b>This value will update automatically based on your Plex settings</b> and you can override the value if desired.">
+                    <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                    </span>
+                    <input type="number" class="form-control" id="plex_db_cache" name="plex_db_cache"
+                        value="{{ data['plex']['db_cache'] }}"
+                        title="Set the size of the Plex Database Cache (in Megabytes), default is 40"
+                        min="40" required>
+                </div>
+                <div id="plexDbCache" class="status-message mb-2"></div>
+            </div>
+            <div class="col">
+                <div class="input-group mb-2">
+                    <span class="input-group-text" id="plex_timeout_text">
+                    Timeout (seconds)
+                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
+                        title="Set how long Kometa will attempt to communicate with Plex for.<br><br>If Plex does not respond to Kometa requests in the timeout, all Kometa can do is wait longer - it cannot try to communicate in any other way.">
+                    <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                    </span>
+                    <input type="number" class="form-control" id="plex_timeout" name="plex_timeout"
+                        value="{{ data['plex']['timeout'] }}"
+                        title="Amount of seconds to wait for Plex to respond, default is 60"
+                        min="60" required>
+                </div>
+            </div>
+        </div>
+        <!-- Checkbox handling -->
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="plex_verify_ssl" id="plex_verify_ssl" value="true" {% if data['plex']['verify_ssl']|string|lower == 'true' %}checked{% endif %}>
+            <input type="hidden" name="plex_verify_ssl" value="false">
+            <label class="form-check-label" for="plex_verify_ssl">Verify SSL
+            <span class="text-info" data-bs-html="true" data-bs-toggle="tooltip" style="margin-left: 10px;"
+                title="Turns SSL verification on/off for only Plex<br><br>
+                <b>Note:</b> If you get errors related to SSL or Certificate verification, disable SSL Verification.">
+            <i class="bi bi-info-circle-fill"></i>
+            </span>
+            </label>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="plex_clean_bundles" id="plex_clean_bundles" value="true" {% if data['plex']['clean_bundles']|string|lower == 'true' %}checked{% endif %}>
+            <input type="hidden" name="plex_clean_bundles" value="false">
+            <label class="form-check-label" for="plex_clean_bundles">Clean Bundles
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
+                title="Poster images and other metadata for items in your library are kept in “bundle” packages. When you remove items from your library, these bundles aren’t immediately removed. Removing these old bundles can reduce the size of your install.">
+            <i class="bi bi-info-circle-fill"></i>
+            </span>
+            </label>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="plex_empty_trash" id="plex_empty_trash" value="true" {% if data['plex']['empty_trash']|string|lower == 'true' %}checked{% endif %}>
+            <input type="hidden" name="plex_empty_trash" value="false">
+            <label class="form-check-label" for="plex_empty_trash">Empty Trash
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
+                title="If an item is currently in the trash, it can be restored back to the Library by making the file for the library item available again at the expected location. Conversely, if you perform an “Empty Trash” on your Server, then the item is discarded from the trash and can no longer be automatically restored.">
+            <i class="bi bi-info-circle-fill"></i>
+            </span>
+            </label>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="plex_optimize" id="plex_optimize" value="true" {% if data['plex']['optimize']|string|lower == 'true' %}checked{% endif %}>
+            <input type="hidden" name="plex_optimize" value="false">
+            <label class="form-check-label" for="plex_optimize">Optimize Database
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
+                title="The Optimize Database option cleans up the server database from unused or fragmented data. For example, if you have deleted or added an entire library or many items in a library, you may like to optimize the database. Confirmation is given once the optimization for the server is complete.<br><br>
+                <b>Note:</b> Plex may become unresponsive at the end of the Kometa run while the Database Optimize is running, this is expected.">
+            <i class="bi bi-info-circle-fill"></i>
+            </span>
+            </label>
+        </div>
     </div>
-  </div>
+</div>
 </form>
 {% endblock %}
