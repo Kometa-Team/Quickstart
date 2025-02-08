@@ -1,38 +1,55 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <div class="form-floating mb-2">
-      <input type="text" class="form-control" id="mal_client_id" name="mal_client_id" value="{{ data['mal']['client_id'] if data['mal']['client_id'] and 'Enter MyAnimeList Client ID' not in data['mal']['client_id'] else '' }}" oninput="updateMALTargetURL(this)">
-      <label for="mal_client_id">Client ID</label>
-    </div>
-    <div class="form-floating mb-2">
-      <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{ data['code_verifier']}}">
+    <div class="input-group mb-2" id="mal_client_id_field">
+      <span class="input-group-text" id="mal_client_id_text">
+        Client ID
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Enter your MyAnimeList Client ID here.">
+          <i class="bi bi-info-circle-fill"></i>
+        </span>
+      </span>
+      <input type="text" class="form-control" id="mal_client_id" name="mal_client_id"
+             value="{{ data['mal']['client_id'] if data['mal']['client_id'] and 'Enter MyAnimeList Client ID' not in data['mal']['client_id'] else '' }}"
+             oninput="updateMALTargetURL(this)" aria-describedby="mal_client_id_text">
     </div>
     <div class="input-group mb-2">
-      <div class="form-floating flex-grow-1">
-        <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret"
-               value="{{ data['mal']['client_secret'] if data['mal']['client_secret'] and 'Enter MyAnimeList Client Secret' not in data['mal']['client_secret'] else '' }}" title="Client Secret"
-               aria-label="Client Secret" oninput="updateMALTargetURL(this)">
-        <label for="mal_client_secret">Client Secret</label>
-      </div>
-      <button class="btn btn-secondary" id="toggleClientSecretVisibility" type="button">
+      <input type="hidden" class="form-control" id="mal_code_verifier" name="mal_code_verifier" value="{{ data['code_verifier'] }}">
+    </div>
+    <div class="input-group mb-2">
+      <span class="input-group-text" id="mal_client_secret_text">
+        Client Secret
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Enter your MyAnimeList Client Secret here.">
+          <i class="bi bi-info-circle-fill"></i>
+        </span>
+      </span>
+      <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret"
+             value="{{ data['mal']['client_secret'] if data['mal']['client_secret'] and 'Enter MyAnimeList Client Secret' not in data['mal']['client_secret'] else '' }}"
+             title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)" aria-describedby="mal_client_secret_text">
+      <button class="btn btn-outline-secondary" id="toggleClientSecretVisibility" type="button">
         <i class="fas fa-eye"></i>
       </button>
-      <button class="btn btn-success" id="mal_get_localhost_url" type="button">
+      <button class="btn btn-outline-success" id="mal_get_localhost_url" type="button">
         Authorize <i id="spinner_retrieve" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
-
     <input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
-    <div class="form-floating  mb-2">
+
+    <div class="input-group mb-2" id="localhost_url_field">
+      <span class="input-group-text" id="mal_localhost_url_text">
+        Localhost URL
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Enter the URL for localhost authentication.">
+          <i class="bi bi-info-circle-fill"></i>
+        </span>
+      </span>
+      <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" placeholder="Enter your localhost URL here"
+             aria-label="Localhost URL" oninput="checkURLField(this)" aria-describedby="mal_localhost_url_text">
+      <button type="button" class="btn btn-outline-success" id="validate_mal_url">
+        Complete Authentication <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+      </button>
     </div>
-    <div class="form-group" id="localhost_url">
-      <div class="input-group">
-        <input type="text" class="form-control" id="mal_localhost_url" name="mal_localhost_url" placeholder="Localhost URL" aria-label="Localhost URL" oninput="checkURLField(this)">
-        <button type="button" class="btn btn-success" id="validate_mal_url">
-          Complete Authentication <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-        </button>
-      </div>
       <div class="form-floating" style="display:none;">
         <input type="text" class="form-control" id="mal_validated" name="mal_validated" value="{{ data['validated'] }}" title="">
         <label for="mal_validated">MyAnimeList Validated</label>
