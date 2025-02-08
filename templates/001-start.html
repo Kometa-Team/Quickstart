@@ -83,7 +83,7 @@
       <label for="configSelector">Select or Add Config</label>
     </div>
 
-    <div id="newConfigInput" class="form-floating" style="display: {% if page_info['config_name'] not in available_configs %}block{% else %}none{% endif %};">
+    <div id="newConfigInput" class="form-floating mb-2" style="display: {% if page_info['config_name'] not in available_configs %}block{% else %}none{% endif %};">
       <input
         type="text"
         id="newConfigName"
@@ -96,15 +96,15 @@
     </div>
   </div>
   <form>
-    <div class="d-grid gap-2">
+    <div class="form-floating mb-2">
         <!-- Reset (Start Over) Button -->
-        <button type="button" class="btn btn-warning ms-2" id="resetConfigButton" disabled data-bs-toggle="modal" data-bs-target="#configActionModal" data-action="reset">
+        <button type="button" class="btn btn-warning" id="resetConfigButton" disabled data-bs-toggle="modal" data-bs-target="#configActionModal" data-action="reset">
           <i class="bi bi-arrow-clockwise"></i> Reset
         </button>
 
         <!-- Delete Config Button -->
         <button type="button" class="btn btn-danger ms-2" id="deleteConfigButton" disabled data-bs-toggle="modal" data-bs-target="#configActionModal" data-action="delete">
-          <i class="bi bi-trash"></i>
+          <i class="bi bi-trash"></i> Delete
         </button>
     </div>
   </form>
