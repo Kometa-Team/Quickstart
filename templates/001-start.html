@@ -97,29 +97,35 @@
   </div>
   <form>
     <div class="d-grid gap-2">
-      <a href="#" id="reset">
-        <button class="btn btn-danger" type="submit" id="clearSessionButton">Reset and Start Over</button>
-      </a>
+        <!-- Reset (Start Over) Button -->
+        <button type="button" class="btn btn-warning ms-2" id="resetConfigButton" disabled data-bs-toggle="modal" data-bs-target="#configActionModal" data-action="reset">
+          <i class="bi bi-arrow-clockwise"></i> Reset
+        </button>
+
+        <!-- Delete Config Button -->
+        <button type="button" class="btn btn-danger ms-2" id="deleteConfigButton" disabled data-bs-toggle="modal" data-bs-target="#configActionModal" data-action="delete">
+          <i class="bi bi-trash"></i>
+        </button>
     </div>
   </form>
 </form>
 <!-- Toast Notifications -->
 <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toastContainer"></div>
 
-  <!-- Modal for confirmation -->
-<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+<!-- Reset and Delete Confirmation Modal -->
+<div class="modal fade" id="configActionModal" tabindex="-1" aria-labelledby="configActionModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title text-danger" id="confirmationModalLabel">Confirm</h5>
+        <h5 class="modal-title text-danger" id="configActionModalLabel">Confirm Action</h5> <!-- ✅ Ensure ID is correct -->
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" id="confirmationModalBody">
-        <!-- Dynamic content added via JS -->
+      <div class="modal-body" id="configActionModalBody">
+        <!-- Dynamic text will be inserted here -->
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-danger" id="confirmClearSession">Yes, Reset</button>
+        <button type="button" class="btn btn-danger" id="confirmConfigAction">Proceed</button>
       </div>
     </div>
   </div>
