@@ -2,30 +2,39 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group mb-2">
-      <div class="form-floating flex-grow-1">
+        <span class="input-group-text" id="mdblist_apikey_text">
+            MDBList API Key
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                title="Enter your MDBList API Key to allow Quickstart to authenticate with MDBList.">
+                <i class="bi bi-info-circle-fill"></i>
+            </span>
+        </span>
         <input type="password" class="form-control" id="mdblist_apikey" name="mdblist_apikey"
-               value="{{ data['mdblist']['apikey'] if data['mdblist']['apikey'] and 'Enter MDBList API Key' not in data['mdblist']['apikey'] else '' }}" title="MDBList API Key"
-               aria-label="MDBList API Key">
-        <label for="mdblist_apikey">MDBList API Key</label>
-      </div>
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
-        <i class="fas fa-eye"></i>
-      </button>
-      <button class="btn btn-success" id="validateButton" type="button">
-        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-      </button>
+            value="{{ data['mdblist']['apikey'] if data['mdblist']['apikey'] and 'Enter MDBList API Key' not in data['mdblist']['apikey'] else '' }}" title="MDBList API Key"
+            aria-label="MDBList API Key">
+        <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
+            <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn btn-success" id="validateButton" type="button">
+            Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        </button>
     </div>
-
 
     <div class="form-floating" style="display:none;">
       <input type="text" class="form-control" id="mdblist_validated" name="mdblist_validated" value="{{ data['validated'] }}" title="">
       <label for="mdblist_validated">MDBList Validated</label>
     </div>
-    <div id="statusMessage" class="status-message"></div>
-    <br>
-    <div class="form-floating mb-2">
-      <input type="number" class="form-control" id="mdblist_cache_expiration" name="mdblist_cache_expiration" value="{{ data['mdblist']['cache_expiration'] }}" min="0">
-      <label for="mdblist_cache_expiration">Cache Expiration (in days)</label>
+    <div id="statusMessage" class="status-message mb-2"></div>
+    <div class="input-group mb-2">
+      <span class="input-group-text" id="mdblist_cache_expiration_text">
+        Cache Expiration (in days)
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Set the number of days the MDBList cache should be stored before it expires. The default value is 7 days.">
+          <i class="bi bi-info-circle-fill"></i>
+        </span>
+      </span>
+      <input type="number" class="form-control" id="mdblist_cache_expiration" name="mdblist_cache_expiration"
+             value="{{ data['mdblist']['cache_expiration'] }}" min="0" aria-describedby="mdblist_cache_expiration_text">
     </div>
   </div>
 </form>

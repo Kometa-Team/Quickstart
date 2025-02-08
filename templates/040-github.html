@@ -2,26 +2,32 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group mb-2">
-      <div class="form-floating flex-grow-1">
+        <span class="input-group-text" id="github_token_text">
+            GitHub Personal Access Token
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                title="Enter your GitHub Personal Access Token to allow Quickstart to authenticate with GitHub.<br><br>
+                GitHub authentication increases your API allowance, which may be useful if you run Kometa on a frequent schedule.">
+                <i class="bi bi-info-circle-fill"></i>
+            </span>
+        </span>
         <input type="password" class="form-control" id="github_token" name="github_token"
-               value="{{ data['github']['token'] if data['github']['token'] and 'Enter GitHub Personal Access Token' not in data['github']['token'] else '' }}" title="GitHub Token"
-               aria-label="GitHub Token">
-        <label for="github_token">GitHub Personal Access Token</label>
-      </div>
-      <button class="btn btn-secondary" id="toggleApikeyVisibility" type="button">
-        <i class="fas fa-eye"></i>
-      </button>
-      <button class="btn btn-success" id="validateButton" type="button">
-        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-      </button>
+            value="{{ data['github']['token'] if data['github']['token'] and 'Enter GitHub Personal Access Token' not in data['github']['token'] else '' }}"
+            aria-describedby="github_token_text">
+        <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button">
+            <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn btn-outline-success" id="validateButton" type="button">
+            Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+        </button>
     </div>
+
 
 
     <div class="form-floating" style="display:none;">
       <input type="text" class="form-control" id="github_validated" name="github_validated" value="{{ data['validated'] }}" title="">
       <label for="github_validated">GitHub Validated</label>
     </div>
-    <div id="statusMessage" class="status-message"></div><br>
+    <div id="statusMessage" class="status-message mb-2"></div><br>
   </div>
 </form>
 {% endblock %}
