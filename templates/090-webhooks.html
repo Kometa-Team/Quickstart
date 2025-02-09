@@ -4,40 +4,46 @@
     {% for webhook in ["error", "run_start", "run_end", "changes", "version", "delete"] %}
     <div class="form-floating mb-2">
         <div class="input-group mb-2">
-          <span class="input-group-text" id="webhook_title_{{ webhook }}">
-            {{ webhook|replace('_', ' ')|title }} Webhook
-          </span>
-          <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)" aria-label="{{ webhook|replace('_', ' ')|title }} Webhook Selection">
-            <option value="">None</option>
-            <option value="notifiarr"
-                    {% if page_info['notifiarr_available'] %}enabled{% else %}disabled{% endif %}
-                    {% if data.webhooks[webhook] == 'notifiarr' %}selected{% endif %}
-                    data-bs-toggle="tooltip" data-bs-placement="right"
-                    title="Select Notifiarr for receiving notifications from the Notifiarr service.">
-              Notifiarr
-            </option>
-            <option value="gotify"
-                    {% if page_info['gotify_available'] %}enabled{% else %}disabled{% endif %}
-                    {% if data.webhooks[webhook] == 'gotify' %}selected{% endif %}
-                    data-bs-toggle="tooltip" data-bs-placement="right"
-                    title="Select Gotify to use Gotify as the notification service.">
-              Gotify
-            </option>
-            <option value="ntfy"
-                    {% if page_info['ntfy_available'] %}enabled{% else %}disabled{% endif %}
-                    {% if data.webhooks[webhook] == 'ntfy' %}selected{% endif %}
-                    data-bs-toggle="tooltip" data-bs-placement="right"
-                    title="Select ntfy to use ntfy.sh for push notifications.">
-              ntfy
-            </option>
-            <option value="custom"
-                    {% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}selected{% endif %}
-                    data-bs-toggle="tooltip" data-bs-placement="right"
-                    title="Select Custom if you have a custom webhook URL for notifications.">
-              Custom
-            </option>
-          </select>
+            <span class="input-group-text" id="webhooks_{{ webhook }}_text">
+                {{ webhook|replace('_', ' ')|title }} Webhook
+                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                      title="{% if webhook == 'error' %}The Error notification will be sent whenever an error occurs. The payload that is sent is different depending on which level the error occurs.{% elif webhook == 'version' %}The Version notification will be sent at the beginning of a run if there is a newer version available.{% elif webhook == 'run_start' %}The Run Start notification will be sent at the beginning of every run.{% elif webhook == 'run_end' %}The Run End notification will be sent at the end of every run with statistics.{% elif webhook == 'delete' %}The Delete Notification will be sent whenever a collection/playlist is deleted containing the following payload.{% elif webhook == 'changes' %}The Changes Notification will be sent after each collection/playlist containing the following payload if the collection/playlist has been created, has new items, or has had items removed.{% endif %}">
+                    <i class="bi bi-info-circle-fill"></i>
+                </span>
+            </span>
+            <select class="form-select" id="webhooks_{{ webhook }}" name="webhooks_{{ webhook }}" onchange="showCustomInput(this)"
+                    aria-describedby="webhooks_{{ webhook }}_text">
+                <option value="">None</option>
+                <option value="notifiarr"
+                        {% if page_info['notifiarr_available'] %}enabled{% else %}disabled{% endif %}
+                        {% if data.webhooks[webhook] == 'notifiarr' %}selected{% endif %}
+                        data-bs-toggle="tooltip" data-bs-placement="right"
+                        title="Select Notifiarr for receiving notifications from the Notifiarr service.">
+                    Notifiarr
+                </option>
+                <option value="gotify"
+                        {% if page_info['gotify_available'] %}enabled{% else %}disabled{% endif %}
+                        {% if data.webhooks[webhook] == 'gotify' %}selected{% endif %}
+                        data-bs-toggle="tooltip" data-bs-placement="right"
+                        title="Select Gotify to use Gotify as the notification service.">
+                    Gotify
+                </option>
+                <option value="ntfy"
+                        {% if page_info['ntfy_available'] %}enabled{% else %}disabled{% endif %}
+                        {% if data.webhooks[webhook] == 'ntfy' %}selected{% endif %}
+                        data-bs-toggle="tooltip" data-bs-placement="right"
+                        title="Select ntfy to use ntfy.sh for push notifications.">
+                    ntfy
+                </option>
+                <option value="custom"
+                        {% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}selected{% endif %}
+                        data-bs-toggle="tooltip" data-bs-placement="right"
+                        title="Select Custom if you have a custom webhook URL for notifications.">
+                    Custom
+                </option>
+            </select>
         </div>
+
 
 
     <div class="input-group custom-webhook" id="webhooks_{{ webhook }}_custom" style="display: none;">
