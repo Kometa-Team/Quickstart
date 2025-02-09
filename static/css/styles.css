@@ -179,6 +179,13 @@ label {
     opacity: 0.6;
 }
 
+.btn.disabled, .btn:disabled, fieldset:disabled .btn {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #181818;
+    border-color: #495057;
+    opacity: var(--bs-btn-disabled-opacity);
+}
 /* -------------------- */
 /* INPUT STYLES         */
 /* -------------------- */
