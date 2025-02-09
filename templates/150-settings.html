@@ -195,14 +195,19 @@
           </h2>
           <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
             <div class="accordion-body">
-              <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="cache" name="cache" value="true" {% if data['settings']['cache']|string|lower=='true' %}checked{% endif %}>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="cache" name="cache" value="true"
+                    {% if data['settings']['cache']|string|lower=='true' %}checked{% endif %}>
                   <input type="hidden" name="cache" value="false">
                   <label class="form-check-label" for="cache">
-                      Cache
-                      <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" title="Used to control Kometa's cache database."></i>
+                    Cache
+                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                      title="Used to control Kometa's cache database.">
+                      <i class="bi bi-info-circle-fill"></i>
+                    </span>
                   </label>
-              </div>
+                </div>
+
 
               <div class="row">
                   <div class="col-md-6">
