@@ -6,6 +6,7 @@ iso-639
 iso3166
 jsonschema
 namesgenerator
+pillow
 plexapi
 pre-commit
 pyfiglet

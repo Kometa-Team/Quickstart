@@ -50,7 +50,17 @@ from modules.persistence import (
 )
 from modules.database import reset_data
 from modules.database import get_unique_config_names
-from modules.helpers import booler
+from modules.helpers import booler, is_default_image
+
+from PIL import Image, ImageDraw
+
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+UPLOAD_FOLDER_MOVIE = "uploads/movies"
+UPLOAD_FOLDER_SHOW = "uploads/shows"
+os.makedirs(UPLOAD_FOLDER_MOVIE, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER_SHOW, exist_ok=True)
 
 basedir = os.path.abspath
 
@@ -69,6 +79,88 @@ app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
 server_session = Session(app)
+
+
+@app.route("/check_base_images", methods=["GET"])
+def check_base_images():
+    movie_path = os.path.join(UPLOAD_FOLDER_MOVIE, "base_image.png")
+    show_path = os.path.join(UPLOAD_FOLDER_SHOW, "base_image.png")
+
+    movie_exists = os.path.exists(movie_path) and not is_default_image(movie_path)
+    show_exists = os.path.exists(show_path) and not is_default_image(show_path)
+
+    return jsonify({"movie_exists": movie_exists, "show_exists": show_exists})
+
+
+@app.route("/upload_base_image", methods=["POST"])
+def upload_base_image():
+    img_type = request.form.get("type", "movie")
+    upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
+    if "image" not in request.files:
+        return jsonify({"status": "error", "message": "No file uploaded."})
+
+    file = request.files["image"]
+    img = Image.open(file)
+    width, height = img.size
+    if width / height != 2 / 3:
+        return jsonify(
+            {
+                "status": "error",
+                "message": "Image must have a 2:3 ratio. Example: 1000px x 1500px",
+            }
+        )
+
+    img = img.resize((1000, 1500))
+    img_path = os.path.join(upload_folder, "base_image.png")
+    img.save(img_path)
+    return jsonify({"status": "success", "message": "Image uploaded successfully."})
+
+
+@app.route("/delete_base_image", methods=["POST"])
+def delete_base_image():
+    img_type = request.form.get("type", "movie")
+    upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
+    base_path = os.path.join(upload_folder, "base_image.png")
+
+    # ✅ Delete the uploaded image if it exists
+    if os.path.exists(base_path):
+        os.remove(base_path)
+
+    return jsonify(
+        {
+            "status": "success",
+            "message": "Custom base image deleted. Grey default will be used.",
+        }
+    )
+
+
+@app.route("/generate_preview", methods=["POST"])
+def generate_preview():
+    data = request.json
+    overlays = data.get("overlays", [])
+    img_type = data.get("type", "movie")
+    upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
+    base_path = os.path.join(upload_folder, "base_image.png")
+
+    # ✅ If no custom image exists, create a grey 1000x1500 placeholder
+    if not os.path.exists(base_path):
+        default_img = Image.new(
+            "RGBA", (1000, 1500), (128, 128, 128, 255)
+        )  # Grey background
+        default_img.save(base_path)
+
+    base_img = Image.open(base_path).convert("RGBA")
+
+    for overlay in overlays:
+        overlay_path = f"static/images/overlays/{overlay}.png"
+        if os.path.exists(overlay_path):
+            overlay_img = Image.open(overlay_path).convert("RGBA")
+            base_img.paste(overlay_img, (0, 0), overlay_img)
+
+    output = os.path.join(upload_folder, "preview.png")
+    base_img.save(output)
+
+    return send_file(output, mimetype="image/png")
 
 
 @app.route("/update_libraries", methods=["POST"])

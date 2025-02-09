@@ -2,6 +2,8 @@ import os
 import re
 from flask import current_app as app
 from pathlib import Path
+from PIL import Image, ImageDraw
+
 
 STRING_FIELDS = {
     "apikey",
@@ -9,6 +11,15 @@ STRING_FIELDS = {
     "username",
     "password",
 }
+
+
+def is_default_image(image_path):
+    try:
+        img = Image.open(image_path)
+        grey_img = Image.new("RGBA", (1000, 1500), (128, 128, 128, 255))
+        return list(img.getdata()) == list(grey_img.getdata())
+    except Exception:
+        return False
 
 
 def enforce_string_fields(data, string_fields):
