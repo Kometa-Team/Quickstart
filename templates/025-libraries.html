@@ -1292,6 +1292,35 @@
                 </div>
               </div>
             </div>
+            <!-- Preview Overlays Accordion -->
+            <div class="accordion mt-3" id="mov-previewOverlaysAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#mov-previewOverlays" aria-expanded="false" aria-controls="mov-previewOverlays">
+                    Preview Overlays
+                  </button>
+                </h2>
+                <div id="mov-previewOverlays" class="accordion-collapse collapse"
+                  data-bs-parent="#mov-previewOverlaysAccordion">
+                  <div class="accordion-body">
+                    <!-- Preview Overlay Toggles -->
+                    <div class="container mt-4">
+                      <input type="file" id="baseImageUploadMovie" accept="image/png, image/jpeg" class="form-control mt-2">
+                      <button id="previewOverlayButtonMovie" class="btn btn-primary mt-3">Preview</button>
+                      <button id="deleteMovieImage" class="btn btn-danger mt-3">Delete Custom Image</button>
+                      <div id="previewMovieImageContainer" class="mt-4" style="display: none;">
+                          <h5>Preview:</h5>
+                          <img id="previewMovieImage" class="img-fluid" alt="Overlay Preview">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
           </div>
         </div>
       </div>
@@ -2537,6 +2566,35 @@
                 </div>
               </div>
             </div>
+            <!-- Preview Overlays Accordion -->
+            <div class="accordion mt-3" id="sho-previewOverlaysAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#sho-previewOverlays" aria-expanded="false" aria-controls="sho-previewOverlays">
+                    Preview Overlays
+                  </button>
+                </h2>
+                <div id="sho-previewOverlays" class="accordion-collapse collapse"
+                  data-bs-parent="#sho-previewOverlaysAccordion">
+                  <div class="accordion-body">
+                    <!-- Preview Overlay Toggles -->
+                    <div class="container mt-4">
+                      <input type="file" id="baseImageUploadShow" accept="image/png, image/jpeg" class="form-control mt-2">
+                      <button id="previewOverlayButtonShow" class="btn btn-primary mt-3">Preview</button>
+                      <button id="deleteShowImage" class="btn btn-danger mt-3">Delete Custom Image</button>
+                      <div id="previewShowImageContainer" class="mt-4" style="display: none;">
+                          <h5>Preview:</h5>
+                          <img id="previewShowImage" class="img-fluid" alt="Overlay Preview">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
           </div>
         </div>
       </div>
@@ -2705,4 +2763,7 @@
     <div id="statusMessage" class="status-message"></div><br>
   </div>
 </form>
+<!-- Toast Notifications -->
+<div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toastContainer"></div>
+
 {% endblock %}

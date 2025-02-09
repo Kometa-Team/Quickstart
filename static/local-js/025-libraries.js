@@ -1,6 +1,179 @@
-/* global $ */
+/* global $, showToast */
 
 document.addEventListener('DOMContentLoaded', function () {
+  fetch('/check_base_images')
+    .then(response => response.json())
+    .then(data => {
+      if (!data.movie_exists) {
+        deleteMovieImage.style.display = 'none'
+      } else {
+        deleteMovieImage.style.display = 'block'
+        showToast('info', 'Custom movie base image detected.')
+      }
+
+      if (!data.show_exists) {
+        deleteShowImage.style.display = 'none'
+      } else {
+        deleteShowImage.style.display = 'block'
+        showToast('info', 'Custom show base image detected.')
+      }
+    })
+    .catch(error => console.error('Error checking base images:', error))
+  const previewMovieButton = document.getElementById('previewOverlayButtonMovie')
+  const previewShowButton = document.getElementById('previewOverlayButtonShow')
+  const uploadMovieInput = document.getElementById('baseImageUploadMovie')
+  const uploadShowInput = document.getElementById('baseImageUploadShow')
+  const previewMovieImageContainer = document.getElementById('previewMovieImageContainer')
+  const previewShowImageContainer = document.getElementById('previewShowImageContainer')
+  const previewMovieImage = document.getElementById('previewMovieImage')
+  const previewShowImage = document.getElementById('previewShowImage')
+  const deleteMovieImage = document.getElementById('deleteMovieImage')
+  const deleteShowImage = document.getElementById('deleteShowImage')
+
+  function generatePreview (isMoviePreview) {
+    const selectedOverlays = []
+    const overlayContainer = isMoviePreview ? document.getElementById('movieOverlays') : document.getElementById('showOverlays')
+    const overlayPrefix = isMoviePreview ? 'mov-' : 'sho-'
+
+    overlayContainer.querySelectorAll('input.form-check-input:checked').forEach(input => {
+      if (input.id.startsWith(overlayPrefix)) {
+        selectedOverlays.push(input.name)
+      }
+    })
+
+    const selectedRating = overlayContainer.querySelector("input[type='radio']:checked")
+    if (selectedRating) {
+      selectedOverlays.push(selectedRating.value)
+    }
+
+    if (selectedOverlays.length === 0) {
+      if (isMoviePreview) {
+        previewMovieImageContainer.style.display = 'none'
+      } else {
+        previewShowImageContainer.style.display = 'none'
+      }
+      showToast('warning', 'No overlays selected!')
+      return
+    }
+
+    fetch('/generate_preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ overlays: selectedOverlays, type: isMoviePreview ? 'movie' : 'show' })
+    })
+      .then(response => response.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob)
+        if (isMoviePreview) {
+          previewMovieImage.src = url
+          previewMovieImageContainer.style.display = 'block'
+          deleteMovieImage.style.display = 'block'
+        } else {
+          previewShowImage.src = url
+          previewShowImageContainer.style.display = 'block'
+          deleteShowImage.style.display = 'block'
+        }
+      })
+      .catch(error => {
+        console.error('Error generating preview:', error)
+        showToast('error', 'Failed to generate preview.')
+      })
+  }
+
+  if (previewMovieButton) {
+    previewMovieButton.addEventListener('click', function (event) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.preventDefault()
+      generatePreview(true)
+    })
+  }
+
+  if (previewShowButton) {
+    previewShowButton.addEventListener('click', function (event) {
+      event.preventDefault()
+      event.stopPropagation()
+      event.preventDefault()
+      generatePreview(false)
+    })
+  }
+
+  function deleteCustomImage (isMovie) {
+    fetch('/delete_base_image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `type=${isMovie ? 'movie' : 'show'}`
+    })
+      .then(response => response.json())
+      .then(data => {
+        showToast('success', data.message)
+      })
+      .catch(error => {
+        console.error('Error deleting image:', error)
+        showToast('error', 'Failed to delete custom image.')
+      })
+  }
+
+  if (deleteMovieImage) {
+    deleteMovieImage.addEventListener('click', function (event) {
+      event.preventDefault()
+      event.stopPropagation()
+      deleteCustomImage(true)
+      previewMovieImageContainer.style.display = 'none'
+      deleteMovieImage.style.display = 'none'
+    })
+  }
+
+  if (deleteShowImage) {
+    deleteShowImage.addEventListener('click', function (event) {
+      event.preventDefault()
+      event.stopPropagation()
+      deleteCustomImage(false)
+      previewShowImageContainer.style.display = 'none'
+      deleteShowImage.style.display = 'none'
+    })
+  }
+
+  function handleImageUpload (isMovieUpload, inputElement) {
+    const file = inputElement.files[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('image', file)
+    formData.append('type', isMovieUpload ? 'movie' : 'show')
+
+    fetch('/upload_base_image', {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          showToast('success', isMovieUpload ? 'Movie base image uploaded successfully!' : 'Show base image uploaded successfully!')
+        } else {
+          showToast('error', data.message)
+        }
+      })
+      .catch(error => {
+        console.error('Upload error:', error)
+        showToast('error', 'Failed to upload base image.')
+      })
+  }
+
+  if (uploadMovieInput) {
+    uploadMovieInput.addEventListener('change', function () {
+      previewMovieImageContainer.style.display = 'none'
+      handleImageUpload(true, uploadMovieInput)
+    })
+  }
+
+  if (uploadShowInput) {
+    uploadShowInput.addEventListener('change', function () {
+      previewShowImageContainer.style.display = 'none'
+      handleImageUpload(false, uploadShowInput)
+    })
+  }
+
   function updateHiddenInputs (prefix) {
     const form = document.getElementById('configForm')
     if (!form) {
