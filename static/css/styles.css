@@ -308,3 +308,12 @@ div#loading {
 .tooltip {
     transition-delay: 0.5s;
 }
+
+/* -------------------- */
+/* IMAGE STYLES         */
+/* -------------------- */
+
+
+.img-fluid {
+    max-height: 500px;
+}

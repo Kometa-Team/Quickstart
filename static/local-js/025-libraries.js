@@ -508,3 +508,10 @@ function enableNavigation () {
   $('#configForm button').prop('disabled', false)
   $('#configForm .dropdown-toggle').prop('disabled', false)
 }
+
+  // Update the Separator Preview
+    function updateSeparatorPreview() {
+        var selectedStyle = document.getElementById("sho-attribute_use_separators").value;
+        var previewImage = document.getElementById("separator-preview");
+        previewImage.src = "https://github.com/Kometa-Team/Default-Images/blob/master/separators/" + selectedStyle + "/movie_chart.jpg?raw=true";
+    }
