@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const configActionModalElement = document.getElementById('configActionModal')
   let configActionModal = null
+
   if (configActionModalElement) {
     configActionModal = new bootstrap.Modal(configActionModalElement)
   } else {
@@ -59,22 +60,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let currentAction = ''
 
-  configSelector.dispatchEvent(new Event('change'))
   // ✅ Ensure buttons are enabled if the config isn't "Add Config"
   function updateButtonState () {
     const isAddConfig = configSelector.value === 'add_config'
+    const onlyAddConfigAvailable = configSelector.options.length === 1 && isAddConfig // Check if it's the only option
+
     resetConfigButton.disabled = isAddConfig
     deleteConfigButton.disabled = isAddConfig
+
+    // 🛠️ Ensure input box is visible if "Add Config" is the only option
+    if (onlyAddConfigAvailable) {
+      document.getElementById('newConfigInput').style.display = 'block'
+    } else {
+      toggleConfigInput(configSelector)
+    }
   }
 
-  // ✅ Trigger `change` event on page load to enable/disable buttons properly
+  // ✅ Ensure input box appears on page load if necessary
   updateButtonState()
 
   configSelector.addEventListener('change', function () {
-    const isAddConfig = configSelector.value === 'add_config'
-
-    resetConfigButton.disabled = isAddConfig
-    deleteConfigButton.disabled = isAddConfig
+    updateButtonState()
   })
 
   document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
@@ -88,14 +94,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       const modalTitle = document.getElementById('configActionModalLabel')
-      if (!modalTitle) {
-        console.error('⚠️ configActionModalLabel not found in the DOM!')
-        return
-      }
-
       const modalBody = document.getElementById('configActionModalBody')
-      if (!modalBody) {
-        console.error('⚠️ configActionModalBody not found in the DOM!')
+
+      if (!modalTitle || !modalBody) {
+        console.error('⚠️ Modal elements not found in the DOM!')
         return
       }
 
@@ -150,9 +152,7 @@ document.addEventListener('DOMContentLoaded', function () {
             configSelector.value = nextOption ? nextOption.value : 'add_config'
           }
 
-          const isAddConfig = configSelector.value === 'add_config'
-          resetConfigButton.disabled = isAddConfig
-          deleteConfigButton.disabled = isAddConfig
+          updateButtonState()
 
           if (configActionModal) {
             configActionModal.hide()
