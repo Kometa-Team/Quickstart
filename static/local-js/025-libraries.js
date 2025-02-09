@@ -203,6 +203,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectedValue = useSeparatorsDropdown.value
     const isEnabled = selectedValue !== 'none'
 
+    // Separator Preview Elements
+    const separatorPreviewContainer = document.getElementById(`${prefix}-separatorPreviewContainer`)
+    const separatorPreviewImage = document.getElementById(`${prefix}-separatorPreviewImage`)
+
     // Ensure hidden inputs exist
     if (!useSeparatorsInput) {
       useSeparatorsInput = document.createElement('input')
@@ -220,6 +224,7 @@ document.addEventListener('DOMContentLoaded', function () {
       sepStyleInput.id = `${prefix}-template_variables_sep_style`
       form.appendChild(sepStyleInput)
     }
+
     sepStyleInput.value = isEnabled ? selectedValue : ''
 
     // **Enable/Disable Award Separator Toggle**
@@ -236,7 +241,23 @@ document.addEventListener('DOMContentLoaded', function () {
       console.log('[DEBUG] Chart Separator Toggle is now:', chartSeparatorToggle.checked)
     }
 
-    // updateValidationState() // ✅ Ensure validation updates when separators change
+    // **Fetch Separator Style**
+    const selectedStyle = selectedValue || 'none'
+
+    sepStyleInput.value = isEnabled ? selectedStyle : ''
+
+    // **Update Separator Preview Image**
+    function updateSeparatorPreview () {
+      if (selectedStyle !== 'none') {
+        const imageUrl = `https://github.com/Kometa-Team/Default-Images/blob/master/separators/${selectedStyle}/chart.jpg?raw=true`
+        separatorPreviewImage.src = imageUrl
+        separatorPreviewContainer.style.display = 'block'
+      } else {
+        separatorPreviewContainer.style.display = 'none'
+      }
+    }
+
+    updateSeparatorPreview() // Update on load
   }
 
   // Function to update separator toggles dynamically when a checkbox is clicked
@@ -261,7 +282,6 @@ document.addEventListener('DOMContentLoaded', function () {
       dropdown.addEventListener('change', function () {
         console.log(`[DEBUG] ${prefix}-attribute_use_separators dropdown changed`)
         updateHiddenInputs(prefix)
-        // updateValidationState() // ✅ Ensure validation updates when separators change
       })
       updateHiddenInputs(prefix) // Run once on load
       attachToggleListeners(prefix) // Attach listeners for dynamic changes
@@ -508,10 +528,3 @@ function enableNavigation () {
   $('#configForm button').prop('disabled', false)
   $('#configForm .dropdown-toggle').prop('disabled', false)
 }
-
-  // Update the Separator Preview
-    function updateSeparatorPreview() {
-        var selectedStyle = document.getElementById("sho-attribute_use_separators").value;
-        var previewImage = document.getElementById("separator-preview");
-        previewImage.src = "https://github.com/Kometa-Team/Default-Images/blob/master/separators/" + selectedStyle + "/movie_chart.jpg?raw=true";
-    }
