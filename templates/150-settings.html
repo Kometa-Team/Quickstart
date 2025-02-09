@@ -14,115 +14,175 @@
           </h2>
           <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
             <div class="accordion-body">
-              <div class="form-floating mb-2">
-                <div id="asset_directory_container">
-                  <label>Asset Directory</label>
-                  {% for directory in data['settings']['asset_directory'] %}
-                  <div class="input-group mb-2">
-                    <input type="text" class="form-control" name="asset_directory" id="asset_directory_{{ loop.index }}" placeholder="Add Asset Directory" value="{{ directory }}">
-                    <button class="btn btn-danger remove-asset-directory" type="button">Remove</button>
+              <h6 class="fw-bold mt-3"><u>Asset Settings</u></h6>
+              <div class="row mb-2">
+                  <div class="col-md-9">
+                      <div id="asset_directory_container">
+                          <label>Asset Directory
+                              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                                 title="Used to define where local assets are located."></i>
+                          </label>
+                          {% for directory in data['settings']['asset_directory'] %}
+                          <div class="input-group mb-2">
+                              <input type="text" class="form-control" name="asset_directory" id="asset_directory_{{ loop.index }}"
+                                     placeholder="Add Asset Directory" value="{{ directory }}">
+                              <button class="btn btn-danger remove-asset-directory" type="button">Remove</button>
+                          </div>
+                          {% endfor %}
+                          <div class="input-group mb-2">
+                              <input type="text" class="form-control" name="asset_directory" placeholder="Add Asset Directory">
+                              <button class="btn btn-danger remove-asset-directory" type="button">Remove</button>
+                          </div>
+                      </div>
+                      <button class="btn btn-primary" id="add-asset-directory" type="button">Add Directory</button>
                   </div>
-                  {% endfor %}
-                  <div class="input-group mb-2">
-                    <input type="text" class="form-control" name="asset_directory" placeholder="Add Asset Directory">
-                    <button class="btn btn-danger remove-asset-directory" type="button">Remove</button>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="asset_folders" name="asset_folders" value="true" {% if data['settings']['asset_folders']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="asset_folders" value="false">
+                <label class="form-check-label" for="asset_folders">
+                  Asset Folders
+                  <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true" title="Used to control the asset directory folder structure."></i>
+                </label>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="create_asset_folders" name="create_asset_folders" value="true" {% if data['settings']['create_asset_folders']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="create_asset_folders" value="false">
+                <label class="form-check-label" for="create_asset_folders">
+                  Create Asset Folders
+                  <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true" title="Used to automatically create asset folders when none exist."></i>
+                </label>
+              </div>
+              <div class="row mb-2">
+                  <div class="col-md-6">
+                      <div class="input-group">
+                          <span class="input-group-text" id="asset_depth_text">
+                              Asset Depth
+                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="Used to control the depth of search in the asset directory.">
+                                  <i class="bi bi-info-circle-fill"></i>
+                              </span>
+                          </span>
+                          <input type="number" class="form-control" id="asset_depth" name="asset_depth"
+                                 value="{{ data['settings']['asset_depth'] }}" min="0" aria-describedby="asset_depth_text">
+                      </div>
+                  </div>
+              </div>
+
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="prioritize_assets" name="prioritize_assets" value="true"
+                      {% if data['settings']['prioritize_assets']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="prioritize_assets" value="false">
+                  <label class="form-check-label" for="prioritize_assets">
+                      Prioritize Assets
+                      <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="Used to prioritize asset_directory images over all other image types."></i>
+                  </label>
+              </div>
+
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="dimensional_asset_rename" name="dimensional_asset_rename" value="true"
+                      {% if data['settings']['dimensional_asset_rename']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="dimensional_asset_rename" value="false">
+                  <label class="form-check-label" for="dimensional_asset_rename">
+                      Dimensional Asset Rename
+                      <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="Used to automatically rename asset files based on their dimensions."></i>
+                  </label>
+              </div>
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="download_url_assets" name="download_url_assets"
+                      value="true" {% if data['settings']['download_url_assets']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="download_url_assets" value="false">
+                  <label class="form-check-label" for="download_url_assets">
+                      Download URL Assets
+                      <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="Used to download URL images into the asset directory."></i>
+                  </label>
+              </div>
+
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="show_missing_assets" name="show_missing_assets"
+                      value="true" {% if data['settings']['show_missing_assets']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="show_missing_assets" value="false">
+                  <label class="form-check-label" for="show_missing_assets">
+                      Show Missing Assets
+                      <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="Used to print a message when assets are missing."></i>
+                  </label>
+              </div>
+
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="show_missing_season_assets" name="show_missing_season_assets"
+                      value="true" {% if data['settings']['show_missing_season_assets']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="show_missing_season_assets" value="false">
+                  <label class="form-check-label" for="show_missing_season_assets">
+                      Show Missing Season Assets
+                      <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="Used to show any missing season assets."></i>
+                  </label>
+              </div>
+
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="show_missing_episode_assets" name="show_missing_episode_assets"
+                      value="true" {% if data['settings']['show_missing_episode_assets']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="show_missing_episode_assets" value="false">
+                  <label class="form-check-label" for="show_missing_episode_assets">
+                      Show Missing Episode Assets
+                      <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="Used to show any missing episode assets."></i>
+                  </label>
+              </div>
+
+              <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="show_asset_not_needed" name="show_asset_not_needed"
+                      value="true" {% if data['settings']['show_asset_not_needed']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="show_asset_not_needed" value="false">
+                  <label class="form-check-label" for="show_asset_not_needed">
+                      Show Asset Not Needed
+                      <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="Used to show/hide the update not needed messages."></i>
+                  </label>
+              </div>
+              <h6 class="fw-bold mt-3"><u>Overlay Settings</u></h6>
+                <div class="row mb-2">
+                  <div class="col-6">
+                    <div class="input-group">
+                      <span class="input-group-text" id="overlay_artwork_filetype_text">
+                        Overlay Artwork Filetype
+                        <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                          title="Used to control the filetype used with overlay images.">
+                          <i class="bi bi-info-circle-fill"></i>
+                        </span>
+                      </span>
+                      <select class="form-select" id="overlay_artwork_filetype" name="overlay_artwork_filetype">
+                        <option value="jpg" {% if data['settings']['overlay_artwork_filetype']=='jpg' %}selected{% endif %}>JPG</option>
+                        <option value="png" {% if data['settings']['overlay_artwork_filetype']=='png' %}selected{% endif %}>PNG</option>
+                        <option value="webp_lossy" {% if data['settings']['overlay_artwork_filetype']=='webp_lossy' %}selected{% endif %}>WebP Lossy</option>
+                        <option value="webp_lossless" {% if data['settings']['overlay_artwork_filetype']=='webp_lossless' %}selected{% endif %}>WebP Lossless</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="col-6">
+                    <div class="input-group">
+                      <span class="input-group-text" id="overlay_artwork_quality_text">
+                        Overlay Artwork Quality
+                        <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                          title="Used to control the JPG or Lossy WEBP quality used with overlay images.">
+                          <i class="bi bi-info-circle-fill"></i>
+                        </span>
+                      </span>
+                      <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" min="1" max="100"
+                        value="{{ data['settings']['overlay_artwork_quality'] }}">
+                    </div>
                   </div>
                 </div>
-                <button class="btn btn-primary" id="add-asset-directory" type="button">Add Directory</button>
-              </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="asset_folders" name="asset_folders" value="true" {%
-                  if data['settings']['asset_folders']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="asset_folders" value="false">
-                <label class="form-check-label" for="asset_folders">Asset Folders</label>
-              </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="create_asset_folders" name="create_asset_folders"
-                  value="true" {% if data['settings']['create_asset_folders']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="create_asset_folders" value="false">
-                <label class="form-check-label" for="create_asset_folders">Create Asset Folders</label>
-              </div>
-
-              <div class="form-floating mb-2">
-                <input type="number" class="form-control" id="asset_depth" name="asset_depth" placeholder="" min="0"
-                  value="{{ data['settings']['asset_depth'] }}">
-                <label for="asset_depth">Asset Depth</label>
-                <div class="error-message text-danger"></div>
-              </div>
-
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="prioritize_assets" name="prioritize_assets"
-                  value="true" {% if data['settings']['prioritize_assets']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="prioritize_assets" value="false">
-                <label class="form-check-label" for="prioritize_assets">Prioritize Assets</label>
-              </div>
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="dimensional_asset_rename"
-                  name="dimensional_asset_rename" value="true" {% if
-                  data['settings']['dimensional_asset_rename']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="dimensional_asset_rename" value="false">
-                <label class="form-check-label" for="dimensional_asset_rename">Dimensional Asset Rename</label>
-              </div>
-
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="download_url_assets" name="download_url_assets"
-                  value="true" {% if data['settings']['download_url_assets']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="download_url_assets" value="false">
-                <label class="form-check-label" for="download_url_assets">Download URL Assets</label>
-              </div>
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_missing_assets" name="show_missing_assets"
-                  value="true" {% if data['settings']['show_missing_assets']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="show_missing_assets" value="false">
-                <label class="form-check-label" for="show_missing_assets">Show Missing Assets</label>
-              </div>
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_missing_season_assets"
-                  name="show_missing_season_assets" value="true" {% if
-                  data['settings']['show_missing_season_assets']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="show_missing_season_assets" value="false">
-                <label class="form-check-label" for="show_missing_season_assets">Show Missing Season
-                  Assets</label>
-              </div>
-
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_missing_episode_assets"
-                  name="show_missing_episode_assets" value="true" {% if
-                  data['settings']['show_missing_episode_assets']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="show_missing_episode_assets" value="false">
-                <label class="form-check-label" for="show_missing_episode_assets">Show Missing Episode Assets</label>
-              </div>
-
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_asset_not_needed" name="show_asset_not_needed"
-                  value="true" {% if data['settings']['show_asset_not_needed']|string|lower=='true' %}checked{% endif
-                  %}>
-                <input type="hidden" name="show_asset_not_needed" value="false">
-                <label class="form-check-label" for="show_asset_not_needed">Show Asset Not Needed</label>
-              </div>
-
-              <div class="form-floating mb-2">
-                <select class="form-select" id="overlay_artwork_filetype" name="overlay_artwork_filetype">
-                  <option value="jpg" {% if data['settings']['overlay_artwork_filetype']=='jpg' %}selected{% endif %}>
-                    JPG</option>
-                  <option value="png" {% if data['settings']['overlay_artwork_filetype']=='png' %}selected{% endif %}>
-                    PNG</option>
-                  <option value="webp_lossy" {% if data['settings']['overlay_artwork_filetype']=='webp_lossy'
-                    %}selected{% endif %}>WEBP LOSSY</option>
-                  <option value="webp_lossless" {% if data['settings']['overlay_artwork_filetype']=='webp_lossless'
-                    %}selected{% endif %}>WEBP LOSSLESS</option>
-                </select>
-                <label for="overlay_artwork_filetype">Overlay Artwork Filetype</label>
-              </div>
-
-              <div class="form-floating mb-2">
-                <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" min="1" max="100"
-                  placeholder="" value="{{ data['settings']['overlay_artwork_quality'] }}">
-                <label for="overlay_artwork_quality">Overlay Artwork Quality</label>
-                <div class="error-message text-danger"></div>
-              </div>
             </div>
           </div>
         </div>
@@ -136,17 +196,30 @@
           <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
             <div class="accordion-body">
               <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="cache" name="cache" value="true" {% if
-                  data['settings']['cache']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="cache" value="false">
-                <label class="form-check-label" for="cache">Cache</label>
+                  <input class="form-check-input" type="checkbox" id="cache" name="cache" value="true" {% if data['settings']['cache']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="cache" value="false">
+                  <label class="form-check-label" for="cache">
+                      Cache
+                      <i class="bi bi-info-circle-fill" data-bs-toggle="tooltip" data-bs-html="true" title="Used to control Kometa's cache database."></i>
+                  </label>
               </div>
-              <div class="form-floating mb-2">
-                <input type="number" class="form-control" id="cache_expiration" name="cache_expiration" placeholder="" min="1"
-                  value="{{ data['settings']['cache_expiration'] }}">
-                <label for="cache_expiration">Cache Expiration (days)</label>
-                <div class="error-message text-danger"></div>
+
+              <div class="row">
+                  <div class="col-md-6">
+                      <div class="input-group mb-2">
+                          <span class="input-group-text" id="cache_expiration_text">
+                              Cache Expiration (days)
+                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                  title="Used to control how long data is cached for.">
+                                  <i class="bi bi-info-circle-fill"></i>
+                              </span>
+                          </span>
+                          <input type="number" class="form-control" id="cache_expiration" name="cache_expiration" min="1"
+                              value="{{ data['settings']['cache_expiration'] }}">
+                      </div>
+                  </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -159,102 +232,125 @@
           </h2>
           <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
             <div class="accordion-body">
+                <h6 class="fw-bold mt-3"><u>Collection Settings</u></h6>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="input-group mb-2">
+                      <span class="input-group-text">
+                        Sync Mode
+                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                          title="Used to set the sync_mode for collections and playlists.">
+                          <i class="bi bi-info-circle-fill"></i>
+                        </span>
+                      </span>
+                      <select class="form-select" id="sync_mode" name="sync_mode">
+                        <option value="append" {% if data['settings']['sync_mode']=='append' %}selected{% endif %}>Append (default)</option>
+                        <option value="sync" {% if data['settings']['sync_mode']=='sync' %}selected{% endif %}>Sync</option>
+                      </select>
+                    </div>
+                  </div>
 
-              <div class="form-floating mb-2">
-                <select class="form-select" id="sync_mode" name="sync_mode">
-                  <option value="append" {% if data['settings']['sync_mode']=='append' %}selected{% endif %}>Append
-                    (default)</option>
-                  <option value="sync" {% if data['settings']['sync_mode']=='sync' %}selected{% endif %}>Sync</option>
-                </select>
-                <label for="sync_mode">Sync Mode</label>
-              </div>
+                  <div class="col-md-6">
+                    <div class="input-group mb-2">
+                      <span class="input-group-text">
+                        Default Collection Order
+                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                          title="Used to set the collection_order for every collection run.">
+                          <i class="bi bi-info-circle-fill"></i>
+                        </span>
+                      </span>
+                      <select class="form-select" id="default_collection_order" name="default_collection_order">
+                        <option value="release.asc" {% if data['settings']['default_collection_order']=='release.asc' %}selected{% endif %}>Release Date (Ascending)</option>
+                        <option value="release.desc" {% if data['settings']['default_collection_order']=='release.desc' %}selected{% endif %}>Release Date (Descending)</option>
+                        <option value="added.asc" {% if data['settings']['default_collection_order']=='added.asc' %}selected{% endif %}>Added to Library (Ascending)</option>
+                        <option value="added.desc" {% if data['settings']['default_collection_order']=='added.desc' %}selected{% endif %}>Added to Library (Descending)</option>
+                        <option value="alpha" {% if data['settings']['default_collection_order']=='alpha' %}selected{% endif %}>Alphabetical</option>
+                        <option value="originally_available.asc" {% if data['settings']['default_collection_order']=='originally_available.asc' %}selected{% endif %}>Originally Available (Ascending)</option>
+                        <option value="originally_available.desc" {% if data['settings']['default_collection_order']=='originally_available.desc' %}selected{% endif %}>Originally Available (Descending)</option>
+                        <option value="random" {% if data['settings']['default_collection_order']=='random' %}selected{% endif %}>Random</option>
+                        <option value="rating.desc" {% if data['settings']['default_collection_order']=='rating.desc' %}selected{% endif %}>Rating (Descending)</option>
+                        <option value="rating.asc" {% if data['settings']['default_collection_order']=='rating.asc' %}selected{% endif %}>Rating (Ascending)</option>
+                        <option value="duration.desc" {% if data['settings']['default_collection_order']=='duration.desc' %}selected{% endif %}>Duration (Descending)</option>
+                        <option value="duration.asc" {% if data['settings']['default_collection_order']=='duration.asc' %}selected{% endif %}>Duration (Ascending)</option>
+                        <option value="plays.desc" {% if data['settings']['default_collection_order']=='plays.desc' %}selected{% endif %}>Plays (Descending)</option>
+                        <option value="plays.asc" {% if data['settings']['default_collection_order']=='plays.asc' %}selected{% endif %}>Plays (Ascending)</option>
+                        <option value="last_played.desc" {% if data['settings']['default_collection_order']=='last_played.desc' %}selected{% endif %}>Last Played (Descending)</option>
+                        <option value="last_played.asc" {% if data['settings']['default_collection_order']=='last_played.asc' %}selected{% endif %}>Last Played (Ascending)</option>
+                      </select>
+                    </div>
+                  </div>
 
-              <div class="form-floating mb-2">
-                <select class="form-select" id="default_collection_order" name="default_collection_order">
-                  <option value="added.asc" {% if data['settings']['default_collection_order']=='added.asc' %}selected{% endif %}>Added (Ascending)</option>
-                  <option value="added.desc" {% if data['settings']['default_collection_order']=='added.desc' %}selected{% endif %}>Added (Descending)</option>
-                  <option value="alpha" {% if data['settings']['default_collection_order']=='alpha' %}selected{% endif %}>Alphabetical</option>
-                  <option value="audience_rating.asc" {% if data['settings']['default_collection_order']=='audience_rating.asc' %}selected{% endif %}>Audience Rating (Ascending)</option>
-                  <option value="audience_rating.desc" {% if data['settings']['default_collection_order']=='audience_rating.desc' %}selected{% endif %}>Audience Rating (Descending)</option>
-                  <option value="bitrate.asc" {% if data['settings']['default_collection_order']=='bitrate.asc' %}selected{% endif %}>Bitrate (Ascending)</option>
-                  <option value="bitrate.desc" {% if data['settings']['default_collection_order']=='bitrate.desc' %}selected{% endif %}>Bitrate (Descending)</option>
-                  <option value="content_rating.asc" {% if data['settings']['default_collection_order']=='content_rating.asc' %}selected{% endif %}>Content Rating (Ascending)</option>
-                  <option value="content_rating.desc" {% if data['settings']['default_collection_order']=='content_rating.desc' %}selected{% endif %}>Content Rating (Descending)</option>
-                  <option value="critic_rating.asc" {% if data['settings']['default_collection_order']=='critic_rating.asc' %}selected{% endif %}>Critic Rating (Ascending)</option>
-                  <option value="critic_rating.desc" {% if data['settings']['default_collection_order']=='critic_rating.desc' %}selected{% endif %}>Critic Rating (Descending)</option>
-                  <option value="custom" {% if data['settings']['default_collection_order']=='custom' %}selected{% endif %}>Custom</option>
-                  <option value="duration.asc" {% if data['settings']['default_collection_order']=='duration.asc' %}selected{% endif %}>Duration (Ascending)</option>
-                  <option value="duration.desc" {% if data['settings']['default_collection_order']=='duration.desc' %}selected{% endif %}>Duration (Descending)</option>
-                  <option value="originally_available.asc" {% if data['settings']['default_collection_order']=='originally_available.asc' %}selected{% endif %}>Originally Available (Ascending)</option>
-                  <option value="originally_available.desc" {% if data['settings']['default_collection_order']=='originally_available.desc' %}selected{% endif %}>Originally Available (Descending)</option>
-                  <option value="plays.asc" {% if data['settings']['default_collection_order']=='plays.asc' %}selected{% endif %}>Plays (Ascending)</option>
-                  <option value="plays.desc" {% if data['settings']['default_collection_order']=='plays.desc' %}selected{% endif %}>Plays (Descending)</option>
-                  <option value="progress.asc" {% if data['settings']['default_collection_order']=='progress.asc' %}selected{% endif %}>Progress (Ascending)</option>
-                  <option value="progress.desc" {% if data['settings']['default_collection_order']=='progress.desc' %}selected{% endif %}>Progress (Descending)</option>
-                  <option value="random" {% if data['settings']['default_collection_order']=='random' %}selected{% endif %}>Random</option>
-                  <option value="release" {% if data['settings']['default_collection_order']=='release' %}selected{% endif %}>Release</option>
-                  <option value="release.asc" {% if data['settings']['default_collection_order']=='release.asc' %}selected{% endif %}>Release (Ascending)</option>
-                  <option value="release.desc" {% if data['settings']['default_collection_order']=='release.desc' %}selected{% endif %}>Release (Descending)</option>
-                  <option value="resolution.asc" {% if data['settings']['default_collection_order']=='resolution.asc' %}selected{% endif %}>Resolution (Ascending)</option>
-                  <option value="resolution.desc" {% if data['settings']['default_collection_order']=='resolution.desc' %}selected{% endif %}>Resolution (Descending)</option>
-                  <option value="title.asc" {% if data['settings']['default_collection_order']=='title.asc' %}selected{% endif %}>Title (Ascending)</option>
-                  <option value="title.desc" {% if data['settings']['default_collection_order']=='title.desc' %}selected{% endif %}>Title (Descending)</option>
-                  <option value="user_rating.asc" {% if data['settings']['default_collection_order']=='user_rating.asc' %}selected{% endif %}>User Rating (Ascending)</option>
-                  <option value="user_rating.desc" {% if data['settings']['default_collection_order']=='user_rating.desc' %}selected{% endif %}>User Rating (Descending)</option>
-                  <option value="viewed.asc" {% if data['settings']['default_collection_order']=='viewed.asc' %}selected{% endif %}>Viewed (Ascending)</option>
-                  <option value="viewed.desc" {% if data['settings']['default_collection_order']=='viewed.desc' %}selected{% endif %}>Viewed (Descending)</option>
-                  <option value="year.asc" {% if data['settings']['default_collection_order']=='year.asc' %}selected{% endif %}>Year (Ascending)</option>
-                  <option value="year.desc" {% if data['settings']['default_collection_order']=='year.desc' %}selected{% endif %}>Year (Descending)</option>
-                </select>
-                <label for="default_collection_order">Default Collection Order</label>
-              </div>
 
-              <div class="form-floating mb-2">
-                <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" min="0"
-                  placeholder="" value="{{ data['settings']['item_refresh_delay'] }}">
-                <label for="item_refresh_delay">Item Refresh Delay (seconds)</label>
-                <div class="error-message text-danger"></div>
-              </div>
+                  <div class="col-md-6">
+                    <div class="input-group mb-2">
+                      <span class="input-group-text">
+                        Item Refresh Delay (seconds)
+                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                          title="Time to wait between each item_refresh.">
+                          <i class="bi bi-info-circle-fill"></i>
+                        </span>
+                      </span>
+                      <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" min="0"
+                        value="{{ data['settings']['item_refresh_delay'] }}">
+                    </div>
+                  </div>
 
-              <div class="form-floating mb-2">
-                <input type="number" class="form-control" id="minimum_items" name="minimum_items" placeholder="" min="1"
-                  value="{{ data['settings']['minimum_items'] }}">
-                <label for="minimum_items">Minimum Items</label>
-                <div class="error-message text-danger"></div>
-              </div>
+                  <div class="col-md-6">
+                    <div class="input-group mb-2">
+                      <span class="input-group-text">
+                        Minimum Items
+                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                          title="Used to control minimum items required to build a collection/playlist.">
+                          <i class="bi bi-info-circle-fill"></i>
+                        </span>
+                      </span>
+                      <input type="number" class="form-control" id="minimum_items" name="minimum_items" min="1"
+                        value="{{ data['settings']['minimum_items'] }}">
+                    </div>
+                  </div>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_missing" name="show_missing" value="true" {% if
-                  data['settings']['show_missing']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="show_missing" value="false">
-                <label class="form-check-label" for="show_missing">Show Missing</label>
-              </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="input-group mb-2">
+                      <span class="input-group-text">
+                        Run Again Delay (minutes)
+                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                          title="Used to control the number of minutes to delay running run_again collections.">
+                          <i class="bi bi-info-circle-fill"></i>
+                        </span>
+                      </span>
+                      <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" min="0"
+                        value="{{ data['settings']['run_again_delay'] }}">
+                    </div>
+                  </div>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="delete_below_minimum" name="delete_below_minimum"
-                  value="true" {% if data['settings']['delete_below_minimum']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="delete_below_minimum" value="false">
-                <label class="form-check-label" for="delete_below_minimum">Delete Below Minimum</label>
-              </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="show_missing" name="show_missing" value="true"
+                    {% if data['settings']['show_missing']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="show_missing" value="false">
+                  <label class="form-check-label" for="show_missing">
+                    Show Missing
+                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                      title="Used to show missing items from collections or playlists.">
+                      <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                  </label>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="delete_not_scheduled" name="delete_not_scheduled"
-                  value="true" {% if data['settings']['delete_not_scheduled']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="delete_not_scheduled" value="false">
-                <label class="form-check-label" for="delete_not_scheduled">Delete Not Scheduled</label>
-              </div>
-
-              <div class="form-floating mb-2">
-                <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" min="0"
-                  value="{{ data['settings']['run_again_delay'] }}">
-                <label for="run_again_delay">Run Again Delay (minutes)</label>
-                <div class="error-message text-danger"></div>
-              </div>
+                <h6 class="fw-bold mt-3"><u>Playlist Settings</u></h6>
 
               <!-- Button to open the modal for playlist_sync_to_users -->
-              <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#syncUsersModal">
-                Select Sync Users
-              </button>
+                <div class="form-floating mb-2">
+                    <!-- Button to open the modal for playlist_sync_to_users -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#syncUsersModal">
+                        🔄 Select Sync Users
+                    </button>
+                    <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#excludeUsersModal">
+                        ❌ Select Exclude Users
+                    </button>
+                </div>
 
               <!-- Modal for selecting sync users -->
               <div class="modal fade" id="syncUsersModal" tabindex="-1" aria-labelledby="syncUsersModalLabel" aria-hidden="true">
@@ -290,10 +386,6 @@
                 </div>
               </div>
 
-              <!-- Button to open the modal for playlist_exclude_users -->
-              <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#excludeUsersModal">
-                Select Exclude Users
-              </button>
 
               <!-- Modal for selecting exclude users -->
               <div class="modal fade" id="excludeUsersModal" tabindex="-1" aria-labelledby="excludeUsersModalLabel" aria-hidden="true">
@@ -324,22 +416,46 @@
               </div>
 
               <!-- Form inputs to display selected users -->
-              <div class="form-floating mb-2">
-                <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users" value="{{ data['settings']['playlist_sync_to_users'] }}" readonly>
-                <label for="playlist_sync_to_users">Playlist Sync to Users (all, or comma-separated)</label>
-              </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" id="playlist_sync_to_users_text">
+                                Playlist Sync to Users
+                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="All users or a comma-separated list of users who will receive synced playlists.">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </span>
+                            </span>
+                            <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users"
+                                value="{{ data['settings']['playlist_sync_to_users'] }}" readonly>
+                        </div>
+                    </div>
 
-              <div class="form-floating mb-2">
-                <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users" value="{{ data['settings']['playlist_exclude_users'] }}" readonly>
-                <label for="playlist_exclude_users">Playlist Exclude Users (comma-separated)</label>
-              </div>
+                    <div class="col-md-6">
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" id="playlist_exclude_users_text">
+                                Playlist Exclude Users
+                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="A comma-separated list of users to exclude from synced playlists.">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </span>
+                            </span>
+                            <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users"
+                                value="{{ data['settings']['playlist_exclude_users'] }}" readonly>
+                        </div>
+                    </div>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="playlist_report" name="playlist_report" value="true"
-                  {% if data['settings']['playlist_report']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="playlist_report" value="false">
-                <label class="form-check-label" for="playlist_report">Playlist Report</label>
-              </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="playlist_report" name="playlist_report" value="true"
+                        {% if data['settings']['playlist_report']|string|lower=='true' %}checked{% endif %}>
+                    <input type="hidden" name="playlist_report" value="false">
+                    <label class="form-check-label" for="playlist_report">
+                        Playlist Report
+                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to print out a playlist report."></i>
+                    </label>
+                </div>
             </div>
           </div>
         </div>
@@ -354,56 +470,83 @@
           <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
             <div class="accordion-body">
 
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="missing_only_released" name="missing_only_released"
+                        value="true" {% if data['settings']['missing_only_released']|string|lower=='true' %}checked{% endif %}>
+                    <input type="hidden" name="missing_only_released" value="false">
+                    <label class="form-check-label" for="missing_only_released">
+                        Missing Only Released
+                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to filter unreleased items from missing lists."></i>
+                    </label>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="missing_only_released" name="missing_only_released"
-                  value="true" {% if data['settings']['missing_only_released']|string|lower=='true' %}checked{% endif
-                  %}>
-                <input type="hidden" name="missing_only_released" value="false">
-                <label class="form-check-label" for="missing_only_released">Missing Only Released</label>
-              </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="show_unconfigured" name="show_unconfigured"
+                        value="true" {% if data['settings']['show_unconfigured']|string|lower=='true' %}checked{% endif %}>
+                    <input type="hidden" name="show_unconfigured" value="false">
+                    <label class="form-check-label" for="show_unconfigured">
+                        Show Unconfigured
+                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to show collections not in the current run."></i>
+                    </label>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_unconfigured" name="show_unconfigured"
-                  value="true" {% if data['settings']['show_unconfigured']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="show_unconfigured" value="false">
-                <label class="form-check-label" for="show_unconfigured">Show Unconfigured</label>
-              </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="show_unmanaged" name="show_unmanaged"
+                        value="true" {% if data['settings']['show_unmanaged']|string|lower=='true' %}checked{% endif %}>
+                    <input type="hidden" name="show_unmanaged" value="false">
+                    <label class="form-check-label" for="show_unmanaged">
+                        Show Unmanaged
+                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to show collections not managed by Kometa."></i>
+                    </label>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_unmanaged" name="show_unmanaged" value="true"
-                  {% if data['settings']['show_unmanaged']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="show_unmanaged" value="false">
-                <label class="form-check-label" for="show_unmanaged">Show Unmanaged</label>
-              </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="show_filtered" name="show_filtered"
+                        value="true" {% if data['settings']['show_filtered']|string|lower=='true' %}checked{% endif %}>
+                    <input type="hidden" name="show_filtered" value="false">
+                    <label class="form-check-label" for="show_filtered">
+                        Show Filtered
+                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to show items filtered out."></i>
+                    </label>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_filtered" name="show_filtered" value="true" {%
-                  if data['settings']['show_filtered']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="show_filtered" value="false">
-                <label class="form-check-label" for="show_filtered">Show Filtered</label>
-              </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="show_unfiltered" name="show_unfiltered"
+                        value="true" {% if data['settings']['show_unfiltered']|string|lower=='true' %}checked{% endif %}>
+                    <input type="hidden" name="show_unfiltered" value="false">
+                    <label class="form-check-label" for="show_unfiltered">
+                        Show Unfiltered
+                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to show items which make it through filters."></i>
+                    </label>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_unfiltered" name="show_unfiltered" value="true" {%
-                  if data['settings']['show_unfiltered']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="show_unfiltered" value="false">
-                <label class="form-check-label" for="show_unfiltered">Show Unfiltered</label>
-              </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="only_filter_missing" name="only_filter_missing"
+                        value="true" {% if data['settings']['only_filter_missing']|string|lower=='true' %}checked{% endif %}>
+                    <input type="hidden" name="only_filter_missing" value="false">
+                    <label class="form-check-label" for="only_filter_missing">
+                        Only Filter Missing
+                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to have the filter only apply to missing items."></i>
+                    </label>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="only_filter_missing" name="only_filter_missing"
-                  value="true" {% if data['settings']['only_filter_missing']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="only_filter_missing" value="false">
-                <label class="form-check-label" for="only_filter_missing">Only Filter Missing</label>
-              </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="save_report" name="save_report"
+                        value="true" {% if data['settings']['save_report']|string|lower=='true' %}checked{% endif %}>
+                    <input type="hidden" name="save_report" value="false">
+                    <label class="form-check-label" for="save_report">
+                        Save Report
+                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to save a report YAML file."></i>
+                    </label>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="save_report" name="save_report" value="true" {% if
-                  data['settings']['save_report']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="save_report" value="false">
-                <label class="form-check-label" for="save_report">Save Report</label>
-              </div>
 
             </div>
           </div>
@@ -418,30 +561,60 @@
           </h2>
           <div id="CollapseFive" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
             <div class="accordion-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" id="tvdb_language_text">
+                                TVDB Language
+                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="Specify the language to query TVDb in.">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </span>
+                            </span>
+                            <select class="form-select" id="tvdb_language" name="tvdb_language">
+                                {% for code, language in data['iso_639_2_languages'] | sort(attribute='1') %}
+                                <option value="{{ code }}" {% if code==data['settings']['tvdb_language'] %}selected{% endif %}>
+                                    {{ language }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-              <div class="form-floating mb-2">
-                <select class="form-select" id="tvdb_language" name="tvdb_language">
-                  {% for code, language in data['iso_639_2_languages'] | sort(attribute='1') %}
-                  <option value="{{ code }}" {% if code==data['settings']['tvdb_language'] %}selected{% endif %}>{{
-                    language }}</option>
-                  {% endfor %}
-                </select>
-                <label for="tvdb_language">TVDB Language</label>
-              </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" id="ignore_ids_text">
+                                Ignore IDs
+                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="List of TMDb/TVDb IDs to ignore (e.g., 1,12345678).">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </span>
+                            </span>
+                            <input type="text" class="form-control" id="ignore_ids" name="ignore_ids"
+                                value="{{ data['settings']['ignore_ids'] }}">
+                        </div>
+                        <div class="error-message text-danger"></div>
+                    </div>
 
-              <div class="form-floating mb-2">
-                <input type="text" class="form-control" id="ignore_ids" name="ignore_ids" placeholder=""
-                value="{{ data['settings']['ignore_ids'] }}">
-                <label for="ignore_ids">Ignore IDs (TMDb/TVDb IDs e.g., 1,12345678)</label>
-                <div class="error-message text-danger"></div>
-              </div>
+                    <div class="col-md-6">
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" id="ignore_imdb_ids_text">
+                                Ignore IMDb IDs
+                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="List of IMDb IDs to ignore (e.g., tt1234567, tt12345678).">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </span>
+                            </span>
+                            <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids"
+                                value="{{ data['settings']['ignore_imdb_ids'] }}">
+                        </div>
+                        <div class="error-message text-danger"></div>
+                    </div>
+                </div>
 
-              <div class="form-floating mb-2">
-                <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids" placeholder=""
-                value="{{ data['settings']['ignore_imdb_ids'] }}">
-                <label for="ignore_imdb_ids">Ignore IMDb IDs (e.g., tt1234567, tt12345678)</label>
-                <div class="error-message text-danger"></div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -455,39 +628,84 @@
           </h2>
           <div id="CollapseSix" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
             <div class="accordion-body">
+                <div class="row">
+                  <div class="col-8">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="show_options" name="show_options" value="true"
+                        {% if data['settings']['show_options']|string|lower=='true' %}checked{% endif %}>
+                      <input type="hidden" name="show_options" value="false">
+                      <label class="form-check-label" for="show_options">
+                        Show Options
+                        <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                          title="Used to show attribute options from Plex."></i>
+                      </label>
+                    </div>
+                  </div>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="show_options" name="show_options" value="true" {% if
-                  data['settings']['show_options']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="show_options" value="false">
-                <label class="form-check-label" for="show_options">Show Options</label>
-              </div>
+                <div class="row mb-2">
+                  <div class="col-8">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        Run Order
+                        <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                          title="Used to specify the run order of the library components."></i>
+                      </span>
+                      <select class="form-select" id="run_order" name="run_order">
+                        <option value="operations metadata collections overlays" {% if ' '.join(data['settings']['run_order'])=='operations metadata collections overlays' %}selected{% endif %}>
+                          (default) operations metadata collections overlays
+                        </option>
+                        <option value="operations metadata overlays collections" {% if ' '.join(data['settings']['run_order'])=='operations metadata overlays collections' %}selected{% endif %}>
+                          operations metadata overlays collections
+                        </option>
+                        <option value="operations collections metadata overlays" {% if ' '.join(data['settings']['run_order'])=='operations collections metadata overlays' %}selected{% endif %}>
+                          operations collections metadata overlays
+                        </option>
+                        <option value="operations collections overlays metadata" {% if ' '.join(data['settings']['run_order'])=='operations collections overlays metadata' %}selected{% endif %}>
+                          operations collections overlays metadata
+                        </option>
+                        <option value="operations overlays metadata collections" {% if ' '.join(data['settings']['run_order'])=='operations overlays metadata collections' %}selected{% endif %}>
+                          operations overlays metadata collections
+                        </option>
+                        <option value="operations overlays collections metadata" {% if ' '.join(data['settings']['run_order'])=='operations overlays collections metadata' %}selected{% endif %}>
+                          operations overlays collections metadata
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
 
-              <div class="form-floating mb-2">
-                <select class="form-select" id="run_order" name="run_order">
-                  <option value="operations metadata collections overlays" {% if ' ' .join(data['settings']['run_order'])=='operations metadata collections overlays' %}selected{% endif %}>(default) operations metadata collections overlays</option>
-                  <option value="operations metadata overlays collections" {% if ' ' .join(data['settings']['run_order'])=='operations metadata overlays collections' %}selected{% endif %}>operations metadata overlays collections</option>
-                  <option value="operations collections metadata overlays" {% if ' ' .join(data['settings']['run_order'])=='operations collections metadata overlays' %}selected{% endif %}>operations collections metadata overlays</option>
-                  <option value="operations collections overlays metadata" {% if ' ' .join(data['settings']['run_order'])=='operations collections overlays metadata' %}selected{% endif %}>operations collections overlays metadata</option>
-                  <option value="operations overlays metadata collections" {% if ' ' .join(data['settings']['run_order'])=='operations overlays metadata collections' %}selected{% endif %}>operations overlays metadata collections</option>
-                  <option value="operations overlays collections metadata" {% if ' ' .join(data['settings']['run_order'])=='operations overlays collections metadata' %}selected{% endif %}>operations overlays collections metadata</option>
-                </select>
-                <label for="run_order">Run Order</label>
-              </div>
+                <div class="row">
+                  <div class="col-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" value="true"
+                        {% if data['settings']['verify_ssl']|string|lower=='true' %}checked{% endif %}>
+                      <input type="hidden" name="verify_ssl" value="false">
+                      <label class="form-check-label" for="verify_ssl">
+                        Verify SSL
+                        <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                          title="Used to verify SSL certificates when making requests."></i>
+                      </label>
+                    </div>
+                  </div>
+                </div>
 
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" value="true" {% if
-                  data['settings']['verify_ssl']|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="verify_ssl" value="false">
-                <label class="form-check-label" for="verify_ssl">Verify SSL</label>
-              </div>
+                <div class="row mb-2">
+                  <div class="col-8">
+                    <div class="input-group">
+                      <span class="input-group-text">
+                        Custom Repo
+                        <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                          title="Used to set up the custom repo file block type."></i>
+                      </span>
+                      <input type="text" class="form-control" id="custom_repo" name="custom_repo" placeholder=""
+                        value="{{ data['settings']['custom_repo'] }}">
+                    </div>
+                    <div class="error-message text-danger"></div>
+                  </div>
+                </div>
 
-              <div class="form-floating mb-2">
-                <input type="text" class="form-control" id="custom_repo" name="custom_repo" placeholder=""
-                value="{{ data['settings']['custom_repo'] }}">
-                <label for="custom_repo">Custom Repo</label>
-                <div class="error-message text-danger"></div>
-              </div>
+
             </div>
           </div>
         </div>
