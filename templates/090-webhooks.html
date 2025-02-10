@@ -59,7 +59,7 @@
                value="{% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}{{ data.webhooks[webhook] }}{% endif %}"
                oninput="setWebhookValidated(false, '{{ webhook }}')"
                aria-describedby="webhooks_{{ webhook }}_text">
-        <button class="btn btn-outline-success validate-button" type="button" onclick="validateWebhook('{{ webhook }}')">
+        <button class="btn btn-success validate-button" type="button" onclick="validateWebhook('{{ webhook }}')">
           Validate <i id="spinner_{{ webhook }}" class="spinner-border spinner-border-sm" role="status" style="display:none;"></i>
         </button>
       </div>
