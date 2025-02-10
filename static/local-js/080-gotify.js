@@ -40,28 +40,6 @@ document.getElementById('toggleTokenVisibility').addEventListener('click', funct
   this.innerHTML = currentType === 'password' ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>'
 })
 
-/* eslint-disable no-unused-vars */
-// Function to validate Gotify API key
-async function validateGotifyToken (url, token) {
-  const apiUrl = `${url}/version?token=${token}`
-  try {
-    const response = await fetch(apiUrl)
-    if (response.ok) {
-      const data = await response.json()
-      console.log('API Response:', data)
-      return true
-    } else {
-      const error = await response.json()
-      console.log('Invalid Gotify API key. Error:', error)
-      return false
-    }
-  } catch (error) {
-    console.error('Error validating Gotify token:', error)
-    return false
-  }
-}
-/* eslint-enable no-unused-vars */
-
 /* eslint-disable camelcase */
 // Event listener for the validate button
 document.getElementById('validateButton').addEventListener('click', function () {
@@ -72,6 +50,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
   if (!gotify_url || !gotify_token) {
     statusMessage.textContent = 'Please enter both Gotify URL and Token.'
     statusMessage.style.color = '#ea868f'
+    statusMessage.style.display = 'block'
     return
   }
 
