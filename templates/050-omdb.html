@@ -2,7 +2,7 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group mb-2">
-        <span class="input-group-text" id="omdb_apikey_text">
+        <span class="input-group-text" id="omdb_apikey_text" style="width: 233px; justify-content: space-between;">
             OMDb API Key
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                 title="Enter your OMDb API Key to allow Quickstart to authenticate with OMDb.">
@@ -28,7 +28,7 @@
     <div id="statusMessage" class="status-message mb-2"></div>
 
     <div class="input-group mb-2">
-        <span class="input-group-text" id="omdb_cache_expiration_text">
+        <span class="input-group-text" id="omdb_cache_expiration_text" style="width: 233px; justify-content: space-between;">
             Cache Expiration (in days)
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                 title="Set the duration in days for the OMDb API cache expiration.">

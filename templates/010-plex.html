@@ -2,7 +2,7 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group mb-2">
-        <span class="input-group-text" id="plex_url_text" style="width: 130px;">
+        <span class="input-group-text" id="plex_url_text" style="width: 160px; justify-content: space-between;">
         Plex URL
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
             title="You must provide the direct address you use to access your server, including the port. You cannot use https://app.plex.tv<br><br>
@@ -15,7 +15,7 @@
             aria-describedby="plex_url_text">
     </div>
     <div class="input-group mb-2">
-        <span class="input-group-text" id="plex_token_text" style="width: 130px;">
+        <span class="input-group-text" id="plex_token_text" style="width: 160px; justify-content: space-between;">
         Plex Token
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
             title="Your token may change if you sign out of your devices, <b>do not</b> use the token that is found in Preferences.xml<br><br>
@@ -46,7 +46,7 @@
         <div class="row">
             <div class="col">
                 <div class="input-group mb-2">
-                    <span class="input-group-text" id="plex_db_cache_text">
+                    <span class="input-group-text" id="plex_db_cache_text" style="width: 160px; justify-content: space-between;">
                     Cache Size (MB)
                     <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
                         title="Set the size of the main database cache, in MB. The default value is 40 and should be sufficient for just about every user. Increasing much beyond the default value is likely to only benefit users with extremely large media collections (as in, hundreds of thousands of episodes or movies).<br><br>
@@ -63,7 +63,7 @@
             </div>
             <div class="col">
                 <div class="input-group mb-2">
-                    <span class="input-group-text" id="plex_timeout_text">
+                    <span class="input-group-text" id="plex_timeout_text" style="width: 180px; justify-content: space-between;">
                     Timeout (seconds)
                     <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true"  style="margin-left: 10px;"
                         title="Set how long Kometa will attempt to communicate with Plex for.<br><br>If Plex does not respond to Kometa requests in the timeout, all Kometa can do is wait longer - it cannot try to communicate in any other way.">

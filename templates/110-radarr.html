@@ -2,7 +2,7 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_url_text">
+        <span class="input-group-text" id="radarr_url_text" style="width: 170px; justify-content: space-between;">
             Radarr URL
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                   title="Enter your Radarr URL including the port. If Radarr is running in Docker, ensure it's on the same network as Kometa.">
@@ -15,7 +15,7 @@
     </div>
 
     <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_token_text">
+        <span class="input-group-text" id="radarr_token_text" style="width: 170px; justify-content: space-between;">
             Radarr API Key
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                   title="Enter your Radarr API Key to allow Quickstart to authenticate with Radarr.">
@@ -42,7 +42,7 @@
     <div id="statusMessage" class="status-message mb-2"></div>
 
     <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_root_folder_path_text">
+        <span class="input-group-text" id="radarr_root_folder_path_text" style="width: 170px; justify-content: space-between;">
             Root Folder Path
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                   title="Select the root folder where Radarr should store movies.">
@@ -55,7 +55,7 @@
     </div>
 
     <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_quality_profile_text">
+        <span class="input-group-text" id="radarr_quality_profile_text" style="width: 170px; justify-content: space-between;">
             Quality Profile
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                   title="Choose the quality profile that determines the preferred resolution and format for movies.">
@@ -68,7 +68,7 @@
     </div>
 
     <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_availability_text">
+        <span class="input-group-text" id="radarr_availability_text" style="width: 170px; justify-content: space-between;">
             Availability
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                   title="Select when Radarr should consider a movie available for downloading.">
@@ -86,7 +86,7 @@
 
 
     <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_tag_text">
+        <span class="input-group-text" id="radarr_tag_text" style="width: 170px; justify-content: space-between;">
             Tag
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                   title="Enter a tag that will be applied to all movies added through Radarr.">
@@ -98,7 +98,7 @@
     </div>
 
     <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_radarr_path_text">
+        <span class="input-group-text" id="radarr_radarr_path_text" style="width: 170px; justify-content: space-between;">
             Radarr Path
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                   title="Specify the path Radarr should use when adding movies.">
@@ -110,7 +110,7 @@
     </div>
 
     <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_plex_path_text">
+        <span class="input-group-text" id="radarr_plex_path_text" style="width: 170px; justify-content: space-between;">
             Plex Path
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                   title="Set the path where Plex will find the movies added through Radarr.">

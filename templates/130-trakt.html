@@ -2,7 +2,7 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="input-group mb-2">
-      <span class="input-group-text" id="trakt_client_id_text">
+      <span class="input-group-text" id="trakt_client_id_text" style="width: 141px; justify-content: space-between;">
         Client ID
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
               title="Enter your Trakt Client ID here.">
@@ -14,7 +14,7 @@
              aria-describedby="trakt_client_id_text" oninput="updateTraktURL(this)">
     </div>
     <div class="input-group mb-2">
-      <span class="input-group-text" id="trakt_client_secret_text">
+      <span class="input-group-text" id="trakt_client_secret_text" style="width: 141px; justify-content: space-between;">
         Client Secret
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
               title="Enter your Trakt Client Secret here.">
@@ -42,7 +42,7 @@
       If you have a PIN you generated in the last few minutes, enter it below.<br>
     </div>
     <div class="input-group mb-2" id="urlField">
-      <span class="input-group-text" id="trakt_pin_text">
+      <span class="input-group-text" id="trakt_pin_text" style="width: 141px; justify-content: space-between;">
         Trakt PIN
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
               title="Enter the PIN received from Trakt for authentication.">
