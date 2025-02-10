@@ -5,6 +5,32 @@ document.addEventListener('DOMContentLoaded', function () {
   const saveExcludeChangesButton = document.getElementById('saveExcludeChangesButton')
   const configForm = document.getElementById('configForm')
   const validationMessages = document.getElementById('validation-messages')
+  const syncUsersModal = document.getElementById('syncUsersModal')
+  const excludeUsersModal = document.getElementById('excludeUsersModal')
+
+  function populateModalToggles (inputId, modalSelector, toggleClass) {
+    const selectedUsers = document.getElementById(inputId).value.split(', ').map(u => u.trim())
+
+    document.querySelectorAll(`${modalSelector} .${toggleClass}`).forEach(toggle => {
+      toggle.checked = selectedUsers.includes(toggle.value)
+    })
+
+    // Handle "All Users" toggle
+    const allToggle = document.querySelector(`${modalSelector} #sync_all_users`)
+    if (allToggle) {
+      allToggle.checked = selectedUsers.includes('all')
+    }
+  }
+
+  // Populate Sync Users modal when opened
+  syncUsersModal.addEventListener('show.bs.modal', function () {
+    populateModalToggles('playlist_sync_to_users', '#syncUsersModal', 'sync-user-toggle')
+  })
+
+  // Populate Exclude Users modal when opened
+  excludeUsersModal.addEventListener('show.bs.modal', function () {
+    populateModalToggles('playlist_exclude_users', '#excludeUsersModal', 'exclude-user-toggle')
+  })
 
   saveSyncChangesButton.addEventListener('click', function () {
     const selectedUsers = []
