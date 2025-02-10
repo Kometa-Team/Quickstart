@@ -366,25 +366,24 @@
                     </div>
                     <div class="modal-body">
                       <div id="syncUserListForm">
-                        <div class="form-check">
-                          <input class="form-check-input sync-user-checkbox" type="checkbox" value="all" id="sync_all_users">
-                          <label class="form-check-label" for="sync_all_users">
-                            All Users
-                          </label>
-                        </div>
-                        {% set user_list = plex_data['plex']['tmp_user_list'].split(',') if plex_data['plex']['tmp_user_list'] else [] %}
-                        {% for username in user_list %}
-                        <div class="form-check">
-                          <input class="form-check-input sync-user-checkbox" type="checkbox" value="{{ username }}" id="sync_user_{{ loop.index }}">
-                          <label class="form-check-label" for="sync_user_{{ loop.index }}">
-                            {{ username }}
-                          </label>
-                        </div>
-                        {% endfor %}
+                          <div class="form-check form-switch">
+                              <input class="form-check-input sync-user-toggle" type="checkbox" value="all" id="sync_all_users">
+                              <label class="form-check-label" for="sync_all_users">
+                                  All Users
+                              </label>
+                          </div>
+                          {% set user_list = plex_data['plex']['tmp_user_list'].split(',') if plex_data['plex']['tmp_user_list'] else [] %}
+                          {% for username in user_list %}
+                          <div class="form-check form-switch">
+                              <input class="form-check-input sync-user-toggle" type="checkbox" value="{{ username }}" id="sync_user_{{ loop.index }}">
+                              <label class="form-check-label" for="sync_user_{{ loop.index }}">
+                                  {{ username }}
+                              </label>
+                          </div>
+                          {% endfor %}
                       </div>
-                    </div>
+                  </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                       <button type="button" class="btn btn-primary" id="saveSyncChangesButton">Apply</button>
                     </div>
                   </div>
@@ -401,19 +400,18 @@
                     </div>
                     <div class="modal-body">
                       <div id="excludeUserListForm">
-                        {% set user_list = plex_data['plex']['tmp_user_list'].split(',') if plex_data['plex']['tmp_user_list'] else [] %}
-                        {% for username in user_list %}
-                        <div class="form-check">
-                          <input class="form-check-input exclude-user-checkbox" type="checkbox" value="{{ username }}" id="exclude_user_{{ loop.index }}">
-                          <label class="form-check-label" for="exclude_user_{{ loop.index }}">
-                            {{ username }}
-                          </label>
-                        </div>
-                        {% endfor %}
+                          {% set user_list = plex_data['plex']['tmp_user_list'].split(',') if plex_data['plex']['tmp_user_list'] else [] %}
+                          {% for username in user_list %}
+                          <div class="form-check form-switch">
+                              <input class="form-check-input exclude-user-toggle" type="checkbox" value="{{ username }}" id="exclude_user_{{ loop.index }}">
+                              <label class="form-check-label" for="exclude_user_{{ loop.index }}">
+                                  {{ username }}
+                              </label>
+                          </div>
+                          {% endfor %}
                       </div>
-                    </div>
+                  </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                       <button type="button" class="btn btn-primary" id="saveExcludeChangesButton">Apply</button>
                     </div>
                   </div>
