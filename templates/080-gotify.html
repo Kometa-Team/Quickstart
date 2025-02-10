@@ -10,7 +10,7 @@
         </span>
       </span>
       <input type="text" class="form-control" id="gotify_url" name="gotify_url"
-             value="{{ data['gotify']['url'] if data['gotify']['url'] and 'http://192.168.1.12:80' not in data['gotify']['url'] else '' }}"
+             value="{{ data['gotify']['url'] | string if data['gotify']['url'] and 'http://192.168.1.12:80' not in data['gotify']['url'] | string else '' }}"
              title="Gotify URL" aria-describedby="gotify_url_text">
     </div>
 
@@ -23,7 +23,7 @@
         </span>
       </span>
       <input type="password" class="form-control" id="gotify_token" name="gotify_token"
-             value="{{ data['gotify']['token'] if data['gotify']['token'] and 'Enter Gotify Token' not in data['gotify']['token'] else '' }}"
+             value="{{ data['gotify']['token'] | string if data['gotify']['token'] and 'Enter Gotify Token' not in data['gotify']['token'] | string else '' }}"
              title="Gotify API Key" aria-describedby="gotify_token_text">
       <button class="btn btn-secondary" id="toggleTokenVisibility" type="button">
         <i class="fas fa-eye"></i>

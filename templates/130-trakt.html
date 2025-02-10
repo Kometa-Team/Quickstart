@@ -10,7 +10,7 @@
         </span>
       </span>
       <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id"
-             value="{{ data['trakt']['client_id'] if data['trakt']['client_id'] and 'Enter Trakt Client ID' not in data['trakt']['client_id'] else '' }}"
+             value="{{ data['trakt']['client_id'] | string if data['trakt']['client_id'] and 'Enter Trakt Client ID' not in data['trakt']['client_id'] | string else '' }}"
              aria-describedby="trakt_client_id_text" oninput="updateTraktURL(this)">
     </div>
     <div class="input-group mb-2">
@@ -22,7 +22,7 @@
         </span>
       </span>
       <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret"
-             value="{{ data['trakt']['client_secret'] if data['trakt']['client_secret'] and 'Enter Trakt Client Secret' not in data['trakt']['client_secret'] else '' }}"
+             value="{{ data['trakt']['client_secret'] | string if data['trakt']['client_secret'] and 'Enter Trakt Client Secret' not in data['trakt']['client_secret'] | string else '' }}"
              title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)" aria-describedby="trakt_client_secret_text">
       <button class="btn btn-outline-secondary" id="toggleClientSecretVisibility" type="button">
         <i class="fas fa-eye"></i>

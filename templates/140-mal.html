@@ -10,7 +10,7 @@
         </span>
       </span>
       <input type="text" class="form-control" id="mal_client_id" name="mal_client_id"
-             value="{{ data['mal']['client_id'] if data['mal']['client_id'] and 'Enter MyAnimeList Client ID' not in data['mal']['client_id'] else '' }}"
+             value="{{ data['mal']['client_id'] | string if data['mal']['client_id'] and 'Enter MyAnimeList Client ID' not in data['mal']['client_id'] | string else '' }}"
              oninput="updateMALTargetURL(this)" aria-describedby="mal_client_id_text">
     </div>
     <div class="input-group mb-2">
@@ -25,7 +25,7 @@
         </span>
       </span>
       <input type="password" class="form-control" id="mal_client_secret" name="mal_client_secret"
-             value="{{ data['mal']['client_secret'] if data['mal']['client_secret'] and 'Enter MyAnimeList Client Secret' not in data['mal']['client_secret'] else '' }}"
+             value="{{ data['mal']['client_secret'] | string if data['mal']['client_secret'] and 'Enter MyAnimeList Client Secret' not in data['mal']['client_secret'] | string else '' }}"
              title="Client Secret" aria-label="Client Secret" oninput="updateMALTargetURL(this)" aria-describedby="mal_client_secret_text">
       <button class="btn btn-outline-secondary" id="toggleClientSecretVisibility" type="button">
         <i class="fas fa-eye"></i>
