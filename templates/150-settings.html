@@ -16,7 +16,7 @@
             <div class="accordion-body">
               <h6 class="fw-bold mt-3"><u>Asset Settings</u></h6>
               <div class="row mb-2">
-                  <div class="col-md-9">
+                  <div class="col-md-8">
                       <div id="asset_directory_container">
                         <label>Asset Directory
                             <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
@@ -43,6 +43,22 @@
                   </div>
               </div>
 
+              <div class="row mb-2">
+                  <div class="col-md-6">
+                      <div class="input-group">
+                        <span class="input-group-text" id="asset_depth_text">
+                          Asset Depth
+                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                title="Specify how many folder levels to scan for an item within the asset directory.<br><br><b>Tip:</b> Increasing the amount of levels to scan will reduce performance.<br><br><b>Warning:</b> <code>asset_folders</code> must be set to <code>true</code> for this to take effect.">
+                            <i class="bi bi-info-circle-fill"></i>
+                          </span>
+                        </span>
+
+                          <input type="number" class="form-control" id="asset_depth" name="asset_depth"
+                                 value="{{ data['settings']['asset_depth'] }}" min="0" aria-describedby="asset_depth_text">
+                      </div>
+                  </div>
+              </div>
 
               <div class="form-check form-switch">
                 <input class="form-check-input" type="checkbox" id="asset_folders" name="asset_folders" value="true" {% if data['settings']['asset_folders']|string|lower=='true' %}checked{% endif %}>
@@ -63,24 +79,8 @@
                   <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                      title="Whilst searching for assets, if an asset folder cannot be found within the <code>asset_directory</code> one will be created.<br><br><b>Tip:</b> This is useful when automatically managing large libraries where new assets may be added dynamically."></i>
                 </label>
-
               </div>
-              <div class="row mb-2">
-                  <div class="col-md-6">
-                      <div class="input-group">
-                        <span class="input-group-text" id="asset_depth_text">
-                          Asset Depth
-                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                title="Specify how many folder levels to scan for an item within the asset directory.<br><br><b>Tip:</b> Increasing the amount of levels to scan will reduce performance.<br><br><b>Warning:</b> <code>asset_folders</code> must be set to <code>true</code> for this to take effect.">
-                            <i class="bi bi-info-circle-fill"></i>
-                          </span>
-                        </span>
 
-                          <input type="number" class="form-control" id="asset_depth" name="asset_depth"
-                                 value="{{ data['settings']['asset_depth'] }}" min="0" aria-describedby="asset_depth_text">
-                      </div>
-                  </div>
-              </div>
 
               <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" id="prioritize_assets" name="prioritize_assets" value="true"
@@ -259,120 +259,123 @@
           <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
             <div class="accordion-body">
                 <h6 class="fw-bold mt-3"><u>Collection Settings</u></h6>
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="input-group mb-2">
-                        <span class="input-group-text">
-                          Sync Mode
-                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                title="Sets the sync_mode for collections and playlists. Setting the sync_mode directly in a collection or playlist definition will override this setting.">
-                            <i class="bi bi-info-circle-fill"></i>
-                          </span>
-                        </span>
 
-                      <select class="form-select" id="sync_mode" name="sync_mode">
-                        <option value="append" {% if data['settings']['sync_mode']=='append' %}selected{% endif %}>Append (default)</option>
-                        <option value="sync" {% if data['settings']['sync_mode']=='sync' %}selected{% endif %}>Sync</option>
-                      </select>
-                    </div>
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="show_missing" name="show_missing" value="true"
+                    {% if data['settings']['show_missing']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="show_missing" value="false">
+                  <label class="form-check-label" for="show_missing">
+                    Show Missing
+                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                          title="While enabled, missing items from collections or playlists will be displayed.">
+                      <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                  </label>
+                </div>
+
+                <div class="col-md-8">
+                  <div class="input-group mb-2">
+                    <span class="input-group-text" style="width: 256px; justify-content: space-between;">
+                      Sync Mode
+                      <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                            title="Sets the sync_mode for collections and playlists. Setting the sync_mode directly in a collection or playlist definition will override this setting.">
+                        <i class="bi bi-info-circle-fill"></i>
+                      </span>
+                    </span>
+                    <select class="form-select" id="sync_mode" name="sync_mode">
+                      <option value="append" {% if data['settings']['sync_mode']=='append' %}selected{% endif %}>Append (default)</option>
+                      <option value="sync" {% if data['settings']['sync_mode']=='sync' %}selected{% endif %}>Sync</option>
+                    </select>
                   </div>
+                </div>
 
-                  <div class="col-md-6">
-                    <div class="input-group mb-2">
-                        <span class="input-group-text">
-                          Default Collection Order
-                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                title="Set the collection_order for every collection run by Kometa unless the collection has a specific collection_order defined.">
-                            <i class="bi bi-info-circle-fill"></i>
-                          </span>
-                        </span>
-
-                      <select class="form-select" id="default_collection_order" name="default_collection_order">
-                        <option value="release.asc" {% if data['settings']['default_collection_order']=='release.asc' %}selected{% endif %}>Release Date (Ascending)</option>
-                        <option value="release.desc" {% if data['settings']['default_collection_order']=='release.desc' %}selected{% endif %}>Release Date (Descending)</option>
-                        <option value="added.asc" {% if data['settings']['default_collection_order']=='added.asc' %}selected{% endif %}>Added to Library (Ascending)</option>
-                        <option value="added.desc" {% if data['settings']['default_collection_order']=='added.desc' %}selected{% endif %}>Added to Library (Descending)</option>
-                        <option value="alpha" {% if data['settings']['default_collection_order']=='alpha' %}selected{% endif %}>Alphabetical</option>
-                        <option value="originally_available.asc" {% if data['settings']['default_collection_order']=='originally_available.asc' %}selected{% endif %}>Originally Available (Ascending)</option>
-                        <option value="originally_available.desc" {% if data['settings']['default_collection_order']=='originally_available.desc' %}selected{% endif %}>Originally Available (Descending)</option>
-                        <option value="random" {% if data['settings']['default_collection_order']=='random' %}selected{% endif %}>Random</option>
-                        <option value="rating.desc" {% if data['settings']['default_collection_order']=='rating.desc' %}selected{% endif %}>Rating (Descending)</option>
-                        <option value="rating.asc" {% if data['settings']['default_collection_order']=='rating.asc' %}selected{% endif %}>Rating (Ascending)</option>
-                        <option value="duration.desc" {% if data['settings']['default_collection_order']=='duration.desc' %}selected{% endif %}>Duration (Descending)</option>
-                        <option value="duration.asc" {% if data['settings']['default_collection_order']=='duration.asc' %}selected{% endif %}>Duration (Ascending)</option>
-                        <option value="plays.desc" {% if data['settings']['default_collection_order']=='plays.desc' %}selected{% endif %}>Plays (Descending)</option>
-                        <option value="plays.asc" {% if data['settings']['default_collection_order']=='plays.asc' %}selected{% endif %}>Plays (Ascending)</option>
-                        <option value="last_played.desc" {% if data['settings']['default_collection_order']=='last_played.desc' %}selected{% endif %}>Last Played (Descending)</option>
-                        <option value="last_played.asc" {% if data['settings']['default_collection_order']=='last_played.asc' %}selected{% endif %}>Last Played (Ascending)</option>
-                      </select>
-                    </div>
+                <div class="col-md-8">
+                  <div class="input-group mb-2">
+                    <span class="input-group-text" style="width: 256px; justify-content: space-between;">
+                      Default Collection Order
+                      <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                            title="Set the collection_order for every collection run by Kometa unless the collection has a specific collection_order defined.">
+                        <i class="bi bi-info-circle-fill"></i>
+                      </span>
+                    </span>
+                    <select class="form-select" id="default_collection_order" name="default_collection_order">
+                      <option value="release.asc" {% if data['settings']['default_collection_order']=='release.asc' %}selected{% endif %}>Release Date (Ascending)</option>
+                      <option value="release.desc" {% if data['settings']['default_collection_order']=='release.desc' %}selected{% endif %}>Release Date (Descending)</option>
+                      <option value="added.asc" {% if data['settings']['default_collection_order']=='added.asc' %}selected{% endif %}>Added to Library (Ascending)</option>
+                      <option value="added.desc" {% if data['settings']['default_collection_order']=='added.desc' %}selected{% endif %}>Added to Library (Descending)</option>
+                      <option value="alpha" {% if data['settings']['default_collection_order']=='alpha' %}selected{% endif %}>Alphabetical</option>
+                      <option value="originally_available.asc" {% if data['settings']['default_collection_order']=='originally_available.asc' %}selected{% endif %}>Originally Available (Ascending)</option>
+                      <option value="originally_available.desc" {% if data['settings']['default_collection_order']=='originally_available.desc' %}selected{% endif %}>Originally Available (Descending)</option>
+                      <option value="random" {% if data['settings']['default_collection_order']=='random' %}selected{% endif %}>Random</option>
+                      <option value="rating.desc" {% if data['settings']['default_collection_order']=='rating.desc' %}selected{% endif %}>Rating (Descending)</option>
+                      <option value="rating.asc" {% if data['settings']['default_collection_order']=='rating.asc' %}selected{% endif %}>Rating (Ascending)</option>
+                      <option value="duration.desc" {% if data['settings']['default_collection_order']=='duration.desc' %}selected{% endif %}>Duration (Descending)</option>
+                      <option value="duration.asc" {% if data['settings']['default_collection_order']=='duration.asc' %}selected{% endif %}>Duration (Ascending)</option>
+                      <option value="plays.desc" {% if data['settings']['default_collection_order']=='plays.desc' %}selected{% endif %}>Plays (Descending)</option>
+                      <option value="plays.asc" {% if data['settings']['default_collection_order']=='plays.asc' %}selected{% endif %}>Plays (Ascending)</option>
+                      <option value="last_played.desc" {% if data['settings']['default_collection_order']=='last_played.desc' %}selected{% endif %}>Last Played (Descending)</option>
+                      <option value="last_played.asc" {% if data['settings']['default_collection_order']=='last_played.asc' %}selected{% endif %}>Last Played (Ascending)</option>
+                    </select>
                   </div>
+                </div>
 
-
-                  <div class="col-md-6">
-                    <div class="input-group mb-2">
-                        <span class="input-group-text">
-                          Item Refresh Delay (seconds)
-                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                title="Specify the number of seconds to wait between each item_refresh of every movie/show in a collection or playlist.<br><br><b>Tip:</b> Useful if your Plex Media Server is experiencing high request levels.">
-                            <i class="bi bi-info-circle-fill"></i>
-                          </span>
-                        </span>
-
-                      <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" min="0"
-                        value="{{ data['settings']['item_refresh_delay'] }}">
-                    </div>
+                <div class="col-md-8">
+                  <div class="input-group mb-2">
+                    <span class="input-group-text"style="width: 256px; justify-content: space-between;">
+                      Item Refresh Delay (seconds)
+                      <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                            title="Specify the number of seconds to wait between each item_refresh of every movie/show in a collection or playlist.">
+                        <i class="bi bi-info-circle-fill"></i>
+                      </span>
+                    </span>
+                    <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" min="0"
+                      value="{{ data['settings']['item_refresh_delay'] }}">
                   </div>
+                </div>
 
-                  <div class="col-md-6">
-                    <div class="input-group mb-2">
-                    <span class="input-group-text">
+                <div class="col-md-8">
+                  <div class="input-group mb-2">
+                    <span class="input-group-text" style="width: 256px; justify-content: space-between;">
                       Minimum Items
                       <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                             title="Set the minimum number of items that must be found in order to build or update a collection or playlist.">
                         <i class="bi bi-info-circle-fill"></i>
                       </span>
                     </span>
-
-                      <input type="number" class="form-control" id="minimum_items" name="minimum_items" min="1"
-                        value="{{ data['settings']['minimum_items'] }}">
-                    </div>
+                    <input type="number" class="form-control" id="minimum_items" name="minimum_items" min="1"
+                      value="{{ data['settings']['minimum_items'] }}">
                   </div>
                 </div>
 
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="input-group mb-2">
-                    <span class="input-group-text">
+                <div class="col-md-8">
+                  <div class="input-group mb-2">
+                    <span class="input-group-text" style="width: 256px; justify-content: space-between;">
                       Run Again Delay (minutes)
                       <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                            title="Set the number of minutes to delay running run_again collections after the daily run is finished.<br><br><b>Tip:</b> Useful for allowing time for Sonarr/Radarr to process newly added items before running Kometa again.">
+                            title="Set the number of minutes to delay running run_again collections after the daily run is finished.">
                         <i class="bi bi-info-circle-fill"></i>
                       </span>
                     </span>
-
-                      <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" min="0"
-                        value="{{ data['settings']['run_again_delay'] }}">
-                    </div>
+                    <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" min="0"
+                      value="{{ data['settings']['run_again_delay'] }}">
                   </div>
-                </div>
-
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="show_missing" name="show_missing" value="true"
-                    {% if data['settings']['show_missing']|string|lower=='true' %}checked{% endif %}>
-                  <input type="hidden" name="show_missing" value="false">
-                    <label class="form-check-label" for="show_missing">
-                      Show Missing
-                      <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                            title="While enabled, missing items from collections or playlists will be displayed.">
-                        <i class="bi bi-info-circle-fill"></i>
-                      </span>
-                    </label>
-
                 </div>
 
                 <h6 class="fw-bold mt-3"><u>Playlist Settings</u></h6>
 
+
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="playlist_report" name="playlist_report" value="true"
+                        {% if data['settings']['playlist_report']|string|lower=='true' %}checked{% endif %}>
+                    <input type="hidden" name="playlist_report" value="false">
+                    <label class="form-check-label" for="playlist_report">
+                      Playlist Report
+                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="Enable this setting to print out a playlist report at the end of the log.">
+                      </i>
+                    </label>
+
+                </div>
               <!-- Button to open the modal for playlist_sync_to_users -->
                 <div class="form-floating mb-2">
                     <!-- Button to open the modal for playlist_sync_to_users -->
@@ -476,19 +479,6 @@
                                 value="{{ data['settings']['playlist_exclude_users'] }}" readonly>
                         </div>
                     </div>
-                </div>
-
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="playlist_report" name="playlist_report" value="true"
-                        {% if data['settings']['playlist_report']|string|lower=='true' %}checked{% endif %}>
-                    <input type="hidden" name="playlist_report" value="false">
-                    <label class="form-check-label" for="playlist_report">
-                      Playlist Report
-                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                         title="Enable this setting to print out a playlist report at the end of the log.">
-                      </i>
-                    </label>
-
                 </div>
             </div>
           </div>
@@ -612,7 +602,7 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="input-group mb-2">
-                            <span class="input-group-text" id="tvdb_language_text">
+                            <span class="input-group-text" id="tvdb_language_text" style="width: 165px; justify-content: space-between;">
                               TVDB Language
                               <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                                     title="Specify the language to query TVDb in. If no language is specified or the specified language is not found, the original language is used.">
@@ -620,7 +610,7 @@
                               </span>
                             </span>
 
-                            <select class="form-select" id="tvdb_language" name="tvdb_language">
+                            <select class="form-select" id="tvdb_language" name="tvdb_language" style="width: 165px; justify-content: space-between;">
                                 {% for code, language in data['iso_639_2_languages'] | sort(attribute='1') %}
                                 <option value="{{ code }}" {% if code==data['settings']['tvdb_language'] %}selected{% endif %}>
                                     {{ language }}
@@ -634,7 +624,7 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="input-group mb-2">
-                            <span class="input-group-text" id="ignore_ids_text">
+                            <span class="input-group-text" id="ignore_ids_text" style="width: 165px; justify-content: space-between;">
                               Ignore IDs
                               <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                                     title="Set a list or comma-separated string of TMDb/TVDb IDs to ignore in all collections.">
@@ -695,11 +685,26 @@
                     </div>
                   </div>
                 </div>
+                <div class="row">
+                  <div class="col-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" value="true"
+                        {% if data['settings']['verify_ssl']|string|lower=='true' %}checked{% endif %}>
+                      <input type="hidden" name="verify_ssl" value="false">
+                        <label class="form-check-label" for="verify_ssl">
+                          Verify SSL
+                          <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                             title="When enabled, verifies SSL certificates for secure requests. If disabled, Kometa will ignore SSL verification errors.">
+                          </i>
+                        </label>
 
+                    </div>
+                  </div>
+                </div>
                 <div class="row mb-2">
                   <div class="col-8">
                     <div class="input-group">
-                        <span class="input-group-text">
+                        <span class="input-group-text" style="width: 141px; justify-content: space-between;">
                           Run Order
                           <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
                              title="Specify the run order of the library components, including Library Operations, Collection Files, and Overlay Files.">
@@ -730,27 +735,10 @@
                   </div>
                 </div>
 
-                <div class="row">
-                  <div class="col-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" value="true"
-                        {% if data['settings']['verify_ssl']|string|lower=='true' %}checked{% endif %}>
-                      <input type="hidden" name="verify_ssl" value="false">
-                        <label class="form-check-label" for="verify_ssl">
-                          Verify SSL
-                          <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                             title="When enabled, verifies SSL certificates for secure requests. If disabled, Kometa will ignore SSL verification errors.">
-                          </i>
-                        </label>
-
-                    </div>
-                  </div>
-                </div>
-
                 <div class="row mb-2">
                   <div class="col-8">
                     <div class="input-group">
-                        <span class="input-group-text">
+                        <span class="input-group-text" style="width: 141px; justify-content: space-between;">
                           Custom Repo
                           <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
                              title="Specify a custom repository URL or path to use for additional collection, metadata, or overlay files.">
