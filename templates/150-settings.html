@@ -18,10 +18,15 @@
               <div class="row mb-2">
                   <div class="col-md-9">
                       <div id="asset_directory_container">
-                          <label>Asset Directory
-                              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                                 title="Used to define where local assets are located."></i>
-                          </label>
+                        <label>Asset Directory
+                            <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                               title="Specify the directories where assets (posters, backgrounds, etc.) are located.
+
+                               <br><br><b>Tip:</b> Assets can be stored anywhere on the host system that Kometa has visibility of (i.e. if using Docker, the directory must be mounted/visible to the Docker container).
+
+                               <br><br><b>Warning:</b> Kometa will not create asset directories. Asset directories you specify here need to exist already."></i>
+                        </label>
+
                           {% for directory in data['settings']['asset_directory'] %}
                           <div class="input-group mb-2">
                               <input type="text" class="form-control" name="asset_directory" id="asset_directory_{{ loop.index }}"
@@ -44,8 +49,10 @@
                 <input type="hidden" name="asset_folders" value="false">
                 <label class="form-check-label" for="asset_folders">
                   Asset Folders
-                  <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true" title="Used to control the asset directory folder structure."></i>
+                  <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                     title="While <code>true</code>, Kometa will search the <code>asset_directory</code> for a dedicated folder per item. If <code>false</code>, it will look for an image instead.<br><br><b>Example:</b> When <code>true</code>, the path would be <code><asset_directory_path>;/Star Wars/poster.png</code> instead of <code><asset_directory_path>/Star Wars.png</code>."></i>
                 </label>
+
               </div>
 
               <div class="form-check form-switch">
@@ -53,19 +60,22 @@
                 <input type="hidden" name="create_asset_folders" value="false">
                 <label class="form-check-label" for="create_asset_folders">
                   Create Asset Folders
-                  <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true" title="Used to automatically create asset folders when none exist."></i>
+                  <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                     title="Whilst searching for assets, if an asset folder cannot be found within the <code>asset_directory</code> one will be created.<br><br><b>Tip:</b> This is useful when automatically managing large libraries where new assets may be added dynamically."></i>
                 </label>
+
               </div>
               <div class="row mb-2">
                   <div class="col-md-6">
                       <div class="input-group">
-                          <span class="input-group-text" id="asset_depth_text">
-                              Asset Depth
-                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                    title="Used to control the depth of search in the asset directory.">
-                                  <i class="bi bi-info-circle-fill"></i>
-                              </span>
+                        <span class="input-group-text" id="asset_depth_text">
+                          Asset Depth
+                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                title="Specify how many folder levels to scan for an item within the asset directory.<br><br><b>Tip:</b> Increasing the amount of levels to scan will reduce performance.<br><br><b>Warning:</b> <code>asset_folders</code> must be set to <code>true</code> for this to take effect.">
+                            <i class="bi bi-info-circle-fill"></i>
                           </span>
+                        </span>
+
                           <input type="number" class="form-control" id="asset_depth" name="asset_depth"
                                  value="{{ data['settings']['asset_depth'] }}" min="0" aria-describedby="asset_depth_text">
                       </div>
@@ -76,88 +86,96 @@
                   <input class="form-check-input" type="checkbox" id="prioritize_assets" name="prioritize_assets" value="true"
                       {% if data['settings']['prioritize_assets']|string|lower=='true' %}checked{% endif %}>
                   <input type="hidden" name="prioritize_assets" value="false">
-                  <label class="form-check-label" for="prioritize_assets">
+                    <label class="form-check-label" for="prioritize_assets">
                       Prioritize Assets
                       <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                         title="Used to prioritize asset_directory images over all other image types."></i>
-                  </label>
+                         title="When determining which image to use on an item, prioritize the <code>asset_directory</code> over all other image sources.<br><br><b>Tip:</b> This setting is useful when you want to ensure that local assets are always used over externally sourced images."></i>
+                    </label>
+
               </div>
 
               <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" id="dimensional_asset_rename" name="dimensional_asset_rename" value="true"
                       {% if data['settings']['dimensional_asset_rename']|string|lower=='true' %}checked{% endif %}>
                   <input type="hidden" name="dimensional_asset_rename" value="false">
-                  <label class="form-check-label" for="dimensional_asset_rename">
+                    <label class="form-check-label" for="dimensional_asset_rename">
                       Dimensional Asset Rename
                       <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                         title="Used to automatically rename asset files based on their dimensions."></i>
-                  </label>
+                         title="Whilst searching for assets, scan the folders within the <code>asset_directory</code> and if an asset poster (i.e. <code>/ASSET_NAME/poster.ext</code>) was not found, rename the first image found that has a height greater than or equal to its width to <code>poster.ext</code>. If an asset background (i.e. <code>/ASSET_NAME/background.ext</code>), rename the first image found that has a width greater than its height to <code>background.ext</code>.<br><br><b>Tip:</b> <code>asset_folders</code> must be set to <code>true</code> for this to take effect."></i>
+                    </label>
+
               </div>
               <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" id="download_url_assets" name="download_url_assets"
                       value="true" {% if data['settings']['download_url_assets']|string|lower=='true' %}checked{% endif %}>
                   <input type="hidden" name="download_url_assets" value="false">
-                  <label class="form-check-label" for="download_url_assets">
+                    <label class="form-check-label" for="download_url_assets">
                       Download URL Assets
                       <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                         title="Used to download URL images into the asset directory."></i>
-                  </label>
+                         title="Whilst searching for assets, download images set within Collection/Metadata/Playlist files (i.e. images set by <code>url_poster</code> or <code>url_background</code>) into the asset folder if none are already present."></i>
+                    </label>
+
               </div>
 
               <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" id="show_missing_assets" name="show_missing_assets"
                       value="true" {% if data['settings']['show_missing_assets']|string|lower=='true' %}checked{% endif %}>
                   <input type="hidden" name="show_missing_assets" value="false">
-                  <label class="form-check-label" for="show_missing_assets">
+                    <label class="form-check-label" for="show_missing_assets">
                       Show Missing Assets
                       <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                         title="Used to print a message when assets are missing."></i>
-                  </label>
+                         title="Display missing asset warnings for items, collections, and playlists."></i>
+                    </label>
+
               </div>
 
               <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" id="show_missing_season_assets" name="show_missing_season_assets"
                       value="true" {% if data['settings']['show_missing_season_assets']|string|lower=='true' %}checked{% endif %}>
                   <input type="hidden" name="show_missing_season_assets" value="false">
-                  <label class="form-check-label" for="show_missing_season_assets">
+                    <label class="form-check-label" for="show_missing_season_assets">
                       Show Missing Season Assets
                       <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                         title="Used to show any missing season assets."></i>
-                  </label>
+                         title="Whilst searching for assets, when scanning for assets for a TV Show, if Season posters are found (i.e. <code>/ASSET_NAME/Season##.ext</code>), notify the user of any seasons which do not have an asset image.<br><br><b>Tip:</b> Shows/Hides messages like these for seasons/albums:<br> - 'Asset Warning: No poster found for {item_title} in the assets folder {directory}'<br> - 'Asset Warning: No poster {name} found in the assets folders'<br> - 'Missing Season {season_number} Poster'"></i>
+                    </label>
+
               </div>
 
               <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" id="show_missing_episode_assets" name="show_missing_episode_assets"
                       value="true" {% if data['settings']['show_missing_episode_assets']|string|lower=='true' %}checked{% endif %}>
-                  <input type="hidden" name="show_missing_episode_assets" value="false">
-                  <label class="form-check-label" for="show_missing_episode_assets">
+                    <input type="hidden" name="show_missing_episode_assets" value="false">
+                    <label class="form-check-label" for="show_missing_episode_assets">
                       Show Missing Episode Assets
                       <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                         title="Used to show any missing episode assets."></i>
-                  </label>
+                         title="Whilst searching for assets, when scanning for assets for a TV Show, if an Episode Title Card is found (i.e. <code>/ASSET_NAME/S##E##.ext</code>), notify the user of any episodes which do not have an asset image.<br><br><b>Tip:</b> Shows/Hides messages like these for episodes:<br> - 'Asset Warning: No poster found for {item_title} in the assets folder {directory}'<br> - 'Asset Warning: No poster {name} found in the assets folders'<br> - 'Missing S##E## Title Card'"></i>
+                    </label>
+
               </div>
 
               <div class="form-check form-switch">
                   <input class="form-check-input" type="checkbox" id="show_asset_not_needed" name="show_asset_not_needed"
                       value="true" {% if data['settings']['show_asset_not_needed']|string|lower=='true' %}checked{% endif %}>
                   <input type="hidden" name="show_asset_not_needed" value="false">
-                  <label class="form-check-label" for="show_asset_not_needed">
+                    <label class="form-check-label" for="show_asset_not_needed">
                       Show Asset Not Needed
                       <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                         title="Used to show/hide the update not needed messages."></i>
-                  </label>
+                         title="Whilst searching for assets, show or hide the 'update not needed' messages."></i>
+                    </label>
+
               </div>
               <h6 class="fw-bold mt-3"><u>Overlay Settings</u></h6>
                 <div class="row mb-2">
                   <div class="col-6">
                     <div class="input-group">
-                      <span class="input-group-text" id="overlay_artwork_filetype_text">
-                        Overlay Artwork Filetype
-                        <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
-                          title="Used to control the filetype used with overlay images.">
-                          <i class="bi bi-info-circle-fill"></i>
-                        </span>
+                    <span class="input-group-text" id="overlay_artwork_filetype_text">
+                      Overlay Artwork Filetype
+                      <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to control the filetype used with overlay images. This setting will only be applied to images generated after the value is added to your config.<br><br><b>Accepted Values:</b><br> - <code>jpg</code>: Use JPG files for saving Overlays.<br> - <code>png</code>: Use PNG files for saving Overlays.<br> - <code>webp_lossy</code>: Use Lossy WEBP files for saving Overlays.<br> - <code>webp_lossless</code>: Use Lossless WEBP files for saving Overlays.<br><br><b>Default Value:</b> <code>webp_lossy</code>">
+                        <i class="bi bi-info-circle-fill"></i>
                       </span>
+                    </span>
+
                       <select class="form-select" id="overlay_artwork_filetype" name="overlay_artwork_filetype">
                         <option value="jpg" {% if data['settings']['overlay_artwork_filetype']=='jpg' %}selected{% endif %}>JPG</option>
                         <option value="png" {% if data['settings']['overlay_artwork_filetype']=='png' %}selected{% endif %}>PNG</option>
@@ -169,13 +187,14 @@
 
                   <div class="col-6">
                     <div class="input-group">
-                      <span class="input-group-text" id="overlay_artwork_quality_text">
-                        Overlay Artwork Quality
-                        <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
-                          title="Used to control the JPG or Lossy WEBP quality used with overlay images.">
-                          <i class="bi bi-info-circle-fill"></i>
-                        </span>
+                    <span class="input-group-text" id="overlay_artwork_quality_text">
+                      Overlay Artwork Quality
+                      <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="Used to control the JPG or Lossy WEBP quality used with overlay images. This setting will only be applied to images generated after the value is added to your config.<br><br><b>Accepted Values:</b> Any integer between 1-100.<br><br><b>Warning:</b> Values over 95 are not recommended and may result in excessive image size, perhaps too large to be uploaded to Plex.<br><br><b>Default Value:</b> <code>None</code> (if no value is provided, the standard 90 is used).">
+                        <i class="bi bi-info-circle-fill"></i>
                       </span>
+                    </span>
+
                       <input type="number" class="form-control" id="overlay_artwork_quality" name="overlay_artwork_quality" min="1" max="100"
                         value="{{ data['settings']['overlay_artwork_quality'] }}">
                     </div>
@@ -199,26 +218,28 @@
                   <input class="form-check-input" type="checkbox" id="cache" name="cache" value="true"
                     {% if data['settings']['cache']|string|lower=='true' %}checked{% endif %}>
                   <input type="hidden" name="cache" value="false">
-                  <label class="form-check-label" for="cache">
-                    Cache
-                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                      title="Used to control Kometa's cache database.">
-                      <i class="bi bi-info-circle-fill"></i>
-                    </span>
-                  </label>
+                    <label class="form-check-label" for="cache">
+                      Cache
+                      <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                            title="Allow Kometa to create and maintain a local cache database for faster subsequent processing. The cache file is created in the same directory as the configuration file.<br><br><b>Warning:</b> If you set this to false, any Overlays set against your libraries will be reapplied on each and every run. This may cause image bloat and significantly increase Kometa's runtime.">
+                        <i class="bi bi-info-circle-fill"></i>
+                      </span>
+                    </label>
+
                 </div>
 
 
               <div class="row">
                   <div class="col-md-6">
                       <div class="input-group mb-2">
-                          <span class="input-group-text" id="cache_expiration_text">
-                              Cache Expiration (days)
-                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                  title="Used to control how long data is cached for.">
-                                  <i class="bi bi-info-circle-fill"></i>
-                              </span>
+                        <span class="input-group-text" id="cache_expiration_text">
+                          Cache Expiration (days)
+                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                title="Set the number of days before each cache mapping expires and has to be re-cached.">
+                            <i class="bi bi-info-circle-fill"></i>
                           </span>
+                        </span>
+
                           <input type="number" class="form-control" id="cache_expiration" name="cache_expiration" min="1"
                               value="{{ data['settings']['cache_expiration'] }}">
                       </div>
@@ -241,13 +262,14 @@
                 <div class="row">
                   <div class="col-md-6">
                     <div class="input-group mb-2">
-                      <span class="input-group-text">
-                        Sync Mode
-                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                          title="Used to set the sync_mode for collections and playlists.">
-                          <i class="bi bi-info-circle-fill"></i>
+                        <span class="input-group-text">
+                          Sync Mode
+                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                title="Sets the sync_mode for collections and playlists. Setting the sync_mode directly in a collection or playlist definition will override this setting.">
+                            <i class="bi bi-info-circle-fill"></i>
+                          </span>
                         </span>
-                      </span>
+
                       <select class="form-select" id="sync_mode" name="sync_mode">
                         <option value="append" {% if data['settings']['sync_mode']=='append' %}selected{% endif %}>Append (default)</option>
                         <option value="sync" {% if data['settings']['sync_mode']=='sync' %}selected{% endif %}>Sync</option>
@@ -257,13 +279,14 @@
 
                   <div class="col-md-6">
                     <div class="input-group mb-2">
-                      <span class="input-group-text">
-                        Default Collection Order
-                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                          title="Used to set the collection_order for every collection run.">
-                          <i class="bi bi-info-circle-fill"></i>
+                        <span class="input-group-text">
+                          Default Collection Order
+                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                title="Set the collection_order for every collection run by Kometa unless the collection has a specific collection_order defined.">
+                            <i class="bi bi-info-circle-fill"></i>
+                          </span>
                         </span>
-                      </span>
+
                       <select class="form-select" id="default_collection_order" name="default_collection_order">
                         <option value="release.asc" {% if data['settings']['default_collection_order']=='release.asc' %}selected{% endif %}>Release Date (Ascending)</option>
                         <option value="release.desc" {% if data['settings']['default_collection_order']=='release.desc' %}selected{% endif %}>Release Date (Descending)</option>
@@ -288,13 +311,14 @@
 
                   <div class="col-md-6">
                     <div class="input-group mb-2">
-                      <span class="input-group-text">
-                        Item Refresh Delay (seconds)
-                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                          title="Time to wait between each item_refresh.">
-                          <i class="bi bi-info-circle-fill"></i>
+                        <span class="input-group-text">
+                          Item Refresh Delay (seconds)
+                          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                title="Specify the number of seconds to wait between each item_refresh of every movie/show in a collection or playlist.<br><br><b>Tip:</b> Useful if your Plex Media Server is experiencing high request levels.">
+                            <i class="bi bi-info-circle-fill"></i>
+                          </span>
                         </span>
-                      </span>
+
                       <input type="number" class="form-control" id="item_refresh_delay" name="item_refresh_delay" min="0"
                         value="{{ data['settings']['item_refresh_delay'] }}">
                     </div>
@@ -302,13 +326,14 @@
 
                   <div class="col-md-6">
                     <div class="input-group mb-2">
-                      <span class="input-group-text">
-                        Minimum Items
-                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                          title="Used to control minimum items required to build a collection/playlist.">
-                          <i class="bi bi-info-circle-fill"></i>
-                        </span>
+                    <span class="input-group-text">
+                      Minimum Items
+                      <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                            title="Set the minimum number of items that must be found in order to build or update a collection or playlist.">
+                        <i class="bi bi-info-circle-fill"></i>
                       </span>
+                    </span>
+
                       <input type="number" class="form-control" id="minimum_items" name="minimum_items" min="1"
                         value="{{ data['settings']['minimum_items'] }}">
                     </div>
@@ -318,13 +343,14 @@
                 <div class="row">
                   <div class="col-md-6">
                     <div class="input-group mb-2">
-                      <span class="input-group-text">
-                        Run Again Delay (minutes)
-                        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                          title="Used to control the number of minutes to delay running run_again collections.">
-                          <i class="bi bi-info-circle-fill"></i>
-                        </span>
+                    <span class="input-group-text">
+                      Run Again Delay (minutes)
+                      <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                            title="Set the number of minutes to delay running run_again collections after the daily run is finished.<br><br><b>Tip:</b> Useful for allowing time for Sonarr/Radarr to process newly added items before running Kometa again.">
+                        <i class="bi bi-info-circle-fill"></i>
                       </span>
+                    </span>
+
                       <input type="number" class="form-control" id="run_again_delay" name="run_again_delay" min="0"
                         value="{{ data['settings']['run_again_delay'] }}">
                     </div>
@@ -335,13 +361,14 @@
                   <input class="form-check-input" type="checkbox" id="show_missing" name="show_missing" value="true"
                     {% if data['settings']['show_missing']|string|lower=='true' %}checked{% endif %}>
                   <input type="hidden" name="show_missing" value="false">
-                  <label class="form-check-label" for="show_missing">
-                    Show Missing
-                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                      title="Used to show missing items from collections or playlists.">
-                      <i class="bi bi-info-circle-fill"></i>
-                    </span>
-                  </label>
+                    <label class="form-check-label" for="show_missing">
+                      Show Missing
+                      <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                            title="While enabled, missing items from collections or playlists will be displayed.">
+                        <i class="bi bi-info-circle-fill"></i>
+                      </span>
+                    </label>
+
                 </div>
 
                 <h6 class="fw-bold mt-3"><u>Playlist Settings</u></h6>
@@ -423,12 +450,13 @@
                     <div class="col-md-6">
                         <div class="input-group mb-2">
                             <span class="input-group-text" id="playlist_sync_to_users_text">
-                                Playlist Sync to Users
-                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                    title="All users or a comma-separated list of users who will receive synced playlists.">
-                                    <i class="bi bi-info-circle-fill"></i>
-                                </span>
+                              Playlist Sync to Users
+                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="Set the default playlist sync_to_users. To sync a playlist to only yourself, leave this field blank.<br><br><b>Tip:</b> Sharing playlists with other users will not share any associated posters due to a Plex limitation.">
+                                <i class="bi bi-info-circle-fill"></i>
+                              </span>
                             </span>
+
                             <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users"
                                 value="{{ data['settings']['playlist_sync_to_users'] }}" readonly>
                         </div>
@@ -437,12 +465,13 @@
                     <div class="col-md-6">
                         <div class="input-group mb-2">
                             <span class="input-group-text" id="playlist_exclude_users_text">
-                                Playlist Exclude Users
-                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                    title="A comma-separated list of users to exclude from synced playlists.">
-                                    <i class="bi bi-info-circle-fill"></i>
-                                </span>
+                              Playlist Exclude Users
+                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="Specify a comma-separated list of users who should be excluded from receiving synced playlists.">
+                                <i class="bi bi-info-circle-fill"></i>
+                              </span>
                             </span>
+
                             <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users"
                                 value="{{ data['settings']['playlist_exclude_users'] }}" readonly>
                         </div>
@@ -454,10 +483,12 @@
                         {% if data['settings']['playlist_report']|string|lower=='true' %}checked{% endif %}>
                     <input type="hidden" name="playlist_report" value="false">
                     <label class="form-check-label" for="playlist_report">
-                        Playlist Report
-                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                            title="Used to print out a playlist report."></i>
+                      Playlist Report
+                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="Enable this setting to print out a playlist report at the end of the log.">
+                      </i>
                     </label>
+
                 </div>
             </div>
           </div>
@@ -478,10 +509,12 @@
                         value="true" {% if data['settings']['missing_only_released']|string|lower=='true' %}checked{% endif %}>
                     <input type="hidden" name="missing_only_released" value="false">
                     <label class="form-check-label" for="missing_only_released">
-                        Missing Only Released
-                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                            title="Used to filter unreleased items from missing lists."></i>
+                      Missing Only Released
+                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="When enabled, missing lists will only include released items, filtering out unreleased media.">
+                      </i>
                     </label>
+
                 </div>
 
                 <div class="form-check form-switch">
@@ -489,10 +522,12 @@
                         value="true" {% if data['settings']['show_unconfigured']|string|lower=='true' %}checked{% endif %}>
                     <input type="hidden" name="show_unconfigured" value="false">
                     <label class="form-check-label" for="show_unconfigured">
-                        Show Unconfigured
-                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                            title="Used to show collections not in the current run."></i>
+                      Show Unconfigured
+                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="When enabled, collections that are not configured in the current Kometa run will be listed at the end of each run.">
+                      </i>
                     </label>
+
                 </div>
 
                 <div class="form-check form-switch">
@@ -500,10 +535,12 @@
                         value="true" {% if data['settings']['show_unmanaged']|string|lower=='true' %}checked{% endif %}>
                     <input type="hidden" name="show_unmanaged" value="false">
                     <label class="form-check-label" for="show_unmanaged">
-                        Show Unmanaged
-                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                            title="Used to show collections not managed by Kometa."></i>
+                      Show Unmanaged
+                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="When enabled, lists all collections that are not managed by Kometa at the end of each run.">
+                      </i>
                     </label>
+
                 </div>
 
                 <div class="form-check form-switch">
@@ -511,10 +548,12 @@
                         value="true" {% if data['settings']['show_filtered']|string|lower=='true' %}checked{% endif %}>
                     <input type="hidden" name="show_filtered" value="false">
                     <label class="form-check-label" for="show_filtered">
-                        Show Filtered
-                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                            title="Used to show items filtered out."></i>
+                      Show Filtered
+                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="When enabled, lists all items that have been filtered out of a collection or playlist.">
+                      </i>
                     </label>
+
                 </div>
 
                 <div class="form-check form-switch">
@@ -522,10 +561,12 @@
                         value="true" {% if data['settings']['show_unfiltered']|string|lower=='true' %}checked{% endif %}>
                     <input type="hidden" name="show_unfiltered" value="false">
                     <label class="form-check-label" for="show_unfiltered">
-                        Show Unfiltered
-                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                            title="Used to show items which make it through filters."></i>
+                      Show Unfiltered
+                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="When enabled, lists all items that have passed through filters and were added to a collection or playlist.">
+                      </i>
                     </label>
+
                 </div>
 
                 <div class="form-check form-switch">
@@ -533,10 +574,12 @@
                         value="true" {% if data['settings']['only_filter_missing']|string|lower=='true' %}checked{% endif %}>
                     <input type="hidden" name="only_filter_missing" value="false">
                     <label class="form-check-label" for="only_filter_missing">
-                        Only Filter Missing
-                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                            title="Used to have the filter only apply to missing items."></i>
+                      Only Filter Missing
+                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="When enabled, filters will only apply to missing items rather than all items in a collection or playlist.">
+                      </i>
                     </label>
+
                 </div>
 
                 <div class="form-check form-switch">
@@ -544,10 +587,12 @@
                         value="true" {% if data['settings']['save_report']|string|lower=='true' %}checked{% endif %}>
                     <input type="hidden" name="save_report" value="false">
                     <label class="form-check-label" for="save_report">
-                        Save Report
-                        <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                            title="Used to save a report YAML file."></i>
+                      Save Report
+                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                         title="When enabled, saves a report of the items added, removed, filtered, or missing from collections to a YAML file.">
+                      </i>
                     </label>
+
                 </div>
 
 
@@ -568,12 +613,13 @@
                     <div class="col-md-12">
                         <div class="input-group mb-2">
                             <span class="input-group-text" id="tvdb_language_text">
-                                TVDB Language
-                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                    title="Specify the language to query TVDb in.">
-                                    <i class="bi bi-info-circle-fill"></i>
-                                </span>
+                              TVDB Language
+                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="Specify the language to query TVDb in. If no language is specified or the specified language is not found, the original language is used.">
+                                <i class="bi bi-info-circle-fill"></i>
+                              </span>
                             </span>
+
                             <select class="form-select" id="tvdb_language" name="tvdb_language">
                                 {% for code, language in data['iso_639_2_languages'] | sort(attribute='1') %}
                                 <option value="{{ code }}" {% if code==data['settings']['tvdb_language'] %}selected{% endif %}>
@@ -589,12 +635,13 @@
                     <div class="col-md-6">
                         <div class="input-group mb-2">
                             <span class="input-group-text" id="ignore_ids_text">
-                                Ignore IDs
-                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                    title="List of TMDb/TVDb IDs to ignore (e.g., 1,12345678).">
-                                    <i class="bi bi-info-circle-fill"></i>
-                                </span>
+                              Ignore IDs
+                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="Set a list or comma-separated string of TMDb/TVDb IDs to ignore in all collections.">
+                                <i class="bi bi-info-circle-fill"></i>
+                              </span>
                             </span>
+
                             <input type="text" class="form-control" id="ignore_ids" name="ignore_ids"
                                 value="{{ data['settings']['ignore_ids'] }}">
                         </div>
@@ -604,12 +651,13 @@
                     <div class="col-md-6">
                         <div class="input-group mb-2">
                             <span class="input-group-text" id="ignore_imdb_ids_text">
-                                Ignore IMDb IDs
-                                <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                    title="List of IMDb IDs to ignore (e.g., tt1234567, tt12345678).">
-                                    <i class="bi bi-info-circle-fill"></i>
-                                </span>
+                              Ignore IMDb IDs
+                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                                    title="Set a list or comma-separated string of IMDb IDs to ignore in all collections.">
+                                <i class="bi bi-info-circle-fill"></i>
+                              </span>
                             </span>
+
                             <input type="text" class="form-control" id="ignore_imdb_ids" name="ignore_imdb_ids"
                                 value="{{ data['settings']['ignore_imdb_ids'] }}">
                         </div>
@@ -637,11 +685,13 @@
                       <input class="form-check-input" type="checkbox" id="show_options" name="show_options" value="true"
                         {% if data['settings']['show_options']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="show_options" value="false">
-                      <label class="form-check-label" for="show_options">
-                        Show Options
-                        <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                          title="Used to show attribute options from Plex."></i>
-                      </label>
+                        <label class="form-check-label" for="show_options">
+                          Show Options
+                          <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                             title="When enabled, displays available attribute options for use with plex_search, smart_filter, or filters.">
+                          </i>
+                        </label>
+
                     </div>
                   </div>
                 </div>
@@ -649,11 +699,13 @@
                 <div class="row mb-2">
                   <div class="col-8">
                     <div class="input-group">
-                      <span class="input-group-text">
-                        Run Order
-                        <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
-                          title="Used to specify the run order of the library components."></i>
-                      </span>
+                        <span class="input-group-text">
+                          Run Order
+                          <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                             title="Specify the run order of the library components, including Library Operations, Collection Files, and Overlay Files.">
+                          </i>
+                        </span>
+
                       <select class="form-select" id="run_order" name="run_order">
                         <option value="operations metadata collections overlays" {% if ' '.join(data['settings']['run_order'])=='operations metadata collections overlays' %}selected{% endif %}>
                           (default) operations metadata collections overlays
@@ -684,11 +736,13 @@
                       <input class="form-check-input" type="checkbox" id="verify_ssl" name="verify_ssl" value="true"
                         {% if data['settings']['verify_ssl']|string|lower=='true' %}checked{% endif %}>
                       <input type="hidden" name="verify_ssl" value="false">
-                      <label class="form-check-label" for="verify_ssl">
-                        Verify SSL
-                        <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                          title="Used to verify SSL certificates when making requests."></i>
-                      </label>
+                        <label class="form-check-label" for="verify_ssl">
+                          Verify SSL
+                          <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                             title="When enabled, verifies SSL certificates for secure requests. If disabled, Kometa will ignore SSL verification errors.">
+                          </i>
+                        </label>
+
                     </div>
                   </div>
                 </div>
@@ -696,11 +750,13 @@
                 <div class="row mb-2">
                   <div class="col-8">
                     <div class="input-group">
-                      <span class="input-group-text">
-                        Custom Repo
-                        <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
-                          title="Used to set up the custom repo file block type."></i>
-                      </span>
+                        <span class="input-group-text">
+                          Custom Repo
+                          <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                             title="Specify a custom repository URL or path to use for additional collection, metadata, or overlay files.">
+                          </i>
+                        </span>
+
                       <input type="text" class="form-control" id="custom_repo" name="custom_repo" placeholder=""
                         value="{{ data['settings']['custom_repo'] }}">
                     </div>
