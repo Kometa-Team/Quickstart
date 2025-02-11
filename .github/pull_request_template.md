@@ -15,14 +15,14 @@
 ## What type of PR is this?
 
 <!--
-    Type X in the brackets of any relevant option, for example:
+    Replace the space in the brackets with an X of any relevant option, for example:
     - [X] Bug Fix (non-breaking change which fixes an issue)
 -->
-- [] Bug Fix (non-breaking change which fixes an issue)
-- [] Feature/Tweak (non-breaking change which adds new functionality or enhances existing functionality)
-- [] Breaking Change (fix or feature that would break any existing functionality for users)
-- [] Documentation Update
-- [] Other 
+- [ ] Bug Fix (non-breaking change which fixes an issue)
+- [ ] Feature/Tweak (non-breaking change which adds new functionality or enhances existing functionality)
+- [ ] Breaking Change (fix or feature that would break any existing functionality for users)
+- [ ] Documentation Update
+- [ ] Other 
 
 ## Description
 
@@ -45,8 +45,8 @@ _Please replace this line with a meaningful description of your PR. What does it
 <!--
     If your PR warrants Documentation changes, you are expected to make the relevant changes.
     Failure to do so will result in your PR not being approved.
-    Type X in the brackets of any relevant option, for example:
+    Replace the space in the brackets with an X of any relevant option, for example:
     - [X] Yes
 -->
-- [] Yes
-- [] No
+- [ ] Yes
+- [ ] No
