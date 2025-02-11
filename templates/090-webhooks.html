@@ -36,9 +36,9 @@
                     ntfy
                 </option>
                 <option value="custom"
-                        {% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}selected{% endif %}
-                        data-bs-toggle="tooltip" data-bs-placement="right"
-                        title="Select Custom if you have a custom webhook URL for notifications.">
+                    {% if data and data.webhooks[webhook] and (data.webhooks[webhook]|string)[:4] == "http" %}selected{% endif %}
+                    data-bs-toggle="tooltip" data-bs-placement="right"
+                    title="Select Custom if you have a custom webhook URL for notifications.">
                     Custom
                 </option>
             </select>
@@ -56,7 +56,7 @@
           </span>
         </span>
         <input type="text" class="form-control custom-webhook-url"
-               value="{% if (data and data.webhooks[webhook] and data.webhooks[webhook].startswith('http')) %}{{ data.webhooks[webhook] }}{% endif %}"
+        value="{% if data and data.webhooks[webhook] and (data.webhooks[webhook]|string)[:4] == 'http' %}{{ data.webhooks[webhook] }}{% endif %}"
                oninput="setWebhookValidated(false, '{{ webhook }}')"
                aria-describedby="webhooks_{{ webhook }}_text">
         <button class="btn btn-success validate-button" type="button" onclick="validateWebhook('{{ webhook }}')">
