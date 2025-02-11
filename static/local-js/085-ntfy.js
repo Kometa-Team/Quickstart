@@ -32,6 +32,11 @@ $(document).ready(function () {
     document.getElementById('ntfy_validated').value = 'false'
     validateButton.disabled = false
   })
+
+  document.getElementById('ntfy_topic').addEventListener('input', function () {
+    document.getElementById('ntfy_validated').value = 'false'
+    validateButton.disabled = false
+  })
 })
 
 // Function to toggle API key visibility
@@ -42,38 +47,18 @@ document.getElementById('toggleTokenVisibility').addEventListener('click', funct
   this.innerHTML = currentType === 'password' ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>'
 })
 
-/* eslint-disable no-unused-vars */
-// Function to validate ntfy API key
-async function validatentfyToken (url, token) {
-  const apiUrl = `${url}/version?token=${token}`
-  try {
-    const response = await fetch(apiUrl)
-    if (response.ok) {
-      const data = await response.json()
-      console.log('API Response:', data)
-      return true
-    } else {
-      const error = await response.json()
-      console.log('Invalid ntfy API key. Error:', error)
-      return false
-    }
-  } catch (error) {
-    console.error('Error validating ntfy token:', error)
-    return false
-  }
-}
-/* eslint-enable no-unused-vars */
-
 /* eslint-disable camelcase */
 // Event listener for the validate button
 document.getElementById('validateButton').addEventListener('click', function () {
   const ntfy_url = document.getElementById('ntfy_url').value
   const ntfy_token = document.getElementById('ntfy_token').value
+  const ntfy_topic = document.getElementById('ntfy_topic').value
   const statusMessage = document.getElementById('statusMessage')
 
-  if (!ntfy_url || !ntfy_token) {
-    statusMessage.textContent = 'Please enter both ntfy URL and Token.'
+  if (!ntfy_url || !ntfy_token || !ntfy_topic) {
+    statusMessage.textContent = 'Please enter ntfy URL, Token and Topic.'
     statusMessage.style.color = '#ea868f'
+    statusMessage.style.display = 'block'
     return
   }
 
@@ -86,7 +71,8 @@ document.getElementById('validateButton').addEventListener('click', function () 
     },
     body: JSON.stringify({
       ntfy_url,
-      ntfy_token
+      ntfy_token,
+      ntfy_topic
     })
   })
     .then((response) => response.json())
@@ -94,7 +80,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       if (data.valid) {
         hideSpinner('validate')
         document.getElementById('ntfy_validated').value = 'true'
-        statusMessage.textContent = 'ntfy credentials validated successfully!'
+        statusMessage.textContent = 'ntfy credentials validated successfully! Ensure you are subscribed to topic to see test message.'
         statusMessage.style.color = '#75b798'
       } else {
         hideSpinner('validate')

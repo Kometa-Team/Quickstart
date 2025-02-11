@@ -5,6 +5,7 @@ from plexapi.server import PlexServer
 import re
 import requests
 import urllib.parse
+import json
 
 import iso639
 import iso3166
@@ -264,42 +265,51 @@ def validate_ntfy_server(data):
     ntfy_url = data.get("ntfy_url")
     ntfy_token = data.get("ntfy_token")
     ntfy_topic = data.get("ntfy_topic")
-    ntfy_url = ntfy_url.rstrip("#")
-    ntfy_url = ntfy_url.rstrip("/")
 
-    response = requests.get(f"{ntfy_url}/version")
+    # Ensure the URL is formatted correctly
+    ntfy_url = ntfy_url.rstrip("#").rstrip("/")
+
+    headers = {"Content-Type": "text/plain"}
+    if ntfy_token:
+        headers["Authorization"] = f"Bearer {ntfy_token}"
+
+    test_message = "🔔 Kometa QuickStart Test ntfy Message"
 
     try:
-        response_json = response.json()
-    except JSONDecodeError as e:
-        return jsonify({"valid": False, "error": f"Validation error: {str(e)}"})
-
-    if response.status_code >= 400:
-        return jsonify(
-            {
-                "valid": False,
-                "error": f"({response.status_code} [{response.reason}]) {response_json['errorDescription']}",
-            }
+        # Step 1: Send test notification
+        response = requests.post(
+            f"{ntfy_url}/{ntfy_topic}", headers=headers, data=test_message
         )
 
-    json = {
-        "message": "Kometa QuickStart Test ntfy Message",
-        "title": "Kometa QuickStart ntfy Test",
-    }
+        if response.status_code != 200:
+            return jsonify(
+                {
+                    "valid": False,
+                    "error": f"Failed to send test message ({response.status_code} [{response.reason}]).",
+                }
+            )
 
-    response = requests.post(
-        f"{ntfy_url}/message", headers={"X-ntfy-Key": ntfy_token}, json=json
-    )
+        # Step 2: Auto-subscribe the sender to the topic
+        sub_headers = headers.copy()
+        sub_headers["X-Subscriber"] = "true"  # Tell ntfy.sh to subscribe this client
 
-    if response.status_code != 200:
-        return jsonify(
-            {
-                "valid": False,
-                "error": f"({response.status_code} [{response.reason}]) {response_json['errorDescription']}",
-            }
+        sub_response = requests.put(
+            f"{ntfy_url}/{ntfy_topic}",
+            headers=sub_headers,
         )
 
-    return jsonify({"valid": True})
+        if sub_response.status_code == 200:
+            return jsonify({"valid": True})
+        else:
+            return jsonify(
+                {
+                    "valid": False,
+                    "error": f"Failed to auto-subscribe ({sub_response.status_code} [{sub_response.reason}]).",
+                }
+            )
+
+    except requests.RequestException as e:
+        return jsonify({"valid": False, "error": f"Connection error: {str(e)}"})
 
 
 def validate_mal_server(data):
