@@ -945,8 +945,45 @@
             Movie Overlays
           </button>
         </h2>
+
         <div id="movieOverlays" class="accordion-collapse collapse" data-bs-parent="#accordionMovies">
           <div class="accordion-body">
+
+            <!-- Preview Overlays Accordion -->
+            <div class="accordion mt-3" id="mov-previewOverlaysAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#mov-previewOverlays" aria-expanded="true" aria-controls="mov-previewOverlays">
+                    Preview Overlays
+                  </button>
+                </h2>
+                <div id="mov-previewOverlays" class="accordion-collapse collapse show"
+                  data-bs-parent="#mov-previewOverlaysAccordion">
+                  <div class="accordion-body">
+                    <p class="mb-3">
+                      Once you have selected which Overlays you would like to use, you can come back here,
+                      upload an image, and hit the <strong>Preview</strong> button to see how the overlays will look.
+                    </p>
+
+                    <!-- Preview Overlay Toggles -->
+                    <div class="container mt-4">
+                      <input type="file" id="baseImageUploadMovie" accept="image/png, image/jpeg" class="form-control mt-2">
+                      <div class="d-flex gap-2 mt-3">
+                        <button id="previewOverlayButtonMovie" class="btn btn-primary">Preview</button>
+                        <button id="deleteMovieImage" class="btn btn-danger">Delete Custom Image</button>
+                      </div>
+                      <div id="previewMovieImageContainer" class="mt-4" style="display: none;">
+                        <h5>Preview:</h5>
+                        <img id="previewMovieImage" class="img-fluid" alt="Overlay Preview">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
             <!-- Chart Overlays Accordion -->
             <div class="accordion mt-3" id="mov-chartOverlaysAccordion">
               <div class="accordion-item">
@@ -1292,34 +1329,6 @@
                 </div>
               </div>
             </div>
-            <!-- Preview Overlays Accordion -->
-            <div class="accordion mt-3" id="mov-previewOverlaysAccordion">
-              <div class="accordion-item">
-                <h2 class="accordion-header">
-                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#mov-previewOverlays" aria-expanded="false" aria-controls="mov-previewOverlays">
-                    Preview Overlays
-                  </button>
-                </h2>
-                <div id="mov-previewOverlays" class="accordion-collapse collapse"
-                  data-bs-parent="#mov-previewOverlaysAccordion">
-                  <div class="accordion-body">
-                    <!-- Preview Overlay Toggles -->
-                    <div class="container mt-4">
-                      <input type="file" id="baseImageUploadMovie" accept="image/png, image/jpeg" class="form-control mt-2">
-                      <button id="previewOverlayButtonMovie" class="btn btn-primary mt-3">Preview</button>
-                      <button id="deleteMovieImage" class="btn btn-danger mt-3">Delete Custom Image</button>
-                      <div id="previewMovieImageContainer" class="mt-4" style="display: none;">
-                          <h5>Preview:</h5>
-                          <img id="previewMovieImage" class="img-fluid" alt="Overlay Preview">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-
 
           </div>
         </div>
@@ -2188,6 +2197,39 @@
         </h2>
         <div id="showOverlays" class="accordion-collapse collapse" data-bs-parent="#accordionShows">
           <div class="accordion-body">
+            <!-- Preview Overlays Accordion -->
+            <div class="accordion mt-3" id="sho-previewOverlaysAccordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#sho-previewOverlays" aria-expanded="true" aria-controls="sho-previewOverlays">
+                    Preview Overlays
+                  </button>
+                </h2>
+                <div id="sho-previewOverlays" class="accordion-collapse collapse show"
+                  data-bs-parent="#sho-previewOverlaysAccordion">
+                  <div class="accordion-body">
+                    <p class="mb-3">
+                      Once you have selected which Overlays you would like to use, you can come back here,
+                      upload an image, and hit the <strong>Preview</strong> button to see how the overlays will look.
+                    </p>
+
+                    <!-- Preview Overlay Toggles -->
+                    <div class="container mt-4">
+                      <input type="file" id="baseImageUploadShow" accept="image/png, image/jpeg" class="form-control mt-2">
+                      <div class="d-flex gap-2 mt-3">
+                        <button id="previewOverlayButtonShow" class="btn btn-primary">Preview</button>
+                        <button id="deleteShowImage" class="btn btn-danger">Delete Custom Image</button>
+                      </div>
+                      <div id="previewShowImageContainer" class="mt-4" style="display: none;">
+                        <h5>Preview:</h5>
+                        <img id="previewShowImage" class="img-fluid" alt="Overlay Preview">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <!-- Chart Overlays Accordion -->
             <div class="accordion mt-3" id="sho-chartOverlaysAccordion">
               <div class="accordion-item">
@@ -2556,35 +2598,6 @@
                 </div>
               </div>
             </div>
-            <!-- Preview Overlays Accordion -->
-            <div class="accordion mt-3" id="sho-previewOverlaysAccordion">
-              <div class="accordion-item">
-                <h2 class="accordion-header">
-                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                    data-bs-target="#sho-previewOverlays" aria-expanded="false" aria-controls="sho-previewOverlays">
-                    Preview Overlays
-                  </button>
-                </h2>
-                <div id="sho-previewOverlays" class="accordion-collapse collapse"
-                  data-bs-parent="#sho-previewOverlaysAccordion">
-                  <div class="accordion-body">
-                    <!-- Preview Overlay Toggles -->
-                    <div class="container mt-4">
-                      <input type="file" id="baseImageUploadShow" accept="image/png, image/jpeg" class="form-control mt-2">
-                      <button id="previewOverlayButtonShow" class="btn btn-primary mt-3">Preview</button>
-                      <button id="deleteShowImage" class="btn btn-danger mt-3">Delete Custom Image</button>
-                      <div id="previewShowImageContainer" class="mt-4" style="display: none;">
-                          <h5>Preview:</h5>
-                          <img id="previewShowImage" class="img-fluid" alt="Overlay Preview">
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-
-
           </div>
         </div>
       </div>
