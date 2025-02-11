@@ -1,6 +1,56 @@
 /* global $, showToast */
 
 document.addEventListener('DOMContentLoaded', function () {
+  function updateAccordionHighlights () {
+    document.querySelectorAll('.accordion-item').forEach((accordion) => {
+      const isCheckedOrSelected = accordion.querySelector(
+        "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none'])"
+      ) !== null
+
+      const accordionHeader = accordion.querySelector('.accordion-header')
+
+      if (isCheckedOrSelected) {
+        highlightParentAccordions(accordionHeader)
+      } else {
+        removeHighlightIfEmpty(accordionHeader)
+      }
+    })
+  }
+  function highlightParentAccordions (element) {
+    while (element) {
+      if (element.classList.contains('accordion-header')) {
+        element.classList.add('selected')
+      }
+      element = element.closest('.accordion-item')?.parentElement.closest('.accordion-item')
+    }
+  }
+
+  function removeHighlightIfEmpty (element) {
+    if (!element) return
+    const accordionItem = element.closest('.accordion-item')
+    if (!accordionItem) return
+
+    const hasSelections = accordionItem.querySelector(
+      "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none'])"
+    )
+
+    if (!hasSelections) {
+      element.classList.remove('selected')
+    }
+
+    // Recursively check parents
+    const parentAccordionHeader = accordionItem.parentElement.closest('.accordion-item')?.querySelector('.accordion-header')
+    removeHighlightIfEmpty(parentAccordionHeader)
+  }
+
+  // Attach event listeners to checkboxes, radio buttons, and dropdowns
+  document.querySelectorAll("input[type='checkbox'], input[type='radio'], select").forEach((input) => {
+    input.addEventListener('change', updateAccordionHighlights)
+  })
+
+  // Run on page load to update any previously selected items
+  updateAccordionHighlights()
+
   fetch('/check_base_images')
     .then(response => response.json())
     .then(data => {
@@ -19,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     })
     .catch(error => console.error('Error checking base images:', error))
+
   const previewMovieButton = document.getElementById('previewOverlayButtonMovie')
   const previewShowButton = document.getElementById('previewOverlayButtonShow')
   const uploadMovieInput = document.getElementById('baseImageUploadMovie')

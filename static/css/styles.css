@@ -165,6 +165,51 @@ label {
     padding-bottom: 10px;
 }
 
+/* -------------------- */
+/* ACCORDION STYLES     */
+/* -------------------- */
+
+.accordion {
+    --bs-accordion-bg: #191d20;
+}
+
+.accordion-body,
+.card-group {
+    background-color: #212529;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+/* ✅ Add a green left border when an accordion has selected items */
+.accordion-header.selected {
+    border-left: 4px solid #00bc8c !important; /* Bright green left border */
+    padding-left: 10px !important; /* Space text from border */
+}
+
+/* ✅ Ensure expanded accordion does NOT fill with green */
+.accordion-button:not(.collapsed) {
+    background-color: transparent !important; /* No background fill */
+    color: white !important;
+    border-color: #343a40 !important; /* Keep border subtle */
+}
+
+/* ✅ Prevent hover/focus from changing colors too much */
+.accordion-button:not(.collapsed):hover,
+.accordion-button:not(.collapsed):focus {
+    background-color: transparent !important;
+    color: white !important;
+    border-color: #343a40 !important;
+}
+
+/* ✅ Keep expand/collapse arrow white when expanded */
+.accordion-button:not(.collapsed)::after {
+    color: white !important;
+}
+
+/* ✅ Keep expand/collapse arrow white when collapsed */
+.accordion-button.collapsed::after {
+    color: white !important;
+}
 
 .mb-3.small {
     margin-bottom: 0rem !important;
