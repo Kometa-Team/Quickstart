@@ -14,6 +14,7 @@ from cachelib.file import FileSystemCache
 
 import io
 import os
+import threading
 from dotenv import load_dotenv
 import namesgenerator
 
@@ -40,6 +41,8 @@ from modules.helpers import (
     get_bits,
     get_menu_list,
     redact_sensitive_data,
+    check_for_update,
+    update_checker_loop,
 )
 from modules.persistence import (
     save_settings,
@@ -54,6 +57,8 @@ from modules.helpers import booler, is_default_image
 
 from PIL import Image, ImageDraw
 
+load_dotenv()
+
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
@@ -62,11 +67,37 @@ UPLOAD_FOLDER_SHOW = "uploads/shows"
 os.makedirs(UPLOAD_FOLDER_MOVIE, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER_SHOW, exist_ok=True)
 
+VERSION_FILE = "VERSION"
+GITHUB_MASTER_VERSION_URL = (
+    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
+)
+GITHUB_DEVELOP_VERSION_URL = (
+    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
+)
+
 basedir = os.path.abspath
 
-load_dotenv()
-
 app = Flask(__name__)
+
+# Run version check at startup
+app.config["VERSION_CHECK"] = check_for_update()
+
+
+def start_update_thread():
+    """Ensure update_checker_loop runs inside the Flask app context."""
+    with app.app_context():
+        update_checker_loop(app)
+
+
+# Start the background version checker safely
+threading.Thread(target=start_update_thread, daemon=True).start()
+
+
+@app.context_processor
+def inject_version_info():
+    """Ensure latest version info is injected dynamically in templates."""
+    return {"version_info": check_for_update()}
+
 
 # Use booler() for FLASK_DEBUG conversion
 app.config["QS_DEBUG"] = booler(os.getenv("QS_DEBUG", "0"))

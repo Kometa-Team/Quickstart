@@ -38,6 +38,19 @@ code {
     height: auto;
 }
 
+/* Fixed header settings */
+header.fixed-top {
+    width: 100%;
+    z-index: 1030;
+    background-color: #181818;
+    padding: 10px 0;
+}
+
+/* Ensure content is not hidden under the fixed header */
+.content-wrapper {
+    margin-top: 80px; /* Adjust based on header height */
+}
+
 /* -------------------- */
 /* FOOTER STYLES        */
 /* -------------------- */

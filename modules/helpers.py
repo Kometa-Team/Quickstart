@@ -1,5 +1,7 @@
 import os
 import re
+import requests
+import time
 from flask import current_app as app
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -11,6 +13,56 @@ STRING_FIELDS = {
     "username",
     "password",
 }
+
+
+def get_local_version():
+    """Read the local VERSION file and determine the branch."""
+    version_file = "VERSION"
+    if not os.path.exists(version_file):
+        return "unknown", "custom"
+
+    with open(version_file, "r", encoding="utf-8") as f:
+        local_version = f.read().strip()
+
+    # Determine branch based on whether "build" is in the file
+    branch = "develop" if "build" in local_version.lower() else "master"
+
+    return local_version, branch
+
+
+def get_remote_version(branch):
+    """Fetch the latest VERSION file from the correct GitHub branch."""
+    url = f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/VERSION"
+
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        return response.text.strip()
+    except requests.RequestException:
+        return None  # If request fails, return None
+
+
+def check_for_update():
+    """Compare the local version with the remote version."""
+    local_version, branch = get_local_version()
+    remote_version = get_remote_version(branch)
+
+    update_available = remote_version and remote_version != local_version
+
+    return {
+        "local_version": local_version,
+        "remote_version": remote_version,
+        "branch": branch,
+        "update_available": update_available,
+    }
+
+
+def update_checker_loop(app):
+    """Runs an update check every 24 hours in the background."""
+    with app.app_context():  # Ensure Flask app context is available
+        while True:
+            app.config["VERSION_CHECK"] = check_for_update()
+            time.sleep(86400)  # Sleep for 24 hours
 
 
 def is_default_image(image_path):
