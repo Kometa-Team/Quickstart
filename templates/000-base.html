@@ -34,17 +34,6 @@
   </head>
 
   <body>
-    <!-- Fixed Header -->
-    <header class="fixed-top bg-dark text-light">
-      {% if version_info and version_info.update_available %}
-      <div class="alert alert-warning text-center m-0" role="alert">
-        <i class="bi bi-arrow-up-circle"></i> A new version of QuickStart (<strong>{{ version_info.remote_version }}</strong>) is available!
-        <a href="https://github.com/Kometa-Team/Quickstart/tree/{{ version_info.branch }}" target="_blank" class="alert-link">Click here to update.</a>
-      </div>
-      {% endif %}
-
-    </header>
-
     <script type="text/javascript" src="{{ url_for('static', filename='local-js/000-base.js') }}"></script>
     <div class="header-container text-center">
       <img src="{{ url_for('static', filename='images/logo.webp') }}" alt="QUICKSTART" class="header-image" />
@@ -52,6 +41,14 @@
 
     <div class="container">
       <div class="content-wrapper">
+        <!-- New Version Available Message -->
+        {% if version_info and version_info.update_available %}
+        <div class="alert alert-danger text-center" role="alert" style="max-width: 900px; margin: 0 auto;">
+          <i class="bi bi-arrow-up-circle"></i> A new version of Quickstart (<strong>{{ version_info.remote_version }}</strong>) is available!
+          <a href="https://github.com/Kometa-Team/Quickstart/tree/{{ version_info.branch }}" target="_blank" class="alert-link">Click here to update.</a>
+        </div>
+        <br>
+        {% endif %}
         <!-- Early Development Warning -->
         <div class="alert alert-warning text-center" role="alert" style="max-width: 900px; margin: 0 auto;">
           <b>Quickstart is in early development.</b> Please provide feedback via the

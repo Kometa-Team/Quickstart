@@ -242,8 +242,8 @@ def validate_gotify_server(data):
         )
 
     json = {
-        "message": "Kometa QuickStart Test Gotify Message",
-        "title": "Kometa QuickStart Gotify Test",
+        "message": "Kometa Quickstart Test Gotify Message",
+        "title": "Kometa Quickstart Gotify Test",
     }
 
     response = requests.post(
@@ -273,7 +273,7 @@ def validate_ntfy_server(data):
     if ntfy_token:
         headers["Authorization"] = f"Bearer {ntfy_token}"
 
-    test_message = "🔔 Kometa QuickStart Test ntfy Message"
+    test_message = "🔔 Kometa Quickstart Test ntfy Message"
 
     try:
         # Step 1: Send test notification

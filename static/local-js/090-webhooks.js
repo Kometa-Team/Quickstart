@@ -104,7 +104,7 @@ function validateWebhook (webhookType) {
     },
     body: JSON.stringify({
       webhook_url: webhookUrl,
-      message: 'Kometa QuickStart Test message for ' + webhookTypeFormatted + ' webhook'
+      message: 'Kometa Quickstart Test message for ' + webhookTypeFormatted + ' webhook'
     })
   })
     .then(response => response.json())
