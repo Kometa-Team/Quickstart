@@ -57,13 +57,13 @@ from modules.helpers import booler, is_default_image
 
 from PIL import Image, ImageDraw
 
-load_dotenv()
+load_dotenv("config/.env")
 
-UPLOAD_FOLDER = "uploads"
+UPLOAD_FOLDER = "config/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-UPLOAD_FOLDER_MOVIE = "uploads/movies"
-UPLOAD_FOLDER_SHOW = "uploads/shows"
+UPLOAD_FOLDER_MOVIE = "config/uploads/movies"
+UPLOAD_FOLDER_SHOW = "config/uploads/shows"
 os.makedirs(UPLOAD_FOLDER_MOVIE, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER_SHOW, exist_ok=True)
 
