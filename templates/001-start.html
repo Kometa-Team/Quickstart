@@ -8,7 +8,7 @@
 
           <!-- Page Title as Dropdown -->
           <div class="dropdown text-center flex-grow-1">
-            <button class="btn btn-link dropdown-toggle fs-3 text-white fw-bold" id="navbarDropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+            <button class="btn btn-link dropdown-toggle fs-3 text-white fw-bold" id="navbarDropdownMenuLink" title="Jump to another step" data-bs-toggle="dropdown" aria-expanded="false">
               {{ page_info['title'] }}
             </button>
             <ul class="dropdown-menu text-center" style="left: 50%; transform: translateX(-50%);" aria-labelledby="navbarDropdownMenuLink">
@@ -27,7 +27,7 @@
           </div>
 
           <!-- Next Button -->
-          <button type="submit" class="btn btn-success ms-auto" onclick="loading('next')" formaction="/step/{{ page_info['next_page'] }}">
+          <button type="submit" class="btn btn-success ms-auto" onclick="loading('next')" title="Next" formaction="/step/{{ page_info['next_page'] }}">
             <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
           </button>
         </div>
