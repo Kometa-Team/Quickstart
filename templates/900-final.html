@@ -1,51 +1,6 @@
 {% extends "000-base.html" %} {% block content %}
-<form method="post" id="final-form">
-  <div id="{{ page_info['title'] }}Section">
-    <!-- Navigation Bar -->
-    <div class="container mt-4">
-      <nav class="navbar p-3 rounded shadow bg-transparent">
-        <div class="d-flex align-items-center w-100">
-
-          <!-- Back Button -->
-          <button type="submit" class="btn btn-secondary me-auto" onclick="loading('prev')" title="Previous" formaction="/step/{{ page_info['prev_page'] }}">
-            <i id="prev-spinner-icon" class="fa fa-arrow-left"></i>
-          </button>
-
-          <!-- Page Title as Dropdown -->
-          <div class="dropdown text-center flex-grow-1">
-            <button class="btn btn-link dropdown-toggle fs-3 text-white fw-bold" id="navbarDropdownMenuLink" title="Jump to another step" data-bs-toggle="dropdown" aria-expanded="false">
-              {{ page_info['title'] }}
-            </button>
-            <ul class="dropdown-menu text-center" style="left: 50%; transform: translateX(-50%);" aria-labelledby="navbarDropdownMenuLink">
-              {% for file, name in template_list %}
-                {% if name == 'Final Validation' %}
-                  <li><hr class="dropdown-divider"></li>
-                {% endif %}
-                <li>
-                  <a class="dropdown-item" href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">{{ name }}</a>
-                </li>
-                {% if name == 'Start' %}
-                  <li><hr class="dropdown-divider"></li>
-                {% endif %}
-              {% endfor %}
-            </ul>
-          </div>
-
-        </div>
-      </nav>
-    </div>
-
-    <!-- Progress Bar -->
-    <div class="container text-center mt-3">
-      <div class="progress" role="progressbar" aria-valuenow="{{ page_info['progress'] }}" aria-valuemin="0" aria-valuemax="100">
-        <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%">
-          {{ page_info['progress'] }}%
-        </div>
-      </div>
-    </div>
-
-    <hr class="hr">
-    {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+{% include "001-navigation.html" %}
+{% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating mb-2">
       <select id="header-style" name="header_style" class="form-select">
         <option value="ascii" {% if page_info['header_style'] == 'ascii' %}selected{% endif %}>With ASCII Art</option>

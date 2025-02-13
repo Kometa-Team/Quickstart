@@ -155,6 +155,23 @@ label {
     position: relative;
 }
 
+/* Ensure the dropdown items use the same green color */
+.dropdown-menu {
+    background-color: #212529; /* Dark background */
+}
+
+/* Hover color */
+.dropdown-item:hover {
+    background-color: #019c75 !important;
+    color: white !important;
+}
+
+/* Active (selected) item color */
+.dropdown-item.active, .dropdown-item:active {
+    background-color: #019c75 !important;
+    color: white !important;
+}
+
 .text-info {
     color: rgb(0 152 183) !important;
 }
@@ -328,15 +345,18 @@ div#loading {
 }
 
 .nav-button {
-    background-color: #00bc8c !important;
+    background-color: #343a40 !important; /* Dark background */
     color: white !important;
-    border-color: #00bc8c !important;
+    border-color: #343a40 !important;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .nav-button:hover {
-    background-color: #019c75 !important;
+    background-color: #019c75 !important; /* Green hover */
     border-color: #019c75 !important;
+    color: white !important; /* Keep text white */
 }
+
 
 .form-check-input:checked {
     background-color: #00bc8c;
