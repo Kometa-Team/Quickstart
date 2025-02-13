@@ -20,7 +20,8 @@ code {
     background-color: #181818 !important;
 }
 
-.form-control, .form-select {
+.form-control,
+.form-select {
     background-color: hsl(225deg 8.87% 10.98%);
 }
 
@@ -48,7 +49,8 @@ header.fixed-top {
 
 /* Ensure content is not hidden under the fixed header */
 .content-wrapper {
-    margin-top: 80px; /* Adjust based on header height */
+    margin-top: 80px;
+    /* Adjust based on header height */
 }
 
 /* -------------------- */
@@ -125,7 +127,8 @@ header.fixed-top {
 /* FORM STYLES          */
 /* -------------------- */
 
-form, #final-form {
+form,
+#final-form {
     max-width: 900px;
     margin: auto;
     padding: 20px;
@@ -152,12 +155,19 @@ label {
 }
 
 .dropdown {
-    position: relative;
+    display: flex;
+    justify-content: center;
 }
 
-/* Ensure the dropdown items use the same green color */
+.dropdown .btn {
+    min-width: 180px;
+    text-align: center;
+}
+
 .dropdown-menu {
-    background-color: #212529; /* Dark background */
+    min-width: 180px;
+    left: 50%;
+    text-align: left;
 }
 
 /* Hover color */
@@ -167,7 +177,8 @@ label {
 }
 
 /* Active (selected) item color */
-.dropdown-item.active, .dropdown-item:active {
+.dropdown-item.active,
+.dropdown-item:active {
     background-color: #019c75 !important;
     color: white !important;
 }
@@ -175,6 +186,7 @@ label {
 .text-info {
     color: rgb(0 152 183) !important;
 }
+
 /* -------------------- */
 /* FORM COMPONENTS      */
 /* -------------------- */
@@ -184,13 +196,9 @@ label {
     border-bottom: 1px solid #3a3a3a;
 }
 
-.accordion {
-    --bs-accordion-bg: #191d20;
-}
-
 .accordion-body,
 .card-group {
-    background-color: #212529;
+    background-color: #343a40;
     padding-top: 10px;
     padding-bottom: 10px;
 }
@@ -205,22 +213,26 @@ label {
 
 .accordion-body,
 .card-group {
-    background-color: #212529;
+    background-color: #343a40;
     padding-top: 10px;
     padding-bottom: 10px;
 }
 
 /* ✅ Add a green left border when an accordion has selected items */
 .accordion-header.selected {
-    border-left: 4px solid #00bc8c !important; /* Bright green left border */
-    padding-left: 10px !important; /* Space text from border */
+    border-left: 4px solid #00bc8c !important;
+    /* Bright green left border */
+    padding-left: 10px !important;
+    /* Space text from border */
 }
 
 /* ✅ Ensure expanded accordion does NOT fill with green */
 .accordion-button:not(.collapsed) {
-    background-color: transparent !important; /* No background fill */
+    background-color: transparent !important;
+    /* No background fill */
     color: white !important;
-    border-color: #343a40 !important; /* Keep border subtle */
+    border-color: #343a40 !important;
+    /* Keep border subtle */
 }
 
 /* ✅ Prevent hover/focus from changing colors too much */
@@ -254,13 +266,16 @@ label {
     opacity: 0.6;
 }
 
-.btn.disabled, .btn:disabled, fieldset:disabled .btn {
+.btn.disabled,
+.btn:disabled,
+fieldset:disabled .btn {
     color: #6c757d;
     pointer-events: none;
     background-color: #181818;
     border-color: #495057;
     opacity: var(--bs-btn-disabled-opacity);
 }
+
 /* -------------------- */
 /* INPUT STYLES         */
 /* -------------------- */
@@ -344,30 +359,13 @@ div#loading {
     margin-top: 0 !important;
 }
 
-.nav-button {
-    background-color: #343a40 !important; /* Dark background */
-    color: white !important;
-    border-color: #343a40 !important;
-    transition: background-color 0.3s, color 0.3s;
-}
-
-.nav-button:hover {
-    background-color: #019c75 !important; /* Green hover */
-    border-color: #019c75 !important;
-    color: white !important; /* Keep text white */
-}
-
-
 .form-check-input:checked {
     background-color: #00bc8c;
     border-color: #0f5132;
 }
 
-.accordion-button:not(.collapsed) {
-    background-color: transparent;
-}
-
-.sponsor-btn, .discord-btn {
+.sponsor-btn,
+.discord-btn {
     background-color: #24292e;
     color: white;
     border: none;
@@ -401,4 +399,99 @@ div#loading {
 
 .img-fluid {
     max-height: 500px;
+}
+
+
+/* -------------------- */
+/* NAVBAR STYLES        */
+/* -------------------- */
+.nav-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 12px;
+    border: 2px solid #019c75;
+    background-color: #343a40 !important;
+    color: white !important;
+    border-color: #343a40 !important;
+    transition: all 0.3s ease-in-out;
+}
+
+.nav-button:hover {
+    background-color: #019c75 !important;
+    border-color: #019c75 !important;
+    color: white !important;
+}
+
+/* Dropdown Styling */
+.dropdown-menu {
+    background-color: #343a40;
+    border: 1px solid #019c75;
+}
+
+.dropdown-menu .dropdown-item {
+    color: white;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.dropdown-menu .dropdown-item:hover {
+    background-color: #019c75;
+}
+
+.dropdown-menu .dropdown-item.active {
+    background-color: #019c75 !important;
+    color: white !important;
+}
+
+/* Center Dropdown on Narrow Screens. 767.98 ensures that 768 exactly is not a problem */
+@media (max-width: 767.98px) {
+    .container-fluid.d-flex {
+        justify-content: center !important; /* Ensures dropdown stays centered */
+    }
+
+    .dropdown {
+        display: flex;
+        justify-content: center;
+        width: auto;
+    }
+
+    .dropdown .btn {
+        min-width: 180px;
+        text-align: center;
+    }
+
+    .dropdown-menu {
+        min-width: 180px;
+        left: 50%;
+        /* transform: translateX(-50%); */
+        text-align: left;
+    }
+}
+
+/* Progress Bar Styling Inside Dropdown */
+.progress-container {
+    padding: 8px 12px;
+}
+
+.progress {
+    background-color: #555;
+}
+
+.progress-bar {
+    background-color: #019c75;
+}
+
+/* Properly align icons inside navigation buttons */
+.nav-button i {
+    vertical-align: middle;
+    line-height: 1;
+    font-size: 1rem;
+    /* Adjust size if needed */
+}
+
+.nav-button:hover {
+    background-color: #019c75 !important;
+    border-color: #019c75 !important;
+    color: white !important;
 }
