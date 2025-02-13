@@ -405,6 +405,12 @@ div#loading {
 /* -------------------- */
 /* NAVBAR STYLES        */
 /* -------------------- */
+.navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1050;
+}
+
 .nav-button {
     display: flex;
     align-items: center;
