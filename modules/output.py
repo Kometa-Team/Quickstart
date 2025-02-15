@@ -16,7 +16,9 @@ from .helpers import (
     build_config_dict,
     get_template_list,
     get_bits,
+    check_for_update,
     enforce_string_fields,
+    ensure_json_schema,
     STRING_FIELDS,
 )
 
@@ -406,12 +408,19 @@ def build_config(header_style="ascii"):
     yaml.default_flow_style = False
     yaml.sort_keys = False
 
+    ensure_json_schema()
+
     with open("json-schema/config-schema.json", "r") as file:
         schema = yaml.load(file)
 
-    # Prepare the final YAML content
+    # Fetch kometa_branch dynamically
+    version_info = check_for_update()
+    kometa_branch = version_info.get(
+        "kometa_branch", "nightly"
+    )  # Default to nightly if not found
+
     yaml_content = (
-        "# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/nightly/json-schema/config-schema.json\n\n"
+        f"# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/{kometa_branch}/json-schema/config-schema.json\n\n"
         f"{section_heading('KOMETA') if header_style == 'ascii' else ('#==================== KOMETA ====================#' if header_style == 'divider' else '')}\n\n"
         f"{header_comment}\n\n"
     )

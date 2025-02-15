@@ -43,6 +43,9 @@ from modules.helpers import (
     redact_sensitive_data,
     check_for_update,
     update_checker_loop,
+    booler,
+    is_default_image,
+    ensure_json_schema,
 )
 from modules.persistence import (
     save_settings,
@@ -51,9 +54,7 @@ from modules.persistence import (
     flush_session_storage,
     notification_systems_available,
 )
-from modules.database import reset_data
-from modules.database import get_unique_config_names
-from modules.helpers import booler, is_default_image
+from modules.database import reset_data, get_unique_config_names
 
 from PIL import Image, ImageDraw
 
@@ -110,6 +111,9 @@ app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
 server_session = Session(app)
+
+# Ensure json-schema files are up to date at startup
+ensure_json_schema()
 
 
 @app.route("/check_base_images", methods=["GET"])

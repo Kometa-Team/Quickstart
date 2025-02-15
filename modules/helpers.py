@@ -1,3 +1,4 @@
+import hashlib
 import os
 import re
 import requests
@@ -13,6 +14,91 @@ STRING_FIELDS = {
     "username",
     "password",
 }
+
+
+JSON_SCHEMA_DIR = "json-schema"
+FILES_TO_DOWNLOAD = ["prototype_config.yml", "config-schema.json"]
+GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
+
+HASH_FILE = os.path.join(
+    JSON_SCHEMA_DIR, "file_hashes.txt"
+)  # Stores previous file hashes
+
+
+def get_kometa_branch():
+    """Fetch the correct branch (master or nightly)."""
+    from .helpers import check_for_update  # Prevent circular import
+
+    version_info = check_for_update()
+    return version_info.get("kometa_branch", "nightly")  # Default to nightly
+
+
+def calculate_hash(content):
+    """Compute the SHA256 hash of the given content."""
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
+def load_previous_hashes():
+    """Load the last known hashes of schema files."""
+    if not os.path.exists(HASH_FILE):
+        return {}
+
+    hashes = {}
+    with open(HASH_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            filename, file_hash = line.strip().split(":", 1)
+            hashes[filename] = file_hash
+    return hashes
+
+
+def save_hashes(hashes):
+    """Save updated hashes to the hash file."""
+    with open(HASH_FILE, "w", encoding="utf-8") as f:
+        for filename, file_hash in hashes.items():
+            f.write(f"{filename}:{file_hash}\n")
+
+
+def ensure_json_schema():
+    """Ensure json-schema files exist and are up-to-date based on hash checks."""
+    branch = get_kometa_branch()
+
+    if not os.path.exists(JSON_SCHEMA_DIR):
+        os.makedirs(JSON_SCHEMA_DIR)
+
+    previous_hashes = load_previous_hashes()
+    new_hashes = {}
+
+    for filename in FILES_TO_DOWNLOAD:
+        file_path = os.path.join(JSON_SCHEMA_DIR, filename)
+        url = f"{GITHUB_BASE_URL}/{branch}/json-schema/{filename}"
+
+        # print(f"[INFO] Checking for updates: {filename}...")
+
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            new_content = response.text
+            new_hash = calculate_hash(new_content)
+
+            # Compare hash with previous version
+            if filename in previous_hashes and previous_hashes[filename] == new_hash:
+                # print(f"[INFO] No changes detected for {filename}. Skipping download.")
+                new_hashes[filename] = new_hash  # Keep existing hash
+                continue
+
+            # Save the new file if hash has changed
+            # print(f"[INFO] Changes detected in {filename}. Downloading new version...")
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(new_content)
+
+            new_hashes[filename] = new_hash
+
+        except requests.RequestException as e:
+            print(f"[ERROR] Failed to download {filename}: {e}")
+            continue  # Skip to the next file
+
+    # Save updated hashes
+    save_hashes(new_hashes)
 
 
 def get_local_version():
@@ -43,16 +129,20 @@ def get_remote_version(branch):
 
 
 def check_for_update():
-    """Compare the local version with the remote version."""
+    """Compare the local version with the remote version and determine Kometa branch."""
     local_version, branch = get_local_version()
     remote_version = get_remote_version(branch)
 
     update_available = remote_version and remote_version != local_version
 
+    # Determine Kometa branch
+    kometa_branch = "master" if branch == "master" else "nightly"
+
     return {
         "local_version": local_version,
         "remote_version": remote_version,
         "branch": branch,
+        "kometa_branch": kometa_branch,
         "update_available": update_available,
     }
 

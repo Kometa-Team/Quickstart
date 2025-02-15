@@ -4,7 +4,13 @@ import secrets
 from ruamel.yaml import YAML
 from flask import current_app as app
 
-from .helpers import build_config_dict, get_template_list, get_bits, booler
+from .helpers import (
+    build_config_dict,
+    get_template_list,
+    get_bits,
+    booler,
+    ensure_json_schema,
+)
 from .iso_639_1 import iso_639_1_languages  # Importing the languages list
 from .iso_639_2 import iso_639_2_languages  # Importing the languages list
 from .iso_3166_1 import iso_3166_1_regions  # Importing the regions list
@@ -202,6 +208,9 @@ def retrieve_status(target):
 def get_dummy_data(target):
 
     yaml = YAML(typ="safe", pure=True)
+
+    ensure_json_schema()
+
     with open("json-schema/prototype_config.yml", "r") as file:
         base_config = yaml.load(file)
 

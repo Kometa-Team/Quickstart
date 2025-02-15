@@ -12,10 +12,10 @@
 
         <!-- Previous Button (Hidden on Start Page) -->
         {% if page_info['template_name'] != '001-start' %}
-          <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('previous')"
+          <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('prev')"
             title="Previous Step: {{ page_info['prev_page_name'] }}"
             formaction="/step/{{ page_info['prev_page'] }}">
-            <i class="fa fa-arrow-left"></i> Previous
+            <i id="prev-spinner-icon" class="fa fa-arrow-left"></i> Previous
           </button>
         {% endif %}
 
@@ -63,7 +63,7 @@
           <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
             title="Next Step: {{ page_info['next_page_name'] }}"
             formaction="/step/{{ page_info['next_page'] }}">
-            Next <i class="fa fa-arrow-right"></i>
+            Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
           </button>
         {% endif %}
 
