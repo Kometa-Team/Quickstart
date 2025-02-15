@@ -39,7 +39,8 @@ logs/
 # Ignore macOS system files
 .DS_Store
 
-# Ignore uploads
+# Ignore these direct
 uploads/
-
 .vscode/
+config/
+json-schema/
