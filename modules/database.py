@@ -5,12 +5,14 @@ import pickle
 from .helpers import booler
 from flask import current_app as app
 
-# Determine the root path of the project directory
-ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-CONFIG_DIR = os.path.join(ROOT_DIR, "config")
-DATABASE_PATH = os.path.join(CONFIG_DIR, "quickstart.sqlite")
-# Ensure the config directory exists
+# Ensure the 'config' folder exists
+CONFIG_DIR = os.path.join(
+    os.getcwd(), "config"
+)  # Ensures it's created in the current working directory
 os.makedirs(CONFIG_DIR, exist_ok=True)
+
+# Correctly set the database path
+DATABASE_PATH = os.path.join(CONFIG_DIR, "quickstart.sqlite")
 
 
 def persisted_section_table_create():

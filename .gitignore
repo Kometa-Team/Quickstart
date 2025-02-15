@@ -44,3 +44,4 @@ uploads/
 .vscode/
 config/
 json-schema/
+build/

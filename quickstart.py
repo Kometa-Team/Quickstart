@@ -14,6 +14,9 @@ from cachelib.file import FileSystemCache
 
 import io
 import os
+import shutil
+import stat
+import sys
 import threading
 from dotenv import load_dotenv
 import namesgenerator
@@ -57,6 +60,38 @@ from modules.persistence import (
 from modules.database import reset_data, get_unique_config_names
 
 from PIL import Image, ImageDraw
+
+# Determine the base directory (where Quickstart.exe is located)
+if getattr(sys, "frozen", False):  # Running as PyInstaller EXE
+    BASE_DIR = os.path.dirname(sys.executable)  # D:\QS\
+    MEIPASS_DIR = sys._MEIPASS  # PyInstaller's temp directory
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Running as a script
+    MEIPASS_DIR = BASE_DIR  # Use local directory when running normally
+
+# Ensure config directory exists
+CONFIG_DIR = os.path.join(BASE_DIR, "config")
+os.makedirs(CONFIG_DIR, exist_ok=True)
+
+# Files to copy from _MEIPASS to correct locations
+files_to_copy = {
+    "VERSION": BASE_DIR,  # Copy to the same directory as Quickstart.exe
+    ".env.example": CONFIG_DIR,  # Copy to config/ next to Quickstart.exe
+}
+
+# Copy files before _MEIPASS disappears
+for filename, dest_dir in files_to_copy.items():
+    src_path = os.path.join(MEIPASS_DIR, filename)  # File location in _MEIPASS
+    dest_path = os.path.join(dest_dir, filename)  # Target location
+
+    # Copy only if the file exists in _MEIPASS and does not already exist in the destination
+    if os.path.exists(src_path) and not os.path.exists(dest_path):
+        try:
+            print(f"[INFO] Extracting {filename} to {dest_dir}")
+            shutil.copyfile(src_path, dest_path)
+        except Exception as e:
+            print(f"[ERROR] Failed to copy {filename}: {e}")
+
 
 load_dotenv("config/.env")
 
