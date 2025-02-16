@@ -25,6 +25,27 @@ HASH_FILE = os.path.join(
 )  # Stores previous file hashes
 
 
+def get_pyfiglet_fonts():
+    """Retrieve available PyFiglet fonts from static/fonts, sorted with custom order."""
+    fonts_dir = "static/fonts"
+
+    # Ensure predefined fonts are at the top
+    predefined_fonts = ["none", "single line", "standard"]
+    fonts = set(predefined_fonts)  # Using set to prevent duplicates
+
+    # Append all .flf files, removing extension
+    if os.path.exists(fonts_dir):
+        fonts.update(
+            f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf")
+        )
+
+    # Sort remaining fonts (excluding predefined ones)
+    sorted_fonts = sorted(fonts - set(predefined_fonts))
+
+    # Combine predefined fonts with sorted remaining fonts
+    return predefined_fonts + sorted_fonts
+
+
 def get_kometa_branch():
     """Fetch the correct branch (master or nightly)."""
     from .helpers import check_for_update  # Prevent circular import

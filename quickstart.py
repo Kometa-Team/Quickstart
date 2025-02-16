@@ -49,6 +49,7 @@ from modules.helpers import (
     booler,
     is_default_image,
     ensure_json_schema,
+    get_pyfiglet_fonts,
 )
 from modules.persistence import (
     save_settings,
@@ -290,11 +291,36 @@ def clear_data(name):
 @app.route("/step/<name>", methods=["GET", "POST"])
 def step(name):
     page_info = {}
-    header_style = "ascii"  # Default to ASCII art
+    header_style = "standard"  # Default to 'standard' font
 
     if request.method == "POST":
         save_settings(request.referrer, request.form)
-        header_style = request.form.get("header_style", "ascii")
+        header_style = request.form.get("header_style", "standard")
+
+    # Retrieve available fonts (ensuring "none" and "single line" are always included)
+    available_fonts = get_pyfiglet_fonts()
+    # if "none" not in available_fonts:
+    #     available_fonts.append("none")
+    # if "single line" not in available_fonts:
+    #     available_fonts.append("single line")
+
+    page_info["available_fonts"] = available_fonts
+
+    # Retrieve stored settings from DB
+    saved_settings = retrieve_settings(name)  # Retrieve from DB
+
+    # ✅ Ensure we correctly access header_style from "final"
+    if "final" in saved_settings and "header_style" in saved_settings["final"]:
+        header_style = saved_settings["final"]["header_style"]
+
+    if header_style is None:
+        header_style = "none"
+
+    # Ensure the selected font is valid
+    if header_style not in available_fonts:
+        header_style = "standard"
+
+    page_info["header_style"] = header_style  # Now properly restored
 
     # Get selected config from form data (sent from the dropdown)
     selected_config = request.form.get("configSelector")  # Comes from the dropdown

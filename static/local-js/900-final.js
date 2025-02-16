@@ -70,5 +70,5 @@ $(document).ready(function () {
 })
 
 document.getElementById('header-style').addEventListener('change', function () {
-  document.getElementById('final-form').submit()
+  document.getElementById('configForm').submit()
 })

@@ -3,9 +3,11 @@
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
     <div class="form-floating mb-2">
       <select id="header-style" name="header_style" class="form-select">
-        <option value="ascii" {% if page_info['header_style'] == 'ascii' %}selected{% endif %}>With ASCII Art</option>
-        <option value="divider" {% if page_info['header_style'] == 'divider' %}selected{% endif %}>With Simple Divider</option>
-        <option value="none" {% if page_info['header_style'] == 'none' %}selected{% endif %}>No Headers/Dividers</option>
+          {% for font in page_info.available_fonts %}
+              <option value="{{ font }}" {% if font == page_info.header_style %}selected{% endif %}>
+                  {{ font.replace('_', ' ')|capitalize }}
+              </option>
+          {% endfor %}
       </select>
       <label for="header-style">Header Style</label>
     </div>

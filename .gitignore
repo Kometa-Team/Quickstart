@@ -45,3 +45,4 @@ uploads/
 config/
 json-schema/
 build/
+dist/

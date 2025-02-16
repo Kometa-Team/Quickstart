@@ -34,8 +34,16 @@ def add_border_to_ascii_art(art):
     return "\n".join(bordered_art)
 
 
-def section_heading(title):
-    return add_border_to_ascii_art(pyfiglet.figlet_format(title))
+def section_heading(title, font="standard"):
+    if font == "none":
+        return ""
+    elif font == "single line":
+        return f"#==================== {title} ====================#"
+    else:
+        try:
+            return add_border_to_ascii_art(pyfiglet.figlet_format(title, font=font))
+        except pyfiglet.FontNotFound:
+            return f"#==================== {title} ====================#"
 
 
 def clean_section_data(section_data, config_attribute):
@@ -210,7 +218,7 @@ def reorder_library_section(library_data):
     return reordered_data
 
 
-def build_config(header_style="ascii"):
+def build_config(header_style="standard"):
     """
     Build the final configuration, including all sections and headers,
     ensuring the libraries section is properly processed.
@@ -225,15 +233,25 @@ def build_config(header_style="ascii"):
         persistence_key = item["stem"]
         config_attribute = item["raw_name"]
 
-        # Generate ASCII art or divider headers
-        if header_style == "ascii":
-            header_art[config_attribute] = section_heading(item["name"])
-        elif header_style == "divider":
+        # ✅ Handle all header styles
+        if header_style == "none":
+            header_art[config_attribute] = ""  # No headers at all
+        elif (
+            header_style == "single line"
+        ):  # 🔥 Standardizes "single line" as divider format
             header_art[config_attribute] = (
                 "#==================== " + item["name"] + " ====================#"
             )
         else:
-            header_art[config_attribute] = ""
+            # 🔥 Handle custom PyFiglet fonts dynamically (including "standard")
+            try:
+                figlet_text = pyfiglet.figlet_format(item["name"], font=header_style)
+                header_art[config_attribute] = add_border_to_ascii_art(figlet_text)
+            except pyfiglet.FontNotFound:
+                # ✅ Fallback to "single line" divider format instead of basic text
+                header_art[config_attribute] = (
+                    "#==================== " + item["name"] + " ====================#"
+                )
 
         # Retrieve settings for each section
         section_data = retrieve_settings(persistence_key)
@@ -421,7 +439,7 @@ def build_config(header_style="ascii"):
 
     yaml_content = (
         f"# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/{kometa_branch}/json-schema/config-schema.json\n\n"
-        f"{section_heading('KOMETA') if header_style == 'ascii' else ('#==================== KOMETA ====================#' if header_style == 'divider' else '')}\n\n"
+        f"{add_border_to_ascii_art(section_heading('KOMETA', font=header_style)) if header_style not in ['none', 'single line'] else section_heading('KOMETA', font=header_style)}\n\n"
         f"{header_comment}\n\n"
     )
 
