@@ -226,13 +226,24 @@ label {
     /* Space text from border */
 }
 
-/* ✅ Ensure expanded accordion does NOT fill with green */
+/* Ensure the accordion header has a transparent background */
 .accordion-button:not(.collapsed) {
     background-color: transparent !important;
-    /* No background fill */
     color: white !important;
-    border-color: #343a40 !important;
-    /* Keep border subtle */
+    border-color: #343a40 !important; /* Keep border subtle */
+}
+
+/* Ensure the expanded accordion body matches the surrounding theme */
+.accordion-button:not(.collapsed) + .accordion-collapse .accordion-body {
+    background-color: #343a40 !important; /* Explicitly set to match the header */
+    color: white !important;
+}
+
+/* Ensure the expanded accordion section matches the header */
+.accordion-collapse.show .accordion-body {
+    background-color: transparent !important; /* Same as the header */
+    color: white !important;
+    border-top: 1px solid #343a40; /* Optional: subtle border for separation */
 }
 
 /* ✅ Prevent hover/focus from changing colors too much */
