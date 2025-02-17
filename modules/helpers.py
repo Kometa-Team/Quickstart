@@ -18,7 +18,6 @@ STRING_FIELDS = {
 
 
 JSON_SCHEMA_DIR = "json-schema"
-FILES_TO_DOWNLOAD = ["prototype_config.yml", "config-schema.json"]
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 
 HASH_FILE = os.path.join(
@@ -84,17 +83,23 @@ def ensure_json_schema():
     """Ensure json-schema files exist and are up-to-date based on hash checks."""
     branch = get_kometa_branch()
 
-    if not os.path.exists(JSON_SCHEMA_DIR):
-        os.makedirs(JSON_SCHEMA_DIR)
+    # Ensure json-schema directory exists
+    os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
+
+    # Define source locations for each file
+    FILE_LOCATIONS = {
+        "prototype_config.yml": f"{GITHUB_BASE_URL}/{branch}/json-schema/prototype_config.yml",
+        "config-schema.json": f"{GITHUB_BASE_URL}/{branch}/json-schema/config-schema.json",
+        "config.yml.template": f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template",
+    }
 
     previous_hashes = load_previous_hashes()
     new_hashes = {}
 
-    for filename in FILES_TO_DOWNLOAD:
-        file_path = os.path.join(JSON_SCHEMA_DIR, filename)
-        url = f"{GITHUB_BASE_URL}/{branch}/json-schema/{filename}"
-
-        # print(f"[INFO] Checking for updates: {filename}...")
+    for filename, url in FILE_LOCATIONS.items():
+        file_path = os.path.join(
+            JSON_SCHEMA_DIR, filename
+        )  # Store everything in json-schema
 
         try:
             response = requests.get(url, timeout=10)
@@ -104,19 +109,17 @@ def ensure_json_schema():
 
             # Compare hash with previous version
             if filename in previous_hashes and previous_hashes[filename] == new_hash:
-                # print(f"[INFO] No changes detected for {filename}. Skipping download.")
                 new_hashes[filename] = new_hash  # Keep existing hash
                 continue
 
             # Save the new file if hash has changed
-            # print(f"[INFO] Changes detected in {filename}. Downloading new version...")
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
 
             new_hashes[filename] = new_hash
 
         except requests.RequestException as e:
-            print(f"[ERROR] Failed to download {filename}: {e}")
+            print(f"[ERROR] Failed to download {filename} from {url}: {e}")
             continue  # Skip to the next file
 
     # Save updated hashes

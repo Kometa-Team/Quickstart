@@ -211,7 +211,7 @@ def get_dummy_data(target):
 
     ensure_json_schema()
 
-    with open("json-schema/prototype_config.yml", "r") as file:
+    with open("json-schema/config.yml.template", "r") as file:
         base_config = yaml.load(file)
 
     data = {}

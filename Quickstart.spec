@@ -10,7 +10,7 @@ a = Analysis(
     ['quickstart.py'],
     pathex=[],
     binaries=[],
-    datas=[('VERSION', '.'), ('static/fonts', 'pyfiglet/fonts'), ('static', 'static'), ('templates', 'templates'), ('modules', 'modules'), ('.env.example', '.')],
+    datas=[('VERSION', '.'), ('static/fonts', 'pyfiglet/fonts'), ('static', 'static'), ('templates', 'templates'), ('modules', 'modules'), ('config', 'config'), ('.env.example', '.')],
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
@@ -40,5 +40,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=['static\\favicon.png'],
+    icon=['static\\favicon.ico'],
 )
