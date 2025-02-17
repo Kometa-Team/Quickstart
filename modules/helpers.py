@@ -2,6 +2,7 @@ import hashlib
 import os
 import re
 import requests
+import subprocess
 import time
 from flask import current_app as app
 from pathlib import Path
@@ -131,8 +132,17 @@ def get_local_version():
     with open(version_file, "r", encoding="utf-8") as f:
         local_version = f.read().strip()
 
-    # Determine branch based on whether "build" is in the file
-    branch = "develop" if "build" in local_version.lower() else "master"
+    # Use Git to determine the current branch
+    try:
+        branch = (
+            subprocess.check_output(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
+            )
+            .decode("utf-8")
+            .strip()
+        )
+    except subprocess.CalledProcessError:
+        branch = "unknown"  # Fallback if not a git repo
 
     return local_version, branch
 
