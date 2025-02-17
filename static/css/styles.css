@@ -218,7 +218,7 @@ label {
     padding-bottom: 10px;
 }
 
-/* ✅ Add a green left border when an accordion has selected items */
+/* Add a green left border when an accordion has selected items */
 .accordion-header.selected {
     border-left: 4px solid #00bc8c !important;
     /* Bright green left border */
@@ -246,7 +246,7 @@ label {
     border-top: 1px solid #343a40; /* Optional: subtle border for separation */
 }
 
-/* ✅ Prevent hover/focus from changing colors too much */
+/* Prevent hover/focus from changing colors too much */
 .accordion-button:not(.collapsed):hover,
 .accordion-button:not(.collapsed):focus {
     background-color: transparent !important;
@@ -254,12 +254,12 @@ label {
     border-color: #343a40 !important;
 }
 
-/* ✅ Keep expand/collapse arrow white when expanded */
+/* Keep expand/collapse arrow white when expanded */
 .accordion-button:not(.collapsed)::after {
     color: white !important;
 }
 
-/* ✅ Keep expand/collapse arrow white when collapsed */
+/* Keep expand/collapse arrow white when collapsed */
 .accordion-button.collapsed::after {
     color: white !important;
 }

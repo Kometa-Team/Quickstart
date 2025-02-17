@@ -367,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function () {
         )
       })
 
-    updateValidationState() // ✅ Ensure validation updates on form submission
+    updateValidationState() // Ensure validation updates on form submission
   })
 })
 
@@ -411,7 +411,7 @@ $(document).ready(function () {
   // Attach change listeners to library and accordion checkboxes
   $('.library-checkbox, .accordion-item input[type="checkbox"]').change(function () {
     console.log('[DEBUG] Checkbox state changed.')
-    updateValidationState() // ✅ Ensure validation updates when checkboxes change
+    updateValidationState() // Ensure validation updates when checkboxes change
   })
 
   // Ensure values are stored properly before form submission
@@ -464,7 +464,7 @@ $(document).ready(function () {
         console.log(`[DEBUG] Selected radio button: ${this.name} -> ${selectedValue}`)
       }
 
-      updateValidationState() // ✅ Ensure validation updates when radio selection changes
+      updateValidationState() // Ensure validation updates when radio selection changes
     })
   })
 

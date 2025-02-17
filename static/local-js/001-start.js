@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let currentAction = ''
 
-  // ✅ Ensure buttons are enabled if the config isn't "Add Config"
+  // Ensure buttons are enabled if the config isn't "Add Config"
   function updateButtonState () {
     const isAddConfig = configSelector.value === 'add_config'
     const onlyAddConfigAvailable = configSelector.options.length === 1 && isAddConfig // Check if it's the only option
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // ✅ Ensure input box appears on page load if necessary
+  // Ensure input box appears on page load if necessary
   updateButtonState()
 
   configSelector.addEventListener('change', function () {

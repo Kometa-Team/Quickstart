@@ -88,7 +88,7 @@ def build_libraries_section(
             if selected
         ]
 
-        # ✅ NEW: Add selected_content_rating to overlays
+        # Add selected_content_rating to overlays
         selected_content_rating_key = (
             f"{library_type}-attribute_selected_content_rating"
         )
@@ -233,7 +233,7 @@ def build_config(header_style="standard"):
         persistence_key = item["stem"]
         config_attribute = item["raw_name"]
 
-        # ✅ Handle all header styles
+        # Handle all header styles
         if header_style == "none":
             header_art[config_attribute] = ""  # No headers at all
         elif (
@@ -248,7 +248,7 @@ def build_config(header_style="standard"):
                 figlet_text = pyfiglet.figlet_format(item["name"], font=header_style)
                 header_art[config_attribute] = add_border_to_ascii_art(figlet_text)
             except pyfiglet.FontNotFound:
-                # ✅ Fallback to "single line" divider format instead of basic text
+                # Fallback to "single line" divider format instead of basic text
                 header_art[config_attribute] = (
                     "#==================== " + item["name"] + " ====================#"
                 )
@@ -315,14 +315,14 @@ def build_config(header_style="standard"):
         if isinstance(webhooks_data, dict) and "webhooks" in webhooks_data:
             webhooks_data = webhooks_data["webhooks"]  # 🔥 Fix: Handle extra nesting
 
-        # ✅ Remove empty values
+        # Remove empty values
         cleaned_webhooks = {
             key: value
             for key, value in webhooks_data.items()
             if value is not None and value != "" and value != [] and value != {}
         }
 
-        # ✅ If no valid webhooks exist, remove the "webhooks" section entirely
+        # If no valid webhooks exist, remove the "webhooks" section entirely
         if cleaned_webhooks:
             config_data["webhooks"] = {
                 "webhooks": cleaned_webhooks

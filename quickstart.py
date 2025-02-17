@@ -193,7 +193,7 @@ def delete_base_image():
     upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
     base_path = os.path.join(upload_folder, "base_image.png")
 
-    # ✅ Delete the uploaded image if it exists
+    # Delete the uploaded image if it exists
     if os.path.exists(base_path):
         os.remove(base_path)
 
@@ -213,7 +213,7 @@ def generate_preview():
     upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
     base_path = os.path.join(upload_folder, "base_image.png")
 
-    # ✅ If no custom image exists, create a grey 1000x1500 placeholder
+    # If no custom image exists, create a grey 1000x1500 placeholder
     if not os.path.exists(base_path):
         default_img = Image.new(
             "RGBA", (1000, 1500), (128, 128, 128, 255)
@@ -299,17 +299,18 @@ def step(name):
 
     # Retrieve available fonts (ensuring "none" and "single line" are always included)
     available_fonts = get_pyfiglet_fonts()
-    # if "none" not in available_fonts:
-    #     available_fonts.append("none")
-    # if "single line" not in available_fonts:
-    #     available_fonts.append("single line")
 
     page_info["available_fonts"] = available_fonts
+
+    # Ensure session["config_name"] always exists
+    if "config_name" not in session:
+        session["config_name"] = namesgenerator.get_random_name()
+        app.logger.info(f"Assigned new config_name: {session['config_name']}")
 
     # Retrieve stored settings from DB
     saved_settings = retrieve_settings(name)  # Retrieve from DB
 
-    # ✅ Ensure we correctly access header_style from "final"
+    # Ensure we correctly access header_style from "final"
     if "final" in saved_settings and "header_style" in saved_settings["final"]:
         header_style = saved_settings["final"]["header_style"]
 
