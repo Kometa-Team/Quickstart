@@ -102,7 +102,7 @@ jobs:
         run: |
           pyinstaller -y ./Quickstart.spec
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           name: Quickstart-${{ needs.docker-build-version.outputs.version }}-${{ runner.os }}
           path: dist/Quickstart.exe
