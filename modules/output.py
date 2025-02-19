@@ -532,6 +532,11 @@ def build_config(header_style="standard"):
         ("mal", "130-mal"),
     ]
 
+    # Ensure `code_verifier` is removed from mal.authorization (wherever it exists)
+    if "mal" in config_data and "mal" in config_data["mal"]:
+        authorization_data = config_data["mal"]["mal"].get("authorization", {})
+        authorization_data.pop("code_verifier", None)  # ✅ Remove safely
+
     # Apply enforce_string_fields to ensure proper formatting
     config_data = enforce_string_fields(config_data, STRING_FIELDS)
 
