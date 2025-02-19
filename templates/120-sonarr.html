@@ -53,6 +53,42 @@
 </div>
 
 <div class="input-group mb-2">
+    <span class="input-group-text" id="sonarr_tag_text" style="width: 170px; justify-content: space-between;">
+        Tag
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Enter a tag that will be applied to all movies added through Radarr.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </span>
+    <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag"
+           value="{{ data['sonarr']['tag'] }}" aria-describedby="sonarr_tag_text">
+</div>
+
+<div class="input-group mb-2">
+    <span class="input-group-text" id="sonarr_sonarr_path_text" style="width: 170px; justify-content: space-between;">
+        Sonarr Path
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Specify the path Sonarr should use when adding movies.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </span>
+    <input type="text" class="form-control" id="sonarr_sonarr_path" name="sonarr_sonarr_path"
+           value="{{ data['sonarr']['sonarr_path'] }}" aria-describedby="sonarr_sonarr_path_text">
+</div>
+
+<div class="input-group mb-2">
+    <span class="input-group-text" id="sonarr_plex_path_text" style="width: 170px; justify-content: space-between;">
+        Plex Path
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Set the path where Plex will find the movies added through Sonarr.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </span>
+    <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path"
+           value="{{ data['sonarr']['plex_path'] }}" aria-describedby="sonarr_plex_path_text">
+</div>
+
+<div class="input-group mb-2">
     <span class="input-group-text" id="sonarr_monitor_text" style="width: 171px; justify-content: space-between;">
         Monitor
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"

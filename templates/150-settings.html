@@ -289,6 +289,30 @@
                   </div>
                 </div>
 
+                <div class="form-check form-switch">
+                  <input class="form-check-input" type="checkbox" id="delete_below_minimum" name="delete_below_minimum" value="true"
+                      {% if data['settings']['delete_below_minimum']|string|lower=='true' %}checked{% endif %}>
+                  <input type="hidden" name="delete_below_minimum" value="false">
+                  <label class="form-check-label" for="delete_below_minimum">
+                    Delete Below Minimum
+                    <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                       title="Used to delete collections below minimum items. When a collection is run, delete the collection if it is below the minimum number specified by minimum_items.">
+                    </i>
+                  </label>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="delete_not_scheduled" name="delete_not_scheduled" value="true"
+                    {% if data['settings']['delete_not_scheduled']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="delete_not_scheduled" value="false">
+                <label class="form-check-label" for="delete_not_scheduled">
+                  Delete Not Scheduled
+                  <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                     title="Used to delete collections not scheduled. If a collection is skipped due to it not being scheduled, delete the collection.">
+                  </i>
+                </label>
+            </div>
+
                 <div class="col-md-8">
                   <div class="input-group mb-2">
                     <span class="input-group-text" style="width: 256px; justify-content: space-between;">
@@ -374,9 +398,9 @@
                          title="Enable this setting to print out a playlist report at the end of the log.">
                       </i>
                     </label>
-
                 </div>
-              <!-- Button to open the modal for playlist_sync_to_users -->
+
+                <!-- Button to open the modal for playlist_sync_to_users -->
                 <div class="form-floating mb-2">
                     <!-- Button to open the modal for playlist_sync_to_users -->
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#syncUsersModal">
