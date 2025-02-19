@@ -34,6 +34,19 @@
         Authorize <i id="spinner_retrieve" class="spinner-border spinner-border-sm" style="display:none;"></i>
       </button>
     </div>
+
+    <div class="input-group mb-2">
+      <span class="input-group-text" id="mal_cache_expiration_text" style="width: 170px;  justify-content: space-between;">
+          Cache Expiration
+          <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Set the number of days before MyAnimeList cache expires.<br><br>Setting it to 0 disables caching.">
+              <i class="bi bi-info-circle-fill"></i>
+          </span>
+      </span>
+      <input type="number" class="form-control" id="mal_cache_expiration" name="mal_cache_expiration"
+          value="{{ data['mal']['cache_expiration'] }}" min="0" aria-describedby="mal_cache_expiration_text">
+  </div>
+
     <input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">
 
     <div class="input-group mb-2" id="localhost_url_field">

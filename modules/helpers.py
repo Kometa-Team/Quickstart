@@ -221,17 +221,21 @@ def build_oauth_dict(source, form_data):
         final_key = key.replace(source + "_", "", 1)
         value = form_data[key]
 
-        if (
-            (final_key == "client_id")
-            or (final_key == "client_secret")
-            or (final_key == "pin")
+        if final_key in (
+            "client_id",
+            "client_secret",
+            "pin",
+            "cache_expiration",
+            "localhost_url",
         ):
-            data[source][final_key] = value
+            data[source][final_key] = value  # Store outside authorization
         elif final_key == "validated":
             data[final_key] = value
         else:
             if final_key != "url":
-                data[source]["authorization"][final_key] = value
+                data[source]["authorization"][
+                    final_key
+                ] = value  # Everything else goes into authorization
 
     return data
 
