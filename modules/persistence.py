@@ -2,6 +2,7 @@ from flask import session
 import os
 import secrets
 from ruamel.yaml import YAML
+from ruamel.yaml.constructor import DuplicateKeyError
 from flask import current_app as app
 
 from .helpers import (
@@ -206,21 +207,23 @@ def retrieve_status(target):
 
 
 def get_dummy_data(target):
+    """
+    Load dummy data from config.yml.template while handling duplicate keys gracefully.
+    """
 
-    yaml = YAML(typ="safe", pure=True)
+    yaml = YAML(typ="safe", pure=True)  # Safe loading mode
 
     ensure_json_schema()
 
-    with open("json-schema/config.yml.template", "r") as file:
-        base_config = yaml.load(file)
-
-    data = {}
     try:
-        data = base_config[target]
-    except:
-        data = {}
+        with open("json-schema/config.yml.template", "r") as file:
+            base_config = yaml.load(file)
+    except DuplicateKeyError as e:
+        print(f"[WARNING] Duplicate key detected in config.yml.template: {e}")
+        return {}  # Return empty data instead of crashing
 
-    return data
+    # Safely retrieve target data
+    return base_config.get(target, {})
 
 
 def check_minimum_settings():

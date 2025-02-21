@@ -8,18 +8,23 @@ from flask import (
     flash,
     session,
     send_file,
+    send_from_directory,
 )
 from flask_session import Session
 from cachelib.file import FileSystemCache
 
 import io
 import os
+import requests
 import shutil
 import stat
 import sys
 import threading
 from dotenv import load_dotenv
 import namesgenerator
+from io import BytesIO
+from werkzeug.utils import secure_filename
+
 
 from modules.validations import (
     validate_plex_server,
@@ -103,6 +108,9 @@ UPLOAD_FOLDER_MOVIE = "config/uploads/movies"
 UPLOAD_FOLDER_SHOW = "config/uploads/shows"
 os.makedirs(UPLOAD_FOLDER_MOVIE, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER_SHOW, exist_ok=True)
+OVERLAY_FOLDER = "static/images/overlays"
+PREVIEW_FOLDER = "config/previews"
+os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
 VERSION_FILE = "VERSION"
 GITHUB_MASTER_VERSION_URL = (
@@ -151,58 +159,23 @@ server_session = Session(app)
 # Ensure json-schema files are up to date at startup
 ensure_json_schema()
 
-
-@app.route("/check_base_images", methods=["GET"])
-def check_base_images():
-    movie_path = os.path.join(UPLOAD_FOLDER_MOVIE, "base_image.png")
-    show_path = os.path.join(UPLOAD_FOLDER_SHOW, "base_image.png")
-
-    movie_exists = os.path.exists(movie_path) and not is_default_image(movie_path)
-    show_exists = os.path.exists(show_path) and not is_default_image(show_path)
-
-    return jsonify({"movie_exists": movie_exists, "show_exists": show_exists})
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 
-@app.route("/upload_base_image", methods=["POST"])
-def upload_base_image():
-    img_type = request.form.get("type", "movie")
-    upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
-    if "image" not in request.files:
-        return jsonify({"status": "error", "message": "No file uploaded."})
-
-    file = request.files["image"]
-    img = Image.open(file)
-    width, height = img.size
-    if width / height != 2 / 3:
-        return jsonify(
-            {
-                "status": "error",
-                "message": "Image must have a 2:3 ratio. Example: 1000px x 1500px",
-            }
-        )
-
-    img = img.resize((1000, 1500))
-    img_path = os.path.join(upload_folder, "base_image.png")
-    img.save(img_path)
-    return jsonify({"status": "success", "message": "Image uploaded successfully."})
+def allowed_file(filename):
+    """Check if the file has an allowed extension."""
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route("/delete_base_image", methods=["POST"])
-def delete_base_image():
-    img_type = request.form.get("type", "movie")
-    upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
-    base_path = os.path.join(upload_folder, "base_image.png")
+def is_valid_aspect_ratio(image):
+    """Check if the image has an aspect ratio of approximately 1:1.5."""
+    width, height = image.size
+    return abs((width / height) - (2 / 3)) < 0.01  # Ensure it's approximately 1000x1500
 
-    # Delete the uploaded image if it exists
-    if os.path.exists(base_path):
-        os.remove(base_path)
 
-    return jsonify(
-        {
-            "status": "success",
-            "message": "Custom base image deleted. Grey default will be used.",
-        }
-    )
+@app.route("/config/previews/<path:filename>")
+def serve_previews(filename):
+    return send_from_directory("config/previews", filename)
 
 
 @app.route("/generate_preview", methods=["POST"])
@@ -210,28 +183,252 @@ def generate_preview():
     data = request.json
     overlays = data.get("overlays", [])
     img_type = data.get("type", "movie")
+    selected_image = data.get("selected_image")
+
     upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
-    base_path = os.path.join(upload_folder, "base_image.png")
+    preview_folder = "config/previews"
+    preview_filename = f"{img_type}_preview.png"
+    preview_path = os.path.join(preview_folder, preview_filename)
 
-    # If no custom image exists, create a grey 1000x1500 placeholder
-    if not os.path.exists(base_path):
-        default_img = Image.new(
-            "RGBA", (1000, 1500), (128, 128, 128, 255)
-        )  # Grey background
-        default_img.save(base_path)
+    # Ensure preview folder exists
+    os.makedirs(preview_folder, exist_ok=True)
 
-    base_img = Image.open(base_path).convert("RGBA")
+    if not selected_image or selected_image == "default":
+        base_image_path = os.path.join(preview_folder, "default_grey.png")
+        if not os.path.exists(base_image_path):
+            base_img = Image.new("RGBA", (1000, 1500), (128, 128, 128, 255))
+            base_img.save(base_image_path)
+    else:
+        base_image_path = os.path.join(upload_folder, selected_image)
 
+    if not os.path.exists(base_image_path):
+        return jsonify({"status": "error", "message": "Selected image not found."}), 400
+
+    base_img = Image.open(base_image_path).convert("RGBA")
+
+    # Ensure base image is 1000x1500
+    base_img = base_img.resize((1000, 1500), Image.LANCZOS)
+
+    # Apply overlays
     for overlay in overlays:
         overlay_path = f"static/images/overlays/{overlay}.png"
         if os.path.exists(overlay_path):
             overlay_img = Image.open(overlay_path).convert("RGBA")
             base_img.paste(overlay_img, (0, 0), overlay_img)
 
-    output = os.path.join(upload_folder, "preview.png")
-    base_img.save(output)
+    # Save the generated preview
+    base_img.save(preview_path)
+    print(f"[INFO] Preview saved at {preview_path}")
 
-    return send_file(output, mimetype="image/png")
+    return jsonify({"status": "success", "preview_url": f"/{preview_path}"})
+
+
+@app.route("/get_preview_image/<img_type>", methods=["GET"])
+def get_preview_image(img_type):
+    preview_folder = "config/previews"
+    preview_filename = f"{img_type}_preview.png"
+    preview_path = os.path.join(preview_folder, preview_filename)
+
+    # Generate preview if it doesn't exist
+    if not os.path.exists(preview_path):
+        print(f"[WARNING] Preview not found for {img_type}. Generating...")
+        generate_preview()
+
+    if os.path.exists(preview_path):
+        return send_file(preview_path, mimetype="image/png")
+
+    return jsonify({"status": "error", "message": "Preview image not found"}), 40
+
+
+@app.route("/list_uploaded_images", methods=["GET"])
+def list_uploaded_images():
+    image_type = request.args.get("type")  # Expecting "movie" or "show"
+
+    if image_type not in ["movie", "show"]:
+        return jsonify({"status": "error", "message": "Invalid image type"}), 400
+
+    # Ensure the correct directory is used
+    uploads_dir = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
+
+    if not os.path.exists(uploads_dir):
+        return jsonify({"images": []})  # Return empty list if folder doesn't exist
+
+    images = [
+        img
+        for img in os.listdir(uploads_dir)
+        if img.lower().endswith((".png", ".jpg", ".jpeg"))
+    ]
+
+    return jsonify({"images": images})
+
+
+@app.route("/upload_library_image", methods=["POST"])
+def upload_library_image():
+    if "image" not in request.files:
+        return jsonify({"status": "error", "message": "No image uploaded"}), 400
+
+    image = request.files["image"]
+    image_type = request.form.get("type")  # "movie" or "show"
+
+    if not image or not image_type or image_type not in ["movie", "show"]:
+        return (
+            jsonify({"status": "error", "message": "Invalid request parameters"}),
+            400,
+        )
+
+    # Validate file extension
+    filename = secure_filename(image.filename)
+    ext = filename.rsplit(".", 1)[-1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "Invalid file type. Allowed: png, jpg, jpeg, webp",
+                }
+            ),
+            400,
+        )
+
+    # Open and validate image
+    img = Image.open(image)
+    if not is_valid_aspect_ratio(img):
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500).",
+                }
+            ),
+            400,
+        )
+
+    # Resize if needed
+    img = img.resize((1000, 1500), Image.LANCZOS)
+
+    # Set save directory
+    save_folder = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
+    os.makedirs(save_folder, exist_ok=True)
+
+    save_path = os.path.join(save_folder, filename)
+    img.save(save_path)
+
+    return jsonify(
+        {
+            "status": "success",
+            "message": f"Image uploaded and saved as {filename}",
+            "filename": filename,
+        }
+    )
+
+
+@app.route("/fetch_library_image", methods=["POST"])
+def fetch_library_image():
+    data = request.json
+    image_url = data.get("url")
+    image_type = data.get("type")  # "movie" or "show"
+
+    if not image_url or not image_type or image_type not in ["movie", "show"]:
+        return (
+            jsonify({"status": "error", "message": "Invalid request parameters"}),
+            400,
+        )
+
+    try:
+        response = requests.get(image_url, stream=True, timeout=5)
+        response.raise_for_status()
+        img = Image.open(BytesIO(response.content))
+
+        # Validate file extension
+        file_extension = img.format.lower()
+        if file_extension not in ALLOWED_EXTENSIONS:
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "Invalid file type. Allowed: png, jpg, jpeg, webp",
+                    }
+                ),
+                400,
+            )
+
+        # Ensure the correct aspect ratio
+        if not is_valid_aspect_ratio(img):
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500).",
+                    }
+                ),
+                400,
+            )
+
+        # Resize if necessary
+        img = img.resize((1000, 1500), Image.LANCZOS)
+
+        # Set save directory
+        save_folder = (
+            UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
+        )
+        os.makedirs(save_folder, exist_ok=True)
+
+        # Generate a safe filename from URL
+        filename = secure_filename(os.path.basename(image_url))
+        if (
+            "." not in filename
+            or filename.split(".")[-1].lower() not in ALLOWED_EXTENSIONS
+        ):
+            filename += ".png"  # Default to PNG if no valid extension is found
+
+        save_path = os.path.join(save_folder, filename)
+
+        # Prevent overwriting existing files
+        base, ext = os.path.splitext(filename)
+        counter = 1
+        while os.path.exists(save_path):
+            filename = f"{base}_{counter}{ext}"
+            save_path = os.path.join(save_folder, filename)
+            counter += 1
+
+        # Save the validated and resized image
+        img.save(save_path)
+
+        return jsonify(
+            {
+                "status": "success",
+                "message": f"Image fetched and saved as {filename}",
+                "filename": filename,
+            }
+        )
+
+    except requests.exceptions.RequestException as e:
+        return (
+            jsonify({"status": "error", "message": f"Failed to fetch image: {str(e)}"}),
+            400,
+        )
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Processing error: {str(e)}"}), 4
+
+
+@app.route("/delete_library_image/<filename>", methods=["DELETE"])
+def delete_library_image(filename):
+    image_type = request.args.get("type")  # "movie" or "show"
+
+    if image_type not in ["movie", "show"]:
+        return jsonify({"status": "error", "message": "Invalid image type"}), 400
+
+    uploads_dir = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
+    file_path = os.path.join(uploads_dir, filename)
+
+    if not os.path.exists(file_path):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    try:
+        os.remove(file_path)
+        return jsonify({"status": "success", "message": f"Deleted {filename}"}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/update_libraries", methods=["POST"])

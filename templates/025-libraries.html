@@ -56,7 +56,7 @@
                            data-bs-toggle="tooltip"
                            data-bs-placement="top"
                            data-bs-custom-class="text-tooltip"
-                           title="Please enable Separators under the Movie Attributes section to enable this file.">
+                           title="Please select your desired Separator style from the Movie Attributes section, which will allow you to enable this Separator.">
                         </i>
                       </div>
                     </div>
@@ -331,7 +331,7 @@
                            data-bs-toggle="tooltip"
                            data-bs-placement="top"
                            data-bs-custom-class="text-tooltip"
-                           title="Please enable Separators under the Movie Attributes section to enable this file.">
+                           title="Please select your desired Separator style from the Movie Attributes section, which will allow you to enable this Separator.">
                         </i>
                       </div>
                     </div>
@@ -950,6 +950,7 @@
           <div class="accordion-body">
 
             <!-- Preview Overlays Accordion -->
+
             <div class="accordion mt-3" id="mov-previewOverlaysAccordion">
               <div class="accordion-item">
                 <h2 class="accordion-header">
@@ -966,18 +967,27 @@
                       upload an image, and hit the <strong>Preview</strong> button to see how the overlays will look.
                     </p>
 
-                    <!-- Preview Overlay Toggles -->
-                    <div class="container mt-4">
-                      <input type="file" id="baseImageUploadMovie" accept="image/png, image/jpeg" class="form-control mt-2">
-                      <div class="d-flex gap-2 mt-3">
-                        <button id="previewOverlayButtonMovie" class="btn btn-primary">Preview</button>
-                        <button id="deleteMovieImage" class="btn btn-danger">Delete Custom Image</button>
-                      </div>
-                      <div id="previewMovieImageContainer" class="mt-4" style="display: none;">
-                        <h5>Preview:</h5>
-                        <img id="previewMovieImage" class="img-fluid" alt="Overlay Preview">
-                      </div>
+                    <div class="form-floating mb-2">
+                      <select id="mov-library-image-dropdown" class="form-select">
+                          <option value="default">Default Grey</option>
+                      </select>
+                      <label for="mov-library-image-dropdown">Select Custom Movie Image</label>
                     </div>
+
+                    <!-- Upload an image manually -->
+                    <input type="file" id="mov-upload-library-image" accept="image/png, image/jpeg" class="form-control mb-2">
+                    <button type="button" id="mov-upload-btn" class="btn btn-primary">Upload</button>
+
+                    <!-- Fetch an image from a URL -->
+                    <div class="input-group mt-2">
+                        <input type="url" id="mov-image-url" class="form-control" placeholder="Enter Image URL">
+                        <button type="button" id="mov-fetch-url-btn" class="btn btn-secondary">Fetch</button>
+                    </div>
+
+                    <button type="button" id="mov-delete-image-btn" class="btn btn-danger mt-2">Delete Selected</button>
+
+                    <img id="mov-preview-image" src="/config/previews/movie_preview.png" class="img-fluid mt-3" alt="Movie Preview">
+
                   </div>
                 </div>
               </div>
@@ -1527,7 +1537,7 @@
                            data-bs-toggle="tooltip"
                            data-bs-placement="top"
                            data-bs-custom-class="text-tooltip"
-                           title="Please enable Separators under the Show Attributes section to enable this file.">
+                           title="Please select your desired Separator style from the Show Attributes section, which will allow you to enable this Separator.">
                         </i>
                       </div>
                     </div>
@@ -1635,7 +1645,7 @@
                            data-bs-toggle="tooltip"
                            data-bs-placement="top"
                            data-bs-custom-class="text-tooltip"
-                           title="Please enable Separators under the Show Attributes section to enable this file.">
+                           title="Please select your desired Separator style from the Show Attributes section, which will allow you to enable this Separator.">
                         </i>
                       </div>
                     </div>
@@ -2198,6 +2208,7 @@
         <div id="showOverlays" class="accordion-collapse collapse" data-bs-parent="#accordionShows">
           <div class="accordion-body">
             <!-- Preview Overlays Accordion -->
+
             <div class="accordion mt-3" id="sho-previewOverlaysAccordion">
               <div class="accordion-item">
                 <h2 class="accordion-header">
@@ -2214,22 +2225,34 @@
                       upload an image, and hit the <strong>Preview</strong> button to see how the overlays will look.
                     </p>
 
-                    <!-- Preview Overlay Toggles -->
-                    <div class="container mt-4">
-                      <input type="file" id="baseImageUploadShow" accept="image/png, image/jpeg" class="form-control mt-2">
-                      <div class="d-flex gap-2 mt-3">
-                        <button id="previewOverlayButtonShow" class="btn btn-primary">Preview</button>
-                        <button id="deleteShowImage" class="btn btn-danger">Delete Custom Image</button>
-                      </div>
-                      <div id="previewShowImageContainer" class="mt-4" style="display: none;">
-                        <h5>Preview:</h5>
-                        <img id="previewShowImage" class="img-fluid" alt="Overlay Preview">
-                      </div>
+                    <div class="form-floating mb-2">
+                      <select id="sho-library-image-dropdown" class="form-select">
+                          <option value="default">Default Grey</option>
+                      </select>
+                      <label for="sho-library-image-dropdown">Select Custom Show Image</label>
                     </div>
+
+                    <!-- Upload an image manually -->
+                    <input type="file" id="sho-upload-library-image" accept="image/png, image/jpeg" class="form-control mb-2">
+                    <button type="button" id="sho-upload-btn" class="btn btn-primary">Upload</button>
+
+                    <!-- Fetch an image from a URL -->
+                    <div class="input-group mt-2">
+                        <input type="url" id="sho-image-url" class="form-control" placeholder="Enter Image URL">
+                        <button type="button" id="sho-fetch-url-btn" class="btn btn-secondary">Fetch</button>
+                    </div>
+
+                    <button type="button" id="sho-delete-image-btn" class="btn btn-danger mt-2">Delete Selected</button>
+
+                    <img id="sho-preview-image" src="/config/previews/show_preview.png" class="img-fluid mt-3" alt="Show Preview">
+
                   </div>
                 </div>
               </div>
             </div>
+
+
+
             <!-- Chart Overlays Accordion -->
             <div class="accordion mt-3" id="sho-chartOverlaysAccordion">
               <div class="accordion-item">
