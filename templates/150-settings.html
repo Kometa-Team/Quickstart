@@ -385,125 +385,146 @@
                   </div>
                 </div>
 
-                <h6 class="fw-bold mt-3"><u>Playlist Settings</u></h6>
+                <h6 class="fw-bold mt-3"><u>Playlist Settings</u>
+                  <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/settings/#playlist-sync-to-users"
+                     target="_blank">
+                      <i class="bi bi-info-circle"></i>
+                  </a>
+              </h6>
 
+              {% set user_list = plex_data['plex']['tmp_user_list'].split(',') if plex_data['plex']['tmp_user_list'] else [] %}
+              {% if user_list %}
+                  <div id="playlist-settings-section">
 
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="playlist_report" name="playlist_report" value="true"
-                        {% if data['settings']['playlist_report']|string|lower=='true' %}checked{% endif %}>
-                    <input type="hidden" name="playlist_report" value="false">
-                    <label class="form-check-label" for="playlist_report">
-                      Playlist Report
-                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                         title="Enable this setting to print out a playlist report at the end of the log.">
-                      </i>
-                    </label>
-                </div>
+                      <!-- Playlist Report Toggle -->
+                      <div class="form-check form-switch">
+                          <input class="form-check-input" type="checkbox" id="playlist_report" name="playlist_report" value="true"
+                              {% if data['settings']['playlist_report']|string|lower=='true' %}checked{% endif %}>
+                          <input type="hidden" name="playlist_report" value="false">
+                          <label class="form-check-label" for="playlist_report">
+                              Playlist Report
+                              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                                 title="Enable this setting to print out a playlist report at the end of the log.">
+                              </i>
+                          </label>
+                      </div>
 
-                <!-- Button to open the modal for playlist_sync_to_users -->
-                <div class="form-floating mb-2">
-                    <!-- Button to open the modal for playlist_sync_to_users -->
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#syncUsersModal">
-                        🔄 Select Sync Users
-                    </button>
-                    <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#excludeUsersModal">
-                        ❌ Select Exclude Users
-                    </button>
-                </div>
+                      <!-- Buttons to open Modals -->
+                      <div class="form-floating mb-2">
+                          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#syncUsersModal">
+                              🔄 Select Sync Users
+                          </button>
+                          <button type="button" class="btn btn-primary ms-2" data-bs-toggle="modal" data-bs-target="#excludeUsersModal">
+                              ❌ Select Exclude Users
+                          </button>
+                      </div>
 
-              <!-- Modal for selecting sync users -->
+                      <!-- Form inputs to display selected users -->
+                      <div class="row">
+                          <div class="col-md-6">
+                              <div class="input-group mb-2">
+                                  <span class="input-group-text">
+                                      Playlist Sync to Users
+                                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                                         title="Set the default playlist sync_to_users. To sync a playlist to only yourself, leave this field blank.<br><br><b>Tip:</b> Sharing playlists with other users will not share any associated posters due to a Plex limitation.">
+                                      </i>
+                                  </span>
+                                  <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users"
+                                         value="{{ data['settings']['playlist_sync_to_users'] }}" readonly>
+                              </div>
+                          </div>
+
+                          <div class="col-md-6">
+                              <div class="input-group mb-2">
+                                  <span class="input-group-text">
+                                      Playlist Exclude Users
+                                      <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                                         title="Specify a comma-separated list of users who should be excluded from receiving synced playlists.">
+                                      </i>
+                                  </span>
+                                  <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users"
+                                         value="{{ data['settings']['playlist_exclude_users'] }}" readonly>
+                              </div>
+                          </div>
+                      </div>
+
+                  </div>
+              {% else %}
+                  <div id="no-plex-users-message" class="alert alert-warning">
+                      No Plex users detected. Add users in Plex to enable Playlist Sync and Exclusion.
+                  </div>
+
+                  <!-- Hide settings, but keep modals -->
+                  <style>
+                      #playlist-settings-section,
+                      .sync-user-toggle,
+                      .exclude-user-toggle,
+                      #saveSyncChangesButton,
+                      #saveExcludeChangesButton {
+                          display: none;
+                      }
+                  </style>
+              {% endif %}
+
+              <!-- Modals (Always Present, but Buttons Disabled If No Users Exist) -->
               <div class="modal fade" id="syncUsersModal" tabindex="-1" aria-labelledby="syncUsersModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="syncUsersModalLabel">Select Sync Users</h5>
-                    </div>
-                    <div class="modal-body">
-                      <div id="syncUserListForm">
-                          <div class="form-check form-switch">
-                              <input class="form-check-input sync-user-toggle" type="checkbox" value="all" id="sync_all_users">
-                              <label class="form-check-label" for="sync_all_users">
-                                  All Users
-                              </label>
+                  <div class="modal-dialog">
+                      <div class="modal-content">
+                          <div class="modal-header">
+                              <h5 class="modal-title" id="syncUsersModalLabel">Select Sync Users</h5>
                           </div>
-                          {% set user_list = plex_data['plex']['tmp_user_list'].split(',') if plex_data['plex']['tmp_user_list'] else [] %}
-                          {% for username in user_list %}
-                          <div class="form-check form-switch">
-                              <input class="form-check-input sync-user-toggle" type="checkbox" value="{{ username }}" id="sync_user_{{ loop.index }}">
-                              <label class="form-check-label" for="sync_user_{{ loop.index }}">
-                                  {{ username }}
-                              </label>
+                          <div class="modal-body">
+                              <div id="syncUserListForm">
+                                  <div class="form-check form-switch">
+                                      <input class="form-check-input sync-user-toggle" type="checkbox" value="all" id="sync_all_users" {% if not user_list %}disabled{% endif %}>
+                                      <label class="form-check-label" for="sync_all_users">
+                                          All Users
+                                      </label>
+                                  </div>
+                                  {% for username in user_list %}
+                                  <div class="form-check form-switch">
+                                      <input class="form-check-input sync-user-toggle" type="checkbox" value="{{ username }}" id="sync_user_{{ loop.index }}" {% if not user_list %}disabled{% endif %}>
+                                      <label class="form-check-label" for="sync_user_{{ loop.index }}">
+                                          {{ username }}
+                                      </label>
+                                  </div>
+                                  {% endfor %}
+                              </div>
                           </div>
-                          {% endfor %}
+                          <div class="modal-footer">
+                              <button type="button" class="btn btn-primary" id="saveSyncChangesButton" {% if not user_list %}disabled{% endif %}>Apply</button>
+                          </div>
                       </div>
                   </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-primary" id="saveSyncChangesButton">Apply</button>
-                    </div>
-                  </div>
-                </div>
               </div>
 
-
-              <!-- Modal for selecting exclude users -->
               <div class="modal fade" id="excludeUsersModal" tabindex="-1" aria-labelledby="excludeUsersModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="excludeUsersModalLabel">Select Exclude Users</h5>
-                    </div>
-                    <div class="modal-body">
-                      <div id="excludeUserListForm">
-                          {% set user_list = plex_data['plex']['tmp_user_list'].split(',') if plex_data['plex']['tmp_user_list'] else [] %}
-                          {% for username in user_list %}
-                          <div class="form-check form-switch">
-                              <input class="form-check-input exclude-user-toggle" type="checkbox" value="{{ username }}" id="exclude_user_{{ loop.index }}">
-                              <label class="form-check-label" for="exclude_user_{{ loop.index }}">
-                                  {{ username }}
-                              </label>
+                  <div class="modal-dialog">
+                      <div class="modal-content">
+                          <div class="modal-header">
+                              <h5 class="modal-title" id="excludeUsersModalLabel">Select Exclude Users</h5>
                           </div>
-                          {% endfor %}
+                          <div class="modal-body">
+                              <div id="excludeUserListForm">
+                                  {% for username in user_list %}
+                                  <div class="form-check form-switch">
+                                      <input class="form-check-input exclude-user-toggle" type="checkbox" value="{{ username }}" id="exclude_user_{{ loop.index }}" {% if not user_list %}disabled{% endif %}>
+                                      <label class="form-check-label" for="exclude_user_{{ loop.index }}">
+                                          {{ username }}
+                                      </label>
+                                  </div>
+                                  {% endfor %}
+                              </div>
+                          </div>
+                          <div class="modal-footer">
+                              <button type="button" class="btn btn-primary" id="saveExcludeChangesButton" {% if not user_list %}disabled{% endif %}>Apply</button>
+                          </div>
                       </div>
                   </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-primary" id="saveExcludeChangesButton">Apply</button>
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              <!-- Form inputs to display selected users -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="input-group mb-2">
-                            <span class="input-group-text" id="playlist_sync_to_users_text">
-                              Playlist Sync to Users
-                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                    title="Set the default playlist sync_to_users. To sync a playlist to only yourself, leave this field blank.<br><br><b>Tip:</b> Sharing playlists with other users will not share any associated posters due to a Plex limitation.">
-                                <i class="bi bi-info-circle-fill"></i>
-                              </span>
-                            </span>
 
-                            <input type="text" class="form-control" id="playlist_sync_to_users" name="playlist_sync_to_users"
-                                value="{{ data['settings']['playlist_sync_to_users'] }}" readonly>
-                        </div>
-                    </div>
 
-                    <div class="col-md-6">
-                        <div class="input-group mb-2">
-                            <span class="input-group-text" id="playlist_exclude_users_text">
-                              Playlist Exclude Users
-                              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                                    title="Specify a comma-separated list of users who should be excluded from receiving synced playlists.">
-                                <i class="bi bi-info-circle-fill"></i>
-                              </span>
-                            </span>
-
-                            <input type="text" class="form-control" id="playlist_exclude_users" name="playlist_exclude_users"
-                                value="{{ data['settings']['playlist_exclude_users'] }}" readonly>
-                        </div>
-                    </div>
-                </div>
             </div>
           </div>
         </div>
