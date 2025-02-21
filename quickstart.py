@@ -342,6 +342,9 @@ def upload_library_image():
     save_folder = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
     os.makedirs(save_folder, exist_ok=True)
 
+    # Set initial save path **before the loop**
+    save_path = os.path.join(save_folder, filename)
+
     # Prevent overwriting existing files
     base, ext = os.path.splitext(filename)
     counter = 1
@@ -421,6 +424,7 @@ def fetch_library_image():
         ):
             filename += ".png"  # Default to PNG if no valid extension is found
 
+        # Set initial save path **before the loop**
         save_path = os.path.join(save_folder, filename)
 
         # Prevent overwriting existing files
