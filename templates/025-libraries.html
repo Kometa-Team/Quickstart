@@ -963,8 +963,7 @@
                   data-bs-parent="#mov-previewOverlaysAccordion">
                   <div class="accordion-body">
                     <p class="mb-3">
-                      Once you have selected which Overlays you would like to use, you can come back here,
-                      upload an image, and hit the <strong>Preview</strong> button to see how the overlays will look.
+                      Selecting Overlays will automatically update the preview image here. Upload a poster file or Fetch from a URL.
                     </p>
 
                     <div class="form-floating mb-2">
@@ -972,6 +971,8 @@
                           <option value="default">Default Grey</option>
                       </select>
                       <label for="mov-library-image-dropdown">Select Custom Movie Image</label>
+                      <input type="text" id="mov-image-name" class="form-control mt-2" placeholder="Enter new name">
+                      <button id="mov-rename-image" class="btn btn-primary mt-2" type="button">Rename</button>
                     </div>
 
                     <!-- Upload an image manually -->
@@ -2221,8 +2222,7 @@
                   data-bs-parent="#sho-previewOverlaysAccordion">
                   <div class="accordion-body">
                     <p class="mb-3">
-                      Once you have selected which Overlays you would like to use, you can come back here,
-                      upload an image, and hit the <strong>Preview</strong> button to see how the overlays will look.
+                      Selecting Overlays will automatically update the preview image here. Upload a poster file or Fetch from a URL.
                     </p>
 
                     <div class="form-floating mb-2">
@@ -2230,6 +2230,8 @@
                           <option value="default">Default Grey</option>
                       </select>
                       <label for="sho-library-image-dropdown">Select Custom Show Image</label>
+                      <input type="text" id="sho-image-name" class="form-control mt-2" placeholder="Enter new name">
+                      <button id="sho-rename-image" class="btn btn-primary mt-2" type="button">Rename</button>
                     </div>
 
                     <!-- Upload an image manually -->

@@ -173,6 +173,38 @@ def is_valid_aspect_ratio(image):
     return abs((width / height) - (2 / 3)) < 0.01  # Ensure it's approximately 1000x1500
 
 
+@app.route("/rename_library_image", methods=["POST"])
+def rename_library_image():
+    data = request.json
+    old_name = data.get("old_name")
+    new_name = data.get("new_name")
+    image_type = data.get("type")  # "movie" or "show"
+
+    if not old_name or not new_name or image_type not in ["movie", "show"]:
+        return jsonify({"status": "error", "message": "Invalid parameters"}), 400
+
+    save_folder = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
+    old_path = os.path.join(save_folder, old_name)
+    new_path = os.path.join(save_folder, new_name)
+
+    if not os.path.exists(old_path):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    if os.path.exists(new_path):
+        return (
+            jsonify(
+                {"status": "error", "message": "File with new name already exists"}
+            ),
+            400,
+        )
+
+    try:
+        os.rename(old_path, new_path)
+        return jsonify({"status": "success", "message": "File renamed successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @app.route("/config/previews/<path:filename>")
 def serve_previews(filename):
     return send_from_directory("config/previews", filename)
@@ -310,7 +342,15 @@ def upload_library_image():
     save_folder = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
     os.makedirs(save_folder, exist_ok=True)
 
-    save_path = os.path.join(save_folder, filename)
+    # Prevent overwriting existing files
+    base, ext = os.path.splitext(filename)
+    counter = 1
+    while os.path.exists(os.path.join(save_folder, filename)):
+        filename = f"{base}_{counter}{ext}"
+        save_path = os.path.join(save_folder, filename)
+        counter += 1
+
+    # Save the validated and resized image
     img.save(save_path)
 
     return jsonify(
