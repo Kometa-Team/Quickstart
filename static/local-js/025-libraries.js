@@ -697,12 +697,10 @@ $(document).ready(function () {
   document.querySelectorAll('input[type="radio"][name$="-content-rating-group"]').forEach(radio => {
     radio.addEventListener('click', function () {
       console.log(`[DEBUG] Radio button clicked: ${this.name} -> ${this.value}`)
-
       const isMovie = this.id.startsWith('mov-') // Determine if it's a movie or show
-      const wasChecked = this.dataset.wasChecked === 'true'
 
-      if (wasChecked) {
-        this.checked = false // Allow unchecking the radio button
+      if (this.checked && this.dataset.wasChecked === 'true') {
+        this.checked = false
         this.dataset.wasChecked = 'false'
 
         const hiddenInputName = this.name.replace('-content-rating-group', '-attribute_selected_content_rating')
@@ -710,20 +708,29 @@ $(document).ready(function () {
         if (hiddenInput) {
           hiddenInput.value = ''
         }
-
         console.log('[DEBUG] Unselected radio button:', this.name)
       } else {
         document.querySelectorAll(`input[name="${this.name}"]`).forEach(r => { r.dataset.wasChecked = 'false' })
         this.dataset.wasChecked = 'true'
+
+        let selectedValue = this.value
+
+        // 🔥 Fix: Ensure Common Sense gets stored as 'commonsense' instead of 'content_rating_commonsense'
+        if (selectedValue === 'content_rating_commonsense') {
+          selectedValue = 'commonsense'
+        }
+
+        const hiddenInputName = this.name.replace('-content-rating-group', '-attribute_selected_content_rating')
+        const hiddenInput = document.querySelector(`input[name="${hiddenInputName}"]`)
+        if (hiddenInput) {
+          hiddenInput.value = selectedValue
+        }
+        console.log(`[DEBUG] Selected radio button: ${this.name} -> ${selectedValue}`)
       }
 
       // Force `generatePreview()` to run regardless of select/unselect
       generatePreview(isMovie)
-    })
-
-    radio.addEventListener('change', function () {
-      const isMovie = this.id.startsWith('mov-')
-      generatePreview(isMovie)
+      updateValidationState() // Ensure validation updates when radio selection changes
     })
   })
 
