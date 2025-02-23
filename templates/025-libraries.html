@@ -962,35 +962,45 @@
                 <div id="mov-previewOverlays" class="accordion-collapse collapse show"
                   data-bs-parent="#mov-previewOverlaysAccordion">
                   <div class="accordion-body">
-                    <p class="mb-3">
-                      Selecting Overlays will automatically update the preview image here. Upload a poster file or Fetch from a URL.
-                    </p>
+                    <div class="row">
+                      <!-- Left Column: Form Elements -->
+                      <div class="col-md-6">
+                        <p class="mb-3">
+                          Selecting any Overlays will automatically update the preview image here. You can upload your custom base image from a file or a URL to preview your Overlays against that image.
+                        </p>
+                        <div class="form-floating mb-4">
+                          <select id="mov-library-image-dropdown" class="form-select">
+                            <option value="default">Default Kometa</option>
+                          </select>
+                          <label for="mov-library-image-dropdown">Select Custom Movie Image</label>
+                        </div>
 
-                    <div class="form-floating mb-2">
-                      <select id="mov-library-image-dropdown" class="form-select">
-                          <option value="default">Default Grey</option>
-                      </select>
-                      <label for="mov-library-image-dropdown">Select Custom Movie Image</label>
-                      <input type="text" id="mov-image-name" class="form-control mt-2" placeholder="Enter new name">
-                      <button id="mov-rename-image" class="btn btn-primary mt-2" type="button">Rename</button>
+                        <!-- Upload an image automatically when selected -->
+                        <input type="file" id="mov-upload-library-image" accept="image/png, image/jpeg" class="form-control mb-2">
+
+                        <!-- Fetch an image from a URL -->
+                        <div class="input-group mt-2">
+                          <input type="url" id="mov-image-url" class="form-control" placeholder="Enter Image URL">
+                          <button type="button" id="mov-fetch-url-btn" class="btn btn-secondary">Fetch</button>
+                        </div>
+
+                        <button type="button" id="mov-delete-image-btn" class="btn btn-danger mt-2">
+                          <i class="bi bi-trash"></i> Delete Selected
+                        </button>
+                        <button type="button" id="mov-rename-image-btn" class="btn btn-warning mt-2">
+                          <i class="fa fa-pencil-alt"></i> Rename Selected
+                        </button>
+
+                      </div>
+
+                      <!-- Right Column: Image Preview -->
+                      <div class="col-md-6 d-flex align-items-center justify-content-center">
+                        <img id="mov-preview-image" src="/config/previews/movie_preview.png" class="img-fluid" alt="Movie Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                      </div>
                     </div>
-
-                    <!-- Upload an image manually -->
-                    <input type="file" id="mov-upload-library-image" accept="image/png, image/jpeg" class="form-control mb-2">
-                    <button type="button" id="mov-upload-btn" class="btn btn-primary">Upload</button>
-
-                    <!-- Fetch an image from a URL -->
-                    <div class="input-group mt-2">
-                        <input type="url" id="mov-image-url" class="form-control" placeholder="Enter Image URL">
-                        <button type="button" id="mov-fetch-url-btn" class="btn btn-secondary">Fetch</button>
-                    </div>
-
-                    <button type="button" id="mov-delete-image-btn" class="btn btn-danger mt-2">Delete Selected</button>
-
-                    <img id="mov-preview-image" src="/config/previews/movie_preview.png" class="img-fluid mt-3" alt="Movie Preview">
-
                   </div>
                 </div>
+
               </div>
             </div>
 
@@ -1370,45 +1380,51 @@
                   </h2>
                   <div id="mov-collapseSeparators" class="accordion-collapse collapse" data-bs-parent="#mov-separatorsAccordion">
                     <div class="accordion-body">
-                      <div class="input-group mb-2">
-                        <span class="input-group-text" id="mov-attribute_use_separators_text">
-                          Separator Style
-                          <span class="text-danger" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                            title="Separators are like index cards at a library, to categorize Collections in your library.<br><br>
-                            To enable Separators for the Defaults Collections, select your style from the drop-down.<br><br>
-                            <b>Warning</b>: Plex does not officially support blank collections, which is what separators are. You may experience bugs if you enable Separators.">
-                            <i class="bi bi-info-circle-fill"></i>
-                          </span>
-                        </span>
-                        <select class="form-select" id="mov-attribute_use_separators" name="mov-template_variables[use_separators]"
-                          aria-describedby="mov-attribute_use_separators_text">
-                          <option value="none"
-                            {% if data['libraries'].get('mov-template_variables', {}).get('use_separators', None) in ['false', None] %}selected{% endif %}>
-                            None
-                          </option>
-                          {% set selected_style = data['libraries'].get('mov-template_variables', {}).get('sep_style', '') %}
-                          {% for style, value in {
-                            "Amethyst": "amethyst", "Aqua": "aqua", "Blue": "blue", "Brown": "stb",
-                            "Forest": "forest", "Fuchsia": "fuchsia", "Gold": "gold", "Gray": "gray",
-                            "Green": "green", "Navy": "navy", "Ocean": "ocean", "Olive": "olive",
-                            "Orchid": "orchid", "Original": "orig", "Pink": "pink", "Plum": "plum", "Purple": "purple",
-                            "Red": "red", "Rust": "rust", "Salmon": "salmon", "Sand": "sand",
-                            "Tan": "tan"
-                          }.items() %}
-                          <option value="{{ value }}" {% if selected_style == value %}selected{% endif %}>
-                            {{ style }}
-                          </option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      <div id="mov-separatorPreviewContainer" style="display: none; margin-top: 10px;">
-                        <img id="mov-separatorPreviewImage" src="" alt="Movie Separator Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                      <div class="row">
+                        <!-- Left Column: Dropdown Selection -->
+                        <div class="col-md-6">
+                          <label for="mov-attribute_use_separators" class="form-label">
+                            Separator Style
+                            <span class="text-danger" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                              title="Separators are like index cards at a library, to categorize Collections in your library.<br><br>
+                              To enable Separators for the Defaults Collections, select your style from the drop-down.<br><br>
+                              <b>Warning</b>: Plex does not officially support blank collections, which is what separators are. You may experience bugs if you enable Separators.">
+                              <i class="bi bi-info-circle-fill"></i>
+                            </span>
+                          </label>
+                          <select class="form-select" id="mov-attribute_use_separators" name="mov-template_variables[use_separators]">
+                            <option value="none"
+                              {% if data['libraries'].get('mov-template_variables', {}).get('use_separators', None) in ['false', None] %}selected{% endif %}>
+                              None
+                            </option>
+                            {% set selected_style = data['libraries'].get('mov-template_variables', {}).get('sep_style', '') %}
+                            {% for style, value in {
+                              "Amethyst": "amethyst", "Aqua": "aqua", "Blue": "blue", "Brown": "stb",
+                              "Forest": "forest", "Fuchsia": "fuchsia", "Gold": "gold", "Gray": "gray",
+                              "Green": "green", "Navy": "navy", "Ocean": "ocean", "Olive": "olive",
+                              "Orchid": "orchid", "Original": "orig", "Pink": "pink", "Plum": "plum", "Purple": "purple",
+                              "Red": "red", "Rust": "rust", "Salmon": "salmon", "Sand": "sand",
+                              "Tan": "tan"
+                            }.items() %}
+                            <option value="{{ value }}" {% if selected_style == value %}selected{% endif %}>
+                              {{ style }}
+                            </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+
+                        <!-- Right Column: Preview Image -->
+                        <div class="col-md-6 d-flex align-items-center justify-content-center">
+                          <div id="mov-separatorPreviewContainer" style="display: none;">
+                            <img id="mov-separatorPreviewImage" src="" alt="Movie Separator Preview"
+                              class="img-fluid" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-
               <!-- 🔹 Section: Overlay Operations -->
               <div class="accordion mt-3" id="mov-overlayOperationsAccordion">
                 <div class="accordion-item">
@@ -2206,8 +2222,10 @@
             Show Overlays
           </button>
         </h2>
+
         <div id="showOverlays" class="accordion-collapse collapse" data-bs-parent="#accordionShows">
           <div class="accordion-body">
+
             <!-- Preview Overlays Accordion -->
 
             <div class="accordion mt-3" id="sho-previewOverlaysAccordion">
@@ -2221,38 +2239,47 @@
                 <div id="sho-previewOverlays" class="accordion-collapse collapse show"
                   data-bs-parent="#sho-previewOverlaysAccordion">
                   <div class="accordion-body">
-                    <p class="mb-3">
-                      Selecting Overlays will automatically update the preview image here. Upload a poster file or Fetch from a URL.
-                    </p>
+                    <div class="row">
+                      <!-- Left Column: Form Elements -->
+                      <div class="col-md-6">
+                        <p class="mb-3">
+                          Selecting any Overlays will automatically update the preview image here. You can upload your custom base image from a file or a URL to preview your Overlays against that image.
+                        </p>
+                        <div class="form-floating mb-4">
+                          <select id="sho-library-image-dropdown" class="form-select">
+                            <option value="default">Default Kometa</option>
+                          </select>
+                          <label for="sho-library-image-dropdown">Select Custom Show Image</label>
+                        </div>
 
-                    <div class="form-floating mb-2">
-                      <select id="sho-library-image-dropdown" class="form-select">
-                          <option value="default">Default Grey</option>
-                      </select>
-                      <label for="sho-library-image-dropdown">Select Custom Show Image</label>
-                      <input type="text" id="sho-image-name" class="form-control mt-2" placeholder="Enter new name">
-                      <button id="sho-rename-image" class="btn btn-primary mt-2" type="button">Rename</button>
+                        <!-- Upload an image automatically when selected -->
+                        <input type="file" id="sho-upload-library-image" accept="image/png, image/jpeg" class="form-control mb-2">
+
+                        <!-- Fetch an image from a URL -->
+                        <div class="input-group mt-2">
+                          <input type="url" id="sho-image-url" class="form-control" placeholder="Enter Image URL">
+                          <button type="button" id="sho-fetch-url-btn" class="btn btn-secondary">Fetch</button>
+                        </div>
+
+                        <button type="button" id="sho-delete-image-btn" class="btn btn-danger mt-2">
+                          <i class="bi bi-trash"></i> Delete Selected
+                        </button>
+                        <button type="button" id="sho-rename-image-btn" class="btn btn-warning mt-2">
+                          <i class="fa fa-pencil-alt"></i> Rename Selected
+                        </button>
+
+                      </div>
+
+                      <!-- Right Column: Image Preview -->
+                      <div class="col-md-6 d-flex align-items-center justify-content-center">
+                        <img id="sho-preview-image" src="/config/previews/show_preview.png" class="img-fluid" alt="Show Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                      </div>
                     </div>
-
-                    <!-- Upload an image manually -->
-                    <input type="file" id="sho-upload-library-image" accept="image/png, image/jpeg" class="form-control mb-2">
-                    <button type="button" id="sho-upload-btn" class="btn btn-primary">Upload</button>
-
-                    <!-- Fetch an image from a URL -->
-                    <div class="input-group mt-2">
-                        <input type="url" id="sho-image-url" class="form-control" placeholder="Enter Image URL">
-                        <button type="button" id="sho-fetch-url-btn" class="btn btn-secondary">Fetch</button>
-                    </div>
-
-                    <button type="button" id="sho-delete-image-btn" class="btn btn-danger mt-2">Delete Selected</button>
-
-                    <img id="sho-preview-image" src="/config/previews/show_preview.png" class="img-fluid mt-3" alt="Show Preview">
-
                   </div>
                 </div>
+
               </div>
             </div>
-
 
 
             <!-- Chart Overlays Accordion -->
@@ -2317,9 +2344,10 @@
                         <label class="form-check-label me-3" for="sho-overlay_status">
                           <a target="_blank" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/status/">Status</a>
                         </label>
-                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/mediastinger.png" height="300" style="opacity: 1;">'></i>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/status.png" height="300" style="opacity: 1;">'></i>
                       </div>
                     </div>
+
 
                   </div>
                 </div>
@@ -2340,13 +2368,13 @@
                   <div class="accordion-body">
                     <!-- Content Rating Overlay Toggles -->
                     <div class="form-check form-switch">
-                      <input class="form-check-input" type="radio" id="sho-overlay_content_rating_us_movie"
+                      <input class="form-check-input" type="radio" id="sho-overlay_content_rating_us_show"
                         name="sho-content-rating-group" value="us_show" {% if data['libraries']['sho-attribute_selected_content_rating'] == 'us_show' %}checked{% endif %}>
                       <div class="d-flex align-items-center">
-                        <label class="form-check-label me-3" for="sho-overlay_content_rating_us_movie">
+                        <label class="form-check-label me-3" for="sho-overlay_content_rating_us_show">
                           <a target="_blank" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_us_show/">US Content Ratings</a>
                         </label>
-                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/content_rating_us_movie.png" height="300" style="opacity: 1;">'></i>
+                        <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true" title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/content_rating_us_show.png" height="300" style="opacity: 1;">'></i>
                       </div>
                     </div>
 
@@ -2623,6 +2651,7 @@
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </div>
@@ -2653,45 +2682,51 @@
                   </h2>
                   <div id="sho-collapseSeparators" class="accordion-collapse collapse" data-bs-parent="#sho-separatorsAccordion">
                     <div class="accordion-body">
-                      <div class="input-group mb-2">
-                        <span class="input-group-text" id="sho-attribute_use_separators_text">
-                          Separator Style
-                          <span class="text-danger" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                            title="Separators are like index cards at a library, to categorize Collections in your library.<br><br>
-                            To enable Separators for the Defaults Collections, select your style from the drop-down.<br><br>
-                            <b>Warning</b>: Plex does not officially support blank collections, which is what separators are. You may experience bugs if you enable Separators.">
-                            <i class="bi bi-info-circle-fill"></i>
-                          </span>
-                        </span>
-                        <select class="form-select" id="sho-attribute_use_separators" name="sho-template_variables[use_separators]"
-                          aria-describedby="sho-attribute_use_separators_text">
-                          <option value="none"
-                            {% if data['libraries'].get('sho-template_variables', {}).get('use_separators', None) in ['false', None] %}selected{% endif %}>
-                            None
-                          </option>
-                          {% set selected_style = data['libraries'].get('sho-template_variables', {}).get('sep_style', '') %}
-                          {% for style, value in {
-                            "Amethyst": "amethyst", "Aqua": "aqua", "Blue": "blue", "Brown": "stb",
-                            "Forest": "forest", "Fuchsia": "fuchsia", "Gold": "gold", "Gray": "gray",
-                            "Green": "green", "Navy": "navy", "Ocean": "ocean", "Olive": "olive",
-                            "Orchid": "orchid", "Original": "orig", "Pink": "pink", "Plum": "plum", "Purple": "purple",
-                            "Red": "red", "Rust": "rust", "Salmon": "salmon", "Sand": "sand",
-                            "Tan": "tan"
-                          }.items() %}
-                          <option value="{{ value }}" {% if selected_style == value %}selected{% endif %}>
-                            {{ style }}
-                          </option>
-                          {% endfor %}
-                        </select>
-                      </div>
-                      <div id="sho-separatorPreviewContainer" style="display: none; margin-top: 10px;">
-                        <img id="sho-separatorPreviewImage" src="" alt="Show Separator Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                      <div class="row">
+                        <!-- Left Column: Dropdown Selection -->
+                        <div class="col-md-6">
+                          <label for="sho-attribute_use_separators" class="form-label">
+                            Separator Style
+                            <span class="text-danger" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                              title="Separators are like index cards at a library, to categorize Collections in your library.<br><br>
+                              To enable Separators for the Defaults Collections, select your style from the drop-down.<br><br>
+                              <b>Warning</b>: Plex does not officially support blank collections, which is what separators are. You may experience bugs if you enable Separators.">
+                              <i class="bi bi-info-circle-fill"></i>
+                            </span>
+                          </label>
+                          <select class="form-select" id="sho-attribute_use_separators" name="sho-template_variables[use_separators]">
+                            <option value="none"
+                              {% if data['libraries'].get('sho-template_variables', {}).get('use_separators', None) in ['false', None] %}selected{% endif %}>
+                              None
+                            </option>
+                            {% set selected_style = data['libraries'].get('sho-template_variables', {}).get('sep_style', '') %}
+                            {% for style, value in {
+                              "Amethyst": "amethyst", "Aqua": "aqua", "Blue": "blue", "Brown": "stb",
+                              "Forest": "forest", "Fuchsia": "fuchsia", "Gold": "gold", "Gray": "gray",
+                              "Green": "green", "Navy": "navy", "Ocean": "ocean", "Olive": "olive",
+                              "Orchid": "orchid", "Original": "orig", "Pink": "pink", "Plum": "plum", "Purple": "purple",
+                              "Red": "red", "Rust": "rust", "Salmon": "salmon", "Sand": "sand",
+                              "Tan": "tan"
+                            }.items() %}
+                            <option value="{{ value }}" {% if selected_style == value %}selected{% endif %}>
+                              {{ style }}
+                            </option>
+                            {% endfor %}
+                          </select>
+                        </div>
+
+                        <!-- Right Column: Preview Image -->
+                        <div class="col-md-6 d-flex align-items-center justify-content-center">
+                          <div id="sho-separatorPreviewContainer" style="display: none;">
+                            <img id="sho-separatorPreviewImage" src="" alt="Show Separator Preview"
+                              class="img-fluid" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-
               <!-- 🔹 Section: Overlay Operations -->
               <div class="accordion mt-3" id="sho-overlayOperationsAccordion">
                 <div class="accordion-item">
@@ -2781,6 +2816,37 @@
     </div>
     <div id="statusMessage" class="status-message mb-2"></div><br>
   </div>
+
+<!-- Rename Modal -->
+<div class="modal fade" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="renameModalLabel">Rename Image</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <!-- Selected Image Preview -->
+        <img id="rename-image-preview" src="" class="img-fluid mb-3" alt="Selected Image">
+
+        <!-- Current Name Display -->
+        <p id="rename-current-name" class="fw-bold"></p>
+
+        <!-- Input Box for New Name -->
+        <div class="mb-3">
+          <label for="rename-new-name" class="form-label">Enter New Name:</label>
+          <input type="text" id="rename-new-name" class="form-control" placeholder="New Name">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="rename-confirm-btn">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 </form>
 <!-- Toast Notifications -->
 <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toastContainer"></div>

@@ -52,7 +52,6 @@ from modules.helpers import (
     check_for_update,
     update_checker_loop,
     booler,
-    is_default_image,
     ensure_json_schema,
     get_pyfiglet_fonts,
 )
@@ -108,6 +107,7 @@ UPLOAD_FOLDER_MOVIE = "config/uploads/movies"
 UPLOAD_FOLDER_SHOW = "config/uploads/shows"
 os.makedirs(UPLOAD_FOLDER_MOVIE, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER_SHOW, exist_ok=True)
+IMAGES_FOLDER = "static/images"
 OVERLAY_FOLDER = "static/images/overlays"
 PREVIEW_FOLDER = "config/previews"
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
@@ -225,11 +225,25 @@ def generate_preview():
     # Ensure preview folder exists
     os.makedirs(preview_folder, exist_ok=True)
 
+    # ✅ First, check if `default.png` exists in `IMAGES_FOLDER`
+    default_image_path = os.path.join(IMAGES_FOLDER, "default.png")
+
     if not selected_image or selected_image == "default":
-        base_image_path = os.path.join(preview_folder, "default_grey.png")
-        if not os.path.exists(base_image_path):
-            base_img = Image.new("RGBA", (1000, 1500), (128, 128, 128, 255))
-            base_img.save(base_image_path)
+        if os.path.exists(default_image_path):
+            base_image_path = default_image_path  # ✅ Use existing `default.png`
+        else:
+            base_image_path = os.path.join(preview_folder, "default.png")
+
+            # ✅ Only create grey image if both locations are missing
+            if not os.path.exists(base_image_path):
+                if app.config["QS_DEBUG"]:
+                    print(
+                        "[DEBUG] default.png not found in IMAGES_FOLDER or previews, creating grey placeholder image..."
+                    )
+
+                # Create grey image
+                base_img = Image.new("RGBA", (1000, 1500), (128, 128, 128, 255))  # grey
+                base_img.save(base_image_path)
     else:
         base_image_path = os.path.join(upload_folder, selected_image)
 
@@ -250,7 +264,9 @@ def generate_preview():
 
     # Save the generated preview
     base_img.save(preview_path)
-    print(f"[INFO] Preview saved at {preview_path}")
+
+    if app.config["QS_DEBUG"]:
+        print(f"[DEBUG] Preview saved at {preview_path}")
 
     return jsonify({"status": "success", "preview_url": f"/{preview_path}"})
 

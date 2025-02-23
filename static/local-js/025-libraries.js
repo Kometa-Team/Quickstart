@@ -1,61 +1,186 @@
-/* global $, showToast , localStorage, generatePreview */
+/* global $, showToast , localStorage, generatePreview, alert, bootstrap, loadAvailableImages */
+
+function renameSelectedImage (isMovie) {
+  const dropdown = document.getElementById(isMovie ? 'mov-library-image-dropdown' : 'sho-library-image-dropdown')
+  const inputField = document.getElementById(isMovie ? 'mov-image-name' : 'sho-image-name')
+
+  if (!dropdown || !inputField) {
+    console.error(`[ERROR] Missing elements for renaming ${isMovie ? 'movie' : 'show'} image.`)
+    return
+  }
+
+  const oldFilename = dropdown.value
+  const newName = inputField.value.trim()
+
+  if (!newName) {
+    showToast('warning', 'Please enter a new name.')
+    return
+  }
+
+  if (oldFilename === 'default') {
+    showToast('warning', 'You cannot rename the default image.')
+    return
+  }
+
+  // Preserve file extension
+  const newFilename = newName + oldFilename.substring(oldFilename.lastIndexOf('.'))
+
+  console.log(`[DEBUG] Renaming ${isMovie ? 'movie' : 'show'} image: ${oldFilename} -> ${newFilename}`)
+
+  // Send request to Flask to rename the file
+  fetch('/rename_library_image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      old_name: oldFilename,
+      new_name: newFilename,
+      type: isMovie ? 'movie' : 'show'
+    })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        showToast('success', `Successfully renamed to ${newFilename}`)
+        inputField.value = '' // Clear input
+
+        // Reload dropdown and select the renamed image
+        loadAvailableImages(isMovie, newFilename)
+      } else {
+        showToast('error', `Rename failed: ${data.message}`)
+      }
+    })
+    .catch(error => console.error('Rename error:', error))
+}
+
+function toggleDeleteButton (isMovie) {
+  const dropdown = document.getElementById(isMovie ? 'mov-library-image-dropdown' : 'sho-library-image-dropdown')
+  const deleteBtn = document.getElementById(isMovie ? 'mov-delete-image-btn' : 'sho-delete-image-btn')
+  const renameBtn = document.getElementById(isMovie ? 'mov-rename-image-btn' : 'sho-rename-image-btn')
+
+  if (!dropdown || !deleteBtn || !renameBtn) {
+    console.error(`[ERROR] Missing dropdown or delete button or rename button for ${isMovie ? 'movie' : 'show'}`)
+    return
+  }
+
+  const isDefaultSelected = dropdown.value === 'default'
+  const onlyDefaultExists = dropdown.options.length === 1 && isDefaultSelected
+
+  // ✅ Show the delete/rename button if a non-default image is selected
+  // ❌ Hide the delete/rename button if "default" is selected or if it's the only available option
+  deleteBtn.style.display = (isDefaultSelected || onlyDefaultExists) ? 'none' : 'block'
+  renameBtn.style.display = (isDefaultSelected || onlyDefaultExists) ? 'none' : 'block'
+}
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Document fully loaded')
 
   console.log('[DEBUG] Restoring selected libraries for 025-libraries')
 
-  function renameSelectedImage (isMovie) {
-    const dropdown = document.getElementById(isMovie ? 'mov-library-image-dropdown' : 'sho-library-image-dropdown')
-    const inputField = document.getElementById(isMovie ? 'mov-image-name' : 'sho-image-name')
+  // Handle Rename Button Click (For both Movies and Shows)
+  document.querySelectorAll('.rename-image-btn').forEach(button => {
+    button.addEventListener('click', function () {
+      const isMovie = this.id.includes('mov-')
+      const section = isMovie ? 'movie' : 'show'
 
-    if (!dropdown || !inputField) {
-      console.error(`[ERROR] Missing elements for renaming ${isMovie ? 'movie' : 'show'} image.`)
-      return
-    }
+      // Get the selected checkbox
+      const selectedCheckbox = document.querySelector(`#${section}-libraries-container .library-checkbox:checked`)
+      if (!selectedCheckbox) {
+        alert('Please select a library first.')
+        return
+      }
 
-    const oldFilename = dropdown.value
-    const newName = inputField.value.trim()
+      // Get the selected image and current name
+      const selectedLabel = document.querySelector(`label[for="${selectedCheckbox.id}"]`)
+      const currentName = selectedLabel ? selectedLabel.textContent.trim() : ''
+      const imagePath = '/static/images/sample-placeholder.png' // Update dynamically if needed
+
+      // Update modal content
+      document.getElementById('rename-image-preview').src = imagePath
+      document.getElementById('rename-current-name').textContent = `Current Name: ${currentName}`
+      document.getElementById('rename-new-name').value = ''
+
+      // Show modal
+      const renameModal = new bootstrap.Modal(document.getElementById('renameModal'))
+      renameModal.show()
+
+      // Store the selected library ID for later processing
+      document.getElementById('rename-confirm-btn').dataset.selectedLibraryId = selectedCheckbox.id
+    })
+  })
+
+  // Confirm Rename Button Click Handler
+  document.getElementById('rename-confirm-btn').addEventListener('click', function () {
+    const newName = document.getElementById('rename-new-name').value.trim()
+    const selectedLibraryId = this.dataset.selectedLibraryId
 
     if (!newName) {
-      showToast('warning', 'Please enter a new name.')
+      alert('Please enter a new name.')
       return
     }
 
-    if (oldFilename === 'default') {
-      showToast('warning', 'You cannot rename the default image.')
-      return
+    // Find the corresponding label and update it
+    const selectedLabel = document.querySelector(`label[for="${selectedLibraryId}"]`)
+    if (selectedLabel) {
+      selectedLabel.textContent = newName
     }
 
-    // Preserve file extension
-    const newFilename = newName + oldFilename.substring(oldFilename.lastIndexOf('.'))
+    // Close the modal
+    bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide()
+  })
 
-    console.log(`[DEBUG] Renaming ${isMovie ? 'movie' : 'show'} image: ${oldFilename} -> ${newFilename}`)
+  console.log('Rename functionality initialized.')
 
-    // Send request to Flask to rename the file
-    fetch('/rename_library_image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        old_name: oldFilename,
-        new_name: newFilename,
-        type: isMovie ? 'movie' : 'show'
-      })
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'success') {
-          showToast('success', `Successfully renamed to ${newFilename}`)
-          inputField.value = '' // Clear input
+  // function renameSelectedImage (isMovie) {
+  //   const dropdown = document.getElementById(isMovie ? 'mov-library-image-dropdown' : 'sho-library-image-dropdown')
+  //   const inputField = document.getElementById(isMovie ? 'mov-image-name' : 'sho-image-name')
 
-          // Reload dropdown and select the renamed image
-          loadAvailableImages(isMovie, newFilename)
-        } else {
-          showToast('error', `Rename failed: ${data.message}`)
-        }
-      })
-      .catch(error => console.error('Rename error:', error))
-  }
+  //   if (!dropdown || !inputField) {
+  //     console.error(`[ERROR] Missing elements for renaming ${isMovie ? 'movie' : 'show'} image.`)
+  //     return
+  //   }
+
+  //   const oldFilename = dropdown.value
+  //   const newName = inputField.value.trim()
+
+  //   if (!newName) {
+  //     showToast('warning', 'Please enter a new name.')
+  //     return
+  //   }
+
+  //   if (oldFilename === 'default') {
+  //     showToast('warning', 'You cannot rename the default image.')
+  //     return
+  //   }
+
+  //   // Preserve file extension
+  //   const newFilename = newName + oldFilename.substring(oldFilename.lastIndexOf('.'))
+
+  //   console.log(`[DEBUG] Renaming ${isMovie ? 'movie' : 'show'} image: ${oldFilename} -> ${newFilename}`)
+
+  //   // Send request to Flask to rename the file
+  //   fetch('/rename_library_image', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify({
+  //       old_name: oldFilename,
+  //       new_name: newFilename,
+  //       type: isMovie ? 'movie' : 'show'
+  //     })
+  //   })
+  //     .then(response => response.json())
+  //     .then(data => {
+  //       if (data.status === 'success') {
+  //         showToast('success', `Successfully renamed to ${newFilename}`)
+  //         inputField.value = '' // Clear input
+
+  //         // Reload dropdown and select the renamed image
+  //         loadAvailableImages(isMovie, newFilename)
+  //       } else {
+  //         showToast('error', `Rename failed: ${data.message}`)
+  //       }
+  //     })
+  //     .catch(error => console.error('Rename error:', error))
+  // }
 
   // Read preselected libraries from the hidden input field
   const libraryInput = document.getElementById('libraries')
@@ -147,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function () {
           return
         }
 
-        dropdown.innerHTML = "<option value='default'>Default Grey</option>"
+        dropdown.innerHTML = "<option value='default'>Default Kometa</option>"
 
         data.images.forEach(img => {
           const option = document.createElement('option')
@@ -160,10 +285,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const storedImage = selectedImage || localStorage.getItem(`${isMovie ? 'mov' : 'sho'}-selected-image`)
         if (storedImage && [...dropdown.options].some(option => option.value === storedImage)) {
           dropdown.value = storedImage
-          storeSelectedImage(isMovie) // Store in localStorage
+          storeSelectedImage(isMovie)
         }
 
         generatePreview(isMovie)
+
+        // ✅ Now that dropdown is updated, toggle delete button visibility
+        toggleDeleteButton(isMovie)
       })
       .catch(error => {
         console.error('Error loading images:', error)
@@ -268,7 +396,9 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(response => response.json())
       .then(data => {
         showToast(data.status === 'success' ? 'success' : 'error', data.message)
-        loadAvailableImages(isMovie)
+        if (data.status === 'success') {
+          loadAvailableImages(isMovie, data.filename)
+        }
       })
       .catch(error => {
         console.error('Upload error:', error)
@@ -293,7 +423,9 @@ document.addEventListener('DOMContentLoaded', function () {
       .then(response => response.json())
       .then(data => {
         showToast(data.status === 'success' ? 'success' : 'error', data.message)
-        loadAvailableImages(isMovie)
+        if (data.status === 'success') {
+          loadAvailableImages(isMovie, data.filename)
+        }
       })
       .catch(error => {
         console.error('Fetch error:', error)
@@ -301,13 +433,22 @@ document.addEventListener('DOMContentLoaded', function () {
       })
   }
 
+  // ✅ Automatically trigger upload when a file is selected
+  document.getElementById('mov-upload-library-image')?.addEventListener('change', () => uploadLibraryImage(true))
+  document.getElementById('sho-upload-library-image')?.addEventListener('change', () => uploadLibraryImage(false))
+
+  document.getElementById('mov-library-image-dropdown')?.addEventListener('change', () => toggleDeleteButton(true))
+  document.getElementById('sho-library-image-dropdown')?.addEventListener('change', () => toggleDeleteButton(false))
+
   // ✅ Bind event listeners correctly
-  document.getElementById('mov-delete-image-btn').addEventListener('click', () => deleteCustomImage(true))
-  document.getElementById('sho-delete-image-btn').addEventListener('click', () => deleteCustomImage(false))
-  document.getElementById('mov-upload-btn').addEventListener('click', () => uploadLibraryImage(true))
-  document.getElementById('sho-upload-btn').addEventListener('click', () => uploadLibraryImage(false))
-  document.getElementById('mov-fetch-url-btn').addEventListener('click', () => fetchLibraryImage(true))
-  document.getElementById('sho-fetch-url-btn').addEventListener('click', () => fetchLibraryImage(false))
+  document.getElementById('mov-delete-image-btn')?.addEventListener('click', () => deleteCustomImage(true))
+  document.getElementById('sho-delete-image-btn')?.addEventListener('click', () => deleteCustomImage(false))
+
+  document.getElementById('mov-rename-image-btn')?.addEventListener('click', () => renameSelectedImage(true))
+  document.getElementById('sho-rename-image-btn')?.addEventListener('click', () => renameSelectedImage(false))
+
+  document.getElementById('mov-fetch-url-btn')?.addEventListener('click', () => fetchLibraryImage(true))
+  document.getElementById('sho-fetch-url-btn')?.addEventListener('click', () => fetchLibraryImage(false))
 
   movieDropdown.addEventListener('change', function () {
     storeSelectedImage(true)
@@ -320,11 +461,11 @@ document.addEventListener('DOMContentLoaded', function () {
   })
 
   // Attach event listeners to rename buttons
-  document.getElementById('mov-rename-image').addEventListener('click', function () {
+  document.getElementById('mov-rename-image-btn').addEventListener('click', function () {
     renameSelectedImage(true)
   })
 
-  document.getElementById('sho-rename-image').addEventListener('click', function () {
+  document.getElementById('sho-rename-image-btn')?.addEventListener('click', function () {
     renameSelectedImage(false)
   })
 
@@ -342,6 +483,8 @@ document.addEventListener('DOMContentLoaded', function () {
   // Run on page load to update any previously selected items
   loadAvailableImages(true)
   loadAvailableImages(false)
+  toggleDeleteButton(true) // Movies
+  toggleDeleteButton(false) // Shows
   updateAccordionHighlights()
   updateValidationState()
 })
