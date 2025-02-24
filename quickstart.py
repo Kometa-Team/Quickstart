@@ -692,9 +692,10 @@ def step(name):
         data["sho-template_variables"] = {}
 
     # Ensure correct rendering for the final validation page
+    config_name = session.get("config_name") or page_info.get("config_name", "default")
     if name == "900-final":
         validated, validation_error, config_data, yaml_content = build_config(
-            header_style
+            header_style, config_name=config_name
         )
 
         page_info["yaml_valid"] = validated

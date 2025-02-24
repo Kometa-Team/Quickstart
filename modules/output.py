@@ -218,7 +218,7 @@ def reorder_library_section(library_data):
     return reordered_data
 
 
-def build_config(header_style="standard"):
+def build_config(header_style="standard", config_name=None):
     """
     Build the final configuration, including all sections and headers,
     ensuring the libraries section is properly processed.
@@ -440,6 +440,7 @@ def build_config(header_style="standard"):
     yaml_content = (
         f"# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/{kometa_branch}/json-schema/config-schema.json\n\n"
         f"{add_border_to_ascii_art(section_heading('KOMETA', font=header_style)) if header_style not in ['none', 'single line'] else section_heading('KOMETA', font=header_style)}\n\n"
+        f"{add_border_to_ascii_art(section_heading(config_name, font=header_style)) if header_style not in ['none', 'single line'] else section_heading(config_name, font=header_style)}\n\n"
         f"{header_comment}\n\n"
     )
 
