@@ -4,6 +4,7 @@ import json
 import pyfiglet
 from ruamel.yaml import YAML
 from flask import current_app as app
+from datetime import datetime
 
 from .persistence import (
     save_settings,
@@ -437,10 +438,13 @@ def build_config(header_style="standard", config_name=None):
         "kometa_branch", "nightly"
     )  # Default to nightly if not found
 
+    # Get the current timestamp in a readable format
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     yaml_content = (
         f"# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/{kometa_branch}/json-schema/config-schema.json\n\n"
         f"{add_border_to_ascii_art(section_heading('KOMETA', font=header_style)) if header_style not in ['none', 'single line'] else section_heading('KOMETA', font=header_style)}\n\n"
-        f"{add_border_to_ascii_art(section_heading(config_name, font=header_style)) if header_style not in ['none', 'single line'] else section_heading(config_name, font=header_style)}\n\n"
+        f"# {config_name} config created by Quickstart on {timestamp}\n\n"
         f"{header_comment}\n\n"
     )
 

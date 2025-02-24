@@ -295,6 +295,8 @@ def user_visible_name(raw_name):
         formatted_name = "OMDb"
     elif raw_name == "github":
         formatted_name = "GitHub"
+    elif raw_name == "ntfy":
+        formatted_name = "ntfy"
     elif raw_name == "mal":
         formatted_name = "MyAnimeList"
     elif raw_name == "mdblist":
