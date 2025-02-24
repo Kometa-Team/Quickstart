@@ -205,6 +205,11 @@ def rename_library_image():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@app.route("/config/uploads/<path:filename>")
+def serve_uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+
 @app.route("/config/previews/<path:filename>")
 def serve_previews(filename):
     return send_from_directory("config/previews", filename)
