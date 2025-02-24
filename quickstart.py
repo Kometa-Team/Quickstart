@@ -1,3 +1,5 @@
+import webbrowser
+
 from flask import (
     Flask,
     jsonify,
@@ -13,17 +15,22 @@ from flask import (
 from flask_session import Session
 from cachelib.file import FileSystemCache
 
+import argparse
 import io
 import os
 import requests
+import pystray
 import shutil
+import signal
 import stat
 import sys
 import threading
+from threading import Thread
 from dotenv import load_dotenv
 import namesgenerator
 from io import BytesIO
 from werkzeug.utils import secure_filename
+from waitress import serve
 
 
 from modules.validations import (
@@ -160,6 +167,16 @@ server_session = Session(app)
 ensure_json_schema()
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+
+parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
+parser.add_argument("--port", type=int, help="Specify the port number to run the server")
+parser.add_argument("--debug", action="store_true", help="Enable debug mode")
+args = parser.parse_args()
+
+port = args.port if args.port else int(os.getenv("QS_PORT", "5000"))
+debug_mode = args.debug if args.debug else booler(os.getenv("QS_DEBUG", "0"))
+
+print(f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}")
 
 
 def allowed_file(filename):
@@ -878,29 +895,33 @@ def validate_notifiarr():
     else:
         return jsonify(result.get_json()), 400
 
+server_thread = None
+
+def start_flask_app():
+    global server_thread
+    if debug_mode:
+        app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    else:
+        serve(app, host="0.0.0.0", port=port)
+
+def open_github(icon):
+    webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
+
+
+def exit_action(icon):
+    global server_thread
+    icon.stop()
+    os.kill(os.getpid(), signal.SIGINT)
+    if server_thread and server_thread.is_alive():
+        server_thread.join()
 
 if __name__ == "__main__":
-    import argparse
+    icon = pystray.Icon("Flask App", Image.open("static/favicon.ico"), menu=pystray.Menu(
+        pystray.MenuItem("Quickstart GitHub", open_github),
+        pystray.MenuItem("Exit", exit_action),
+    ))
 
-    parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
-    parser.add_argument(
-        "--port", type=int, help="Specify the port number to run the server"
-    )
-    parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-    args = parser.parse_args()
-
-    # Load port and debug settings from `.env`
-    env_port = os.getenv("QS_PORT", "5000")
-    env_debug = booler(
-        os.getenv("QS_DEBUG", "0")
-    )  # Use booler() to handle boolean conversion
-
-    # Determine final settings with precedence: CLI > .env > default
-    port = args.port if args.port else int(env_port)
-    debug_mode = args.debug if args.debug else env_debug
-
-    print(
-        f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
-    )
-
-    app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    server_thread = Thread(target=start_flask_app)
+    server_thread.daemon = True
+    server_thread.start()
+    icon.run()
