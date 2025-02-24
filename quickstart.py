@@ -900,6 +900,9 @@ def start_flask_app():
     global server_thread
     serve(app, host="0.0.0.0", port=port)
 
+def open_quickstart(icon):
+    webbrowser.open(f"http://localhost:{port}")
+
 def open_github(icon):
     webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
 
@@ -918,6 +921,7 @@ if __name__ == "__main__":
         image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
 
         icon = pystray.Icon("Flask App", image, menu=pystray.Menu(
+            pystray.MenuItem("Open Quickstart", open_quickstart),
             pystray.MenuItem("Quickstart GitHub", open_github),
             pystray.MenuItem("Exit", exit_action),
         ))
