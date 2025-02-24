@@ -46,3 +46,4 @@ config/
 json-schema/
 build/
 dist/
+favicon.ico

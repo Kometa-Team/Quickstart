@@ -85,15 +85,14 @@ else:
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
-# Files to copy from _MEIPASS to correct locations
-files_to_copy = {
-    "VERSION": BASE_DIR,  # Copy to the same directory as Quickstart.exe
-    ".env.example": CONFIG_DIR,  # Copy to config/ next to Quickstart.exe
-}
-
 # Copy files before _MEIPASS disappears
-for filename, dest_dir in files_to_copy.items():
-    src_path = os.path.join(MEIPASS_DIR, filename)  # File location in _MEIPASS
+for source, dest_dir in [
+    ("VERSION", BASE_DIR),
+    (os.path.join("config", ".env.example"), CONFIG_DIR),
+    (os.path.join("static", "favicon.ico"), BASE_DIR)
+]:
+    filename = os.path.basename(source)
+    src_path = os.path.join(MEIPASS_DIR, source)  # File location in _MEIPASS
     dest_path = os.path.join(dest_dir, filename)  # Target location
 
     # Copy only if the file exists in _MEIPASS and does not already exist in the destination
@@ -899,10 +898,7 @@ server_thread = None
 
 def start_flask_app():
     global server_thread
-    if debug_mode:
-        app.run(host="0.0.0.0", port=port, debug=debug_mode)
-    else:
-        serve(app, host="0.0.0.0", port=port)
+    serve(app, host="0.0.0.0", port=port)
 
 def open_github(icon):
     webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
@@ -916,12 +912,17 @@ def exit_action(icon):
         server_thread.join()
 
 if __name__ == "__main__":
-    icon = pystray.Icon("Flask App", Image.open("static/favicon.ico"), menu=pystray.Menu(
-        pystray.MenuItem("Quickstart GitHub", open_github),
-        pystray.MenuItem("Exit", exit_action),
-    ))
+    if debug_mode:
+        app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    else:
+        image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
 
-    server_thread = Thread(target=start_flask_app)
-    server_thread.daemon = True
-    server_thread.start()
-    icon.run()
+        icon = pystray.Icon("Flask App", image, menu=pystray.Menu(
+            pystray.MenuItem("Quickstart GitHub", open_github),
+            pystray.MenuItem("Exit", exit_action),
+        ))
+
+        server_thread = Thread(target=start_flask_app)
+        server_thread.daemon = True
+        server_thread.start()
+        icon.run()
