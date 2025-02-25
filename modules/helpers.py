@@ -43,8 +43,6 @@ def get_pyfiglet_fonts():
 
 def get_kometa_branch():
     """Fetch the correct branch (master or nightly)."""
-    from .helpers import check_for_update  # Prevent circular import
-
     version_info = check_for_update()
     return version_info.get("kometa_branch", "nightly")  # Default to nightly
 
