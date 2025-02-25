@@ -6,9 +6,53 @@ on:
 
 jobs:
 
+  build-releases:
+    name: Build ${{ matrix.os_upper }} Installer
+    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
+    needs: [ docker-build-version ]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: 'windows'
+            os_upper: 'Windows'
+            os_version: 'latest'
+            ext: '.exe'
+          - os: 'ubuntu'
+            os_upper: 'Linux'
+            os_version: 'latest'
+            ext: ''
+          - os: 'macos'
+            os_upper: 'MacOS'
+            os_version: 'latest'
+            ext: ''
+
+    steps:
+
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install Requirements
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build Executable
+        run: |
+          pyinstaller -y ./Quickstart.spec
+          gh release upload ${{github.event.release.tag_name}} dist/Quickstart${{ matrix.ext }}
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+
   release-notification:
 
     runs-on: ubuntu-latest
+    needs: [ build-releases ]
     steps:
 
       - name: Send Discord Release Notification

@@ -147,7 +147,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Quickstart-${{ needs.increment-build.outputs.version }}-${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
           path: dist/Quickstart${{ matrix.ext }}
 
   docker-build-develop:
