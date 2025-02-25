@@ -1,0 +1,1092 @@
+<!-- Movie Collections Accordion -->
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+      data-bs-target="#movieCollections" aria-expanded="false" aria-controls="movieCollections">
+      Movie Collections
+    </button>
+  </h2>
+  <div id="movieCollections" class="accordion-collapse collapse" data-bs-parent="#accordionMovies">
+    <div class="accordion-body">
+      <p>Select which Collection Files you would like to run against your libraries. You can hover over the magnifying
+        glass to see some of the collections that the file will create, or click on the name of the file to be taken
+        to it's wiki page.</p>
+      <!-- Award Collections Accordion -->
+      <div class="accordion mt-3" id="mov-awardCollectionsAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mov-awardCollections" aria-expanded="false" aria-controls="mov-awardCollections">
+              Award Collections
+            </button>
+          </h2>
+          <div id="mov-awardCollections" class="accordion-collapse collapse"
+            data-bs-parent="#mov-awardCollectionsAccordion">
+            <div class="accordion-body">
+              <!-- Award Collection Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input readonly-toggle" type="checkbox" id="mov-collection_separator_award"
+                  name="mov-collection_separator_award">
+                <input type="hidden" id="mov-collection_separator_award_hidden" name="mov-collection_separator_award"
+                  value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_separator_award">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/separator">Award
+                      Separator</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/awardseparator.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    data-bs-custom-class="text-tooltip"
+                    title="Please select your desired Separator style from the Movie Attributes section, which will allow you to enable this Separator.">
+                  </i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_oscars" name="mov-collection_oscars"
+                  value="true" {% if data['libraries']['mov-collection_oscars']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_oscars" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_oscars">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/oscars">Academy
+                      Awards (Oscars)</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/oscars.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_berlinale"
+                  name="mov-collection_berlinale" value="true" {% if
+                  data['libraries']['mov-collection_berlinale']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_berlinale" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_berlinale">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/berlinale">Berlin
+                      International Film Festival Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/berlinale.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_bafta" name="mov-collection_bafta"
+                  value="true" {% if data['libraries']['mov-collection_bafta']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_bafta" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_bafta">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/bafta">British
+                      Academy of Film Awards (BAFTA)</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/bafta.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_cannes" name="mov-collection_cannes"
+                  value="true" {% if data['libraries']['mov-collection_cannes']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_cannes" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_cannes">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/cannes">Cannes Film
+                      Festival Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/cannes.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_cesar" name="mov-collection_cesar"
+                  value="true" {% if data['libraries']['mov-collection_cesar']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_cesar" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_cesar">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/cesar">César
+                      Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/images/cesar.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_choice" name="mov-collection_choice"
+                  value="true" {% if data['libraries']['mov-collection_choice']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_choice" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_choice">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/award/choice">Critics
+                      Choice Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/images/choice.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_emmy" name="mov-collection_emmy"
+                  value="true" {% if data['libraries']['mov-collection_emmy']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_emmy" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_emmy">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/award/emmy">Emmy
+                      Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/images/emmy.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_golden" name="mov-collection_golden"
+                  value="true" {% if data['libraries']['mov-collection_golden']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_golden" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_golden">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/golden">Golden
+                      Globe Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/golden.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_spirit" name="mov-collection_spirit"
+                  value="true" {% if data['libraries']['mov-collection_spirit']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_spirit" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_spirit">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/spirit">Independent
+                      Spirit Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/spirit.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_nfr" name="mov-collection_nfr"
+                  value="true" {% if data['libraries']['mov-collection_nfr']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_nfr" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_nfr">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/nfr">National Film
+                      Registry</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/nfr.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_pca" name="mov-collection_pca"
+                  value="true" {% if data['libraries']['mov-collection_pca']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_pca" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_pca">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/award/pca">People's
+                      Choice Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/images/pca.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_razzie" name="mov-collection_razzie"
+                  value="true" {% if data['libraries']['mov-collection_razzie']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_razzie" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_razzie">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/award/razzie">Razzie
+                      Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/images/razzie.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_sag" name="mov-collection_sag"
+                  value="true" {% if data['libraries']['mov-collection_sag']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_sag" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_sag">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/ion_info.kometa_branch }}/defaults/award/sag">Screen
+                      Actors Guild Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/sag.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_sundance"
+                  name="mov-collection_sundance" value="true" {% if
+                  data['libraries']['mov-collection_sundance']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_sundance" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_sundance">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/sundance">Sundance
+                      Film Festival Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/sundance.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_tiff" name="mov-collection_tiff"
+                  value="true" {% if data['libraries']['mov-collection_tiff']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_tiff" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_tiff">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/tiff">Toronto
+                      International Film Festival Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/tiff.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_venice" name="mov-collection_venice"
+                  value="true" {% if data['libraries']['mov-collection_venice']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_venice" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_venice">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/venice">Venice Film
+                      Festival Awards</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/venice.png" height="200" style="opacity: 1;">'></i>
+
+                </div>
+              </div>
+
+
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Chart Collections Accordion -->
+      <div class="accordion mt-3" id="mov-chartCollectionsAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mov-chartCollections" aria-expanded="false" aria-controls="mov-chartCollections">
+              Chart Collections
+            </button>
+          </h2>
+          <div id="mov-chartCollections" class="accordion-collapse collapse"
+            data-bs-parent="#mov-chartCollectionsAccordion">
+            <div class="accordion-body">
+              <!-- Chart Collection Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input readonly-toggle" type="checkbox" id="mov-collection_separator_chart"
+                  name="mov-collection_separator_chart">
+                <input type="hidden" id="mov-collection_separator_chart_hidden" name="mov-collection_separator_chart"
+                  value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_separator_chart">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/separator">Chart
+                      Separator</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/chartseparator.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    data-bs-custom-class="text-tooltip"
+                    title="Please select your desired Separator style from the Movie Attributes section, which will allow you to enable this Separator.">
+                  </i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_basic" name="mov-collection_basic"
+                  value="true" {% if data['libraries']['mov-collection_basic']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_basic" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_basic">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/basic">Basic
+                      Charts</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/basic.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_tautulli"
+                  name="mov-collection_tautulli" value="true" {% if
+                  data['libraries']['mov-collection_tautulli']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_tautulli" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_tautulli">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/tautulli">Tautulli
+                      Charts</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/tautulli.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Requires Tautulli authentication"></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_imdb" name="mov-collection_imdb"
+                  value="true" {% if data['libraries']['mov-collection_imdb']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_imdb" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_imdb">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/imdb">IMDb
+                      Charts</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/imdb.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_tmdb" name="mov-collection_tmdb"
+                  value="true" {% if data['libraries']['mov-collection_tmdb']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_tmdb" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_tmdb">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/tmdb">TMDb
+                      Charts</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/tmdb.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_trakt" name="mov-collection_trakt"
+                  value="true" {% if data['libraries']['mov-collection_trakt']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_trakt" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_trakt">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/trakt">Trakt
+                      Charts</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/trakt.png" height="200">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Requires Trakt authentication"></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_anilist"
+                  name="mov-collection_anilist" value="true" {% if
+                  data['libraries']['mov-collection_anilist']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_anilist" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_anilist">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/anilist">AniList
+                      Charts</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/anilist.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_myanimelist"
+                  name="mov-collection_myanimelist" value="true" {% if
+                  data['libraries']['mov-collection_myanimelist']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_myanimelist" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_myanimelist">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/myanimelist">MyAnimeList
+                      Charts</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/myanimelist.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_letterboxd"
+                  name="mov-collection_letterboxd" value="true" {% if
+                  data['libraries']['mov-collection_letterboxd']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_letterboxd" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_letterboxd">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/letterboxd">Letterboxd
+                      Charts</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/letterboxd.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_other_chart"
+                  name="mov-collection_other_chart" value="true" {% if
+                  data['libraries']['mov-collection_other_chart']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_other_chart" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_other_chart">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/other">Other
+                      Charts</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/chartother.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Content Collections Accordion -->
+      <div class="accordion mt-3" id="mov-contentCollectionsAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mov-contentCollections" aria-expanded="false" aria-controls="mov-contentCollections">
+              Content Collections
+            </button>
+          </h2>
+          <div id="mov-contentCollections" class="accordion-collapse collapse"
+            data-bs-parent="#mov-contentCollectionsAccordion">
+            <div class="accordion-body">
+              <!-- Content Collection Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_genre" name="mov-collection_genre"
+                  value="true" {% if data['libraries']['mov-collection_genre']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_genre" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_genre">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/genre/">Genres</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/genre.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_franchise"
+                  name="mov-collection_franchise" value="true" {% if
+                  data['libraries']['mov-collection_franchise']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_franchise" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_franchise">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/franchise/">Franchises</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/moviefranchise.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Disable Plex's in-built Automatic Collections feature if you use this file. Click the name of this file to go to the wiki page to learn more."></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_universe"
+                  name="mov-collection_universe" value="true" {% if
+                  data['libraries']['mov-collection_universe']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_universe" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_universe">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/universe/">Universes</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/universe.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_based" name="mov-collection_based"
+                  value="true" {% if data['libraries']['mov-collection_based']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_based" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_based">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/based/">Based On...</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/based.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_collectionless"
+                  name="mov-collection_collectionless" value="true" {% if
+                  data['libraries']['mov-collection_collectionless']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_collectionless" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_collectionless">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/collectionless/">Collectionless</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/collectionless.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="Please visit the wiki for this file to understand what it does"></i>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Content Rating Collections Accordion -->
+      <div class="accordion mt-3" id="mov-contentRatingCollectionsAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mov-contentRatingCollections" aria-expanded="false"
+              aria-controls="mov-contentRatingCollections">
+              Content Rating Collections
+            </button>
+          </h2>
+          <div id="mov-contentRatingCollections" class="accordion-collapse collapse"
+            data-bs-parent="#mov-contentRatingCollectionsAccordion">
+            <div class="accordion-body">
+              <!-- Content Rating Collection Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_us"
+                  name="mov-collection_content_rating_us" value="true" {% if
+                  data['libraries']['mov-collection_content_rating_us']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_content_rating_us" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_content_rating_us">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/content_rating_us">US
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/moviecontent_rating_us.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_uk"
+                  name="mov-collection_content_rating_uk" value="true" {% if
+                  data['libraries']['mov-collection_content_rating_uk']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_content_rating_uk" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_content_rating_uk">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_uk">UK
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/content_rating_uk.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_de"
+                  name="mov-collection_content_rating_de" value="true" {% if
+                  data['libraries']['mov-collection_content_rating_de']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_content_rating_de" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_content_rating_de">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_de">DE
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/content_rating_de.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_au"
+                  name="mov-collection_content_rating_au" value="true" {% if
+                  data['libraries']['mov-collection_content_rating_au']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_content_rating_au" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_content_rating_au">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_au">AU
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/content_rating_au.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_nz"
+                  name="mov-collection_content_rating_nz" value="true" {% if
+                  data['libraries']['mov-collection_content_rating_nz']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_content_rating_nz" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_content_rating_nz">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_nz">NZ
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/content_rating_nz.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_mal"
+                  name="mov-collection_content_rating_mal" value="true" {% if
+                  data['libraries']['mov-collection_content_rating_mal']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_content_rating_mal" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_content_rating_mal">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_mal">MyAnimeList
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/content_rating_mal.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_content_rating_cs"
+                  name="mov-collection_content_rating_cs" value="true" {% if
+                  data['libraries']['mov-collection_content_rating_cs']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_content_rating_cs" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_content_rating_cs">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_cs">Common
+                      Sense Media Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/content_rating_cs.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Location Collections Accordion -->
+      <div class="accordion mt-3" id="mov-locationCollectionsAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mov-locationCollections" aria-expanded="false" aria-controls="mov-locationCollections">
+              Location Collections
+            </button>
+          </h2>
+          <div id="mov-locationCollections" class="accordion-collapse collapse"
+            data-bs-parent="#mov-locationCollectionsAccordion">
+            <div class="accordion-body">
+              <!-- Location Collection Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_country"
+                  name="mov-collection_country" value="true" {% if
+                  data['libraries']['mov-collection_country']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_country" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_country">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/country">Countries</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/country1.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_region" name="mov-collection_region"
+                  value="true" {% if data['libraries']['mov-collection_region']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_region" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_region">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/region">Regions</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/region1.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_continent"
+                  name="mov-collection_continent" value="true" {% if
+                  data['libraries']['mov-collection_continent']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_continent" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_continent">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/continent">Continents</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/continent1.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Media Collections Accordion -->
+      <div class="accordion mt-3" id="mov-mediaCollectionsAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mov-mediaCollections" aria-expanded="false" aria-controls="mov-mediaCollections">
+              Media Collections
+            </button>
+          </h2>
+          <div id="mov-mediaCollections" class="accordion-collapse collapse"
+            data-bs-parent="#mov-mediaCollectionsAccordion">
+            <div class="accordion-body">
+              <!-- Media Collection Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_aspect" name="mov-collection_aspect"
+                  value="true" {% if data['libraries']['mov-collection_aspect']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_aspect" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_aspect">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/aspect">Aspect
+                      Ratios</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/aspect.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_resolution"
+                  name="mov-collection_resolution" value="true" {% if
+                  data['libraries']['mov-collection_resolution']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_resolution" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_resolution">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/resolution">Resolutions</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/resolution.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_audio_language"
+                  name="mov-collection_audio_language" value="true" {% if
+                  data['libraries']['mov-collection_audio_language']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_audio_language" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_audio_language">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/audio_language">Audio
+                      Languages</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/audio_language.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_subtitle_language"
+                  name="mov-collection_subtitle_language" value="true" {% if
+                  data['libraries']['mov-collection_subtitle_language']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_subtitle_language" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_subtitle_language">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/subtitle_language">Subtitle
+                      Languages</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/subtitle_language.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Production Collections Accordion -->
+      <div class="accordion mt-3" id="mov-productionCollectionsAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mov-productionCollections" aria-expanded="false"
+              aria-controls="mov-productionCollections">
+              Production Collections
+            </button>
+          </h2>
+          <div id="mov-productionCollections" class="accordion-collapse collapse"
+            data-bs-parent="#mov-productionCollectionsAccordion">
+            <div class="accordion-body">
+              <!-- Production Collection Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_streaming"
+                  name="mov-collection_streaming" value="true" {% if
+                  data['libraries']['mov-collection_streaming']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_streaming" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_streaming">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/streaming">Streaming</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/streaming.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="This will show content currently streaming on a particular service, not content that is exclusive to said service. Read the wiki for using `originals_only` to change this"></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_studio" name="mov-collection_studio"
+                  value="true" {% if data['libraries']['mov-collection_studio']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_studio" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_studio">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/studio">Studios</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/studio.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- People Collections Accordion -->
+      <div class="accordion mt-3" id="mov-peopleCollectionsAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mov-peopleCollections" aria-expanded="false" aria-controls="mov-peopleCollections">
+              People Collections
+            </button>
+          </h2>
+          <div id="mov-peopleCollections" class="accordion-collapse collapse"
+            data-bs-parent="#mov-peopleCollectionsAccordion">
+            <div class="accordion-body">
+              <!-- People Collection Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_actor" name="mov-collection_actor"
+                  value="true" {% if data['libraries']['mov-collection_actor']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_actor" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_actor">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/actor">Actors</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/person_signature.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library."></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_director"
+                  name="mov-collection_director" value="true" {% if
+                  data['libraries']['mov-collection_director']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_director" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_director">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/director">Directors</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/person_signature.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library."></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_producer"
+                  name="mov-collection_producer" value="true" {% if
+                  data['libraries']['mov-collection_producer']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_producer" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_producer">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/producer">Producers</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/person_signature.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library."></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_writer" name="mov-collection_writer"
+                  value="true" {% if data['libraries']['mov-collection_writer']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_writer" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_writer">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/writer">Writers</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/person_signature.png" height="200" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library."></i>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Time Collections Accordion -->
+      <div class="accordion mt-3" id="mov-timeCollectionsAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#mov-timeCollections" aria-expanded="false" aria-controls="mov-timeCollections">
+              Time Collections
+            </button>
+          </h2>
+          <div id="mov-timeCollections" class="accordion-collapse collapse"
+            data-bs-parent="#mov-timeCollectionsAccordion">
+            <div class="accordion-body">
+              <!-- Time Collection Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_seasonal"
+                  name="mov-collection_seasonal" value="true" {% if
+                  data['libraries']['mov-collection_seasonal']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_seasonal" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_seasonal">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/seasonal">Seasonal</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/seasonal.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_year" name="mov-collection_year"
+                  value="true" {% if data['libraries']['mov-collection_year']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="mov-collection_year" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_year">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/year">Years</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/year.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="mov-collection_decade" name="mov-collection_decade"
+                  value="true" {% if data['libraries']['mov-collection_decade']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="mov-collection_decade" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="mov-collection_decade">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/movie/decade">Decades</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/images/decade.png" height="200" style="opacity: 1;">'></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,514 @@
+<!-- Show Overlays Accordion -->
+<div class="accordion-item">
+  <h2 class="accordion-header">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#showOverlays"
+      aria-expanded="false" aria-controls="showOverlays">
+      Show Overlays
+    </button>
+  </h2>
+
+  <div id="showOverlays" class="accordion-collapse collapse" data-bs-parent="#accordionShows">
+    <div class="accordion-body">
+
+      <!-- Preview Overlays Accordion -->
+
+      <div class="accordion mt-3" id="sho-previewOverlaysAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+              data-bs-target="#sho-previewOverlays" aria-expanded="true" aria-controls="sho-previewOverlays">
+              Preview Overlays
+            </button>
+          </h2>
+          <div id="sho-previewOverlays" class="accordion-collapse collapse show"
+            data-bs-parent="#sho-previewOverlaysAccordion">
+            <div class="accordion-body">
+              <div class="row">
+                <!-- Left Column: Form Elements -->
+                <div class="col-md-6">
+                  <p class="mb-3">
+                    Selecting any Overlays will automatically update the preview image here. You can upload your
+                    custom base image from a file or a URL to preview your Overlays against that image.
+                  </p>
+                  <div class="form-floating mb-4">
+                    <select id="sho-library-image-dropdown" class="form-select">
+                      <option value="default">Default Kometa</option>
+                    </select>
+                    <label for="sho-library-image-dropdown">Select Custom Show Image</label>
+                  </div>
+
+                  <!-- Upload an image automatically when selected -->
+                  <input type="file" id="sho-upload-library-image" accept="image/png, image/jpeg"
+                    class="form-control mb-2">
+
+                  <!-- Fetch an image from a URL -->
+                  <div class="input-group mt-2">
+                    <input type="url" id="sho-image-url" class="form-control" placeholder="Enter Image URL">
+                    <button type="button" id="sho-fetch-url-btn" class="btn btn-secondary">Fetch</button>
+                  </div>
+
+                  <button type="button" id="sho-delete-image-btn" class="btn btn-danger mt-2">
+                    <i class="bi bi-trash"></i> Delete Selected
+                  </button>
+                  <button type="button" id="sho-rename-image-btn" class="btn btn-warning mt-2">
+                    <i class="fa fa-pencil-alt"></i> Rename Selected
+                  </button>
+
+                </div>
+
+                <!-- Right Column: Image Preview -->
+                <div class="col-md-6 d-flex align-items-center justify-content-center">
+                  <img id="sho-preview-image" src="/config/previews/show_preview.png" class="img-fluid"
+                    alt="Show Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- Chart Overlays Accordion -->
+      <div class="accordion mt-3" id="sho-chartOverlaysAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#sho-chartOverlays" aria-expanded="false" aria-controls="sho-chartOverlays">
+              Chart Overlays
+            </button>
+          </h2>
+          <div id="sho-chartOverlays" class="accordion-collapse collapse" data-bs-parent="#sho-chartOverlaysAccordion">
+            <div class="accordion-body">
+              <!-- Chart Overlay Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_ribbon" name="sho-overlay_ribbon"
+                  value="true" {% if data['libraries']['sho-overlay_ribbon']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_ribbon" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_ribbon">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/ribbon/">Ribbon</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/ribbon.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Content Overlays Accordion -->
+      <div class="accordion mt-3" id="sho-contentOverlaysAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#sho-contentOverlays" aria-expanded="false" aria-controls="sho-contentOverlays">
+              Content Overlays
+            </button>
+          </h2>
+          <div id="sho-contentOverlays" class="accordion-collapse collapse"
+            data-bs-parent="#sho-contentOverlaysAccordion">
+            <div class="accordion-body">
+              <!-- Content Overlay Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_mediastinger"
+                  name="sho-overlay_mediastinger" value="true" {% if
+                  data['libraries']['sho-overlay_mediastinger']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_mediastinger" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_mediastinger">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/mediastinger/">Mediastinger</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/mediastinger.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_status" name="sho-overlay_status"
+                  value="true" {% if data['libraries']['sho-overlay_status']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_status" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_status">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/status/">Status</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/status.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Content Rating Overlays Accordion -->
+      <div class="accordion mt-3" id="sho-contentRatingOverlaysAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#sho-contentRatingOverlays" aria-expanded="false"
+              aria-controls="sho-contentRatingOverlays">
+              Content Rating Overlays
+            </button>
+          </h2>
+          <div id="sho-contentRatingOverlays" class="accordion-collapse collapse"
+            data-bs-parent="#sho-contentRatingOverlaysAccordion">
+            <div class="accordion-body">
+              <!-- Content Rating Overlay Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="radio" id="sho-overlay_content_rating_us_show"
+                  name="sho-content-rating-group" value="us_show" {% if
+                  data['libraries']['sho-attribute_selected_content_rating']=='us_show' %}checked{% endif %}>
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_content_rating_us_show">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_us_show/">US
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/content_rating_us_show.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="radio" id="sho-overlay_content_rating_uk"
+                  name="sho-content-rating-group" value="uk" {% if
+                  data['libraries']['sho-attribute_selected_content_rating']=='uk' %}checked{% endif %}>
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_content_rating_uk">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_uk/">UK
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/content_rating_uk.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="radio" id="sho-overlay_content_rating_de"
+                  name="sho-content-rating-group" value="de" {% if
+                  data['libraries']['sho-attribute_selected_content_rating']=='de' %}checked{% endif %}>
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_content_rating_de">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_de/">DE
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/content_rating_de.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="radio" id="sho-overlay_content_rating_au"
+                  name="sho-content-rating-group" value="au" {% if
+                  data['libraries']['sho-attribute_selected_content_rating']=='au' %}checked{% endif %}>
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_content_rating_au">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_au/">AU
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/content_rating_au.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="radio" id="sho-overlay_content_rating_nz"
+                  name="sho-content-rating-group" value="nz" {% if
+                  data['libraries']['sho-attribute_selected_content_rating']=='nz' %}checked{% endif %}>
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_content_rating_nz">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_nz/">NZ
+                      Content Ratings</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/content_rating_nz.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="radio" id="sho-overlay_commonsense"
+                  name="sho-content-rating-group" value="commonsense" {% if
+                  data['libraries']['sho-attribute_selected_content_rating']=='commonsense' %}checked{% endif %}>
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_commonsense">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/commonsense/">Common
+                      Sense Age Rating</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/commonsense.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <input type="hidden" id="sho-attribute_selected_content_rating"
+                name="sho-attribute_selected_content_rating"
+                value="{{ data['libraries']['sho-attribute_selected_content_rating']|default('') }}">
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Media Overlays Accordion -->
+      <div class="accordion mt-3" id="sho-mediaOverlaysAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#sho-mediaOverlays" aria-expanded="false" aria-controls="sho-mediaOverlays">
+              Media Overlays
+            </button>
+          </h2>
+          <div id="sho-mediaOverlays" class="accordion-collapse collapse" data-bs-parent="#sho-mediaOverlaysAccordion">
+            <div class="accordion-body">
+              <!-- Media Overlay Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_aspect" name="sho-overlay_aspect"
+                  value="true" {% if data['libraries']['sho-overlay_aspect']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_aspect" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_aspect">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/aspect/">Aspect
+                      Ratio</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/aspect.png" height="300" style="opacity: 1;">'></i>
+                  <a target="_blank" href="https://trash-guides.info/" target="_blank" class="text-decoration-none">
+                    <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="Designed to use the TRaSH Guides filename naming scheme. Click on the exclamation mark to go to the TRaSH Guides website."></i>
+                  </a>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_audio_codec"
+                  name="sho-overlay_audio_codec" value="true" {% if
+                  data['libraries']['sho-overlay_audio_codec']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_audio_codec" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_audio_codec">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/audio_codec/">Audio
+                      Codec</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/audio_codec.png" height="300" style="opacity: 1;">'></i>
+                  <a target="_blank" href="https://trash-guides.info/" target="_blank" class="text-decoration-none">
+                    <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="Designed to use the TRaSH Guides filename naming scheme. Click on the exclamation mark to go to the TRaSH Guides website."></i>
+                  </a>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_language_count"
+                  name="sho-overlay_language_count" value="true" {% if
+                  data['libraries']['sho-overlay_language_count']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_language_count" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_language_count">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/language_count/">Audio/Subtitle
+                      Language Count</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/language_count.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_languages" name="sho-overlay_languages"
+                  value="true" {% if data['libraries']['sho-overlay_languages']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="sho-overlay_languages" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_languages">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/languages/">Audio/Subtitle
+                      Language Flags</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/language.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_resolution"
+                  name="sho-overlay_resolution" value="true" {% if
+                  data['libraries']['sho-overlay_resolution']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_resolution" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_resolution">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/resolution/">Resolutions/Editions</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/resolution.png" height="300" style="opacity: 1;">'></i>
+                  <a target="_blank" href="https://trash-guides.info/" target="_blank" class="text-decoration-none">
+                    <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="DEditions overlay is designed to use the Editions field within Plex [which requires Plex Pass to use] or the TRaSH Guides filename naming scheme. Click on the exclamation mark to go to the TRaSH Guides website."></i>
+                  </a>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_runtimes" name="sho-overlay_runtimes"
+                  value="true" {% if data['libraries']['sho-overlay_runtimes']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="sho-overlay_runtimes" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_runtimes">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/runtimes/">Runtimes</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/runtimes.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_versions" name="sho-overlay_versions"
+                  value="true" {% if data['libraries']['sho-overlay_versions']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="sho-overlay_versions" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_versions">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/versions/">Versions</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/version.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_video_format"
+                  name="sho-overlay_video_format" value="true" {% if
+                  data['libraries']['sho-overlay_video_format']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_video_format" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_video_format">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/video_format/">Video
+                      Format</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/video_format.png" height="300" style="opacity: 1;">'></i>
+                  <a target="_blank" href="https://trash-guides.info/" target="_blank" class="text-decoration-none">
+                    <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                      title="Designed to use the TRaSH Guides filename naming scheme. Click on the exclamation mark to go to the TRaSH Guides website."></i>
+                  </a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Production Overlays Accordion -->
+      <div class="accordion mt-3" id="sho-productionOverlaysAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#sho-productionOverlays" aria-expanded="false" aria-controls="sho-productionOverlays">
+              Production Overlays
+            </button>
+          </h2>
+          <div id="sho-productionOverlays" class="accordion-collapse collapse"
+            data-bs-parent="#sho-productionOverlaysAccordion">
+            <div class="accordion-body">
+              <!-- Production Overlay Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_network" name="sho-overlay_network"
+                  value="true" {% if data['libraries']['sho-overlay_network']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_network" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_network">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/network/">Networks</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/streaming.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_streaming" name="sho-overlay_streaming"
+                  value="true" {% if data['libraries']['sho-overlay_streaming']|string|lower=='true' %}checked{% endif
+                  %}>
+                <input type="hidden" name="sho-overlay_streaming" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_streaming">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/streaming/">Streaming</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/streaming.png" height="300" style="opacity: 1;">'></i>
+                  <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+                    title="This will show content currently streaming on a particular service, not content that is exclusive to said service. Read the wiki for using `originals_only` to change this"></i>
+                </div>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_studio" name="sho-overlay_studio"
+                  value="true" {% if data['libraries']['sho-overlay_studio']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_studio" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_studio">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/studio/">Studio</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/studio.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Utility Overlays Accordion -->
+      <div class="accordion mt-3" id="sho-utilityOverlaysAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#sho-utilityOverlays" aria-expanded="false" aria-controls="sho-utilityOverlays">
+              Utility Overlays
+            </button>
+          </h2>
+          <div id="sho-utilityOverlays" class="accordion-collapse collapse"
+            data-bs-parent="#sho-utilityOverlaysAccordion">
+            <div class="accordion-body">
+              <!-- Utility Overlay Toggles -->
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="sho-overlay_direct_play"
+                  name="sho-overlay_direct_play" value="true" {% if
+                  data['libraries']['sho-overlay_direct_play']|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="sho-overlay_direct_play" value="false">
+                <div class="d-flex align-items-center">
+                  <label class="form-check-label me-3" for="sho-overlay_direct_play">
+                    <a target="_blank"
+                      href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/direct_play/">Direct
+                      Play Only</a>
+                  </label>
+                  <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                    title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/direct_play.png" height="300" style="opacity: 1;">'></i>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
