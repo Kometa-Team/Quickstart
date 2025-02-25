@@ -79,7 +79,7 @@ jobs:
 
   make-releases:
     runs-on: ubuntu-latest
-    needs: [ docker-build-version, build-releases ]
+    needs: [ docker-build-version ]
 
     steps:
 
