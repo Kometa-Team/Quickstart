@@ -78,12 +78,25 @@ jobs:
           author_icon_url: ${{ vars.DOCKER_IMAGE }}
 
   build-releases:
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.os_upper }} Installer
+    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
     needs: [ docker-build-version ]
     strategy:
       fail-fast: false
       matrix:
-        os: ['windows-latest', 'ubuntu-latest', 'macos-latest']
+        include:
+          - os: 'windows'
+            os_upper: 'Windows'
+            os_version: 'latest'
+            ext: '.exe'
+          - os: 'ubuntu'
+            os_upper: 'Linux'
+            os_version: 'latest'
+            ext: ''
+          - os: 'macos'
+            os_upper: 'MacOS'
+            os_version: 'latest'
+            ext: ''
 
     steps:
 
@@ -94,6 +107,8 @@ jobs:
 
       - name: Setup Python
         uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
 
       - name: Install Requirements
         run: pip install -r requirements.txt pyinstaller
@@ -105,7 +120,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: Quickstart-${{ needs.docker-build-version.outputs.version }}-${{ runner.os }}
-          path: dist/Quickstart.exe
+          path: dist/Quickstart${{ matrix.ext }}
 
   make-releases:
     runs-on: ubuntu-latest

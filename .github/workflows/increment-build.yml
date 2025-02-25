@@ -107,13 +107,25 @@ jobs:
             git push origin develop --force-with-lease
 
   build-releases:
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.os_upper }} Installer
+    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
     needs: [ increment-build ]
     strategy:
       fail-fast: false
       matrix:
-        os: ['windows-latest', 'ubuntu-latest', 'macos-latest']
-
+        include:
+          - os: 'windows'
+            os_upper: 'Windows'
+            os_version: 'latest'
+            ext: '.exe'
+          - os: 'ubuntu'
+            os_upper: 'Linux'
+            os_version: 'latest'
+            ext: ''
+          - os: 'macos'
+            os_upper: 'MacOS'
+            os_version: 'latest'
+            ext: ''
     steps:
 
       - name: Check Out Repo
@@ -132,14 +144,11 @@ jobs:
       - name: Build Executable
         run: |
           pyinstaller -y ./Quickstart.spec
-          dir
-          cd dist
-          dir
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Quickstart-${{ needs.docker-build-version.outputs.version }}-${{ runner.os }}
-          path: dist/Quickstart.exe
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
+          path: dist/Quickstart${{ matrix.ext }}
 
   docker-build-develop:
     runs-on: ubuntu-latest
