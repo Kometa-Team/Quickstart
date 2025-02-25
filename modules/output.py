@@ -11,7 +11,6 @@ from modules.helpers import (
     check_for_update,
     enforce_string_fields,
     ensure_json_schema,
-    STRING_FIELDS,
 )
 from modules.persistence import (
     retrieve_settings,
@@ -537,7 +536,7 @@ def build_config(header_style="standard", config_name=None):
         authorization_data.pop("code_verifier", None)  # ✅ Remove safely
 
     # Apply enforce_string_fields to ensure proper formatting
-    config_data = enforce_string_fields(config_data, STRING_FIELDS)
+    config_data = enforce_string_fields(config_data)
 
     for section_key, section_stem in ordered_sections:
         if section_key in config_data:

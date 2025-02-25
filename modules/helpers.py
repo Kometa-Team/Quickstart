@@ -182,20 +182,17 @@ def update_checker_loop(app):
             time.sleep(86400)  # Sleep for 24 hours
 
 
-def enforce_string_fields(data, string_fields):
+def enforce_string_fields(data, enforce=False):
     """
     Ensure specified fields in a dictionary are of type string.
     """
-    for key, value in data.items():
-        if isinstance(value, dict):
-            # Recursively enforce string fields in nested dictionaries
-            enforce_string_fields(value, string_fields)
-        elif isinstance(value, list):
-            # Process lists and ensure string enforcement within
-            data[key] = [str(item) if key in string_fields else item for item in value]
-        elif key in string_fields:
-            original_type = type(value)
-            data[key] = str(value)
+    if isinstance(data, dict):
+        for k, v in data.items():
+            data[k] = enforce_string_fields(v, enforce=k in STRING_FIELDS)
+    elif isinstance(data, list):
+        return [enforce_string_fields(v, enforce=enforce) for v in data]
+    elif enforce:
+        return str(data)
     return data
 
 
