@@ -132,6 +132,9 @@ jobs:
       - name: Build Executable
         run: |
           pyinstaller -y ./Quickstart.spec
+          dir
+          cd dist
+          dir
 
       - uses: actions/upload-artifact@v4
         with:

@@ -1,13 +1,12 @@
 import hashlib
 import os
 import re
-import requests
 import subprocess
 import time
-from flask import current_app as app
 from pathlib import Path
-from PIL import Image, ImageDraw
 
+import requests
+from flask import current_app as app
 
 STRING_FIELDS = {
     "apikey",
@@ -16,13 +15,9 @@ STRING_FIELDS = {
     "password",
 }
 
-
 JSON_SCHEMA_DIR = "json-schema"
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
-
-HASH_FILE = os.path.join(
-    JSON_SCHEMA_DIR, "file_hashes.txt"
-)  # Stores previous file hashes
+HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")  # Stores previous file hashes
 
 
 def get_pyfiglet_fonts():

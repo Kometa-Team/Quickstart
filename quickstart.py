@@ -1,5 +1,20 @@
+import argparse
+import io
+import os
+import shutil
+import signal
+import sys
+import threading
 import webbrowser
+from io import BytesIO
+from threading import Thread
 
+import namesgenerator
+import pystray
+import requests
+from PIL import Image
+from cachelib.file import FileSystemCache
+from dotenv import load_dotenv
 from flask import (
     Flask,
     jsonify,
@@ -12,27 +27,30 @@ from flask import (
     send_file,
     send_from_directory,
 )
-from flask_session import Session
-from cachelib.file import FileSystemCache
-
-import argparse
-import io
-import os
-import requests
-import pystray
-import shutil
-import signal
-import stat
-import sys
-import threading
-from threading import Thread
-from dotenv import load_dotenv
-import namesgenerator
-from io import BytesIO
-from werkzeug.utils import secure_filename
 from waitress import serve
+from werkzeug.utils import secure_filename
 
-
+from flask_session import Session
+from modules.database import reset_data, get_unique_config_names
+from modules.helpers import (
+    get_template_list,
+    get_bits,
+    get_menu_list,
+    redact_sensitive_data,
+    check_for_update,
+    update_checker_loop,
+    booler,
+    ensure_json_schema,
+    get_pyfiglet_fonts,
+)
+from modules.output import build_config
+from modules.persistence import (
+    save_settings,
+    retrieve_settings,
+    check_minimum_settings,
+    flush_session_storage,
+    notification_systems_available,
+)
 from modules.validations import (
     validate_plex_server,
     validate_tautulli_server,
@@ -50,28 +68,6 @@ from modules.validations import (
     validate_mdblist_server,
     validate_notifiarr_server,
 )
-from modules.output import build_config
-from modules.helpers import (
-    get_template_list,
-    get_bits,
-    get_menu_list,
-    redact_sensitive_data,
-    check_for_update,
-    update_checker_loop,
-    booler,
-    ensure_json_schema,
-    get_pyfiglet_fonts,
-)
-from modules.persistence import (
-    save_settings,
-    retrieve_settings,
-    check_minimum_settings,
-    flush_session_storage,
-    notification_systems_available,
-)
-from modules.database import reset_data, get_unique_config_names
-
-from PIL import Image, ImageDraw
 
 # Determine the base directory (where Quickstart.exe is located)
 if getattr(sys, "frozen", False):  # Running as PyInstaller EXE
@@ -161,6 +157,7 @@ app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
 server_session = Session(app)
+server_thread = None
 
 # Ensure json-schema files are up to date at startup
 ensure_json_schema()
@@ -894,14 +891,14 @@ def validate_notifiarr():
     else:
         return jsonify(result.get_json()), 400
 
-server_thread = None
-
 def start_flask_app():
     global server_thread
     serve(app, host="0.0.0.0", port=port)
 
+
 def open_quickstart(icon):
     webbrowser.open(f"http://localhost:{port}")
+
 
 def open_github(icon):
     webbrowser.open("https://github.com/Kometa-Team/Quickstart/")

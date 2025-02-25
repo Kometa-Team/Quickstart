@@ -1,14 +1,14 @@
-from flask import jsonify, flash
-from flask import current_app as app
-from json import JSONDecodeError
-from plexapi.server import PlexServer
 import re
-import requests
 import urllib.parse
-import json
+from json import JSONDecodeError
 
-import iso639
 import iso3166
+import iso639
+import requests
+from flask import current_app as app
+from flask import jsonify, flash
+from plexapi.server import PlexServer
+
 
 # TODO: maybe a single entry point here to clean up the imports
 
