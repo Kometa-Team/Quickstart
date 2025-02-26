@@ -1,67 +1,84 @@
-{% extends "000-base.html" %} {% block content %}
+{% extends "000-base.html" %}
+{% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-<div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
-</div>
-<!-- Main Libraries Section -->
-<div id="all-accordions-container" style="display: none;">
-  <!-- Movies -->
-  {% include "partials/_movie_libraries.html" %}
-  {% include "partials/_movie_collections.html" %}
-  {% include "partials/_movie_overlays.html" %}
-  {% include "partials/_movie_attributes.html" %}
-  <br>
-  <!-- Shows -->
-  {% include "partials/_show_libraries.html" %}
-  {% include "partials/_show_collections.html" %}
-  {% include "partials/_show_overlays.html" %}
-  {% include "partials/_show_attributes.html" %}
+
+<div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;"></div>
+
+<!-- Selected Movie Libraries -->
+<h2>Selected Movie Libraries</h2>
+<div class="form-group">
+  {% for library in movie_libraries %}
+  <div class="mb-3">
+    <div class="form-check form-switch">
+      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
+        id="{{ library.id }}-library" name="{{ library.id }}-library" checked>
+      <label class="form-check-label" for="{{ library.id }}-library">
+        {{ library.name }}
+      </label>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 
+<!-- Movie Library Settings -->
+{% for library in movie_libraries %}
+    <div class="card mb-4 shadow-sm border border-secondary"> <!-- Wrapped in a card with border -->
+        <div class="card-header bg-dark">
+            <h4 class="mb-0">{{ library.name }} (Movie)</h4> <!-- Library name in header -->
+        </div>
+        <div class="card-body">
+            {% include "partials/_movie_library_settings.html" %}
+        </div>
+    </div>
+{% endfor %}
+
+<!-- Selected Show Libraries -->
+<h2>Selected Show Libraries</h2>
+<div class="form-group">
+  {% for library in show_libraries %}
+  <div class="mb-3">
+    <div class="form-check form-switch">
+      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
+        id="{{ library.id }}-library" name="{{ library.id }}-library" checked>
+      <label class="form-check-label" for="{{ library.id }}-library">
+        {{ library.name }}
+      </label>
+    </div>
+  </div>
+  {% endfor %}
 </div>
+
+<!-- Show Library Settings -->
+{% for library in show_libraries %}
+    <div class="card mb-4 shadow-sm border border-secondary"> <!-- Wrapped in a card with border -->
+        <div class="card-header bg-dark">
+            <h4 class="mb-0">{{ library.name }} (TV Show)</h4> <!-- Library name in header -->
+        </div>
+        <div class="card-body">
+            {% include "partials/_show_library_settings.html" %}
+        </div>
+    </div>
+{% endfor %}
+
+<!-- Hidden Inputs for Tracking -->
 <div class="form-floating" style="display:none;">
   <input type="text" class="form-control" id="libraries" name="libraries" value="{{ data['libraries']['libraries'] }}"
     readonly>
   <label for="libraries">Selected Libraries</label>
 </div>
-</div>
-<div class="input-group form-floating"></div>
+
 <div class="form-floating" style="display:none;">
   <input type="text" class="form-control" id="libraries_validated" name="libraries_validated"
     value="{{ data['validated'] }}">
   <label for="libraries_validated">Libraries Validated</label>
 </div>
+
 <div id="statusMessage" class="status-message mb-2"></div><br>
-</div>
 
 <!-- Rename Modal -->
-<div class="modal fade" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="renameModalLabel">Rename Image</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center">
-        <img id="rename-image-preview" src="" alt="Preview" class="img-fluid mb-3">
-        <p id="rename-current-name"></p>
+{% include "partials/_rename_modal.html" %}
 
-        <!-- Add input fields for movie and show renaming -->
-        <input type="text" id="mov-image-name" class="form-control rename-input" placeholder="Enter new movie name">
-        <input type="text" id="sho-image-name" class="form-control rename-input" placeholder="Enter new show name"
-          style="display: none;">
-
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" id="rename-confirm-btn" class="btn btn-primary">OK</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-</form>
 <!-- Toast Notifications -->
 <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toastContainer"></div>
 

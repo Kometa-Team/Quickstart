@@ -18,6 +18,7 @@ from cachelib.file import FileSystemCache
 import argparse
 import io
 import os
+import re
 import requests
 import pystray
 import shutil
@@ -89,7 +90,7 @@ os.makedirs(CONFIG_DIR, exist_ok=True)
 for source, dest_dir in [
     ("VERSION", BASE_DIR),
     (os.path.join("config", ".env.example"), CONFIG_DIR),
-    (os.path.join("static", "favicon.ico"), BASE_DIR)
+    (os.path.join("static", "favicon.ico"), BASE_DIR),
 ]:
     filename = os.path.basename(source)
     src_path = os.path.join(MEIPASS_DIR, source)  # File location in _MEIPASS
@@ -168,14 +169,18 @@ ensure_json_schema()
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
 
 parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
-parser.add_argument("--port", type=int, help="Specify the port number to run the server")
+parser.add_argument(
+    "--port", type=int, help="Specify the port number to run the server"
+)
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
 
 port = args.port if args.port else int(os.getenv("QS_PORT", "5000"))
 debug_mode = args.debug if args.debug else booler(os.getenv("QS_DEBUG", "0"))
 
-print(f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}")
+print(
+    f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
+)
 
 
 def allowed_file(filename):
@@ -566,6 +571,22 @@ def clear_data(name):
     return redirect(url_for("start"))
 
 
+def normalize_id(name, existing_ids):
+    """Convert library names to safe and unique HTML IDs."""
+    # Replace spaces and special characters with hyphens
+    safe_id = re.sub(r"[^a-zA-Z0-9_-]", "-", name).lower()
+
+    # Ensure ID is unique by appending a counter if needed
+    base_id = safe_id
+    counter = 1
+    while safe_id in existing_ids:
+        safe_id = f"{base_id}-{counter}"
+        counter += 1
+
+    existing_ids.add(safe_id)  # Store to prevent future duplicates
+    return safe_id
+
+
 @app.route("/step/<name>", methods=["GET", "POST"])
 def step(name):
     page_info = {}
@@ -670,6 +691,53 @@ def step(name):
         print(f"[DEBUG] Raw data retrieved for {name}: {data}")
 
     plex_data = retrieve_settings("010-plex")
+    # Fetch Plex settings
+    all_libraries = retrieve_settings("010-plex")
+
+    # Debug: Print entire structure
+    print("[DEBUG] all_libraries content:", all_libraries)
+
+    # Ensure 'plex' key exists before accessing sub-keys
+    plex_data = all_libraries.get("plex", {})
+
+    # Extract the movie and show libraries
+    movie_libraries_raw = plex_data.get("tmp_movie_libraries", "")
+    show_libraries_raw = plex_data.get("tmp_show_libraries", "")
+
+    # Debugging extracted values
+    print("[DEBUG] Extracted movie libraries:", movie_libraries_raw)
+    print("[DEBUG] Extracted show libraries:", show_libraries_raw)
+
+    # Ensure it's a string before splitting
+    if not isinstance(movie_libraries_raw, str):
+        print("[ERROR] tmp_movie_libraries is not a string!")
+        movie_libraries_raw = ""
+
+    if not isinstance(show_libraries_raw, str):
+        print("[ERROR] tmp_show_libraries is not a string!")
+        show_libraries_raw = ""
+
+    existing_ids = set()  # Track used IDs to prevent duplicates
+
+    movie_libraries = [
+        {
+            "id": f"mov-library_{normalize_id(lib.strip(), existing_ids)}",
+            "name": lib.strip(),
+            "type": "movie",
+        }
+        for lib in movie_libraries_raw.split(",")
+        if lib.strip()
+    ]
+
+    show_libraries = [
+        {
+            "id": f"sho-library_{normalize_id(lib.strip(), existing_ids)}",
+            "name": lib.strip(),
+            "type": "show",
+        }
+        for lib in show_libraries_raw.split(",")
+        if lib.strip()
+    ]
 
     # Ensure `libraries` dictionary exists
     if "libraries" not in data:
@@ -733,6 +801,8 @@ def step(name):
             page_info=page_info,
             data=data,
             plex_data=plex_data,
+            movie_libraries=movie_libraries,
+            show_libraries=show_libraries,
             template_list=file_list,
             available_configs=available_configs,
         )
@@ -894,14 +964,18 @@ def validate_notifiarr():
     else:
         return jsonify(result.get_json()), 400
 
+
 server_thread = None
+
 
 def start_flask_app():
     global server_thread
     serve(app, host="0.0.0.0", port=port)
 
+
 def open_quickstart(icon):
     webbrowser.open(f"http://localhost:{port}")
+
 
 def open_github(icon):
     webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
@@ -914,17 +988,26 @@ def exit_action(icon):
     if server_thread and server_thread.is_alive():
         server_thread.join()
 
+
 if __name__ == "__main__":
     if debug_mode:
         app.run(host="0.0.0.0", port=port, debug=debug_mode)
     else:
-        image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
+        image = Image.open(
+            "favicon.ico"
+            if os.path.exists("favicon.ico")
+            else os.path.join("static", "favicon.ico")
+        )
 
-        icon = pystray.Icon("Flask App", image, menu=pystray.Menu(
-            pystray.MenuItem("Open Quickstart", open_quickstart),
-            pystray.MenuItem("Quickstart GitHub", open_github),
-            pystray.MenuItem("Exit", exit_action),
-        ))
+        icon = pystray.Icon(
+            "Flask App",
+            image,
+            menu=pystray.Menu(
+                pystray.MenuItem("Open Quickstart", open_quickstart),
+                pystray.MenuItem("Quickstart GitHub", open_github),
+                pystray.MenuItem("Exit", exit_action),
+            ),
+        )
 
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True

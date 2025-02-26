@@ -413,11 +413,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function getSelectedOverlays (isMovie) {
-    const overlayContainer = isMovie ? document.getElementById('movieOverlays') : document.getElementById('showOverlays')
+    // Select all overlay accordions based on prefix (mov- for movies, sho- for shows)
     const overlayPrefix = isMovie ? 'mov-' : 'sho-'
     const selectedOverlays = []
 
-    overlayContainer.querySelectorAll('input.form-check-input:checked').forEach(input => {
+    // Find all checked overlay checkboxes and collect their names
+    document.querySelectorAll('.accordion input.form-check-input:checked').forEach(input => {
       if (input.id.startsWith(overlayPrefix)) {
         selectedOverlays.push(input.name)
       }
@@ -426,18 +427,18 @@ document.addEventListener('DOMContentLoaded', function () {
     return selectedOverlays
   }
 
-  window.generatePreview = function (isMovie) {
+  function generatePreview (isMovie) {
     const selectedImage = isMovie ? movieDropdown.value : showDropdown.value
     let selectedOverlays = getSelectedOverlays(isMovie)
 
-    // Remove old rating before adding a new one
-    const overlayContainer = isMovie ? document.getElementById('movieOverlays') : document.getElementById('showOverlays')
-    const selectedRating = overlayContainer.querySelector("input[type='radio']:checked")
+    // No longer using 'movieOverlays' or 'showOverlays' directly
+    const selectedRating = document.querySelector(
+      `.${isMovie ? 'mov-' : 'sho-'}contentRatingOverlays input[type='radio']:checked`
+    )
 
     if (selectedRating) {
       selectedOverlays.push(selectedRating.value)
     } else {
-      // Ensure the last content rating is removed if none are selected
       selectedOverlays = selectedOverlays.filter(overlay => !overlay.startsWith('content_rating'))
     }
 
@@ -573,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function () {
     generatePreview(false)
   })
 
-  document.querySelectorAll('#movieOverlays input, #showOverlays input').forEach(input => {
+  document.querySelectorAll('.accordion input').forEach(input => {
     input.addEventListener('change', function () {
       generatePreview(this.id.startsWith('mov-'))
     })

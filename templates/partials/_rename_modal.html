@@ -1,0 +1,25 @@
+<div class="modal fade" id="renameModal" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="renameModalLabel">Rename Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="rename-image-preview" src="" alt="Preview" class="img-fluid mb-3">
+                <p id="rename-current-name"></p>
+
+                <!-- Add input fields for movie and show renaming -->
+                <input type="text" id="mov-image-name" class="form-control rename-input"
+                    placeholder="Enter new movie name">
+                <input type="text" id="sho-image-name" class="form-control rename-input"
+                    placeholder="Enter new show name" style="display: none;">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" id="rename-confirm-btn" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,153 +1,133 @@
-<!-- Show Attributes Accordion -->
-<div class="accordion-item">
-  <h2 class="accordion-header">
-    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#showAttributes"
-      aria-expanded="false" aria-controls="showAttributes">
-      Show Attributes
-    </button>
-  </h2>
+<p>Configure various attributes for show collections.</p>
 
-  <!-- 🎬 Show Attributes Parent Accordion -->
-  <div id="showAttributes" class="accordion-collapse collapse" data-bs-parent="#accordionShows">
-    <div class="accordion-body">
-
-      <!-- 🎭 Show Attributes Sub-Accordion -->
-      <div class="accordion" id="showAttributesSubAccordion">
-
-        <!-- 🔹 Section: Separators -->
-        <div class="accordion mt-3" id="sho-separatorsAccordion">
-          <div class="accordion-item">
-            <h2 class="accordion-header">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                data-bs-target="#sho-collapseSeparators" aria-expanded="false" aria-controls="sho-collapseSeparators">
-                Separators
-              </button>
-            </h2>
-            <div id="sho-collapseSeparators" class="accordion-collapse collapse"
-              data-bs-parent="#sho-separatorsAccordion">
-              <div class="accordion-body">
-                <div class="row">
-                  <!-- Left Column: Dropdown Selection -->
-                  <div class="col-md-6">
-                    <label for="sho-attribute_use_separators" class="form-label">
-                      Separator Style
-                      <span class="text-danger" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                        title="Separators are like index cards at a library, to categorize Collections in your library.<br><br>
+<!-- 🔹 Section: Separators -->
+<div class="accordion mt-3" id="sho-separatorsAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#sho-collapseSeparators" aria-expanded="false" aria-controls="sho-collapseSeparators">
+        Separators
+      </button>
+    </h2>
+    <div id="sho-collapseSeparators" class="accordion-collapse collapse" data-bs-parent="#sho-separatorsAccordion">
+      <div class="accordion-body">
+        <div class="row">
+          <!-- Left Column: Dropdown Selection -->
+          <div class="col-md-6">
+            <label for="{{ library.id }}-sho-attribute_use_separators" class="form-label">
+              Separator Style
+              <span class="text-danger" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                title="Separators are like index cards at a library, to categorize Collections in your library.<br><br>
                                 To enable Separators for the Defaults Collections, select your style from the drop-down.<br><br>
                                 <b>Warning</b>: Plex does not officially support blank collections, which is what separators are. You may experience bugs if you enable Separators.">
-                        <i class="bi bi-info-circle-fill"></i>
-                      </span>
-                    </label>
-                    <select class="form-select" id="sho-attribute_use_separators"
-                      name="sho-template_variables[use_separators]">
-                      <option value="none" {% if data['libraries'].get('sho-template_variables',
-                        {}).get('use_separators', None) in ['false', None] %}selected{% endif %}>
-                        None
-                      </option>
-                      {% set selected_style = data['libraries'].get('sho-template_variables', {}).get('sep_style', '')
-                      %}
-                      {% for style, value in {
-                      "Amethyst": "amethyst", "Aqua": "aqua", "Blue": "blue", "Brown": "stb",
-                      "Forest": "forest", "Fuchsia": "fuchsia", "Gold": "gold", "Gray": "gray",
-                      "Green": "green", "Navy": "navy", "Ocean": "ocean", "Olive": "olive",
-                      "Orchid": "orchid", "Original": "orig", "Pink": "pink", "Plum": "plum", "Purple": "purple",
-                      "Red": "red", "Rust": "rust", "Salmon": "salmon", "Sand": "sand",
-                      "Tan": "tan"
-                      }.items() %}
-                      <option value="{{ value }}" {% if selected_style==value %}selected{% endif %}>
-                        {{ style }}
-                      </option>
-                      {% endfor %}
-                    </select>
-                  </div>
+                <i class="bi bi-info-circle-fill"></i>
+              </span>
+            </label>
+            <select class="form-select" id="{{ library.id }}-sho-attribute_use_separators"
+              name="sho-template_variables[use_separators]">
+              <option value="none" {% if data['libraries'].get('sho-template_variables', {}).get('use_separators', None)
+                in ['false', None] %}selected{% endif %}>
+                None
+              </option>
+              {% set selected_style = data['libraries'].get('sho-template_variables', {}).get('sep_style', '')
+              %}
+              {% for style, value in {
+              "Amethyst": "amethyst", "Aqua": "aqua", "Blue": "blue", "Brown": "stb",
+              "Forest": "forest", "Fuchsia": "fuchsia", "Gold": "gold", "Gray": "gray",
+              "Green": "green", "Navy": "navy", "Ocean": "ocean", "Olive": "olive",
+              "Orchid": "orchid", "Original": "orig", "Pink": "pink", "Plum": "plum", "Purple": "purple",
+              "Red": "red", "Rust": "rust", "Salmon": "salmon", "Sand": "sand",
+              "Tan": "tan"
+              }.items() %}
+              <option value="{{ value }}" {% if selected_style==value %}selected{% endif %}>
+                {{ style }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
 
-                  <!-- Right Column: Preview Image -->
-                  <div class="col-md-6 d-flex align-items-center justify-content-center">
-                    <div id="sho-separatorPreviewContainer" style="display: none;">
-                      <img id="sho-separatorPreviewImage" src="" alt="Show Separator Preview" class="img-fluid"
-                        style="max-width: 100%; height: auto; border: 1px solid #ccc;">
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <!-- Right Column: Preview Image -->
+          <div class="col-md-6 d-flex align-items-center justify-content-center">
+            <div id="sho-separatorPreviewContainer" style="display: none;">
+              <img id="sho-separatorPreviewImage" src="" alt="Show Separator Preview" class="img-fluid"
+                style="max-width: 100%; height: auto; border: 1px solid #ccc;">
             </div>
           </div>
         </div>
-        <!-- 🔹 Section: Overlay Operations -->
-        <div class="accordion mt-3" id="sho-overlayOperationsAccordion">
-          <div class="accordion-item">
-            <h2 class="accordion-header">
-              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                data-bs-target="#sho-collapseOverlays" aria-expanded="false" aria-controls="sho-collapseOverlays">
-                Overlay Operations
-              </button>
-            </h2>
-            <div id="sho-collapseOverlays" class="accordion-collapse collapse"
-              data-bs-parent="#sho-overlayOperationsAccordion">
-              <div class="accordion-body">
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 🔹 Section: Overlay Operations -->
+<div class="accordion mt-3" id="sho-overlayOperationsAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#sho-collapseOverlays" aria-expanded="false" aria-controls="sho-collapseOverlays">
+        Overlay Operations
+      </button>
+    </h2>
+    <div id="sho-collapseOverlays" class="accordion-collapse collapse" data-bs-parent="#sho-overlayOperationsAccordion">
+      <div class="accordion-body">
 
-                <!-- Remove Overlays Toggle -->
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="sho-attribute_remove_overlays"
-                    name="sho-attribute_remove_overlays" value="true" {% if
-                    data['libraries']['sho-attribute_remove_overlays']|string|lower=='true' %}checked{% endif %}>
-                  <input type="hidden" name="sho-attribute_remove_overlays" value="false">
-                  <label class="form-check-label" for="sho-attribute_remove_overlays">
-                    <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/libraries/#remove-overlays"
-                      target="_blank" rel="noopener noreferrer">Remove Overlays</a>
-                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                      title="Remove Overlays will remove all overlays from your library. This toggle will take priority over any previous selections.">
-                      <i class="bi bi-info-circle-fill"></i>
-                    </span>
-                  </label>
-                </div>
+        <!-- Remove Overlays Toggle -->
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-attribute_remove_overlays"
+            name="{{ library.id }}-sho-attribute_remove_overlays" value="true" {% if data['libraries'][library.id
+            ~ '-sho-attribute_remove_overlays' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-sho-attribute_remove_overlays" value="false">
+          <label class="form-check-label" for="{{ library.id }}-sho-attribute_remove_overlays">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/libraries/#remove-overlays"
+              target="_blank" rel="noopener noreferrer">Remove Overlays</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Remove Overlays will remove all overlays from your library. This toggle will take priority over any previous selections.">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+        </div>
 
-                <!-- Reset Overlays Dropdown -->
-                <div class="col-md-6">
-                  <div class="input-group mb-2">
-                    <span class="input-group-text" id="sho-attribute_reset_overlays_text">
-                      <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/libraries/#reset-overlays"
-                        target="_blank" rel="noopener noreferrer">
-                        Reset Overlays
-                      </a>
-                      <span class="text-danger" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                        title="Reset Overlays will grab a new base image from the source that you choose, and then use that as the source for applying your overlays.<br><br>
+        <!-- Reset Overlays Dropdown -->
+        <div class="col-md-6">
+          <div class="input-group mb-2">
+            <span class="input-group-text" id="{{ library.id }}-sho-attribute_reset_overlays_text">
+              <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/libraries/#reset-overlays"
+                target="_blank" rel="noopener noreferrer">
+                Reset Overlays
+              </a>
+              <span class="text-danger" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                title="Reset Overlays will grab a new base image from the source that you choose, and then use that as the source for applying your overlays.<br><br>
                                 <b>Warning:</b> Once you have done a run with Reset Overlays, you should then set this value to None or remove the reset_overlays line(s) from your config.yml.
                                 If you do not do this, you will end up in a loop of your overlays being removed, a new image grabbed, and your overlays reapplying.">
-                        <i class="bi bi-info-circle-fill"></i>
-                      </span>
-                    </span>
-                    <select class="form-select" id="sho-attribute_reset_overlays" name="sho-attribute_reset_overlays"
-                      aria-describedby="sho-attribute_reset_overlays_text">
-                      <option value="" {% if data['libraries'].get('sho-attribute_reset_overlays')=="" %}selected{%
-                        endif %}>None</option>
-                      <option value="tmdb" {% if data['libraries'].get('sho-attribute_reset_overlays')=="tmdb"
-                        %}selected{% endif %}>TMDb</option>
-                      <option value="plex" {% if data['libraries'].get('sho-attribute_reset_overlays')=="plex"
-                        %}selected{% endif %}>Plex</option>
-                    </select>
-                  </div>
-                </div>
-
-                <!-- Image Bloat Tip -->
-                <p class="text-white">
-                  <span class="text-info">
-                    <b>Read this Tip:</b>
-                    <i class="bi bi-lightbulb-fill" data-bs-toggle="tooltip" data-bs-placement="top"
-                      data-bs-custom-class="text-tooltip"
-                      title="Using Reset Overlays or frequently Removing and Reapplying overlays will quickly result in Image Bloat. Neither Plex nor Kometa cleans up previously-used posters with overlays. Consider using ImageMaid to clean up old, unused images.">
-                    </i>
-                  </span>
-                  Using <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/scripts/imagemaid"
-                    target="_blank">ImageMaid</a> can help clean up old, unused images.
-                </p>
-
-              </div>
-            </div>
+                <i class="bi bi-info-circle-fill"></i>
+              </span>
+            </span>
+            <select class="form-select" id="{{ library.id }}-sho-attribute_reset_overlays"
+              name="{{ library.id }}-sho-attribute_reset_overlays"
+              aria-describedby="{{ library.id }}-sho-attribute_reset_overlays_text">
+              <option value="" {% if data['libraries'].get('sho-attribute_reset_overlays')=="" %}selected{% endif %}>
+                None</option>
+              <option value="tmdb" {% if data['libraries'].get('sho-attribute_reset_overlays')=="tmdb" %}selected{%
+                endif %}>TMDb</option>
+              <option value="plex" {% if data['libraries'].get('sho-attribute_reset_overlays')=="plex" %}selected{%
+                endif %}>Plex</option>
+            </select>
           </div>
         </div>
 
+        <!-- Image Bloat Tip -->
+        <p class="text-white">
+          <span class="text-info">
+            <b>Read this Tip:</b>
+            <i class="bi bi-lightbulb-fill" data-bs-toggle="tooltip" data-bs-placement="top"
+              data-bs-custom-class="text-tooltip"
+              title="Using Reset Overlays or frequently Removing and Reapplying overlays will quickly result in Image Bloat. Neither Plex nor Kometa cleans up previously-used posters with overlays. Consider using ImageMaid to clean up old, unused images.">
+            </i>
+          </span>
+          Using <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/scripts/imagemaid"
+            target="_blank">ImageMaid</a> can help clean up old, unused images.
+        </p>
 
-      </div> <!-- End of Show Attributes Sub-Accordion -->
+      </div>
     </div>
-  </div> <!-- End of Show Attributes  Parent Accordion -->
+  </div>
+</div>

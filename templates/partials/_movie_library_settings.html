@@ -1,0 +1,50 @@
+<div id="{{ library.id }}-library-container">
+
+    <!-- Accordion for Movie Settings -->
+    <div class="accordion" id="{{ library.id }}-accordion">
+        <!-- Movie Collections -->
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#{{ library.id }}-collections">
+                    Collections
+                </button>
+            </h2>
+            <div id="{{ library.id }}-collections" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    {% include "partials/_movie_collections.html" %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Movie Overlays -->
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#{{ library.id }}-overlays">
+                    Overlays
+                </button>
+            </h2>
+            <div id="{{ library.id }}-overlays" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    {% include "partials/_movie_overlays.html" %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Movie Attributes -->
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#{{ library.id }}-attributes">
+                    Attributes
+                </button>
+            </h2>
+            <div id="{{ library.id }}-attributes" class="accordion-collapse collapse">
+                <div class="accordion-body">
+                    {% include "partials/_movie_attributes.html" %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
