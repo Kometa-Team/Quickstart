@@ -147,6 +147,7 @@ def inject_version_info():
 
 # Use booler() for FLASK_DEBUG conversion
 app.config["QS_DEBUG"] = booler(os.getenv("QS_DEBUG", "0"))
+app.config["QUICKSTART_DOCKER"] = booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
 app.config["SESSION_CACHELIB"] = FileSystemCache(
@@ -913,7 +914,7 @@ def exit_action(icon):
 if __name__ == "__main__":
     if debug_mode:
         app.run(host="0.0.0.0", port=port, debug=debug_mode)
-    elif os.getenv("DOCKER_ENV"):
+    elif app.config["QUICKSTART_DOCKER"]:
         start_flask_app()
     else:
         import pystray

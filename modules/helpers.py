@@ -308,19 +308,15 @@ def user_visible_name(raw_name):
 
 def booler(thing):
     if isinstance(thing, str):
-        # Normalize the string
         thing = thing.lower().strip()
         if thing in ("true", "yes", "1"):
             return True
         elif thing in ("false", "no", "0"):
             return False
         else:
-            # Default to False for invalid strings
             if app.config["QS_DEBUG"]:
-                print(
-                    f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False."
-                )
-                return False
+                print(f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False.")
+            return False
     return bool(thing)
 
 
