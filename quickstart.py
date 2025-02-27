@@ -10,7 +10,6 @@ from io import BytesIO
 from threading import Thread
 
 import namesgenerator
-import pystray
 import requests
 from PIL import Image
 from cachelib.file import FileSystemCache
@@ -914,11 +913,15 @@ def exit_action(icon):
 if __name__ == "__main__":
     if debug_mode:
         app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    elif os.getenv("DOCKER_ENV"):
+        start_flask_app()
     else:
+        import pystray
+
         image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
 
         icon = pystray.Icon("Flask App", image, menu=pystray.Menu(
-            pystray.MenuItem("Open Quickstart", open_quickstart),
+            pystray.MenuItem("Open Quickstart", open_quickstart, default=True),
             pystray.MenuItem("Quickstart GitHub", open_github),
             pystray.MenuItem("Exit", exit_action),
         ))
