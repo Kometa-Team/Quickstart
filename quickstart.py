@@ -915,15 +915,19 @@ if __name__ == "__main__":
     if debug_mode:
         app.run(host="0.0.0.0", port=port, debug=debug_mode)
     else:
-        image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
+        if os.getenv("DOCKER_ENV"):
+            start_flask_app()
+        else:
+            image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
 
-        icon = pystray.Icon("Flask App", image, menu=pystray.Menu(
-            pystray.MenuItem("Open Quickstart", open_quickstart),
-            pystray.MenuItem("Quickstart GitHub", open_github),
-            pystray.MenuItem("Exit", exit_action),
-        ))
+            icon = pystray.Icon("Flask App", image, menu=pystray.Menu(
+                pystray.MenuItem("Open Quickstart", open_quickstart),
+                pystray.MenuItem("Quickstart GitHub", open_github),
+                pystray.MenuItem("Exit", exit_action),
+            ))
 
-        server_thread = Thread(target=start_flask_app)
-        server_thread.daemon = True
-        server_thread.start()
-        icon.run()
+            server_thread = Thread(target=start_flask_app)
+            server_thread.daemon = True
+            server_thread.start()
+            
+            icon.run()
