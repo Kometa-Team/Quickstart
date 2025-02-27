@@ -9,7 +9,6 @@ jobs:
   build-releases:
     name: Build ${{ matrix.os_upper }} Installer
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
-    needs: [ docker-build-version ]
     strategy:
       fail-fast: false
       matrix:

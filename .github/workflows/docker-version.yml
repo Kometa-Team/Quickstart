@@ -89,5 +89,3 @@ jobs:
           title: ${{ vars.NAME }} ${{ github.event.ref }}
           repo_token: ${{ secrets.PAT }}
           prerelease: false
-          files: |
-            dist/*
