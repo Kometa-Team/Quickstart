@@ -6,20 +6,20 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#sho-awardCollections" aria-expanded="false" aria-controls="sho-awardCollections">
+        data-bs-target="#{{ library.id }}-awardCollections" aria-expanded="false" aria-controls="{{ library.id }}-awardCollections">
         Award Collections
       </button>
     </h2>
-    <div id="sho-awardCollections" class="accordion-collapse collapse" data-bs-parent="#sho-awardCollectionsAccordion">
+    <div id="{{ library.id }}-awardCollections" class="accordion-collapse collapse" data-bs-parent="#{{ library.id }}-awardCollectionsAccordion">
       <div class="accordion-body">
         <!-- Award Collection Toggles -->
         <div class="form-check form-switch">
           <input class="form-check-input readonly-toggle" type="checkbox"
-            id="{{ library.id }}-sho-collection_separator_award" name="{{ library.id }}-sho-collection_separator_award">
-          <input type="hidden" name="{{ library.id }}-sho-collection_separator_award"
-            id="{{ library.id }}-sho-collection_separator_award_hidden" value="false">
+            id="{{ library.id }}-collection_separator_award" name="{{ library.id }}-collection_separator_award">
+          <input type="hidden" name="{{ library.id }}-collection_separator_award"
+            id="{{ library.id }}-collection_separator_award_hidden" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_separator_award">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_separator_award">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/separator">Award
                 Separator</a>
@@ -34,12 +34,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_choice"
-            name="{{ library.id }}-sho-collection_choice" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_choice' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_choice" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_choice"
+            name="{{ library.id }}-collection_choice" value="true" {% if data['libraries'][library.id
+            ~ '-collection_choice' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_choice" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_choice">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_choice">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/choice">Critics
                 Choice Awards</a>
@@ -52,12 +52,12 @@
 
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_emmy"
-            name="{{ library.id }}-sho-collection_emmy" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_emmy' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_emmy" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_emmy"
+            name="{{ library.id }}-collection_emmy" value="true" {% if data['libraries'][library.id
+            ~ '-collection_emmy' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_emmy" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_emmy">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_emmy">
               <a target="_blank" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/emmy">Emmy
                 Awards</a>
             </label>
@@ -69,12 +69,12 @@
 
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_golden"
-            name="{{ library.id }}-sho-collection_golden" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_golden' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_golden" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_golden"
+            name="{{ library.id }}-collection_golden" value="true" {% if data['libraries'][library.id
+            ~ '-collection_golden' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_golden" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_golden">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_golden">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/golden">Golden
                 Globe Awards</a>
@@ -87,12 +87,12 @@
 
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_pca"
-            name="{{ library.id }}-sho-collection_pca" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_pca' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_pca" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_pca"
+            name="{{ library.id }}-collection_pca" value="true" {% if data['libraries'][library.id
+            ~ '-collection_pca' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_pca" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_pca">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_pca">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/pca">People's
                 Choice Awards</a>
@@ -104,12 +104,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_sag"
-            name="{{ library.id }}-sho-collection_sag" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_sag' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_sag" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_sag"
+            name="{{ library.id }}-collection_sag" value="true" {% if data['libraries'][library.id
+            ~ '-collection_sag' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_sag" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_sag">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_sag">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/award/sag">Screen Actors
                 Guild Awards</a>
@@ -129,20 +129,20 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#sho-chartCollections" aria-expanded="false" aria-controls="sho-chartCollections">
+        data-bs-target="#{{ library.id }}-chartCollections" aria-expanded="false" aria-controls="{{ library.id }}-chartCollections">
         Chart Collections
       </button>
     </h2>
-    <div id="sho-chartCollections" class="accordion-collapse collapse" data-bs-parent="#sho-chartCollectionsAccordion">
+    <div id="{{ library.id }}-chartCollections" class="accordion-collapse collapse" data-bs-parent="#{{ library.id }}-chartCollectionsAccordion">
       <div class="accordion-body">
         <!-- Chart Collection Toggles -->
         <div class="form-check form-switch">
           <input class="form-check-input readonly-toggle" type="checkbox"
-            id="{{ library.id }}-sho-collection_separator_chart" name="{{ library.id }}-sho-collection_separator_chart">
-          <input type="hidden" name="{{ library.id }}-sho-collection_separator_chart"
-            id="{{ library.id }}-sho-collection_separator_chart_hidden" value="false">
+            id="{{ library.id }}-collection_separator_chart" name="{{ library.id }}-collection_separator_chart">
+          <input type="hidden" name="{{ library.id }}-collection_separator_chart"
+            id="{{ library.id }}-collection_separator_chart_hidden" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_separator_chart">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_separator_chart">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/separator">Chart
                 Separator</a>
@@ -157,12 +157,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_basic"
-            name="{{ library.id }}-sho-collection_basic" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_basic' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_basic" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_basic"
+            name="{{ library.id }}-collection_basic" value="true" {% if data['libraries'][library.id
+            ~ '-collection_basic' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_basic" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_basic">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_basic">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/basic">Basic
                 Charts</a>
@@ -174,12 +174,12 @@
 
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_tautulli"
-            name="{{ library.id }}-sho-collection_tautulli" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_tautulli' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_tautulli" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_tautulli"
+            name="{{ library.id }}-collection_tautulli" value="true" {% if data['libraries'][library.id
+            ~ '-collection_tautulli' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_tautulli" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_tautulli">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_tautulli">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/tautulli">Tautulli
                 Charts</a>
@@ -193,12 +193,12 @@
 
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_imdb"
-            name="{{ library.id }}-sho-collection_imdb" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_imdb' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_imdb" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_imdb"
+            name="{{ library.id }}-collection_imdb" value="true" {% if data['libraries'][library.id
+            ~ '-collection_imdb' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_imdb" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_imdb">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_imdb">
               <a target="_blank" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/imdb">IMDb
                 Charts</a>
             </label>
@@ -209,12 +209,12 @@
 
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_tmdb"
-            name="{{ library.id }}-sho-collection_tmdb" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_tmdb' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_tmdb" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_tmdb"
+            name="{{ library.id }}-collection_tmdb" value="true" {% if data['libraries'][library.id
+            ~ '-collection_tmdb' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_tmdb" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_tmdb">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_tmdb">
               <a target="_blank" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/tmdb">TMDb
                 Charts</a>
             </label>
@@ -225,12 +225,12 @@
 
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_trakt"
-            name="{{ library.id }}-sho-collection_trakt" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_trakt' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_trakt" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_trakt"
+            name="{{ library.id }}-collection_trakt" value="true" {% if data['libraries'][library.id
+            ~ '-collection_trakt' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_trakt" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_trakt">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_trakt">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/trakt">Trakt
                 Charts</a>
@@ -244,12 +244,12 @@
 
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_anilist"
-            name="{{ library.id }}-sho-collection_anilist" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_anilist' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_anilist" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_anilist"
+            name="{{ library.id }}-collection_anilist" value="true" {% if data['libraries'][library.id
+            ~ '-collection_anilist' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_anilist" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_anilist">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_anilist">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/anilist">AniList
                 Charts</a>
@@ -261,12 +261,12 @@
 
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_myanimelist"
-            name="{{ library.id }}-sho-collection_myanimelist" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_myanimelist' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_myanimelist" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_myanimelist"
+            name="{{ library.id }}-collection_myanimelist" value="true" {% if data['libraries'][library.id
+            ~ '-collection_myanimelist' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_myanimelist" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_myanimelist">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_myanimelist">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/myanimelist">MyAnimeList
                 Charts</a>
@@ -277,12 +277,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_other_chart"
-            name="{{ library.id }}-sho-collection_other_chart" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_other_chart' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_other_chart" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_other_chart"
+            name="{{ library.id }}-collection_other_chart" value="true" {% if data['libraries'][library.id
+            ~ '-collection_other_chart' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_other_chart" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_other_chart">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_other_chart">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/chart/other">Other
                 Charts</a>
@@ -302,21 +302,21 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#sho-contentCollections" aria-expanded="false" aria-controls="sho-contentCollections">
+        data-bs-target="#{{ library.id }}-contentCollections" aria-expanded="false" aria-controls="{{ library.id }}-contentCollections">
         Content Collections
       </button>
     </h2>
-    <div id="sho-contentCollections" class="accordion-collapse collapse"
-      data-bs-parent="#sho-contentCollectionsAccordion">
+    <div id="{{ library.id }}-contentCollections" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-contentCollectionsAccordion">
       <div class="accordion-body">
         <!-- Content Collection Toggles -->
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_genre"
-            name="{{ library.id }}-sho-collection_genre" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_genre' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_genre" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_genre"
+            name="{{ library.id }}-collection_genre" value="true" {% if data['libraries'][library.id
+            ~ '-collection_genre' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_genre" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_genre">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_genre">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/genre/">Genres</a>
             </label>
@@ -326,12 +326,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_franchise"
-            name="{{ library.id }}-sho-collection_franchise" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_franchise' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_franchise" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_franchise"
+            name="{{ library.id }}-collection_franchise" value="true" {% if data['libraries'][library.id
+            ~ '-collection_franchise' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_franchise" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_franchise">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_franchise">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/show/franchise/">Franchises</a>
             </label>
@@ -343,12 +343,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_universe"
-            name="{{ library.id }}-sho-collection_universe" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_universe' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_universe" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_universe"
+            name="{{ library.id }}-collection_universe" value="true" {% if data['libraries'][library.id
+            ~ '-collection_universe' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_universe" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_universe">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_universe">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/universe/">Universes</a>
             </label>
@@ -358,12 +358,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_based"
-            name="{{ library.id }}-sho-collection_based" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_based' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_based" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_based"
+            name="{{ library.id }}-collection_based" value="true" {% if data['libraries'][library.id
+            ~ '-collection_based' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_based" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_based">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_based">
               <a target="_blank" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/based/">Based
                 On...</a>
             </label>
@@ -373,12 +373,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_collectionless"
-            name="{{ library.id }}-sho-collection_collectionless" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_collectionless' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_collectionless" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_collectionless"
+            name="{{ library.id }}-collection_collectionless" value="true" {% if data['libraries'][library.id
+            ~ '-collection_collectionless' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_collectionless" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_collectionless">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_collectionless">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/collectionless/">Collectionless</a>
             </label>
@@ -398,22 +398,22 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#sho-contentRatingCollections" aria-expanded="false"
-        aria-controls="sho-contentRatingCollections">
+        data-bs-target="#{{ library.id }}-contentRatingCollections" aria-expanded="false"
+        aria-controls="{{ library.id }}-contentRatingCollections">
         Content Rating Collections
       </button>
     </h2>
-    <div id="sho-contentRatingCollections" class="accordion-collapse collapse"
-      data-bs-parent="#sho-contentRatingCollectionsAccordion">
+    <div id="{{ library.id }}-contentRatingCollections" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-contentRatingCollectionsAccordion">
       <div class="accordion-body">
         <!-- Content Rating Collection Toggles -->
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_content_rating_us"
-            name="{{ library.id }}-sho-collection_content_rating_us" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_content_rating_us' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_content_rating_us" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_content_rating_us"
+            name="{{ library.id }}-collection_content_rating_us" value="true" {% if data['libraries'][library.id
+            ~ '-collection_content_rating_us' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_content_rating_us" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_content_rating_us">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_content_rating_us">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/show/content_rating_us">US
                 Content Ratings</a>
@@ -424,12 +424,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_content_rating_uk"
-            name="{{ library.id }}-sho-collection_content_rating_uk" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_content_rating_uk' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_content_rating_uk" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_content_rating_uk"
+            name="{{ library.id }}-collection_content_rating_uk" value="true" {% if data['libraries'][library.id
+            ~ '-collection_content_rating_uk' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_content_rating_uk" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_content_rating_uk">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_content_rating_uk">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_uk">UK
                 Content Ratings</a>
@@ -440,12 +440,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_content_rating_de"
-            name="{{ library.id }}-sho-collection_content_rating_de" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_content_rating_de' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_content_rating_de" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_content_rating_de"
+            name="{{ library.id }}-collection_content_rating_de" value="true" {% if data['libraries'][library.id
+            ~ '-collection_content_rating_de' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_content_rating_de" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_content_rating_de">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_content_rating_de">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_de">DE
                 Content Ratings</a>
@@ -456,12 +456,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_content_rating_au"
-            name="{{ library.id }}-sho-collection_content_rating_au" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_content_rating_au' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_content_rating_au" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_content_rating_au"
+            name="{{ library.id }}-collection_content_rating_au" value="true" {% if data['libraries'][library.id
+            ~ '-collection_content_rating_au' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_content_rating_au" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_content_rating_au">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_content_rating_au">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_au">AU
                 Content Ratings</a>
@@ -472,12 +472,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_content_rating_nz"
-            name="{{ library.id }}-sho-collection_content_rating_nz" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_content_rating_nz' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_content_rating_nz" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_content_rating_nz"
+            name="{{ library.id }}-collection_content_rating_nz" value="true" {% if data['libraries'][library.id
+            ~ '-collection_content_rating_nz' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_content_rating_nz" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_content_rating_nz">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_content_rating_nz">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_nz">NZ
                 Content Ratings</a>
@@ -488,12 +488,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_content_rating_mal"
-            name="{{ library.id }}-sho-collection_content_rating_mal" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_content_rating_mal' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_content_rating_mal" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_content_rating_mal"
+            name="{{ library.id }}-collection_content_rating_mal" value="true" {% if data['libraries'][library.id
+            ~ '-collection_content_rating_mal' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_content_rating_mal" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_content_rating_mal">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_content_rating_mal">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_mal">MyAnimeList
                 Content Ratings</a>
@@ -504,12 +504,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_content_rating_cs"
-            name="{{ library.id }}-sho-collection_content_rating_cs" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_content_rating_cs' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_content_rating_cs" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_content_rating_cs"
+            name="{{ library.id }}-collection_content_rating_cs" value="true" {% if data['libraries'][library.id
+            ~ '-collection_content_rating_cs' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_content_rating_cs" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_content_rating_cs">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_content_rating_cs">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/content_rating_cs">Common
                 Sense Media Content Ratings</a>
@@ -528,21 +528,21 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#sho-locationCollections" aria-expanded="false" aria-controls="sho-locationCollections">
+        data-bs-target="#{{ library.id }}-locationCollections" aria-expanded="false" aria-controls="{{ library.id }}-locationCollections">
         Location Collections
       </button>
     </h2>
-    <div id="sho-locationCollections" class="accordion-collapse collapse"
-      data-bs-parent="#sho-locationCollectionsAccordion">
+    <div id="{{ library.id }}-locationCollections" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-locationCollectionsAccordion">
       <div class="accordion-body">
         <!-- Location Collection Toggles -->
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_country"
-            name="{{ library.id }}-sho-collection_country" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_country' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_country" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_country"
+            name="{{ library.id }}-collection_country" value="true" {% if data['libraries'][library.id
+            ~ '-collection_country' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_country" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_country">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_country">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/show/country">Countries</a>
             </label>
@@ -552,12 +552,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_region"
-            name="{{ library.id }}-sho-collection_region" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_region' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_region" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_region"
+            name="{{ library.id }}-collection_region" value="true" {% if data['libraries'][library.id
+            ~ '-collection_region' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_region" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_region">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_region">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/show/region">Regions</a>
             </label>
@@ -567,12 +567,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_continent"
-            name="{{ library.id }}-sho-collection_continent" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_continent' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_continent" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_continent"
+            name="{{ library.id }}-collection_continent" value="true" {% if data['libraries'][library.id
+            ~ '-collection_continent' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_continent" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_continent">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_continent">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/show/continent">Continents</a>
             </label>
@@ -590,20 +590,20 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#sho-mediaCollections" aria-expanded="false" aria-controls="sho-mediaCollections">
+        data-bs-target="#{{ library.id }}-mediaCollections" aria-expanded="false" aria-controls="{{ library.id }}-mediaCollections">
         Media Collections
       </button>
     </h2>
-    <div id="sho-mediaCollections" class="accordion-collapse collapse" data-bs-parent="#sho-mediaCollectionsAccordion">
+    <div id="{{ library.id }}-mediaCollections" class="accordion-collapse collapse" data-bs-parent="#{{ library.id }}-mediaCollectionsAccordion">
       <div class="accordion-body">
         <!-- Media Collection Toggles -->
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_aspect"
-            name="{{ library.id }}-sho-collection_aspect" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_aspect' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_aspect" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_aspect"
+            name="{{ library.id }}-collection_aspect" value="true" {% if data['libraries'][library.id
+            ~ '-collection_aspect' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_aspect" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_aspect">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_aspect">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/aspect">Aspect
                 Ratios</a>
@@ -614,12 +614,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_resolution"
-            name="{{ library.id }}-sho-collection_resolution" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_resolution' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_resolution" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_resolution"
+            name="{{ library.id }}-collection_resolution" value="true" {% if data['libraries'][library.id
+            ~ '-collection_resolution' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_resolution" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_resolution">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_resolution">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/resolution">Resolutions</a>
             </label>
@@ -629,12 +629,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_audio_language"
-            name="{{ library.id }}-sho-collection_audio_language" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_audio_language' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_audio_language" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_audio_language"
+            name="{{ library.id }}-collection_audio_language" value="true" {% if data['libraries'][library.id
+            ~ '-collection_audio_language' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_audio_language" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_audio_language">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_audio_language">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/audio_language">Audio
                 Languages</a>
@@ -645,12 +645,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_subtitle_language"
-            name="{{ library.id }}-sho-collection_subtitle_language" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_subtitle_language' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_subtitle_language" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_subtitle_language"
+            name="{{ library.id }}-collection_subtitle_language" value="true" {% if data['libraries'][library.id
+            ~ '-collection_subtitle_language' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_subtitle_language" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_subtitle_language">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_subtitle_language">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/subtitle_language">Subtitle
                 Languages</a>
@@ -669,22 +669,22 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#sho-productionCollections" aria-expanded="false" aria-controls="sho-productionCollections">
+        data-bs-target="#{{ library.id }}-productionCollections" aria-expanded="false" aria-controls="{{ library.id }}-productionCollections">
         Production Collections
       </button>
     </h2>
-    <div id="sho-productionCollections" class="accordion-collapse collapse"
-      data-bs-parent="#sho-productionCollectionsAccordion">
+    <div id="{{ library.id }}-productionCollections" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-productionCollectionsAccordion">
       <div class="accordion-body">
         <!-- Production Collection Toggles -->
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_network"
-            name="{{ library.id }}-sho-collection_network" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_network' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_network" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_network"
+            name="{{ library.id }}-collection_network" value="true" {% if data['libraries'][library.id
+            ~ '-collection_network' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_network" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_network">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_network">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/show/network">Networks</a>
             </label>
@@ -694,12 +694,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_streaming"
-            name="{{ library.id }}-sho-collection_streaming" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_streaming' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_streaming" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_streaming"
+            name="{{ library.id }}-collection_streaming" value="true" {% if data['libraries'][library.id
+            ~ '-collection_streaming' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_streaming" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_streaming">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_streaming">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/streaming">Streaming</a>
             </label>
@@ -711,12 +711,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_studio"
-            name="{{ library.id }}-sho-collection_studio" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_studio' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_studio" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_studio"
+            name="{{ library.id }}-collection_studio" value="true" {% if data['libraries'][library.id
+            ~ '-collection_studio' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_studio" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_studio">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_studio">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/studio">Studios</a>
             </label>
@@ -734,21 +734,21 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#sho-peopleCollections" aria-expanded="false" aria-controls="sho-peopleCollections">
+        data-bs-target="#{{ library.id }}-peopleCollections" aria-expanded="false" aria-controls="{{ library.id }}-peopleCollections">
         People Collections
       </button>
     </h2>
-    <div id="sho-peopleCollections" class="accordion-collapse collapse"
-      data-bs-parent="#sho-peopleCollectionsAccordion">
+    <div id="{{ library.id }}-peopleCollections" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-peopleCollectionsAccordion">
       <div class="accordion-body">
         <!-- People Collection Toggles -->
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_actor"
-            name="{{ library.id }}-sho-collection_actor" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_actor' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_actor" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_actor"
+            name="{{ library.id }}-collection_actor" value="true" {% if data['libraries'][library.id
+            ~ '-collection_actor' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_actor" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_actor">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_actor">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/actor">Actors</a>
             </label>
@@ -766,21 +766,21 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#sho-timeCollections" aria-expanded="false" aria-controls="sho-timeCollections">
+        data-bs-target="#{{ library.id }}-timeCollections" aria-expanded="false" aria-controls="{{ library.id }}-timeCollections">
         Time Collections
       </button>
     </h2>
-    <div id="sho-timeCollections" class="accordion-collapse collapse" data-bs-parent="#sho-timeCollectionsAccordion">
+    <div id="{{ library.id }}-timeCollections" class="accordion-collapse collapse" data-bs-parent="#{{ library.id }}-timeCollectionsAccordion">
       <div class="accordion-body">
         <!-- Time Collection Toggles -->
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_year"
-            name="{{ library.id }}-sho-collection_year" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_year' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_year" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_year"
+            name="{{ library.id }}-collection_year" value="true" {% if data['libraries'][library.id
+            ~ '-collection_year' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_year" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_year">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_year">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/both/year">Years</a>
             </label>
@@ -790,12 +790,12 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-sho-collection_decade"
-            name="{{ library.id }}-sho-collection_decade" value="true" {% if data['libraries'][library.id
-            ~ '-sho-collection_decade' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-sho-collection_decade" value="false">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_decade"
+            name="{{ library.id }}-collection_decade" value="true" {% if data['libraries'][library.id
+            ~ '-collection_decade' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-collection_decade" value="false">
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-sho-collection_decade">
+            <label class="form-check-label me-3" for="{{ library.id }}-collection_decade">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/show/decade">Decades</a>
             </label>

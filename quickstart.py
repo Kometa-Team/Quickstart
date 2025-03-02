@@ -166,7 +166,7 @@ server_session = Session(app)
 # Ensure json-schema files are up to date at startup
 ensure_json_schema()
 
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp"}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 
 parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
 parser.add_argument(
@@ -206,11 +206,23 @@ def rename_library_image():
 
     save_folder = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
     old_path = os.path.join(save_folder, old_name)
-    new_path = os.path.join(save_folder, new_name)
 
+    # Ensure old file exists
     if not os.path.exists(old_path):
         return jsonify({"status": "error", "message": "File not found"}), 404
 
+    # Extract original extension
+    old_ext = os.path.splitext(old_name)[1]  # e.g., ".jpg"
+
+    # Ensure new name has correct extension
+    if "." not in new_name:  # No extension provided
+        new_name += old_ext  # Append original extension
+    elif not new_name.endswith(old_ext):  # Wrong extension provided
+        new_name += old_ext  # Append original extension
+
+    new_path = os.path.join(save_folder, new_name)
+
+    # Check if the new file name already exists
     if os.path.exists(new_path):
         return (
             jsonify(
@@ -240,16 +252,24 @@ def serve_previews(filename):
 def generate_preview():
     data = request.json
     overlays = data.get("overlays", [])
-    img_type = data.get("type", "movie")
-    selected_image = data.get("selected_image")
-
+    img_type = data.get("type", "movie")  # "movie" or "show"
+    selected_image = data.get("selected_image", "default.png")
+    library_id = data.get(
+        "library_id", "default-library"
+    )  # Unique identifier for each library
     upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
-    preview_folder = "config/previews"
-    preview_filename = f"{img_type}_preview.png"
-    preview_path = os.path.join(preview_folder, preview_filename)
 
-    # Ensure preview folder exists
-    os.makedirs(preview_folder, exist_ok=True)
+    print(
+        f"[DEBUG] Generating preview for {library_id}, Type: {img_type}, Overlays: {overlays}"
+    )
+
+    # Ensure preview directory exists
+    if not os.path.exists(PREVIEW_FOLDER):
+        os.makedirs(PREVIEW_FOLDER)
+
+    # Generate a unique preview filename per library
+    preview_filename = f"{library_id}-{img_type}_preview.png"
+    preview_filepath = os.path.join(PREVIEW_FOLDER, preview_filename)
 
     # ✅ First, check if `default.png` exists in `IMAGES_FOLDER`
     default_image_path = os.path.join(IMAGES_FOLDER, "default.png")
@@ -258,7 +278,7 @@ def generate_preview():
         if os.path.exists(default_image_path):
             base_image_path = default_image_path  # ✅ Use existing `default.png`
         else:
-            base_image_path = os.path.join(preview_folder, "default.png")
+            base_image_path = os.path.join(PREVIEW_FOLDER, "default.png")
 
             # ✅ Only create grey image if both locations are missing
             if not os.path.exists(base_image_path):
@@ -289,12 +309,28 @@ def generate_preview():
             base_img.paste(overlay_img, (0, 0), overlay_img)
 
     # Save the generated preview
-    base_img.save(preview_path)
+    base_img.save(preview_filepath)
 
     if app.config["QS_DEBUG"]:
-        print(f"[DEBUG] Preview saved at {preview_path}")
+        print(f"[DEBUG] Preview saved at {preview_filepath}")
 
-    return jsonify({"status": "success", "preview_url": f"/{preview_path}"})
+    return jsonify({"status": "success", "preview_url": f"/{preview_filepath}"})
+
+
+@app.route("/config/previews/<filename>")
+def serve_preview_image(filename):
+    """
+    Serves the requested preview image. If not found, returns a default placeholder.
+    """
+    filepath = os.path.join(PREVIEW_FOLDER, filename)
+
+    if os.path.exists(filepath):
+        return send_file(filepath, mimetype="image/png")
+    else:
+        print(
+            f"[WARNING] Requested preview image '{filename}' not found. Returning default."
+        )
+        return send_file("static/images/default.png", mimetype="image/png")
 
 
 @app.route("/get_preview_image/<img_type>", methods=["GET"])

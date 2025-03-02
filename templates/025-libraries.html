@@ -12,7 +12,7 @@
   <div class="mb-3">
     <div class="form-check form-switch">
       <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
-        id="{{ library.id }}-library" name="{{ library.id }}-library" checked>
+        id="{{ library.id }}-library" name="{{ library.id }}-library">
       <label class="form-check-label" for="{{ library.id }}-library">
         {{ library.name }}
       </label>
@@ -23,7 +23,7 @@
 
 <!-- Movie Library Settings -->
 {% for library in movie_libraries %}
-    <div class="card mb-4 shadow-sm border border-secondary"> <!-- Wrapped in a card with border -->
+    <div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
         <div class="card-header bg-dark">
             <h4 class="mb-0">{{ library.name }} (Movie)</h4> <!-- Library name in header -->
         </div>
@@ -40,7 +40,7 @@
   <div class="mb-3">
     <div class="form-check form-switch">
       <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
-        id="{{ library.id }}-library" name="{{ library.id }}-library" checked>
+        id="{{ library.id }}-library" name="{{ library.id }}-library">
       <label class="form-check-label" for="{{ library.id }}-library">
         {{ library.name }}
       </label>
@@ -51,7 +51,7 @@
 
 <!-- Show Library Settings -->
 {% for library in show_libraries %}
-    <div class="card mb-4 shadow-sm border border-secondary"> <!-- Wrapped in a card with border -->
+    <div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
         <div class="card-header bg-dark">
             <h4 class="mb-0">{{ library.name }} (TV Show)</h4> <!-- Library name in header -->
         </div>
