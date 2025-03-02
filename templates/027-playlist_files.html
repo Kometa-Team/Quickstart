@@ -6,7 +6,7 @@
     <div id="libraries-container" style="display: none;">
       <div class="form-floating mb-2">
         <label for="libraries">Select Movie Libraries:</label><br><br>
-        {% set movie_libraries = plex_data['plex']['tmp_movie_libraries'].split(',')|sort if plex_data['plex']['tmp_movie_libraries'] else [] %}
+        {% set movie_libraries = (plex_data.get('plex', {}).get('tmp_movie_libraries', '')|string).split(',')|sort if plex_data and plex_data.get('plex', {}).get('tmp_movie_libraries') else [] %}
         {% for library in movie_libraries %}
         <div class="form-check form-switch">
           <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
@@ -16,7 +16,7 @@
       </div>
       <div class="form-floating mb-2">
         <label for="libraries">Select Show Libraries:</label><br><br>
-        {% set show_libraries = plex_data['plex']['tmp_show_libraries'].split(',')|sort if plex_data['plex']['tmp_show_libraries'] else [] %}
+        {% set show_libraries = (plex_data.get('plex', {}).get('tmp_show_libraries') or '')|string|split(',')|sort if plex_data and plex_data.get('plex', {}).get('tmp_show_libraries') else [] %}
         {% for library in show_libraries %}
         <div class="form-check form-switch">
           <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">

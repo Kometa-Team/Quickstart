@@ -1,4 +1,4 @@
-/* global EventHandler */
+/* global EventHandler, ValidationHandler */
 
 function loadScriptsSequentially (scripts, callback) {
   let index = 0
@@ -34,26 +34,27 @@ document.addEventListener('DOMContentLoaded', function () {
   const scriptsToLoad = [
     '/static/local-js/imageHandler.js',
     '/static/local-js/overlayHandler.js',
-    '/static/local-js/validation.js',
+    '/static/local-js/validationHandler.js', // ✅ Renamed
     '/static/local-js/eventHandler.js'
   ]
 
   loadScriptsSequentially(scriptsToLoad, function () {
-    console.log(
-      '[DEBUG] All dependencies loaded. Running Library Initialization...'
-    )
+    console.log('[DEBUG] All dependencies loaded. Running Library Initialization...')
 
     // ✅ Ensure EventHandler is loaded before using it
-    if (
-      typeof EventHandler !== 'undefined' &&
-      EventHandler.attachLibraryListeners
-    ) {
+    if (typeof EventHandler !== 'undefined' && EventHandler.attachLibraryListeners) {
       console.log('[DEBUG] Calling EventHandler.attachLibraryListeners()')
       EventHandler.attachLibraryListeners()
     } else {
-      console.error(
-        '[ERROR] EventHandler is not loaded properly. Check script paths.'
-      )
+      console.error('[ERROR] EventHandler is not loaded properly. Check script paths.')
+    }
+
+    // ✅ Ensure ValidationHandler is loaded before calling updateValidationState()
+    if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
+      console.log('[DEBUG] Calling ValidationHandler.updateValidationState() after script load')
+      ValidationHandler.updateValidationState()
+    } else {
+      console.error('[ERROR] ValidationHandler is not loaded properly. Check script paths.')
     }
   })
 })

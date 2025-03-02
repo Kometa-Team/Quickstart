@@ -1,13 +1,13 @@
 /* global $ */
 
 $(document).ready(function () {
-  const plexValid = $('#plex_valid').data('plex-valid') === 'True'
+  const plexValid = $('#plex_valid').length > 0 && $('#plex_valid').data('plex-valid') === 'True'
   console.log('Plex Valid:', plexValid)
 
   if (!plexValid) {
     $('#libraries-container').hide()
     $('#validation-messages').html(
-      'Plex settings have not been validated successfully. Please return to that page and validate before proceeding.'
+      'Plex settings have not been validated successfully. Please <a href="javascript:void(0);" onclick="jumpTo(\'010-plex\');">return to the Plex page</a> and hit the validate button and ensure success before returning here.<br>'
     ).show()
   } else {
     $('#libraries-container').show()

@@ -1,25 +1,58 @@
-/* global */
+/* global $ */
 
 const ValidationHandler = {
   updateValidationState: function () {
     console.log('[DEBUG] Running validation state update.')
 
+    // 🚀 Check Plex Validation First
+    if (!ValidationHandler.validatePlexState()) {
+      return // Stop further validation if Plex is not valid
+    }
+
     const selectedMovieLibraries = ValidationHandler.getSelectedLibraries('mov')
     const selectedShowLibraries = ValidationHandler.getSelectedLibraries('sho')
     const isValid = ValidationHandler.validateForm()
+
+    console.log(`[DEBUG] Selected Movie Libraries: ${selectedMovieLibraries}`)
+    console.log(`[DEBUG] Selected Show Libraries: ${selectedShowLibraries}`)
+    console.log(`[DEBUG] Form is valid: ${isValid}`)
 
     document.getElementById('libraries').value = [...selectedMovieLibraries, ...selectedShowLibraries].join(', ')
     document.getElementById('libraries_validated').value = isValid ? 'true' : 'false'
 
     if (isValid) {
+      console.log('[DEBUG] Validation Passed! Enabling navigation.')
       ValidationHandler.showValidationMessage('Validation successful! You may proceed.', 'success')
       ValidationHandler.enableNavigation()
     } else {
+      console.log('[DEBUG] Validation Failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
         'You must select at least one library and at least one corresponding accordion item.',
         'danger'
       )
       ValidationHandler.disableNavigation(false)
+    }
+  },
+
+  validatePlexState: function () {
+    const plexValid = $('#plex_valid').data('plex-valid') === 'True'
+    console.log('[DEBUG] Plex Valid:', plexValid)
+
+    if (!plexValid) {
+      console.log('[DEBUG] Plex validation failed! Hiding all accordions & disabling navigation.')
+      document.getElementById('selected-libraries-container').style.display = 'none'
+      $('#all-accordions-container').hide()
+      ValidationHandler.showValidationMessage(
+        'Plex settings have not been validated successfully. Please <a href="javascript:void(0);" onclick="jumpTo(\'010-plex\');">return to the Plex page</a> and hit the validate button and ensure success before returning here.<br>',
+        'danger'
+      )
+      ValidationHandler.disableNavigation()
+      return false
+    } else {
+      console.log('[DEBUG] Plex validation passed! Showing all accordions.')
+      document.getElementById('selected-libraries-container').style.display = 'block'
+      $('#all-accordions-container').show()
+      return true
     }
   },
 
@@ -67,13 +100,36 @@ const ValidationHandler = {
   },
 
   getSelectedLibraries: function (type) {
-    return [...document.querySelectorAll(`[id^="${type}-library_"]:checked`)]
+    const selectedLibraries = [...document.querySelectorAll(`[id^="${type}-library_"]:checked`)]
       .map(input => input.value)
+
+    console.log(`[DEBUG] Retrieved Selected Libraries (${type}):`, selectedLibraries)
+    return selectedLibraries
+  },
+
+  restoreSelectedLibraries: function () {
+    const librariesInput = $('#libraries')
+    if (!librariesInput.val()) {
+      console.log('[DEBUG] Libraries field is empty. Initializing...')
+      librariesInput.val('') // Initialize if empty
+    }
+
+    const selectedLibraries = librariesInput.val().split(',').map(item => item.trim())
+    console.log('[DEBUG] Restoring Selected Libraries:', selectedLibraries)
+
+    $('.library-checkbox').each(function () {
+      if (selectedLibraries.includes($(this).val())) {
+        console.log(`[DEBUG] Restoring selection: ${$(this).val()}`)
+        $(this).prop('checked', true)
+      }
+    })
   },
 
   showValidationMessage: function (message, type) {
     const validationBox = document.getElementById('validation-messages')
     if (!validationBox) return
+
+    console.log(`[DEBUG] Showing validation message: "${message}" (${type})`)
 
     validationBox.innerHTML = message
     validationBox.classList.remove('alert-danger', 'alert-success')
@@ -99,7 +155,8 @@ const ValidationHandler = {
 
     // Handle accordions based on the lockAccordions flag
     if (!lockAccordions) {
-      document.querySelectorAll('.accordion-button').forEach(function (button) {
+      console.log('[DEBUG] Accordions are unlocked despite validation failure.')
+      document.querySelectorAll('.accordion-button').forEach(button => {
         button.disabled = false
       })
     }
@@ -115,12 +172,19 @@ const ValidationHandler = {
 
 // ✅ Attach validation update on input change
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('[DEBUG] Adding change event listeners to library checkboxes & accordions.')
+
   document.querySelectorAll('.library-checkbox, .accordion input').forEach((input) => {
     input.addEventListener('change', () => {
+      console.log(`[DEBUG] Change detected on: ${input.id || '(unknown input)'}`)
       ValidationHandler.updateValidationState()
     })
   })
 
   // ✅ Initial validation check on page load
+  console.log('[DEBUG] Running initial validation check on page load.')
   ValidationHandler.updateValidationState()
+
+  // ✅ Restore previously selected libraries
+  ValidationHandler.restoreSelectedLibraries()
 })

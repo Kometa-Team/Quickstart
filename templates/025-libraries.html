@@ -5,20 +5,39 @@
 
 <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;"></div>
 
-<!-- Selected Movie Libraries -->
-<h2>Selected Movie Libraries</h2>
-<div class="form-group">
-  {% for library in movie_libraries %}
-  <div class="mb-3">
-    <div class="form-check form-switch">
-      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
-        id="{{ library.id }}-library" name="{{ library.id }}-library">
-      <label class="form-check-label" for="{{ library.id }}-library">
-        {{ library.name }}
-      </label>
+<!-- Hidden Container for Selected Libraries -->
+<div id="selected-libraries-container" style="display: none;">
+  <!-- Selected Movie Libraries -->
+  <h2>Selected Movie Libraries</h2>
+  <div class="form-group">
+    {% for library in movie_libraries %}
+    <div class="mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
+          id="{{ library.id }}-library" name="{{ library.id }}-library">
+        <label class="form-check-label" for="{{ library.id }}-library">
+          {{ library.name }}
+        </label>
+      </div>
     </div>
+    {% endfor %}
   </div>
-  {% endfor %}
+
+  <!-- Selected Show Libraries -->
+  <h2>Selected Show Libraries</h2>
+  <div class="form-group">
+    {% for library in show_libraries %}
+    <div class="mb-3">
+      <div class="form-check form-switch">
+        <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
+          id="{{ library.id }}-library" name="{{ library.id }}-library">
+        <label class="form-check-label" for="{{ library.id }}-library">
+          {{ library.name }}
+        </label>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
 </div>
 
 <!-- Movie Library Settings -->
@@ -32,22 +51,6 @@
         </div>
     </div>
 {% endfor %}
-
-<!-- Selected Show Libraries -->
-<h2>Selected Show Libraries</h2>
-<div class="form-group">
-  {% for library in show_libraries %}
-  <div class="mb-3">
-    <div class="form-check form-switch">
-      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
-        id="{{ library.id }}-library" name="{{ library.id }}-library">
-      <label class="form-check-label" for="{{ library.id }}-library">
-        {{ library.name }}
-      </label>
-    </div>
-  </div>
-  {% endfor %}
-</div>
 
 <!-- Show Library Settings -->
 {% for library in show_libraries %}
