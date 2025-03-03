@@ -61,17 +61,25 @@ const ValidationHandler = {
 
     // **Movies Section Validation**
     const movieLibrarySelected = document.querySelectorAll('[id^="mov-library_"]:checked').length > 0
-    const selectedMovieToggles = [...document.querySelectorAll('#accordionMovies .accordion-item input:checked')]
-      .map((input) => input.id.startsWith('mov-library_') ? input.id : null)
-      .filter(Boolean)
+    const selectedMovieToggles = '1'
+    // const selectedMovieToggles = [...document.querySelectorAll('#accordionMovies .accordion-item input:checked')]
+    //   .map((input) => {
+    //     const libraryId = input.id.match(/^mov-library_([\w-]+)/)?.[1]; // Extract unique library ID
+    //     return libraryId ? input.id : null;
+    //   })
+    //   .filter(Boolean);
 
     const movieAccordionSelected = selectedMovieToggles.length > 0
 
     // **TV Shows Section Validation**
     const showLibrarySelected = document.querySelectorAll('[id^="sho-library_"]:checked').length > 0
-    const selectedShowToggles = [...document.querySelectorAll('#accordionShows .accordion-item input:checked')]
-      .map((input) => input.id.startsWith('sho-') ? input.id : null)
-      .filter(Boolean)
+    const selectedShowToggles = '1'
+    // const selectedShowToggles = [...document.querySelectorAll('#accordionShows .accordion-item input:checked')]
+    //   .map((input) => {
+    //     const libraryId = input.id.match(/^sho-library_([\w-]+)/)?.[1]; // Extract unique library ID
+    //     return libraryId ? input.id : null;
+    //   })
+    //   .filter(Boolean);
 
     const showAccordionSelected = selectedShowToggles.length > 0
 
