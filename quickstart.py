@@ -69,6 +69,8 @@ from modules.persistence import (
     check_minimum_settings,
     flush_session_storage,
     notification_systems_available,
+    get_stored_plex_credentials,
+    update_stored_plex_libraries,
 )
 from modules.database import reset_data, get_unique_config_names
 
@@ -632,6 +634,9 @@ def step(name):
         save_settings(request.referrer, request.form)
         header_style = request.form.get("header_style", "standard")
 
+    # ✅ Call `refresh_plex_libraries()` BEFORE retrieving Plex settings
+    refresh_plex_libraries()
+
     # Retrieve available fonts (ensuring "none" and "single line" are always included)
     available_fonts = get_pyfiglet_fonts()
 
@@ -892,6 +897,51 @@ def validate_ntfy():
 def validate_plex():
     data = request.json
     return validate_plex_server(data)
+
+
+@app.route("/refresh_plex_libraries", methods=["POST"])
+def refresh_plex_libraries():
+    try:
+        # ✅ Get stored Plex credentials from DB
+        config_name = session.get("config_name")  # Ensure the session has config_name
+        if not config_name:
+            return jsonify({"valid": False, "error": "Missing config_name"}), 400
+
+        plex_url, plex_token = get_stored_plex_credentials("010-plex")  # Fetch from DB
+        if not plex_url or not plex_token:
+            return jsonify({"valid": False, "error": "Plex credentials missing"}), 400
+
+        # ✅ Fetch latest libraries from Plex
+        plex_response = validate_plex_server(
+            {"plex_url": plex_url, "plex_token": plex_token}
+        )
+
+        # ✅ Fix: Convert Flask response object to JSON before accessing data
+        if isinstance(plex_response, Flask.response_class):
+            plex_data = plex_response.get_json()  # ✅ Extract JSON data correctly
+        else:
+            plex_data = plex_response  # If already a dict, use as-is
+
+        if not plex_data.get("validated"):
+            return jsonify({"valid": False, "error": "Plex validation failed"}), 500
+
+        # ✅ Extract new library data
+        updated_movie_libraries = plex_data.get("movie_libraries", [])
+        updated_show_libraries = plex_data.get("show_libraries", [])
+        updated_music_libraries = plex_data.get("music_libraries", [])
+
+        # ✅ Update the DB with the latest libraries
+        update_stored_plex_libraries(
+            "010-plex",
+            updated_movie_libraries,
+            updated_show_libraries,
+            updated_music_libraries,
+        )
+
+        return jsonify(plex_data)  # Return refreshed data
+
+    except Exception as e:
+        return jsonify({"valid": False, "error": f"Server error: {str(e)}"}), 500
 
 
 @app.route("/validate_tautulli", methods=["POST"])

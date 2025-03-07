@@ -52,13 +52,14 @@ const ImageHandler = {
     }
 
     const selectedImage = dropdown ? dropdown.value : 'default.png'
+    const selectedOverlays = ImageHandler.getLibraryOverlays(libraryId, isMovie)
 
     fetch('/generate_preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         library_id: libraryId,
-        overlays: [],
+        overlays: selectedOverlays,
         type: isMovie ? 'movie' : 'show',
         selected_image: selectedImage
       })
@@ -71,12 +72,40 @@ const ImageHandler = {
 
           if (previewImage) {
             previewImage.src = newPreviewURL
+            console.log(`[DEBUG] Updated preview image for ${libraryId}: ${newPreviewURL}`)
           } else {
             console.error(`[ERROR] Overlay preview image not found for library ${libraryId}`)
           }
         }
       })
       .catch(error => console.error('[ERROR] Generating overlay preview:', error))
+  },
+
+  getLibraryOverlays: function (libraryId, isMovie) {
+    let overlays = []
+
+    // ✅ Get all selected overlay checkboxes within the library section
+    document.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"]:checked`).forEach(input => {
+      overlays.push(input.name)
+    })
+
+    // ✅ Ensure rating overlay is included
+    const selectedRating = document.querySelector(
+      `#${libraryId}-contentRatingOverlays input[type='radio']:checked`
+    )
+
+    if (selectedRating) {
+      overlays.push(selectedRating.value)
+    } else {
+      // Remove previous content rating overlays if none is selected
+      overlays = overlays.filter(overlay => !overlay.startsWith('content_rating'))
+    }
+
+    // 🔥 **Fix: Strip out `library_<library_name>-` from overlay names**
+    overlays = overlays.map(overlay => overlay.replace(new RegExp(`^${libraryId}-`), `${isMovie ? 'mov' : 'sho'}-`))
+
+    console.log(`[DEBUG] Overlays found for ${libraryId}:`, overlays)
+    return overlays
   },
 
   toggleDeleteButton: function (libraryId, isMovie) {

@@ -17,7 +17,7 @@ const ValidationHandler = {
     console.log(`[DEBUG] Selected Show Libraries: ${selectedShowLibraries}`)
     console.log(`[DEBUG] Form is valid: ${isValid}`)
 
-    document.getElementById('libraries').value = [...selectedMovieLibraries, ...selectedShowLibraries].join(', ')
+    document.getElementById('libraries').value = [...selectedMovieLibraries, ...selectedShowLibraries].join(',')
     document.getElementById('libraries_validated').value = isValid ? 'true' : 'false'
 
     if (isValid) {
@@ -61,25 +61,23 @@ const ValidationHandler = {
 
     // **Movies Section Validation**
     const movieLibrarySelected = document.querySelectorAll('[id^="mov-library_"]:checked').length > 0
-    const selectedMovieToggles = '1'
-    // const selectedMovieToggles = [...document.querySelectorAll('#accordionMovies .accordion-item input:checked')]
-    //   .map((input) => {
-    //     const libraryId = input.id.match(/^mov-library_([\w-]+)/)?.[1]; // Extract unique library ID
-    //     return libraryId ? input.id : null;
-    //   })
-    //   .filter(Boolean);
+    const selectedMovieToggles = [...document.querySelectorAll('#accordionMovies .accordion-item input:checked')]
+      .map((input) => {
+        const libraryIdMatch = input.id.match(/^mov-library_(.+)-library$/) // Extracts the unique library name
+        return libraryIdMatch ? libraryIdMatch[1] : null
+      })
+      .filter(Boolean)
 
     const movieAccordionSelected = selectedMovieToggles.length > 0
 
     // **TV Shows Section Validation**
     const showLibrarySelected = document.querySelectorAll('[id^="sho-library_"]:checked').length > 0
-    const selectedShowToggles = '1'
-    // const selectedShowToggles = [...document.querySelectorAll('#accordionShows .accordion-item input:checked')]
-    //   .map((input) => {
-    //     const libraryId = input.id.match(/^sho-library_([\w-]+)/)?.[1]; // Extract unique library ID
-    //     return libraryId ? input.id : null;
-    //   })
-    //   .filter(Boolean);
+    const selectedShowToggles = [...document.querySelectorAll('#accordionShows .accordion-item input:checked')]
+      .map((input) => {
+        const libraryIdMatch = input.id.match(/^sho-library_(.+)-library$/) // Extracts the unique library name
+        return libraryIdMatch ? libraryIdMatch[1] : null
+      })
+      .filter(Boolean)
 
     const showAccordionSelected = selectedShowToggles.length > 0
 
@@ -108,21 +106,21 @@ const ValidationHandler = {
   },
 
   getSelectedLibraries: function (type) {
-    const selectedLibraries = [...document.querySelectorAll(`[id^="${type}-library_"]:checked`)]
-      .map(input => input.value)
+    const selectedLibraries = [...document.querySelectorAll(`.library-checkbox[id^="${type}-library"]:checked`)]
+      .map(input => input.value.trim()) // Ensure we get the actual library name
 
-    console.log(`[DEBUG] Retrieved Selected Libraries (${type}):`, selectedLibraries)
+    console.log(`[DEBUG] Selected ${type} Libraries:`, selectedLibraries)
     return selectedLibraries
   },
 
   restoreSelectedLibraries: function () {
-    const librariesInput = $('#libraries')
-    if (!librariesInput.val()) {
+    const libraryInput = document.getElementById('libraries')
+    if (!libraryInput.value) {
       console.log('[DEBUG] Libraries field is empty. Initializing...')
-      librariesInput.val('') // Initialize if empty
+      libraryInput.value = '' // Initialize if empty
     }
 
-    const selectedLibraries = librariesInput.val().split(',').map(item => item.trim())
+    const selectedLibraries = libraryInput ? libraryInput.value.split(',').map(item => item.trim()) : []
     console.log('[DEBUG] Restoring Selected Libraries:', selectedLibraries)
 
     $('.library-checkbox').each(function () {
@@ -178,6 +176,9 @@ const ValidationHandler = {
   }
 }
 
+// ✅ Restore previously selected libraries
+ValidationHandler.restoreSelectedLibraries()
+
 // ✅ Attach validation update on input change
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] Adding change event listeners to library checkboxes & accordions.')
@@ -192,7 +193,4 @@ document.addEventListener('DOMContentLoaded', () => {
   // ✅ Initial validation check on page load
   console.log('[DEBUG] Running initial validation check on page load.')
   ValidationHandler.updateValidationState()
-
-  // ✅ Restore previously selected libraries
-  ValidationHandler.restoreSelectedLibraries()
 })

@@ -1,7 +1,7 @@
 <p>Configure various attributes for movie collections.</p>
 
 <!-- 🔹 Section: Separators -->
-<div class="accordion mt-3" id="mov-separatorsAccordion">
+<div class="accordion mt-3" id="{{ library.id }}-separatorsAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -62,7 +62,7 @@
   </div>
 </div>
 <!-- 🔹 Section: Overlay Operations -->
-<div class="accordion mt-3" id="mov-overlayOperationsAccordion">
+<div class="accordion mt-3" id="{{ library.id }}-overlayOperationsAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -107,11 +107,11 @@
             <select class="form-select" id="{{ library.id }}-attribute_reset_overlays"
               name="{{ library.id }}-attribute_reset_overlays"
               aria-describedby="{{ library.id }}-attribute_reset_overlays_text">
-              <option value="" {% if data['libraries'].get('mov-attribute_reset_overlays')=="" %}selected{% endif %}>
+              <option value="" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="" %}selected{% endif %}>
                 None</option>
-              <option value="tmdb" {% if data['libraries'].get('mov-attribute_reset_overlays')=="tmdb" %}selected{%
+              <option value="tmdb" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="tmdb" %}selected{%
                 endif %}>TMDb</option>
-              <option value="plex" {% if data['libraries'].get('mov-attribute_reset_overlays')=="plex" %}selected{%
+              <option value="plex" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="plex" %}selected{%
                 endif %}>Plex</option>
             </select>
           </div>

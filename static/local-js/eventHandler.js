@@ -21,7 +21,7 @@ const EventHandler = {
 
     document.querySelectorAll("[id$='-card-container']").forEach((library) => {
       const libraryId = library.id.replace('-card-container', '')
-      const isMovie = libraryId.startsWith('mov')
+      const isMovie = libraryId.startsWith('mov-library_')
 
       console.log(`[DEBUG] Attaching listeners for Library: ${libraryId}, Type: ${isMovie ? 'Movie' : 'Show'}`)
       ImageHandler.loadAvailableImages(libraryId, isMovie)
@@ -53,7 +53,6 @@ const EventHandler = {
       const uploadButton = document.getElementById(`${libraryId}-upload-image`)
       if (uploadButton && !uploadButton.dataset.listenerAdded) {
         console.log(`[DEBUG] Attaching upload listener for ${libraryId}`)
-
         uploadButton.addEventListener('change', (event) => {
           if (event.target.files.length > 0) {
             console.log(`[DEBUG] File selected, starting upload for ${libraryId}`)
@@ -62,14 +61,13 @@ const EventHandler = {
             console.log('[DEBUG] No file selected, upload not triggered.')
           }
         })
-
         uploadButton.dataset.listenerAdded = true
       }
 
       // ✅ Attach overlay selection listeners
       library.querySelectorAll('.accordion input').forEach((input) => {
         if (input.id && !input.dataset.listenerAdded) {
-          console.log(`[DEBUG] Attaching overlay listener for ${input.id}`)
+          console.log(`[DEBUG] Attaching toggle listener for ${input.id}`)
           input.addEventListener('change', () => {
             console.log(`[DEBUG] Overlay changed: ${input.id}`)
 
@@ -81,6 +79,71 @@ const EventHandler = {
           })
           input.dataset.listenerAdded = true
         }
+      })
+
+      // ✅ Allow unselecting Content Rating radio buttons
+      document.querySelectorAll('input[type="radio"][id*="-overlay_content_rating_"]').forEach(radio => {
+        if (!radio.dataset.listenerAdded) {
+          radio.addEventListener('click', function () {
+            console.log(`[DEBUG] Radio button clicked: ${this.name} -> ${this.value}`)
+
+            // ✅ Extract libraryId strictly from content rating radios only
+            const match = this.id.match(/^(mov|sho)-library_([^-]+(?:-[^-]+)*)-overlay_content_rating_/)
+            const libraryId = match ? match[0].replace('-overlay_content_rating_', '') : null
+            if (!libraryId) {
+              console.warn(`[WARNING] Could not determine libraryId from ${this.id}`)
+              return
+            }
+            const isMovie = libraryId.startsWith('mov-library_')
+
+            if (this.checked && this.dataset.wasChecked === 'true') {
+              // ✅ Unselect if clicked again
+              this.checked = false
+              this.dataset.wasChecked = 'false'
+
+              // ✅ Clear corresponding hidden input
+              const hiddenInput = document.querySelector(`input[name="${libraryId}-overlay_selected_content_rating"]`)
+              if (hiddenInput) {
+                hiddenInput.value = '' // Clear hidden input when unselected
+              }
+
+              console.log(`[DEBUG] Unselected radio button: ${this.name}`)
+            } else {
+              // ✅ Mark this radio as checked and reset others in the group
+              document.querySelectorAll(`input[name="${this.name}"]`).forEach(r => {
+                r.dataset.wasChecked = 'false'
+              })
+              this.dataset.wasChecked = 'true'
+
+              const selectedValue = this.value
+
+              // ✅ Update hidden input
+              const hiddenInputName = `${libraryId}-overlay_selected_content_rating`
+              const hiddenInput = document.querySelector(`input[name="${hiddenInputName}"]`)
+              if (hiddenInput) {
+                hiddenInput.value = selectedValue
+              }
+
+              console.log(`[DEBUG] Selected radio button: ${this.name} -> ${selectedValue}`)
+            }
+
+            // ✅ Ensure preview updates after selection/unselection
+            EventHandler.updateAccordionHighlights()
+            ValidationHandler.updateValidationState()
+            ImageHandler.generatePreview(libraryId, isMovie)
+          })
+
+          radio.dataset.listenerAdded = 'true'
+          radio.dataset.wasChecked = 'false' // Track the initial state
+        }
+      })
+
+      // ✅ Automatically Update Preview When Overlay Toggles or Content Rating Changes
+      library.querySelectorAll('.accordion input[type="checkbox"], .accordion input[type="radio"]').forEach(input => {
+        input.addEventListener('change', () => {
+          console.log(`[DEBUG] Overlay or Rating Changed: ${input.id} - Checked/Selected: ${input.checked || input.value}`)
+          ImageHandler.generatePreview(libraryId, isMovie)
+        })
       })
 
       // ✅ Attach separator preview logic (Now handled by OverlayHandler)
@@ -130,49 +193,146 @@ const EventHandler = {
   },
 
   /**
-     * Updates accordion highlights when items are selected (EXCLUDES Preview Overlays)
-     */
+   * Update accordion highlights when selections change
+   */
   updateAccordionHighlights: function () {
-    document.querySelectorAll('.accordion-item').forEach((accordion) => {
-      const isPreview = accordion.classList.contains('preview-accordion')
-      if (isPreview) return // 🚀 Skip preview accordions
+    console.log('🔍 [DEBUG] Updating accordion highlights...')
 
+    document.querySelectorAll('.accordion-item').forEach((accordion) => {
+      const accordionHeader = accordion.querySelector('.accordion-header')
+      if (!accordionHeader) return
+
+      const headerText = accordionHeader.textContent.trim()
+      const isPreviewOverlay = headerText.toLowerCase().includes('preview overlays')
+
+      // ✅ Skip Preview Overlays
+      if (isPreviewOverlay) {
+        console.log(`🚫 [DEBUG] Skipping Preview Overlays: ${headerText}`)
+        accordionHeader.classList.remove('selected')
+        return
+      }
+
+      // ✅ Check if this section has selected checkboxes, radios, or dropdowns
       const isCheckedOrSelected = accordion.querySelector(
         "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none'])"
       ) !== null
 
-      const accordionHeader = accordion.querySelector('.accordion-header')
-
       if (isCheckedOrSelected) {
+        console.log(`✅ [DEBUG] Highlighting: ${headerText}`)
+        accordionHeader.classList.add('selected')
+
+        // ✅ Ensure the **IMMEDIATE PARENT** gets highlighted before moving up
         EventHandler.highlightParentAccordions(accordionHeader)
       } else {
+        // console.log(`❌ [DEBUG] Removing highlight: ${headerText}`)
         EventHandler.removeHighlightIfEmpty(accordionHeader)
+      }
+    })
+
+    // ✅ Ensure Overlays does NOT highlight if only Preview Overlays are active
+    document.querySelectorAll('.accordion-item').forEach((accordion) => {
+      const accordionHeader = accordion.querySelector('.accordion-header')
+      if (!accordionHeader) return
+
+      const headerText = accordionHeader.textContent.trim()
+      const isOverlaysSection = headerText.toLowerCase() === 'overlays'
+
+      if (isOverlaysSection) {
+        console.log(`🔍 [DEBUG] Checking Overlays: ${headerText}`)
+
+        // ✅ Ensure at least one non-preview child is active
+        const hasValidChild = Array.from(accordion.querySelectorAll('.accordion-item')).some(child => {
+          const childHeader = child.querySelector('.accordion-header')
+          if (!childHeader) return false
+
+          const childText = childHeader.textContent.trim()
+          const isPreviewChild = childText.toLowerCase().includes('preview overlays')
+
+          if (!isPreviewChild && child.querySelector("input:checked, input[type='radio']:checked")) {
+            console.log(`✅ [DEBUG] Valid selection found under: ${childText}`)
+            childHeader.classList.add('selected') // ✅ Ensure child is highlighted first
+            return true
+          }
+          return false
+        })
+
+        if (!hasValidChild) {
+          console.log(`🚫 [DEBUG] Overlays should NOT highlight: ${headerText}`)
+          accordionHeader.classList.remove('selected')
+        } else {
+          console.log(`✅ [DEBUG] Highlighting Overlays: ${headerText}`)
+          accordionHeader.classList.add('selected')
+        }
       }
     })
   },
 
+  /**
+   * Highlight parent accordions when a child section is selected
+   */
   highlightParentAccordions: function (element) {
     while (element) {
-      if (element.classList.contains('accordion-header')) {
-        element.classList.add('selected')
+      const parentAccordion = element.closest('.accordion-item')
+      if (!parentAccordion) break
+
+      const parentHeader = parentAccordion.querySelector('.accordion-header')
+      const parentText = parentHeader ? parentHeader.textContent.trim() : ''
+      const isPreviewOverlay = parentText.toLowerCase().includes('preview overlays')
+      const isOverlaysSection = parentText.toLowerCase().includes('overlays')
+
+      if (isPreviewOverlay) {
+        console.log(`🚫 [DEBUG] Skipping parent highlight for Preview Overlays: ${parentText}`)
+        return // ✅ Prevent parent highlight inheritance from Preview Overlays
       }
-      element = element.closest('.accordion-item')?.parentElement.closest('.accordion-item')?.querySelector('.accordion-header')
+
+      if (isOverlaysSection) {
+        const hasValidChild = Array.from(parentAccordion.querySelectorAll('.accordion-item')).some(child => {
+          const childHeader = child.querySelector('.accordion-header')
+          const childText = childHeader ? childHeader.textContent.trim() : ''
+          const isPreviewChild = childText.toLowerCase().includes('preview overlays')
+
+          return !isPreviewChild && child.querySelector('input:checked') // ✅ Only highlight Overlays if non-preview children are checked
+        })
+
+        if (!hasValidChild) {
+          console.log(`🚫 [DEBUG] Preventing Overlays from inheriting highlight due to only Preview Overlays: ${parentText}`)
+          return // ✅ Stop if Overlays only contain Preview Overlays
+        }
+      }
+
+      console.log(`🎯 [DEBUG] Adding highlight to parent: ${parentText}`)
+      parentHeader.classList.add('selected')
+
+      element = parentAccordion.parentElement.closest('.accordion-item')?.querySelector('.accordion-header')
     }
   },
 
+  /**
+   * Remove highlight if an accordion has no selections
+   */
   removeHighlightIfEmpty: function (element) {
     if (!element) return
     const accordionItem = element.closest('.accordion-item')
     if (!accordionItem) return
+
+    const accordionId = accordionItem.id || ''
+    const isPreviewOverlay = accordionId.includes('-previewOverlays')
+
+    if (isPreviewOverlay) {
+      console.log(`🚫 [DEBUG] Preventing highlight removal check for Preview Overlays: ${accordionId}`)
+      return // ✅ Do not allow Preview Overlays to trigger highlight removal
+    }
 
     const hasSelections = accordionItem.querySelector(
       "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none'])"
     )
 
     if (!hasSelections) {
+      // console.log(`🔻 [DEBUG] Removing highlight from: ${accordionId}`)
       element.classList.remove('selected')
     }
 
+    // Recursively check parents
     const parentAccordionHeader = accordionItem.parentElement.closest('.accordion-item')?.querySelector('.accordion-header')
     EventHandler.removeHighlightIfEmpty(parentAccordionHeader)
   }
@@ -194,6 +354,7 @@ const observer = new MutationObserver((mutations) => {
   })
 
   if (needsReattachment) {
+    console.log('[DEBUG] Reattaching event listeners due to DOM mutation...')
     EventHandler.attachLibraryListeners()
   }
 })
@@ -203,6 +364,9 @@ observer.observe(document.body, { childList: true, subtree: true })
 // ✅ Initial call on page load
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] Initializing EventHandler...')
+
+  // ✅ Run once on page load
   EventHandler.attachLibraryListeners()
+  ValidationHandler.restoreSelectedLibraries()
   ValidationHandler.updateValidationState()
 })

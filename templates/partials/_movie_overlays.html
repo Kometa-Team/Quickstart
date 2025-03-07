@@ -4,11 +4,11 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#{{ library.id }}-overlayPreviewContainer"
-        aria-expanded="true" aria-controls="{{ library.id }}-overlayPreviewContainer">
+        aria-expanded="false" aria-controls="{{ library.id }}-overlayPreviewContainer">
         Preview Overlays
       </button>
     </h2>
-    <div id="{{ library.id }}-overlayPreviewContainer" class="accordion-collapse collapse movie"
+    <div id="{{ library.id }}-overlayPreviewContainer" class="accordion-collapse collapse show"
       data-bs-parent="#{{ library.id }}-previewOverlaysAccordion">
       <div class="accordion-body">
         <div class="row">
@@ -57,7 +57,7 @@
 
 
 <!-- Chart Overlays Accordion -->
-<div class="accordion mt-3" id="mov-chartOverlaysAccordion">
+<div class="accordion mt-3" id="{{ library.id }}-chartOverlaysAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -88,7 +88,7 @@
   </div>
 </div>
 <!-- Content Overlays Accordion -->
-<div class="accordion mt-3" id="mov-contentOverlaysAccordion">
+<div class="accordion mt-3" id="{{ library.id }}-contentOverlaysAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -119,7 +119,7 @@
   </div>
 </div>
 <!-- Content Rating Overlays Accordion -->
-<div class="accordion mt-3" id="mov-contentRatingOverlaysAccordion">
+<div class="accordion mt-3" id="{{ library.id }}-contentRatingOverlaysAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -133,7 +133,7 @@
         <!-- Content Rating Overlay Toggles -->
         <div class="form-check form-switch">
           <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_us_movie"
-            name="mov-content-rating-group" value="us_movie" {% if data['libraries'][library.id
+            name="{{ library.id }}-content-rating-group" value="us_movie" {% if data['libraries'][library.id
             ~ '-overlay_selected_content_rating' ]=='us_movie' %}checked{% endif %}>
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_us_movie">
@@ -148,7 +148,7 @@
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_uk"
-            name="mov-content-rating-group" value="uk" {% if data['libraries'][library.id
+            name="{{ library.id }}-content-rating-group" value="uk" {% if data['libraries'][library.id
             ~ '-overlay_selected_content_rating' ]=='uk' %}checked{% endif %}>
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_uk">
@@ -163,7 +163,7 @@
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_de"
-            name="mov-content-rating-group" value="de" {% if data['libraries'][library.id
+            name="{{ library.id }}-content-rating-group" value="de" {% if data['libraries'][library.id
             ~ '-overlay_selected_content_rating' ]=='de' %}checked{% endif %}>
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_de">
@@ -178,7 +178,7 @@
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_au"
-            name="mov-content-rating-group" value="au" {% if data['libraries'][library.id
+            name="{{ library.id }}-content-rating-group" value="au" {% if data['libraries'][library.id
             ~ '-overlay_selected_content_rating' ]=='au' %}checked{% endif %}>
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_au">
@@ -193,7 +193,7 @@
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_nz"
-            name="mov-content-rating-group" value="nz" {% if data['libraries'][library.id
+            name="{{ library.id }}-content-rating-group" value="nz" {% if data['libraries'][library.id
             ~ '-overlay_selected_content_rating' ]=='nz' %}checked{% endif %}>
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_nz">
@@ -207,11 +207,11 @@
         </div>
 
         <div class="form-check form-switch">
-          <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_commonsense"
-            name="mov-content-rating-group" value="commonsense" {% if data['libraries'][library.id
+          <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_commonsense"
+            name="{{ library.id }}-content-rating-group" value="commonsense" {% if data['libraries'][library.id
             ~ '-overlay_selected_content_rating' ]=='commonsense' %}checked{% endif %}>
           <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_commonsense">
+            <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_commonsense">
               <a target="_blank"
                 href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/commonsense/">Common
                 Sense Age Rating</a>
@@ -230,7 +230,7 @@
   </div>
 </div>
 <!-- Media Overlays Accordion -->
-<div class="accordion mt-3" id="mov-mediaOverlaysAccordion">
+<div class="accordion mt-3" id="{{ library.id }}-mediaOverlaysAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -387,7 +387,7 @@
   </div>
 </div>
 <!-- Production Overlays Accordion -->
-<div class="accordion mt-3" id="mov-productionOverlaysAccordion">
+<div class="accordion mt-3" id="{{ library.id }}-productionOverlaysAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -436,7 +436,7 @@
   </div>
 </div>
 <!-- Utility Overlays Accordion -->
-<div class="accordion mt-3" id="mov-utilityOverlaysAccordion">
+<div class="accordion mt-3" id="{{ library.id }}-utilityOverlaysAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
