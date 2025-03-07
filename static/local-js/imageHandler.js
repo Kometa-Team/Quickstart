@@ -27,11 +27,16 @@ const ImageHandler = {
           dropdown.appendChild(option)
         })
 
-        // Restore last selected image after dropdown reloads
+        // ✅ Restore last selected image after dropdown reloads
         const storedImage = localStorage.getItem(`${libraryId}-selected-image`)
         if (storedImage && [...dropdown.options].some(option => option.value === storedImage)) {
           dropdown.value = storedImage
         }
+
+        // ✅ Store selection when changed
+        dropdown.addEventListener('change', function () {
+          localStorage.setItem(`${libraryId}-selected-image`, dropdown.value)
+        })
 
         ImageHandler.generatePreview(libraryId, isMovie)
         ImageHandler.toggleDeleteButton(libraryId, isMovie)
