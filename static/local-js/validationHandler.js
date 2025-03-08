@@ -59,50 +59,94 @@ const ValidationHandler = {
   validateForm: function () {
     console.log('[DEBUG] Running validateForm...')
 
-    // **Movies Section Validation**
-    const movieLibrarySelected = document.querySelectorAll('[id^="mov-library_"]:checked').length > 0
-    const selectedMovieToggles = [...document.querySelectorAll('#accordionMovies .accordion-item input:checked')]
-      .map((input) => {
-        const libraryIdMatch = input.id.match(/^mov-library_(.+)-library$/) // Extracts the unique library name
-        return libraryIdMatch ? libraryIdMatch[1] : null
+    const selectedMovieLibraries = ValidationHandler.getSelectedLibraries('mov')
+    const selectedShowLibraries = ValidationHandler.getSelectedLibraries('sho')
+    const libraryList = [...selectedMovieLibraries, ...selectedShowLibraries]
+
+    console.log(`[DEBUG] Selected Movie Libraries: ${selectedMovieLibraries}`)
+    console.log(`[DEBUG] Selected Show Libraries: ${selectedShowLibraries}`)
+    console.log(`[DEBUG] Combined Library List: ${libraryList}`)
+
+    // ❌ If no libraries are selected, disable navigation immediately
+    if (libraryList.length === 0) {
+      console.log('[DEBUG] No libraries selected! Disabling navigation.')
+      ValidationHandler.showValidationMessage(
+        'You must select at least one library to proceed.',
+        'danger'
+      )
+      ValidationHandler.disableNavigation(false)
+      return false
+    }
+
+    // 🚀 Validate that all selected libraries have at least one highlight
+    const validateLibraries = () => {
+      const selectedLibraries = Array.from(document.querySelectorAll('.library-checkbox:checked'))
+        .map(checkbox => checkbox.id.replace(/-library$/, '')) // Normalize ID
+
+      const invalidLibraries = []
+
+      // Reset all borders before validation
+      document.querySelectorAll('[id$="-container"]').forEach(container => {
+        container.style.border = '' // Remove the red border
       })
-      .filter(Boolean)
 
-    const movieAccordionSelected = selectedMovieToggles.length > 0
+      const isValid = selectedLibraries.every(libraryId => {
+        const libraryContainer = document.querySelector(`#${libraryId}-container`)
+        console.log(`[DEBUG] Looking for libraryContainer: #${libraryId}-container`)
 
-    // **TV Shows Section Validation**
-    const showLibrarySelected = document.querySelectorAll('[id^="sho-library_"]:checked').length > 0
-    const selectedShowToggles = [...document.querySelectorAll('#accordionShows .accordion-item input:checked')]
-      .map((input) => {
-        const libraryIdMatch = input.id.match(/^sho-library_(.+)-library$/) // Extracts the unique library name
-        return libraryIdMatch ? libraryIdMatch[1] : null
+        if (!libraryContainer) {
+          console.log(`[DEBUG] No container found for selected library: ${libraryId}`)
+          invalidLibraries.push(libraryId)
+          return false
+        }
+
+        const hasSelectedHeader = libraryContainer.querySelector('.accordion-header.selected') !== null
+        console.log(`[DEBUG] Library "${libraryId}-container" has selected header highlight: ${hasSelectedHeader}`)
+
+        if (!hasSelectedHeader) {
+          invalidLibraries.push(libraryId)
+        } else {
+          // If the library is valid, remove red border
+          libraryContainer.style.border = ''
+        }
+
+        return hasSelectedHeader
       })
-      .filter(Boolean)
 
-    const showAccordionSelected = selectedShowToggles.length > 0
+      if (!isValid) {
+        // Highlight problematic containers
+        invalidLibraries.forEach(libraryId => {
+          const libraryContainer = document.querySelector(`#${libraryId}-container`)
+          if (libraryContainer) {
+            libraryContainer.style.border = '2px solid red' // Highlight border in red
+          }
+        })
 
-    // **Validation Logic**
-    const moviesValid = !movieLibrarySelected || movieAccordionSelected
-    const showsValid = !showLibrarySelected || showAccordionSelected
-    const atLeastOneLibrarySelected = movieLibrarySelected || showLibrarySelected
-    const librariesValid = moviesValid && showsValid
+        // Display a Bootstrap Toast notification
+        // showToast('error', `The following libraries must have at least one selected item:<br><strong>${invalidLibraries.join(", ")}</strong>`)
+      }
 
-    // **Debug Logs**
-    console.log('===== VALIDATION DEBUG LOGS =====')
-    console.log('  Movie Library Selected:', movieLibrarySelected)
-    console.log('  Movie Accordion Selected:', movieAccordionSelected)
-    console.log('  Selected Movie Toggles:', selectedMovieToggles)
-    console.log('  Show Library Selected:', showLibrarySelected)
-    console.log('  Show Accordion Selected:', showAccordionSelected)
-    console.log('  Selected Show Toggles:', selectedShowToggles)
-    console.log('  Movies Valid:', moviesValid)
-    console.log('  Shows Valid:', showsValid)
-    console.log('  At Least One Library Selected:', atLeastOneLibrarySelected)
-    console.log('  Libraries Valid:', librariesValid)
-    console.log('  Final Validation Result:', atLeastOneLibrarySelected && librariesValid)
-    console.log('=================================')
+      return isValid
+    }
 
-    return atLeastOneLibrarySelected && librariesValid
+    const allLibrariesValid = validateLibraries(libraryList)
+
+    console.log(`[DEBUG] Libraries Valid: ${allLibrariesValid}`)
+
+    if (allLibrariesValid) {
+      console.log('[DEBUG] Validation Passed! Enabling navigation.')
+      ValidationHandler.showValidationMessage('Validation successful! You may proceed.', 'success')
+      ValidationHandler.enableNavigation()
+      return true
+    } else {
+      console.log('[DEBUG] Some selected libraries lack highlights! Disabling navigation.')
+      ValidationHandler.showValidationMessage(
+        'Each selected library must have at least one highlighted option.',
+        'danger'
+      )
+      ValidationHandler.disableNavigation(false)
+      return false
+    }
   },
 
   getSelectedLibraries: function (type) {
@@ -141,13 +185,6 @@ const ValidationHandler = {
     validationBox.classList.remove('alert-danger', 'alert-success')
     validationBox.classList.add(`alert-${type}`)
     validationBox.style.display = 'block'
-
-    // Hide after 5 seconds if it's a success message
-    if (type === 'success') {
-      setTimeout(() => {
-        validationBox.style.display = 'none'
-      }, 5000)
-    }
   },
 
   disableNavigation: function (lockAccordions = true) {

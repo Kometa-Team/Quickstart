@@ -392,7 +392,7 @@
                   </a>
               </h6>
 
-              {% set user_list = (plex_data.get('plex', {}).get('tmp_user_list', '')|string).split(',') if plex_data and plex_data.get('plex', {}).get('tmp_user_list') else [] %}
+              {% set user_list = plex_data.get('tmp_user_list', []) %}
               {% if user_list %}
                   <div id="playlist-settings-section">
 

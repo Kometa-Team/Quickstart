@@ -816,6 +816,28 @@ def step(name):
     if "sho-template_variables" not in data:
         data["sho-template_variables"] = {}
 
+    # Ensure these are lists
+    plex_data["tmp_movie_libraries"] = (
+        plex_data.get("tmp_movie_libraries", "").split(",")
+        if isinstance(plex_data.get("tmp_movie_libraries"), str)
+        else []
+    )
+    plex_data["tmp_show_libraries"] = (
+        plex_data.get("tmp_show_libraries", "").split(",")
+        if isinstance(plex_data.get("tmp_show_libraries"), str)
+        else []
+    )
+    plex_data["tmp_music_libraries"] = (
+        plex_data.get("tmp_music_libraries", "").split(",")
+        if isinstance(plex_data.get("tmp_music_libraries"), str)
+        else []
+    )
+    plex_data["tmp_user_list"] = (
+        plex_data.get("tmp_user_list", "").split(",")
+        if isinstance(plex_data.get("tmp_user_list"), str)
+        else []
+    )
+
     # Ensure correct rendering for the final validation page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if name == "900-final":
