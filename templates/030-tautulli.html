@@ -1,46 +1,46 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="tautulli_url_text" style="width: 135px; justify-content: space-between;">
-            Tautulli URL
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Enter the full URL for your Tautulli instance, including the port.<br><br>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="tautulli_url_text" style="width: 135px; justify-content: space-between;">
+        Tautulli URL
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;" title="Enter the full URL for your Tautulli instance, including the port.<br><br>
                        <b>Example:</b> http://192.168.1.12:8181">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="text" class="form-control" id="tautulli_url" name="tautulli_url"
-            value="{{ data['tautulli']['url'] | string if data['tautulli']['url'] and 'http://192.168.1.12:8181' not in data['tautulli']['url'] | string else '' }}"
-            aria-describedby="tautulli_url_text">
-    </div>
+    </span>
+    <input type="text" class="form-control" id="tautulli_url" name="tautulli_url"
+        value="{{ data['tautulli']['url'] | string if data['tautulli']['url'] and 'http://192.168.1.12:8181' not in data['tautulli']['url'] | string else '' }}"
+        aria-describedby="tautulli_url_text">
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="tautulli_apikey_text" style="width: 135px; justify-content: space-between;">
-            API Key
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Enter your Tautulli API Key to allow Quickstart to authenticate with Tautulli">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="tautulli_apikey_text" style="width: 135px; justify-content: space-between;">
+        API Key
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enter your Tautulli API Key to allow Quickstart to authenticate with Tautulli">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey"
-            value="{{ data['tautulli']['apikey'] | string if data['tautulli']['apikey'] and 'Enter Tautulli API Key' not in data['tautulli']['apikey'] | string else '' }}"
-            aria-describedby="tautulli_apikey_text">
-        <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button">
-            <i class="fas fa-eye"></i>
-        </button>
-        <button class="btn btn-success" id="validateButton" type="button">
-            Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-        </button>
-    </div>
+    </span>
+    <input type="password" class="form-control" id="tautulli_apikey" name="tautulli_apikey"
+        value="{{ data['tautulli']['apikey'] | string if data['tautulli']['apikey'] and 'Enter Tautulli API Key' not in data['tautulli']['apikey'] | string else '' }}"
+        aria-describedby="tautulli_apikey_text">
+    <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button">
+        <i class="fas fa-eye"></i>
+    </button>
+    <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+    </button>
+</div>
 
 
 
-    <div class="form-floating" style="display:none;">
-      <input type="text" class="form-control" id="tautulli_validated" name="tautulli_validated" value="{{ data['validated'] }}" title="">
-      <label for="tautulli_validated">Tautulli Validated</label>
-    </div>
-    <div id="statusMessage" class="status-message mb-2"></div>
-  </div>
+<div class="form-floating" style="display:none;">
+    <input type="text" class="form-control" id="tautulli_validated" name="tautulli_validated"
+        value="{{ data['validated'] }}" title="">
+    <label for="tautulli_validated">Tautulli Validated</label>
+</div>
+<div id="statusMessage" class="status-message mb-2"></div>
+</div>
 </form>
 {% endblock %}

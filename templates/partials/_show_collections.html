@@ -6,11 +6,13 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-awardCollections" aria-expanded="false" aria-controls="{{ library.id }}-awardCollections">
+        data-bs-target="#{{ library.id }}-awardCollections" aria-expanded="false"
+        aria-controls="{{ library.id }}-awardCollections">
         Award Collections
       </button>
     </h2>
-    <div id="{{ library.id }}-awardCollections" class="accordion-collapse collapse" data-bs-parent="#{{ library.id }}-awardCollectionsAccordion">
+    <div id="{{ library.id }}-awardCollections" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-awardCollectionsAccordion">
       <div class="accordion-body">
         <!-- Award Collection Toggles -->
         <div class="form-check form-switch">
@@ -53,8 +55,8 @@
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_emmy"
-            name="{{ library.id }}-collection_emmy" value="true" {% if data['libraries'][library.id
-            ~ '-collection_emmy' ]|string|lower=='true' %}checked{% endif %}>
+            name="{{ library.id }}-collection_emmy" value="true" {% if data['libraries'][library.id ~ '-collection_emmy'
+            ]|string|lower=='true' %}checked{% endif %}>
           <input type="hidden" name="{{ library.id }}-collection_emmy" value="false">
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-collection_emmy">
@@ -88,8 +90,8 @@
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_pca"
-            name="{{ library.id }}-collection_pca" value="true" {% if data['libraries'][library.id
-            ~ '-collection_pca' ]|string|lower=='true' %}checked{% endif %}>
+            name="{{ library.id }}-collection_pca" value="true" {% if data['libraries'][library.id ~ '-collection_pca'
+            ]|string|lower=='true' %}checked{% endif %}>
           <input type="hidden" name="{{ library.id }}-collection_pca" value="false">
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-collection_pca">
@@ -105,8 +107,8 @@
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_sag"
-            name="{{ library.id }}-collection_sag" value="true" {% if data['libraries'][library.id
-            ~ '-collection_sag' ]|string|lower=='true' %}checked{% endif %}>
+            name="{{ library.id }}-collection_sag" value="true" {% if data['libraries'][library.id ~ '-collection_sag'
+            ]|string|lower=='true' %}checked{% endif %}>
           <input type="hidden" name="{{ library.id }}-collection_sag" value="false">
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-collection_sag">
@@ -129,11 +131,13 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-chartCollections" aria-expanded="false" aria-controls="{{ library.id }}-chartCollections">
+        data-bs-target="#{{ library.id }}-chartCollections" aria-expanded="false"
+        aria-controls="{{ library.id }}-chartCollections">
         Chart Collections
       </button>
     </h2>
-    <div id="{{ library.id }}-chartCollections" class="accordion-collapse collapse" data-bs-parent="#{{ library.id }}-chartCollectionsAccordion">
+    <div id="{{ library.id }}-chartCollections" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-chartCollectionsAccordion">
       <div class="accordion-body">
         <!-- Chart Collection Toggles -->
         <div class="form-check form-switch">
@@ -194,8 +198,8 @@
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_imdb"
-            name="{{ library.id }}-collection_imdb" value="true" {% if data['libraries'][library.id
-            ~ '-collection_imdb' ]|string|lower=='true' %}checked{% endif %}>
+            name="{{ library.id }}-collection_imdb" value="true" {% if data['libraries'][library.id ~ '-collection_imdb'
+            ]|string|lower=='true' %}checked{% endif %}>
           <input type="hidden" name="{{ library.id }}-collection_imdb" value="false">
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-collection_imdb">
@@ -210,8 +214,8 @@
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_tmdb"
-            name="{{ library.id }}-collection_tmdb" value="true" {% if data['libraries'][library.id
-            ~ '-collection_tmdb' ]|string|lower=='true' %}checked{% endif %}>
+            name="{{ library.id }}-collection_tmdb" value="true" {% if data['libraries'][library.id ~ '-collection_tmdb'
+            ]|string|lower=='true' %}checked{% endif %}>
           <input type="hidden" name="{{ library.id }}-collection_tmdb" value="false">
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-collection_tmdb">
@@ -302,7 +306,8 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-contentCollections" aria-expanded="false" aria-controls="{{ library.id }}-contentCollections">
+        data-bs-target="#{{ library.id }}-contentCollections" aria-expanded="false"
+        aria-controls="{{ library.id }}-contentCollections">
         Content Collections
       </button>
     </h2>
@@ -528,7 +533,8 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-locationCollections" aria-expanded="false" aria-controls="{{ library.id }}-locationCollections">
+        data-bs-target="#{{ library.id }}-locationCollections" aria-expanded="false"
+        aria-controls="{{ library.id }}-locationCollections">
         Location Collections
       </button>
     </h2>
@@ -590,11 +596,13 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-mediaCollections" aria-expanded="false" aria-controls="{{ library.id }}-mediaCollections">
+        data-bs-target="#{{ library.id }}-mediaCollections" aria-expanded="false"
+        aria-controls="{{ library.id }}-mediaCollections">
         Media Collections
       </button>
     </h2>
-    <div id="{{ library.id }}-mediaCollections" class="accordion-collapse collapse" data-bs-parent="#{{ library.id }}-mediaCollectionsAccordion">
+    <div id="{{ library.id }}-mediaCollections" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-mediaCollectionsAccordion">
       <div class="accordion-body">
         <!-- Media Collection Toggles -->
         <div class="form-check form-switch">
@@ -669,7 +677,8 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-productionCollections" aria-expanded="false" aria-controls="{{ library.id }}-productionCollections">
+        data-bs-target="#{{ library.id }}-productionCollections" aria-expanded="false"
+        aria-controls="{{ library.id }}-productionCollections">
         Production Collections
       </button>
     </h2>
@@ -734,7 +743,8 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-peopleCollections" aria-expanded="false" aria-controls="{{ library.id }}-peopleCollections">
+        data-bs-target="#{{ library.id }}-peopleCollections" aria-expanded="false"
+        aria-controls="{{ library.id }}-peopleCollections">
         People Collections
       </button>
     </h2>
@@ -766,18 +776,20 @@
   <div class="accordion-item">
     <h2 class="accordion-header">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-timeCollections" aria-expanded="false" aria-controls="{{ library.id }}-timeCollections">
+        data-bs-target="#{{ library.id }}-timeCollections" aria-expanded="false"
+        aria-controls="{{ library.id }}-timeCollections">
         Time Collections
       </button>
     </h2>
-    <div id="{{ library.id }}-timeCollections" class="accordion-collapse collapse" data-bs-parent="#{{ library.id }}-timeCollectionsAccordion">
+    <div id="{{ library.id }}-timeCollections" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-timeCollectionsAccordion">
       <div class="accordion-body">
         <!-- Time Collection Toggles -->
 
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="{{ library.id }}-collection_year"
-            name="{{ library.id }}-collection_year" value="true" {% if data['libraries'][library.id
-            ~ '-collection_year' ]|string|lower=='true' %}checked{% endif %}>
+            name="{{ library.id }}-collection_year" value="true" {% if data['libraries'][library.id ~ '-collection_year'
+            ]|string|lower=='true' %}checked{% endif %}>
           <input type="hidden" name="{{ library.id }}-collection_year" value="false">
           <div class="d-flex align-items-center">
             <label class="form-check-label me-3" for="{{ library.id }}-collection_year">

@@ -1,79 +1,80 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <center>
-      <p><b class="text-danger">Read this warning (hover over the icon): </b>
-    <i class="bi bi-exclamation-circle text-danger"
-       data-bs-toggle="tooltip"
-       data-bs-placement="top"
-       data-bs-custom-class="text-tooltip"
-       title="Quickstart is designed to be run by you, on your own machine, to ensure your data and credentials remain secure. All information entered, including credentials, is stored locally on your device, and Quickstart only communicates with third-party services to verify credentials. Kometa does not collect or share any data. We strongly advise against using a version of Quickstart hosted by someone else.">
+<center>
+  <p><b class="text-danger">Read this warning (hover over the icon): </b>
+    <i class="bi bi-exclamation-circle text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+      data-bs-custom-class="text-tooltip"
+      title="Quickstart is designed to be run by you, on your own machine, to ensure your data and credentials remain secure. All information entered, including credentials, is stored locally on your device, and Quickstart only communicates with third-party services to verify credentials. Kometa does not collect or share any data. We strongly advise against using a version of Quickstart hosted by someone else.">
     </i>
-    </p>
-    </center>
-    <div class="form-text" id="pin-info">
-      <p class="fs-5">Quickstart is a Web UI that will guide you through creating a Configuration File for Kometa.</p>
-      <p class="fs-5"><a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click here</a> for a more in-depth explanation and example of what Quickstart does</p>
-      <p class="fs-5">To use Quickstart, you will need at least a Plex URL & Token, and a TMDb API Key.</p>
-      <p class="fs-5">We <b>strongly</b> suggest you set up test libraries if this is your first time running Quickstart/Kometa, <a href="#" data-bs-toggle="modal" data-bs-target="#Modal2">click here</a> to learn more</p>
-      <p class="fs-5">Review the Config Data section below and press the arrow button above when you are ready to begin.</p>
-    </div><br>
-    <label class="form-label">
-      <h6>Config Data</h6>
-    </label>
-    <div class="form-text" id="name-info">
-      <p class="fs-6">The config name below is used for saving your config and progress within the Quickstart database. You can change it if you wish before getting started, or choose one of your previously-created configs from the drop-down.</p>
-    </div>
+  </p>
+</center>
+<div class="form-text" id="pin-info">
+  <p class="fs-5">Quickstart is a Web UI that will guide you through creating a Configuration File for Kometa.</p>
+  <p class="fs-5"><a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click here</a> for a more in-depth
+    explanation and example of what Quickstart does</p>
+  <p class="fs-5">To use Quickstart, you will need at least a Plex URL & Token, and a TMDb API Key.</p>
+  <p class="fs-5">We <b>strongly</b> suggest you set up test libraries if this is your first time running
+    Quickstart/Kometa, <a href="#" data-bs-toggle="modal" data-bs-target="#Modal2">click here</a> to learn more</p>
+  <p class="fs-5">Review the Config Data section below and press the arrow button above when you are ready to begin.</p>
+</div><br>
+<label class="form-label">
+  <h6>Config Data</h6>
+</label>
+<div class="form-text" id="name-info">
+  <p class="fs-6">The config name below is used for saving your config and progress within the Quickstart database. You
+    can change it if you wish before getting started, or choose one of your previously-created configs from the
+    drop-down.</p>
+</div>
 
-    <div class="form-floating mb-2">
-      <select id="configSelector" name="configSelector" class="form-select" onchange="toggleConfigInput(this)">
-        <option value="add_config" {% if page_info['config_name'] not in available_configs %}selected{% endif %}>
-          Add Config
-        </option>
-        {% for name in available_configs %}
-        <option value="{{ name }}" {% if name == page_info['config_name'] %}selected{% endif %}>
-          {{ name }}
-        </option>
-        {% endfor %}
-      </select>
-      <label for="configSelector">Select or Add Config</label>
-    </div>
+<div class="form-floating mb-2">
+  <select id="configSelector" name="configSelector" class="form-select" onchange="toggleConfigInput(this)">
+    <option value="add_config" {% if page_info['config_name'] not in available_configs %}selected{% endif %}>
+      Add Config
+    </option>
+    {% for name in available_configs %}
+    <option value="{{ name }}" {% if name==page_info['config_name'] %}selected{% endif %}>
+      {{ name }}
+    </option>
+    {% endfor %}
+  </select>
+  <label for="configSelector">Select or Add Config</label>
+</div>
 
-    <div id="newConfigInput" class="form-floating mb-2" style="display: {% if page_info['config_name'] not in available_configs %}block{% else %}none{% endif %};">
-      <input
-        type="text"
-        id="newConfigName"
-        name="newConfigName"
-        class="form-control"
-        placeholder="Enter a new config name"
-        value="{% if page_info['config_name'] not in available_configs %}{{ page_info['config_name'] }}{% else %}{{ page_info['new_config_name'] }}{% endif %}"
-      >
-      <label for="newConfigName">New Config Name</label>
-    </div>
+<div id="newConfigInput" class="form-floating mb-2"
+  style="display: {% if page_info['config_name'] not in available_configs %}block{% else %}none{% endif %};">
+  <input type="text" id="newConfigName" name="newConfigName" class="form-control" placeholder="Enter a new config name"
+    value="{% if page_info['config_name'] not in available_configs %}{{ page_info['config_name'] }}{% else %}{{ page_info['new_config_name'] }}{% endif %}">
+  <label for="newConfigName">New Config Name</label>
+</div>
+</div>
+<form>
+  <div class="form-floating mb-2">
+    <!-- Reset (Start Over) Button -->
+    <button type="button" class="btn btn-warning" id="resetConfigButton" disabled data-bs-toggle="modal"
+      data-bs-target="#configActionModal" data-action="reset">
+      <i class="bi bi-arrow-clockwise"></i> Reset
+    </button>
+
+    <!-- Delete Config Button -->
+    <button type="button" class="btn btn-danger ms-2" id="deleteConfigButton" disabled data-bs-toggle="modal"
+      data-bs-target="#configActionModal" data-action="delete">
+      <i class="bi bi-trash"></i> Delete
+    </button>
   </div>
-  <form>
-    <div class="form-floating mb-2">
-        <!-- Reset (Start Over) Button -->
-        <button type="button" class="btn btn-warning" id="resetConfigButton" disabled data-bs-toggle="modal" data-bs-target="#configActionModal" data-action="reset">
-          <i class="bi bi-arrow-clockwise"></i> Reset
-        </button>
-
-        <!-- Delete Config Button -->
-        <button type="button" class="btn btn-danger ms-2" id="deleteConfigButton" disabled data-bs-toggle="modal" data-bs-target="#configActionModal" data-action="delete">
-          <i class="bi bi-trash"></i> Delete
-        </button>
-    </div>
-  </form>
+</form>
 </form>
 <!-- Toast Notifications -->
 <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toastContainer"></div>
 
 <!-- Reset and Delete Confirmation Modal -->
-<div class="modal fade" id="configActionModal" tabindex="-1" aria-labelledby="configActionModalLabel" aria-hidden="true">
+<div class="modal fade" id="configActionModal" tabindex="-1" aria-labelledby="configActionModalLabel"
+  aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title text-danger" id="configActionModalLabel">Confirm Action</h5> <!-- Ensure ID is correct -->
+        <h5 class="modal-title text-danger" id="configActionModalLabel">Confirm Action</h5>
+        <!-- Ensure ID is correct -->
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="configActionModalBody">

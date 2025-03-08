@@ -1,55 +1,73 @@
-  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{page_info['title']}} Section</h1>
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Completing the {{page_info['title']}} Section</h1>
+      </div>
+      <div class="modal-body">
+        <p>Welcome to Kometa Quickstart! This powerful tool is designed to streamline your workflow and enhance your
+          productivity. With just a few clicks, you'll be able to configure and customize your collections and overlays,
+          making your media server visually appealing. Dive in and discover the endless possibilities that Kometa has to
+          offer. Get ready to transform your media server!</p>
+
+        <p>Kometa is your ultimate solution for managing and enhancing your media server experience. Whether you're a
+          seasoned pro or just getting started, Kometa offers powerful features to help you organize your media
+          collections effortlessly. With Kometa, you can create stunning overlays, customize your media presentation,
+          and ensure your server stands out. Join the Kometa community today and take your media server to the next
+          level!</p>
+
+        <p>For more information, visit our <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/"
+            target="_blank">wiki</a>.</p>
+
+        <h5>Example Collections After Using Kometa Quickstart</h5>
+        <div class="text-center">
+          <img
+            src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/install/images/wt-default-collections.png"
+            alt="Kometa Default Collections" class="img-fluid">
         </div>
-        <div class="modal-body">
-            <p>Welcome to Kometa Quickstart! This powerful tool is designed to streamline your workflow and enhance your productivity. With just a few clicks, you'll be able to configure and customize your collections and overlays, making your media server visually appealing. Dive in and discover the endless possibilities that Kometa has to offer. Get ready to transform your media server!</p>
 
-            <p>Kometa is your ultimate solution for managing and enhancing your media server experience. Whether you're a seasoned pro or just getting started, Kometa offers powerful features to help you organize your media collections effortlessly. With Kometa, you can create stunning overlays, customize your media presentation, and ensure your server stands out. Join the Kometa community today and take your media server to the next level!</p>
-
-            <p>For more information, visit our <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/" target="_blank">wiki</a>.</p>
-
-            <h5>Example Collections After Using Kometa Quickstart</h5>
-            <div class="text-center">
-                <img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/install/images/wt-default-collections.png" alt="Kometa Default Collections" class="img-fluid">
-            </div>
-
-            <h5>Example Ribbon Overlays</h5>
-            <div class="text-center">
-                <img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/ribbon.png" alt="Kometa Ribbon" class="img-fluid">
-            </div>
+        <h5>Example Ribbon Overlays</h5>
+        <div class="text-center">
+          <img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/images/ribbon.png"
+            alt="Kometa Ribbon" class="img-fluid">
+        </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-        </div>
         </div>
       </div>
     </div>
   </div>
-  <div class="modal fade" id="Modal2" tabindex="-1" aria-labelledby="Modal2Label" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h1 class="modal-title fs-5" id="Modal2Label">Setting up Test Libraries</h1>
-        </div>
-        <div class="modal-body">
-            <p>While going through this process, Kometa is going to load the items in your library, create some collections, and apply some overlays. If you have a large library, this will be very time-consuming.</p>
-            <p>For learning and testing, it is advisable to create a small test library of a reasonable size—preferably below a thousand items.</p>
+</div>
+<div class="modal fade" id="Modal2" tabindex="-1" aria-labelledby="Modal2Label" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="Modal2Label">Setting up Test Libraries</h1>
+      </div>
+      <div class="modal-body">
+        <p>While going through this process, Kometa is going to load the items in your library, create some collections,
+          and apply some overlays. If you have a large library, this will be very time-consuming.</p>
+        <p>For learning and testing, it is advisable to create a small test library of a reasonable size—preferably
+          below a thousand items.</p>
 
-            <p>You may choose to take advantage of the <a href="https://github.com/chazlarson/plex-test-libraries" target="_blank">plex-test-libraries repository</a>, which contains pre-made videos to use when following this guide.</p>
+        <p>You may choose to take advantage of the <a href="https://github.com/chazlarson/plex-test-libraries"
+            target="_blank">plex-test-libraries repository</a>, which contains pre-made videos to use when following
+          this guide.</p>
 
-            <p>Using the plex-test-libraries repository will ensure enough variety in media to populate the example collections. Running some of these default collections against a library of a few thousand movies can take hours, and for iterative testing, it's useful to have something that will run in a few minutes or seconds.</p>
+        <p>Using the plex-test-libraries repository will ensure enough variety in media to populate the example
+          collections. Running some of these default collections against a library of a few thousand movies can take
+          hours, and for iterative testing, it's useful to have something that will run in a few minutes or seconds.</p>
 
-            <p>To clone the repository, navigate to your desired storage location and run:</p>
-            <pre><code>git clone https://github.com/chazlarson/plex-test-libraries</code>
+        <p>To clone the repository, navigate to your desired storage location and run:</p>
+        <pre><code>git clone https://github.com/chazlarson/plex-test-libraries</code>
 <code>cd plex-test-libraries</code></pre>
 
-            <p>You should now have two folders, <code>test_tv_lib</code> and <code>test_movie_lib</code>. Mount each of these as a library within Plex and use them in Quickstart.</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-        </div>
+        <p>You should now have two folders, <code>test_tv_lib</code> and <code>test_movie_lib</code>. Mount each of
+          these as a library within Plex and use them in Quickstart.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
+</div>

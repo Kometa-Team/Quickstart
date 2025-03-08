@@ -1,71 +1,81 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <div class="input-group mb-2">
-      <span class="input-group-text" id="trakt_client_id_text" style="width: 141px; justify-content: space-between;">
-        Client ID
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Enter your Trakt Client ID here.">
-          <i class="bi bi-info-circle-fill"></i>
-        </span>
-      </span>
-      <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id"
-             value="{{ data['trakt']['client_id'] | string if data['trakt']['client_id'] and 'Enter Trakt Client ID' not in data['trakt']['client_id'] | string else '' }}"
-             aria-describedby="trakt_client_id_text" oninput="updateTraktURL(this)">
-    </div>
-    <div class="input-group mb-2">
-      <span class="input-group-text" id="trakt_client_secret_text" style="width: 141px; justify-content: space-between;">
-        Client Secret
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Enter your Trakt Client Secret here.">
-          <i class="bi bi-info-circle-fill"></i>
-        </span>
-      </span>
-      <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret"
-             value="{{ data['trakt']['client_secret'] | string if data['trakt']['client_secret'] and 'Enter Trakt Client Secret' not in data['trakt']['client_secret'] | string else '' }}"
-             title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)" aria-describedby="trakt_client_secret_text">
-      <button class="btn btn-outline-secondary" id="toggleClientSecretVisibility" type="button">
-        <i class="fas fa-eye"></i>
-      </button>
-      <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">
-        Retrieve PIN <i id="spinner_retrieve" class="spinner-border spinner-border-sm" style="display:none;"></i>
-      </button>
-    </div>
+<div class="input-group mb-2">
+  <span class="input-group-text" id="trakt_client_id_text" style="width: 141px; justify-content: space-between;">
+    Client ID
+    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Enter your Trakt Client ID here.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="text" class="form-control" id="trakt_client_id" name="trakt_client_id"
+    value="{{ data['trakt']['client_id'] | string if data['trakt']['client_id'] and 'Enter Trakt Client ID' not in data['trakt']['client_id'] | string else '' }}"
+    aria-describedby="trakt_client_id_text" oninput="updateTraktURL(this)">
+</div>
+<div class="input-group mb-2">
+  <span class="input-group-text" id="trakt_client_secret_text" style="width: 141px; justify-content: space-between;">
+    Client Secret
+    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Enter your Trakt Client Secret here.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="password" class="form-control" id="trakt_client_secret" name="trakt_client_secret"
+    value="{{ data['trakt']['client_secret'] | string if data['trakt']['client_secret'] and 'Enter Trakt Client Secret' not in data['trakt']['client_secret'] | string else '' }}"
+    title="Client Secret" aria-label="Client Secret" oninput="updateTraktURL(this)"
+    aria-describedby="trakt_client_secret_text">
+  <button class="btn btn-outline-secondary" id="toggleClientSecretVisibility" type="button">
+    <i class="fas fa-eye"></i>
+  </button>
+  <button class="btn btn-success" id="trakt_open_url" type="button" onclick="openTraktUrl()">
+    Retrieve PIN <i id="spinner_retrieve" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
 
 
 
-    <input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
-    <div class="form-text mb-2" id="pin-info">
-      When you click "Retrieve PIN" above, you will be taken to a Trakt web page. Log in and allow your application access to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br>
-    </div>
-    <div class="form-text mb-2" id="pin-info">
-      If you have a PIN you generated in the last few minutes, enter it below.<br>
-    </div>
-    <div class="input-group mb-2" id="urlField">
-      <span class="input-group-text" id="trakt_pin_text" style="width: 141px; justify-content: space-between;">
-        Trakt PIN
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Enter the PIN received from Trakt for authentication.">
-          <i class="bi bi-info-circle-fill"></i>
-        </span>
-      </span>
-      <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin" oninput="checkPinField(this)" aria-describedby="trakt_pin_text">
-      <button class="btn btn-success" type="button" id="validate_trakt_pin">
-        Validate PIN <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-      </button>
-    </div>
+<input type="hidden" class="form-control" id="trakt_url" name="trakt_url" readonly oninput="checkURLStart(this)">
+<div class="form-text mb-2" id="pin-info">
+  When you click "Retrieve PIN" above, you will be taken to a Trakt web page. Log in and allow your application access
+  to your Trakt account. Trakt will display a PIN. Copy that PIN and paste it into the "Trakt PIN" field below.<br>
+</div>
+<div class="form-text mb-2" id="pin-info">
+  If you have a PIN you generated in the last few minutes, enter it below.<br>
+</div>
+<div class="input-group mb-2" id="urlField">
+  <span class="input-group-text" id="trakt_pin_text" style="width: 141px; justify-content: space-between;">
+    Trakt PIN
+    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Enter the PIN received from Trakt for authentication.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="text" class="form-control" placeholder="Trakt PIN" aria-label="Trakt PIN" id="trakt_pin" name="trakt_pin"
+    oninput="checkPinField(this)" aria-describedby="trakt_pin_text">
+  <button class="btn btn-success" type="button" id="validate_trakt_pin">
+    Validate PIN <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
 
-    <input type="hidden" class="form-control" id="access_token" name="access_token" value="{{ data['trakt']['authorization']['access_token'] }}" readonly>
-    <input type="hidden" class="form-control" id="token_type" name="token_type" value="{{ data['trakt']['authorization']['token_type'] }}" readonly>
-    <input type="hidden" class="form-control" id="expires_in" name="expires_in" value="{{ data['trakt']['authorization']['expires_in'] }}" readonly>
-    <input type="hidden" class="form-control" id="refresh_token" name="refresh_token" value="{{ data['trakt']['authorization']['refresh_token'] }}" readonly>
-    <input type="hidden" class="form-control" id="scope" name="scope" value="{{ data['trakt']['authorization']['scope'] }}" readonly>
-    <input type="hidden" class="form-control" id="created_at" name="created_at" value="{{ data['trakt']['authorization']['created_at'] }}" readonly>
-    <div class="form-floating" style="display:none;">
-      <input type="text" class="form-control" id="trakt_validated" name="trakt_validated" value="{{ data['validated'] }}" title="">
-      <label for="trakt_validated">Trakt Validated</label>
-    </div>
-    <div id="statusMessage" class="status-message mb-2"></div>
-  </div>
+<input type="hidden" class="form-control" id="access_token" name="access_token"
+  value="{{ data['trakt']['authorization']['access_token'] }}" readonly>
+<input type="hidden" class="form-control" id="token_type" name="token_type"
+  value="{{ data['trakt']['authorization']['token_type'] }}" readonly>
+<input type="hidden" class="form-control" id="expires_in" name="expires_in"
+  value="{{ data['trakt']['authorization']['expires_in'] }}" readonly>
+<input type="hidden" class="form-control" id="refresh_token" name="refresh_token"
+  value="{{ data['trakt']['authorization']['refresh_token'] }}" readonly>
+<input type="hidden" class="form-control" id="scope" name="scope" value="{{ data['trakt']['authorization']['scope'] }}"
+  readonly>
+<input type="hidden" class="form-control" id="created_at" name="created_at"
+  value="{{ data['trakt']['authorization']['created_at'] }}" readonly>
+<div class="form-floating" style="display:none;">
+  <input type="text" class="form-control" id="trakt_validated" name="trakt_validated" value="{{ data['validated'] }}"
+    title="">
+  <label for="trakt_validated">Trakt Validated</label>
+</div>
+<div id="statusMessage" class="status-message mb-2"></div>
+</div>
 </form>
 {% endblock %}

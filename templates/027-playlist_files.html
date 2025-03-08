@@ -1,40 +1,42 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
+<div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
+</div>
+<div id="libraries-container" style="display: none;">
+  <div class="form-floating mb-2">
+    <label for="libraries">Select Movie Libraries:</label><br><br>
+    {% set movie_libraries = plex_data.get('tmp_movie_libraries', []) | sort %}
+    {% for library in movie_libraries %}
+    <div class="form-check form-switch">
+      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
+      <label class="form-check-label" for="library_{{ library }}">{{ library }}</label>
     </div>
-    <div id="libraries-container" style="display: none;">
-      <div class="form-floating mb-2">
-        <label for="libraries">Select Movie Libraries:</label><br><br>
-        {% set movie_libraries = plex_data.get('tmp_movie_libraries', []) | sort %}
-        {% for library in movie_libraries %}
-            <div class="form-check form-switch">
-                <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
-                <label class="form-check-label" for="library_{{ library }}">{{ library }}</label>
-            </div>
-        {% endfor %}
-      </div>
-      <div class="form-floating mb-2">
-        <label for="libraries">Select Show Libraries:</label><br><br>
-        {% set show_libraries = plex_data.get('tmp_show_libraries', []) | sort %}
-        {% for library in show_libraries %}
-            <div class="form-check form-switch">
-                <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
-                <label class="form-check-label" for="library_{{ library }}">{{ library }}</label>
-            </div>
-        {% endfor %}
-      </div>
-      <div class="form-floating" style="display:none;">
-        <input type="text" class="form-control" id="libraries" name="libraries" value="{{ data['playlist_files']['libraries'] }}" readonly>
-        <label for="libraries">Selected Libraries</label>
-      </div>
-    </div>
-    <div class="input-group form-floating"></div>
-    <div class="form-floating" style="display:none;">
-      <input type="text" class="form-control" id="playlist_files_validated" name="playlist_files_validated" value="{{ data['validated'] }}" title="" readonly>
-      <label for="playlist_files_validated">Playlist Validated</label>
-    </div>
-    <div id="statusMessage" class="status-message mb-2"></div>
+    {% endfor %}
   </div>
+  <div class="form-floating mb-2">
+    <label for="libraries">Select Show Libraries:</label><br><br>
+    {% set show_libraries = plex_data.get('tmp_show_libraries', []) | sort %}
+    {% for library in show_libraries %}
+    <div class="form-check form-switch">
+      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
+      <label class="form-check-label" for="library_{{ library }}">{{ library }}</label>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-floating" style="display:none;">
+    <input type="text" class="form-control" id="libraries" name="libraries"
+      value="{{ data['playlist_files']['libraries'] }}" readonly>
+    <label for="libraries">Selected Libraries</label>
+  </div>
+</div>
+<div class="input-group form-floating"></div>
+<div class="form-floating" style="display:none;">
+  <input type="text" class="form-control" id="playlist_files_validated" name="playlist_files_validated"
+    value="{{ data['validated'] }}" title="" readonly>
+  <label for="playlist_files_validated">Playlist Validated</label>
+</div>
+<div id="statusMessage" class="status-message mb-2"></div>
+</div>
 </form>
 {% endblock %}

@@ -1,104 +1,107 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="anidb_client_text" style="width: 233px; justify-content: space-between;">
-            AniDB Client
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Enter the AniDB client name or identifier">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="anidb_client_text" style="width: 233px; justify-content: space-between;">
+        AniDB Client
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enter the AniDB client name or identifier">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="text" class="form-control" id="anidb_client" name="anidb_client"
-               value="{{ data['anidb']['client'] | string if data['anidb']['client'] and 'Enter AniDB Client' not in data['anidb']['client'] | string else '' }}"
-               aria-describedby="anidb_client_text">
-    </div>
+    </span>
+    <input type="text" class="form-control" id="anidb_client" name="anidb_client"
+        value="{{ data['anidb']['client'] | string if data['anidb']['client'] and 'Enter AniDB Client' not in data['anidb']['client'] | string else '' }}"
+        aria-describedby="anidb_client_text">
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="anidb_version_text" style="width: 233px; justify-content: space-between;">
-            Client Version
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Enter the version of your AniDB client">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="anidb_version_text" style="width: 233px; justify-content: space-between;">
+        Client Version
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enter the version of your AniDB client">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="number" class="form-control" id="anidb_version" name="anidb_version"
-               value="{{ data['anidb']['version'] }}" min="1" max="1"
-               aria-describedby="anidb_version_text">
-    </div>
+    </span>
+    <input type="number" class="form-control" id="anidb_version" name="anidb_version"
+        value="{{ data['anidb']['version'] }}" min="1" max="1" aria-describedby="anidb_version_text">
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="anidb_username_text" style="width: 233px; justify-content: space-between;">
-            Username
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Enter your AniDB username">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="anidb_username_text" style="width: 233px; justify-content: space-between;">
+        Username
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enter your AniDB username">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="text" class="form-control" id="anidb_username" name="anidb_username"
-               value="{{ data['anidb']['username'] | string if data['anidb']['username'] and 'Enter AniDB Username' not in data['anidb']['username'] | string else '' }}"
-               aria-describedby="anidb_username_text">
-    </div>
+    </span>
+    <input type="text" class="form-control" id="anidb_username" name="anidb_username"
+        value="{{ data['anidb']['username'] | string if data['anidb']['username'] and 'Enter AniDB Username' not in data['anidb']['username'] | string else '' }}"
+        aria-describedby="anidb_username_text">
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="anidb_password_text" style="width: 233px; justify-content: space-between;">
-            AniDB Password
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Enter your AniDB password">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="anidb_password_text" style="width: 233px; justify-content: space-between;">
+        AniDB Password
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enter your AniDB password">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="password" class="form-control" id="anidb_password" name="anidb_password"
-               value="{{ data['anidb']['password'] | string if data['anidb']['password'] and 'Enter AniDB Password' not in data['anidb']['password'] | string else '' }}"
-               aria-describedby="anidb_password_text">
-        <button class="btn btn-outline-secondary" id="togglePasswordVisibility" type="button">
-            <i class="fas fa-eye"></i>
-        </button>
-        <button class="btn btn-success" id="validateButton" type="button">
-            Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-        </button>
-    </div>
+    </span>
+    <input type="password" class="form-control" id="anidb_password" name="anidb_password"
+        value="{{ data['anidb']['password'] | string if data['anidb']['password'] and 'Enter AniDB Password' not in data['anidb']['password'] | string else '' }}"
+        aria-describedby="anidb_password_text">
+    <button class="btn btn-outline-secondary" id="togglePasswordVisibility" type="button">
+        <i class="fas fa-eye"></i>
+    </button>
+    <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+    </button>
+</div>
 
 
-    <div class="input-group mb-2" style="display:none;">
-        <span class="input-group-text" id="anidb_validated_text" style="width: 233px; justify-content: space-between;">
-            AniDB Validated
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;" title="Indicates whether the AniDB account is validated">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2" style="display:none;">
+    <span class="input-group-text" id="anidb_validated_text" style="width: 233px; justify-content: space-between;">
+        AniDB Validated
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Indicates whether the AniDB account is validated">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="text" class="form-control" id="anidb_validated" name="anidb_validated" value="{{ data['validated'] }}"
-               aria-describedby="anidb_validated_text">
-    </div>
+    </span>
+    <input type="text" class="form-control" id="anidb_validated" name="anidb_validated" value="{{ data['validated'] }}"
+        aria-describedby="anidb_validated_text">
+</div>
 
-    <div id="statusMessage" class="status-message mb-2"></div>
+<div id="statusMessage" class="status-message mb-2"></div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="anidb_language_text" style="width: 233px; justify-content: space-between;">
-            Language
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;" title="Select the preferred language for AniDB data">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="anidb_language_text" style="width: 233px; justify-content: space-between;">
+        Language
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Select the preferred language for AniDB data">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <select class="form-select" id="anidb_language" name="anidb_language" aria-describedby="anidb_language_text">
-            <option value="">Select Language</option>
-            {% for code, language in data['iso_639_1_languages'] %}
-                <option value="{{ code }}" {% if code == data['anidb']['language'] %}selected{% endif %}>{{ language }}</option>
-            {% endfor %}
-        </select>
-    </div>
+    </span>
+    <select class="form-select" id="anidb_language" name="anidb_language" aria-describedby="anidb_language_text">
+        <option value="">Select Language</option>
+        {% for code, language in data['iso_639_1_languages'] %}
+        <option value="{{ code }}" {% if code==data['anidb']['language'] %}selected{% endif %}>{{ language }}</option>
+        {% endfor %}
+    </select>
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="anidb_cache_expiration_text" style="width: 233px; justify-content: space-between;">
-            Cache Expiration (in days)
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;" title="Set the number of days after which the cache expires">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="anidb_cache_expiration_text"
+        style="width: 233px; justify-content: space-between;">
+        Cache Expiration (in days)
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Set the number of days after which the cache expires">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="number" class="form-control" id="anidb_cache_expiration" name="anidb_cache_expiration"
-               value="{{ data['anidb']['cache_expiration'] }}" min="0" aria-describedby="anidb_cache_expiration_text">
-    </div>
+    </span>
+    <input type="number" class="form-control" id="anidb_cache_expiration" name="anidb_cache_expiration"
+        value="{{ data['anidb']['cache_expiration'] }}" min="0" aria-describedby="anidb_cache_expiration_text">
+</div>
 
-  </div>
+</div>
 </form>
 {% endblock %}

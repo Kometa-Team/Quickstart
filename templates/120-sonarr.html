@@ -1,49 +1,51 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="sonarr_url_text" style="width: 171px; justify-content: space-between;">
-            Sonarr URL
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="You must provide the direct address you use to access your Sonarr server, including the port.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="sonarr_url_text" style="width: 171px; justify-content: space-between;">
+        Sonarr URL
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="You must provide the direct address you use to access your Sonarr server, including the port.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="text" class="form-control" id="sonarr_url" name="sonarr_url"
-            value="{{ data['sonarr']['url'] | string if data['sonarr']['url'] and 'http://192.168.1.12:8989' not in data['sonarr']['url'] | string else '' }}"
-            aria-describedby="sonarr_url_text">
-    </div>
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="sonarr_token_text" style="width: 171px; justify-content: space-between;">
-            Sonarr API Key
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Enter your Sonarr API Key to allow Quickstart to authenticate with Sonarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+    </span>
+    <input type="text" class="form-control" id="sonarr_url" name="sonarr_url"
+        value="{{ data['sonarr']['url'] | string if data['sonarr']['url'] and 'http://192.168.1.12:8989' not in data['sonarr']['url'] | string else '' }}"
+        aria-describedby="sonarr_url_text">
+</div>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="sonarr_token_text" style="width: 171px; justify-content: space-between;">
+        Sonarr API Key
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enter your Sonarr API Key to allow Quickstart to authenticate with Sonarr.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="password" class="form-control" id="sonarr_token" name="sonarr_token"
-               value="{{ data['sonarr']['token'] | string if data['sonarr']['token'] and 'Enter Sonarr API Key' not in data['sonarr']['token'] | string else '' }}"
-               aria-describedby="sonarr_token_text">
-        <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button">
-            <i class="fas fa-eye"></i>
-        </button>
-        <button class="btn btn-success" id="validateButton" type="button">
-            Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-        </button>
-    </div>
+    </span>
+    <input type="password" class="form-control" id="sonarr_token" name="sonarr_token"
+        value="{{ data['sonarr']['token'] | string if data['sonarr']['token'] and 'Enter Sonarr API Key' not in data['sonarr']['token'] | string else '' }}"
+        aria-describedby="sonarr_token_text">
+    <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button">
+        <i class="fas fa-eye"></i>
+    </button>
+    <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+    </button>
+</div>
 
 
-    <div class="form-floating" style="display:none;">
-      <input type="text" class="form-control" id="sonarr_validated" name="sonarr_validated" value="{{ data['validated'] }}" title="">
-      <label for="sonarr_validated">Sonarr Validated</label>
-    </div>
-    <div id="statusMessage" class="status-message mb-2"></div>
+<div class="form-floating" style="display:none;">
+    <input type="text" class="form-control" id="sonarr_validated" name="sonarr_validated"
+        value="{{ data['validated'] }}" title="">
+    <label for="sonarr_validated">Sonarr Validated</label>
+</div>
+<div id="statusMessage" class="status-message mb-2"></div>
 
 <div class="input-group mb-2">
-    <span class="input-group-text" id="sonarr_root_folder_path_text" style="width: 171px; justify-content: space-between;">
+    <span class="input-group-text" id="sonarr_root_folder_path_text"
+        style="width: 171px; justify-content: space-between;">
         Root Folder Path
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Select the root folder where Sonarr should store TV shows.">
+            title="Select the root folder where Sonarr should store TV shows.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
@@ -56,64 +58,74 @@
     <span class="input-group-text" id="sonarr_tag_text" style="width: 170px; justify-content: space-between;">
         Tag
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Enter a tag that will be applied to all movies added through Radarr.">
+            title="Enter a tag that will be applied to all movies added through Radarr.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
-    <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag"
-           value="{{ data['sonarr']['tag'] }}" aria-describedby="sonarr_tag_text">
+    <input type="text" class="form-control" id="sonarr_tag" name="sonarr_tag" value="{{ data['sonarr']['tag'] }}"
+        aria-describedby="sonarr_tag_text">
 </div>
 
 <div class="input-group mb-2">
     <span class="input-group-text" id="sonarr_sonarr_path_text" style="width: 170px; justify-content: space-between;">
         Sonarr Path
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Specify the path Sonarr should use when adding movies.">
+            title="Specify the path Sonarr should use when adding movies.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
     <input type="text" class="form-control" id="sonarr_sonarr_path" name="sonarr_sonarr_path"
-           value="{{ data['sonarr']['sonarr_path'] }}" aria-describedby="sonarr_sonarr_path_text">
+        value="{{ data['sonarr']['sonarr_path'] }}" aria-describedby="sonarr_sonarr_path_text">
 </div>
 
 <div class="input-group mb-2">
     <span class="input-group-text" id="sonarr_plex_path_text" style="width: 170px; justify-content: space-between;">
         Plex Path
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Set the path where Plex will find the movies added through Sonarr.">
+            title="Set the path where Plex will find the movies added through Sonarr.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
     <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path"
-           value="{{ data['sonarr']['plex_path'] }}" aria-describedby="sonarr_plex_path_text">
+        value="{{ data['sonarr']['plex_path'] }}" aria-describedby="sonarr_plex_path_text">
 </div>
 
 <div class="input-group mb-2">
     <span class="input-group-text" id="sonarr_monitor_text" style="width: 171px; justify-content: space-between;">
         Monitor
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Choose how Sonarr monitors episodes when adding a show.">
+            title="Choose how Sonarr monitors episodes when adding a show.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
     <select class="form-select" id="sonarr_monitor" name="sonarr_monitor">
-        <option value="" {% if data['sonarr']['monitor'] == '' %}selected{% endif %} disabled>Select Monitor Preference</option>
-        <option value="all" {% if data['sonarr']['monitor'] == 'all' %}selected{% endif %}>all (default) - monitor all episodes except specials</option>
-        <option value="none" {% if data['sonarr']['monitor'] == 'none' %}selected{% endif %}>none - Do not monitor any episodes</option>
-        <option value="future" {% if data['sonarr']['monitor'] == 'future' %}selected{% endif %}>future - monitor episodes that have not aired yet</option>
-        <option value="missing" {% if data['sonarr']['monitor'] == 'missing' %}selected{% endif %}>missing - monitor episodes that do not have files or have not aired yet</option>
-        <option value="existing" {% if data['sonarr']['monitor'] == 'existing' %}selected{% endif %}>existing - monitor episodes that have files or have not aired yet</option>
-        <option value="pilot" {% if data['sonarr']['monitor'] == 'pilot' %}selected{% endif %}>pilot - monitor the first episode, all others will be ignored</option>
-        <option value="first" {% if data['sonarr']['monitor'] == 'first' %}selected{% endif %}>first - monitor all episodes of the first season only</option>
-        <option value="latest" {% if data['sonarr']['monitor'] == 'latest' %}selected{% endif %}>latest - monitor all episodes of the latest season and future seasons</option>
+        <option value="" {% if data['sonarr']['monitor']=='' %}selected{% endif %} disabled>Select Monitor Preference
+        </option>
+        <option value="all" {% if data['sonarr']['monitor']=='all' %}selected{% endif %}>all (default) - monitor all
+            episodes except specials</option>
+        <option value="none" {% if data['sonarr']['monitor']=='none' %}selected{% endif %}>none - Do not monitor any
+            episodes</option>
+        <option value="future" {% if data['sonarr']['monitor']=='future' %}selected{% endif %}>future - monitor episodes
+            that have not aired yet</option>
+        <option value="missing" {% if data['sonarr']['monitor']=='missing' %}selected{% endif %}>missing - monitor
+            episodes that do not have files or have not aired yet</option>
+        <option value="existing" {% if data['sonarr']['monitor']=='existing' %}selected{% endif %}>existing - monitor
+            episodes that have files or have not aired yet</option>
+        <option value="pilot" {% if data['sonarr']['monitor']=='pilot' %}selected{% endif %}>pilot - monitor the first
+            episode, all others will be ignored</option>
+        <option value="first" {% if data['sonarr']['monitor']=='first' %}selected{% endif %}>first - monitor all
+            episodes of the first season only</option>
+        <option value="latest" {% if data['sonarr']['monitor']=='latest' %}selected{% endif %}>latest - monitor all
+            episodes of the latest season and future seasons</option>
     </select>
 </div>
 
 <div class="input-group mb-2">
-    <span class="input-group-text" id="sonarr_quality_profile_text" style="width: 171px; justify-content: space-between;">
+    <span class="input-group-text" id="sonarr_quality_profile_text"
+        style="width: 171px; justify-content: space-between;">
         Quality Profile
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Choose the quality profile that determines the preferred resolution and format for TV shows.">
+            title="Choose the quality profile that determines the preferred resolution and format for TV shows.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
@@ -123,10 +135,11 @@
 </div>
 
 <div class="input-group mb-2">
-    <span class="input-group-text" id="sonarr_language_profile_text" style="width: 171px; justify-content: space-between;">
+    <span class="input-group-text" id="sonarr_language_profile_text"
+        style="width: 171px; justify-content: space-between;">
         Language Profile
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Select the preferred language for downloaded TV shows.">
+            title="Select the preferred language for downloaded TV shows.">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
@@ -139,105 +152,117 @@
     <span class="input-group-text" id="sonarr_series_type_text" style="width: 171px; justify-content: space-between;">
         Series Type
         <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Choose the type of TV series (Standard, Daily, or Anime).">
+            title="Choose the type of TV series (Standard, Daily, or Anime).">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </span>
     <select class="form-select" id="sonarr_series_type" name="sonarr_series_type">
-        <option value="" {% if data['sonarr']['series_type'] == '' %}selected{% endif %} disabled>Select Series Type</option>
-        <option value="standard" {% if data['sonarr']['series_type'] == 'standard' %}selected{% endif %}>Standard (default)</option>
-        <option value="daily" {% if data['sonarr']['series_type'] == 'daily' %}selected{% endif %}>Daily</option>
-        <option value="anime" {% if data['sonarr']['series_type'] == 'anime' %}selected{% endif %}>Anime</option>
+        <option value="" {% if data['sonarr']['series_type']=='' %}selected{% endif %} disabled>Select Series Type
+        </option>
+        <option value="standard" {% if data['sonarr']['series_type']=='standard' %}selected{% endif %}>Standard
+            (default)</option>
+        <option value="daily" {% if data['sonarr']['series_type']=='daily' %}selected{% endif %}>Daily</option>
+        <option value="anime" {% if data['sonarr']['series_type']=='anime' %}selected{% endif %}>Anime</option>
     </select>
 </div>
 
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="sonarr_search" id="sonarr_search" value="true" {% if data['sonarr']['search']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="sonarr_search" value="false">
-        <label class="form-check-label" for="sonarr_search">Search for media when added
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Automatically searches for episodes when added.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="sonarr_season_folder" id="sonarr_season_folder" value="true" {% if data['sonarr']['season_folder']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="sonarr_season_folder" value="false">
-        <label class="form-check-label" for="sonarr_season_folder">Use the Season Folder option when adding new media
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Enables the 'Season Folder' setting when adding new media.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="sonarr_add_missing" id="sonarr_add_missing" value="true" {% if data['sonarr']['add_missing']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="sonarr_add_missing" value="false">
-        <label class="form-check-label" for="sonarr_add_missing">Add missing media from collections
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Adds missing TV shows from collections to Sonarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="sonarr_add_existing" id="sonarr_add_existing" value="true" {% if data['sonarr']['add_existing']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="sonarr_add_existing" value="false">
-        <label class="form-check-label" for="sonarr_add_existing">Add existing media from collections
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Adds already available TV shows from collections to Sonarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="sonarr_upgrade_existing" id="sonarr_upgrade_existing" value="true" {% if data['sonarr']['upgrade_existing']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="sonarr_upgrade_existing" value="false">
-        <label class="form-check-label" for="sonarr_upgrade_existing">Upgrade existing media from collections to the Quality Profile
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Upgrades existing TV shows to match the assigned quality profile.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="sonarr_monitor_existing" id="sonarr_monitor_existing" value="true" {% if data['sonarr']['monitor_existing']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="sonarr_monitor_existing" value="false">
-        <label class="form-check-label" for="sonarr_monitor_existing">Set existing media from collections to monitored
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Marks all existing media from collections as 'monitored' in Sonarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="sonarr_cutoff_search" id="sonarr_cutoff_search" value="true" {% if data['sonarr']['cutoff_search']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="sonarr_cutoff_search" value="false">
-        <label class="form-check-label" for="sonarr_cutoff_search">Start search for cutoff unmet episodes when adding new media
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Searches for better quality versions if the current episode doesn't meet the cutoff.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="sonarr_ignore_cache" id="sonarr_ignore_cache" value="true" {% if data['sonarr']['ignore_cache']|string|lower == 'true' %}checked{% endif %}>
-        <input type="hidden" name="sonarr_ignore_cache" value="false">
-        <label class="form-check-label" for="sonarr_ignore_cache">Ignore Kometa's cache when adding media
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Forces Sonarr to ignore Kometa's cache when adding media, ensuring the latest data is fetched.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="sonarr_search" id="sonarr_search" value="true" {% if
+        data['sonarr']['search']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="sonarr_search" value="false">
+    <label class="form-check-label" for="sonarr_search">Search for media when added
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Automatically searches for episodes when added.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="sonarr_season_folder" id="sonarr_season_folder" value="true"
+        {% if data['sonarr']['season_folder']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="sonarr_season_folder" value="false">
+    <label class="form-check-label" for="sonarr_season_folder">Use the Season Folder option when adding new media
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enables the 'Season Folder' setting when adding new media.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="sonarr_add_missing" id="sonarr_add_missing" value="true" {% if
+        data['sonarr']['add_missing']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="sonarr_add_missing" value="false">
+    <label class="form-check-label" for="sonarr_add_missing">Add missing media from collections
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Adds missing TV shows from collections to Sonarr.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="sonarr_add_existing" id="sonarr_add_existing" value="true" {%
+        if data['sonarr']['add_existing']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="sonarr_add_existing" value="false">
+    <label class="form-check-label" for="sonarr_add_existing">Add existing media from collections
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Adds already available TV shows from collections to Sonarr.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="sonarr_upgrade_existing" id="sonarr_upgrade_existing"
+        value="true" {% if data['sonarr']['upgrade_existing']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="sonarr_upgrade_existing" value="false">
+    <label class="form-check-label" for="sonarr_upgrade_existing">Upgrade existing media from collections to the Quality
+        Profile
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Upgrades existing TV shows to match the assigned quality profile.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="sonarr_monitor_existing" id="sonarr_monitor_existing"
+        value="true" {% if data['sonarr']['monitor_existing']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="sonarr_monitor_existing" value="false">
+    <label class="form-check-label" for="sonarr_monitor_existing">Set existing media from collections to monitored
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Marks all existing media from collections as 'monitored' in Sonarr.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="sonarr_cutoff_search" id="sonarr_cutoff_search" value="true"
+        {% if data['sonarr']['cutoff_search']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="sonarr_cutoff_search" value="false">
+    <label class="form-check-label" for="sonarr_cutoff_search">Start search for cutoff unmet episodes when adding new
+        media
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Searches for better quality versions if the current episode doesn't meet the cutoff.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="sonarr_ignore_cache" id="sonarr_ignore_cache" value="true" {%
+        if data['sonarr']['ignore_cache']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="sonarr_ignore_cache" value="false">
+    <label class="form-check-label" for="sonarr_ignore_cache">Ignore Kometa's cache when adding media
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Forces Sonarr to ignore Kometa's cache when adding media, ensuring the latest data is fetched.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
 
-  </div>
+</div>
 </form>
 <script>
-  // Pass the initial values from Jinja to JavaScript
-  const initialSonarrRootFolderPath = "{{ data['sonarr']['root_folder_path'] }}";
-  const initialSonarrQualityProfile = "{{ data['sonarr']['quality_profile'] }}";
-  const initialSonarrLanguageProfile = "{{ data['sonarr']['language_profile'] }}";
+    // Pass the initial values from Jinja to JavaScript
+    const initialSonarrRootFolderPath = "{{ data['sonarr']['root_folder_path'] }}"
+    const initialSonarrQualityProfile = "{{ data['sonarr']['quality_profile'] }}"
+    const initialSonarrLanguageProfile = "{{ data['sonarr']['language_profile'] }}";
 </script>
 {% endblock %}

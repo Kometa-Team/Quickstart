@@ -12,21 +12,21 @@
 
         <!-- Previous Button (Hidden on Start Page) -->
         {% if page_info['template_name'] != '001-start' %}
-          <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('prev')"
-            title="Previous Step: {{ page_info['prev_page_name'] }}"
-            formaction="/step/{{ page_info['prev_page'] }}">
-            <i id="prev-spinner-icon" class="fa fa-arrow-left"></i> Previous
-          </button>
+        <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('prev')"
+          title="Previous Step: {{ page_info['prev_page_name'] }}" formaction="/step/{{ page_info['prev_page'] }}">
+          <i id="prev-spinner-icon" class="fa fa-arrow-left"></i> Previous
+        </button>
         {% endif %}
 
         <!-- Jump-To Dropdown -->
         <div class="dropdown">
-          <button class="btn nav-button dropdown-toggle" id="stepDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+          <button class="btn nav-button dropdown-toggle" id="stepDropdown" data-bs-toggle="dropdown"
+            aria-expanded="false">
             <i class="fa fa-list"></i>
             Jump to: {% if page_info['template_name'] == '900-final' %}
-              {{ page_info['prev_page_name'] }}
+            {{ page_info['prev_page_name'] }}
             {% else %}
-              {{ page_info['next_page_name'] }}
+            {{ page_info['next_page_name'] }}
             {% endif %}
           </button>
 
@@ -38,36 +38,41 @@
               </div>
               <small class="text-muted">{{ page_info['progress'] }}% Completed</small>
             </li>
-            <li><hr class="dropdown-divider"></li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
 
             <!-- Navigation Items -->
             {% for file, name in template_list %}
-              {% if name == 'Final Validation' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
-              <li>
-                <a class="dropdown-item {% if file.rsplit('.', 1)[0] == page_info['template_name'] %} active {% endif %}"
-                   href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">
-                  {{ name }}
-                </a>
-              </li>
-              {% if name == 'Start' %}
-                <li><hr class="dropdown-divider"></li>
-              {% endif %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item {% if file.rsplit('.', 1)[0] == page_info['template_name'] %} active {% endif %}"
+                href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">
+                {{ name }}
+              </a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
             {% endfor %}
           </ul>
         </div>
 
         <!-- Next Button (Hidden on Final Page) -->
         {% if page_info['template_name'] != '900-final' %}
-          <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
-            title="Next Step: {{ page_info['next_page_name'] }}"
-            formaction="/step/{{ page_info['next_page'] }}">
-            Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
-          </button>
+        <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
+          title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
+          Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+        </button>
         {% endif %}
 
       </div>
     </nav>
 
-<hr class="hr">
+    <hr class="hr">

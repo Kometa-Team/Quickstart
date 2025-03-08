@@ -42,26 +42,26 @@
 
 <!-- Movie Library Settings -->
 {% for library in movie_libraries %}
-    <div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
-        <div class="card-header bg-dark">
-            <h4 class="mb-0">{{ library.name }} (Movie)</h4> <!-- Library name in header -->
-        </div>
-        <div class="card-body">
-            {% include "partials/_movie_library_settings.html" %}
-        </div>
-    </div>
+<div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
+  <div class="card-header bg-dark">
+    <h4 class="mb-0">{{ library.name }} (Movie)</h4> <!-- Library name in header -->
+  </div>
+  <div class="card-body">
+    {% include "partials/_movie_library_settings.html" %}
+  </div>
+</div>
 {% endfor %}
 
 <!-- Show Library Settings -->
 {% for library in show_libraries %}
-    <div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
-        <div class="card-header bg-dark">
-            <h4 class="mb-0">{{ library.name }} (TV Show)</h4> <!-- Library name in header -->
-        </div>
-        <div class="card-body">
-            {% include "partials/_show_library_settings.html" %}
-        </div>
-    </div>
+<div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
+  <div class="card-header bg-dark">
+    <h4 class="mb-0">{{ library.name }} (TV Show)</h4> <!-- Library name in header -->
+  </div>
+  <div class="card-body">
+    {% include "partials/_show_library_settings.html" %}
+  </div>
+</div>
 {% endfor %}
 
 <!-- Hidden Inputs for Tracking -->

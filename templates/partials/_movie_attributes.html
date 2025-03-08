@@ -107,12 +107,13 @@
             <select class="form-select" id="{{ library.id }}-attribute_reset_overlays"
               name="{{ library.id }}-attribute_reset_overlays"
               aria-describedby="{{ library.id }}-attribute_reset_overlays_text">
-              <option value="" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="" %}selected{% endif %}>
+              <option value="" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="" %}selected{%
+                endif %}>
                 None</option>
-              <option value="tmdb" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="tmdb" %}selected{%
-                endif %}>TMDb</option>
-              <option value="plex" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="plex" %}selected{%
-                endif %}>Plex</option>
+              <option value="tmdb" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="tmdb"
+                %}selected{% endif %}>TMDb</option>
+              <option value="plex" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="plex"
+                %}selected{% endif %}>Plex</option>
             </select>
           </div>
         </div>

@@ -1,202 +1,214 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_url_text" style="width: 170px; justify-content: space-between;">
-            Radarr URL
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Enter your Radarr URL including the port. If Radarr is running in Docker, ensure it's on the same network as Kometa.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="radarr_url_text" style="width: 170px; justify-content: space-between;">
+        Radarr URL
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enter your Radarr URL including the port. If Radarr is running in Docker, ensure it's on the same network as Kometa.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="text" class="form-control" id="radarr_url" name="radarr_url"
-               value="{{ data['radarr']['url'] | string if data['radarr']['url'] and 'http://192.168.1.12:7878' not in data['radarr']['url'] | string else '' }}"
-               aria-describedby="radarr_url_text">
-    </div>
+    </span>
+    <input type="text" class="form-control" id="radarr_url" name="radarr_url"
+        value="{{ data['radarr']['url'] | string if data['radarr']['url'] and 'http://192.168.1.12:7878' not in data['radarr']['url'] | string else '' }}"
+        aria-describedby="radarr_url_text">
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_token_text" style="width: 170px; justify-content: space-between;">
-            Radarr API Key
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Enter your Radarr API Key to allow Quickstart to authenticate with Radarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="radarr_token_text" style="width: 170px; justify-content: space-between;">
+        Radarr API Key
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enter your Radarr API Key to allow Quickstart to authenticate with Radarr.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="password" class="form-control" id="radarr_token" name="radarr_token"
-               value="{{ data['radarr']['token'] | string if data['radarr']['token'] and 'Enter Radarr API Key' not in data['radarr']['token'] | string else '' }}"
-               aria-describedby="radarr_token_text">
-        <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button">
-            <i class="fas fa-eye"></i>
-        </button>
-        <button class="btn btn-success" id="validateButton" type="button">
-            Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-        </button>
-    </div>
+    </span>
+    <input type="password" class="form-control" id="radarr_token" name="radarr_token"
+        value="{{ data['radarr']['token'] | string if data['radarr']['token'] and 'Enter Radarr API Key' not in data['radarr']['token'] | string else '' }}"
+        aria-describedby="radarr_token_text">
+    <button class="btn btn-outline-secondary" id="toggleApikeyVisibility" type="button">
+        <i class="fas fa-eye"></i>
+    </button>
+    <button class="btn btn-success" id="validateButton" type="button">
+        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+    </button>
+</div>
 
 
-    <div class="form-floating" style="display:none;">
-      <input type="text" class="form-control" id="radarr_validated" name="radarr_validated"
+<div class="form-floating" style="display:none;">
+    <input type="text" class="form-control" id="radarr_validated" name="radarr_validated"
         value="{{ data['validated'] }}" title="">
-      <label for="radarr_validated">Radarr Validated</label>
-    </div>
-    <div id="statusMessage" class="status-message mb-2"></div>
+    <label for="radarr_validated">Radarr Validated</label>
+</div>
+<div id="statusMessage" class="status-message mb-2"></div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_root_folder_path_text" style="width: 170px; justify-content: space-between;">
-            Root Folder Path
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Select the root folder where Radarr should store movies.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="radarr_root_folder_path_text"
+        style="width: 170px; justify-content: space-between;">
+        Root Folder Path
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Select the root folder where Radarr should store movies.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <select class="form-select" id="radarr_root_folder_path" name="radarr_root_folder_path">
-            <option value="">Select Root Folder Path</option>
-        </select>
-    </div>
+    </span>
+    <select class="form-select" id="radarr_root_folder_path" name="radarr_root_folder_path">
+        <option value="">Select Root Folder Path</option>
+    </select>
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_quality_profile_text" style="width: 170px; justify-content: space-between;">
-            Quality Profile
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Choose the quality profile that determines the preferred resolution and format for movies.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="radarr_quality_profile_text"
+        style="width: 170px; justify-content: space-between;">
+        Quality Profile
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Choose the quality profile that determines the preferred resolution and format for movies.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <select class="form-select" id="radarr_quality_profile" name="radarr_quality_profile">
-            <option value="">Select Quality Profile</option>
-        </select>
-    </div>
+    </span>
+    <select class="form-select" id="radarr_quality_profile" name="radarr_quality_profile">
+        <option value="">Select Quality Profile</option>
+    </select>
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_availability_text" style="width: 170px; justify-content: space-between;">
-            Availability
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Select when Radarr should consider a movie available for downloading.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="radarr_availability_text" style="width: 170px; justify-content: space-between;">
+        Availability
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Select when Radarr should consider a movie available for downloading.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <select class="form-select" id="radarr_availability" name="radarr_availability">
-            <option value="" selected disabled>Select Availability</option>
-            <option value="announced" {% if data['radarr']['availability']=='announced' %}selected{% endif %}>Announced (default)</option>
-            <option value="cinemas" {% if data['radarr']['availability']=='cinemas' %}selected{% endif %}>Cinemas</option>
-            <option value="released" {% if data['radarr']['availability']=='released' %}selected{% endif %}>Released</option>
-            <option value="db" {% if data['radarr']['availability']=='db' %}selected{% endif %}>DB</option>
-        </select>
-    </div>
+    </span>
+    <select class="form-select" id="radarr_availability" name="radarr_availability">
+        <option value="" selected disabled>Select Availability</option>
+        <option value="announced" {% if data['radarr']['availability']=='announced' %}selected{% endif %}>Announced
+            (default)</option>
+        <option value="cinemas" {% if data['radarr']['availability']=='cinemas' %}selected{% endif %}>Cinemas</option>
+        <option value="released" {% if data['radarr']['availability']=='released' %}selected{% endif %}>Released
+        </option>
+        <option value="db" {% if data['radarr']['availability']=='db' %}selected{% endif %}>DB</option>
+    </select>
+</div>
 
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_tag_text" style="width: 170px; justify-content: space-between;">
-            Tag
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Enter a tag that will be applied to all movies added through Radarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="radarr_tag_text" style="width: 170px; justify-content: space-between;">
+        Tag
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enter a tag that will be applied to all movies added through Radarr.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="text" class="form-control" id="radarr_tag" name="radarr_tag"
-               value="{{ data['radarr']['tag'] }}" aria-describedby="radarr_tag_text">
-    </div>
+    </span>
+    <input type="text" class="form-control" id="radarr_tag" name="radarr_tag" value="{{ data['radarr']['tag'] }}"
+        aria-describedby="radarr_tag_text">
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_radarr_path_text" style="width: 170px; justify-content: space-between;">
-            Radarr Path
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Specify the path Radarr should use when adding movies.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="radarr_radarr_path_text" style="width: 170px; justify-content: space-between;">
+        Radarr Path
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Specify the path Radarr should use when adding movies.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path"
-               value="{{ data['radarr']['radarr_path'] }}" aria-describedby="radarr_radarr_path_text">
-    </div>
+    </span>
+    <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path"
+        value="{{ data['radarr']['radarr_path'] }}" aria-describedby="radarr_radarr_path_text">
+</div>
 
-    <div class="input-group mb-2">
-        <span class="input-group-text" id="radarr_plex_path_text" style="width: 170px; justify-content: space-between;">
-            Plex Path
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                  title="Set the path where Plex will find the movies added through Radarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
+<div class="input-group mb-2">
+    <span class="input-group-text" id="radarr_plex_path_text" style="width: 170px; justify-content: space-between;">
+        Plex Path
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Set the path where Plex will find the movies added through Radarr.">
+            <i class="bi bi-info-circle-fill"></i>
         </span>
-        <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path"
-               value="{{ data['radarr']['plex_path'] }}" aria-describedby="radarr_plex_path_text">
-    </div>
+    </span>
+    <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path"
+        value="{{ data['radarr']['plex_path'] }}" aria-describedby="radarr_plex_path_text">
+</div>
 
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="radarr_monitor" id="radarr_monitor" value="true" {% if data['radarr']['monitor']|string|lower=='true' %}checked{% endif %}>
-        <input type="hidden" name="radarr_monitor" value="false">
-        <label class="form-check-label" for="radarr_monitor">Monitor media when added
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Enables monitoring of newly added media in Radarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="radarr_search" id="radarr_search" value="true" {% if data['radarr']['search']|string|lower=='true' %}checked{% endif %}>
-        <input type="hidden" name="radarr_search" value="false">
-        <label class="form-check-label" for="radarr_search">Search media when added
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Automatically searches for media when added.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="radarr_add_missing" id="radarr_add_missing" value="true" {% if data['radarr']['add_missing']|string|lower=='true' %}checked{% endif %}>
-        <input type="hidden" name="radarr_add_missing" value="false">
-        <label class="form-check-label" for="radarr_add_missing">Add missing media from collections
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Adds missing movies from collections to Radarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="radarr_add_existing" id="radarr_add_existing" value="true" {% if data['radarr']['add_existing']|string|lower=='true' %}checked{% endif %}>
-        <input type="hidden" name="radarr_add_existing" value="false">
-        <label class="form-check-label" for="radarr_add_existing">Add existing media from collections
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Adds already available movies from collections to Radarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="radarr_upgrade_existing" id="radarr_upgrade_existing" value="true" {% if data['radarr']['upgrade_existing']|string|lower=='true' %}checked{% endif %}>
-        <input type="hidden" name="radarr_upgrade_existing" value="false">
-        <label class="form-check-label" for="radarr_upgrade_existing">Upgrade existing media from collections to the Quality Profile
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Attempts to upgrade existing media to match the assigned quality profile.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="radarr_monitor_existing" id="radarr_monitor_existing" value="true" {% if data['radarr']['monitor_existing']|string|lower=='true' %}checked{% endif %}>
-        <input type="hidden" name="radarr_monitor_existing" value="false">
-        <label class="form-check-label" for="radarr_monitor_existing">Set existing media from collections to monitored
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Changes all existing media from collections to 'monitored' in Radarr.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
-    <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" name="radarr_ignore_cache" id="radarr_ignore_cache" value="true" {% if data['radarr']['ignore_cache']|string|lower=='true' %}checked{% endif %}>
-        <input type="hidden" name="radarr_ignore_cache" value="false">
-        <label class="form-check-label" for="radarr_ignore_cache">Ignore Kometa's cache when adding media
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-                title="Forces Radarr to ignore Kometa's cache when adding media, ensuring the latest data is fetched.">
-                <i class="bi bi-info-circle-fill"></i>
-            </span>
-        </label>
-    </div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="radarr_monitor" id="radarr_monitor" value="true" {% if
+        data['radarr']['monitor']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="radarr_monitor" value="false">
+    <label class="form-check-label" for="radarr_monitor">Monitor media when added
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Enables monitoring of newly added media in Radarr.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="radarr_search" id="radarr_search" value="true" {% if
+        data['radarr']['search']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="radarr_search" value="false">
+    <label class="form-check-label" for="radarr_search">Search media when added
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Automatically searches for media when added.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="radarr_add_missing" id="radarr_add_missing" value="true" {% if
+        data['radarr']['add_missing']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="radarr_add_missing" value="false">
+    <label class="form-check-label" for="radarr_add_missing">Add missing media from collections
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Adds missing movies from collections to Radarr.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="radarr_add_existing" id="radarr_add_existing" value="true" {%
+        if data['radarr']['add_existing']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="radarr_add_existing" value="false">
+    <label class="form-check-label" for="radarr_add_existing">Add existing media from collections
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Adds already available movies from collections to Radarr.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="radarr_upgrade_existing" id="radarr_upgrade_existing"
+        value="true" {% if data['radarr']['upgrade_existing']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="radarr_upgrade_existing" value="false">
+    <label class="form-check-label" for="radarr_upgrade_existing">Upgrade existing media from collections to the Quality
+        Profile
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Attempts to upgrade existing media to match the assigned quality profile.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="radarr_monitor_existing" id="radarr_monitor_existing"
+        value="true" {% if data['radarr']['monitor_existing']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="radarr_monitor_existing" value="false">
+    <label class="form-check-label" for="radarr_monitor_existing">Set existing media from collections to monitored
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Changes all existing media from collections to 'monitored' in Radarr.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" name="radarr_ignore_cache" id="radarr_ignore_cache" value="true" {%
+        if data['radarr']['ignore_cache']|string|lower=='true' %}checked{% endif %}>
+    <input type="hidden" name="radarr_ignore_cache" value="false">
+    <label class="form-check-label" for="radarr_ignore_cache">Ignore Kometa's cache when adding media
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="Forces Radarr to ignore Kometa's cache when adding media, ensuring the latest data is fetched.">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+</div>
 
-  </div>
+</div>
 </form>
 <script>
-  // Pass the initial values from Jinja to JavaScript
-  const initialRadarrRootFolderPath = "{{ data['radarr']['root_folder_path'] }}";
-  const initialRadarrQualityProfile = "{{ data['radarr']['quality_profile'] }}";
+    // Pass the initial values from Jinja to JavaScript
+    const initialRadarrRootFolderPath = "{{ data['radarr']['root_folder_path'] }}"
+    const initialRadarrQualityProfile = "{{ data['radarr']['quality_profile'] }}";
 </script>
 {% endblock %}

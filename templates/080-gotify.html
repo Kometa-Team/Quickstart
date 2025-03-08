@@ -1,45 +1,46 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-    <div class="input-group mb-2">
-      <span class="input-group-text" id="gotify_url_text" style="width: 152px; justify-content: space-between;">
-        Gotify URL
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Enter your Gotify URL to allow Quickstart to communicate with Gotify.">
-          <i class="bi bi-info-circle-fill"></i>
-        </span>
-      </span>
-      <input type="text" class="form-control" id="gotify_url" name="gotify_url"
-             value="{{ data['gotify']['url'] | string if data['gotify']['url'] and 'http://192.168.1.12:80' not in data['gotify']['url'] | string else '' }}"
-             title="Gotify URL" aria-describedby="gotify_url_text">
-    </div>
+<div class="input-group mb-2">
+  <span class="input-group-text" id="gotify_url_text" style="width: 152px; justify-content: space-between;">
+    Gotify URL
+    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Enter your Gotify URL to allow Quickstart to communicate with Gotify.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="text" class="form-control" id="gotify_url" name="gotify_url"
+    value="{{ data['gotify']['url'] | string if data['gotify']['url'] and 'http://192.168.1.12:80' not in data['gotify']['url'] | string else '' }}"
+    title="Gotify URL" aria-describedby="gotify_url_text">
+</div>
 
-    <div class="input-group mb-2">
-      <span class="input-group-text" id="gotify_token_text" style="width: 152px; justify-content: space-between;">
-        Gotify API Key
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Enter your Gotify API Key to allow Quickstart to authenticate with Gotify.">
-          <i class="bi bi-info-circle-fill"></i>
-        </span>
-      </span>
-      <input type="password" class="form-control" id="gotify_token" name="gotify_token"
-             value="{{ data['gotify']['token'] | string if data['gotify']['token'] and 'Enter Gotify Token' not in data['gotify']['token'] | string else '' }}"
-             title="Gotify API Key" aria-describedby="gotify_token_text">
-      <button class="btn btn-secondary" id="toggleTokenVisibility" type="button">
-        <i class="fas fa-eye"></i>
-      </button>
-        <button class="btn btn-success" id="validateButton" type="button">
-        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
-        </button>
-    </div>
+<div class="input-group mb-2">
+  <span class="input-group-text" id="gotify_token_text" style="width: 152px; justify-content: space-between;">
+    Gotify API Key
+    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Enter your Gotify API Key to allow Quickstart to authenticate with Gotify.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <input type="password" class="form-control" id="gotify_token" name="gotify_token"
+    value="{{ data['gotify']['token'] | string if data['gotify']['token'] and 'Enter Gotify Token' not in data['gotify']['token'] | string else '' }}"
+    title="Gotify API Key" aria-describedby="gotify_token_text">
+  <button class="btn btn-secondary" id="toggleTokenVisibility" type="button">
+    <i class="fas fa-eye"></i>
+  </button>
+  <button class="btn btn-success" id="validateButton" type="button">
+    Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
 
 
 
-    <div class="form-floating" style="display:none;">
-      <input type="text" class="form-control" id="gotify_validated" name="gotify_validated" value="{{ data['validated'] }}" title="">
-      <label for="gotify_validated">Gotify Validated</label>
-    </div>
-    <div id="statusMessage" class="status-message mb-2"></div>
-  </div>
+<div class="form-floating" style="display:none;">
+  <input type="text" class="form-control" id="gotify_validated" name="gotify_validated" value="{{ data['validated'] }}"
+    title="">
+  <label for="gotify_validated">Gotify Validated</label>
+</div>
+<div id="statusMessage" class="status-message mb-2"></div>
+</div>
 </form>
 {% endblock %}
