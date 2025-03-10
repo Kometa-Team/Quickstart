@@ -164,8 +164,9 @@ def build_libraries_section(
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Entry for {library_name}: {entry}")
 
-        if entry:  # ✅ Ensure empty entries aren't added
-            libraries_section[library_name] = entry
+        # ✅ Apply `reorder_library_section()` before storing the entry
+        if entry:
+            libraries_section[library_name] = reorder_library_section(entry)
 
     # Process movie libraries
     for library_key, library_name in movie_libraries.items():
