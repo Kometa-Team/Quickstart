@@ -95,7 +95,8 @@ def build_libraries_section(
     ):
         """Processes a single library and adds valid data to the output."""
         entry = {}
-        print(f"[DEBUG] Processing Library: {library_key} -> {library_name}")
+        if app.config["QS_DEBUG"]:
+            print(f"[DEBUG] Processing Library: {library_key} -> {library_name}")
 
         # ✅ Process Collections
         collection_key = extract_library_name(library_key)
@@ -160,7 +161,8 @@ def build_libraries_section(
             if reset_overlays not in [None, "None", ""]:
                 entry["reset_overlays"] = reset_overlays
 
-        print(f"[DEBUG] Entry for {library_name}: {entry}")
+        if app.config["QS_DEBUG"]:
+            print(f"[DEBUG] Entry for {library_name}: {entry}")
 
         if entry:  # ✅ Ensure empty entries aren't added
             libraries_section[library_name] = entry
@@ -189,12 +191,15 @@ def build_libraries_section(
             show_templates,
         )
 
-    print("[DEBUG] Generated YAML Output:\n")
-    print(
-        yaml.dump(
-            {"libraries": libraries_section}, default_flow_style=False, sort_keys=False
+    if app.config["QS_DEBUG"]:
+        print("[DEBUG] Generated YAML Output:\n")
+        print(
+            yaml.dump(
+                {"libraries": libraries_section},
+                default_flow_style=False,
+                sort_keys=False,
+            )
         )
-    )
 
     return {"libraries": libraries_section}
 
