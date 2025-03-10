@@ -25,6 +25,12 @@ HASH_FILE = os.path.join(
 )  # Stores previous file hashes
 
 
+def extract_library_name(key):
+    """Extracts the actual library name from the key format."""
+    match = re.match(r"(mov|sho)-library_([^-]+(?:-[^-]+)*)-", key)
+    return match.group(2) if match else None
+
+
 def get_pyfiglet_fonts():
     """Retrieve available PyFiglet fonts from static/fonts, sorted with custom order."""
     fonts_dir = "static/fonts"

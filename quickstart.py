@@ -610,18 +610,22 @@ def clear_data(name):
 
 
 def normalize_id(name, existing_ids):
-    """Convert library names to safe and unique HTML IDs."""
-    # Replace spaces and special characters with hyphens
-    safe_id = re.sub(r"[^a-zA-Z0-9_-]", "-", name).lower()
+    """Convert library names to safe and unique HTML IDs while preserving Unicode."""
 
-    # Ensure ID is unique by appending a counter if needed
+    # Step 1: Remove unwanted characters (only keep letters, numbers, - and _)
+    safe_id = re.sub(r"[^\w\u3040-\u30FF\u4E00-\u9FFF\uAC00-\uD7A3-]", "", name)
+
+    # Step 2: Replace spaces with dashes
+    safe_id = safe_id.replace(" ", "-").lower()
+
+    # Step 3: Ensure ID is unique by appending a counter if needed
     base_id = safe_id
     counter = 1
     while safe_id in existing_ids:
         safe_id = f"{base_id}-{counter}"
         counter += 1
 
-    existing_ids.add(safe_id)  # Store to prevent future duplicates
+    existing_ids.add(safe_id)  # Store it to prevent future duplicates
     return safe_id
 
 

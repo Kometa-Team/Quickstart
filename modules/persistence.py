@@ -170,7 +170,8 @@ def update_stored_plex_libraries(
     try:
         # ✅ Fetch existing settings from DB before updating
         settings_before = retrieve_settings(name)
-        print("[DEBUG] Settings before update:", settings_before)
+        if app.config["QS_DEBUG"]:
+            print("[DEBUG] Settings before update:", settings_before)
 
         if "plex" not in settings_before:
             settings_before["plex"] = {}
@@ -197,9 +198,10 @@ def update_stored_plex_libraries(
             validated_before  # 🔥 Prevents losing validation state
         )
 
-        print(
-            f"[DEBUG] Sending updated Plex settings to save_settings(): {settings_formatted}"
-        )
+        if app.config["QS_DEBUG"]:
+            print(
+                f"[DEBUG] Sending updated Plex settings to save_settings(): {settings_formatted}"
+            )
 
         # ✅ Corrected function call (use "010-plex" as the raw_source)
         save_settings(
@@ -208,7 +210,8 @@ def update_stored_plex_libraries(
 
         # ✅ Fetch updated settings from DB after updating
         settings_after = retrieve_settings(name)
-        print("[DEBUG] Settings after update:", settings_after)
+        if app.config["QS_DEBUG"]:
+            print("[DEBUG] Settings after update:", settings_after)
 
     except Exception as e:
         print(f"[ERROR] Failed to update Plex libraries in DB: {e}")

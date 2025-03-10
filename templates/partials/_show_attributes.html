@@ -27,12 +27,11 @@
             </label>
             <select class="form-select" id="{{ library.id }}-attribute_use_separators"
               name="{{ library.id }}-template_variables[use_separators]">
-              <option value="none" {% if data['libraries'].get(library.id ~ '-template_variables' ,
-                {}).get('use_separators', None) in ['false', None] %}selected{% endif %}>
-                None
-              </option>
-              {% set selected_style = data['libraries'].get(library.id ~ '-template_variables', {}).get('sep_style', '')
-              %}
+              <option value="none" {% if data['libraries'].get(library.id ~ '-template_variables[use_separators]'
+                , 'none' ) in ['false', None] %} selected {% endif %}>None</option>
+
+              {% set selected_style = data['libraries'].get(library.id ~ '-template_variables[use_separators]', '') %}
+
               {% for style, value in {
               "Amethyst": "amethyst", "Aqua": "aqua", "Blue": "blue", "Brown": "stb",
               "Forest": "forest", "Fuchsia": "fuchsia", "Gold": "gold", "Gray": "gray",
@@ -41,7 +40,7 @@
               "Red": "red", "Rust": "rust", "Salmon": "salmon", "Sand": "sand",
               "Tan": "tan"
               }.items() %}
-              <option value="{{ value }}" {% if selected_style==value %}selected{% endif %}>
+              <option value="{{ value }}" {% if selected_style==value %} selected {% endif %}>
                 {{ style }}
               </option>
               {% endfor %}
@@ -110,12 +109,12 @@
             <select class="form-select" id="{{ library.id }}-attribute_reset_overlays"
               name="{{ library.id }}-attribute_reset_overlays"
               aria-describedby="{{ library.id }}-attribute_reset_overlays_text">
-              <option value="" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="" %}selected{%
+              <option value="" {% if data['libraries'].get(library.id ~ '-attribute_reset_overlays' )=="" %}selected{%
                 endif %}>
                 None</option>
-              <option value="tmdb" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="tmdb"
+              <option value="tmdb" {% if data['libraries'].get(library.id ~'-attribute_reset_overlays')=="tmdb"
                 %}selected{% endif %}>TMDb</option>
-              <option value="plex" {% if data['libraries'].get('{{ library.id }}-attribute_reset_overlays')=="plex"
+              <option value="plex" {% if data['libraries'].get(library.id ~ '-attribute_reset_overlays' )=="plex"
                 %}selected{% endif %}>Plex</option>
             </select>
           </div>
