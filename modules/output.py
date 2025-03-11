@@ -27,10 +27,6 @@ from .helpers import (
     extract_library_name,
     STRING_FIELDS,
 )
-                                 
-                      
-               
- 
 
 
 def add_border_to_ascii_art(art):
@@ -122,15 +118,31 @@ def build_libraries_section(
         # ✅ Process Overlays
         overlay_key = extract_library_name(library_key)
         if overlay_key and overlay_key in overlays:
-            overlay_files = [
-                {
-                    "default": key.split(
-                        f"{library_type}-library_{overlay_key}-overlay_"
-                    )[-1]
-                }
-                for key, selected in overlays[overlay_key].items()
-                if selected is True
-            ]
+            overlay_files = []
+            for key, value in overlays[
+                overlay_key
+            ].items():  # ✅ Only iterate relevant overlays
+                if isinstance(value, bool) and value:  # ✅ Boolean overlays
+                    overlay_files.append(
+                        {
+                            "default": key.split(
+                                f"{library_type}-library_{overlay_key}-overlay_"
+                            )[-1]
+                        }
+                    )
+                elif isinstance(value, str) and value:  # ✅ String-based overlays
+                    if (
+                        value.lower() == "commonsense"
+                    ):  # ✅ Special Case for commonsense
+                        overlay_files.append(
+                            {"default": "commonsense"}  # No content_rating_ prefix
+                        )
+                    else:
+                        overlay_files.append(
+                            {
+                                "default": f"content_rating_{value}"  # Normal content ratings
+                            }
+                        )
             if overlay_files:
                 entry["overlay_files"] = overlay_files  # ✅ Ensures overlays are added
 
