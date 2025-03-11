@@ -1,13 +1,12 @@
 import hashlib
 import os
 import re
-import requests
 import subprocess
 import time
-from flask import current_app as app
 from pathlib import Path
-from PIL import Image, ImageDraw
 
+import requests
+from flask import current_app as app
 
 STRING_FIELDS = {
     "apikey",
@@ -16,13 +15,9 @@ STRING_FIELDS = {
     "password",
 }
 
-
 JSON_SCHEMA_DIR = "json-schema"
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
-
-HASH_FILE = os.path.join(
-    JSON_SCHEMA_DIR, "file_hashes.txt"
-)  # Stores previous file hashes
+HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")  # Stores previous file hashes
 
 
 def normalize_id(name, existing_ids):
@@ -80,8 +75,6 @@ def get_pyfiglet_fonts():
 
 def get_kometa_branch():
     """Fetch the correct branch (master or nightly)."""
-    from .helpers import check_for_update  # Prevent circular import
-
     version_info = check_for_update()
     return version_info.get("kometa_branch", "nightly")  # Default to nightly
 
@@ -221,20 +214,17 @@ def update_checker_loop(app):
             time.sleep(86400)  # Sleep for 24 hours
 
 
-def enforce_string_fields(data, string_fields):
+def enforce_string_fields(data, enforce=False):
     """
     Ensure specified fields in a dictionary are of type string.
     """
-    for key, value in data.items():
-        if isinstance(value, dict):
-            # Recursively enforce string fields in nested dictionaries
-            enforce_string_fields(value, string_fields)
-        elif isinstance(value, list):
-            # Process lists and ensure string enforcement within
-            data[key] = [str(item) if key in string_fields else item for item in value]
-        elif key in string_fields:
-            original_type = type(value)
-            data[key] = str(value)
+    if isinstance(data, dict):
+        for k, v in data.items():
+            data[k] = enforce_string_fields(v, enforce=k in STRING_FIELDS)
+    elif isinstance(data, list):
+        return [enforce_string_fields(v, enforce=enforce) for v in data]
+    elif enforce:
+        return str(data)
     return data
 
 
@@ -350,19 +340,15 @@ def user_visible_name(raw_name):
 
 def booler(thing):
     if isinstance(thing, str):
-        # Normalize the string
         thing = thing.lower().strip()
         if thing in ("true", "yes", "1"):
             return True
         elif thing in ("false", "no", "0"):
             return False
         else:
-            # Default to False for invalid strings
             if app.config["QS_DEBUG"]:
-                print(
-                    f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False."
-                )
-                return False
+                print(f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False.")
+            return False
     return bool(thing)
 
 

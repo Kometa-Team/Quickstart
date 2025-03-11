@@ -1,5 +1,19 @@
+import argparse
+import io
+import os
+import shutil
+import signal
+import sys
+import threading
 import webbrowser
+from io import BytesIO
+from threading import Thread
 
+import namesgenerator
+import requests
+from PIL import Image
+from cachelib.file import FileSystemCache
+from dotenv import load_dotenv
 from flask import (
     Flask,
     jsonify,
@@ -31,9 +45,35 @@ from dotenv import load_dotenv
 import namesgenerator
 from io import BytesIO
 from werkzeug.utils import secure_filename
+
+from flask_session import Session
 from waitress import serve
+from modules.database import reset_data, get_unique_config_names
+from modules.helpers import (
+    get_template_list,
+    get_bits,
+    get_menu_list,
+    redact_sensitive_data,
+    check_for_update,
+    update_checker_loop,
+    booler,
+    ensure_json_schema,
+    get_pyfiglet_fonts,
+    is_valid_aspect_ratio,
+    normalize_id,
+)
+from modules.output import build_config
+from modules.persistence import (
+    save_settings,
+    retrieve_settings,
+    check_minimum_settings,
+    flush_session_storage,
+    notification_systems_available,
+    get_stored_plex_credentials,
+    update_stored_plex_libraries,
+)
 
-
+from PIL import Image, ImageDraw
 from modules.validations import (
     validate_plex_server,
     validate_tautulli_server,
@@ -51,32 +91,6 @@ from modules.validations import (
     validate_mdblist_server,
     validate_notifiarr_server,
 )
-from modules.output import build_config
-from modules.helpers import (
-    get_template_list,
-    get_bits,
-    get_menu_list,
-    redact_sensitive_data,
-    check_for_update,
-    update_checker_loop,
-    booler,
-    ensure_json_schema,
-    get_pyfiglet_fonts,
-    is_valid_aspect_ratio,
-    normalize_id,
-)
-from modules.persistence import (
-    save_settings,
-    retrieve_settings,
-    check_minimum_settings,
-    flush_session_storage,
-    notification_systems_available,
-    get_stored_plex_credentials,
-    update_stored_plex_libraries,
-)
-from modules.database import reset_data, get_unique_config_names
-
-from PIL import Image, ImageDraw
 
 # Determine the base directory (where Quickstart.exe is located)
 if getattr(sys, "frozen", False):  # Running as PyInstaller EXE
@@ -157,6 +171,7 @@ def inject_version_info():
 
 # Use booler() for FLASK_DEBUG conversion
 app.config["QS_DEBUG"] = booler(os.getenv("QS_DEBUG", "0"))
+app.config["QUICKSTART_DOCKER"] = booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
 app.config["SESSION_CACHELIB"] = FileSystemCache(
@@ -166,6 +181,7 @@ app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
 server_session = Session(app)
+server_thread = None
 
 # Ensure json-schema files are up to date at startup
 ensure_json_schema()
@@ -1075,6 +1091,8 @@ def exit_action(icon):
 if __name__ == "__main__":
     if debug_mode:
         app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    elif app.config["QUICKSTART_DOCKER"]:
+        start_flask_app()
     else:
         image = Image.open(
             "favicon.ico"
@@ -1091,6 +1109,15 @@ if __name__ == "__main__":
                 pystray.MenuItem("Exit", exit_action),
             ),
         )
+        import pystray
+
+        image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
+
+        icon = pystray.Icon("Flask App", image, menu=pystray.Menu(
+            pystray.MenuItem("Open Quickstart", open_quickstart, default=True),
+            pystray.MenuItem("Quickstart GitHub", open_github),
+            pystray.MenuItem("Exit", exit_action),
+        ))
 
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True

@@ -1,5 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
+import argparse
 from PyInstaller.utils.hooks import collect_submodules
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--installer", type=str, default="Quickstart")
+options = parser.parse_args()
 
 hiddenimports = ['flask', 'flask.cli', 'werkzeug', 'pyfiglet', 'pyfiglet.fonts']
 hiddenimports += collect_submodules('flask')
@@ -27,7 +32,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='Quickstart',
+    name=options.installer,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

@@ -2,7 +2,7 @@ FROM python:3.11-slim-buster
 ARG BRANCH_NAME=master
 ENV BRANCH_NAME=${BRANCH_NAME}
 ENV TINI_VERSION=v0.19.0
-ENV KOMETA_DOCKER=True
+ENV QUICKSTART_DOCKER=True
 COPY requirements.txt requirements.txt
 RUN echo "**** install system packages ****" \
  && apt-get update \
