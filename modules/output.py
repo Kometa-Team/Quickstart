@@ -148,20 +148,33 @@ def build_libraries_section(
 
         # ✅ Process Template Variables
         template_vars = {}
-        template_data = templates.get(library_name, {})
+        template_key = extract_library_name(library_key)
+        template_data = templates.get(template_key, {})
 
-        if isinstance(template_data, dict):
-            use_separators = template_data.get(
-                f"{library_type}-library_{library_name}-template_variables[use_separators]",
-                False,
-            )
-            if use_separators not in [None, "None", ""]:
-                template_vars["use_separators"] = bool(use_separators)
+        # ✅ Step 1: Find the exact key that matches the pattern
+        sep_color_key = None
+        for key in template_data.keys():
+            if key.endswith("-template_variables[use_separators]") and key.startswith(
+                f"{library_type}-library_{template_key}"
+            ):
+                sep_color_key = key
+                break  # Stop once we find the matching key
 
-        if template_vars:
-            entry["template_variables"] = template_vars
+        # ✅ Step 2: Extract the value
+        sep_color = template_data.get(sep_color_key)
+
+        # ✅ Step 3: Apply logic if the key was found
+        if sep_color:
+            template_vars["use_separators"] = True
+            template_vars["sep_style"] = sep_color
         else:
+            template_vars["use_separators"] = False  # Default if key is missing
+
+        # ✅ Assign default values if nothing was found
+        if not template_vars:
             entry["template_variables"] = {"use_separators": False}
+        else:
+            entry["template_variables"] = template_vars
 
         # ✅ Process Attributes
         if library_name in attributes:
