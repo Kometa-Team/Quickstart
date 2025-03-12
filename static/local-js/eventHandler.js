@@ -81,6 +81,23 @@ const EventHandler = {
         }
       })
 
+      // ✅ Attach attribute_reset_overlays listeners
+      document.querySelectorAll("[id$='-attribute_reset_overlays']").forEach(dropdown => {
+        if (!dropdown.dataset.listenerAdded) {
+          console.log(`[DEBUG] Attaching change listener for Reset Overlays: ${dropdown.id}`)
+
+          dropdown.addEventListener('change', function () {
+            console.log(`[DEBUG] Reset Overlays dropdown changed: ${this.id} -> ${this.value}`)
+
+            // ✅ Ensure Highlights Update Properly
+            EventHandler.updateAccordionHighlights()
+            ValidationHandler.updateValidationState()
+          })
+
+          dropdown.dataset.listenerAdded = 'true'
+        }
+      })
+
       // ✅ Allow unselecting Content Rating radio buttons
       document.querySelectorAll('input[type="radio"][id*="-overlay_content_rating_"]').forEach(radio => {
         if (!radio.dataset.listenerAdded) {
