@@ -71,6 +71,7 @@ from modules.persistence import (
     notification_systems_available,
     get_stored_plex_credentials,
     update_stored_plex_libraries,
+    get_dummy_data,
 )
 
 from PIL import Image, ImageDraw
@@ -921,8 +922,30 @@ def refresh_plex_libraries():
             return jsonify({"valid": False, "error": "Missing config_name"}), 400
 
         plex_url, plex_token = get_stored_plex_credentials("010-plex")  # Fetch from DB
-        if not plex_url or not plex_token:
-            return jsonify({"valid": False, "error": "Plex credentials missing"}), 400
+
+        # ✅ Load default values from config.yml.template
+        dummy_plex_config = get_dummy_data(
+            "plex"
+        )  # Retrieves {"url": "...", "token": "..."}
+        default_plex_url = dummy_plex_config.get("url", "")
+        default_plex_token = dummy_plex_config.get("token", "")
+
+        # ✅ Exit early if the Plex credentials are still using default placeholder values
+        if (
+            not plex_url
+            or not plex_token
+            or plex_url == default_plex_url
+            or plex_token == default_plex_token
+        ):
+            return (
+                jsonify(
+                    {
+                        "valid": False,
+                        "error": "Plex credentials are using default placeholder values",
+                    }
+                ),
+                400,
+            )
 
         # ✅ Fetch latest libraries from Plex
         plex_response = validate_plex_server(
@@ -1111,13 +1134,21 @@ if __name__ == "__main__":
         )
         import pystray
 
-        image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
+        image = Image.open(
+            "favicon.ico"
+            if os.path.exists("favicon.ico")
+            else os.path.join("static", "favicon.ico")
+        )
 
-        icon = pystray.Icon("Flask App", image, menu=pystray.Menu(
-            pystray.MenuItem("Open Quickstart", open_quickstart, default=True),
-            pystray.MenuItem("Quickstart GitHub", open_github),
-            pystray.MenuItem("Exit", exit_action),
-        ))
+        icon = pystray.Icon(
+            "Flask App",
+            image,
+            menu=pystray.Menu(
+                pystray.MenuItem("Open Quickstart", open_quickstart, default=True),
+                pystray.MenuItem("Quickstart GitHub", open_github),
+                pystray.MenuItem("Exit", exit_action),
+            ),
+        )
 
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
