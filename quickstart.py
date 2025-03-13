@@ -34,7 +34,6 @@ import io
 import os
 import re
 import requests
-import pystray
 import shutil
 import signal
 import stat
@@ -1117,6 +1116,8 @@ if __name__ == "__main__":
     elif app.config["QUICKSTART_DOCKER"]:
         start_flask_app()
     else:
+        import pystray
+        
         image = Image.open(
             "favicon.ico"
             if os.path.exists("favicon.ico")
@@ -1132,7 +1133,6 @@ if __name__ == "__main__":
                 pystray.MenuItem("Exit", exit_action),
             ),
         )
-        import pystray
 
         image = Image.open(
             "favicon.ico"
