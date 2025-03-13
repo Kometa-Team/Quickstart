@@ -162,14 +162,7 @@ def get_remote_version(branch):
 
 
 def get_branch():
-    """Determine the current branch without requiring Git"""
-    # ✅ Option 1: Try GitPython
-    try:
-        return Repo(path=".").head.ref.name
-    except Exception:
-        pass  # Ignore errors if GitPython is missing
-
-    # ✅ Option 2: Use Environment Variable with Fallback
+    """Always use environment variable for branch detection."""
     return os.getenv("BRANCH_NAME", "master")
 
 

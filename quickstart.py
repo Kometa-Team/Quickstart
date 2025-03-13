@@ -61,8 +61,6 @@ from modules.helpers import (
     get_pyfiglet_fonts,
     is_valid_aspect_ratio,
     normalize_id,
-    get_branch,
-    get_version,
 )
 from modules.output import build_config
 from modules.persistence import (
@@ -151,7 +149,6 @@ GITHUB_DEVELOP_VERSION_URL = (
 basedir = os.path.abspath
 
 app = Flask(__name__)
-
 
 # Run version check at startup
 app.config["VERSION_CHECK"] = check_for_update()
