@@ -25,7 +25,7 @@ JSON_SCHEMA_DIR = "json-schema"
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 HASH_FILE = os.path.join(
     JSON_SCHEMA_DIR, "file_hashes.txt"
-)  # Stores previous file hashes
+)  # Store previous file hashes
 
 
 def normalize_id(name, existing_ids):
