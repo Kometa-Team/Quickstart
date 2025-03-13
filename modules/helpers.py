@@ -7,7 +7,11 @@ from pathlib import Path
 
 import requests
 from flask import current_app as app
-from git import Repo
+
+try:
+    from git import Repo
+except ImportError:
+    Repo = None  # Prevents errors if GitPython is missing
 
 
 STRING_FIELDS = {
@@ -162,7 +166,19 @@ def get_remote_version(branch):
 
 
 def get_branch():
-    """Always use environment variable for branch detection."""
+    """Determine the current branch with Docker support."""
+    # ✅ If running in Docker, use the environment variable
+    if os.getenv("QUICKSTART_DOCKER", "False").lower() in ["true", "1"]:
+        return os.getenv("BRANCH_NAME", "master")  # Use environment variable
+
+    # ✅ Otherwise, try GitPython (if available)
+    if Repo:
+        try:
+            return Repo(path=".").head.ref.name
+        except Exception:
+            pass  # Ignore errors if GitPython fails
+
+    # ✅ Fallback: Use BRANCH_NAME from the environment (for non-Docker cases)
     return os.getenv("BRANCH_NAME", "master")
 
 
