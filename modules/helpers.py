@@ -1,7 +1,6 @@
 import hashlib
 import os
 import re
-import subprocess
 import time
 from pathlib import Path
 

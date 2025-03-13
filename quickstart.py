@@ -26,72 +26,11 @@ from flask import (
     send_file,
     send_from_directory,
 )
-from flask_session import Session
-from cachelib.file import FileSystemCache
-
-import argparse
-import io
-import os
-import re
-import requests
-import pystray
-import shutil
-import signal
-import stat
-import sys
-import threading
-from threading import Thread
-from dotenv import load_dotenv
-import namesgenerator
-from io import BytesIO
+from waitress import serve
 from werkzeug.utils import secure_filename
 
 from flask_session import Session
-from waitress import serve
-from modules.database import reset_data, get_unique_config_names
-from modules.helpers import (
-    get_template_list,
-    get_bits,
-    get_menu_list,
-    redact_sensitive_data,
-    check_for_update,
-    update_checker_loop,
-    booler,
-    ensure_json_schema,
-    get_pyfiglet_fonts,
-    is_valid_aspect_ratio,
-    normalize_id,
-)
-from modules.output import build_config
-from modules.persistence import (
-    save_settings,
-    retrieve_settings,
-    check_minimum_settings,
-    flush_session_storage,
-    notification_systems_available,
-    get_stored_plex_credentials,
-    update_stored_plex_libraries,
-    get_dummy_data,
-)
-
-from PIL import Image, ImageDraw
-from modules.validations import (
-    validate_plex_server,
-    validate_tautulli_server,
-    validate_trakt_server,
-    validate_mal_server,
-    validate_anidb_server,
-    validate_gotify_server,
-    validate_ntfy_server,
-    validate_webhook_server,
-    validate_radarr_server,
-    validate_sonarr_server,
-    validate_omdb_server,
-    validate_github_server,
-    validate_tmdb_server,
-    validate_mdblist_server,
-    validate_notifiarr_server,
-)
+from modules import validations, output, persistence, helpers, database
 
 # Determine the base directory (where Quickstart.exe is located)
 if getattr(sys, "frozen", False):  # Running as PyInstaller EXE
@@ -151,13 +90,13 @@ basedir = os.path.abspath
 app = Flask(__name__)
 
 # Run version check at startup
-app.config["VERSION_CHECK"] = check_for_update()
+app.config["VERSION_CHECK"] = helpers.check_for_update()
 
 
 def start_update_thread():
     """Ensure update_checker_loop runs inside the Flask app context."""
     with app.app_context():
-        update_checker_loop(app)
+        helpers.update_checker_loop(app)
 
 
 # Start the background version checker safely
@@ -167,12 +106,12 @@ threading.Thread(target=start_update_thread, daemon=True).start()
 @app.context_processor
 def inject_version_info():
     """Ensure latest version info is injected dynamically in templates."""
-    return {"version_info": check_for_update()}
+    return {"version_info": helpers.check_for_update()}
 
 
 # Use booler() for FLASK_DEBUG conversion
-app.config["QS_DEBUG"] = booler(os.getenv("QS_DEBUG", "0"))
-app.config["QUICKSTART_DOCKER"] = booler(os.getenv("QUICKSTART_DOCKER", "0"))
+app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
+app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
 app.config["SESSION_CACHELIB"] = FileSystemCache(
@@ -185,7 +124,7 @@ server_session = Session(app)
 server_thread = None
 
 # Ensure json-schema files are up to date at startup
-ensure_json_schema()
+helpers.ensure_json_schema()
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 
@@ -197,7 +136,7 @@ parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
 
 port = args.port if args.port else int(os.getenv("QS_PORT", "5000"))
-debug_mode = args.debug if args.debug else booler(os.getenv("QS_DEBUG", "0"))
+debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
 print(
     f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
@@ -412,7 +351,7 @@ def upload_library_image():
 
     # Open and validate image
     img = Image.open(image)
-    if not is_valid_aspect_ratio(img):
+    if not helpers.is_valid_aspect_ratio(img):
         return (
             jsonify(
                 {
@@ -484,7 +423,7 @@ def fetch_library_image():
             )
 
         # Ensure the correct aspect ratio
-        if not is_valid_aspect_ratio(img):
+        if not helpers.is_valid_aspect_ratio(img):
             return (
                 jsonify(
                     {
@@ -592,7 +531,7 @@ def clear_session():
     except KeyError:  # Handle missing `name` key safely
         config_name = session.get("config_name")
 
-    flush_session_storage(config_name)
+    persistence.flush_session_storage(config_name)
 
     # Send message to toast
     return jsonify(
@@ -605,14 +544,14 @@ def clear_session():
 
 @app.route("/clear_data/<name>/<section>")
 def clear_data_section(name, section):
-    reset_data(name, section)
+    database.reset_data(name, section)
     flash("SQLite storage cleared successfully.", "success")
     return redirect(url_for("start"))
 
 
 @app.route("/clear_data/<name>")
 def clear_data(name):
-    reset_data(name)
+    database.reset_data(name)
     flash("SQLite storage cleared successfully.", "success")
     return redirect(url_for("start"))
 
@@ -623,14 +562,14 @@ def step(name):
     header_style = "standard"  # Default to 'standard' font
 
     if request.method == "POST":
-        save_settings(request.referrer, request.form)
+        persistence.save_settings(request.referrer, request.form)
         header_style = request.form.get("header_style", "standard")
 
     # ✅ Call `refresh_plex_libraries()` BEFORE retrieving Plex settings
     refresh_plex_libraries()
 
     # Retrieve available fonts (ensuring "none" and "single line" are always included)
-    available_fonts = get_pyfiglet_fonts()
+    available_fonts = helpers.get_pyfiglet_fonts()
 
     page_info["available_fonts"] = available_fonts
 
@@ -640,7 +579,7 @@ def step(name):
         app.logger.info(f"Assigned new config_name: {session['config_name']}")
 
     # Retrieve stored settings from DB
-    saved_settings = retrieve_settings(name)  # Retrieve from DB
+    saved_settings = persistence.retrieve_settings(name)  # Retrieve from DB
 
     # Ensure we correctly access header_style from "final"
     if "final" in saved_settings and "header_style" in saved_settings["final"]:
@@ -677,17 +616,17 @@ def step(name):
     page_info["new_config_name"] = namesgenerator.get_random_name()
 
     # Fetch available configurations from the database
-    available_configs = get_unique_config_names() or []
+    available_configs = database.get_unique_config_names() or []
 
     # Ensure the selected config is either in the dropdown or newly created
     if selected_config not in available_configs:
         page_info["new_config_name"] = selected_config  # Use the new config name
 
-    file_list = get_menu_list()
-    template_list = get_template_list()
+    file_list = helpers.get_menu_list()
+    template_list = helpers.get_template_list()
     total_steps = len(template_list)
 
-    stem, num, b = get_bits(name)
+    stem, num, b = helpers.get_bits(name)
 
     try:
         current_index = list(template_list).index(num)
@@ -719,13 +658,12 @@ def step(name):
         page_info["prev_page_name"] = "Previous"
 
     # Retrieve data from storage
-    data = retrieve_settings(name)
+    data = persistence.retrieve_settings(name)
     if app.config["QS_DEBUG"]:
         print(f"[DEBUG] Raw data retrieved for {name}: {data}")
 
-    plex_data = retrieve_settings("010-plex")
     # Fetch Plex settings
-    all_libraries = retrieve_settings("010-plex")
+    all_libraries = persistence.retrieve_settings("010-plex")
 
     # Debug: Print entire structure
     print("[DEBUG] all_libraries content:", all_libraries)
@@ -754,7 +692,7 @@ def step(name):
 
     movie_libraries = [
         {
-            "id": f"mov-library_{normalize_id(lib.strip(), existing_ids)}",
+            "id": f"mov-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
             "name": lib.strip(),
             "type": "movie",
         }
@@ -764,7 +702,7 @@ def step(name):
 
     show_libraries = [
         {
-            "id": f"sho-library_{normalize_id(lib.strip(), existing_ids)}",
+            "id": f"sho-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
             "name": lib.strip(),
             "type": "show",
         }
@@ -794,13 +732,13 @@ def step(name):
         page_info["tmdb_valid"],
         page_info["libs_valid"],
         page_info["sett_valid"],
-    ) = check_minimum_settings()
+    ) = persistence.check_minimum_settings()
 
     (
         page_info["notifiarr_available"],
         page_info["gotify_available"],
         page_info["ntfy_available"],
-    ) = notification_systems_available()
+    ) = persistence.notification_systems_available()
 
     # Ensure template variables exist
     if "mov-template_variables" not in data:
@@ -833,7 +771,7 @@ def step(name):
     # Ensure correct rendering for the final validation page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if name == "900-final":
-        validated, validation_error, config_data, yaml_content = build_config(
+        validated, validation_error, config_data, yaml_content = output.build_config(
             header_style, config_name=config_name
         )
 
@@ -882,7 +820,7 @@ def download_redacted():
     yaml_content = session.get("yaml_content", "")
     if yaml_content:
         # Redact sensitive information
-        redacted_content = redact_sensitive_data(yaml_content)
+        redacted_content = helpers.redact_sensitive_data(yaml_content)
 
         # Serve the redacted YAML as a file download
         return send_file(
@@ -898,19 +836,19 @@ def download_redacted():
 @app.route("/validate_gotify", methods=["POST"])
 def validate_gotify():
     data = request.json
-    return validate_gotify_server(data)
+    return validations.validate_gotify_server(data)
 
 
 @app.route("/validate_ntfy", methods=["POST"])
 def validate_ntfy():
     data = request.json
-    return validate_ntfy_server(data)
+    return validations.validate_ntfy_server(data)
 
 
 @app.route("/validate_plex", methods=["POST"])
 def validate_plex():
     data = request.json
-    return validate_plex_server(data)
+    return validations.validate_plex_server(data)
 
 
 @app.route("/refresh_plex_libraries", methods=["POST"])
@@ -921,10 +859,10 @@ def refresh_plex_libraries():
         if not config_name:
             return jsonify({"valid": False, "error": "Missing config_name"}), 400
 
-        plex_url, plex_token = get_stored_plex_credentials("010-plex")  # Fetch from DB
+        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")  # Fetch from DB
 
         # ✅ Load default values from config.yml.template
-        dummy_plex_config = get_dummy_data(
+        dummy_plex_config = persistence.get_dummy_data(
             "plex"
         )  # Retrieves {"url": "...", "token": "..."}
         default_plex_url = dummy_plex_config.get("url", "")
@@ -948,7 +886,7 @@ def refresh_plex_libraries():
             )
 
         # ✅ Fetch latest libraries from Plex
-        plex_response = validate_plex_server(
+        plex_response = validations.validate_plex_server(
             {"plex_url": plex_url, "plex_token": plex_token}
         )
 
@@ -967,7 +905,7 @@ def refresh_plex_libraries():
         updated_music_libraries = plex_data.get("music_libraries", [])
 
         # ✅ Update the DB with the latest libraries
-        update_stored_plex_libraries(
+        persistence.update_stored_plex_libraries(
             "010-plex",
             updated_movie_libraries,
             updated_show_libraries,
@@ -983,37 +921,37 @@ def refresh_plex_libraries():
 @app.route("/validate_tautulli", methods=["POST"])
 def validate_tautulli():
     data = request.json
-    return validate_tautulli_server(data)
+    return validations.validate_tautulli_server(data)
 
 
 @app.route("/validate_trakt", methods=["POST"])
 def validate_trakt():
     data = request.json
-    return validate_trakt_server(data)
+    return validations.validate_trakt_server(data)
 
 
 @app.route("/validate_mal", methods=["POST"])
 def validate_mal():
     data = request.json
-    return validate_mal_server(data)
+    return validations.validate_mal_server(data)
 
 
 @app.route("/validate_anidb", methods=["POST"])
 def validate_anidb():
     data = request.json
-    return validate_anidb_server(data)
+    return validations.validate_anidb_server(data)
 
 
 @app.route("/validate_webhook", methods=["POST"])
 def validate_webhook():
     data = request.json
-    return validate_webhook_server(data)
+    return validations.validate_webhook_server(data)
 
 
 @app.route("/validate_radarr", methods=["POST"])
 def validate_radarr():
     data = request.json
-    result = validate_radarr_server(data)
+    result = validations.validate_radarr_server(data)
 
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
@@ -1024,7 +962,7 @@ def validate_radarr():
 @app.route("/validate_sonarr", methods=["POST"])
 def validate_sonarr():
     data = request.json
-    result = validate_sonarr_server(data)
+    result = validations.validate_sonarr_server(data)
 
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
@@ -1035,7 +973,7 @@ def validate_sonarr():
 @app.route("/validate_omdb", methods=["POST"])
 def validate_omdb():
     data = request.json
-    result = validate_omdb_server(data)
+    result = validations.validate_omdb_server(data)
 
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
@@ -1046,7 +984,7 @@ def validate_omdb():
 @app.route("/validate_github", methods=["POST"])
 def validate_github():
     data = request.json
-    result = validate_github_server(data)
+    result = validations.validate_github_server(data)
 
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
@@ -1057,7 +995,7 @@ def validate_github():
 @app.route("/validate_tmdb", methods=["POST"])
 def validate_tmdb():
     data = request.json
-    result = validate_tmdb_server(data)
+    result = validations.validate_tmdb_server(data)
 
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
@@ -1068,7 +1006,7 @@ def validate_tmdb():
 @app.route("/validate_mdblist", methods=["POST"])
 def validate_mdblist():
     data = request.json
-    result = validate_mdblist_server(data)
+    result = validations.validate_mdblist_server(data)
 
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
@@ -1079,7 +1017,7 @@ def validate_mdblist():
 @app.route("/validate_notifiarr", methods=["POST"])
 def validate_notifiarr():
     data = request.json
-    result = validate_notifiarr_server(data)
+    result = validations.validate_notifiarr_server(data)
 
     if result.get_json().get("valid"):
         return jsonify(result.get_json())
@@ -1117,21 +1055,6 @@ if __name__ == "__main__":
     elif app.config["QUICKSTART_DOCKER"]:
         start_flask_app()
     else:
-        image = Image.open(
-            "favicon.ico"
-            if os.path.exists("favicon.ico")
-            else os.path.join("static", "favicon.ico")
-        )
-
-        icon = pystray.Icon(
-            "Flask App",
-            image,
-            menu=pystray.Menu(
-                pystray.MenuItem("Open Quickstart", open_quickstart),
-                pystray.MenuItem("Quickstart GitHub", open_github),
-                pystray.MenuItem("Exit", exit_action),
-            ),
-        )
         import pystray
 
         image = Image.open(

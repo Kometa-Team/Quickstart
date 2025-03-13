@@ -2,31 +2,12 @@ import io
 from datetime import datetime
 
 import jsonschema
-import json
 import pyfiglet
-import re
 import yaml
+from flask import current_app as app
 from ruamel.yaml import YAML
 
-from flask import current_app as app
-
-from .persistence import (
-    save_settings,
-    retrieve_settings,
-    check_minimum_settings,
-    flush_session_storage,
-    notification_systems_available,
-)
-from .helpers import (
-    build_config_dict,
-    get_template_list,
-    get_bits,
-    check_for_update,
-    enforce_string_fields,
-    ensure_json_schema,
-    extract_library_name,
-    STRING_FIELDS,
-)
+from modules import helpers, persistence
 
 
 def add_border_to_ascii_art(art):
@@ -101,7 +82,7 @@ def build_libraries_section(
             print(f"[DEBUG] Processing Library: {library_key} -> {library_name}")
 
         # ✅ Process Collections
-        collection_key = extract_library_name(library_key)
+        collection_key = helpers.extract_library_name(library_key)
         if collection_key and collection_key in collections:
             collection_files = [
                 {
@@ -116,7 +97,7 @@ def build_libraries_section(
                 entry["collection_files"] = collection_files
 
         # ✅ Process Overlays
-        overlay_key = extract_library_name(library_key)
+        overlay_key = helpers.extract_library_name(library_key)
         if overlay_key and overlay_key in overlays:
             overlay_files = []
             for key, value in overlays[
@@ -148,7 +129,7 @@ def build_libraries_section(
 
         # ✅ Process Template Variables
         template_vars = {}
-        template_key = extract_library_name(library_key)
+        template_key = helpers.extract_library_name(library_key)
         template_data = templates.get(template_key, {})
 
         # ✅ Step 1: Find the exact key that matches the pattern
@@ -279,7 +260,7 @@ def build_config(header_style="standard", config_name=None):
     Build the final configuration, including all sections and headers,
     ensuring the libraries section is properly processed.
     """
-    sections = get_template_list()
+    sections = helpers.get_template_list()
     config_data = {}
     header_art = {}
 
@@ -310,7 +291,7 @@ def build_config(header_style="standard", config_name=None):
                 )
 
         # Retrieve settings for each section
-        section_data = retrieve_settings(persistence_key)
+        section_data = persistence.retrieve_settings(persistence_key)
 
         if "validated" in section_data and section_data["validated"]:
             # Clean and store data
@@ -402,7 +383,7 @@ def build_config(header_style="standard", config_name=None):
         grouped = {}
 
         for key, value in data_dict.items():
-            library_name = extract_library_name(key)
+            library_name = helpers.extract_library_name(key)
             if library_name:
                 if library_name not in grouped:
                     grouped[library_name] = {}
@@ -430,8 +411,8 @@ def build_config(header_style="standard", config_name=None):
         }
 
         # Extract **correct** movie and show library names
-        movie_library_names = {extract_library_name(k) for k in movie_libraries}
-        show_library_names = {extract_library_name(k) for k in show_libraries}
+        movie_library_names = {helpers.extract_library_name(k) for k in movie_libraries}
+        show_library_names = {helpers.extract_library_name(k) for k in show_libraries}
 
         # Debugging
         if app.config["QS_DEBUG"]:
@@ -443,7 +424,7 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "collection_" in k and extract_library_name(k) in movie_library_names
+                if "collection_" in k and helpers.extract_library_name(k) in movie_library_names
             },
             "mov",
         )
@@ -452,7 +433,7 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "collection_" in k and extract_library_name(k) in show_library_names
+                if "collection_" in k and helpers.extract_library_name(k) in show_library_names
             },
             "sho",
         )
@@ -461,7 +442,7 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "overlay_" in k and extract_library_name(k) in movie_library_names
+                if "overlay_" in k and helpers.extract_library_name(k) in movie_library_names
             },
             "mov",
         )
@@ -470,7 +451,7 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "overlay_" in k and extract_library_name(k) in show_library_names
+                if "overlay_" in k and helpers.extract_library_name(k) in show_library_names
             },
             "sho",
         )
@@ -479,7 +460,7 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "attribute_" in k and extract_library_name(k) in movie_library_names
+                if "attribute_" in k and helpers.extract_library_name(k) in movie_library_names
             },
             "mov",
         )
@@ -488,7 +469,7 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "attribute_" in k and extract_library_name(k) in show_library_names
+                if "attribute_" in k and helpers.extract_library_name(k) in show_library_names
             },
             "sho",
         )
@@ -498,7 +479,7 @@ def build_config(header_style="standard", config_name=None):
                 k: v
                 for k, v in nested_libraries_data.items()
                 if "template_variables" in k
-                and extract_library_name(k) in movie_library_names
+                and helpers.extract_library_name(k) in movie_library_names
             },
             "mov",
         )
@@ -508,7 +489,7 @@ def build_config(header_style="standard", config_name=None):
                 k: v
                 for k, v in nested_libraries_data.items()
                 if "template_variables" in k
-                and extract_library_name(k) in show_library_names
+                and helpers.extract_library_name(k) in show_library_names
             },
             "sho",
         )
@@ -554,13 +535,13 @@ def build_config(header_style="standard", config_name=None):
     yaml.default_flow_style = False
     yaml.sort_keys = False
 
-    ensure_json_schema()
+    helpers.ensure_json_schema()
 
     with open("json-schema/config-schema.json", "r") as file:
         schema = yaml.load(file)
 
     # Fetch kometa_branch dynamically
-    version_info = check_for_update()
+    version_info = helpers.check_for_update()
     kometa_branch = version_info.get(
         "kometa_branch", "nightly"
     )  # Default to nightly if not found
@@ -670,7 +651,7 @@ def build_config(header_style="standard", config_name=None):
         authorization_data.pop("code_verifier", None)  # ✅ Remove safely
 
     # Apply enforce_string_fields to ensure proper formatting
-    config_data = enforce_string_fields(config_data, STRING_FIELDS)
+    config_data = helpers.enforce_string_fields(config_data, helpers.STRING_FIELDS)
 
     for section_key, section_stem in ordered_sections:
         if section_key in config_data:

@@ -4,7 +4,7 @@ import sqlite3
 
 from flask import current_app as app
 
-from modules.helpers import booler
+from modules import helpers
 
 # Ensure the 'config' folder exists
 CONFIG_DIR = os.path.join(os.getcwd(), "config")  # Ensures it's created in the current working directory
@@ -104,8 +104,8 @@ def retrieve_section_data(name, section):
         if len(records) > 0:
             # since name-section is the primary key, there should be just one result here
             # [(1, 1, b'\x80\x04\x95\xad\x00\x00\x00\x00\x00\x00\x00}\x94(\x8c\x04plex\x94}\x94(\x8c\x03url\x94\x8c\x19http://192.168.1.11:32400\x94\x8c\x05token\x94\x8c\x142PxWuxX_NydKLKKEt3Z2\x94\x8c\x08db_cache\x94K(\x8c\x07timeout\x94K<\x8c\nverify_ssl\x94\x89\x8c\rclean_bundles\x94\x89\x8c\x0bempty_trash\x94\x89\x8c\x08optimize\x94\x89u\x8c\x05valid\x94\x88u.')]
-            validated = booler(records[0][0])
-            user_entered = booler(records[0][1])
+            validated = helpers.booler(records[0][0])
+            user_entered = helpers.booler(records[0][1])
             data = pickle.loads(records[0][2])
         else:
             validated = False

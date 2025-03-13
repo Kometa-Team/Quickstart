@@ -5,12 +5,7 @@ from flask import session
 from ruamel.yaml import YAML
 from ruamel.yaml.constructor import DuplicateKeyError
 
-from modules.database import save_section_data, retrieve_section_data, reset_data
-from modules.helpers import (
-    build_config_dict,
-    booler,
-    ensure_json_schema,
-)
+from modules import database, helpers
 from modules.iso_3166_1 import iso_3166_1_regions  # Importing the regions list
 from modules.iso_639_1 import iso_639_1_languages  # Importing the languages list
 from modules.iso_639_2 import iso_639_2_languages  # Importing the languages list
@@ -110,7 +105,7 @@ def save_settings(raw_source, form_data):
             print(f"[DEBUG] Cleaned asset_directory: {clean_data['asset_directory']}")
 
     # Build the dictionary to save
-    data = build_config_dict(source_name, clean_data)
+    data = helpers.build_config_dict(source_name, clean_data)
 
     # Debug final data to be saved
     if app.config["QS_DEBUG"]:
@@ -128,7 +123,7 @@ def save_settings(raw_source, form_data):
     user_entered = data != base_data
     validated = data.get("validated", False)
 
-    save_section_data(
+    database.save_section_data(
         name=session["config_name"],
         section=source_name,
         validated=validated,
@@ -224,12 +219,12 @@ def retrieve_settings(target):
     # source_name will be `plex`
 
     # Fetch stored data from DB
-    db_data = retrieve_section_data(name=session["config_name"], section=source_name)
+    db_data = database.retrieve_section_data(name=session["config_name"], section=source_name)
     # db_data is a tuple of validated, user_entered, data
 
     # Extract validation flags
-    data["validated"] = booler(db_data[0])
-    data["user_entered"] = booler(db_data[1])
+    data["validated"] = helpers.booler(db_data[0])
+    data["user_entered"] = helpers.booler(db_data[1])
     data[source_name] = db_data[2].get(source_name, {}) if db_data[2] else {}
 
     if not data[source_name]:
@@ -267,11 +262,11 @@ def retrieve_status(target):
     # source will be `010-plex`
     # source_name will be `plex`
 
-    db_data = retrieve_section_data(name=session["config_name"], section=source_name)
+    db_data = database.retrieve_section_data(name=session["config_name"], section=source_name)
     # db_data is a tuple of validated, user_entered, data
 
-    validated = booler(db_data[0])
-    user_entered = booler(db_data[1])
+    validated = helpers.booler(db_data[0])
+    user_entered = helpers.booler(db_data[1])
 
     return validated, user_entered
 
@@ -283,7 +278,7 @@ def get_dummy_data(target):
 
     yaml = YAML(typ="safe", pure=True)  # Safe loading mode
 
-    ensure_json_schema()
+    helpers.ensure_json_schema()
 
     try:
         with open("json-schema/config.yml.template", "r") as file:
@@ -313,7 +308,7 @@ def flush_session_storage(name):
         for key in list(session.keys())
         if not key.startswith("config_name")
     ]
-    reset_data(name)
+    database.reset_data(name)
 
 
 def notification_systems_available():
