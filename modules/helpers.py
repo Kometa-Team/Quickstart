@@ -7,6 +7,8 @@ from pathlib import Path
 
 import requests
 from flask import current_app as app
+from git import Repo
+
 
 STRING_FIELDS = {
     "apikey",
@@ -17,7 +19,9 @@ STRING_FIELDS = {
 
 JSON_SCHEMA_DIR = "json-schema"
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
-HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")  # Stores previous file hashes
+HASH_FILE = os.path.join(
+    JSON_SCHEMA_DIR, "file_hashes.txt"
+)  # Stores previous file hashes
 
 
 def normalize_id(name, existing_ids):
@@ -71,12 +75,6 @@ def get_pyfiglet_fonts():
 
     # Combine predefined fonts with sorted remaining fonts
     return predefined_fonts + sorted_fonts
-
-
-def get_kometa_branch():
-    """Fetch the correct branch (master or nightly)."""
-    version_info = check_for_update()
-    return version_info.get("kometa_branch", "nightly")  # Default to nightly
 
 
 def calculate_hash(content):
@@ -151,30 +149,6 @@ def ensure_json_schema():
     save_hashes(new_hashes)
 
 
-def get_local_version():
-    """Read the local VERSION file and determine the branch."""
-    version_file = "VERSION"
-    if not os.path.exists(version_file):
-        return "unknown", "custom"
-
-    with open(version_file, "r", encoding="utf-8") as f:
-        local_version = f.read().strip()
-
-    # Use Git to determine the current branch
-    try:
-        branch = (
-            subprocess.check_output(
-                ["git", "rev-parse", "--abbrev-ref", "HEAD"], stderr=subprocess.DEVNULL
-            )
-            .decode("utf-8")
-            .strip()
-        )
-    except subprocess.CalledProcessError:
-        branch = "unknown"  # Fallback if not a git repo
-
-    return local_version, branch
-
-
 def get_remote_version(branch):
     """Fetch the latest VERSION file from the correct GitHub branch."""
     url = f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/VERSION"
@@ -187,9 +161,37 @@ def get_remote_version(branch):
         return None  # If request fails, return None
 
 
+def get_branch():
+    """Determine the current branch without requiring Git"""
+    # ✅ Option 1: Try GitPython
+    try:
+        return Repo(path=".").head.ref.name
+    except Exception:
+        pass  # Ignore errors if GitPython is missing
+
+    # ✅ Option 2: Use Environment Variable with Fallback
+    return os.getenv("BRANCH_NAME", "master")
+
+
+def get_kometa_branch():
+    """Fetch the correct branch (master or nightly)."""
+    version_info = check_for_update()
+    return version_info.get("kometa_branch", "nightly")  # Default to nightly
+
+
+def get_version():
+    """Read the local VERSION file"""
+    version_file = "VERSION"
+    if os.path.exists(version_file):
+        with open(version_file, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    return "unknown"
+
+
 def check_for_update():
     """Compare the local version with the remote version and determine Kometa branch."""
-    local_version, branch = get_local_version()
+    local_version = get_version()
+    branch = get_branch()
     remote_version = get_remote_version(branch)
 
     update_available = remote_version and remote_version != local_version
@@ -347,7 +349,9 @@ def booler(thing):
             return False
         else:
             if app.config["QS_DEBUG"]:
-                print(f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False.")
+                print(
+                    f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False."
+                )
             return False
     return bool(thing)
 
