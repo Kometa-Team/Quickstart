@@ -152,12 +152,6 @@ basedir = os.path.abspath
 
 app = Flask(__name__)
 
-# # Get both version and branch
-# branch_name = get_branch()
-# version = get_version()
-
-# # ✅ Print the final version output
-# print(f"Version: {version} (Branch: {branch_name})")
 
 # Run version check at startup
 app.config["VERSION_CHECK"] = check_for_update()
