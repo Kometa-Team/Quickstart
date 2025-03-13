@@ -43,7 +43,7 @@ jobs:
 
       - name: Build Executable
         run: |
-          pyinstaller -y ./Quickstart.spec
+          pyinstaller -y ./quickstart-master.spec
           mv dist/Quickstart${{ matrix.ext }} dist/Quickstart-${{github.event.release.tag_name}}-${{ runner.os }}${{ matrix.ext }}
           gh release upload ${{github.event.release.tag_name}} dist/Quickstart-${{github.event.release.tag_name}}-${{ runner.os }}${{ matrix.ext }}
         env:
