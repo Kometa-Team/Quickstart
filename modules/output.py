@@ -83,9 +83,7 @@ def build_libraries_section(
         collection_key = helpers.extract_library_name(library_key)
         if collection_key and collection_key in collections:
             collection_files = [
-                {"default": key.split(f"{library_type}-library_{collection_key}-collection_")[-1]}
-                for key, selected in collections[collection_key].items()
-                if selected is True
+                {"default": key.split(f"{library_type}-library_{collection_key}-collection_")[-1]} for key, selected in collections[collection_key].items() if selected is True
             ]
             if collection_files:
                 entry["collection_files"] = collection_files
@@ -251,10 +249,12 @@ def build_config(header_style="standard", config_name=None):
 
         # Format playlist_files data
         formatted_playlist_files = {
-            "playlist_files": [{
-                "default": "playlist",
-                "template_variables": {"libraries": libraries_list},
-            }]
+            "playlist_files": [
+                {
+                    "default": "playlist",
+                    "template_variables": {"libraries": libraries_list},
+                }
+            ]
         }
         if app.config["QS_DEBUG"]:
             print("[DEBUG] Formatted playlist_files data:", formatted_playlist_files)
@@ -270,11 +270,7 @@ def build_config(header_style="standard", config_name=None):
             webhooks_data = webhooks_data["webhooks"]  # 🔥 Fix: Handle extra nesting
 
         # Remove empty values
-        cleaned_webhooks = {
-            key: value
-            for key, value in webhooks_data.items()
-            if value is not None and value != "" and value != [] and value != {}
-        }
+        cleaned_webhooks = {key: value for key, value in webhooks_data.items() if value is not None and value != "" and value != [] and value != {}}
 
         # If no valid webhooks exist, remove the "webhooks" section entirely
         if cleaned_webhooks:
@@ -297,16 +293,8 @@ def build_config(header_style="standard", config_name=None):
             print("[DEBUG] Raw nested libraries data:", nested_libraries_data)
 
         # Extract selected libraries
-        movie_libraries = {
-            key: value
-            for key, value in nested_libraries_data.items()
-            if key.startswith("mov-library_") and key.endswith("-library")
-        }
-        show_libraries = {
-            key: value
-            for key, value in nested_libraries_data.items()
-            if key.startswith("sho-library_") and key.endswith("-library")
-        }
+        movie_libraries = {key: value for key, value in nested_libraries_data.items() if key.startswith("mov-library_") and key.endswith("-library")}
+        show_libraries = {key: value for key, value in nested_libraries_data.items() if key.startswith("sho-library_") and key.endswith("-library")}
 
         # Extract **correct** movie and show library names
         movie_library_names = {helpers.extract_library_name(k) for k in movie_libraries}
@@ -322,10 +310,7 @@ def build_config(header_style="standard", config_name=None):
             Groups collection, overlay, and attribute data by library.
             """
             grouped = {}
-            for key, value in [
-                (k, v) for k, v in nested_libraries_data.items()
-                if prefix in k and helpers.extract_library_name(k) in names
-            ]:
+            for key, value in [(k, v) for k, v in nested_libraries_data.items() if prefix in k and helpers.extract_library_name(k) in names]:
                 library_name = helpers.extract_library_name(key)
                 if library_name:
                     if library_name not in grouped:
@@ -420,8 +405,22 @@ def build_config(header_style="standard", config_name=None):
             if isinstance(obj, dict):
                 # Sort specific sections alphabetically
                 if dump_name in [
-                    "settings", "webhooks", "plex", "tmdb", "tautulli", "github", "omdb", "mdblist",
-                    "notifiarr", "gotify", "ntfy", "anidb", "radarr", "sonarr", "trakt", "mal",
+                    "settings",
+                    "webhooks",
+                    "plex",
+                    "tmdb",
+                    "tautulli",
+                    "github",
+                    "omdb",
+                    "mdblist",
+                    "notifiarr",
+                    "gotify",
+                    "ntfy",
+                    "anidb",
+                    "radarr",
+                    "sonarr",
+                    "trakt",
+                    "mal",
                 ]:
                     obj = dict(sorted(obj.items()))  # Alphabetically sort keys in the section
                 return {k: clean_data(v) for k, v in obj.items() if k != "valid"}

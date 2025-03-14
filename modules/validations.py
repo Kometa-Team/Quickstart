@@ -67,14 +67,16 @@ def validate_plex_server(data):
         return jsonify({"valid": False, "error": f"Invalid Plex URL or Token: {str(e)}"})
 
     # If PlexServer instance is successfully created and db_cache is retrieved, return success response
-    return jsonify({
-        "validated": True,
-        "db_cache": db_cache,  # Send back the integer value of db_cache
-        "user_list": user_list,
-        "music_libraries": music_libraries,
-        "movie_libraries": movie_libraries,
-        "show_libraries": show_libraries,
-    })
+    return jsonify(
+        {
+            "validated": True,
+            "db_cache": db_cache,  # Send back the integer value of db_cache
+            "user_list": user_list,
+            "music_libraries": music_libraries,
+            "movie_libraries": movie_libraries,
+            "show_libraries": show_libraries,
+        }
+    )
 
 
 def validate_tautulli_server(data):
@@ -117,39 +119,46 @@ def validate_trakt_server(data):
     base_url = "https://api.trakt.tv"
 
     try:
-        response = requests.post(f"{base_url}/oauth/token", json={
-            "code": trakt_pin,
-            "client_id": trakt_client_id,
-            "client_secret": trakt_client_secret,
-            "redirect_uri": redirect_uri,
-            "grant_type": "authorization_code",
-        }, headers={
-            "Content-Type": "application/json"
-        })
+        response = requests.post(
+            f"{base_url}/oauth/token",
+            json={
+                "code": trakt_pin,
+                "client_id": trakt_client_id,
+                "client_secret": trakt_client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+            headers={"Content-Type": "application/json"},
+        )
 
         if response.status_code != 200:
             return jsonify({"valid": False, "error": f"Trakt Error: Invalid trakt pin, client_id, or client_secret."})
 
-        validation_response = requests.get(f"{base_url}/users/settings", headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {response.json()['access_token']}",
-            "trakt-api-version": "2",
-            "trakt-api-key": trakt_client_id,
-        })
+        validation_response = requests.get(
+            f"{base_url}/users/settings",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {response.json()['access_token']}",
+                "trakt-api-version": "2",
+                "trakt-api-key": trakt_client_id,
+            },
+        )
 
         if validation_response.status_code == 423:
             return jsonify({"valid": False, "error": f"Account is locked; please contact Trakt Support"})
 
-        return jsonify({
-            "valid": True,
-            "error": "",
-            "trakt_authorization_access_token": response.json()["access_token"],
-            "trakt_authorization_token_type": response.json()["token_type"],
-            "trakt_authorization_expires_in": response.json()["expires_in"],
-            "trakt_authorization_refresh_token": response.json()["refresh_token"],
-            "trakt_authorization_scope": response.json()["scope"],
-            "trakt_authorization_created_at": response.json()["created_at"],
-        })
+        return jsonify(
+            {
+                "valid": True,
+                "error": "",
+                "trakt_authorization_access_token": response.json()["access_token"],
+                "trakt_authorization_token_type": response.json()["token_type"],
+                "trakt_authorization_expires_in": response.json()["expires_in"],
+                "trakt_authorization_refresh_token": response.json()["refresh_token"],
+                "trakt_authorization_scope": response.json()["scope"],
+                "trakt_authorization_created_at": response.json()["created_at"],
+            }
+        )
 
     except requests.exceptions.RequestException as e:
         print(f"[DEBUG] Error validating Trakt connection: {e}")
@@ -230,25 +239,30 @@ def validate_mal_server(data):
     if not match:
         return jsonify({"valid": False, "error": f"MAL Error: No required code in localhost URL."})
 
-    new_authorization = requests.post("https://myanimelist.net/v1/oauth2/token", data={
-        "client_id": mal_client_id,
-        "client_secret": mal_client_secret,
-        "code": match.group(1),
-        "code_verifier": mal_code_verifier,
-        "grant_type": "authorization_code",
-    }).json()
+    new_authorization = requests.post(
+        "https://myanimelist.net/v1/oauth2/token",
+        data={
+            "client_id": mal_client_id,
+            "client_secret": mal_client_secret,
+            "code": match.group(1),
+            "code_verifier": mal_code_verifier,
+            "grant_type": "authorization_code",
+        },
+    ).json()
 
     if "error" in new_authorization:
         return jsonify({"valid": False, "error": f"MAL Error: invalid code."})
 
     # return success response
-    return jsonify({
-        "valid": True,
-        "mal_authorization_access_token": new_authorization["access_token"],
-        "mal_authorization_token_type": new_authorization["token_type"],
-        "mal_authorization_expires_in": new_authorization["expires_in"],
-        "mal_authorization_refresh_token": new_authorization["refresh_token"],
-    })
+    return jsonify(
+        {
+            "valid": True,
+            "mal_authorization_access_token": new_authorization["access_token"],
+            "mal_authorization_token_type": new_authorization["token_type"],
+            "mal_authorization_expires_in": new_authorization["expires_in"],
+            "mal_authorization_refresh_token": new_authorization["refresh_token"],
+        }
+    )
 
 
 def validate_anidb_server(data):
@@ -266,15 +280,18 @@ def validate_anidb_server(data):
 
     try:
         # Make a GET request to AniDB API
-        response = requests.get(api_url, params={
-            "request": "hints",
-            "user": username,
-            "pass": password,
-            "protover": "1",
-            "client": client,
-            "clientver": clientver,
-            "type": "1",
-        })
+        response = requests.get(
+            api_url,
+            params={
+                "request": "hints",
+                "user": username,
+                "pass": password,
+                "protover": "1",
+                "client": client,
+                "clientver": clientver,
+                "type": "1",
+            },
+        )
         response_text = response.text
 
         # Check if the response contains 'hints'
@@ -392,12 +409,14 @@ def validate_sonarr_server(data):
 
         app.logger.info("Sonarr connection successful.")
 
-        return jsonify({
-            "valid": True,
-            "root_folders": root_folders,
-            "quality_profiles": quality_profiles,
-            "language_profiles": language_profiles,
-        })
+        return jsonify(
+            {
+                "valid": True,
+                "root_folders": root_folders,
+                "quality_profiles": quality_profiles,
+                "language_profiles": language_profiles,
+            }
+        )
 
     except requests.exceptions.RequestException as e:
         print(f"[DEBUG] Error validating Sonarr connection: {e}")
@@ -426,10 +445,13 @@ def validate_github_server(data):
     github_token = data.get("github_token")
 
     try:
-        response = requests.get("https://api.github.com/user", headers={
-            "Authorization": f"token {github_token}",
-            "Accept": "application/vnd.github.v3+json",
-        })
+        response = requests.get(
+            "https://api.github.com/user",
+            headers={
+                "Authorization": f"token {github_token}",
+                "Accept": "application/vnd.github.v3+json",
+            },
+        )
         if response.status_code == 200:
             user_data = response.json()
             return jsonify({"valid": True, "message": f"GitHub token is valid. User: {user_data.get('login')}"})

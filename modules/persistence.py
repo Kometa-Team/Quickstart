@@ -35,12 +35,12 @@ def clean_form_data(form_data):
         # Handle use_separators & sep_style correctly for both mov & sho
         elif key.endswith("use_separators"):
             prefix = "mov" if key.startswith("mov") else "sho"
-            clean_data.setdefault(f"{prefix}-template_variables", {})["use_separators"] = value if value != "none" else None # noqa
+            clean_data.setdefault(f"{prefix}-template_variables", {})["use_separators"] = value if value != "none" else None  # noqa
 
         elif key.endswith("sep_style"):
             prefix = "mov" if key.startswith("mov") else "sho"
             if form_data.get(f"{prefix}-template_variables[use_separators]", "false") != "none":
-                clean_data.setdefault(f"{prefix}-template_variables", {})["sep_style"] = value.strip() # noqa
+                clean_data.setdefault(f"{prefix}-template_variables", {})["sep_style"] = value.strip()  # noqa
 
         # Standard processing for other string values
         elif isinstance(value, str):

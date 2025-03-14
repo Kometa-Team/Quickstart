@@ -107,7 +107,7 @@ def ensure_json_schema():
     for filename, url in [
         ("prototype_config.yml", f"{GITHUB_BASE_URL}/{branch}/json-schema/prototype_config.yml"),
         ("config-schema.json", f"{GITHUB_BASE_URL}/{branch}/json-schema/config-schema.json"),
-        ("config.yml.template", f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template")
+        ("config.yml.template", f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template"),
     ]:
         file_path = os.path.join(JSON_SCHEMA_DIR, filename)  # Store everything in json-schema
 
@@ -156,8 +156,8 @@ def get_branch():
     # ✅ Otherwise, try GitPython (if available)
     if Repo:
         try:
-            return Repo(path=".").head.ref.name # noqa
-        except Exception: # noqa
+            return Repo(path=".").head.ref.name  # noqa
+        except Exception:  # noqa
             pass  # Ignore errors if GitPython fails
 
     # ✅ Fallback: Use BRANCH_NAME from the environment (for non-Docker cases)
