@@ -5,10 +5,7 @@ from flask import session
 from ruamel.yaml import YAML
 from ruamel.yaml.constructor import DuplicateKeyError
 
-from modules import database, helpers
-from modules.iso_3166_1 import iso_3166_1_regions  # Importing the regions list
-from modules.iso_639_1 import iso_639_1_languages  # Importing the languages list
-from modules.iso_639_2 import iso_639_2_languages  # Importing the languages list
+from modules import database, helpers, iso
 
 
 def extract_names(raw_source):
@@ -250,9 +247,9 @@ def retrieve_settings(target):
                 data[source_name][prefix][variable] = data[source_name].pop(key)
 
     data["code_verifier"] = secrets.token_urlsafe(100)[:128]
-    data["iso_639_1_languages"] = iso_639_1_languages
-    data["iso_3166_1_regions"] = iso_3166_1_regions
-    data["iso_639_2_languages"] = iso_639_2_languages
+    data["iso_639_1_languages"] = [(l.alpha2, l.name) for l in iso.languages]
+    data["iso_3166_1_regions"] = [(c.alpha2, c.name) for c in iso.countries]
+    data["iso_639_2_languages"] = [(l.alpha3, l.name) for l in iso.languages]
 
     return data
 

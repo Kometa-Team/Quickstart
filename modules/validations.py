@@ -2,32 +2,27 @@ import re
 import urllib.parse
 from json import JSONDecodeError
 
-import iso3166
-import iso639
 import requests
 from flask import current_app as app
 from flask import jsonify, flash
 from plexapi.server import PlexServer
-
+from modules import iso
 
 # TODO: maybe a single entry point here to clean up the imports
 
 
 def validate_iso3166_1(code):
     try:
-        country = iso3166.countries.get(code.upper())
-        if country:
-            return country.alpha2
-        else:
-            return None
-    except KeyError:
+        return iso.get_country(alpha2=code, alpha3=code)
+    except (NameError, ValueError):
         return None
 
 
 def validate_iso639_1(code):
-    if len(code) == 2 and iso639.languages.get(alpha2=code.lower()):
-        return code.lower()
-    return None
+    try:
+        return iso.get_language(alpha2=code, alpha3=code)
+    except (NameError, ValueError):
+        return None
 
 
 def validate_plex_server(data):

@@ -208,9 +208,10 @@ def generate_preview():
     )  # Unique identifier for each library
     upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
 
-    print(
-        f"[DEBUG] Generating preview for {library_id}, Type: {img_type}, Overlays: {overlays}"
-    )
+    if app.config["QS_DEBUG"]:
+        print(
+            f"[DEBUG] Generating preview for {library_id}, Type: {img_type}, Overlays: {overlays}"
+        )
 
     # Ensure preview directory exists
     if not os.path.exists(PREVIEW_FOLDER):
@@ -666,7 +667,8 @@ def step(name):
     all_libraries = persistence.retrieve_settings("010-plex")
 
     # Debug: Print entire structure
-    print("[DEBUG] all_libraries content:", all_libraries)
+    if app.config["QS_DEBUG"]:
+        print("[DEBUG] all_libraries content:", all_libraries)
 
     # Ensure 'plex' key exists before accessing sub-keys
     plex_data = all_libraries.get("plex", {})
@@ -676,8 +678,9 @@ def step(name):
     show_libraries_raw = plex_data.get("tmp_show_libraries", "")
 
     # Debugging extracted values
-    print("[DEBUG] Extracted movie libraries:", movie_libraries_raw)
-    print("[DEBUG] Extracted show libraries:", show_libraries_raw)
+    if app.config["QS_DEBUG"]:
+        print("[DEBUG] Extracted movie libraries:", movie_libraries_raw)
+        print("[DEBUG] Extracted show libraries:", show_libraries_raw)
 
     # Ensure it's a string before splitting
     if not isinstance(movie_libraries_raw, str):
