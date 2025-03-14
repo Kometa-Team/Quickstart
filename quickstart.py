@@ -859,7 +859,9 @@ def refresh_plex_libraries():
         if not config_name:
             return jsonify({"valid": False, "error": "Missing config_name"}), 400
 
-        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")  # Fetch from DB
+        plex_url, plex_token = persistence.get_stored_plex_credentials(
+            "010-plex"
+        )  # Fetch from DB
 
         # ✅ Load default values from config.yml.template
         dummy_plex_config = persistence.get_dummy_data(

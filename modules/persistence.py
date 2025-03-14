@@ -219,7 +219,9 @@ def retrieve_settings(target):
     # source_name will be `plex`
 
     # Fetch stored data from DB
-    db_data = database.retrieve_section_data(name=session["config_name"], section=source_name)
+    db_data = database.retrieve_section_data(
+        name=session["config_name"], section=source_name
+    )
     # db_data is a tuple of validated, user_entered, data
 
     # Extract validation flags
@@ -262,7 +264,9 @@ def retrieve_status(target):
     # source will be `010-plex`
     # source_name will be `plex`
 
-    db_data = database.retrieve_section_data(name=session["config_name"], section=source_name)
+    db_data = database.retrieve_section_data(
+        name=session["config_name"], section=source_name
+    )
     # db_data is a tuple of validated, user_entered, data
 
     validated = helpers.booler(db_data[0])

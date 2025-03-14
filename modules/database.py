@@ -7,7 +7,9 @@ from flask import current_app as app
 from modules import helpers
 
 # Ensure the 'config' folder exists
-CONFIG_DIR = os.path.join(os.getcwd(), "config")  # Ensures it's created in the current working directory
+CONFIG_DIR = os.path.join(
+    os.getcwd(), "config"
+)  # Ensures it's created in the current working directory
 os.makedirs(CONFIG_DIR, exist_ok=True)
 
 # Correctly set the database path

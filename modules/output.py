@@ -424,7 +424,8 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "collection_" in k and helpers.extract_library_name(k) in movie_library_names
+                if "collection_" in k
+                and helpers.extract_library_name(k) in movie_library_names
             },
             "mov",
         )
@@ -433,7 +434,8 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "collection_" in k and helpers.extract_library_name(k) in show_library_names
+                if "collection_" in k
+                and helpers.extract_library_name(k) in show_library_names
             },
             "sho",
         )
@@ -442,7 +444,8 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "overlay_" in k and helpers.extract_library_name(k) in movie_library_names
+                if "overlay_" in k
+                and helpers.extract_library_name(k) in movie_library_names
             },
             "mov",
         )
@@ -451,7 +454,8 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "overlay_" in k and helpers.extract_library_name(k) in show_library_names
+                if "overlay_" in k
+                and helpers.extract_library_name(k) in show_library_names
             },
             "sho",
         )
@@ -460,7 +464,8 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "attribute_" in k and helpers.extract_library_name(k) in movie_library_names
+                if "attribute_" in k
+                and helpers.extract_library_name(k) in movie_library_names
             },
             "mov",
         )
@@ -469,7 +474,8 @@ def build_config(header_style="standard", config_name=None):
             {
                 k: v
                 for k, v in nested_libraries_data.items()
-                if "attribute_" in k and helpers.extract_library_name(k) in show_library_names
+                if "attribute_" in k
+                and helpers.extract_library_name(k) in show_library_names
             },
             "sho",
         )
