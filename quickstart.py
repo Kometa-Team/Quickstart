@@ -54,7 +54,7 @@ for source, dest_dir in [
     src_path = os.path.join(MEIPASS_DIR, source)  # File location in _MEIPASS
     dest_path = os.path.join(dest_dir, filename)  # Target location
 
-    # Copy only if the file exists in _MEIPASS and does not already exist in the destination
+    # Copy only if the file exists in _MEIPASS and does not already exist in the destination.
     if os.path.exists(src_path) and not os.path.exists(dest_path):
         try:
             print(f"[INFO] Extracting {filename} to {dest_dir}")
