@@ -13,14 +13,14 @@ from modules import iso
 
 def validate_iso3166_1(code):
     try:
-        return iso.get_country(alpha2=code, alpha3=code)
+        return iso.get_country(alpha2=code, alpha3=code).alpha2
     except (NameError, ValueError):
         return None
 
 
 def validate_iso639_1(code):
     try:
-        return iso.get_language(alpha2=code, alpha3=code)
+        return iso.get_language(alpha2=code, alpha3=code).alpha2
     except (NameError, ValueError):
         return None
 
