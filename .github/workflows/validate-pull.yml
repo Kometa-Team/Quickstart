@@ -55,14 +55,6 @@ jobs:
                 fi
             done
 
-      - name: Get all changed files
-        uses: tj-actions/changed-files@v45
-        id: changed_files
-        with:
-          files: |
-            **.md
-            CHANGELOG
-
       - name: Run Spellcheck on changed files
         id: spellcheck
         uses: rojopolis/spellcheck-github-actions@0.47.0
@@ -93,6 +85,15 @@ jobs:
             pip install -r requirements.txt pyinstaller
             pip install black
             black .
+
+      - name: Check if there are any changes
+        id: verify_diff
+        run: |
+            git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit
+        if: steps.verify_diff.outputs.changed == 'true'
+        run: |
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
             git add .

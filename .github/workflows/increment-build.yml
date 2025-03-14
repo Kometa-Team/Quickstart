@@ -120,11 +120,11 @@ jobs:
             ext: '.exe'
           - os: 'ubuntu'
             os_upper: 'Linux'
-            os_version: 'latest'
+            os_version: '20.04'
             ext: ''
           - os: 'macos'
             os_upper: 'MacOS'
-            os_version: 'latest'
+            os_version: '13'
             ext: ''
     steps:
 
