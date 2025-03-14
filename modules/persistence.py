@@ -3,7 +3,7 @@ import secrets
 from flask import current_app as app
 from flask import session
 from ruamel.yaml import YAML
-from ruamel.yaml.constructor import DuplicateKeyError
+from ruamel.yaml.constructor import DuplicateKeyError  # noqa
 
 from modules import database, helpers, iso
 
@@ -35,19 +35,12 @@ def clean_form_data(form_data):
         # Handle use_separators & sep_style correctly for both mov & sho
         elif key.endswith("use_separators"):
             prefix = "mov" if key.startswith("mov") else "sho"
-            clean_data.setdefault(f"{prefix}-template_variables", {})[
-                "use_separators"
-            ] = (value if value != "none" else None)
+            clean_data.setdefault(f"{prefix}-template_variables", {})["use_separators"] = value if value != "none" else None # noqa
 
         elif key.endswith("sep_style"):
             prefix = "mov" if key.startswith("mov") else "sho"
-            if (
-                form_data.get(f"{prefix}-template_variables[use_separators]", "false")
-                != "none"
-            ):
-                clean_data.setdefault(f"{prefix}-template_variables", {})[
-                    "sep_style"
-                ] = value.strip()
+            if form_data.get(f"{prefix}-template_variables[use_separators]", "false") != "none":
+                clean_data.setdefault(f"{prefix}-template_variables", {})["sep_style"] = value.strip() # noqa
 
         # Standard processing for other string values
         elif isinstance(value, str):
@@ -111,9 +104,7 @@ def save_settings(raw_source, form_data):
     # Log the final data structure for asset_directory
     if source_name == "settings" and "asset_directory" in data.get("settings", {}):
         if app.config["QS_DEBUG"]:
-            print(
-                f"[DEBUG] Final asset_directory structure to save: {data['settings']['asset_directory']}"
-            )
+            print(f"[DEBUG] Final asset_directory structure to save: {data['settings']['asset_directory']}")
 
     # Proceed with saving
     base_data = get_dummy_data(source_name)
@@ -141,20 +132,15 @@ def get_stored_plex_credentials(name):
         plex_url = plex_settings.get("url")  # ✅ Correct key inside 'plex'
         plex_token = plex_settings.get("token")  # ✅ Correct key inside 'plex'
 
-        if not plex_url or not plex_token:
-            print("[ERROR] Plex URL or Token is missing in stored settings")
-            return None, None
-
-        return plex_url, plex_token
-
+        if plex_url and plex_token:
+            return plex_url, plex_token
+        print("[ERROR] Plex URL or Token is missing in stored settings")
     except Exception as e:
         print(f"[ERROR] Failed to retrieve Plex credentials: {e}")
-        return None, None
+    return None, None
 
 
-def update_stored_plex_libraries(
-    name, movie_libraries, show_libraries, music_libraries
-):
+def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_libraries):
     """Update the stored Plex libraries in the database and preserve `validated`."""
     try:
         # ✅ Fetch existing settings from DB before updating
@@ -169,33 +155,21 @@ def update_stored_plex_libraries(
         validated_before = settings_before.get("validated", True)
 
         # ✅ Update library data
-        settings_before["plex"]["tmp_movie_libraries"] = (
-            ",".join(movie_libraries) if movie_libraries else ""
-        )
-        settings_before["plex"]["tmp_show_libraries"] = (
-            ",".join(show_libraries) if show_libraries else ""
-        )
-        settings_before["plex"]["tmp_music_libraries"] = (
-            ",".join(music_libraries) if music_libraries else ""
-        )
+        settings_before["plex"]["tmp_movie_libraries"] = ",".join(movie_libraries) if movie_libraries else ""
+        settings_before["plex"]["tmp_show_libraries"] = ",".join(show_libraries) if show_libraries else ""
+        settings_before["plex"]["tmp_music_libraries"] = ",".join(music_libraries) if music_libraries else ""
 
         # ✅ Convert to a format that `save_settings()` expects
         settings_formatted = settings_before["plex"]  # ✅ Pass only the `plex` section
 
         # ✅ Restore `validated` before saving
-        settings_formatted["validated"] = (
-            validated_before  # 🔥 Prevents losing validation state
-        )
+        settings_formatted["validated"] = validated_before  # 🔥 Prevents losing validation state
 
         if app.config["QS_DEBUG"]:
-            print(
-                f"[DEBUG] Sending updated Plex settings to save_settings(): {settings_formatted}"
-            )
+            print(f"[DEBUG] Sending updated Plex settings to save_settings(): {settings_formatted}")
 
         # ✅ Corrected function call (use "010-plex" as the raw_source)
-        save_settings(
-            "010-plex", settings_formatted
-        )  # 🔥 Pass only `plex` settings, not full config
+        save_settings("010-plex", settings_formatted)  # 🔥 Pass only `plex` settings, not full config
 
         # ✅ Fetch updated settings from DB after updating
         settings_after = retrieve_settings(name)
@@ -216,9 +190,7 @@ def retrieve_settings(target):
     # source_name will be `plex`
 
     # Fetch stored data from DB
-    db_data = database.retrieve_section_data(
-        name=session["config_name"], section=source_name
-    )
+    db_data = database.retrieve_section_data(name=session["config_name"], section=source_name)
     # db_data is a tuple of validated, user_entered, data
 
     # Extract validation flags
@@ -237,19 +209,15 @@ def retrieve_settings(target):
 
         # Migrate incorrectly stored flat keys into the correct nested structure
         for key in list(data[source_name].keys()):
-            if key.startswith("mov-template_variables[") or key.startswith(
-                "sho-template_variables["
-            ):
+            if key.startswith("mov-template_variables[") or key.startswith("sho-template_variables["):
                 prefix, variable = key.split("[")
-                variable = variable.strip(
-                    "]"
-                )  # Extract 'use_separators' or 'sep_style'
+                variable = variable.strip("]")  # Extract 'use_separators' or 'sep_style'
                 data[source_name][prefix][variable] = data[source_name].pop(key)
 
     data["code_verifier"] = secrets.token_urlsafe(100)[:128]
-    data["iso_639_1_languages"] = [(l.alpha2, l.name) for l in iso.languages]
+    data["iso_639_1_languages"] = [(la.alpha2, la.name) for la in iso.languages]
     data["iso_3166_1_regions"] = [(c.alpha2, c.name) for c in iso.countries]
-    data["iso_639_2_languages"] = [(l.alpha3, l.name) for l in iso.languages]
+    data["iso_639_2_languages"] = [(la.alpha3, la.name) for la in iso.languages]
 
     return data
 
@@ -261,9 +229,7 @@ def retrieve_status(target):
     # source will be `010-plex`
     # source_name will be `plex`
 
-    db_data = database.retrieve_section_data(
-        name=session["config_name"], section=source_name
-    )
+    db_data = database.retrieve_section_data(name=session["config_name"], section=source_name)
     # db_data is a tuple of validated, user_entered, data
 
     validated = helpers.booler(db_data[0])
@@ -304,11 +270,7 @@ def check_minimum_settings():
 def flush_session_storage(name):
     if not name:
         name = session["config_name"]
-    [
-        session.pop(key)
-        for key in list(session.keys())
-        if not key.startswith("config_name")
-    ]
+    [session.pop(key) for key in list(session.keys()) if not key.startswith("config_name")]
     database.reset_data(name)
 
 

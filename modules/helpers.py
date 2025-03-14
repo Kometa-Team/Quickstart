@@ -1,7 +1,6 @@
 import hashlib
 import os
 import re
-import time
 from pathlib import Path
 
 import requests
@@ -13,18 +12,13 @@ except ImportError:
     Repo = None  # Prevents errors if GitPython is missing
 
 
-STRING_FIELDS = {
-    "apikey",
-    "token",
-    "username",
-    "password",
-}
-
-JSON_SCHEMA_DIR = "json-schema"
+STRING_FIELDS = {"apikey", "token", "username", "password"}
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
-HASH_FILE = os.path.join(
-    JSON_SCHEMA_DIR, "file_hashes.txt"
-)  # Store previous file hashes
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+JSON_SCHEMA_DIR = os.path.join(BASE_DIR, "..", "json-schema")
+os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
+HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")
 
 
 def normalize_id(name, existing_ids):
@@ -69,9 +63,7 @@ def get_pyfiglet_fonts():
 
     # Append all .flf files, removing extension
     if os.path.exists(fonts_dir):
-        fonts.update(
-            f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf")
-        )
+        fonts.update(f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf"))
 
     # Sort remaining fonts (excluding predefined ones)
     sorted_fonts = sorted(fonts - set(predefined_fonts))
@@ -109,23 +101,15 @@ def ensure_json_schema():
     """Ensure json-schema files exist and are up-to-date based on hash checks."""
     branch = get_kometa_branch()
 
-    # Ensure json-schema directory exists
-    os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
-
-    # Define source locations for each file
-    FILE_LOCATIONS = {
-        "prototype_config.yml": f"{GITHUB_BASE_URL}/{branch}/json-schema/prototype_config.yml",
-        "config-schema.json": f"{GITHUB_BASE_URL}/{branch}/json-schema/config-schema.json",
-        "config.yml.template": f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template",
-    }
-
     previous_hashes = load_previous_hashes()
     new_hashes = {}
 
-    for filename, url in FILE_LOCATIONS.items():
-        file_path = os.path.join(
-            JSON_SCHEMA_DIR, filename
-        )  # Store everything in json-schema
+    for filename, url in [
+        ("prototype_config.yml", f"{GITHUB_BASE_URL}/{branch}/json-schema/prototype_config.yml"),
+        ("config-schema.json", f"{GITHUB_BASE_URL}/{branch}/json-schema/config-schema.json"),
+        ("config.yml.template", f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template")
+    ]:
+        file_path = os.path.join(JSON_SCHEMA_DIR, filename)  # Store everything in json-schema
 
         try:
             response = requests.get(url, timeout=10)
@@ -155,7 +139,6 @@ def ensure_json_schema():
 def get_remote_version(branch):
     """Fetch the latest VERSION file from the correct GitHub branch."""
     url = f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/VERSION"
-
     try:
         response = requests.get(url, timeout=5)
         response.raise_for_status()
@@ -173,8 +156,8 @@ def get_branch():
     # ✅ Otherwise, try GitPython (if available)
     if Repo:
         try:
-            return Repo(path=".").head.ref.name
-        except Exception:
+            return Repo(path=".").head.ref.name # noqa
+        except Exception: # noqa
             pass  # Ignore errors if GitPython fails
 
     # ✅ Fallback: Use BRANCH_NAME from the environment (for non-Docker cases)
@@ -216,14 +199,6 @@ def check_for_update():
     }
 
 
-def update_checker_loop(app):
-    """Runs an update check every 24 hours in the background."""
-    with app.app_context():  # Ensure Flask app context is available
-        while True:
-            app.config["VERSION_CHECK"] = check_for_update()
-            time.sleep(86400)  # Sleep for 24 hours
-
-
 def enforce_string_fields(data, enforce=False):
     """
     Ensure specified fields in a dictionary are of type string.
@@ -244,21 +219,13 @@ def build_oauth_dict(source, form_data):
         final_key = key.replace(source + "_", "", 1)
         value = form_data[key]
 
-        if final_key in (
-            "client_id",
-            "client_secret",
-            "pin",
-            "cache_expiration",
-            "localhost_url",
-        ):
+        if final_key in ["client_id", "client_secret", "pin", "cache_expiration", "localhost_url"]:
             data[source][final_key] = value  # Store outside authorization
         elif final_key == "validated":
             data[final_key] = value
         else:
             if final_key != "url":
-                data[source]["authorization"][
-                    final_key
-                ] = value  # Everything else goes into authorization
+                data[source]["authorization"][final_key] = value  # Everything else goes into authorization
 
     return data
 
@@ -266,9 +233,7 @@ def build_oauth_dict(source, form_data):
 def build_simple_dict(source, form_data):
     data = {source: {}}
     for key in form_data:
-        final_key = key.replace(
-            source + "_", "", 1
-        )  # Retain the original key transformation logic
+        final_key = key.replace(source + "_", "", 1)  # Retain the original key transformation logic
         value = form_data[key]
 
         # Handle lists explicitly (e.g., asset_directory)
@@ -280,9 +245,7 @@ def build_simple_dict(source, form_data):
                 try:
                     value = int(value)  # Convert numbers to integers
                 except ValueError:
-                    value = (
-                        value.strip() if isinstance(value, str) else value
-                    )  # Clean strings
+                    value = value.strip() if isinstance(value, str) else value  # Clean strings
 
             # Assign the value to the appropriate place
             if final_key == "validated":
@@ -303,7 +266,7 @@ def build_simple_dict(source, form_data):
 
 
 def build_config_dict(source, form_data):
-    if (source == "trakt") or (source == "mal"):
+    if source in ["trakt", "mal"]:
         return build_oauth_dict(source, form_data)
     else:
         return build_simple_dict(source, form_data)
@@ -312,8 +275,7 @@ def build_config_dict(source, form_data):
 def belongs_in_template_list(file):
     return (
         file.endswith(".html")
-        and file != "000-base.html"
-        and file != "001-navigation.html"
+        and file not in ["000-base.html", "001-navigation.html"]
         and file[:3].isdigit()
         # and file[3] == "-"
         and not file.startswith("999-")
@@ -357,9 +319,7 @@ def booler(thing):
             return False
         else:
             if app.config["QS_DEBUG"]:
-                print(
-                    f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False."
-                )
+                print(f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False.")
             return False
     return bool(thing)
 
@@ -380,27 +340,22 @@ def get_next(file_list, current_file):
     return None
 
 
-def template_record(file, prev, next):
-    rec = {}
+def template_record(file, prev_record, next_record):
     file_stem, num, raw_name = get_bits(file)
-    rec["num"] = num
-    rec["file"] = file
-    rec["stem"] = file_stem
-    rec["name"] = user_visible_name(raw_name)
-    rec["raw_name"] = raw_name
-    rec["next"] = next
-    rec["prev"] = prev
-
-    return rec
+    return {
+        "num": num,
+        "file": file,
+        "stem": file_stem,
+        "name": user_visible_name(raw_name),
+        "raw_name": raw_name,
+        "next": next_record,
+        "prev": prev_record,
+    }
 
 
 def get_menu_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(
-        item
-        for item in os.listdir(templates_dir)
-        if os.path.isfile(os.path.join(templates_dir, item))
-    )
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
     final_list = []
 
     for file in file_list:
@@ -413,24 +368,15 @@ def get_menu_list():
 
 def get_template_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(
-        item
-        for item in os.listdir(templates_dir)
-        if os.path.isfile(os.path.join(templates_dir, item))
-    )
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
 
     templates = {}
-    type_counter = {
-        "012": 0,
-        "013": 0,
-    }  # Counters for movie, show types
-    prev_item = "001-start"
+    type_counter = {"012": 0, "013": 0}  # Counters for movie, show types
+    prev_record = "001-start"
 
     for file in file_list:
         if belongs_in_template_list(file):
-            match = re.match(
-                r"^(\d+)-", file
-            )  # Match any length of digits followed by '-'
+            match = re.match(r"^(\d+)-", file)  # Match any length of digits followed by '-'
             if match:
                 file_prefix = match.group(1)
             else:
@@ -442,12 +388,11 @@ def get_template_list():
             else:
                 num = file_prefix
 
-            next = get_next(file_list, file)
-            prev = prev_item
-            rec = template_record(file, prev, next)
+            next_record = get_next(file_list, file)
+            rec = template_record(file, prev_record, next_record)
             rec["num"] = num  # Update the num to include the counter
             templates[num] = rec
-            prev_item = rec["stem"]
+            prev_record = rec["stem"]
 
     return templates
 

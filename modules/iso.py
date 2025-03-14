@@ -1,5 +1,6 @@
 import csv
 import io
+
 import requests
 
 _country_url = "https://raw.githubusercontent.com/datasets/country-codes/refs/heads/main/data/country-codes.csv"
@@ -92,11 +93,7 @@ def get_country(name=None, alpha2=None, alpha3=None):
     if all(x is None for x in [name, alpha2, alpha3]):
         raise ValueError("Either name, alpha2, or alpha3 is required")
     for country in countries:
-        if (
-            name == country.name
-            or str(alpha2).upper() == country.alpha2
-            or str(alpha3).upper() == country.alpha3
-        ):
+        if name == country.name or str(alpha2).upper() == country.alpha2 or str(alpha3).upper() == country.alpha3:
             return country
     raise NameError("No Country found")
 
@@ -105,10 +102,6 @@ def get_language(name=None, alpha2=None, alpha3=None):
     if all(x is None for x in [name, alpha2, alpha3]):
         raise ValueError("Either name, alpha2, or alpha3 is required")
     for language in languages:
-        if (
-            name in language.names
-            or str(alpha2).lower() == language.alpha2
-            or str(alpha3).lower() == language.alpha3
-        ):
+        if name in language.names or str(alpha2).lower() == language.alpha2 or str(alpha3).lower() == language.alpha3:
             return language
     raise NameError("No Language found")
