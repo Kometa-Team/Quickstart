@@ -213,10 +213,10 @@ const ValidationHandler = {
   }
 }
 
-// ✅ Restore previously selected libraries
+// Restore previously selected libraries
 ValidationHandler.restoreSelectedLibraries()
 
-// ✅ Attach validation update on input change
+// Attach validation update on input change
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] Adding change event listeners to library checkboxes & accordions.')
 
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   })
 
-  // ✅ Initial validation check on page load
+  // Initial validation check on page load
   console.log('[DEBUG] Running initial validation check on page load.')
   ValidationHandler.updateValidationState()
 })

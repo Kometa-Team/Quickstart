@@ -27,13 +27,13 @@ const ImageHandler = {
           dropdown.appendChild(option)
         })
 
-        // ✅ Restore last selected image after dropdown reloads
+        // Restore last selected image after dropdown reloads
         const storedImage = localStorage.getItem(`${libraryId}-selected-image`)
         if (storedImage && [...dropdown.options].some(option => option.value === storedImage)) {
           dropdown.value = storedImage
         }
 
-        // ✅ Store selection when changed
+        // Store selection when changed
         dropdown.addEventListener('change', function () {
           localStorage.setItem(`${libraryId}-selected-image`, dropdown.value)
         })
@@ -89,12 +89,12 @@ const ImageHandler = {
   getLibraryOverlays: function (libraryId, isMovie) {
     let overlays = []
 
-    // ✅ Get all selected overlay checkboxes within the library section
+    // Get all selected overlay checkboxes within the library section
     document.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"]:checked`).forEach(input => {
       overlays.push(input.name)
     })
 
-    // ✅ Ensure rating overlay is included
+    // Ensure rating overlay is included
     const selectedRating = document.querySelector(
       `#${libraryId}-contentRatingOverlays input[type='radio']:checked`
     )
@@ -213,7 +213,7 @@ const ImageHandler = {
     document.getElementById('rename-confirm-btn').onclick = function () {
       ImageHandler.confirmRenameImage()
     }
-    // ✅ Ensure "Enter" key triggers OK button
+    // Ensure "Enter" key triggers OK button
     renameModalElement.addEventListener('keydown', function (event) {
       if (event.key === 'Enter') {
         event.preventDefault()

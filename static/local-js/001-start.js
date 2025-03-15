@@ -26,7 +26,7 @@ function applyValidationStyles (inputElement, type) {
     iconHTML = '<div class="invalid-feedback"><i class="bi bi-exclamation-triangle-fill text-danger"></i> Name already exists. Pick from dropdown instead?</div>'
   } else if (type === 'success') {
     inputElement.classList.add('is-valid')
-    inputElement.style.border = '1px solid #28a745' // ✅ Green border
+    inputElement.style.border = '1px solid #28a745' // Green border
     iconHTML = '<div class="valid-feedback"><i class="bi bi-check-circle-fill text-success"></i> Name is available</div>'
   }
 

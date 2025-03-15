@@ -4,21 +4,21 @@ const OverlayHandler = {
   initializeOverlays: function (libraryId, isMovie) {
     console.log(`[DEBUG] Initializing overlays for ${libraryId} - ${isMovie ? 'Movie' : 'Show'}`)
 
-    // ✅ Attach event listener for separator dropdown
+    // Attach event listener for separator dropdown
     const separatorDropdown = document.getElementById(`${libraryId}-attribute_use_separators`)
     if (separatorDropdown && !separatorDropdown.dataset.listenerAdded) {
       separatorDropdown.addEventListener('change', () => {
         const selectedStyle = separatorDropdown.value !== 'none'
         OverlayHandler.updateSeparatorToggles(libraryId, selectedStyle)
         OverlayHandler.updateSeparatorPreview(libraryId, separatorDropdown.value) // 🔥 Ensure preview updates here
-        EventHandler.updateAccordionHighlights() // ✅ Apply green bar updates after change
+        EventHandler.updateAccordionHighlights() // Apply green bar updates after change
       })
       separatorDropdown.dataset.listenerAdded = true
 
-      // ✅ Apply separator toggle logic on page load
+      // Apply separator toggle logic on page load
       OverlayHandler.updateSeparatorToggles(libraryId, separatorDropdown.value !== 'none')
       OverlayHandler.updateSeparatorPreview(libraryId, separatorDropdown.value) // 🔥 Ensure preview updates on load
-      EventHandler.updateAccordionHighlights() // ✅ Apply green bar updates on load
+      EventHandler.updateAccordionHighlights() // Apply green bar updates on load
     }
   },
 
