@@ -228,10 +228,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download Build Artifacts
+      - name: Download Windows Build
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows
+          path: ./artifacts/Windows
+
+      - name: Download MacOS Build
+        uses: actions/download-artifact@v4
+        with:
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-MacOS
+          path: ./artifacts/MacOS
+
+      - name: Download Ubuntu Build
+        uses: actions/download-artifact@v4
+        with:
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Ubuntu
+          path: ./artifacts/Ubuntu
 
       - name: List Artifacts for Debugging
         run: ls -R ./artifacts
@@ -244,9 +257,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.exe
-            artifacts/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-MacOS
-            artifacts/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Ubuntu
+              artifacts/Windows/Quickstart.exe
+              artifacts/MacOS/Quickstart
+              artifacts/Ubuntu/Quickstart
 
   commit-notification:
     runs-on: ubuntu-latest
