@@ -69,34 +69,34 @@ jobs:
             branch_name=${{ github.event.pull_request.head.ref }}
             repo_name=${{ github.event.pull_request.head.repo.full_name }}
             base_name="${repo_name%/*}"
-            if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then 
+            if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
                 pr_tag="${base_name}"
             else
                 pr_tag="${branch_name}"
             fi
             echo "pr-tag=${pr_tag}" >> $GITHUB_OUTPUT
-            
+
             value=$(cat VERSION)
             old_msg=$(git log -1 HEAD --pretty=format:%s)
             version="${value%-build*}"
-          
+
             part_value=$(cat PART)
-          
+
             if [[ "$value" == *"-"* ]]; then
                 build_value="$((${value#*-build} + 1))"
             else
                 build_value="1"
             fi
-          
+
             new_value="${version}-build${build_value}"
             new_msg="[${build_value}] ${old_msg}"
-          
+
             echo "version=${version}" >> $GITHUB_OUTPUT
             echo "build-value=${build_value}" >> $GITHUB_OUTPUT
             echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
             echo "commit-hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
             echo "commit-short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-          
+
             echo "$new_value" > "VERSION"
             echo "" > "PART"
             git config --local user.email "action@github.com"
@@ -217,6 +217,36 @@ jobs:
           avatar_url: ${{ vars.BOT_IMAGE }}
           author: ${{ vars.DOCKER_NAME }}
           author_icon_url: ${{ vars.DOCKER_IMAGE }}
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [ build-releases ]  # 🚀 Ensure builds are complete before releasing
+    steps:
+
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: List Artifacts for Debugging
+        run: ls -R ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}
+          name: Quickstart ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
+          draft: false
+          prerelease: false
+          files: |
+            artifacts/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.exe
+            artifacts/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-MacOS
+            artifacts/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Ubuntu
 
   commit-notification:
     runs-on: ubuntu-latest
