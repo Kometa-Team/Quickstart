@@ -10,7 +10,7 @@ const EventHandler = {
       // Attach event listener to each checkbox
       checkbox.addEventListener('change', () => {
         EventHandler.toggleLibraryVisibility(libraryId, checkbox.checked)
-        ValidationHandler.updateValidationState() // Run validation when a library is selected/unselected
+        ValidationHandler.updateValidationState()
       })
 
       // Ensure libraries are HIDDEN by default on first entry
