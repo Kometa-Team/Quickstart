@@ -158,6 +158,9 @@ jobs:
           name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
           path: dist/Quickstart${{ matrix.ext }}
 
+      - name: Debug Build Output
+        run: ls -R dist
+
       - name: Create GitHub Release (Only for Windows Builds)
         if: matrix.os == 'windows'  # ✅ Only run once per build to avoid duplicate releases
         uses: softprops/action-gh-release@v1
@@ -168,8 +171,8 @@ jobs:
           prerelease: false
           files: |
             dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.exe
-            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-MacOS
-            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Ubuntu
+            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
+            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
 
   docker-build-develop:
     runs-on: ubuntu-latest
