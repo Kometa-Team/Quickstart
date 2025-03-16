@@ -146,6 +146,9 @@ jobs:
         run: |
           pyinstaller -y ./quickstart-develop.spec
 
+      - name: Debug PyInstaller Output
+        run: ls -lahR ./dist
+
       - name: Debug Build Info
         run: |
           echo "Version: ${{ needs.increment-build.outputs.version }}"
@@ -156,7 +159,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
-          path: dist/Quickstart${{ matrix.ext }}
+          path: ./dist/Quickstart${{ matrix.ext }}
 
   build-release:
     runs-on: ubuntu-latest
@@ -175,7 +178,7 @@ jobs:
       - name: Debug Downloaded Artifacts
         run: |
           echo "Checking dist directory for builds:"
-          ls -lahR dist
+          ls -lahR ./dist
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
