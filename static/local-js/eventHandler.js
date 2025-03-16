@@ -312,7 +312,7 @@ const EventHandler = {
 
         if (!hasValidChild) {
           console.log(`🚫 [DEBUG] Preventing Overlays from inheriting highlight due to only Preview Overlays: ${parentText}`)
-          return // Stop if Overlays only contain Preview Overlays
+          return
         }
       }
 
