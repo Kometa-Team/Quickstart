@@ -147,7 +147,9 @@ jobs:
           pyinstaller -y ./quickstart-develop.spec
 
       - name: Debug PyInstaller Output
-        run: ls -lahR ./dist
+        run: |
+          echo "Checking dist directory for pyinstaller output:"
+          ls -lahR ./dist
 
       - name: Debug Build Info
         run: |
