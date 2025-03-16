@@ -148,7 +148,7 @@ jobs:
 
       - name: Debug PyInstaller Output
         run: |
-          echo "Checking dist directory for pyinstaller output:"
+          echo "Checking dist directory for PyInstaller output:"
           ls -lahR ./dist
 
       - name: Debug Build Info

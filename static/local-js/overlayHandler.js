@@ -17,7 +17,7 @@ const OverlayHandler = {
 
       // Apply separator toggle logic on page load
       OverlayHandler.updateSeparatorToggles(libraryId, separatorDropdown.value !== 'none')
-      OverlayHandler.updateSeparatorPreview(libraryId, separatorDropdown.value) // 🔥 Ensure preview updates on load
+      OverlayHandler.updateSeparatorPreview(libraryId, separatorDropdown.value)
       EventHandler.updateAccordionHighlights() // Apply green bar updates on load
     }
   },
