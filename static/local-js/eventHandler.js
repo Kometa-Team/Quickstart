@@ -336,7 +336,7 @@ const EventHandler = {
 
     if (isPreviewOverlay) {
       console.log(`🚫 [DEBUG] Preventing highlight removal check for Preview Overlays: ${accordionId}`)
-      return // Do not allow Preview Overlays to trigger highlight removal
+      return
     }
 
     const hasSelections = accordionItem.querySelector(
