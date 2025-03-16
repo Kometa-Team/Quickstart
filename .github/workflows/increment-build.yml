@@ -170,9 +170,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.exe
-            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
-            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
+            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.zip
+            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-MacOS.zip
+            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux.zip
 
   docker-build-develop:
     runs-on: ubuntu-latest
