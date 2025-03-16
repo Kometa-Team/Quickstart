@@ -158,11 +158,23 @@ jobs:
           name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
           path: dist/Quickstart${{ matrix.ext }}
 
+  build-release:
+    runs-on: ubuntu-latest
+    needs: [build-releases]
+    steps:
+
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./dist
+
       - name: Debug Build Output
         run: ls -R dist
 
-      - name: Create GitHub Release (Only for Windows Builds)
-        if: matrix.os == 'windows'  # ✅ Only run once per build to avoid duplicate releases
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}
