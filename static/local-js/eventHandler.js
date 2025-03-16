@@ -298,7 +298,7 @@ const EventHandler = {
 
       if (isPreviewOverlay) {
         console.log(`🚫 [DEBUG] Skipping parent highlight for Preview Overlays: ${parentText}`)
-        return // Prevent parent highlight inheritance from Preview Overlays
+        return
       }
 
       if (isOverlaysSection) {
