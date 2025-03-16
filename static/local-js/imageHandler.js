@@ -253,10 +253,10 @@ const ImageHandler = {
         if (data.status === 'success') {
           showToast('success', 'Image renamed successfully.')
 
-          // 🔹 Reload the dropdown list to reflect new name
+          // Reload the dropdown list to reflect new name
           ImageHandler.loadAvailableImages(libraryId, isMovie)
 
-          // 🔹 Hide the modal after renaming
+          // Hide the modal after renaming
           bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide()
         } else {
           showToast('error', data.message)
