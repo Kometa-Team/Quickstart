@@ -266,7 +266,7 @@ const EventHandler = {
 
           if (!isPreviewChild && child.querySelector("input:checked, input[type='radio']:checked")) {
             console.log(`✅ [DEBUG] Valid selection found under: ${childText}`)
-            childHeader.classList.add('selected') // Ensure child is highlighted first
+            childHeader.classList.add('selected')
             return true
           }
           return false
