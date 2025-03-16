@@ -241,7 +241,6 @@ const EventHandler = {
         // Ensure the **IMMEDIATE PARENT** gets highlighted before moving up
         EventHandler.highlightParentAccordions(accordionHeader)
       } else {
-        // console.log(`❌ [DEBUG] Removing highlight: ${headerText}`)
         EventHandler.removeHighlightIfEmpty(accordionHeader)
       }
     })
