@@ -344,7 +344,6 @@ const EventHandler = {
     )
 
     if (!hasSelections) {
-      // console.log(`🔻 [DEBUG] Removing highlight from: ${accordionId}`)
       element.classList.remove('selected')
     }
 
