@@ -170,9 +170,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: ./dist
+          merge-multiple: true
 
-      - name: Debug Build Output
-        run: ls -R dist
+      - name: Debug Downloaded Artifacts
+        run: |
+          echo "Checking dist directory:"
+          ls -lahR dist
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
