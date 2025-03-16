@@ -168,7 +168,7 @@ const EventHandler = {
       if (separatorDropdown && !separatorDropdown.dataset.listenerAdded) {
         console.log(`[DEBUG] Found separator dropdown: ${separatorDropdown.id}`)
         separatorDropdown.addEventListener('change', () => {
-          OverlayHandler.updateHiddenInputs(libraryId, isMovie) // 🚀 Now delegated
+          OverlayHandler.updateHiddenInputs(libraryId, isMovie)
         })
         separatorDropdown.dataset.listenerAdded = true
         OverlayHandler.updateHiddenInputs(libraryId, isMovie)
