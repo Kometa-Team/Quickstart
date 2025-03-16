@@ -174,7 +174,7 @@ jobs:
 
       - name: Debug Downloaded Artifacts
         run: |
-          echo "Checking dist directory:"
+          echo "Checking dist directory for builds:"
           ls -lahR dist
 
       - name: Create GitHub Release
