@@ -25,7 +25,7 @@ const EventHandler = {
 
       console.log(`[DEBUG] Attaching listeners for Library: ${libraryId}, Type: ${isMovie ? 'Movie' : 'Show'}`)
       ImageHandler.loadAvailableImages(libraryId, isMovie)
-      OverlayHandler.initializeOverlays(libraryId, isMovie) // 🚀 Now handled in overlayHandler.js
+      OverlayHandler.initializeOverlays(libraryId, isMovie)
 
       // Attach dropdown change listener for main library image
       library.querySelectorAll("[id$='-image-dropdown']").forEach((dropdown) => {
