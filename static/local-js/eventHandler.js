@@ -307,7 +307,7 @@ const EventHandler = {
           const childText = childHeader ? childHeader.textContent.trim() : ''
           const isPreviewChild = childText.toLowerCase().includes('preview overlays')
 
-          return !isPreviewChild && child.querySelector('input:checked') // Only highlight Overlays if non-preview children are checked
+          return !isPreviewChild && child.querySelector('input:checked')
         })
 
         if (!hasValidChild) {
