@@ -152,32 +152,14 @@ jobs:
           echo "Build Value: ${{ needs.increment-build.outputs.build-value }}"
           echo "Artifact Name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
           path: dist/Quickstart${{ matrix.ext }}
 
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [ build-releases ]
-    steps:
-
-      - name: Check Out Repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Download Builds
-        uses: actions/download-artifact@v4
-        with:
-          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
-          path: ./artifacts/Quickstart${{ matrix.ext }}
-
-      - name: List Artifacts for Debugging
-        run: ls -R ./artifacts
-
-      - name: Create GitHub Release
+      - name: Create GitHub Release (Only for Windows Builds)
+        if: matrix.os == 'windows'  # ✅ Only run once per build to avoid duplicate releases
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}
@@ -185,9 +167,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-              artifacts/Windows/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.zip
-              artifacts/MacOS/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS.zip
-              artifacts/Linux/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux.zip
+            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.exe
+            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-MacOS
+            dist/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Ubuntu
 
   docker-build-develop:
     runs-on: ubuntu-latest
