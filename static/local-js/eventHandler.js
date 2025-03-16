@@ -71,7 +71,7 @@ const EventHandler = {
           input.addEventListener('change', () => {
             console.log(`[DEBUG] Overlay changed: ${input.id}`)
 
-            // 🚀 Exclude preview overlay accordions from highlight updates
+            // Exclude preview overlay accordions from highlight updates
             if (!input.closest('.preview-accordion')) {
               EventHandler.updateAccordionHighlights()
               ValidationHandler.updateValidationState()
