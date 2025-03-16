@@ -150,9 +150,7 @@ jobs:
         run: |
           echo "Version: ${{ needs.increment-build.outputs.version }}"
           echo "Build Value: ${{ needs.increment-build.outputs.build-value }}"
-          echo "Artifact Name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows"
-          echo "Artifact Name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS"
-          echo "Artifact Name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux"
+          echo "Artifact Name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -170,23 +168,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download Windows Build
+      - name: Download Builds
         uses: actions/download-artifact@v4
         with:
-          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows
-          path: ./artifacts/Windows
-
-      - name: Download macOS Build
-        uses: actions/download-artifact@v4
-        with:
-          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
-          path: ./artifacts/MacOS
-
-      - name: Download Linux Build
-        uses: actions/download-artifact@v4
-        with:
-          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
-          path: ./artifacts/Linux
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
+          path: ./artifacts/Quickstart${{ matrix.ext }}
 
       - name: List Artifacts for Debugging
         run: ls -R ./artifacts
@@ -199,9 +185,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-              artifacts/Windows/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.exe
-              artifacts/MacOS/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
-              artifacts/Linux/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
+              artifacts/Windows/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.zip
+              artifacts/MacOS/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS.zip
+              artifacts/Linux/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux.zip
 
   docker-build-develop:
     runs-on: ubuntu-latest
