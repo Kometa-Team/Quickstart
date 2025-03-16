@@ -27,7 +27,7 @@ const ImageHandler = {
           dropdown.appendChild(option)
         })
 
-        // Restore last selected image after dropdown reloads
+        // Restore last selected image after dropdown reloads on page
         const storedImage = localStorage.getItem(`${libraryId}-selected-image`)
         if (storedImage && [...dropdown.options].some(option => option.value === storedImage)) {
           dropdown.value = storedImage
