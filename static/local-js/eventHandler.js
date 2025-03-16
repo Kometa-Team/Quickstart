@@ -151,7 +151,7 @@ const EventHandler = {
           })
 
           radio.dataset.listenerAdded = 'true'
-          radio.dataset.wasChecked = 'false' // Track the initial state
+          radio.dataset.wasChecked = 'false'
         }
       })
 
