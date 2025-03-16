@@ -146,10 +146,62 @@ jobs:
         run: |
           pyinstaller -y ./quickstart-develop.spec
 
+      - name: Debug Build Info
+        run: |
+          echo "Version: ${{ needs.increment-build.outputs.version }}"
+          echo "Build Value: ${{ needs.increment-build.outputs.build-value }}"
+          echo "Artifact Name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows"
+          echo "Artifact Name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS"
+          echo "Artifact Name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux"
+
       - uses: actions/upload-artifact@v4
         with:
           name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
           path: dist/Quickstart${{ matrix.ext }}
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [ build-releases ]
+    steps:
+
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Windows Build
+        uses: actions/download-artifact@v4
+        with:
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows
+          path: ./artifacts/Windows
+
+      - name: Download macOS Build
+        uses: actions/download-artifact@v4
+        with:
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
+          path: ./artifacts/MacOS
+
+      - name: Download Linux Build
+        uses: actions/download-artifact@v4
+        with:
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
+          path: ./artifacts/Linux
+
+      - name: List Artifacts for Debugging
+        run: ls -R ./artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}
+          name: Quickstart ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
+          draft: false
+          prerelease: false
+          files: |
+              artifacts/Windows/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.exe
+              artifacts/MacOS/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
+              artifacts/Linux/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
 
   docker-build-develop:
     runs-on: ubuntu-latest
@@ -217,51 +269,6 @@ jobs:
           avatar_url: ${{ vars.BOT_IMAGE }}
           author: ${{ vars.DOCKER_NAME }}
           author_icon_url: ${{ vars.DOCKER_IMAGE }}
-
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [ build-releases ]
-    steps:
-
-      - name: Check Out Repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Download Windows Build
-        uses: actions/download-artifact@v4
-        with:
-          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows
-          path: ./artifacts/Windows
-
-      - name: Download macOS Build
-        uses: actions/download-artifact@v4
-        with:
-          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
-          path: ./artifacts/MacOS
-
-      - name: Download Linux Build
-        uses: actions/download-artifact@v4
-        with:
-          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
-          path: ./artifacts/Linux
-
-      - name: List Artifacts for Debugging
-        run: ls -R ./artifacts
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: v${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}
-          name: Quickstart ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
-          draft: false
-          prerelease: false
-          files: |
-              artifacts/Windows/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows.exe
-              artifacts/MacOS/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
-              artifacts/Linux/Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
-
 
   commit-notification:
     runs-on: ubuntu-latest
