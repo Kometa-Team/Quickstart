@@ -74,7 +74,7 @@ const EventHandler = {
             // 🚀 Exclude preview overlay accordions from highlight updates
             if (!input.closest('.preview-accordion')) {
               EventHandler.updateAccordionHighlights()
-              ValidationHandler.updateValidationState() // Run validation when a toggle is changed
+              ValidationHandler.updateValidationState()
             }
           })
           input.dataset.listenerAdded = true
