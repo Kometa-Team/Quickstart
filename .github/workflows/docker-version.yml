@@ -80,7 +80,6 @@ jobs:
   make-releases:
     runs-on: ubuntu-latest
     needs: [ docker-build-version ]
-
     steps:
 
       - name: Create release
