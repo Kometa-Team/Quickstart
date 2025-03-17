@@ -212,7 +212,10 @@ jobs:
           name: Quickstart ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
           draft: false
           prerelease: false
-          files: ./dist/*
+          files: |
+            ./dist/windows/*
+            ./dist/linux/*
+            ./dist/macos/*
 
   docker-build-develop:
     runs-on: ubuntu-latest

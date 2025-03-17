@@ -4,7 +4,7 @@ const ValidationHandler = {
   updateValidationState: function () {
     console.log('[DEBUG] Running validation state update.')
 
-    // 🚀 Check Plex Validation First
+    // Check Plex Validation First
     if (!ValidationHandler.validatePlexState()) {
       return
     }
