@@ -213,9 +213,9 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ./dist/windows/*
-            ./dist/linux/*
-            ./dist/macos/*
+            ./dist/windows/Quickstart.exe
+            ./dist/linux/Quickstart
+            ./dist/macos/Quickstart
 
   docker-build-develop:
     runs-on: ubuntu-latest
