@@ -217,7 +217,6 @@ def generate_preview():
                 if app.config["QS_DEBUG"]:
                     print("[DEBUG] default.png not found in IMAGES_FOLDER or previews, creating grey placeholder image...")
 
-                # Create grey image
                 base_img = Image.new("RGBA", (1000, 1500), (128, 128, 128, 255))  # grey
                 base_img.save(base_image_path)
     else:

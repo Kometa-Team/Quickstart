@@ -162,7 +162,7 @@ jobs:
         with:
           title: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}
           repo_token: ${{ secrets.PAT }}
-          automatic_release_tag: develop
+          automatic_release_tag: latest
           prerelease: true
 
   docker-build-develop:
