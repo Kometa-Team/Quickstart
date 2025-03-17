@@ -175,11 +175,26 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v4
 
-      - name: Download All Artifacts
+      - name: Download Windows Artifact
         uses: actions/download-artifact@v4
         with:
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows
           path: ./dist
-          merge-multiple: true
+          merge-multiple: false
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
+          path: ./dist
+          merge-multiple: false
+
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
+          path: ./dist
+          merge-multiple: false
 
       - name: Debug Downloaded Artifacts
         run: |
