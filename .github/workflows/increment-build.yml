@@ -148,8 +148,12 @@ jobs:
 
       - name: Debug PyInstaller Output
         run: |
-          echo "Checking dist directory for PyInstaller output:"
-          ls -lahR ./dist
+            if [ "$RUNNER_OS" == "Windows" ]; then
+              Get-ChildItem -Path ./dist -Recurse -Force
+            else
+              ls -lahR ./dist
+            fi
+        shell: bash
 
       - name: Debug Build Info
         run: |
@@ -179,8 +183,12 @@ jobs:
 
       - name: Debug Downloaded Artifacts
         run: |
-          echo "Checking dist directory for builds:"
-          ls -lahR ./dist
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            Get-ChildItem -Path ./dist -Recurse -Force
+          else
+            ls -lahR ./dist
+          fi
+        shell: bash
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

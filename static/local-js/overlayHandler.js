@@ -10,7 +10,7 @@ const OverlayHandler = {
       separatorDropdown.addEventListener('change', () => {
         const selectedStyle = separatorDropdown.value !== 'none'
         OverlayHandler.updateSeparatorToggles(libraryId, selectedStyle)
-        OverlayHandler.updateSeparatorPreview(libraryId, separatorDropdown.value) // 🔥 Ensure preview updates here
+        OverlayHandler.updateSeparatorPreview(libraryId, separatorDropdown.value)
         EventHandler.updateAccordionHighlights() // Apply green bar updates after change
       })
       separatorDropdown.dataset.listenerAdded = true
