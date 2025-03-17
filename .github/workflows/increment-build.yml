@@ -94,7 +94,6 @@ jobs:
             echo "version=${version}" >> $GITHUB_OUTPUT
             echo "build-value=${build_value}" >> $GITHUB_OUTPUT
             echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
-            echo "commit-hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
             echo "commit-short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
             echo "$new_value" > "VERSION"
@@ -105,6 +104,11 @@ jobs:
             git add PART
             git commit -m "${new_msg}" --amend
             git push origin develop --force-with-lease
+          
+            echo "commit-hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          
+            echo "commit-hash"
+            echo "${commit-hash}"
 
   build-executable:
     name: Build ${{ matrix.os_upper }} Executable
@@ -231,16 +235,29 @@ jobs:
 
       - name: Delete Old Prelease and Tag
         run: |
+          echo "${{ needs.increment-build.outputs.commit-hash }}"
+          echo "$(git rev-parse HEAD)"
           git fetch
+          echo "$(git rev-parse HEAD)"
           git reset --hard develop
+          echo "$(git rev-parse HEAD)"
           gh release delete latest --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
       - name: Create Prerelease
-        uses: marvinpinto/action-automatic-releases@latest
+        uses: ncipollo/release-action@v1
         with:
-          title: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
-          repo_token: ${{ secrets.PAT }}
-          automatic_release_tag: latest
+          name: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
+          commit: ${{ needs.increment-build.outputs.commit-hash }}
+          generateReleaseNotes: true
           prerelease: true
+          tag: latest
+          token: ${{ secrets.PAT }}
+
+      #  uses: marvinpinto/action-automatic-releases@latest
+      #  with:
+      #    title: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
+      #    repo_token: ${{ secrets.PAT }}
+      #    automatic_release_tag: latest
+      #    prerelease: true

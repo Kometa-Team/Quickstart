@@ -199,7 +199,7 @@ def generate_preview():
     if not os.path.exists(PREVIEW_FOLDER):
         os.makedirs(PREVIEW_FOLDER)
 
-    # Generate a unique preview filename per library
+    # Generate a unique preview filename per library.
     preview_filename = f"{library_id}-{img_type}_preview.png"
     preview_filepath = os.path.join(PREVIEW_FOLDER, preview_filename)
 
