@@ -212,7 +212,7 @@ def generate_preview():
         else:
             base_image_path = os.path.join(PREVIEW_FOLDER, "default.png")
 
-            # Only create grey image if both locations are missing
+            # Only create grey image if both locations are missing.
             if not os.path.exists(base_image_path):
                 if app.config["QS_DEBUG"]:
                     print("[DEBUG] default.png not found in IMAGES_FOLDER or previews, creating grey placeholder image...")

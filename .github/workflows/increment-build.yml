@@ -230,7 +230,10 @@ jobs:
           ref: develop
 
       - name: Delete Old Prelease and Tag
-        run: gh release delete latest --cleanup-tag
+        run: |
+          git fetch
+          git reset --hard develop
+          gh release delete latest --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
