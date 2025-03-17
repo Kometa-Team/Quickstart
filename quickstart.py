@@ -203,7 +203,7 @@ def generate_preview():
     preview_filename = f"{library_id}-{img_type}_preview.png"
     preview_filepath = os.path.join(PREVIEW_FOLDER, preview_filename)
 
-    # ✅ First, check if `default.png` exists in `IMAGES_FOLDER`
+    # First, check if `default.png` exists in `IMAGES_FOLDER`
     default_image_path = os.path.join(IMAGES_FOLDER, "default.png")
 
     if not selected_image or selected_image == "default":
