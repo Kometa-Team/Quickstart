@@ -206,7 +206,7 @@ jobs:
         shell: bash
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}
           name: Quickstart ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
