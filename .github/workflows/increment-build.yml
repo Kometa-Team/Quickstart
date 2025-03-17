@@ -179,21 +179,21 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Windows
-          path: ./dist
+          path: ./dist/windows
           merge-multiple: false
 
       - name: Download Linux Artifact
         uses: actions/download-artifact@v4
         with:
           name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-Linux
-          path: ./dist
+          path: ./dist/linux
           merge-multiple: false
 
       - name: Download macOS Artifact
         uses: actions/download-artifact@v4
         with:
           name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-macOS
-          path: ./dist
+          path: ./dist/macos
           merge-multiple: false
 
       - name: Debug Downloaded Artifacts

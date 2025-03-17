@@ -6,7 +6,7 @@ const ValidationHandler = {
 
     // 🚀 Check Plex Validation First
     if (!ValidationHandler.validatePlexState()) {
-      return // Stop further validation if Plex is not valid
+      return
     }
 
     const selectedMovieLibraries = ValidationHandler.getSelectedLibraries('mov')
