@@ -42,6 +42,7 @@ jobs:
         run: pip install -r requirements.txt pyinstaller
 
       - name: Build Executable
+        shell: bash
         run: |
           tag_name=${{github.event.release.tag_name}}
           if [[ "${tag_name}" =~ ^(develop)$ ]]; then
