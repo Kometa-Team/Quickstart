@@ -1,3 +1,4 @@
+import os.path
 import secrets
 
 from flask import current_app as app
@@ -248,7 +249,7 @@ def get_dummy_data(target):
     helpers.ensure_json_schema()
 
     try:
-        with open("json-schema/config.yml.template", "r") as file:
+        with open(os.path.join(helpers.JSON_SCHEMA_DIR, "config.yml.template"), "r") as file:
             base_config = yaml.load(file)
     except DuplicateKeyError as e:
         print(f"[WARNING] Duplicate key detected in config.yml.template: {e}")

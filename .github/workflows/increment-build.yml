@@ -157,6 +157,11 @@ jobs:
     needs: [ increment-build, build-executable ]
     steps:
 
+      - name: Delete Old Prelease and Tag
+        run: gh release delete latest --cleanup-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+
       - name: Create Prerelease
         uses: marvinpinto/action-automatic-releases@latest
         with:
