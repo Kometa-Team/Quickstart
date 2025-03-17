@@ -148,8 +148,8 @@ jobs:
 
       - name: Debug PyInstaller Output
         run: |
-            if [ "$RUNNER_OS" == "Windows" ]; then
-              Get-ChildItem -Path ./dist -Recurse -Force
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+              pwsh -Command "Get-ChildItem -Path ./dist -Recurse -Force"
             else
               ls -lahR ./dist
             fi
@@ -183,8 +183,8 @@ jobs:
 
       - name: Debug Downloaded Artifacts
         run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            Get-ChildItem -Path ./dist -Recurse -Force
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            pwsh -Command "Get-ChildItem -Path ./dist -Recurse -Force"
           else
             ls -lahR ./dist
           fi
