@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           tag_name=${{github.event.release.tag_name}}
-          if [[ "${tag_name}" =~ ^(develop)$ ]]; then
+          if [[ "${tag_name}" =~ ^(latest)$ ]]; then
             pyinstaller -y ./quickstart-develop.spec
             version_value=$(cat VERSION)
           else
