@@ -6,11 +6,9 @@ import signal
 import sys
 import threading
 import time
-import tkinter
 import webbrowser
 from io import BytesIO
 from threading import Thread
-from tkinter.messagebox import showinfo
 
 import namesgenerator
 import requests
@@ -988,6 +986,8 @@ if __name__ == "__main__":
         start_flask_app()
     else:
         import pystray
+        import tkinter
+        from tkinter.messagebox import showinfo
 
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
