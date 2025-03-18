@@ -82,9 +82,11 @@ jobs:
     needs: [ docker-build-version ]
     steps:
 
-      - name: Create release
-        uses: marvinpinto/action-automatic-releases@latest
+      - name: Create Release
+        uses: ncipollo/release-action@v1
         with:
-          title: ${{ vars.NAME }} ${{ github.event.ref }}
-          repo_token: ${{ secrets.PAT }}
+          name: ${{ vars.NAME }} ${{ github.event.ref }}
+          generateReleaseNotes: true
           prerelease: false
+          tag: ${{ github.event.ref }}
+          token: ${{ secrets.PAT }}
