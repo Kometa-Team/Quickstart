@@ -33,50 +33,18 @@ from werkzeug.utils import secure_filename
 from flask_session import Session
 from modules import validations, output, persistence, helpers, database
 
-# Determine the base directory (where Quickstart.exe is located)
-if getattr(sys, "frozen", False):
-    BASE_DIR = os.path.dirname(sys.executable)
-    MEIPASS_DIR = sys._MEIPASS  # noqa
-else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    MEIPASS_DIR = BASE_DIR
+load_dotenv(os.path.join(helpers.CONFIG_DIR, ".env"))
 
-# Ensure config directory exists
-CONFIG_DIR = os.path.join(BASE_DIR, "config")
-os.makedirs(CONFIG_DIR, exist_ok=True)
-
-# Copy files before _MEIPASS disappears
-for source, dest_dir in [
-    ("VERSION", BASE_DIR),
-    (os.path.join("config", ".env.example"), CONFIG_DIR),
-    (os.path.join("static", "favicon.ico"), BASE_DIR),
-]:
-    src_filename = os.path.basename(source)
-    src_path = os.path.join(MEIPASS_DIR, source)  # File location in _MEIPASS
-    dest_path = os.path.join(dest_dir, src_filename)  # Target location
-
-    # Copy only if the file exists in _MEIPASS and does not already exist in the destination
-    if os.path.exists(src_path) and not os.path.exists(dest_path):
-        try:
-            print(f"[INFO] Extracting {src_filename} to {dest_dir}")
-            shutil.copyfile(src_path, dest_path)
-        except Exception as err:
-            print(f"[ERROR] Failed to copy {src_filename}: {err}")
-
-
-load_dotenv(os.path.join(CONFIG_DIR, ".env"))
-
-UPLOAD_FOLDER = os.path.join(CONFIG_DIR, "uploads")
+UPLOAD_FOLDER = os.path.join(helpers.CONFIG_DIR, "uploads")
 UPLOAD_FOLDER_MOVIE = os.path.join(UPLOAD_FOLDER, "movies")
 UPLOAD_FOLDER_SHOW = os.path.join(UPLOAD_FOLDER, "shows")
 os.makedirs(UPLOAD_FOLDER_MOVIE, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER_SHOW, exist_ok=True)
-IMAGES_FOLDER = os.path.join(BASE_DIR, "static", "images")
+IMAGES_FOLDER = os.path.join(helpers.BASE_DIR, "static", "images")
 OVERLAY_FOLDER = os.path.join(IMAGES_FOLDER, "overlays")
-PREVIEW_FOLDER = os.path.join(CONFIG_DIR, "previews")
+PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
-VERSION_FILE = "VERSION"
 GITHUB_MASTER_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
 GITHUB_DEVELOP_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
 
@@ -956,7 +924,8 @@ if __name__ == "__main__":
 
             def minimize_to_tray(self):
                 self.withdraw()
-                icon_image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
+
+                icon_image = Image.open(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.ico"))
                 pystray_icon = pystray.Icon(
                     "Flask App",
                     icon_image,

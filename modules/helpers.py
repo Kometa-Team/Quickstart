@@ -1,6 +1,7 @@
 import hashlib
 import os
 import re
+import sys
 from pathlib import Path
 
 import requests
@@ -15,11 +16,15 @@ except ImportError:
 STRING_FIELDS = {"apikey", "token", "username", "password"}
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JSON_SCHEMA_DIR = os.path.join(BASE_DIR, "..", "json-schema")
-CONFIG_DIR = os.path.join(BASE_DIR, "..", "config")
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
+MEIPASS_DIR = sys._MEIPASS if getattr(sys, "frozen", False) else BASE_DIR # noqa
+JSON_SCHEMA_DIR = os.path.join(WORKING_DIR, "json-schema")
 os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
+CONFIG_DIR = os.path.join(WORKING_DIR, "config")
+os.makedirs(CONFIG_DIR, exist_ok=True)
 HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")
+VERSION_FILE = os.path.join(MEIPASS_DIR, "VERSION")
 
 
 def normalize_id(name, existing_ids):
@@ -173,9 +178,8 @@ def get_kometa_branch():
 
 def get_version():
     """Read the local VERSION file"""
-    version_file = "VERSION"
-    if os.path.exists(version_file):
-        with open(version_file, "r", encoding="utf-8") as f:
+    if os.path.exists(VERSION_FILE):
+        with open(VERSION_FILE, "r", encoding="utf-8") as f:
             return f.read().strip()
     return "unknown"
 

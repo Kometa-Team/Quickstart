@@ -15,7 +15,14 @@ a = Analysis(
     ['quickstart.py'],
     pathex=[],
     binaries=[],
-    datas=[('VERSION', '.'), ('static/fonts', 'pyfiglet/fonts'), ('static', 'static'), ('templates', 'templates'), ('modules', 'modules'), ('.env.example', '.')],
+    datas=[
+        ('VERSION', '.'),
+        ('static/fonts', 'pyfiglet/fonts'),
+        ('static', 'static'),
+        ('templates', 'templates'),
+        ('modules', 'modules'),
+        ('.env.example', '.')
+    ],
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
