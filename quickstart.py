@@ -66,6 +66,9 @@ for source, dest_dir in [
 
 load_dotenv(os.path.join(CONFIG_DIR, ".env"))
 
+# Get current debug state (1 = enabled, 0 = disabled)
+QS_DEBUG_MODE = os.getenv("QS_DEBUG", "0") == "1"
+
 UPLOAD_FOLDER = os.path.join(CONFIG_DIR, "uploads")
 UPLOAD_FOLDER_MOVIE = os.path.join(UPLOAD_FOLDER, "movies")
 UPLOAD_FOLDER_SHOW = os.path.join(UPLOAD_FOLDER, "shows")
@@ -917,32 +920,66 @@ def exit_action(icon):
         server_thread.join()
 
 
-def toggle_debug(icon):  # noqa
-    pass
+def toggle_debug(icon, item):
+    """Toggle QS_DEBUG between ON (1) and OFF (0) and dynamically apply the change."""
+    global QS_DEBUG_MODE
+
+    # Flip the debug state
+    new_debug_state = not QS_DEBUG_MODE
+    env_path = os.path.join(CONFIG_DIR, ".env")
+    helpers.update_env_variable("QS_DEBUG", "1" if new_debug_state else "0", env_path)  # Save to .env
+
+    # ✅ Force reload of .env by clearing cached variables
+    if "QS_DEBUG" in os.environ:
+        del os.environ["QS_DEBUG"]  # Remove cached value
+
+    load_dotenv(env_path, override=True)  # Reload .env and ensure it overrides old values
+    QS_DEBUG_MODE = helpers.booler(os.getenv("QS_DEBUG", "0"))  # Convert to bool
+    app.config["QS_DEBUG"] = QS_DEBUG_MODE  # ✅ Apply change to Flask config
+
+    print(f"QS_DEBUG_MODE {'enabled' if QS_DEBUG_MODE else 'disabled'}.")
+
+    # ✅ Rebuild and apply the menu dynamically
+    icon.menu = create_tray_menu()
+    icon.update_menu()  # ✅ Ensure the menu actually updates
+
+
+def create_tray_menu():
+    """Generate the system tray menu dynamically based on QS_DEBUG_MODE."""
+    return pystray.Menu(
+        pystray.MenuItem("Open Quickstart", open_quickstart, default=True),
+        pystray.MenuItem("Quickstart GitHub", open_github),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem(lambda item: f"Debug Mode: {'ON' if QS_DEBUG_MODE else 'OFF'}", lambda item: None, enabled=False),
+        pystray.MenuItem("Toggle Debug", toggle_debug),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem("Exit", exit_action),
+    )
 
 
 if __name__ == "__main__":
+    print(f"[INFO] Quickstart QS_DEBUG_MODE: {QS_DEBUG_MODE}")
+
+    # ✅ Start Flask app in a background thread
     if debug_mode:
-        app.run(host="0.0.0.0", port=port, debug=debug_mode)
+        print(f"[INFO] Running in Debug Mode.")
+        server_thread = Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": port, "debug": debug_mode})
     elif app.config["QUICKSTART_DOCKER"]:
-        start_flask_app()
-    else:
-        import pystray
-
-        icon_image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
-
-        pystray_icon = pystray.Icon(
-            "Flask App",
-            icon_image,
-            menu=pystray.Menu(
-                pystray.MenuItem("Open Quickstart", open_quickstart, default=True),
-                pystray.MenuItem("Quickstart GitHub", open_github),
-                pystray.MenuItem("Enable/Disable Debug", toggle_debug),
-                pystray.MenuItem("Exit", exit_action),
-            ),
-        )
-
+        print(f"[INFO] Running in Docker Mode. Skipping tray icon.")
         server_thread = Thread(target=start_flask_app)
-        server_thread.daemon = True
-        server_thread.start()
-        pystray_icon.run()
+    else:
+        print(f"[INFO] Running in Normal Mode.")
+        server_thread = Thread(target=start_flask_app)
+
+    server_thread.daemon = True
+    server_thread.start()
+
+    # ✅ Only run Pystray if NOT in Docker
+    if not app.config["QUICKSTART_DOCKER"]:
+        print(f"[INFO] Quickstart tray icon available")
+        import pystray
+        icon_image = Image.open("favicon.ico") if os.path.exists("favicon.ico") else Image.open(os.path.join("static", "favicon.ico"))
+        icon = pystray.Icon("Quickstart", icon_image, menu=create_tray_menu())
+        icon.run()
+    else:
+        print(f"[INFO] Docker Mode: Tray icon disabled.")

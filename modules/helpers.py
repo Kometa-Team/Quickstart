@@ -21,6 +21,25 @@ os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
 HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")
 
 
+def update_env_variable(key, value, env_path=".env"):
+    """Update or add an environment variable in the .env file."""
+    env_lines = []
+    if os.path.exists(env_path):
+        with open(env_path, "r") as file:
+            env_lines = file.readlines()
+
+    with open(env_path, "w") as file:
+        key_found = False
+        for line in env_lines:
+            if line.startswith(f"{key}="):
+                file.write(f"{key}={value}\n")
+                key_found = True
+            else:
+                file.write(line)
+        if not key_found:
+            file.write(f"{key}={value}\n")  # Add variable if not found
+
+
 def normalize_id(name, existing_ids):
     """Convert library names to safe and unique HTML IDs while preserving Unicode."""
 
