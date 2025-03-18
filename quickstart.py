@@ -902,83 +902,6 @@ def start_flask_app():
     serve(app, host="0.0.0.0", port=port)
 
 
-class QSApp(tkinter.Tk):
-    def __init__(self):
-        super().__init__()
-        global port
-
-        def validate_input(new_text):
-            if not new_text:
-                return True
-            try:
-                value = int(new_text)
-                return 0 <= value <= 65535
-            except ValueError:
-                return False
-
-        def get_value():
-            global port
-            value = entry.get()
-            if value:
-                port = int(value)
-                helpers.update_env_variable("QS_PORT", port)
-                showinfo("Port Number", f"Port Number Set to {port}. Please restart server to use new port.")
-                self.minimize_to_tray()
-
-        def enter_pressed(event):  # noqa
-            get_value()
-
-        self.title("Change Port Number")
-        self.geometry("200x100")
-        self.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
-
-        label = tkinter.Label(self, text=f"Current Port Number: {port}")
-        label.pack(pady=5)
-
-        entry = tkinter.Entry(self, validate="key", validatecommand=(self.register(validate_input), "%P"))
-        entry.pack(pady=5)
-        entry.bind("<Return>", enter_pressed)
-
-        button = tkinter.Button(self, text="Save Port Number", command=get_value)
-        button.pack(pady=5)
-
-        self.minimize_to_tray()
-
-    def minimize_to_tray(self):
-        self.withdraw()
-        icon_image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
-        pystray_icon = pystray.Icon(
-            "Flask App",
-            icon_image,
-            menu=pystray.Menu(
-                pystray.MenuItem("Open Quickstart", self.open_quickstart, default=True),
-                pystray.MenuItem("Quickstart GitHub", self.open_github),
-                pystray.Menu.SEPARATOR,
-                pystray.MenuItem(lambda item: f"Current Port: {port}", self.show_window),
-                pystray.Menu.SEPARATOR,
-                pystray.MenuItem("Exit", self.exit_action),
-            ),
-        )
-        pystray_icon.run()
-
-    def show_window(self, icon):
-        icon.stop()
-        self.after(0, self.deiconify)
-
-    def open_quickstart(self, icon):  # noqa
-        webbrowser.open(f"http://localhost:{running_port}")
-
-    def open_github(self, icon):  # noqa
-        webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
-
-    def exit_action(self, icon):  # noqa
-        global server_thread
-        icon.stop()
-        os.kill(os.getpid(), signal.SIGINT)
-        if server_thread and server_thread.is_alive():
-            server_thread.join()
-
-
 if __name__ == "__main__":
     if debug_mode:
         app.run(host="0.0.0.0", port=port, debug=debug_mode)
@@ -988,6 +911,82 @@ if __name__ == "__main__":
         import pystray
         import tkinter
         from tkinter.messagebox import showinfo
+
+        class QSApp(tkinter.Tk):
+            def __init__(self):
+                super().__init__()
+                global port
+
+                def validate_input(new_text):
+                    if not new_text:
+                        return True
+                    try:
+                        value = int(new_text)
+                        return 0 <= value <= 65535
+                    except ValueError:
+                        return False
+
+                def get_value():
+                    global port
+                    value = entry.get()
+                    if value:
+                        port = int(value)
+                        helpers.update_env_variable("QS_PORT", port)
+                        showinfo("Port Number", f"Port Number Set to {port}. Please restart server to use new port.")
+                        self.minimize_to_tray()
+
+                def enter_pressed(event):  # noqa
+                    get_value()
+
+                self.title("Change Port Number")
+                self.geometry("200x100")
+                self.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
+
+                label = tkinter.Label(self, text=f"Current Port Number: {port}")
+                label.pack(pady=5)
+
+                entry = tkinter.Entry(self, validate="key", validatecommand=(self.register(validate_input), "%P"))
+                entry.pack(pady=5)
+                entry.bind("<Return>", enter_pressed)
+
+                button = tkinter.Button(self, text="Save Port Number", command=get_value)
+                button.pack(pady=5)
+
+                self.minimize_to_tray()
+
+            def minimize_to_tray(self):
+                self.withdraw()
+                icon_image = Image.open("favicon.ico" if os.path.exists("favicon.ico") else os.path.join("static", "favicon.ico"))
+                pystray_icon = pystray.Icon(
+                    "Flask App",
+                    icon_image,
+                    menu=pystray.Menu(
+                        pystray.MenuItem("Open Quickstart", self.open_quickstart, default=True),
+                        pystray.MenuItem("Quickstart GitHub", self.open_github),
+                        pystray.Menu.SEPARATOR,
+                        pystray.MenuItem(lambda item: f"Current Port: {port}", self.show_window),
+                        pystray.Menu.SEPARATOR,
+                        pystray.MenuItem("Exit", self.exit_action),
+                    ),
+                )
+                pystray_icon.run()
+
+            def show_window(self, icon):
+                icon.stop()
+                self.after(0, self.deiconify)
+
+            def open_quickstart(self, icon):  # noqa
+                webbrowser.open(f"http://localhost:{running_port}")
+
+            def open_github(self, icon):  # noqa
+                webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
+
+            def exit_action(self, icon):  # noqa
+                global server_thread
+                icon.stop()
+                os.kill(os.getpid(), signal.SIGINT)
+                if server_thread and server_thread.is_alive():
+                    server_thread.join()
 
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
