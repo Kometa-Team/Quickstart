@@ -82,6 +82,17 @@ jobs:
     needs: [ docker-build-version ]
     steps:
 
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: develop
+
+      - name: Delete Old Prelease and Tag
+        run: gh release delete latest --cleanup-tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
