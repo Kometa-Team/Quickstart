@@ -942,14 +942,11 @@ if __name__ == "__main__":
 
             def get_menu(self):
                 return pystray.Menu(
-                    pystray.MenuItem("Open Quickstart", self.open_quickstart, default=True),
+                    pystray.MenuItem(f"Open Quickstart (Port: {running_port})", self.open_quickstart, default=True),
                     pystray.MenuItem("Quickstart GitHub", self.open_github),
                     pystray.Menu.SEPARATOR,
-                    pystray.MenuItem(lambda item: f"Debug Mode: {'ON' if debug_mode else 'OFF'}", lambda item: None, enabled=False),
-                    pystray.MenuItem("Enable/Disable Debug", self.toggle_debug),
-                    pystray.Menu.SEPARATOR,
-                    pystray.MenuItem(lambda item: f"Current Port: {port}", lambda item: None, enabled=False),
-                    pystray.MenuItem(f"Chane Port", self.show_window),
+                    pystray.MenuItem(f"{'Disable' if debug_mode else 'Enable'} Debug", self.toggle_debug),
+                    pystray.MenuItem(f"Change Port (Current: {port})", self.show_window),
                     pystray.Menu.SEPARATOR,
                     pystray.MenuItem("Exit", self.exit_action),
                 )
