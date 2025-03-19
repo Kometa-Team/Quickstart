@@ -1,5 +1,6 @@
 import hashlib
 import os
+import platform
 import re
 import sys
 from pathlib import Path
@@ -195,13 +196,44 @@ def check_for_update():
     # Determine Kometa branch
     kometa_branch = "master" if branch == "master" else "nightly"
 
+    # Get OS name and correct extension
+    os_name, os_ext = get_running_os()
+
     return {
         "local_version": local_version,
         "remote_version": remote_version,
         "branch": branch,
         "kometa_branch": kometa_branch,
         "update_available": update_available,
+        "running_on": os_name,  # OS Name (Windows, macOS, Linux)
+        "file_ext": os_ext,  # File Extension (.exe for Windows, empty otherwise)
     }
+
+
+def get_running_os():
+    """Returns a standardized OS name, its file extension, and detects if running from Python source or Docker."""
+
+    # Check if running inside a Docker container
+    if os.getenv("QUICKSTART_DOCKER", "False").lower() in ["true", "1"]:
+        return "Docker", ""  # Docker shouldn't download binaries
+
+    system = platform.system().lower()
+
+    # Determine the OS (Windows, macOS, Linux)
+    if "windows" in system:
+        os_name, os_ext = "Windows", ".exe"
+    elif "darwin" in system:  # macOS is identified as 'Darwin'
+        os_name, os_ext = "macOS", ""
+    elif "linux" in system:
+        os_name, os_ext = "Linux", ""
+    else:
+        os_name, os_ext = "Unknown", ""
+
+    # Detect if running from Python (`python quickstart.py`)
+    if not getattr(sys, "frozen", False):  # `sys.frozen` exists in PyInstaller executables
+        return "Python", ""  # No extension required for Python source users
+
+    return os_name, os_ext
 
 
 def enforce_string_fields(data, enforce=False):

@@ -51,8 +51,23 @@
       <div class="alert alert-danger text-center" role="alert" style="max-width: 900px; margin: 0 auto;">
         <i class="bi bi-arrow-up-circle"></i> A new version of Quickstart (<strong>{{ version_info.remote_version
           }}</strong>) is available!
-        <a href="https://github.com/Kometa-Team/Quickstart/tree/{{ version_info.branch }}" target="_blank"
-          class="alert-link">Click here to update.</a>
+
+        {% if version_info.running_on == "Docker" %}
+        <br><br>
+        <span>Since you are running Quickstart inside a Docker container, update it as you normally would:</span>
+        <br>
+        <code>docker pull kometateam/quickstart:{{ version_info.branch }}</code>
+        {% elif version_info.running_on == "Python" %}
+        <br><br>
+        <span>Since you are running Quickstart from source, update it with:</span>
+        <br>
+        <code>git pull && pip install -r requirements.txt</code>
+        {% else %}
+        <a href="https://github.com/Kometa-Team/Quickstart/releases/download/v{{ version_info.remote_version }}/Quickstart-v{{ version_info.remote_version }}-{{ version_info.running_on }}{{ version_info.file_ext }}"
+          target="_blank" class="alert-link">
+          Click here to update.
+        </a>
+        {% endif %}
       </div>
       <br>
       {% endif %}
@@ -100,8 +115,21 @@
             <i class="bi bi-exclamation-triangle"></i>
             Available Version: <strong>{{ version_info.remote_version }}</strong> on <strong>{{ version_info.branch
               }}</strong>!
-            <a href="https://github.com/Kometa-Team/Quickstart/tree/{{ version_info.branch }}" target="_blank">Update
-              Now</a>
+
+            {% if version_info.running_on == "Docker" %}
+            <br><br>
+            <span>Since you are running Quickstart inside a Docker container, update it as you normally would:</span>
+            <br>
+            <code>docker pull kometateam/quickstart:{{ version_info.branch }}</code>
+            {% elif version_info.running_on == "Python" %}
+            <br><br>
+            <span>Since you are running Quickstart from source, update it with:</span>
+            <br>
+            <code>git pull && pip install -r requirements.txt</code>
+            {% else %}
+            <a href="https://github.com/Kometa-Team/Quickstart/releases/download/v{{ version_info.remote_version }}/Quickstart-v{{ version_info.remote_version }}-{{ version_info.running_on }}{{ version_info.file_ext }}"
+              target="_blank">Update Now</a>
+            {% endif %}
           </p>
           {% endif %}
         </div>
