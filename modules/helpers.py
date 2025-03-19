@@ -174,7 +174,7 @@ def get_branch():
 def get_kometa_branch():
     """Fetch the correct branch (master or nightly)."""
     version_info = check_for_update()
-    return version_info.get("kometa_branch", "nightly")  # Default to nightly
+    return version_info.get("kometa_branch", "nightly")  # Default to nightly branch
 
 
 def get_version():
