@@ -966,7 +966,6 @@ helpers.update_env_variable("QS_PORT", str(port), os.path.join(CONFIG_DIR, ".env
 
 print(f"[INFO] Quickstart is running on port {port}")
 
-
 if __name__ == "__main__":
     print(f"[INFO] Quickstart QS_DEBUG_MODE: {QS_DEBUG_MODE}")
 
