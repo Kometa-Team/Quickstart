@@ -239,7 +239,12 @@ jobs:
 
       - name: Get commits
         id: get-commits
-        run: echo "commits=$(git log origin/master..HEAD --pretty=format'* [%h](https://github.com/Kometa-Team/Quickstart/commit/%H) %s (%an)' --reverse | grep -v Merge)" >> $GITHUB_OUTPUT
+        run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "commits<<$EOF" >> $GITHUB_OUTPUT
+          echo "$(git log origin/master..HEAD --pretty='* [%h](https://github.com/Kometa-Team/Quickstart/commit/%H) %s (%an)' --reverse | grep -v Merge)" >> $GITHUB_OUTPUT
+          echo "$EOF" >> $GITHUB_OUTPUT
+        
 
       - name: Build Changelog
         id: build-changelog
