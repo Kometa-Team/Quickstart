@@ -88,6 +88,18 @@ jobs:
           fetch-depth: 0
           ref: develop
 
+      - name: Build Changelog
+        id: build-changelog
+        run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "changelog<<$EOF" >> $GITHUB_OUTPUT
+          echo "## Commits" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "$(git log origin/master..HEAD --pretty='* [%h](https://github.com/Kometa-Team/Quickstart/commit/%H) %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "**Full Changelog**: https://github.com/Kometa-Team/Quickstart/compare/master...latest"
+          echo "$EOF" >> $GITHUB_OUTPUT
+
       - name: Delete Old Prelease and Tag
         run: gh release delete latest --cleanup-tag
         env:
@@ -97,7 +109,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: ${{ vars.NAME }} ${{ github.event.ref }}
-          generateReleaseNotes: true
+          body: ${{ steps.build-changelog.outputs.changelog }}
           prerelease: false
           tag: ${{ github.event.ref }}
           token: ${{ secrets.PAT }}

@@ -237,22 +237,21 @@ jobs:
           fetch-depth: 0
           ref: develop
 
-      - name: Get commits
-        id: get-commits
-        run: |
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "commits<<$EOF" >> $GITHUB_OUTPUT
-          echo "$(git log origin/master..HEAD --pretty='* [%h](https://github.com/Kometa-Team/Quickstart/commit/%H) %s (%an)' --reverse)" >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
-        
-
       - name: Build Changelog
         id: build-changelog
         run: |
-            echo "${{ steps.get-commits.outputs.commits }}"
-            for line in ${{ steps.get-commits.outputs.commits }}; do
-                echo "$line"
-            done
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "changelog<<$EOF" >> $GITHUB_OUTPUT
+          echo "## Commits" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "$(git log origin/master..HEAD --pretty='* [%h](https://github.com/Kometa-Team/Quickstart/commit/%H) %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "**Full Changelog**: https://github.com/Kometa-Team/Quickstart/compare/master...latest"
+          echo "$EOF" >> $GITHUB_OUTPUT
+
+      - name: Show Changelog
+        id: show-changelog
+        run: echo "${{ steps.build-changelog.outputs.changelog }}"
 
       - name: Delete Old Prelease and Tag
         run: gh release delete latest --cleanup-tag
@@ -264,7 +263,7 @@ jobs:
         with:
           name: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
           commit: ${{ needs.increment-build.outputs.commit-hash }}
-          generateReleaseNotes: true
+          body: ${{ steps.build-changelog.outputs.changelog }}
           prerelease: true
           tag: latest
           token: ${{ secrets.PAT }}
