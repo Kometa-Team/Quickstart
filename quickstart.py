@@ -861,14 +861,11 @@ def validate_notifiarr():
 
 
 server_thread = None
-
-
-def start_flask_app():
-    global server_thread
-    serve(app, host="0.0.0.0", port=port)
-
-
+update_thread = None
 if __name__ == "__main__":
+
+    def start_flask_app():
+        serve(app, host="0.0.0.0", port=port)
 
     def start_update_thread(app_in):
         with app_in.app_context():
@@ -971,11 +968,13 @@ if __name__ == "__main__":
                 icon.update_menu()
 
             def exit_action(self, icon):  # noqa
-                global server_thread
+                global server_thread, update_thread
                 icon.stop()
                 os.kill(os.getpid(), signal.SIGINT)
                 if server_thread and server_thread.is_alive():
                     server_thread.join()
+                if update_thread and update_thread.is_alive():
+                    update_thread.join()
 
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
