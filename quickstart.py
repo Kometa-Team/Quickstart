@@ -969,7 +969,7 @@ print(f"[INFO] Quickstart is running on port {port}")
 if __name__ == "__main__":
     print(f"[INFO] Quickstart QS_DEBUG_MODE: {QS_DEBUG_MODE}")
 
-    # ✅ Start Flask app in a background thread
+    # Start Flask app in a background thread
     if debug_mode:
         print(f"[INFO] Running in Debug Mode.")
         server_thread = Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": port, "debug": debug_mode})
