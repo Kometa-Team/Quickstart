@@ -893,6 +893,7 @@ print(f"[INFO] Quickstart is running on port {port}")
 # Initialize Flask app
 app.config["QS_DEBUG"] = QS_DEBUG_MODE
 
+
 def start_flask_app():
     """Runs the Flask application."""
     serve(app, host="0.0.0.0", port=port)
