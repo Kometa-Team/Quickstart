@@ -244,9 +244,9 @@ jobs:
           echo "changelog<<$EOF" >> $GITHUB_OUTPUT
           echo "## Commits" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "$(git log origin/master..HEAD --pretty='* [%h](https://github.com/Kometa-Team/Quickstart/commit/%H) %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
+          echo "$(git log $(git describe --tags --abbrev=0 latest^)..HEAD --pretty='* `[%h](https://github.com/Kometa-Team/Quickstart/commit/%H)`: %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "**Full Changelog**: https://github.com/Kometa-Team/Quickstart/compare/master...latest"
+          echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/$(git describe --tags --abbrev=0 latest^)...latest)" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
 
       - name: Show Changelog

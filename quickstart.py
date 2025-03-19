@@ -869,9 +869,18 @@ def start_flask_app():
 
 
 if __name__ == "__main__":
-    if debug_mode:
-        app.run(host="0.0.0.0", port=port, debug=debug_mode)
-    elif app.config["QUICKSTART_DOCKER"]:
+
+    def start_update_thread(app_in):
+        with app_in.app_context():
+            while True:
+                app_in.config["VERSION_CHECK"] = helpers.check_for_update()
+                print("[INFO] Checked for updates.")
+                time.sleep(86400)
+
+    update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
+    update_thread.start()
+
+    if app.config["QUICKSTART_DOCKER"]:
         start_flask_app()
     else:
         import pystray
@@ -927,16 +936,23 @@ if __name__ == "__main__":
                 pystray_icon = pystray.Icon(
                     "Flask App",
                     icon_image,
-                    menu=pystray.Menu(
-                        pystray.MenuItem("Open Quickstart", self.open_quickstart, default=True),
-                        pystray.MenuItem("Quickstart GitHub", self.open_github),
-                        pystray.Menu.SEPARATOR,
-                        pystray.MenuItem(lambda item: f"Current Port: {port}", self.show_window),
-                        pystray.Menu.SEPARATOR,
-                        pystray.MenuItem("Exit", self.exit_action),
-                    ),
+                    menu=self.get_menu(),
                 )
                 pystray_icon.run()
+
+            def get_menu(self):
+                return pystray.Menu(
+                    pystray.MenuItem("Open Quickstart", self.open_quickstart, default=True),
+                    pystray.MenuItem("Quickstart GitHub", self.open_github),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem(lambda item: f"Debug Mode: {'ON' if debug_mode else 'OFF'}", lambda item: None, enabled=False),
+                    pystray.MenuItem("Enable/Disable Debug", self.toggle_debug),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem(lambda item: f"Current Port: {port}", lambda item: None, enabled=False),
+                    pystray.MenuItem(f"Chane Port", self.show_window),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem("Exit", self.exit_action),
+                )
 
             def show_window(self, icon):
                 icon.stop()
@@ -948,6 +964,14 @@ if __name__ == "__main__":
             def open_github(self, icon):  # noqa
                 webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
 
+            def toggle_debug(self, icon):
+                global debug_mode
+                debug_mode = not debug_mode
+                helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
+                app.config["QS_DEBUG"] = debug_mode
+                icon.menu = self.get_menu()
+                icon.update_menu()
+
             def exit_action(self, icon):  # noqa
                 global server_thread
                 icon.stop()
@@ -958,5 +982,6 @@ if __name__ == "__main__":
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
+
         main_app = QSApp()
         main_app.mainloop()
