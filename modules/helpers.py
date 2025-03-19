@@ -22,13 +22,12 @@ os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
 HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")
 
 
-
 def find_available_port(starting_port=5000):
     """Finds an available port, starting at the given port."""
     port = starting_port
     while True:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            if s.connect_ex(('localhost', port)) != 0:  # Port is free
+            if s.connect_ex(("localhost", port)) != 0:  # Port is free
                 return port
         port += 1
 
