@@ -451,23 +451,3 @@ def redact_sensitive_data(yaml_content):
     # Join the lines back together to form the redacted YAML content
     redacted_content = "\n".join(redacted_lines)
     return redacted_content
-
-
-def update_env_variable(key, value):
-    env_path = os.path.join(CONFIG_DIR, ".env")
-
-    env_lines = []
-    if os.path.exists(env_path):
-        with open(env_path, "r") as file:
-            env_lines = file.readlines()
-
-    with open(env_path, "w") as file:
-        key_found = False
-        for line in env_lines:
-            if line.startswith(f"{key}="):
-                file.write(f"{key}={value}\n")
-                key_found = True
-            else:
-                file.write(line)
-        if not key_found:
-            file.write(f"{key}={value}\n")
