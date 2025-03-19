@@ -934,9 +934,10 @@ if __name__ == "__main__":
 
                 icon_image = Image.open(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.ico"))
                 pystray_icon = pystray.Icon(
-                    "Flask App",
+                    "Quickstart",
                     icon_image,
                     menu=self.get_menu(),
+                    title=f"Quickstart (Port: {running_port})",
                 )
                 pystray_icon.run()
 
