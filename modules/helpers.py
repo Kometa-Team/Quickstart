@@ -10,7 +10,7 @@ from flask import current_app as app
 try:
     from git import Repo
 except ImportError:
-    Repo = None  # Prevents errors if GitPython is missing
+    Repo = None
 
 
 STRING_FIELDS = {"apikey", "token", "username", "password"}
