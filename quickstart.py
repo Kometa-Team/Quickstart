@@ -947,7 +947,7 @@ def toggle_debug(icon, item):
 def create_tray_menu():
     """Generate the system tray menu dynamically based on QS_DEBUG_MODE."""
     return pystray.Menu(
-        pystray.MenuItem("Open Quickstart", open_quickstart, default=True),
+        pystray.MenuItem(f"Open Quickstart (Port {port})", open_quickstart, default=True),
         pystray.MenuItem("Quickstart GitHub", open_github),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem(lambda item: f"Debug Mode: {'ON' if QS_DEBUG_MODE else 'OFF'}", lambda item: None, enabled=False),
@@ -955,6 +955,15 @@ def create_tray_menu():
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Exit", exit_action),
     )
+
+# Load existing port from environment or start from 5000
+port = int(os.getenv("QS_PORT", "5000"))
+port = helpers.find_available_port(port)
+
+# Update the .env file
+helpers.update_env_variable("QS_PORT", str(port), os.path.join(CONFIG_DIR, ".env"))
+
+print(f"[INFO] Quickstart is running on port {port}")
 
 
 if __name__ == "__main__":
@@ -979,7 +988,7 @@ if __name__ == "__main__":
         print(f"[INFO] Quickstart tray icon available")
         import pystray
         icon_image = Image.open("favicon.ico") if os.path.exists("favicon.ico") else Image.open(os.path.join("static", "favicon.ico"))
-        icon = pystray.Icon("Quickstart", icon_image, menu=create_tray_menu())
+        icon = pystray.Icon("Quickstart", icon_image, menu=create_tray_menu(), title=f"Quickstart Running on Port {port}")
         icon.run()
     else:
         print(f"[INFO] Docker Mode: Tray icon disabled.")
