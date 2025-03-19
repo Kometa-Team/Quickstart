@@ -237,6 +237,17 @@ jobs:
           fetch-depth: 0
           ref: develop
 
+      - name: Get commits
+        id: get-commits
+        run: echo "commits=$(git log master..HEAD --pretty:format'*  %s [View](https://github.com/Kometa-Team/Quickstart/commit/%H)' --reverse | grep -v Merge)" >> $GITHUB_OUTPUT
+
+      - name: Build Changelog
+        id: build-changelog
+        run: |
+            for line in ${{ steps.get-commits.outputs.commits }}; do
+                echo "$line"
+            done
+
       - name: Delete Old Prelease and Tag
         run: gh release delete latest --cleanup-tag
         env:
