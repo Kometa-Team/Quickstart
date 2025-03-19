@@ -239,16 +239,15 @@ jobs:
 
       - name: Get commits
         id: get-commits
-        run: echo "commits=$(git log origin/master..HEAD --pretty:format'*  %s [View](https://github.com/Kometa-Team/Quickstart/commit/%H)' --reverse | grep -v Merge)" >> $GITHUB_OUTPUT
+        run: echo "commits=$(git log origin/master..HEAD --pretty=format'* [%h](https://github.com/Kometa-Team/Quickstart/commit/%H) %s (%an)' --reverse | grep -v Merge)" >> $GITHUB_OUTPUT
 
       - name: Build Changelog
         id: build-changelog
         run: |
+            echo "${{ steps.get-commits.outputs.commits }}"
             for line in ${{ steps.get-commits.outputs.commits }}; do
                 echo "$line"
             done
-          
-            echo "$(git branch --all)"
 
       - name: Delete Old Prelease and Tag
         run: gh release delete latest --cleanup-tag
