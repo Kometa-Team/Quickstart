@@ -2,6 +2,7 @@ import hashlib
 import os
 import re
 import socket
+import sys
 from pathlib import Path
 
 import requests
@@ -16,10 +17,15 @@ except ImportError:
 STRING_FIELDS = {"apikey", "token", "username", "password"}
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JSON_SCHEMA_DIR = os.path.join(BASE_DIR, "..", "json-schema")
+BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
+MEIPASS_DIR = sys._MEIPASS if getattr(sys, "frozen", False) else BASE_DIR  # noqa
+JSON_SCHEMA_DIR = os.path.join(WORKING_DIR, "json-schema")
 os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
+CONFIG_DIR = os.path.join(WORKING_DIR, "config")
+os.makedirs(CONFIG_DIR, exist_ok=True)
 HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")
+VERSION_FILE = os.path.join(MEIPASS_DIR, "VERSION")
 
 
 def find_available_port(starting_port=5000):
@@ -202,9 +208,8 @@ def get_kometa_branch():
 
 def get_version():
     """Read the local VERSION file"""
-    version_file = "VERSION"
-    if os.path.exists(version_file):
-        with open(version_file, "r", encoding="utf-8") as f:
+    if os.path.exists(VERSION_FILE):
+        with open(VERSION_FILE, "r", encoding="utf-8") as f:
             return f.read().strip()
     return "unknown"
 
@@ -446,3 +451,23 @@ def redact_sensitive_data(yaml_content):
     # Join the lines back together to form the redacted YAML content
     redacted_content = "\n".join(redacted_lines)
     return redacted_content
+
+
+def update_env_variable(key, value):
+    env_path = os.path.join(CONFIG_DIR, ".env")
+
+    env_lines = []
+    if os.path.exists(env_path):
+        with open(env_path, "r") as file:
+            env_lines = file.readlines()
+
+    with open(env_path, "w") as file:
+        key_found = False
+        for line in env_lines:
+            if line.startswith(f"{key}="):
+                file.write(f"{key}={value}\n")
+                key_found = True
+            else:
+                file.write(line)
+        if not key_found:
+            file.write(f"{key}={value}\n")

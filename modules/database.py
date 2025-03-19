@@ -5,10 +5,7 @@ from contextlib import closing
 
 from modules import helpers
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_DIR = os.path.join(BASE_DIR, "..", "config")
-os.makedirs(CONFIG_DIR, exist_ok=True)
-DATABASE_PATH = os.path.join(CONFIG_DIR, "quickstart.sqlite")
+DATABASE_PATH = os.path.join(helpers.CONFIG_DIR, "quickstart.sqlite")
 
 
 def persisted_section_table_create():

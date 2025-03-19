@@ -14,6 +14,13 @@ jobs:
       build: ${{ steps.list-changes.outputs.build }}
     steps:
 
+      - name: Display Refs
+        run: |
+          echo "Base Repo: ${{ github.event.pull_request.base.repo.full_name }}"
+          echo "Base Ref: ${{ github.base_ref }}"
+          echo "Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
+          echo "Head Ref: ${{ github.event.pull_request.head.ref }}"
+
       - name: Check Out Repo
         uses: actions/checkout@v4
         with:
@@ -103,6 +110,7 @@ jobs:
             git add VERSION
             git add PART
             git commit -m "${new_msg}" --amend
+            git push ${{ github.event.pull_request.head.repo.full_name }} ${{ github.event.pull_request.head.ref }} --force-with-lease
             git push origin develop --force-with-lease
 
             echo "commit-hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
