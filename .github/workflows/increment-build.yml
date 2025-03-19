@@ -110,6 +110,7 @@ jobs:
             git add VERSION
             git add PART
             git commit -m "${new_msg}" --amend
+            git push ${{ github.event.pull_request.head.repo.full_name }} ${{ github.event.pull_request.head.ref }} --force-with-lease
             git push origin develop --force-with-lease
 
             echo "commit-hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
@@ -237,22 +238,6 @@ jobs:
           fetch-depth: 0
           ref: develop
 
-      - name: Build Changelog
-        id: build-changelog
-        run: |
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "changelog<<$EOF" >> $GITHUB_OUTPUT
-          echo "## Commits" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "$(git log origin/master..HEAD --pretty='* [%h](https://github.com/Kometa-Team/Quickstart/commit/%H) %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
-          echo "" >> $GITHUB_OUTPUT
-          echo "**Full Changelog**: https://github.com/Kometa-Team/Quickstart/compare/master...latest"
-          echo "$EOF" >> $GITHUB_OUTPUT
-
-      - name: Show Changelog
-        id: show-changelog
-        run: echo "${{ steps.build-changelog.outputs.changelog }}"
-
       - name: Delete Old Prelease and Tag
         run: gh release delete latest --cleanup-tag
         env:
@@ -263,7 +248,7 @@ jobs:
         with:
           name: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
           commit: ${{ needs.increment-build.outputs.commit-hash }}
-          body: ${{ steps.build-changelog.outputs.changelog }}
+          generateReleaseNotes: true
           prerelease: true
           tag: latest
           token: ${{ secrets.PAT }}

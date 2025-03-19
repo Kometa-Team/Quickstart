@@ -1,8 +1,15 @@
 import hashlib
 import os
+import pystray
 import re
+import socket
+import time
+import signal
 import sys
+import webbrowser
+from dotenv import load_dotenv
 from pathlib import Path
+from PIL import Image
 
 import requests
 from flask import current_app as app
@@ -25,6 +32,104 @@ CONFIG_DIR = os.path.join(WORKING_DIR, "config")
 os.makedirs(CONFIG_DIR, exist_ok=True)
 HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")
 VERSION_FILE = os.path.join(MEIPASS_DIR, "VERSION")
+
+
+def open_quickstart(icon, port):  # noqa
+    webbrowser.open(f"http://localhost:{port}")
+
+
+def open_github(icon):  # noqa
+    webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
+
+
+def exit_action(icon):
+    global server_thread
+    icon.stop()
+    os.kill(os.getpid(), signal.SIGINT)
+    if server_thread and server_thread.is_alive():
+        server_thread.join()
+
+
+def start_update_thread(app):
+    """Ensure update_checker_loop runs inside the Flask app context."""
+    with app.app_context():
+        while True:
+            app.config["VERSION_CHECK"] = check_for_update()
+            print("[INFO] Checked for updates.")
+            time.sleep(86400)  # Sleep for 24 hours
+
+
+def create_tray_menu(port, QS_DEBUG_MODE, app):
+    """Generate the system tray menu dynamically."""
+    return pystray.Menu(
+        pystray.MenuItem(f"Open Quickstart (Port {port})", lambda icon, item: open_quickstart(icon, port), default=True),
+        pystray.MenuItem("Quickstart GitHub", open_github),
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem(lambda item: f"Debug Mode: {'ON' if QS_DEBUG_MODE else 'OFF'}", lambda item: None, enabled=False),
+        pystray.MenuItem("Toggle Debug", lambda icon, item: toggle_debug(icon, item, app)),  # ✅ Fix here
+        pystray.Menu.SEPARATOR,
+        pystray.MenuItem("Exit", exit_action),
+    )
+
+
+def run_tray_icon(port, app):
+    """Runs the system tray icon for Quickstart."""
+    QS_DEBUG_MODE = app.config["QS_DEBUG"]  # ✅ Fetch from app.config
+    icon_image = Image.open("favicon.ico") if os.path.exists("favicon.ico") else Image.open("static/favicon.ico")
+    icon = pystray.Icon("Quickstart", icon_image, menu=create_tray_menu(port, QS_DEBUG_MODE, app), title=f"Quickstart Running on Port {port}")  # ✅ Fix here
+    icon.port = port  # ✅ Store port for menu updates
+    icon.run()
+
+
+def toggle_debug(icon, item, app):
+    """Toggle QS_DEBUG between ON and OFF and dynamically update the tray."""
+    env_path = os.path.join("config", ".env")
+
+    # ✅ Toggle the value using app.config
+    new_debug_state = not app.config["QS_DEBUG"]
+    update_env_variable("QS_DEBUG", "1" if new_debug_state else "0", env_path)
+
+    if "QS_DEBUG" in os.environ:
+        del os.environ["QS_DEBUG"]
+    load_dotenv(env_path, override=True)
+
+    # ✅ Update QS_DEBUG_MODE globally in Flask config
+    app.config["QS_DEBUG"] = bool(int(os.getenv("QS_DEBUG", "0")))
+
+    print(f"[INFO] QS_DEBUG_MODE {'enabled' if app.config['QS_DEBUG'] else 'disabled'}.")
+
+    # ✅ Ensure `app` is passed when updating the tray menu
+    icon.menu = create_tray_menu(icon.port, app.config["QS_DEBUG"], app)
+    icon.update_menu()
+
+
+def find_available_port(starting_port=5000):
+    """Finds an available port, starting at the given port."""
+    port = starting_port
+    while True:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(("localhost", port)) != 0:  # Port is free
+                return port
+        port += 1
+
+
+def update_env_variable(key, value, env_path=".env"):
+    """Update or add an environment variable in the .env file."""
+    env_lines = []
+    if os.path.exists(env_path):
+        with open(env_path, "r") as file:
+            env_lines = file.readlines()
+
+    with open(env_path, "w") as file:
+        key_found = False
+        for line in env_lines:
+            if line.startswith(f"{key}="):
+                file.write(f"{key}={value}\n")
+                key_found = True
+            else:
+                file.write(line)
+        if not key_found:
+            file.write(f"{key}={value}\n")  # Add variable if not found
 
 
 def normalize_id(name, existing_ids):
@@ -421,23 +526,3 @@ def redact_sensitive_data(yaml_content):
     # Join the lines back together to form the redacted YAML content
     redacted_content = "\n".join(redacted_lines)
     return redacted_content
-
-
-def update_env_variable(key, value):
-    env_path = os.path.join(CONFIG_DIR, ".env")
-
-    env_lines = []
-    if os.path.exists(env_path):
-        with open(env_path, "r") as file:
-            env_lines = file.readlines()
-
-    with open(env_path, "w") as file:
-        key_found = False
-        for line in env_lines:
-            if line.startswith(f"{key}="):
-                file.write(f"{key}={value}\n")
-                key_found = True
-            else:
-                file.write(line)
-        if not key_found:
-            file.write(f"{key}={value}\n")
