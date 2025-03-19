@@ -956,6 +956,7 @@ def create_tray_menu():
         pystray.MenuItem("Exit", exit_action),
     )
 
+
 # Load existing port from environment or start from 5000
 port = int(os.getenv("QS_PORT", "5000"))
 port = helpers.find_available_port(port)
@@ -987,6 +988,7 @@ if __name__ == "__main__":
     if not app.config["QUICKSTART_DOCKER"]:
         print(f"[INFO] Quickstart tray icon available")
         import pystray
+
         icon_image = Image.open("favicon.ico") if os.path.exists("favicon.ico") else Image.open(os.path.join("static", "favicon.ico"))
         icon = pystray.Icon("Quickstart", icon_image, menu=create_tray_menu(), title=f"Quickstart Running on Port {port}")
         icon.run()
