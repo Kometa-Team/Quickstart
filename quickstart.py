@@ -1,9 +1,7 @@
 import argparse
 import io
 import os
-import shutil
 import signal
-import sys
 import threading
 import time
 import webbrowser
@@ -33,53 +31,18 @@ from werkzeug.utils import secure_filename
 from flask_session import Session
 from modules import validations, output, persistence, helpers, database
 
-# Determine the base directory (where Quickstart.exe is located)
-if getattr(sys, "frozen", False):
-    BASE_DIR = os.path.dirname(sys.executable)
-    MEIPASS_DIR = sys._MEIPASS  # noqa
-else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    MEIPASS_DIR = BASE_DIR
+load_dotenv(os.path.join(helpers.CONFIG_DIR, ".env"))
 
-# Ensure config directory exists
-CONFIG_DIR = os.path.join(BASE_DIR, "config")
-os.makedirs(CONFIG_DIR, exist_ok=True)
-
-# Copy files before _MEIPASS disappears
-for source, dest_dir in [
-    ("VERSION", BASE_DIR),
-    (os.path.join("config", ".env.example"), CONFIG_DIR),
-    (os.path.join("static", "favicon.ico"), BASE_DIR),
-]:
-    src_filename = os.path.basename(source)
-    src_path = os.path.join(MEIPASS_DIR, source)  # File location in _MEIPASS
-    dest_path = os.path.join(dest_dir, src_filename)  # Target location
-
-    # Copy only if the file exists in _MEIPASS and does not already exist in the destination
-    if os.path.exists(src_path) and not os.path.exists(dest_path):
-        try:
-            print(f"[INFO] Extracting {src_filename} to {dest_dir}")
-            shutil.copyfile(src_path, dest_path)
-        except Exception as err:
-            print(f"[ERROR] Failed to copy {src_filename}: {err}")
-
-
-load_dotenv(os.path.join(CONFIG_DIR, ".env"))
-
-# Get current debug state (1 = enabled, 0 = disabled)
-QS_DEBUG_MODE = os.getenv("QS_DEBUG", "0") == "1"
-
-UPLOAD_FOLDER = os.path.join(CONFIG_DIR, "uploads")
+UPLOAD_FOLDER = os.path.join(helpers.CONFIG_DIR, "uploads")
 UPLOAD_FOLDER_MOVIE = os.path.join(UPLOAD_FOLDER, "movies")
 UPLOAD_FOLDER_SHOW = os.path.join(UPLOAD_FOLDER, "shows")
 os.makedirs(UPLOAD_FOLDER_MOVIE, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER_SHOW, exist_ok=True)
-IMAGES_FOLDER = os.path.join(BASE_DIR, "static", "images")
+IMAGES_FOLDER = os.path.join(helpers.BASE_DIR, "static", "images")
 OVERLAY_FOLDER = os.path.join(IMAGES_FOLDER, "overlays")
-PREVIEW_FOLDER = os.path.join(CONFIG_DIR, "previews")
+PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
-VERSION_FILE = "VERSION"
 GITHUB_MASTER_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
 GITHUB_DEVELOP_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
 
@@ -132,6 +95,7 @@ parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
 
 port = args.port if args.port else int(os.getenv("QS_PORT", "5000"))
+running_port = port
 debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
 print(f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}")
@@ -904,92 +868,95 @@ def start_flask_app():
     serve(app, host="0.0.0.0", port=port)
 
 
-def open_quickstart(icon):  # noqa
-    webbrowser.open(f"http://localhost:{port}")
-
-
-def open_github(icon):  # noqa
-    webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
-
-
-def exit_action(icon):
-    global server_thread
-    icon.stop()
-    os.kill(os.getpid(), signal.SIGINT)
-    if server_thread and server_thread.is_alive():
-        server_thread.join()
-
-
-def toggle_debug(icon, item):
-    """Toggle QS_DEBUG between ON (1) and OFF (0) and dynamically apply the change."""
-    global QS_DEBUG_MODE
-
-    # Flip the debug state
-    new_debug_state = not QS_DEBUG_MODE
-    env_path = os.path.join(CONFIG_DIR, ".env")
-    helpers.update_env_variable("QS_DEBUG", "1" if new_debug_state else "0", env_path)  # Save to .env
-
-    # ✅ Force reload of .env by clearing cached variables
-    if "QS_DEBUG" in os.environ:
-        del os.environ["QS_DEBUG"]  # Remove cached value
-
-    load_dotenv(env_path, override=True)  # Reload .env and ensure it overrides old values
-    QS_DEBUG_MODE = helpers.booler(os.getenv("QS_DEBUG", "0"))  # Convert to bool
-    app.config["QS_DEBUG"] = QS_DEBUG_MODE  # ✅ Apply change to Flask config
-
-    print(f"QS_DEBUG_MODE {'enabled' if QS_DEBUG_MODE else 'disabled'}.")
-
-    # ✅ Rebuild and apply the menu dynamically
-    icon.menu = create_tray_menu()
-    icon.update_menu()  # ✅ Ensure the menu actually updates
-
-
-def create_tray_menu():
-    """Generate the system tray menu dynamically based on QS_DEBUG_MODE."""
-    return pystray.Menu(
-        pystray.MenuItem(f"Open Quickstart (Port {port})", open_quickstart, default=True),
-        pystray.MenuItem("Quickstart GitHub", open_github),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem(lambda item: f"Debug Mode: {'ON' if QS_DEBUG_MODE else 'OFF'}", lambda item: None, enabled=False),
-        pystray.MenuItem("Toggle Debug", toggle_debug),
-        pystray.Menu.SEPARATOR,
-        pystray.MenuItem("Exit", exit_action),
-    )
-
-
-# Load existing port from environment or start from 5000
-port = int(os.getenv("QS_PORT", "5000"))
-port = helpers.find_available_port(port)
-
-# Update the .env file
-helpers.update_env_variable("QS_PORT", str(port), os.path.join(CONFIG_DIR, ".env"))
-
-print(f"[INFO] Quickstart is running on port {port}")
-
 if __name__ == "__main__":
-    print(f"[INFO] Quickstart QS_DEBUG_MODE: {QS_DEBUG_MODE}")
-
-    # Start Flask app in a background thread
     if debug_mode:
-        print(f"[INFO] Running in Debug Mode.")
-        server_thread = Thread(target=app.run, kwargs={"host": "0.0.0.0", "port": port, "debug": debug_mode})
+        app.run(host="0.0.0.0", port=port, debug=debug_mode)
     elif app.config["QUICKSTART_DOCKER"]:
-        print(f"[INFO] Running in Docker Mode. Skipping tray icon.")
-        server_thread = Thread(target=start_flask_app)
+        start_flask_app()
     else:
-        print(f"[INFO] Running in Normal Mode.")
-        server_thread = Thread(target=start_flask_app)
-
-    server_thread.daemon = True
-    server_thread.start()
-
-    # ✅ Only run Pystray if NOT in Docker
-    if not app.config["QUICKSTART_DOCKER"]:
-        print(f"[INFO] Quickstart tray icon available")
         import pystray
+        import tkinter
+        from tkinter.messagebox import showinfo
 
-        icon_image = Image.open("favicon.ico") if os.path.exists("favicon.ico") else Image.open(os.path.join("static", "favicon.ico"))
-        icon = pystray.Icon("Quickstart", icon_image, menu=create_tray_menu(), title=f"Quickstart Running on Port {port}")
-        icon.run()
-    else:
-        print(f"[INFO] Docker Mode: Tray icon disabled.")
+        class QSApp(tkinter.Tk):
+            def __init__(self):
+                super().__init__()
+                global port
+
+                def validate_input(new_text):
+                    if not new_text:
+                        return True
+                    try:
+                        value = int(new_text)
+                        return 0 <= value <= 65535
+                    except ValueError:
+                        return False
+
+                def get_value():
+                    global port
+                    value = entry.get()
+                    if value:
+                        port = int(value)
+                        helpers.update_env_variable("QS_PORT", port)
+                        showinfo("Port Number", f"Port Number Set to {port}. Please restart server to use new port.")
+                        self.minimize_to_tray()
+
+                def enter_pressed(event):  # noqa
+                    get_value()
+
+                self.title("Change Port Number")
+                self.geometry("200x100")
+                self.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
+
+                label = tkinter.Label(self, text=f"Current Port Number: {port}")
+                label.pack(pady=5)
+
+                entry = tkinter.Entry(self, validate="key", validatecommand=(self.register(validate_input), "%P"))
+                entry.pack(pady=5)
+                entry.bind("<Return>", enter_pressed)
+
+                button = tkinter.Button(self, text="Save Port Number", command=get_value)
+                button.pack(pady=5)
+
+                self.minimize_to_tray()
+
+            def minimize_to_tray(self):
+                self.withdraw()
+
+                icon_image = Image.open(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.ico"))
+                pystray_icon = pystray.Icon(
+                    "Flask App",
+                    icon_image,
+                    menu=pystray.Menu(
+                        pystray.MenuItem("Open Quickstart", self.open_quickstart, default=True),
+                        pystray.MenuItem("Quickstart GitHub", self.open_github),
+                        pystray.Menu.SEPARATOR,
+                        pystray.MenuItem(lambda item: f"Current Port: {port}", self.show_window),
+                        pystray.Menu.SEPARATOR,
+                        pystray.MenuItem("Exit", self.exit_action),
+                    ),
+                )
+                pystray_icon.run()
+
+            def show_window(self, icon):
+                icon.stop()
+                self.after(0, self.deiconify)
+
+            def open_quickstart(self, icon):  # noqa
+                webbrowser.open(f"http://localhost:{running_port}")
+
+            def open_github(self, icon):  # noqa
+                webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
+
+            def exit_action(self, icon):  # noqa
+                global server_thread
+                icon.stop()
+                os.kill(os.getpid(), signal.SIGINT)
+                if server_thread and server_thread.is_alive():
+                    server_thread.join()
+
+        server_thread = Thread(target=start_flask_app)
+        server_thread.daemon = True
+        server_thread.start()
+        main_app = QSApp()
+        main_app.mainloop()
