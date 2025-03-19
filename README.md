@@ -66,7 +66,7 @@ There are two ways to enable debugging:
 
 If you are already running Quickstart, you will need to re-start it from the console.
 
-Quickstart will run on port 5000 by default, this can be amended in one of two ways:
+Quickstart will run on port 7171 by default, this can be amended in one of two ways:
 - Add `--port=XXXX` to your Run Command, for example: `python quickstart.py --port=1234`
 - Open the `.env` file at the root of the Quickstart directory, and set `QS_PORT=XXXX` where XXXX is the port you want to run on.
 

@@ -94,7 +94,7 @@ parser.add_argument("--port", type=int, help="Specify the port number to run the
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
 
-port = args.port if args.port else int(os.getenv("QS_PORT", "5000"))
+port = args.port if args.port else int(os.getenv("QS_PORT", "7171"))
 running_port = port
 debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
