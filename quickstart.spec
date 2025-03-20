@@ -4,7 +4,20 @@ from PyInstaller.utils.hooks import collect_submodules
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--installer", type=str, default="Quickstart")
+parser.add_argument("--branch", type=str, default="master")
+parser.add_argument("--build", type=str, default="windows")
 options = parser.parse_args()
+
+runtime_hooks = []
+if options.branch == "develop":
+    runtime_hooks.append('./modules/hooks/develop.py')
+
+if options.build == "linux":
+    runtime_hooks.append('./modules/hooks/linux.py')
+elif options.build == "macos":
+    runtime_hooks.append('./modules/hooks/macos.py')
+else:
+    runtime_hooks.append('./modules/hooks/windows.py')
 
 hiddenimports = ['flask', 'flask.cli', 'werkzeug', 'pyfiglet', 'pyfiglet.fonts']
 hiddenimports += collect_submodules('flask')
@@ -26,7 +39,7 @@ a = Analysis(
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
-    runtime_hooks=['./modules/develop.py'],
+    runtime_hooks=runtime_hooks,
     excludes=['.env'],
     noarchive=False,
     optimize=0,
@@ -46,7 +59,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=True,
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,

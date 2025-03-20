@@ -133,7 +133,7 @@ jobs:
           - os: 'macos'
             os_upper: 'MacOS'
             os_version: '13'
-            ext: ''
+            ext: '.app'
     steps:
 
       - name: Check Out Repo
@@ -152,7 +152,7 @@ jobs:
 
       - name: Build Executable
         run: |
-          pyinstaller -y ./quickstart-develop.spec
+          pyinstaller -y ./quickstart.spec -- --branch develop --build ${{ runner.os }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

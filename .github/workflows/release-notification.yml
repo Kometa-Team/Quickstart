@@ -44,7 +44,7 @@ jobs:
           - os: 'macos'
             os_upper: 'MacOS'
             os_version: 'latest'
-            ext: ''
+            ext: '.app'
 
     steps:
 
@@ -66,10 +66,10 @@ jobs:
         run: |
           tag_name=${{github.event.release.tag_name}}
           if [[ "${tag_name}" =~ ^(latest)$ ]]; then
-            pyinstaller -y ./quickstart-develop.spec
+            pyinstaller -y ./quickstart.spec -- --branch develop --build ${{ runner.os }}
             version_value=${{ needs.get-data.outputs.version }}
           else
-            pyinstaller -y ./quickstart-master.spec
+            pyinstaller -y ./quickstart.spec --build ${{ runner.os }}
             version_value=${tag_name}
           fi
           mv dist/Quickstart${{ matrix.ext }} dist/Quickstart-${version_value}-${{ runner.os }}${{ matrix.ext }}

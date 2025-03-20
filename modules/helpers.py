@@ -205,35 +205,26 @@ def check_for_update():
         "branch": branch,
         "kometa_branch": kometa_branch,
         "update_available": update_available,
-        "running_on": os_name,  # OS Name (Windows, macOS, Linux)
-        "file_ext": os_ext,  # File Extension (.exe for Windows, empty otherwise)
+        "running_on": os_name,
+        "file_ext": os_ext,
     }
 
 
 def get_running_os():
-    """Returns a standardized OS name, its file extension, and detects if running from Python source or Docker."""
+    build = os.getenv("BUILD", "local").lower()
 
-    # Check if running inside a Docker container
     if os.getenv("QUICKSTART_DOCKER", "False").lower() in ["true", "1"]:
-        return "Docker", ""  # Docker shouldn't download binaries
-
-    system = platform.system().lower()
-
-    # Determine the OS (Windows, macOS, Linux)
-    if "windows" in system:
-        os_name, os_ext = "Windows", ".exe"
-    elif "darwin" in system:  # macOS is identified as 'Darwin'
-        os_name, os_ext = "macOS", ""
-    elif "linux" in system:
-        os_name, os_ext = "Linux", ""
+        return "Docker", ""
+    elif not getattr(sys, "frozen", False):
+        return "Local", ""
+    elif build == "windows":
+        return "Windows", ".exe"
+    elif build == "macos":
+        return "macOS", ".app"
+    elif build == "linux":
+        return "Linux", ""
     else:
-        os_name, os_ext = "Unknown", ""
-
-    # Detect if running from Python (`python quickstart.py`)
-    if not getattr(sys, "frozen", False):  # `sys.frozen` exists in PyInstaller executables
-        return "Python", ""  # No extension required for Python source users
-
-    return os_name, os_ext
+        return "Unknown", ""
 
 
 def enforce_string_fields(data, enforce=False):
