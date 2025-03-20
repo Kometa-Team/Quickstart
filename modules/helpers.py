@@ -1,6 +1,5 @@
 import hashlib
 import os
-import platform
 import re
 import sys
 from pathlib import Path

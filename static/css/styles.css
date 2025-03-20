@@ -53,6 +53,11 @@ header.fixed-top {
     /* Adjust based on header height */
 }
 
+.title.text-center {
+    text-align: center !important;
+    box-sizing: content-box;
+}
+
 /* -------------------- */
 /* FOOTER STYLES        */
 /* -------------------- */
