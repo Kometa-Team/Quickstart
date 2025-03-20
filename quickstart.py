@@ -725,7 +725,7 @@ def refresh_plex_libraries():
         # ✅ Fetch latest libraries from Plex
         plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
 
-        # ✅ Fix: Convert Flask response object to JSON before accessing data
+        # ✅ Fix: Convert Flask response object to JSON before accessing data.
         if isinstance(plex_response, Flask.response_class):
             plex_data = plex_response.get_json()  # ✅ Extract JSON data correctly
         else:
