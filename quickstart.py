@@ -860,9 +860,9 @@ def validate_notifiarr():
         return jsonify(result.get_json()), 400
 
 
-@app.route('/shutdown')
+@app.route("/shutdown")
 def shutdown():
-    func = request.environ.get('werkzeug.server.shutdown')
+    func = request.environ.get("werkzeug.server.shutdown")
     if func:
         func()
     return "Shutting down...", 200
@@ -1033,7 +1033,6 @@ if __name__ == "__main__":
                     subprocess.Popen([sys.executable] + sys.argv, cwd=os.getcwd())
 
                 os._exit(0)
-
 
             def exit_action(self, icon):  # noqa
                 global server_thread, update_thread
