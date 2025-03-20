@@ -68,7 +68,7 @@ threading.Thread(target=start_update_thread, daemon=True).start()
 
 @app.context_processor
 def inject_version_info():
-    """Ensure latest version info is injected dynamically in templates."""
+    """Ensure latest version info is injected dynamically in templates"""
     return {"version_info": helpers.check_for_update()}
 
 
