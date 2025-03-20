@@ -13,7 +13,7 @@ if options.branch == "develop":
     runtime_hooks.append('./modules/hooks/develop.py')
 
 name = options.installer
-if options.build == "linux":
+if options.build == "ubuntu":
     runtime_hooks.append('./modules/hooks/linux.py')
 elif options.build == "macos":
     runtime_hooks.append('./modules/hooks/macos.py')
