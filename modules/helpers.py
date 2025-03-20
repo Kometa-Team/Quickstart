@@ -211,7 +211,7 @@ def check_for_update():
 
 
 def get_running_os():
-    build = os.getenv("BUILD", "local").lower()
+    build = os.getenv("BUILD_OS", "local").lower()
 
     if os.getenv("QUICKSTART_DOCKER", "False").lower() in ["true", "1"]:
         return "Docker", ""

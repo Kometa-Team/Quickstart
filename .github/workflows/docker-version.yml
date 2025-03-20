@@ -105,6 +105,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
+      - name: Create Prerelease
+        uses: ncipollo/release-action@v1
+        with:
+          name: ${{ vars.NAME }} ${{ github.event.ref }} Build 0
+          body: No Current Changes from the Master Branch.
+          prerelease: true
+          tag: latest
+          token: ${{ secrets.PAT }}
+
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
