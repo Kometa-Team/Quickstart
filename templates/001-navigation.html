@@ -23,7 +23,7 @@
           <button class="btn nav-button dropdown-toggle" id="stepDropdown" data-bs-toggle="dropdown"
             aria-expanded="false">
             <i class="fa fa-list"></i>
-            Jump to: {% if page_info['template_name'] == '900-final' %}
+            Jump to: {% if page_info['template_name'] == '910-sponsor' %}
             {{ page_info['prev_page_name'] }}
             {% else %}
             {{ page_info['next_page_name'] }}
@@ -65,7 +65,7 @@
         </div>
 
         <!-- Next Button (Hidden on Final Page) -->
-        {% if page_info['template_name'] != '900-final' %}
+        {% if page_info['template_name'] != '910-sponsor' %}
         <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
           title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
           Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>

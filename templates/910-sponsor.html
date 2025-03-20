@@ -1,0 +1,70 @@
+{% extends "000-base.html" %} {% block content %}
+{% include "001-navigation.html" %}
+{% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+  <div class="container mt-5">
+    <h2>Support Quickstart</h2>
+    <p class="lead">
+      Thank you for using Quickstart and Kometa! Your support helps us keep the project running and growing.
+      If you would like to consider donating towards the project, it is greatly appreciated. Donations are completely optional, and feel free to contribute as little or as much as you are able to.
+    </p>
+    <p>Select the amount you wish to contribute:</p>
+
+    <!-- Amount Range Slider -->
+    <div class="form-group">
+      <label for="amountRange">Amount ($): <span id="displayAmount">10</span></label>
+      <input type="range" class="custom-range" id="amountRange" min="1" max="100" value="10">
+    </div>
+
+    <!-- Payment Frequency Options -->
+    <div class="form-group">
+      <label>Select Payment Frequency:</label>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="paymentFrequency" id="recurringPayment" value="recurring" checked>
+        <label class="form-check-label" for="recurringPayment">Monthly Payment</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="paymentFrequency" id="oneTimePayment" value="one-time">
+        <label class="form-check-label" for="oneTimePayment">One-Time Payment</label>
+      </div>
+    </div>
+
+    <!-- Sponsor Button -->
+    <a href="#" id="sponsorLink" class="btn btn-primary">Sponsor Now</a>
+
+    <!-- Additional Information -->
+    <p class="mt-3">
+      Note: You will need a GitHub account to make the payment. Once you have sponsored the project, you can ask for the Sponsor role in the
+      <a href="https://kometa.wiki/en/latest/discord" target="_blank">Kometa Discord Server</a>.
+    </p>
+  </div>
+</form>
+<script>
+  const amountRange = document.getElementById('amountRange');
+  const displayAmount = document.getElementById('displayAmount');
+  const sponsorLink = document.getElementById('sponsorLink');
+  const frequencyRadios = document.getElementsByName('paymentFrequency');
+
+  // Function to retrieve the selected payment frequency
+  function getSelectedFrequency() {
+    for (let i = 0; i < frequencyRadios.length; i++) {
+      if (frequencyRadios[i].checked) {
+        return frequencyRadios[i].value;
+      }
+    }
+    return 'recurring'; // Default value
+  }
+
+  // Update the sponsor link URL based on the slider amount and selected frequency
+  function updateSponsorLink() {
+    const amount = amountRange.value;
+    const frequency = getSelectedFrequency();
+    displayAmount.textContent = amount;
+    sponsorLink.href = `https://github.com/sponsors/meisnate12/sponsorships?preview=false&frequency=${frequency}&amount=${amount}`;
+  }
+
+  // Update on page load and whenever the input changes
+  updateSponsorLink();
+  amountRange.addEventListener('input', updateSponsorLink);
+  frequencyRadios.forEach(radio => radio.addEventListener('change', updateSponsorLink));
+</script>
+{% endblock %}
