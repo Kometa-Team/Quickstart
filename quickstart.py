@@ -2,6 +2,9 @@ import argparse
 import io
 import os
 import signal
+import socket
+import subprocess
+import sys
 import threading
 import time
 import webbrowser
@@ -890,9 +893,6 @@ if __name__ == "__main__":
     else:
         import pystray
         import tkinter
-        import socket
-        import subprocess
-        import sys
         from tkinter.messagebox import showinfo, showerror
 
         class QSApp(tkinter.Tk):
@@ -910,43 +910,22 @@ if __name__ == "__main__":
                         return False
 
                 def get_value():
+                    global port
                     value = entry.get()
-
-                    if not value:
-                        return  # Ignore empty input
-
-                    try:
-                        new_port = int(value)
-
-                        # Ignore if the entered port is the same as the current one
-                        if new_port == port:
-                            showinfo("Port Number", f"Port {new_port} is already in use by Quickstart.")
-                            return
-
-                        # Check if the new port is available
-                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                            sock.settimeout(1)  # Short timeout
-                            if sock.connect_ex(("localhost", new_port)) == 0:  # Port is in use
-                                showerror("Port Error", f"Port {new_port} is already occupied. Please choose another.")
-                                return
-
-                        # Update environment and restart Quickstart
-                        helpers.update_env_variable("QS_PORT", str(new_port))
-                        showinfo("Port Number", f"Port Number Set to {new_port}. Exit and restart Quickstart to utilize the new port...")
-
-                        # Restart Quickstart
-                        self.minimize_to_tray()  # Hide UI before restart
-                        # self.restart_quickstart(None)  # Restart immediately
-
-                    except ValueError:
+                    if value:
+                        port = int(value)
+                        helpers.update_env_variable("QS_PORT", port)
+                        showinfo("Port Number", f"Port Number Set to {port}. Please restart server to use new port.")
+                        self.minimize_to_tray()
+                    else:
                         showerror("Invalid Input", "Please enter a valid port number (0-65535).")
 
                 def enter_pressed(event):  # noqa
                     get_value()
 
                 self.title("Change Port Number")
-                self.geometry("200x100")
-                # self.iconbitmap(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.ico"))
+                self.geometry("300x100")
+                self.iconbitmap(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.ico"))
                 self.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
 
                 label = tkinter.Label(self, text=f"Current Port Number: {port}")
@@ -1032,7 +1011,7 @@ if __name__ == "__main__":
                     print("[INFO] Restarting Quickstart via Python script...")
                     subprocess.Popen([sys.executable] + sys.argv, cwd=os.getcwd())
 
-                os._exit(0)
+                os._exit(0)  # noqa
 
             def exit_action(self, icon):  # noqa
                 global server_thread, update_thread

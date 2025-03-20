@@ -69,7 +69,7 @@ jobs:
             pyinstaller -y ./quickstart.spec -- --branch develop --build ${{ runner.os }}
             version_value=${{ needs.get-data.outputs.version }}
           else
-            pyinstaller -y ./quickstart.spec --build ${{ runner.os }}
+            pyinstaller -y ./quickstart.spec -- --build ${{ runner.os }}
             version_value=${tag_name}
           fi
           mv dist/Quickstart${{ matrix.ext }} dist/Quickstart-${version_value}-${{ runner.os }}${{ matrix.ext }}

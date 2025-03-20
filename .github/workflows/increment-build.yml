@@ -153,6 +153,7 @@ jobs:
       - name: Build Executable
         run: |
           pyinstaller -y ./quickstart.spec -- --branch develop --build ${{ runner.os }}
+          echo "$(ls dist)"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
