@@ -725,7 +725,7 @@ def refresh_plex_libraries():
         # ✅ Fetch latest libraries from Plex
         plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
 
-        # ✅ Fix: Convert Flask response object to JSON before accessing data.
+        # ✅ Fix: Convert Flask response object to JSON before accessing data
         if isinstance(plex_response, Flask.response_class):
             plex_data = plex_response.get_json()  # ✅ Extract JSON data correctly
         else:
@@ -860,6 +860,14 @@ def validate_notifiarr():
         return jsonify(result.get_json()), 400
 
 
+@app.route('/shutdown')
+def shutdown():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func:
+        func()
+    return "Shutting down...", 200
+
+
 server_thread = None
 update_thread = None
 if __name__ == "__main__":
@@ -882,7 +890,10 @@ if __name__ == "__main__":
     else:
         import pystray
         import tkinter
-        from tkinter.messagebox import showinfo
+        import socket
+        import subprocess
+        import sys
+        from tkinter.messagebox import showinfo, showerror
 
         class QSApp(tkinter.Tk):
             def __init__(self):
@@ -899,13 +910,36 @@ if __name__ == "__main__":
                         return False
 
                 def get_value():
-                    global port
                     value = entry.get()
-                    if value:
-                        port = int(value)
-                        helpers.update_env_variable("QS_PORT", port)
-                        showinfo("Port Number", f"Port Number Set to {port}. Please restart server to use new port.")
-                        self.minimize_to_tray()
+
+                    if not value:
+                        return  # Ignore empty input
+
+                    try:
+                        new_port = int(value)
+
+                        # Ignore if the entered port is the same as the current one
+                        if new_port == port:
+                            showinfo("Port Number", f"Port {new_port} is already in use by Quickstart.")
+                            return
+
+                        # Check if the new port is available
+                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                            sock.settimeout(1)  # Short timeout
+                            if sock.connect_ex(("localhost", new_port)) == 0:  # Port is in use
+                                showerror("Port Error", f"Port {new_port} is already occupied. Please choose another.")
+                                return
+
+                        # Update environment and restart Quickstart
+                        helpers.update_env_variable("QS_PORT", str(new_port))
+                        showinfo("Port Number", f"Port Number Set to {new_port}. Exit and restart Quickstart to utilize the new port...")
+
+                        # Restart Quickstart
+                        self.minimize_to_tray()  # Hide UI before restart
+                        # self.restart_quickstart(None)  # Restart immediately
+
+                    except ValueError:
+                        showerror("Invalid Input", "Please enter a valid port number (0-65535).")
 
                 def enter_pressed(event):  # noqa
                     get_value()
@@ -946,6 +980,7 @@ if __name__ == "__main__":
                     pystray.Menu.SEPARATOR,
                     pystray.MenuItem(f"{'Disable' if debug_mode else 'Enable'} Debug", self.toggle_debug),
                     pystray.MenuItem(f"Change Port (Current: {port})", self.show_window),
+                    # pystray.MenuItem("Restart Quickstart", self.restart_quickstart),
                     pystray.Menu.SEPARATOR,
                     pystray.MenuItem("Exit", self.exit_action),
                 )
@@ -967,6 +1002,38 @@ if __name__ == "__main__":
                 app.config["QS_DEBUG"] = debug_mode
                 icon.menu = self.get_menu()
                 icon.update_menu()
+
+            def restart_quickstart(self, icon):
+                """Properly stop Quickstart before restarting."""
+                print("[INFO] Restarting Quickstart...")
+
+                # Stop the tray icon
+                icon.stop()
+
+                # Gracefully shutdown Flask (if it's running)
+                global server_thread, update_thread
+                if server_thread and server_thread.is_alive():
+                    print("[INFO] Stopping Flask Server Thread...")
+                    try:
+                        requests.get(f"http://localhost:{running_port}/shutdown")  # Trigger Flask shutdown route
+                    except requests.RequestException:
+                        print("[WARNING] Flask shutdown request failed, forcing exit.")
+
+                # Ensure update thread stops
+                if update_thread and update_thread.is_alive():
+                    print("[INFO] Stopping Update Thread...")
+                    update_thread.join(timeout=2)
+
+                # Restart Quickstart
+                if getattr(sys, "frozen", False):  # PyInstaller Executable
+                    print("[INFO] Restarting PyInstaller executable...")
+                    subprocess.Popen(sys.executable, cwd=os.path.dirname(sys.executable))
+                else:  # Running via Python script
+                    print("[INFO] Restarting Quickstart via Python script...")
+                    subprocess.Popen([sys.executable] + sys.argv, cwd=os.getcwd())
+
+                os._exit(0)
+
 
             def exit_action(self, icon):  # noqa
                 global server_thread, update_thread

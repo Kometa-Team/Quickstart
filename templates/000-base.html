@@ -57,7 +57,7 @@
         <span>Since you are running Quickstart inside a Docker container, update it as you normally would:</span>
         <br>
         <code>docker pull kometateam/quickstart:{{ version_info.branch }}</code>
-        {% elif version_info.running_on == "Python" %}
+        {% elif version_info.running_on == "Local" %}
         <br><br>
         <span>Since you are running Quickstart from source, update it with:</span>
         <br>
@@ -122,7 +122,7 @@
             <span>Since you are running Quickstart inside a Docker container, update it as you normally would:</span>
             <br>
             <code>docker pull kometateam/quickstart:{{ version_info.branch }}</code>
-            {% elif version_info.running_on == "Python" %}
+            {% elif version_info.running_on == "Local" %}
             <br><br>
             <span>Since you are running Quickstart from source, update it with:</span>
             <br>
