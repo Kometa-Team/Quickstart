@@ -678,12 +678,7 @@ def download_redacted():
         redacted_content = helpers.redact_sensitive_data(yaml_content)
 
         # Serve the redacted YAML as a file download
-        return send_file(
-            io.BytesIO(redacted_content.encode("utf-8")),
-            mimetype="text/yaml",
-            as_attachment=True,
-            download_name="config_redacted.yml",
-        )
+        return send_file(io.BytesIO(redacted_content.encode("utf-8")), mimetype="text/yaml", as_attachment=True, download_name="config_redacted.yml")
     flash("No configuration to download", "danger")
     return redirect(request.referrer or url_for("step", page="900-final"))
 
@@ -742,13 +737,8 @@ def refresh_plex_libraries():
         updated_show_libraries = plex_data.get("show_libraries", [])
         updated_music_libraries = plex_data.get("music_libraries", [])
 
-        # ✅ Update the DB with the latest libraries
-        persistence.update_stored_plex_libraries(
-            "010-plex",
-            updated_movie_libraries,
-            updated_show_libraries,
-            updated_music_libraries,
-        )
+        # ✅ Update the DB with the latest libraries.
+        persistence.update_stored_plex_libraries("010-plex", updated_movie_libraries, updated_show_libraries, updated_music_libraries)
 
         return jsonify(plex_data)  # Return refreshed data
 
