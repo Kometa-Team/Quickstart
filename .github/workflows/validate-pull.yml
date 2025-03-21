@@ -158,6 +158,13 @@ jobs:
     needs: [ validate-pull ]
     steps:
 
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+
       - name: Get Version
         id: get-data
         run: |
@@ -240,7 +247,7 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
 
