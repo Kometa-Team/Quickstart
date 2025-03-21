@@ -926,10 +926,7 @@ if __name__ == "__main__":
                                         f"Restart Quickstart for changes to apply.",
                                     )
                                 else:
-                                    showinfo(
-                                        "Port Updated",
-                                        f"Port number has been updated to {new_port}.\n\n"
-                                        f"A restart is required for the change to take effect.")
+                                    showinfo("Port Updated", f"Port number has been updated to {new_port}.\n\n" f"A restart is required for the change to take effect.")
                             port = new_port
                             helpers.update_env_variable("QS_PORT", port)
                         self.minimize_to_tray()
