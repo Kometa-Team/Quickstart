@@ -728,7 +728,7 @@ def refresh_plex_libraries():
         # ✅ Fetch latest libraries from Plex
         plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
 
-        # ✅ Fix: Convert Flask response object to JSON before accessing data.
+        # ✅ Fix: Convert Flask response object to JSON before accessing data
         if isinstance(plex_response, Flask.response_class):
             plex_data = plex_response.get_json()  # ✅ Extract JSON data correctly
         else:
@@ -994,7 +994,7 @@ if __name__ == "__main__":
                 icon.menu = self.get_menu()
                 icon.update_menu()
 
-            def exit_action(self, icon):  #    noqa
+            def exit_action(self, icon):        # noqa
                 global server_thread, update_thread
                 icon.stop()
                 os.kill(os.getpid(), signal.SIGINT)
