@@ -15,7 +15,6 @@ jobs:
         id: get-tag-name
         run: |
           branch_name=${{ github.event.pull_request.head.ref }}
-          repo_name=${{ github.event.pull_request.head.repo.full_name }}
           base_name="${repo_name%/*}"
           if [[ "${branch_name}" =~ ^(master|develop|nightly)$ ]]; then 
               tag_name="${base_name}"

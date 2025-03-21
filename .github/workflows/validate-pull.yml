@@ -87,7 +87,7 @@ jobs:
       - name: Format Code
         id: format-code
         run: |
-            pip install -r requirements.txt pyinstaller
+            pip install -r requirements.txt
             pip install black
             black . -l 180
 
