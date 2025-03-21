@@ -232,7 +232,7 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Quickstart-${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}-${{ needs.get-version.outputs.part }}-${{ runner.os }}
+          name: Quickstart-${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}
           path: dist/Quickstart${{ matrix.ext }}
 
   docker-build-pull:
