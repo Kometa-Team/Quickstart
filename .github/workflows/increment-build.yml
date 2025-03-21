@@ -114,52 +114,6 @@ jobs:
 
             echo "commit-hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
-  build-executable:
-    name: Build ${{ matrix.os_upper }} Executable
-    runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
-    needs: [ increment-build ]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: 'windows'
-            os_upper: 'Windows'
-            os_version: 'latest'
-            ext: '.exe'
-          - os: 'ubuntu'
-            os_upper: 'Linux'
-            os_version: '20.04'
-            ext: ''
-          - os: 'macos'
-            os_upper: 'MacOS'
-            os_version: '13'
-            ext: '.app'
-    steps:
-
-      - name: Check Out Repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: develop
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-
-      - name: Install Requirements
-        run: pip install -r requirements.txt pyinstaller
-
-      - name: Build Executable
-        run: |
-          pyinstaller -y ./quickstart.spec -- --branch develop --build ${{ runner.os }}
-          echo "$(ls dist)"
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Quickstart-${{ needs.increment-build.outputs.version }}-build${{ needs.increment-build.outputs.build-value }}-${{ runner.os }}
-          path: dist/Quickstart${{ matrix.ext }}
 
   docker-build-develop:
     runs-on: ubuntu-latest

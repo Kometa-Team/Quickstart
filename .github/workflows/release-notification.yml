@@ -44,7 +44,7 @@ jobs:
           - os: 'macos'
             os_upper: 'MacOS'
             os_version: 'latest'
-            ext: '.app'
+            ext: ''
 
     steps:
 

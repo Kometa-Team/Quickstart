@@ -893,7 +893,7 @@ if __name__ == "__main__":
     else:
         import pystray
         import tkinter
-        from tkinter.messagebox import showinfo, showerror
+        from tkinter.messagebox import showinfo, showwarning, showerror
 
         class QSApp(tkinter.Tk):
             def __init__(self):
@@ -913,9 +913,17 @@ if __name__ == "__main__":
                     global port
                     value = entry.get()
                     if value:
-                        port = int(value)
-                        helpers.update_env_variable("QS_PORT", port)
-                        showinfo("Port Number", f"Port Number Set to {port}. Please restart server to use new port.")
+                        new_port = int(value)
+                        if new_port == port:
+                            showinfo("Port Already Selected", f"Port {new_port} is already selected to be used by Quickstart.")
+                        else:
+                            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                                if sock.connect_ex(("localhost", port)) == 0:
+                                    showwarning("Port Conflict", f"Port {new_port} is already in use.\n\nClose any conflicting applications using this port or choose an unused port.\n\nRestart Quickstart for changes to apply.")
+                                else:
+                                    showinfo("Port Updated", f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
+                            port = new_port
+                            helpers.update_env_variable("QS_PORT", port)
                         self.minimize_to_tray()
                     else:
                         showerror("Invalid Input", "Please enter a valid port number (0-65535).")
@@ -959,7 +967,6 @@ if __name__ == "__main__":
                     pystray.Menu.SEPARATOR,
                     pystray.MenuItem(f"{'Disable' if debug_mode else 'Enable'} Debug", self.toggle_debug),
                     pystray.MenuItem(f"Change Port (Current: {port})", self.show_window),
-                    # pystray.MenuItem("Restart Quickstart", self.restart_quickstart),
                     pystray.Menu.SEPARATOR,
                     pystray.MenuItem("Exit", self.exit_action),
                 )
@@ -981,37 +988,6 @@ if __name__ == "__main__":
                 app.config["QS_DEBUG"] = debug_mode
                 icon.menu = self.get_menu()
                 icon.update_menu()
-
-            def restart_quickstart(self, icon):
-                """Properly stop Quickstart before restarting."""
-                print("[INFO] Restarting Quickstart...")
-
-                # Stop the tray icon
-                icon.stop()
-
-                # Gracefully shutdown Flask (if it's running)
-                global server_thread, update_thread
-                if server_thread and server_thread.is_alive():
-                    print("[INFO] Stopping Flask Server Thread...")
-                    try:
-                        requests.get(f"http://localhost:{running_port}/shutdown")  # Trigger Flask shutdown route
-                    except requests.RequestException:
-                        print("[WARNING] Flask shutdown request failed, forcing exit.")
-
-                # Ensure update thread stops
-                if update_thread and update_thread.is_alive():
-                    print("[INFO] Stopping Update Thread...")
-                    update_thread.join(timeout=2)
-
-                # Restart Quickstart
-                if getattr(sys, "frozen", False):  # PyInstaller Executable
-                    print("[INFO] Restarting PyInstaller executable...")
-                    subprocess.Popen(sys.executable, cwd=os.path.dirname(sys.executable))
-                else:  # Running via Python script
-                    print("[INFO] Restarting Quickstart via Python script...")
-                    subprocess.Popen([sys.executable] + sys.argv, cwd=os.getcwd())
-
-                os._exit(0)  # noqa
 
             def exit_action(self, icon):  # noqa
                 global server_thread, update_thread

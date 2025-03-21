@@ -11,16 +11,15 @@ options = parser.parse_args()
 runtime_hooks = []
 if options.branch == "develop":
     runtime_hooks.append('./modules/hooks/develop.py')
+elif options.branch == "pull":
+    runtime_hooks.append('./modules/hooks/pull.py')
 
-name = options.installer
 if options.build == "ubuntu":
     runtime_hooks.append('./modules/hooks/linux.py')
 elif options.build == "macos":
     runtime_hooks.append('./modules/hooks/macos.py')
-    name = f"{name}.app"
 else:
     runtime_hooks.append('./modules/hooks/windows.py')
-    name = f"{name}.exe"
 
 hiddenimports = ['flask', 'flask.cli', 'werkzeug', 'pyfiglet', 'pyfiglet.fonts']
 hiddenimports += collect_submodules('flask')
@@ -55,7 +54,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name=name,
+    name=options.installer,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
