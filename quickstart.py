@@ -921,7 +921,9 @@ if __name__ == "__main__":
                                 if sock.connect_ex(("localhost", port)) == 0:
                                     showwarning(
                                         "Port Conflict",
-                                        f"Port {new_port} is already in use.\n\nClose any conflicting applications using this port or choose an unused port.\n\nRestart Quickstart for changes to apply.",
+                                        f"Port {new_port} is already in use.\n\n"
+                                        f"Close any conflicting applications using this port or choose an unused port.\n\n"
+                                        f"Restart Quickstart for changes to apply.",
                                     )
                                 else:
                                     showinfo("Port Updated", f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
