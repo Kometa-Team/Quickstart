@@ -994,7 +994,7 @@ if __name__ == "__main__":
                 icon.menu = self.get_menu()
                 icon.update_menu()
 
-            def exit_action(self, icon):        # noqa
+            def exit_action(self, icon):  # noqa
                 global server_thread, update_thread
                 icon.stop()
                 os.kill(os.getpid(), signal.SIGINT)
