@@ -728,7 +728,7 @@ def refresh_plex_libraries():
         # ✅ Fetch latest libraries from Plex
         plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
 
-        # ✅ Fix: Convert Flask response object to JSON before accessing data
+        # ✅ Fix: Convert Flask response object to JSON before accessing data.
         if isinstance(plex_response, Flask.response_class):
             plex_data = plex_response.get_json()  # ✅ Extract JSON data correctly
         else:
@@ -926,7 +926,7 @@ if __name__ == "__main__":
                                         f"Restart Quickstart for changes to apply.",
                                     )
                                 else:
-                                    showinfo("Port Updated", f"Port number has been updated to {new_port}.\n\n" f"A restart is required for the change to take effect.")
+                                    showinfo("Port Updated",f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
                             port = new_port
                             helpers.update_env_variable("QS_PORT", port)
                         self.minimize_to_tray()
