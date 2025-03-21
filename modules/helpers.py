@@ -105,7 +105,8 @@ def save_hashes(hashes):
 
 def ensure_json_schema():
     """Ensure json-schema files exist and are up-to-date based on hash checks."""
-    branch = get_kometa_branch()
+    # branch = get_kometa_branch()
+    branch = "nightly"
 
     previous_hashes = load_previous_hashes()
     new_hashes = {}
@@ -193,7 +194,8 @@ def check_for_update():
     update_available = remote_version and remote_version != local_version
 
     # Determine Kometa branch
-    kometa_branch = "master" if branch == "master" else "nightly"
+    # kometa_branch = "master" if branch == "master" else "nightly"
+    kometa_branch = "nightly"
 
     # Get OS name and correct extension
     os_name, os_ext = get_running_os()
