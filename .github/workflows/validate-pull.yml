@@ -71,7 +71,7 @@ jobs:
 
   format-code:
     name: Format Code and add Part
-    if: needs.validate-pull.outputs.part == 'true'
+    if: needs.validate-pull.outputs.build != 'true' && needs.validate-pull.outputs.part == 'true'
     runs-on: ubuntu-latest
     needs: [ validate-pull ]
     steps:
@@ -154,7 +154,7 @@ jobs:
   get-version:
     name: Get Version
     runs-on: ubuntu-latest
-    if: needs.validate-pull.outputs.build == 'true' && needs.validate-pull.outputs.part != 'true'
+    if: needs.validate-pull.outputs.build == 'true'
     outputs:
       tag-name: ${{ steps.get-data.outputs.tag-name }}
       version: ${{ steps.get-data.outputs.version }}
@@ -191,7 +191,7 @@ jobs:
   build-executable:
     name: Build ${{ matrix.os_upper }} Executable
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
-    if: needs.validate-pull.outputs.build == 'true' && needs.validate-pull.outputs.part != 'true'
+    if: needs.validate-pull.outputs.build == 'true'
     needs: [ validate-pull, get-version ]
     strategy:
       fail-fast: false
@@ -238,7 +238,7 @@ jobs:
   docker-build-pull:
     runs-on: ubuntu-latest
     needs: [ validate-pull, get-version ]
-    if: needs.validate-pull.outputs.build == 'true' && needs.validate-pull.outputs.part != 'true'
+    if: needs.validate-pull.outputs.build == 'true'
     steps:
 
       - name: Create App Token
