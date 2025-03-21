@@ -183,7 +183,7 @@ jobs:
 
   make-prerelease:
     runs-on: ubuntu-latest
-    needs: [ increment-build, build-executable, docker-build-develop ]
+    needs: [ increment-build, docker-build-develop ]
     steps:
 
       - name: Check Out Repo
