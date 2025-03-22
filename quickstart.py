@@ -517,18 +517,22 @@ def step(name):
     page_info["prev_page"] = item["prev"]
 
     try:
-        # Extract numeric part (e.g., "020" from "020-tmdb")
-        next_num = page_info["next_page"].split("-")[0]
-        prev_num = page_info["prev_page"].split("-")[0]
+        # ✅ Only split if the value is not None or empty
+        if page_info["next_page"]:
+            next_num = page_info["next_page"].split("-")[0]
+            page_info["next_page_name"] = template_list.get(next_num, {}).get("name", "Next")
+        else:
+            page_info["next_page_name"] = "Next"
 
-        # Lookup name from template_list
-        page_info["next_page_name"] = template_list.get(next_num, {}).get("name", "Next")
-        page_info["prev_page_name"] = template_list.get(prev_num, {}).get("name", "Previous")
+        if page_info["prev_page"]:
+            prev_num = page_info["prev_page"].split("-")[0]
+            page_info["prev_page_name"] = template_list.get(prev_num, {}).get("name", "Previous")
+        else:
+            page_info["prev_page_name"] = "Previous"
 
     except Exception as e:
         if app.config["QS_DEBUG"]:
             print(f"[ERROR] Failed to get page names: {e}")
-
         page_info["next_page_name"] = "Next"
         page_info["prev_page_name"] = "Previous"
 
