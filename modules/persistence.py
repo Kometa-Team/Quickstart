@@ -135,9 +135,11 @@ def get_stored_plex_credentials(name):
 
         if plex_url and plex_token:
             return plex_url, plex_token
-        print("[ERROR] Plex URL or Token is missing in stored settings")
+        if app.config["QS_DEBUG"]:
+            print("[ERROR] Plex URL or Token is missing in stored settings")
     except Exception as e:
-        print(f"[ERROR] Failed to retrieve Plex credentials: {e}")
+        if app.config["QS_DEBUG"]:
+            print(f"[ERROR] Failed to retrieve Plex credentials: {e}")
     return None, None
 
 

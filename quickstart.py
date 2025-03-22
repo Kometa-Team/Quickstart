@@ -526,7 +526,9 @@ def step(name):
         page_info["prev_page_name"] = template_list.get(prev_num, {}).get("name", "Previous")
 
     except Exception as e:
-        print(f"[ERROR] Failed to get page names: {e}")
+        if app.config["QS_DEBUG"]:
+            print(f"[ERROR] Failed to get page names: {e}")
+
         page_info["next_page_name"] = "Next"
         page_info["prev_page_name"] = "Previous"
 
@@ -556,11 +558,15 @@ def step(name):
 
     # Ensure it's a string before splitting
     if not isinstance(movie_libraries_raw, str):
-        print("[ERROR] tmp_movie_libraries is not a string!")
+        if app.config["QS_DEBUG"]:
+            print("[ERROR] tmp_movie_libraries is not a string!")
+
         movie_libraries_raw = ""
 
     if not isinstance(show_libraries_raw, str):
-        print("[ERROR] tmp_show_libraries is not a string!")
+        if app.config["QS_DEBUG"]:
+            print("[ERROR] tmp_show_libraries is not a string!")
+
         show_libraries_raw = ""
 
     existing_ids = set()  # Track used IDs to prevent duplicates
