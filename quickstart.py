@@ -863,6 +863,14 @@ def validate_notifiarr():
         return jsonify(result.get_json()), 400
 
 
+def has_display() -> bool:
+    """Returns True if we appear to be running in a GUI environment."""
+    if sys.platform.startswith('linux'):
+        # On Linux, a common check is whether the DISPLAY variable is set
+        return 'DISPLAY' in os.environ
+    # On Windows/Mac, we usually assume a GUI unless you want more checks
+    return True
+
 @app.route("/shutdown")
 def shutdown():
     func = request.environ.get("werkzeug.server.shutdown")
@@ -887,6 +895,7 @@ if __name__ == "__main__":
 
     update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
     update_thread.start()
+
 
     if app.config["QUICKSTART_DOCKER"]:
         start_flask_app()
@@ -1006,6 +1015,10 @@ if __name__ == "__main__":
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
+
+        if has_display():
+            time.sleep(1)
+            webbrowser.open(f"http://localhost:{port}")
 
         main_app = QSApp()
         main_app.mainloop()
