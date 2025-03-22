@@ -864,12 +864,11 @@ def validate_notifiarr():
 
 
 def has_display() -> bool:
-    """Returns True if we appear to be running in a GUI environment."""
-    if sys.platform.startswith('linux'):
-        # On Linux, a common check is whether the DISPLAY variable is set
-        return 'DISPLAY' in os.environ
-    # On Windows/Mac, we usually assume a GUI unless you want more checks
-    return True
+    return (
+        sys.platform.startswith("win")
+        or sys.platform.startswith("darwin")
+        or "DISPLAY" in os.environ
+    )
 
 @app.route("/shutdown")
 def shutdown():
@@ -1016,9 +1015,16 @@ if __name__ == "__main__":
         server_thread.daemon = True
         server_thread.start()
 
+        url = f"http://localhost:{port}"
         if has_display():
-            time.sleep(1)
-            webbrowser.open(f"http://localhost:{port}")
+            time.sleep(1)  # give the server a moment to start
+            try:
+                if not webbrowser.open(url):
+                    print(f"Could not automatically open Quickstart in a browser. Use this URL: {url}")
+            except Exception as e:
+                print(f"Browser launch error: {e}\nUse this URL: {url}")
+        else:
+            print(f"Quickstart available at {url}")
 
         main_app = QSApp()
         main_app.mainloop()
