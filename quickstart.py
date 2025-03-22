@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import argparse
 import io
 import os
@@ -728,6 +729,7 @@ def refresh_plex_libraries():
 
         # ✅ Load default values from config.yml.template
         dummy_plex_config = persistence.get_dummy_data("plex")  # Retrieves {"url": "...", "token": "..."}
+
         default_plex_url = dummy_plex_config.get("url", "")
         default_plex_token = dummy_plex_config.get("token", "")
 
@@ -901,121 +903,88 @@ if __name__ == "__main__":
     if app.config["QUICKSTART_DOCKER"]:
         start_flask_app()
     else:
-        import pystray
-        import tkinter
-        from tkinter.messagebox import showinfo, showwarning, showerror
+        # ----- PyQt6 Tray Icon Implementation -----
+        from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QInputDialog, QMessageBox
+        from PyQt6.QtGui import QIcon, QAction  # QAction is now imported from QtGui
+        from PyQt6.QtCore import QCoreApplication
 
-        class QSApp(tkinter.Tk):
-            def __init__(self):
-                super().__init__()
-                global port
-
-                def validate_input(new_text):
-                    if not new_text:
-                        return True
-                    try:
-                        value = int(new_text)
-                        return 0 <= value <= 65535
-                    except ValueError:
-                        return False
-
-                def get_value():
-                    global port
-                    value = entry.get()
-                    if value:
-                        new_port = int(value)
-                        if new_port == port:
-                            showinfo("Port Already Selected", f"Port {new_port} is already selected to be used by Quickstart.")
-                        else:
-                            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                                if sock.connect_ex(("localhost", port)) == 0:
-                                    showwarning(
-                                        "Port Conflict",
-                                        f"Port {new_port} is already in use.\n\n"
-                                        f"Close any conflicting applications using this port or choose an unused port.\n\n"
-                                        f"Restart Quickstart for changes to apply.",
-                                    )
-                                else:
-                                    showinfo("Port Updated", f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
-                            port = new_port
-                            helpers.update_env_variable("QS_PORT", port)
-                        self.minimize_to_tray()
-                    else:
-                        showerror("Invalid Input", "Please enter a valid port number (0-65535).")
-
-                def enter_pressed(event):  # noqa
-                    get_value()
-
-                self.title("Change Port Number")
-                self.geometry("300x100")
-                self.iconphoto(True, tkinter.PhotoImage(file=os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")))
-                self.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
-
-                label = tkinter.Label(self, text=f"Current Port Number: {port}")
-                label.pack(pady=5)
-
-                entry = tkinter.Entry(self, validate="key", validatecommand=(self.register(validate_input), "%P"))
-                entry.pack(pady=5)
-                entry.bind("<Return>", enter_pressed)
-
-                button = tkinter.Button(self, text="Save Port Number", command=get_value)
-                button.pack(pady=5)
-
-                self.minimize_to_tray()
-
-            def minimize_to_tray(self):
-                self.withdraw()
-
-                icon_image = Image.open(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png"))
-                pystray_icon = pystray.Icon(
-                    "Quickstart",
-                    icon_image,
-                    menu=self.get_menu(),
-                    title=f"Quickstart (Port: {running_port})",
-                )
-                pystray_icon.run()
-
-            def get_menu(self):
-                return pystray.Menu(
-                    pystray.MenuItem(f"Open Quickstart (Port: {running_port})", self.open_quickstart, default=True),
-                    pystray.MenuItem("Quickstart GitHub", self.open_github),
-                    pystray.Menu.SEPARATOR,
-                    pystray.MenuItem(f"{'Disable' if debug_mode else 'Enable'} Debug", self.toggle_debug),
-                    pystray.MenuItem(f"Change Port (Current: {port})", self.show_window),
-                    pystray.Menu.SEPARATOR,
-                    pystray.MenuItem("Exit", self.exit_action),
-                )
-
-            def show_window(self, icon):
-                icon.stop()
-                self.after(0, self.deiconify)
-
-            def open_quickstart(self, icon):  # noqa
-                webbrowser.open(f"http://localhost:{running_port}")
-
-            def open_github(self, icon):  # noqa
-                webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
-
-            def toggle_debug(self, icon):
-                global debug_mode
-                debug_mode = not debug_mode
-                helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
-                app.config["QS_DEBUG"] = debug_mode
-                icon.menu = self.get_menu()
-                icon.update_menu()
-
-            def exit_action(self, icon):  # noqa
-                global server_thread, update_thread
-                icon.stop()
-                os.kill(os.getpid(), signal.SIGINT)
-                if server_thread and server_thread.is_alive():
-                    server_thread.join()
-                if update_thread and update_thread.is_alive():
-                    update_thread.join()
-
+        # Start the Flask server in a separate thread
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
 
-        main_app = QSApp()
-        main_app.mainloop()
+        qt_app = QApplication(sys.argv)
+
+        # Load the tray icon image from the static folder
+        icon_path = os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")
+        tray_icon = QSystemTrayIcon(QIcon(icon_path), qt_app)
+
+        # Create the tray menu
+        menu = QMenu()
+
+        # Action: Open Quickstart
+        open_action = QAction(f"Open Quickstart (Port: {running_port})")
+        open_action.triggered.connect(lambda: webbrowser.open(f"http://localhost:{running_port}"))
+        menu.addAction(open_action)
+
+        # Action: Open GitHub
+        github_action = QAction("Quickstart GitHub")
+        github_action.triggered.connect(lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart/"))
+        menu.addAction(github_action)
+
+        menu.addSeparator()
+
+        # Action: Toggle Debug Mode
+        debug_action = QAction("Disable Debug" if debug_mode else "Enable Debug")
+        def toggle_debug():
+            global debug_mode
+            debug_mode = not debug_mode
+            helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
+            app.config["QS_DEBUG"] = debug_mode
+            debug_action.setText("Disable Debug" if debug_mode else "Enable Debug")
+        debug_action.triggered.connect(toggle_debug)
+        menu.addAction(debug_action)
+
+        # Action: Change Port
+        port_action = QAction(f"Change Port (Current: {port})")
+        def change_port():
+            global port, running_port
+            new_port, ok = QInputDialog.getInt(None, "Change Port", f"Enter new port number (0-65535):", port, 0, 65535)
+            if ok:
+                if new_port == port:
+                    QMessageBox.information(None, "Port Already Selected", f"Port {new_port} is already selected to be used by Quickstart.")
+                else:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                        if sock.connect_ex(("localhost", new_port)) == 0:
+                            QMessageBox.warning(None, "Port Conflict", f"Port {new_port} is already in use.\n\nClose any conflicting applications using this port or choose an unused port.\n\nRestart Quickstart for changes to apply.")
+                        else:
+                            QMessageBox.information(None, "Port Updated", f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
+                            port = new_port
+                            running_port = new_port
+                            helpers.update_env_variable("QS_PORT", port)
+                            open_action.setText(f"Open Quickstart (Port: {running_port})")
+                            port_action.setText(f"Change Port (Current: {port})")
+        port_action.triggered.connect(change_port)
+        menu.addAction(port_action)
+
+        menu.addSeparator()
+
+        # Action: Exit Application
+        exit_action = QAction("Exit")
+        def exit_app():
+            QCoreApplication.quit()
+            os.kill(os.getpid(), signal.SIGINT)
+        exit_action.triggered.connect(exit_app)
+        menu.addAction(exit_action)
+
+        tray_icon.setContextMenu(menu)
+
+        # Connect left-click activation to opening Quickstart
+        def on_activated(reason):
+            if reason == QSystemTrayIcon.ActivationReason.Trigger:
+                webbrowser.open(f"http://localhost:{running_port}")
+        tray_icon.activated.connect(on_activated)
+
+        tray_icon.show()
+
+        sys.exit(qt_app.exec())
