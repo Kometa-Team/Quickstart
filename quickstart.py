@@ -864,11 +864,8 @@ def validate_notifiarr():
 
 
 def has_display() -> bool:
-    return (
-        sys.platform.startswith("win")
-        or sys.platform.startswith("darwin")
-        or "DISPLAY" in os.environ
-    )
+    return sys.platform.startswith("win") or sys.platform.startswith("darwin") or "DISPLAY" in os.environ
+
 
 @app.route("/shutdown")
 def shutdown():
@@ -894,7 +891,6 @@ if __name__ == "__main__":
 
     update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
     update_thread.start()
-
 
     if app.config["QUICKSTART_DOCKER"]:
         start_flask_app()
