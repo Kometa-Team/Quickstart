@@ -956,7 +956,7 @@ if __name__ == "__main__":
             def minimize_to_tray(self):
                 self.withdraw()
 
-                icon_image = Image.open(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.ico"))
+                icon_image = Image.open(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png"))
                 pystray_icon = pystray.Icon(
                     "Quickstart",
                     icon_image,
