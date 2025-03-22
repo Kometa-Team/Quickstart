@@ -24,3 +24,17 @@ _Please replace this line with a meaningful description of your PR. What does it
 -->
 
 - Closes #
+
+## Which Environment Did You Test On?
+
+<!--
+    Place an X in any relevant option, for example:
+    - [X] Windows Executable
+-->
+
+- [] Local Insall (Windows/Linux/Mac via `python quickstart.py`)
+- [] Windows Executable
+- [] Linux Executable
+- [] masOS Executable
+- [] Docker
+- [] Other
