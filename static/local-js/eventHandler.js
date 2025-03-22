@@ -64,7 +64,64 @@ const EventHandler = {
         uploadButton.dataset.listenerAdded = true
       }
 
-      // Attach overlay selection listeners
+      // Allow unselecting Content Rating radio buttons
+      library.querySelectorAll('input[type="radio"][id*="-overlay_content_rating_"]').forEach(radio => {
+        if (!radio.dataset.listenerAdded) {
+          radio.addEventListener('click', function () {
+            console.log(`[DEBUG] Radio button clicked: ${this.name} -> ${this.value}`)
+
+            // Extract libraryId strictly from content rating radios only
+            const match = this.id.match(/^(mov|sho)-library_([^-]+(?:-[^-]+)*)-overlay_content_rating_/)
+            const clickedLibraryId = match ? match[0].replace('-overlay_content_rating_', '') : null
+            if (!clickedLibraryId) {
+              console.warn(`[WARNING] Could not determine libraryId from ${this.id}`)
+              return
+            }
+            const isMovieRadio = clickedLibraryId.startsWith('mov-library_')
+
+            if (this.checked && this.dataset.wasChecked === 'true') {
+              // Unselect if clicked again
+              this.checked = false
+              this.dataset.wasChecked = 'false'
+
+              // Clear corresponding hidden input
+              const hiddenInput = document.querySelector(`input[name="${clickedLibraryId}-overlay_selected_content_rating"]`)
+              if (hiddenInput) {
+                hiddenInput.value = '' // Clear hidden input when unselected
+              }
+
+              console.log(`[DEBUG] Unselected radio button: ${this.name}`)
+            } else {
+              // Mark this radio as checked and reset others in the group
+              document.querySelectorAll(`input[name="${this.name}"]`).forEach(r => {
+                r.dataset.wasChecked = 'false'
+              })
+              this.dataset.wasChecked = 'true'
+
+              const selectedValue = this.value
+
+              // Update hidden input
+              const hiddenInputName = `${clickedLibraryId}-overlay_selected_content_rating`
+              const hiddenInput = document.querySelector(`input[name="${hiddenInputName}"]`)
+              if (hiddenInput) {
+                hiddenInput.value = selectedValue
+              }
+
+              console.log(`[DEBUG] Selected radio button: ${this.name} -> ${selectedValue}`)
+            }
+
+            // Ensure preview updates after selection/unselection
+            EventHandler.updateAccordionHighlights()
+            ValidationHandler.updateValidationState()
+            ImageHandler.generatePreview(clickedLibraryId, isMovieRadio)
+          })
+
+          radio.dataset.listenerAdded = 'true'
+          radio.dataset.wasChecked = 'false'
+        }
+      })
+
+      // Attach overlay selection listeners (CHANGE events)
       library.querySelectorAll('.accordion input').forEach((input) => {
         if (input.id && !input.dataset.listenerAdded) {
           console.log(`[DEBUG] Attaching toggle listener for ${input.id}`)
@@ -81,7 +138,7 @@ const EventHandler = {
         }
       })
 
-      // tach attribute_reset_overlays listeners
+      // Attach attribute_reset_overlays listeners
       document.querySelectorAll("[id$='-attribute_reset_overlays']").forEach(dropdown => {
         if (!dropdown.dataset.listenerAdded) {
           console.log(`[DEBUG] Attaching change listener for Reset Overlays: ${dropdown.id}`)
@@ -95,63 +152,6 @@ const EventHandler = {
           })
 
           dropdown.dataset.listenerAdded = 'true'
-        }
-      })
-
-      // Allow unselecting Content Rating radio buttons
-      document.querySelectorAll('input[type="radio"][id*="-overlay_content_rating_"]').forEach(radio => {
-        if (!radio.dataset.listenerAdded) {
-          radio.addEventListener('click', function () {
-            console.log(`[DEBUG] Radio button clicked: ${this.name} -> ${this.value}`)
-
-            // Extract libraryId strictly from content rating radios only
-            const match = this.id.match(/^(mov|sho)-library_([^-]+(?:-[^-]+)*)-overlay_content_rating_/)
-            const libraryId = match ? match[0].replace('-overlay_content_rating_', '') : null
-            if (!libraryId) {
-              console.warn(`[WARNING] Could not determine libraryId from ${this.id}`)
-              return
-            }
-            const isMovie = libraryId.startsWith('mov-library_')
-
-            if (this.checked && this.dataset.wasChecked === 'true') {
-              // Unselect if clicked again
-              this.checked = false
-              this.dataset.wasChecked = 'false'
-
-              // Clear corresponding hidden input
-              const hiddenInput = document.querySelector(`input[name="${libraryId}-overlay_selected_content_rating"]`)
-              if (hiddenInput) {
-                hiddenInput.value = '' // Clear hidden input when unselected
-              }
-
-              console.log(`[DEBUG] Unselected radio button: ${this.name}`)
-            } else {
-              // Mark this radio as checked and reset others in the group
-              document.querySelectorAll(`input[name="${this.name}"]`).forEach(r => {
-                r.dataset.wasChecked = 'false'
-              })
-              this.dataset.wasChecked = 'true'
-
-              const selectedValue = this.value
-
-              // Update hidden input
-              const hiddenInputName = `${libraryId}-overlay_selected_content_rating`
-              const hiddenInput = document.querySelector(`input[name="${hiddenInputName}"]`)
-              if (hiddenInput) {
-                hiddenInput.value = selectedValue
-              }
-
-              console.log(`[DEBUG] Selected radio button: ${this.name} -> ${selectedValue}`)
-            }
-
-            // Ensure preview updates after selection/unselection
-            EventHandler.updateAccordionHighlights()
-            ValidationHandler.updateValidationState()
-            ImageHandler.generatePreview(libraryId, isMovie)
-          })
-
-          radio.dataset.listenerAdded = 'true'
-          radio.dataset.wasChecked = 'false'
         }
       })
 
