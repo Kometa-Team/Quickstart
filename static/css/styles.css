@@ -446,6 +446,15 @@ div#loading {
     color: white !important;
 }
 
+.btn.nav-button:disabled,
+.btn.nav-button.disabled {
+    background-color: #212529 !important;
+    border: 2px solid #212529 !important;
+    color: #adb5bd !important;
+    text-decoration: line-through;
+    cursor: not-allowed;
+}
+
 /* Dropdown Styling */
 .dropdown-menu {
     background-color: #343a40;
