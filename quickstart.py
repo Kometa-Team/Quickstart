@@ -938,7 +938,7 @@ if __name__ == "__main__":
 
                 self.title("Change Port Number")
                 self.geometry("300x100")
-                self.iconbitmap(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.ico"))
+                self.iconphoto(True, tkinter.PhotoImage(file=os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")))
                 self.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
 
                 label = tkinter.Label(self, text=f"Current Port Number: {port}")
