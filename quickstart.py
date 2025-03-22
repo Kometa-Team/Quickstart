@@ -936,17 +936,20 @@ if __name__ == "__main__":
 
         # Action: Toggle Debug Mode
         debug_action = QAction("Disable Debug" if debug_mode else "Enable Debug")
+
         def toggle_debug():
             global debug_mode
             debug_mode = not debug_mode
             helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
             app.config["QS_DEBUG"] = debug_mode
             debug_action.setText("Disable Debug" if debug_mode else "Enable Debug")
+
         debug_action.triggered.connect(toggle_debug)
         menu.addAction(debug_action)
 
         # Action: Change Port
         port_action = QAction(f"Change Port (Current: {port})")
+
         def change_port():
             global port, running_port
             new_port, ok = QInputDialog.getInt(None, "Change Port", f"Enter new port number (0-65535):", port, 0, 65535)
@@ -956,7 +959,11 @@ if __name__ == "__main__":
                 else:
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                         if sock.connect_ex(("localhost", new_port)) == 0:
-                            QMessageBox.warning(None, "Port Conflict", f"Port {new_port} is already in use.\n\nClose any conflicting applications using this port or choose an unused port.\n\nRestart Quickstart for changes to apply.")
+                            QMessageBox.warning(
+                                None,
+                                "Port Conflict",
+                                f"Port {new_port} is already in use.\n\nClose any conflicting applications using this port or choose an unused port.\n\nRestart Quickstart for changes to apply.",
+                            )
                         else:
                             QMessageBox.information(None, "Port Updated", f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
                             port = new_port
@@ -964,6 +971,7 @@ if __name__ == "__main__":
                             helpers.update_env_variable("QS_PORT", port)
                             open_action.setText(f"Open Quickstart (Port: {running_port})")
                             port_action.setText(f"Change Port (Current: {port})")
+
         port_action.triggered.connect(change_port)
         menu.addAction(port_action)
 
@@ -971,9 +979,11 @@ if __name__ == "__main__":
 
         # Action: Exit Application
         exit_action = QAction("Exit")
+
         def exit_app():
             QCoreApplication.quit()
             os.kill(os.getpid(), signal.SIGINT)
+
         exit_action.triggered.connect(exit_app)
         menu.addAction(exit_action)
 
@@ -983,6 +993,7 @@ if __name__ == "__main__":
         def on_activated(reason):
             if reason == QSystemTrayIcon.ActivationReason.Trigger:
                 webbrowser.open(f"http://localhost:{running_port}")
+
         tray_icon.activated.connect(on_activated)
 
         tray_icon.show()
