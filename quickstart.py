@@ -906,7 +906,15 @@ if __name__ == "__main__":
         print("[DEBUG] Running in Docker mode; starting Flask app without tray icon.")
         start_flask_app()
     else:
-        # ----- PyQt6 Tray Icon Implementation -----
+        import logging
+
+        # Configure logging to file
+        logging.basicConfig(
+            filename="quickstart_debug.log",
+            level=logging.DEBUG,
+            format="%(asctime)s [%(levelname)s] %(message)s",
+        )
+
         from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QInputDialog, QMessageBox
         from PyQt6.QtGui import QIcon, QAction
         from PyQt6.QtCore import QCoreApplication
@@ -915,37 +923,40 @@ if __name__ == "__main__":
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
-        print("[DEBUG] Flask server thread started.")
+        logging.debug("Flask server thread started.")
 
         qt_app = QApplication(sys.argv)
-        print("[DEBUG] QApplication created.")
+        logging.debug("QApplication created.")
 
         # Load the tray icon image from the static folder
         icon_path = os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")
-        print(f"[DEBUG] Loading tray icon from: {icon_path}")
+        logging.debug(f"Loading tray icon from: {icon_path}")
         tray_icon = QSystemTrayIcon(QIcon(icon_path), qt_app)
 
         # Create the tray menu
         menu = QMenu()
-        print("[DEBUG] Tray menu created.")
+        logging.debug("Tray menu created.")
 
         # Action: Open Quickstart
         open_action = QAction(f"Open Quickstart (Port: {running_port})")
-        open_action.triggered.connect(lambda: (print("[DEBUG] Open action triggered."), webbrowser.open(f"http://localhost:{running_port}")))
+        open_action.triggered.connect(
+            lambda: (logging.debug("Open action triggered."), webbrowser.open(f"http://localhost:{running_port}")))
         menu.addAction(open_action)
-        print("[DEBUG] Open action added to menu.")
+        logging.debug("Open action added to menu.")
 
         # Action: Open GitHub
         github_action = QAction("Quickstart GitHub")
-        github_action.triggered.connect(lambda: (print("[DEBUG] GitHub action triggered."), webbrowser.open("https://github.com/Kometa-Team/Quickstart/")))
+        github_action.triggered.connect(lambda: (
+        logging.debug("GitHub action triggered."), webbrowser.open("https://github.com/Kometa-Team/Quickstart/")))
         menu.addAction(github_action)
-        print("[DEBUG] GitHub action added to menu.")
+        logging.debug("GitHub action added to menu.")
 
         menu.addSeparator()
-        print("[DEBUG] Separator added to menu.")
+        logging.debug("Separator added to menu.")
 
         # Action: Toggle Debug Mode
         debug_action = QAction("Disable Debug" if debug_mode else "Enable Debug")
+
 
         def toggle_debug():
             global debug_mode
@@ -953,23 +964,26 @@ if __name__ == "__main__":
             helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
             app.config["QS_DEBUG"] = debug_mode
             debug_action.setText("Disable Debug" if debug_mode else "Enable Debug")
-            print(f"[DEBUG] Debug mode toggled. Now: {'Enabled' if debug_mode else 'Disabled'}")
+            logging.debug(f"Debug mode toggled. Now: {'Enabled' if debug_mode else 'Disabled'}")
+
 
         debug_action.triggered.connect(toggle_debug)
         menu.addAction(debug_action)
-        print("[DEBUG] Debug toggle action added to menu.")
+        logging.debug("Debug toggle action added to menu.")
 
         # Action: Change Port
         port_action = QAction(f"Change Port (Current: {port})")
 
+
         def change_port():
             global port, running_port
             new_port, ok = QInputDialog.getInt(None, "Change Port", f"Enter new port number (0-65535):", port, 0, 65535)
-            print(f"[DEBUG] Change port dialog returned: {new_port} (ok: {ok})")
+            logging.debug(f"Change port dialog returned: {new_port} (ok: {ok})")
             if ok:
                 if new_port == port:
-                    QMessageBox.information(None, "Port Already Selected", f"Port {new_port} is already selected to be used by Quickstart.")
-                    print(f"[DEBUG] Port {new_port} already in use (unchanged).")
+                    QMessageBox.information(None, "Port Already Selected",
+                                            f"Port {new_port} is already selected to be used by Quickstart.")
+                    logging.debug(f"Port {new_port} already in use (unchanged).")
                 else:
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                         if sock.connect_ex(("localhost", new_port)) == 0:
@@ -978,55 +992,61 @@ if __name__ == "__main__":
                                 "Port Conflict",
                                 f"Port {new_port} is already in use.\n\nClose any conflicting applications using this port or choose an unused port.\n\nRestart Quickstart for changes to apply.",
                             )
-                            print(f"[DEBUG] Port {new_port} is in use (conflict).")
+                            logging.debug(f"Port {new_port} is in use (conflict).")
                         else:
-                            QMessageBox.information(None, "Port Updated", f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
+                            QMessageBox.information(None, "Port Updated",
+                                                    f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
                             port = new_port
                             running_port = new_port
                             helpers.update_env_variable("QS_PORT", port)
                             open_action.setText(f"Open Quickstart (Port: {running_port})")
                             port_action.setText(f"Change Port (Current: {port})")
-                            print(f"[DEBUG] Port changed to {new_port}.")
+                            logging.debug(f"Port changed to {new_port}.")
             else:
-                print("[DEBUG] Change port canceled.")
+                logging.debug("Change port canceled.")
+
 
         port_action.triggered.connect(change_port)
         menu.addAction(port_action)
-        print("[DEBUG] Change port action added to menu.")
+        logging.debug("Change port action added to menu.")
 
         menu.addSeparator()
-        print("[DEBUG] Another separator added to menu.")
+        logging.debug("Another separator added to menu.")
 
         # Action: Exit Application
         exit_action = QAction("Exit")
 
+
         def exit_app():
-            print("[DEBUG] Exit action triggered. Exiting application.")
+            logging.debug("Exit action triggered. Exiting application.")
             QCoreApplication.quit()
             os.kill(os.getpid(), signal.SIGINT)
 
+
         exit_action.triggered.connect(exit_app)
         menu.addAction(exit_action)
-        print("[DEBUG] Exit action added to menu.")
+        logging.debug("Exit action added to menu.")
 
         tray_icon.setContextMenu(menu)
-        print("[DEBUG] Context menu set on tray icon.")
+        logging.debug("Context menu set on tray icon.")
+
 
         # Connect activation signals to handle clicks
         def on_activated(reason):
-            print(f"[DEBUG] Tray icon activated with reason: {reason}")
+            logging.debug(f"Tray icon activated with reason: {reason}")
             if reason == QSystemTrayIcon.ActivationReason.Trigger:
-                print("[DEBUG] Left-click detected, opening Quickstart.")
+                logging.debug("Left-click detected, opening Quickstart.")
                 webbrowser.open(f"http://localhost:{running_port}")
             elif reason == QSystemTrayIcon.ActivationReason.Context:
-                print("[DEBUG] Right-click detected, context menu should appear.")
+                logging.debug("Right-click detected, context menu should appear.")
             else:
-                print("[DEBUG] Other activation reason detected.")
+                logging.debug("Other activation reason detected.")
+
 
         tray_icon.activated.connect(on_activated)
-        print("[DEBUG] Activation signal connected to tray icon.")
+        logging.debug("Activation signal connected to tray icon.")
 
         tray_icon.show()
-        print("[DEBUG] Tray icon shown. Entering application event loop.")
+        logging.debug("Tray icon shown. Entering application event loop.")
 
         sys.exit(qt_app.exec())
