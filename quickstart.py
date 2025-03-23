@@ -908,6 +908,25 @@ if __name__ == "__main__":
     else:
         import logging
 
+        logger = logging.getLogger()
+        logger.setLevel(logging.DEBUG)
+
+        # Create console handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setLevel(logging.DEBUG)
+        console_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+        console_handler.setFormatter(console_formatter)
+        logger.addHandler(console_handler)
+
+        # Create file handler
+        file_handler = logging.FileHandler("quickstart_debug.log")
+        file_handler.setLevel(logging.DEBUG)
+        file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+        file_handler.setFormatter(file_formatter)
+        logger.addHandler(file_handler)
+
+        logger.debug("Logging configured to output to both terminal and file.")
+
         # Configure logging to file
         logging.basicConfig(
             filename="quickstart_debug.log",
@@ -939,15 +958,19 @@ if __name__ == "__main__":
 
         # Action: Open Quickstart
         open_action = QAction(f"Open Quickstart (Port: {running_port})")
-        open_action.triggered.connect(
-            lambda: (logging.debug("Open action triggered."), webbrowser.open(f"http://localhost:{running_port}")))
+        open_action.triggered.connect(lambda: (
+            logging.debug("Open action triggered. Opening Quickstart."),
+            webbrowser.open(f"http://localhost:{running_port}")
+        ))
         menu.addAction(open_action)
         logging.debug("Open action added to menu.")
 
         # Action: Open GitHub
         github_action = QAction("Quickstart GitHub")
         github_action.triggered.connect(lambda: (
-        logging.debug("GitHub action triggered."), webbrowser.open("https://github.com/Kometa-Team/Quickstart/")))
+            logging.debug("GitHub action triggered. Opening GitHub."),
+            webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
+        ))
         menu.addAction(github_action)
         logging.debug("GitHub action added to menu.")
 
@@ -1035,12 +1058,14 @@ if __name__ == "__main__":
         def on_activated(reason):
             logging.debug(f"Tray icon activated with reason: {reason}")
             if reason == QSystemTrayIcon.ActivationReason.Trigger:
-                logging.debug("Left-click detected, opening Quickstart.")
-                webbrowser.open(f"http://localhost:{running_port}")
+                logging.debug("Left-click detected on tray icon.")
+                url = f"http://localhost:{running_port}"
+                logging.debug(f"Opening Quickstart URL: {url}")
+                webbrowser.open(url)
             elif reason == QSystemTrayIcon.ActivationReason.Context:
-                logging.debug("Right-click detected, context menu should appear.")
+                logging.debug("Right-click detected on tray icon. Context menu should appear.")
             else:
-                logging.debug("Other activation reason detected.")
+                logging.debug(f"Unhandled activation reason: {reason}")
 
 
         tray_icon.activated.connect(on_activated)
