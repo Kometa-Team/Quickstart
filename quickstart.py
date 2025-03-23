@@ -958,19 +958,13 @@ if __name__ == "__main__":
 
         # Action: Open Quickstart
         open_action = QAction(f"Open Quickstart (Port: {running_port})")
-        open_action.triggered.connect(lambda: (
-            logging.debug("Open action triggered. Opening Quickstart."),
-            webbrowser.open(f"http://localhost:{running_port}")
-        ))
+        open_action.triggered.connect(lambda: (logging.debug("Open action triggered. Opening Quickstart."), webbrowser.open(f"http://localhost:{running_port}")))
         menu.addAction(open_action)
         logging.debug("Open action added to menu.")
 
         # Action: Open GitHub
         github_action = QAction("Quickstart GitHub")
-        github_action.triggered.connect(lambda: (
-            logging.debug("GitHub action triggered. Opening GitHub."),
-            webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
-        ))
+        github_action.triggered.connect(lambda: (logging.debug("GitHub action triggered. Opening GitHub."), webbrowser.open("https://github.com/Kometa-Team/Quickstart/")))
         menu.addAction(github_action)
         logging.debug("GitHub action added to menu.")
 
@@ -980,7 +974,6 @@ if __name__ == "__main__":
         # Action: Toggle Debug Mode
         debug_action = QAction("Disable Debug" if debug_mode else "Enable Debug")
 
-
         def toggle_debug():
             global debug_mode
             debug_mode = not debug_mode
@@ -989,7 +982,6 @@ if __name__ == "__main__":
             debug_action.setText("Disable Debug" if debug_mode else "Enable Debug")
             logging.debug(f"Debug mode toggled. Now: {'Enabled' if debug_mode else 'Disabled'}")
 
-
         debug_action.triggered.connect(toggle_debug)
         menu.addAction(debug_action)
         logging.debug("Debug toggle action added to menu.")
@@ -997,15 +989,13 @@ if __name__ == "__main__":
         # Action: Change Port
         port_action = QAction(f"Change Port (Current: {port})")
 
-
         def change_port():
             global port, running_port
             new_port, ok = QInputDialog.getInt(None, "Change Port", f"Enter new port number (0-65535):", port, 0, 65535)
             logging.debug(f"Change port dialog returned: {new_port} (ok: {ok})")
             if ok:
                 if new_port == port:
-                    QMessageBox.information(None, "Port Already Selected",
-                                            f"Port {new_port} is already selected to be used by Quickstart.")
+                    QMessageBox.information(None, "Port Already Selected", f"Port {new_port} is already selected to be used by Quickstart.")
                     logging.debug(f"Port {new_port} already in use (unchanged).")
                 else:
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -1017,8 +1007,7 @@ if __name__ == "__main__":
                             )
                             logging.debug(f"Port {new_port} is in use (conflict).")
                         else:
-                            QMessageBox.information(None, "Port Updated",
-                                                    f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
+                            QMessageBox.information(None, "Port Updated", f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
                             port = new_port
                             running_port = new_port
                             helpers.update_env_variable("QS_PORT", port)
@@ -1027,7 +1016,6 @@ if __name__ == "__main__":
                             logging.debug(f"Port changed to {new_port}.")
             else:
                 logging.debug("Change port canceled.")
-
 
         port_action.triggered.connect(change_port)
         menu.addAction(port_action)
@@ -1039,12 +1027,10 @@ if __name__ == "__main__":
         # Action: Exit Application
         exit_action = QAction("Exit")
 
-
         def exit_app():
             logging.debug("Exit action triggered. Exiting application.")
             QCoreApplication.quit()
             os.kill(os.getpid(), signal.SIGINT)
-
 
         exit_action.triggered.connect(exit_app)
         menu.addAction(exit_action)
@@ -1052,7 +1038,6 @@ if __name__ == "__main__":
 
         tray_icon.setContextMenu(menu)
         logging.debug("Context menu set on tray icon.")
-
 
         # Connect activation signals to handle clicks
         def on_activated(reason):
@@ -1066,7 +1051,6 @@ if __name__ == "__main__":
                 logging.debug("Right-click detected on tray icon. Context menu should appear.")
             else:
                 logging.debug(f"Unhandled activation reason: {reason}")
-
 
         tray_icon.activated.connect(on_activated)
         logging.debug("Activation signal connected to tray icon.")
