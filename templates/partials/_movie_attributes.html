@@ -58,6 +58,7 @@
       </div>
     </div>
 
+
   </div>
 </div>
 <!-- 🔹 Section: Overlay Operations -->
@@ -129,6 +130,176 @@
           Using <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/scripts/imagemaid"
             target="_blank">ImageMaid</a> can help clean up old, unused images.
         </p>
+
+      </div>
+    </div>
+  </div>
+</div>
+<!-- 🔹 Section: Library Operations -->
+<div class="accordion mt-3" id="{{ library.id }}-libraryOperationsAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#{{ library.id }}-collapseLibrary" aria-expanded="false"
+        aria-controls="{{ library.id }}-collapseLibrary">
+        Library Operations
+      </button>
+    </h2>
+    <div id="{{ library.id }}-collapseLibrary" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-libraryOperationsAccordion">
+      <div class="accordion-body">
+
+        <!-- update_blank_track_titles Toggle -->
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_assets_for_all"
+            name="{{ library.id }}-attribute_assets_for_all" value="true" {% if data['libraries'][library.id
+            ~ '-attribute_assets_for_all' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-attribute_assets_for_all" value="false">
+          <label class="form-check-label" for="{{ library.id }}-attribute_assets_for_all">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/#assets-for-all"
+              target="_blank" rel="noopener noreferrer">Assets for All</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Searches asset directories for images for all items in the library">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+        </div>
+
+        <!-- mass_imdb_parental_labels Dropdown -->
+        <div class="col-md-6">
+          <div class="input-group mb-2">
+            <span class="input-group-text" id="{{ library.id }}-attribute_mass_imdb_parental_labels_text">
+              <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/#mass-imdb-parental-labels"
+                target="_blank" rel="noopener noreferrer">Mass IMDb Parental Labels</a>
+              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                title="Adds IMDb Parental labels of every item in the library.">
+                <i class="bi bi-info-circle-fill"></i>
+              </span>
+            </span>
+            <select class="form-select" id="{{ library.id }}-attribute_mass_imdb_parental_labels"
+              name="{{ library.id }}-attribute_mass_imdb_parental_labels"
+              aria-describedby="{{ library.id }}-attribute_mass_imdb_parental_labels_text">
+              <option value="" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels' )=="" %}selected{%
+                endif %}>
+                None</option>
+              <option value="mild" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels' )=="mild"
+                %}selected{% endif %}>Mild</option>
+              <option value="moderate" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels' )=="moderate"
+                %}selected{% endif %}>Moderate</option>
+              <option value="severe" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels' )=="severe"
+                %}selected{% endif %}>Severe</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- mass_collection_mode Dropdown -->
+        <div class="col-md-6">
+          <div class="input-group mb-2">
+            <span class="input-group-text" id="{{ library.id }}-attribute_mass_collection_mode_text">
+              <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/#mass-collection-mode"
+                target="_blank" rel="noopener noreferrer">Mass Collection Mode</a>
+              <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                title="Updates the Collection Mode of every item in the library">
+                <i class="bi bi-info-circle-fill"></i>
+              </span>
+            </span>
+            <select class="form-select" id="{{ library.id }}-attribute_mass_collection_mode"
+              name="{{ library.id }}-attribute_mass_collection_mode"
+              aria-describedby="{{ library.id }}-attribute_mass_collection_mode_text">
+              <option value="" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode' )=="default" %}selected{%
+                endif %}>
+                Default</option>
+              <option value="hide" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode' )=="hide"
+                %}selected{% endif %}>Hide</option>
+              <option value="hide_items" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode' )=="hide_items"
+                %}selected{% endif %}>Hide Items</option>
+              <option value="show_items" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode' )=="show_items"
+                %}selected{% endif %}>Show Items</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- update_blank_track_titles Toggle -->
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_update_blank_track_titles"
+            name="{{ library.id }}-attribute_update_blank_track_titles" value="true" {% if data['libraries'][library.id
+            ~ '-attribute_update_blank_track_titles' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-attribute_update_blank_track_titles" value="false">
+          <label class="form-check-label" for="{{ library.id }}-attribute_update_blank_track_titles">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/#update-blank-track-titles"
+              target="_blank" rel="noopener noreferrer">Update Blank Track Titles</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Updates blank track titles of every item in the library.">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+        </div>
+
+        <!-- remove_title_parentheses Toggle -->
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_remove_title_parentheses"
+            name="{{ library.id }}-attribute_remove_title_parentheses" value="true" {% if data['libraries'][library.id
+            ~ '-attribute_remove_title_parentheses' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-attribute_remove_title_parentheses" value="false">
+          <label class="form-check-label" for="{{ library.id }}-attribute_remove_title_parentheses">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/remove-title-parentheses"
+              target="_blank" rel="noopener noreferrer">Remove Title Parentheses</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Removes title parentheses of every item in the library.">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+        </div>
+
+        <!-- split_duplicates Toggle -->
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_split_duplicates"
+            name="{{ library.id }}-attribute_split_duplicates" value="true" {% if data['libraries'][library.id
+            ~ '-attribute_split_duplicates' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-attribute_split_duplicates" value="false">
+          <label class="form-check-label" for="{{ library.id }}-attribute_split_duplicates">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/split-duplicates"
+              target="_blank" rel="noopener noreferrer">Split Duplicates</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Splits all duplicate items found in this library.">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+        </div>
+
+        <!-- radarr_add_all Toggle -->
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_radarr_add_all"
+            name="{{ library.id }}-attribute_radarr_add_all" value="true" {% if data['libraries'][library.id
+            ~ '-attribute_radarr_add_all' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-attribute_radarr_add_all" value="false">
+          <label class="form-check-label" for="{{ library.id }}-attribute_radarr_add_all">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/radarr-add-all"
+              target="_blank" rel="noopener noreferrer">Radarr Add All</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Adds every item in the library to Radarr.">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+        </div>
+
+        <!-- sonarr_add_all Toggle -->
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_sonarr_add_all"
+            name="{{ library.id }}-attribute_sonarr_add_all" value="true" {% if data['libraries'][library.id
+            ~ '-attribute_sonarr_add_all' ]|string|lower=='true' %}checked{% endif %}>
+          <input type="hidden" name="{{ library.id }}-attribute_sonarr_add_all" value="false">
+          <label class="form-check-label" for="{{ library.id }}-attribute_sonarr_add_all">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/sonarr-add-all"
+              target="_blank" rel="noopener noreferrer">Sonarr Add All</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Adds every item in the library to Sonarr.">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+        </div>
+
+
 
       </div>
     </div>
