@@ -149,7 +149,7 @@
       data-bs-parent="#{{ library.id }}-libraryOperationsAccordion">
       <div class="accordion-body">
 
-        <!-- update_blank_track_titles Toggle -->
+        <!-- assets_for_all Toggle -->
         <div class="form-check form-switch">
           <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_assets_for_all"
             name="{{ library.id }}-attribute_assets_for_all" value="true" {% if data['libraries'][library.id
@@ -159,10 +159,92 @@
             <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/#assets-for-all"
               target="_blank" rel="noopener noreferrer">Assets for All</a>
             <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
-              title="Searches asset directories for images for all items in the library">
+              title="Searches asset directories for images for all items in the library.">
               <i class="bi bi-info-circle-fill"></i>
             </span>
           </label>
+        </div>
+
+        <!-- delete_collections -->
+        <div class="border rounded p-3 mb-2">
+          <label class="form-check-label" for="{{ library.id }}-attribute_delete_collections">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/#delete-collections"
+              target="_blank" rel="noopener noreferrer">Delete Collections</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Deletes collections based on a set of given attributes. The Collection must match all set attributes to be deleted.">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                  id="{{ library.id }}-attribute_delete_collections_managed"
+                  name="{{ library.id }}-attribute_delete_collections_managed" value="true" {% if
+                  data['libraries'][library.id ~ '-attribute_delete_collections_managed' ]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_delete_collections_managed" value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_delete_collections_managed">
+                  Managed
+                  <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="When enabled: Only collections <strong>with the <code>Kometa</code> label</strong> (Managed) will be deleted.">
+                    <i class="bi bi-info-circle-fill"></i>
+                  </span>
+                </label>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                  id="{{ library.id }}-attribute_delete_collections_configured"
+                  name="{{ library.id }}-attribute_delete_collections_configured" value="true" {% if
+                  data['libraries'][library.id ~ '-attribute_delete_collections_configured' ]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_delete_collections_configured" value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_delete_collections_configured">
+                  Configured
+                  <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="When enabled: Only collections <strong>defined in the current config file</strong> will be eligible for deletion.">
+                    <i class="bi bi-info-circle-fill"></i>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <div class="input-group">
+                <span class="input-group-text" id="{{ library.id }}-attribute_delete_collections_less_label">
+                  Less Than (item count)
+                  <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="Only collections with <strong>fewer than this number of items</strong> will be deleted. Optional value which if undefined means collections will be deleted regardless of how many items they have.">
+                    <i class="bi bi-info-circle-fill"></i>
+                  </span>
+                </span>
+                <input type="number" class="form-control" id="{{ library.id }}-attribute_delete_collections_less"
+                  name="{{ library.id }}-attribute_delete_collections_less" min="1"
+                  value="{{ data['libraries'].get(library.id ~ '-attribute_delete_collections_less', '') or '' }}">
+              </div>
+            </div>
+
+
+            <div class="col-md-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                  id="{{ library.id }}-attribute_ignore_empty_smart_collections"
+                  name="{{ library.id }}-attribute_ignore_empty_smart_collections" value="true" {% if
+                  data['libraries'][library.id ~ '-attribute_ignore_empty_smart_collections' ]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_ignore_empty_smart_collections" value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_ignore_empty_smart_collections">
+                  Ignore Empty Smart Collections
+                  <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="When enabled: Excludes empty smart collections from being affected by the <code>less</code> item count check.
+            This allows retaining things like smart collections that show movies without subtitles or the like.">
+                    <i class="bi bi-info-circle-fill"></i>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- mass_imdb_parental_labels Dropdown -->
@@ -179,15 +261,15 @@
             <select class="form-select" id="{{ library.id }}-attribute_mass_imdb_parental_labels"
               name="{{ library.id }}-attribute_mass_imdb_parental_labels"
               aria-describedby="{{ library.id }}-attribute_mass_imdb_parental_labels_text">
-              <option value="" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels' )=="" %}selected{%
-                endif %}>
+              <option value="" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels' )==""
+                %}selected{% endif %}>
                 None</option>
-              <option value="mild" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels' )=="mild"
-                %}selected{% endif %}>Mild</option>
-              <option value="moderate" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels' )=="moderate"
-                %}selected{% endif %}>Moderate</option>
-              <option value="severe" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels' )=="severe"
-                %}selected{% endif %}>Severe</option>
+              <option value="mild" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels'
+                )=="mild" %}selected{% endif %}>Mild</option>
+              <option value="moderate" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels'
+                )=="moderate" %}selected{% endif %}>Moderate</option>
+              <option value="severe" {% if data['libraries'].get(library.id ~ '-attribute_mass_imdb_parental_labels'
+                )=="severe" %}selected{% endif %}>Severe</option>
             </select>
           </div>
         </div>
@@ -206,15 +288,15 @@
             <select class="form-select" id="{{ library.id }}-attribute_mass_collection_mode"
               name="{{ library.id }}-attribute_mass_collection_mode"
               aria-describedby="{{ library.id }}-attribute_mass_collection_mode_text">
-              <option value="" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode' )=="default" %}selected{%
-                endif %}>
+              <option value="" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode' )=="default"
+                %}selected{% endif %}>
                 Default</option>
               <option value="hide" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode' )=="hide"
                 %}selected{% endif %}>Hide</option>
-              <option value="hide_items" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode' )=="hide_items"
-                %}selected{% endif %}>Hide Items</option>
-              <option value="show_items" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode' )=="show_items"
-                %}selected{% endif %}>Show Items</option>
+              <option value="hide_items" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode'
+                )=="hide_items" %}selected{% endif %}>Hide Items</option>
+              <option value="show_items" {% if data['libraries'].get(library.id ~ '-attribute_mass_collection_mode'
+                )=="show_items" %}selected{% endif %}>Show Items</option>
             </select>
           </div>
         </div>

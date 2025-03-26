@@ -77,7 +77,6 @@ def build_libraries_section(
         """Processes a single library and adds valid data to the output."""
         entry = {}
 
-        # Extract internal library ID like 'movies', 'tv-shows', etc.
         lib_id = helpers.extract_library_name(library_key)
 
         if app.config["QS_DEBUG"]:
@@ -98,6 +97,24 @@ def build_libraries_section(
             if value not in [None, "", False]:
                 operations[field] = value
 
+        # ✅ Handle nested delete_collections block
+        delete_fields = [
+            "delete_collections_configured",
+            "delete_collections_managed",
+            "delete_collections_less",
+            "ignore_empty_smart_collections"
+        ]
+        delete_collections = {}
+        for df in delete_fields:
+            attr_key = f"{library_type}-library_{lib_id}-attribute_{df}"
+            value = attr_group.get(attr_key, None)
+            if value not in [None, "", False]:
+                yaml_key = df.replace("delete_collections_", "")
+                delete_collections[yaml_key] = value
+
+        if delete_collections:
+            operations["delete_collections"] = delete_collections
+
         if operations:
             entry["operations"] = operations
 
@@ -114,54 +131,49 @@ def build_libraries_section(
         overlay_key = helpers.extract_library_name(library_key)
         if overlay_key and overlay_key in overlays:
             overlay_files = []
-            for key, value in overlays[overlay_key].items():  # ✅ Only iterate relevant overlays
-                if isinstance(value, bool) and value:  # ✅ Boolean overlays
+            for key, value in overlays[overlay_key].items():
+                if isinstance(value, bool) and value:
                     overlay_files.append({"default": key.split(f"{library_type}-library_{overlay_key}-overlay_")[-1]})
-                elif isinstance(value, str) and value:  # ✅ String-based overlays
-                    if value.lower() == "commonsense":  # ✅ Special Case for commonsense
-                        overlay_files.append({"default": "commonsense"})  # No content_rating_ prefix
+                elif isinstance(value, str) and value:
+                    if value.lower() == "commonsense":
+                        overlay_files.append({"default": "commonsense"})
                     else:
-                        overlay_files.append({"default": f"content_rating_{value}"})  # Normal content ratings
+                            overlay_files.append({"default": f"content_rating_{value}"})
             if overlay_files:
-                entry["overlay_files"] = overlay_files  # ✅ Ensures overlays are added
+                entry["overlay_files"] = overlay_files
 
-        # ✅ Process Template Variables
+        # ✅ Template Variables
         template_key = helpers.extract_library_name(library_key)
         template_data = templates.get(template_key, {})
-
-        # ✅ Step 1: Find the exact key that matches the pattern
         sep_color_key = None
         for key in template_data.keys():
             if key.endswith("-template_variables[use_separators]") and key.startswith(f"{library_type}-library_{template_key}"):
                 sep_color_key = key
-                break  # Stop once we find the matching key
+                break
 
-        # ✅ Step 2: Extract the value
         sep_color = template_data.get(sep_color_key)
         template_vars = {"use_separators": True if sep_color else False}
-
-        # ✅ Step 3: Apply logic if the key was found
         if sep_color:
             template_vars["sep_style"] = sep_color
-
         entry["template_variables"] = template_vars
 
-        # ✅ Process Attributes
+        # ✅ Remove/Reset Overlays
         if library_name in attributes:
             remove_overlays = attributes[library_name].get(f"{library_type}-library_{library_name}-attribute_remove_overlays", False)
             reset_overlays = attributes[library_name].get(f"{library_type}-library_{library_name}-attribute_reset_overlays")
 
             if remove_overlays:
                 entry["remove_overlays"] = True
-
             if reset_overlays not in [None, "None", ""]:
                 entry["reset_overlays"] = reset_overlays
 
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Entry for {library_name}: {entry}")
 
-        # ✅ Apply `reorder_library_section()` before storing the entry
         libraries_section[library_name] = reorder_library_section(entry)
+
+
+#############################################################################################
 
     # Process movie libraries
     for lk, ln in movie_libraries.items():
