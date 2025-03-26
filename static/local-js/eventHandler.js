@@ -123,6 +123,17 @@ const EventHandler = {
 
       // Attach overlay selection listeners (CHANGE events)
       library.querySelectorAll('.accordion input').forEach((input) => {
+        library.querySelectorAll('.accordion select').forEach(select => {
+          if (!select.dataset.listenerAdded) {
+            select.addEventListener('change', () => {
+              console.log(`[DEBUG] Dropdown changed: ${select.id} -> ${select.value}`)
+              EventHandler.updateAccordionHighlights()
+              ValidationHandler.updateValidationState()
+            })
+            select.dataset.listenerAdded = 'true'
+          }
+        })
+
         if (input.id && !input.dataset.listenerAdded) {
           console.log(`[DEBUG] Attaching toggle listener for ${input.id}`)
           input.addEventListener('change', () => {
