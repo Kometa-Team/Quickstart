@@ -76,8 +76,30 @@ def build_libraries_section(
     ):
         """Processes a single library and adds valid data to the output."""
         entry = {}
+
+        # Extract internal library ID like 'movies', 'tv-shows', etc.
+        lib_id = helpers.extract_library_name(library_key)
+
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Processing Library: {library_key} -> {library_name}")
+
+        # ✅ Process Operations Attributes
+        operations_fields = [
+            "assets_for_all", "mass_imdb_parental_labels", "mass_collection_mode",
+            "update_blank_track_titles", "remove_title_parentheses",
+            "split_duplicates", "radarr_add_all", "sonarr_add_all"
+        ]
+        operations = {}
+        attr_group = attributes.get(lib_id, {})
+
+        for field in operations_fields:
+            attr_key = f"{library_type}-library_{lib_id}-attribute_{field}"
+            value = attr_group.get(attr_key, None)
+            if value not in [None, "", False]:
+                operations[field] = value
+
+        if operations:
+            entry["operations"] = operations
 
         # ✅ Process Collections
         collection_key = helpers.extract_library_name(library_key)
