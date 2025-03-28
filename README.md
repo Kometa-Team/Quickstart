@@ -17,7 +17,7 @@ Special Thanks to [bullmoose20](https://github.com/bullmoose20), [chazlarson](ht
 
 ## Prerequisites
 
-It's ideal that you go through the Kometa install walkthrough prior to running Quickstart, as that will get Kometa set up to accept the config file that Quickstart will produce.  Runnign Quickstart and *then* the walkthrough could end up running into problems that will not be addressed in the walkthroughs.
+It's ideal that you go through the Kometa install walkthrough prior to running Quickstart, as that will get Kometa set up to accept the config file that Quickstart will produce.  Running Quickstart and *then* the walkthrough could end up running into problems that will not be addressed in the walkthroughs; at best nothing in the walkthrough will match expectations so you will be left to figure out any differences yourself.
 
 This will also familiarize you with setting up a virtual environment for running this as a Python script.
 
