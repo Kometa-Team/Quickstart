@@ -207,6 +207,43 @@ const EventHandler = {
       const customAddButton = document.getElementById(`${libraryId}-mass_genre_update_custom_add`)
       if (customAddButton && !customAddButton.dataset.listenerAdded) {
         console.log(`[DEBUG] Attaching custom genre add listener for ${libraryId}`)
+        const customList = document.getElementById(`${libraryId}-mass_genre_update_custom_list`)
+        const hiddenCustomInput = document.getElementById(`${libraryId}-mass_genre_update_custom_hidden`)
+
+        // Restore previously saved custom genres
+        if (hiddenCustomInput && customList) {
+          try {
+            const savedGenres = JSON.parse(hiddenCustomInput.value || '[]')
+            if (Array.isArray(savedGenres)) {
+              savedGenres.forEach(value => {
+                const li = document.createElement('li')
+                li.className = 'list-group-item d-flex justify-content-between align-items-center'
+                li.textContent = value
+
+                const removeBtn = document.createElement('button')
+                removeBtn.type = 'button'
+                removeBtn.className = 'btn btn-sm btn-danger'
+                removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>'
+                removeBtn.addEventListener('click', function () {
+                  li.remove()
+                  updateHiddenInput(customList, hiddenCustomInput)
+                })
+
+                li.appendChild(removeBtn)
+                customList.appendChild(li)
+              })
+            }
+          } catch (e) {
+            console.warn(`[WARN] Could not parse saved custom genres for ${libraryId}:`, e)
+          }
+        }
+
+        function updateHiddenInput (listElement, hiddenInput) {
+          const values = Array.from(listElement.children).map(item =>
+            item.firstChild.textContent.replace(/^"|"$/g, '')
+          )
+          hiddenInput.value = values.length ? JSON.stringify(values) : ''
+        }
 
         customAddButton.addEventListener('click', function () {
           const input = document.getElementById(`${libraryId}-mass_genre_update_custom_input`)
@@ -219,7 +256,7 @@ const EventHandler = {
           // Create the list item
           const li = document.createElement('li')
           li.className = 'list-group-item d-flex justify-content-between align-items-center'
-          li.textContent = `"${value}"`
+          li.textContent = value
 
           const removeBtn = document.createElement('button')
           removeBtn.type = 'button'
@@ -227,20 +264,13 @@ const EventHandler = {
           removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>'
           removeBtn.addEventListener('click', function () {
             li.remove()
-            updateHiddenInput()
+            updateHiddenInput(list, hidden)
           })
 
           li.appendChild(removeBtn)
           list.appendChild(li)
           input.value = ''
-          updateHiddenInput()
-
-          function updateHiddenInput () {
-            const values = Array.from(list.children).map(item =>
-              item.firstChild.textContent.replace(/^"|"$/g, '')
-            )
-            hidden.value = values.length ? JSON.stringify(values) : ''
-          }
+          updateHiddenInput(list, hidden)
         })
 
         customAddButton.dataset.listenerAdded = 'true'

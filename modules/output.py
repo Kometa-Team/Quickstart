@@ -7,6 +7,7 @@ import jsonschema
 import pyfiglet
 from flask import current_app as app
 from ruamel.yaml import YAML
+from ruamel.yaml.comments import CommentedSeq
 
 from modules import helpers, persistence
 
@@ -16,7 +17,9 @@ def add_border_to_ascii_art(art):
     lines = lines[:-1]
     width = max(len(line) for line in lines)
     border_line = "#" * (width + 4)
-    bordered_art = [border_line] + [f"# {line.ljust(width)} #" for line in lines] + [border_line]
+    bordered_art = (
+        [border_line] + [f"# {line.ljust(width)} #" for line in lines] + [border_line]
+    )
     return "\n".join(bordered_art)
 
 
@@ -85,23 +88,42 @@ def build_libraries_section(
 
         # ✅ Process Operations Attributes
         operations_fields = [
-            "assets_for_all", "mass_imdb_parental_labels", "mass_collection_mode",
-            "update_blank_track_titles", "remove_title_parentheses",
-            "split_duplicates", "radarr_add_all", "sonarr_add_all"
+            "assets_for_all",
+            "mass_imdb_parental_labels",
+            "mass_collection_mode",
+            "update_blank_track_titles",
+            "remove_title_parentheses",
+            "split_duplicates",
+            "radarr_add_all",
+            "sonarr_add_all",
         ]
         operations = {}
         attr_group = attributes.get(lib_id, {})
         # Begin: Mass Genre Update Section
         mass_genre_update_keys = [
-            "tmdb", "tvdb", "imdb", "omdb",
-            "anidb", "anidb_3_0", "anidb_2_5", "anidb_2_0",
-            "anidb_1_5", "anidb_1_0", "anidb_0_5",
-            "mal", "lock", "unlock", "remove", "reset"
+            "tmdb",
+            "tvdb",
+            "imdb",
+            "omdb",
+            "anidb",
+            "anidb_3_0",
+            "anidb_2_5",
+            "anidb_2_0",
+            "anidb_1_5",
+            "anidb_1_0",
+            "anidb_0_5",
+            "mal",
+            "lock",
+            "unlock",
+            "remove",
+            "reset",
         ]
         mass_genre_update = []
 
         # Grab the full reordered list from hidden input
-        custom_key = f"{library_type}-library_{lib_id}-attribute_mass_genre_update_custom_order"
+        custom_key = (
+            f"{library_type}-library_{lib_id}-attribute_mass_genre_update_custom_order"
+        )
         custom_value = attr_group.get(custom_key)
 
         if custom_value:
@@ -109,7 +131,11 @@ def build_libraries_section(
                 parsed = json.loads(custom_value)
                 if isinstance(parsed, list):
                     for item in parsed:
-                        if isinstance(item, str) and item.startswith("[") and item.endswith("]"):
+                        if (
+                            isinstance(item, str)
+                            and item.startswith("[")
+                            and item.endswith("]")
+                        ):
                             # Probably malformed nested list — skip
                             continue
                         elif isinstance(item, str):
@@ -117,8 +143,26 @@ def build_libraries_section(
                         elif isinstance(item, list):  # rare case
                             mass_genre_update.extend(item)
             except Exception as e:
-                print(f"[DEBUG] Skipping invalid JSON in custom genre: {custom_value} — {e}")
+                print(
+                    f"[DEBUG] Skipping invalid JSON in custom genre: {custom_value} — {e}"
+                )
 
+        # Also include custom genre strings (if any) from the other hidden input
+        custom_strings_key = (
+            f"{library_type}-library_{lib_id}-attribute_mass_genre_update_custom"
+        )
+        custom_strings_value = attr_group.get(custom_strings_key)
+
+        if custom_strings_value:
+            try:
+                parsed_custom = json.loads(custom_strings_value)
+                if isinstance(parsed_custom, list) and parsed_custom:
+                    # Wrap it in a CommentedSeq to enforce flow style
+                    custom_flow_list = CommentedSeq(parsed_custom)
+                    custom_flow_list.fa.set_flow_style()  # Force [ "Thriller", "Action" ] formatting
+                    mass_genre_update.append(custom_flow_list)
+            except Exception as e:
+                print(f"[DEBUG] Skipping invalid JSON in custom genre strings: {custom_strings_value} — {e}")
 
         if mass_genre_update:
             operations["mass_genre_update"] = mass_genre_update
@@ -134,7 +178,7 @@ def build_libraries_section(
             "delete_collections_configured",
             "delete_collections_managed",
             "delete_collections_less",
-            "ignore_empty_smart_collections"
+            "ignore_empty_smart_collections",
         ]
         delete_collections = {}
         for df in delete_fields:
@@ -154,7 +198,13 @@ def build_libraries_section(
         collection_key = helpers.extract_library_name(library_key)
         if collection_key and collection_key in collections:
             collection_files = [
-                {"default": key.split(f"{library_type}-library_{collection_key}-collection_")[-1]} for key, selected in collections[collection_key].items() if selected is True
+                {
+                    "default": key.split(
+                        f"{library_type}-library_{collection_key}-collection_"
+                    )[-1]
+                }
+                for key, selected in collections[collection_key].items()
+                if selected is True
             ]
             if collection_files:
                 entry["collection_files"] = collection_files
@@ -165,12 +215,18 @@ def build_libraries_section(
             overlay_files = []
             for key, value in overlays[overlay_key].items():
                 if isinstance(value, bool) and value:
-                    overlay_files.append({"default": key.split(f"{library_type}-library_{overlay_key}-overlay_")[-1]})
+                    overlay_files.append(
+                        {
+                            "default": key.split(
+                                f"{library_type}-library_{overlay_key}-overlay_"
+                            )[-1]
+                        }
+                    )
                 elif isinstance(value, str) and value:
                     if value.lower() == "commonsense":
                         overlay_files.append({"default": "commonsense"})
                     else:
-                            overlay_files.append({"default": f"content_rating_{value}"})
+                        overlay_files.append({"default": f"content_rating_{value}"})
             if overlay_files:
                 entry["overlay_files"] = overlay_files
 
@@ -179,7 +235,9 @@ def build_libraries_section(
         template_data = templates.get(template_key, {})
         sep_color_key = None
         for key in template_data.keys():
-            if key.endswith("-template_variables[use_separators]") and key.startswith(f"{library_type}-library_{template_key}"):
+            if key.endswith("-template_variables[use_separators]") and key.startswith(
+                f"{library_type}-library_{template_key}"
+            ):
                 sep_color_key = key
                 break
 
@@ -191,8 +249,13 @@ def build_libraries_section(
 
         # ✅ Remove/Reset Overlays
         if library_name in attributes:
-            remove_overlays = attributes[library_name].get(f"{library_type}-library_{library_name}-attribute_remove_overlays", False)
-            reset_overlays = attributes[library_name].get(f"{library_type}-library_{library_name}-attribute_reset_overlays")
+            remove_overlays = attributes[library_name].get(
+                f"{library_type}-library_{library_name}-attribute_remove_overlays",
+                False,
+            )
+            reset_overlays = attributes[library_name].get(
+                f"{library_type}-library_{library_name}-attribute_reset_overlays"
+            )
 
             if remove_overlays:
                 entry["remove_overlays"] = True
@@ -204,16 +267,31 @@ def build_libraries_section(
 
         libraries_section[library_name] = reorder_library_section(entry)
 
-
-#############################################################################################
+    #############################################################################################
 
     # Process movie libraries
     for lk, ln in movie_libraries.items():
-        add_entry(lk, ln, "mov", movie_collections, movie_overlays, movie_attributes, movie_templates)
+        add_entry(
+            lk,
+            ln,
+            "mov",
+            movie_collections,
+            movie_overlays,
+            movie_attributes,
+            movie_templates,
+        )
 
     # Process show libraries
     for lk, ln in show_libraries.items():
-        add_entry(lk, ln, "sho", show_collections, show_overlays, show_attributes, show_templates)
+        add_entry(
+            lk,
+            ln,
+            "sho",
+            show_collections,
+            show_overlays,
+            show_attributes,
+            show_templates,
+        )
 
     if app.config["QS_DEBUG"]:
         print("[DEBUG] Generated YAML Output:\n")
@@ -239,7 +317,12 @@ def reorder_library_section(library_data):
 
     # Add all remaining keys except overlay_files (keep existing order)
     for key, value in library_data.items():
-        if key not in ["template_variables", "remove_overlays", "reset_overlays", "overlay_files"]:
+        if key not in [
+            "template_variables",
+            "remove_overlays",
+            "reset_overlays",
+            "overlay_files",
+        ]:
             reordered_data[key] = value
 
     # Ensure remove_overlays and reset_overlays appear before overlay_files
@@ -273,8 +356,12 @@ def build_config(header_style="standard", config_name=None):
         # Handle all header styles
         if header_style == "none":
             header_art[config_attribute] = ""  # No headers at all
-        elif header_style == "single line":  # 🔥 Standardizes "single line" as divider format
-            header_art[config_attribute] = "#==================== " + item["name"] + " ====================#"
+        elif (
+            header_style == "single line"
+        ):  # 🔥 Standardizes "single line" as divider format
+            header_art[config_attribute] = (
+                "#==================== " + item["name"] + " ====================#"
+            )
         else:
             # 🔥 Handle custom PyFiglet fonts dynamically (including "standard")
             try:
@@ -282,13 +369,17 @@ def build_config(header_style="standard", config_name=None):
                 header_art[config_attribute] = add_border_to_ascii_art(figlet_text)
             except pyfiglet.FontNotFound:
                 # Fallback to "single line" divider format instead of basic text
-                header_art[config_attribute] = "#==================== " + item["name"] + " ====================#"
+                header_art[config_attribute] = (
+                    "#==================== " + item["name"] + " ====================#"
+                )
 
         # Retrieve settings for each section
         section_data = persistence.retrieve_settings(persistence_key)
 
         if "validated" in section_data and section_data["validated"]:
-            config_data[config_attribute] = clean_section_data(section_data, config_attribute)
+            config_data[config_attribute] = clean_section_data(
+                section_data, config_attribute
+            )
 
     # Process playlist_files section
     if "playlist_files" in config_data:
@@ -296,20 +387,28 @@ def build_config(header_style="standard", config_name=None):
 
         # Debug raw data
         if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Raw config_data['playlist_files'] content (Level 1): {playlist_data}")
+            print(
+                f"[DEBUG] Raw config_data['playlist_files'] content (Level 1): {playlist_data}"
+            )
 
         # Adjust for possible extra nesting
-        if "playlist_files" in playlist_data and isinstance(playlist_data["playlist_files"], dict):
+        if "playlist_files" in playlist_data and isinstance(
+            playlist_data["playlist_files"], dict
+        ):
             playlist_data = playlist_data["playlist_files"]
             if app.config["QS_DEBUG"]:
-                print(f"[DEBUG] Adjusted playlist_data after extra nesting: {playlist_data}")
+                print(
+                    f"[DEBUG] Adjusted playlist_data after extra nesting: {playlist_data}"
+                )
 
         # Extract and process libraries
         libraries_value = playlist_data.get("libraries", "")
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Extracted libraries value: {libraries_value}")
 
-        libraries_list = [lib.strip() for lib in libraries_value.split(",") if lib.strip()]
+        libraries_list = [
+            lib.strip() for lib in libraries_value.split(",") if lib.strip()
+        ]
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Processed libraries list: {libraries_value}")
 
@@ -336,17 +435,25 @@ def build_config(header_style="standard", config_name=None):
             webhooks_data = webhooks_data["webhooks"]  # 🔥 Fix: Handle extra nesting
 
         # Remove empty values
-        cleaned_webhooks = {key: value for key, value in webhooks_data.items() if value is not None and value != "" and value != [] and value != {}}
+        cleaned_webhooks = {
+            key: value
+            for key, value in webhooks_data.items()
+            if value is not None and value != "" and value != [] and value != {}
+        }
 
         # If no valid webhooks exist, remove the "webhooks" section entirely
         if cleaned_webhooks:
-            config_data["webhooks"] = {"webhooks": cleaned_webhooks}  # 🔥 Preserve webhooks key
+            config_data["webhooks"] = {
+                "webhooks": cleaned_webhooks
+            }  # 🔥 Preserve webhooks key
         else:
             config_data.pop("webhooks", None)  # 🚀 Fully remove empty webhooks
 
         # 🔍 Debugging: Ensure webhooks are correctly cleaned
         if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Cleaned Webhooks Data AFTER Removing Empty Values: {cleaned_webhooks}")
+            print(
+                f"[DEBUG] Cleaned Webhooks Data AFTER Removing Empty Values: {cleaned_webhooks}"
+            )
             if "webhooks" not in config_data:
                 print("[DEBUG] Webhooks section completely removed.")
 
@@ -359,8 +466,16 @@ def build_config(header_style="standard", config_name=None):
             print("[DEBUG] Raw nested libraries data:", nested_libraries_data)
 
         # Extract selected libraries
-        movie_libraries = {key: value for key, value in nested_libraries_data.items() if key.startswith("mov-library_") and key.endswith("-library")}
-        show_libraries = {key: value for key, value in nested_libraries_data.items() if key.startswith("sho-library_") and key.endswith("-library")}
+        movie_libraries = {
+            key: value
+            for key, value in nested_libraries_data.items()
+            if key.startswith("mov-library_") and key.endswith("-library")
+        }
+        show_libraries = {
+            key: value
+            for key, value in nested_libraries_data.items()
+            if key.startswith("sho-library_") and key.endswith("-library")
+        }
 
         # Extract **correct** movie and show library names
         movie_library_names = {helpers.extract_library_name(k) for k in movie_libraries}
@@ -376,7 +491,11 @@ def build_config(header_style="standard", config_name=None):
             Groups collection, overlay, and attribute data by library.
             """
             grouped = {}
-            for key, value in [(k, v) for k, v in nested_libraries_data.items() if prefix in k and helpers.extract_library_name(k) in names]:
+            for key, value in [
+                (k, v)
+                for k, v in nested_libraries_data.items()
+                if prefix in k and helpers.extract_library_name(k) in names
+            ]:
                 library_name = helpers.extract_library_name(key)
                 if library_name:
                     if library_name not in grouped:
@@ -442,7 +561,9 @@ def build_config(header_style="standard", config_name=None):
 
     # Fetch kometa_branch dynamically
     version_info = helpers.check_for_update()
-    kometa_branch = version_info.get("kometa_branch", "nightly")  # Default to nightly if not found
+    kometa_branch = version_info.get(
+        "kometa_branch", "nightly"
+    )  # Default to nightly if not found
 
     # Get the current timestamp in a readable format
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -458,7 +579,7 @@ def build_config(header_style="standard", config_name=None):
     def dump_section(title, dump_name, data):
 
         dump_yaml = YAML()
-        dump_yaml.default_flow_style = False  # Use block-style formatting
+        dump_yaml.default_flow_style = False
         dump_yaml.sort_keys = False  # Preserve original key order
 
         # Custom representation for `None` values
@@ -488,7 +609,9 @@ def build_config(header_style="standard", config_name=None):
                     "trakt",
                     "mal",
                 ]:
-                    obj = dict(sorted(obj.items()))  # Alphabetically sort keys in the section
+                    obj = dict(
+                        sorted(obj.items())
+                    )  # Alphabetically sort keys in the section
                 return {k: clean_data(v) for k, v in obj.items() if k != "valid"}
             elif isinstance(obj, list):
                 return [clean_data(v) for v in obj]
@@ -499,13 +622,21 @@ def build_config(header_style="standard", config_name=None):
         cleaned_data = clean_data(data)
 
         # Ensure `asset_directory` is serialized as a proper YAML list
-        if dump_name == "settings" and "asset_directory" in cleaned_data.get("settings", {}):
+        if dump_name == "settings" and "asset_directory" in cleaned_data.get(
+            "settings", {}
+        ):
             if isinstance(cleaned_data["settings"]["asset_directory"], str):
                 # Convert multi-line string into a list
-                cleaned_data["settings"]["asset_directory"] = [line.strip() for line in cleaned_data["settings"]["asset_directory"].splitlines() if line.strip()]
+                cleaned_data["settings"]["asset_directory"] = [
+                    line.strip()
+                    for line in cleaned_data["settings"]["asset_directory"].splitlines()
+                    if line.strip()
+                ]
             elif isinstance(cleaned_data["settings"]["asset_directory"], list):
                 # Ensure all list items are strings
-                cleaned_data["settings"]["asset_directory"] = [str(i).strip() for i in cleaned_data["settings"]["asset_directory"]]
+                cleaned_data["settings"]["asset_directory"] = [
+                    str(i).strip() for i in cleaned_data["settings"]["asset_directory"]
+                ]
 
         # Dump the cleaned data to YAML
         with io.StringIO() as stream:

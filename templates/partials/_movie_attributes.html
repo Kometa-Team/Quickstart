@@ -323,7 +323,7 @@
               </ul>
 
               <!-- Hidden input for custom genre values -->
-              <input type="text" name="{{ library.id }}-attribute_mass_genre_update_custom"
+              <input type="hidden" name="{{ library.id }}-attribute_mass_genre_update_custom"
                 id="{{ library.id }}-mass_genre_update_custom_hidden"
                 value="{{ data['libraries'].get(library.id ~ '-attribute_mass_genre_update_custom', '') }}">
             </div>
@@ -334,7 +334,7 @@
             <!-- Dynamically populated with JS -->
           </ul>
           <!-- Hidden input for genre source + custom drag-and-drop order -->
-          <input type="text" name="{{ library.id }}-attribute_mass_genre_update_custom_order"
+          <input type="hidden" name="{{ library.id }}-attribute_mass_genre_update_custom_order"
             id="{{ library.id }}-mass_genre_update_order"
             value='{{ data["libraries"].get(library.id ~ "-attribute_mass_genre_update_custom_order", "[]") }}'>
         </div>
