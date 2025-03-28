@@ -235,20 +235,24 @@ label {
 .accordion-button:not(.collapsed) {
     background-color: transparent !important;
     color: white !important;
-    border-color: #343a40 !important; /* Keep border subtle */
+    border-color: #343a40 !important;
+    /* Keep border subtle */
 }
 
 /* Ensure the expanded accordion body matches the surrounding theme */
-.accordion-button:not(.collapsed) + .accordion-collapse .accordion-body {
-    background-color: #343a40 !important; /* Explicitly set to match the header */
+.accordion-button:not(.collapsed)+.accordion-collapse .accordion-body {
+    background-color: #343a40 !important;
+    /* Explicitly set to match the header */
     color: white !important;
 }
 
 /* Ensure the expanded accordion section matches the header */
 .accordion-collapse.show .accordion-body {
-    background-color: transparent !important; /* Same as the header */
+    background-color: transparent !important;
+    /* Same as the header */
     color: white !important;
-    border-top: 1px solid #343a40; /* Optional: subtle border for separation */
+    border-top: 1px solid #343a40;
+    /* Optional: subtle border for separation */
 }
 
 /* Prevent hover/focus from changing colors too much */
@@ -478,7 +482,8 @@ div#loading {
 /* Center Dropdown on Narrow Screens. 767.98 ensures that 768 exactly is not a problem */
 @media (max-width: 767.98px) {
     .container-fluid.d-flex {
-        justify-content: center !important; /* Ensures dropdown stays centered */
+        justify-content: center !important;
+        /* Ensures dropdown stays centered */
     }
 
     .dropdown {
@@ -525,4 +530,30 @@ div#loading {
     background-color: #019c75 !important;
     border-color: #019c75 !important;
     color: white !important;
+}
+
+/* Sortable Item Styling */
+.sortable-item {
+    cursor: move;
+    background-color: #051b11;
+    color: #f8f9fa;
+    border: 1px solid #444;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    padding: 10px 12px;
+    transition: background-color 0.2s ease;
+}
+
+.sortable-item:hover {
+    background-color: #019c75;
+}
+
+/* Drag Handle Icon */
+.drag-handle {
+    cursor: grab;
+    color: #ccc;
+}
+
+.drag-handle:hover {
+    color: #fff;
 }

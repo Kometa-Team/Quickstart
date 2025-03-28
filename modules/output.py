@@ -1,5 +1,6 @@
 import io
 import os
+import json
 from datetime import datetime
 
 import jsonschema
@@ -90,6 +91,37 @@ def build_libraries_section(
         ]
         operations = {}
         attr_group = attributes.get(lib_id, {})
+        # Begin: Mass Genre Update Section
+        mass_genre_update_keys = [
+            "tmdb", "tvdb", "imdb", "omdb",
+            "anidb", "anidb_3_0", "anidb_2_5", "anidb_2_0",
+            "anidb_1_5", "anidb_1_0", "anidb_0_5",
+            "mal", "lock", "unlock", "remove", "reset"
+        ]
+        mass_genre_update = []
+
+        # Grab the full reordered list from hidden input
+        custom_key = f"{library_type}-library_{lib_id}-attribute_mass_genre_update_custom_order"
+        custom_value = attr_group.get(custom_key)
+
+        if custom_value:
+            try:
+                parsed = json.loads(custom_value)
+                if isinstance(parsed, list):
+                    for item in parsed:
+                        if isinstance(item, str) and item.startswith("[") and item.endswith("]"):
+                            # Probably malformed nested list — skip
+                            continue
+                        elif isinstance(item, str):
+                            mass_genre_update.append(item)
+                        elif isinstance(item, list):  # rare case
+                            mass_genre_update.extend(item)
+            except Exception as e:
+                print(f"[DEBUG] Skipping invalid JSON in custom genre: {custom_value} — {e}")
+
+
+        if mass_genre_update:
+            operations["mass_genre_update"] = mass_genre_update
 
         for field in operations_fields:
             attr_key = f"{library_type}-library_{lib_id}-attribute_{field}"
