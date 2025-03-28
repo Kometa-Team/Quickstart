@@ -15,9 +15,15 @@ Welcome to Kometa Quickstart! This Web UI tool will guide you through creating a
 
 Special Thanks to [bullmoose20](https://github.com/bullmoose20), [chazlarson](https://github.com/chazlarson) and [Yozora](https://github.com/yozoraXCII) for the time spent developing this tool.
 
+## Prerequisites
+
+It's ideal that you go through the Kometa install walkthrough prior to running Quickstart, as that will get Kometa set up to accept the config file that Quickstart will produce.  Runnign Quickstart and *then* the walkthrough could end up running into problems that will not be addressed in the walkthroughs.
+
+This will also familiarize you with setting up a virtual environment for running this as a Python script.
+
 ## Installing Quickstart
 
-We recommend running Quickstart on a system as a Python script
+We recommend running Quickstart on a system as a Python script.
 
 These are high-level steps which assume the user has knowledge of python and pip, and the general ability to troubleshoot issues.
 
@@ -55,6 +61,28 @@ You should see something similar to this:
 ![image](static/images/running-in-pwsh.png)
 
 Navigate to one of the http addresses that you are presented with, and you should be taken to the Quickstart Welcome Page.
+
+## Running in Docker
+
+Minimal examples:
+
+### `docker run`
+```
+docker run -it -v "/path/to/config:/config:rw" kometateam/quickstart:develop
+```
+
+### `docker compose`
+```yaml
+services:
+  quickstart:
+    image: kometateam/quickstart:develop
+    container_name: quickstart
+    environment:
+      - TZ=TIMEZONE #optional
+    volumes:
+      - /path/to/config:/config
+    restart: unless-stopped
+```
 
 ### Debugging & Changing Ports
 
