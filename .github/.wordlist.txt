@@ -1,10 +1,13 @@
 bullmoose
 chazlarson
+config
 else's
 kometa
 quickstart
 repo
 ui
+walkthrough
+walkthroughs
 xxxx
 yozora
 yozoraxcii
