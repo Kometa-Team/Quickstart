@@ -64,7 +64,7 @@ Navigate to one of the http addresses that you are presented with, and you shoul
 
 ## Running in Docker
 
-Minimal examples:
+Here are some minimal examples:
 
 ### `docker run`
 ```
