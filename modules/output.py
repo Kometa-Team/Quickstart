@@ -167,6 +167,38 @@ def build_libraries_section(
         if mass_genre_update:
             operations["mass_genre_update"] = mass_genre_update
 
+        # Begin: Mass Content Rating Update Section
+        mass_content_rating_update = []
+
+        # Get the ordered source list (sortable)
+        rating_custom_order_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_custom"
+        rating_custom_order_value = attr_group.get(rating_custom_order_key)
+
+        if rating_custom_order_value:
+            try:
+                parsed = json.loads(rating_custom_order_value)
+                if isinstance(parsed, list):
+                    mass_content_rating_update.extend(parsed)
+            except Exception as e:
+                print(f"[DEBUG] Skipping invalid JSON in content rating sources: {rating_custom_order_value} — {e}")
+
+        # Get the optional custom string (e.g., "NR")
+        rating_custom_string_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_custom_string"
+        rating_custom_string_value = None
+        if attr_group and rating_custom_string_key in attr_group:
+            raw_value = attr_group.get(rating_custom_string_key)
+            if raw_value:
+                rating_custom_string_value = raw_value.strip()
+
+        if rating_custom_string_value:
+            mass_content_rating_update.append(rating_custom_string_value)
+
+        # Only add to operations if we have any items
+        if mass_content_rating_update:
+            mcru_list = CommentedSeq(mass_content_rating_update)
+            mcru_list.fa.set_block_style()  # ensures YAML list style
+            operations["mass_content_rating_update"] = mcru_list
+
         for field in operations_fields:
             attr_key = f"{library_type}-library_{lib_id}-attribute_{field}"
             value = attr_group.get(attr_key, None)

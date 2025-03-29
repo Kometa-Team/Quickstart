@@ -290,7 +290,8 @@
                   data['libraries'][library.id ~ '-attribute_mass_genre_update_' ~ source ]|string|lower=='true'
                   %}checked{% endif %}>
                 <input type="hidden" name="{{ library.id }}-attribute_mass_genre_update_{{ source }}" value="false">
-                <label class="form-check-label" for="{{ library.id }}-attribute_mass_genre_update_{{ source }}">
+                <label class="form-check-label" for="{{ library.id }}-attribute_mass_genre_update_{{ source }}"
+                  data-label="{{ label }}">
                   {{ label }}
                   <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
                     <i class="bi bi-info-circle-fill"></i>
@@ -337,6 +338,76 @@
           <input type="hidden" name="{{ library.id }}-attribute_mass_genre_update_custom_order"
             id="{{ library.id }}-mass_genre_update_order"
             value='{{ data["libraries"].get(library.id ~ "-attribute_mass_genre_update_custom_order", "[]") }}'>
+        </div>
+
+        <!-- mass_content_rating_update -->
+        <div class="border rounded p-3 mb-2">
+          <label class="form-check-label" for="{{ library.id }}-attribute_mass_content_rating_update_header">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/#mass-content-rating-update"
+              target="_blank" rel="noopener noreferrer">Mass Content Rating Update</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Updates the content rating of each item using selected sources like OMDb or MDB. Sources are applied in the order listed.">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+
+          <div class="row mb-3">
+            {% set rating_sources = [
+            ('mdb', 'Use MDB for Content Rating', 'Fetch content rating from <b>MDB</b>.'),
+            ('mdb_commonsense', 'Use MDB CommonSense', 'Use <b>Common Sense Media</b> rating from MDB (string).'),
+            ('mdb_commonsense0', 'Use MDB CommonSense (0)', 'Use <b>Common Sense Media</b> rating from MDB (number).'),
+            ('omdb', 'Use OMDb for Content Rating', 'Fetch rating from <b>OMDb</b> API (IMDb-backed).'),
+            ('mal', 'Use MyAnimeList', 'Fetch rating from <b>MyAnimeList</b>.'),
+            ('lock', 'Lock Content Rating Field', 'Prevent content rating from being modified after this operation.'),
+            ('unlock', 'Unlock Content Rating Field', 'Allow future updates to the content rating field.'),
+            ('remove', 'Remove Content Rating and Lock Field', 'Clear content rating and lock the field.'),
+            ('reset', 'Remove Content Rating and Unlock Field', 'Clear content rating and unlock the field.')
+            ] %}
+
+            {% for source, label, tooltip in rating_sources %}
+            <div class="col-md-6 mb-2">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                  id="{{ library.id }}-attribute_mass_content_rating_update_{{ source }}"
+                  name="{{ library.id }}-attribute_mass_content_rating_update_{{ source }}" value="true" {% if
+                  data['libraries'][library.id ~ '-attribute_mass_content_rating_update_' ~ source
+                  ]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_mass_content_rating_update_{{ source }}"
+                  value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_mass_content_rating_update_{{ source }}"
+                  data-label="{{ label }}">
+                  {{ label }}
+                  <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+                    <i class="bi bi-info-circle-fill"></i>
+                  </span>
+                </label>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="row mb-3">
+            <div class="col-12">
+              <label class="form-label">
+                Custom Content Rating String
+                <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                  title="Optional: A single custom rating string to append (e.g. 'NR'). Will be added to the list of selected sources.">
+                  <i class="bi bi-info-circle-fill"></i>
+                </span>
+              </label>
+              <!-- TEXT input field with a distinct name -->
+              <input type="text" class="form-control" id="{{ library.id }}-mass_content_rating_update_custom_input"
+                name="{{ library.id }}-attribute_mass_content_rating_update_custom_string"
+                value="{{ data['libraries'].get(library.id ~ '-attribute_mass_content_rating_update_custom_string', '') }}"
+                placeholder="Enter custom content rating string (e.g. NR)">
+            </div>
+          </div>
+          <label class="form-label">Selected Content Rating Sources (Drag to Reorder):</label>
+          <ul class="list-group sortable-list" id="{{ library.id }}-mass_content_rating_update_sortable">
+            <!-- Dynamically populated with JS -->
+          </ul>
+          <input type="hidden" name="{{ library.id }}-attribute_mass_content_rating_update_custom"
+            id="{{ library.id }}-mass_content_rating_update_order"
+            value='{{ data["libraries"].get(library.id ~ "-attribute_mass_content_rating_update_custom", "[]") }}'>
         </div>
 
         <!-- mass_imdb_parental_labels Dropdown -->

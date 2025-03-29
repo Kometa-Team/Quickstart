@@ -535,7 +535,7 @@ div#loading {
 /* Sortable Item Styling */
 .sortable-item {
     cursor: move;
-    background-color: #051b11;
+    background-color: #212529;
     color: #f8f9fa;
     border: 1px solid #444;
     margin-bottom: 5px;
