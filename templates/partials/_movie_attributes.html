@@ -410,6 +410,77 @@
             value='{{ data["libraries"].get(library.id ~ "-attribute_mass_content_rating_update_custom", "[]") }}'>
         </div>
 
+        <!-- mass_original_title_update -->
+        <div class="border rounded p-3 mb-2">
+          <label class="form-check-label" for="{{ library.id }}-attribute_mass_original_title_update_header">
+            <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/operations/#mass-original-title-update"
+              target="_blank" rel="noopener noreferrer">Mass Original Title Update</a>
+            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+              title="Updates the original title of each item using selected sources. Sources are applied in the order listed.">
+              <i class="bi bi-info-circle-fill"></i>
+            </span>
+          </label>
+
+          <div class="row mb-3">
+            {% set original_title_sources = [
+            ('anidb_official', 'Use AniDB Official', 'Fetch the official <b>AniDB title</b> for anime.'),
+            ('anidb', 'Use AniDB (User Preferred)', 'Use the <b>preferred AniDB title</b> as set by the user.'),
+            ('mal', 'Use MyAnimeList', 'Fetch the title from <b>MyAnimeList</b>.'),
+            ('mal_english', 'Use MyAnimeList English', 'Use the <b>English title</b> from MAL.'),
+            ('mal_japanese', 'Use MyAnimeList Japanese', 'Use the <b>Japanese title</b> from MAL.'),
+            ('lock', 'Lock Original Title Field', 'Prevent original title from being modified after this operation.'),
+            ('unlock', 'Unlock Original Title Field', 'Allow future updates to the original title field.'),
+            ('remove', 'Remove Original Title and Lock Field', 'Clear original title and lock the field.'),
+            ('reset', 'Remove Original Title and Unlock Field', 'Clear original title and unlock the field.')
+            ] %}
+
+            {% for source, label, tooltip in original_title_sources %}
+            <div class="col-md-6 mb-2">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                  id="{{ library.id }}-attribute_mass_original_title_update_{{ source }}"
+                  name="{{ library.id }}-attribute_mass_original_title_update_{{ source }}" value="true" {% if
+                  data['libraries'][library.id ~ '-attribute_mass_original_title_update_' ~ source
+                  ]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_mass_original_title_update_{{ source }}"
+                  value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_mass_original_title_update_{{ source }}"
+                  data-label="{{ label }}">
+                  {{ label }}
+                  <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+                    <i class="bi bi-info-circle-fill"></i>
+                  </span>
+                </label>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-12">
+              <label class="form-label">
+                Custom Original Title String
+                <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                  title="Optional: A single custom original title string to append (e.g. 'Unknown'). Will be added to the list of selected sources.">
+                  <i class="bi bi-info-circle-fill"></i>
+                </span>
+              </label>
+              <input type="text" class="form-control" id="{{ library.id }}-mass_original_title_update_custom_input"
+                name="{{ library.id }}-attribute_mass_original_title_update_custom_string"
+                value="{{ data['libraries'].get(library.id ~ '-attribute_mass_original_title_update_custom_string', '') }}"
+                placeholder="Enter custom original title string (e.g. Unknown)">
+            </div>
+          </div>
+
+          <label class="form-label">Selected Original Title Sources (Drag to Reorder):</label>
+          <ul class="list-group sortable-list" id="{{ library.id }}-mass_original_title_update_sortable">
+            <!-- Dynamically populated with JS -->
+          </ul>
+          <input type="hidden" name="{{ library.id }}-attribute_mass_original_title_update_custom"
+            id="{{ library.id }}-mass_original_title_update_order"
+            value='{{ data["libraries"].get(library.id ~ "-attribute_mass_original_title_update_custom", "[]") }}'>
+        </div>
+
         <!-- mass_imdb_parental_labels Dropdown -->
         <div class="col-md-6">
           <div class="input-group mb-2">

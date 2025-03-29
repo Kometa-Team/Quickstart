@@ -199,6 +199,42 @@ def build_libraries_section(
             mcru_list.fa.set_block_style()  # ensures YAML list style
             operations["mass_content_rating_update"] = mcru_list
 
+        # Begin: Mass Original Title Update Section
+        mass_original_title_update = []
+
+        # Handle the toggle order list
+        original_title_order_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_custom"
+        original_title_order_value = attr_group.get(original_title_order_key)
+
+        if original_title_order_value:
+            try:
+                parsed = json.loads(original_title_order_value)
+                if isinstance(parsed, list):
+                    for item in parsed:
+                        if isinstance(item, str):
+                            mass_original_title_update.append(item)
+                        elif isinstance(item, list):  # nested list — flatten it
+                            mass_original_title_update.extend(item)
+            except Exception as e:
+                print(f"[DEBUG] Skipping invalid JSON in original title order: {original_title_order_value} — {e}")
+
+        # Handle the optional custom string (e.g., "Unknown")
+        original_title_custom_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_custom_string"
+        original_title_custom_value = attr_group.get(original_title_custom_key)
+
+        if original_title_custom_value:
+            try:
+                stripped = original_title_custom_value.strip()
+                if stripped:
+                    mass_original_title_update.append(stripped)
+            except Exception as e:
+                print(f"[DEBUG] Skipping invalid original title custom string: {original_title_custom_value} — {e}")
+
+        if mass_original_title_update:
+            motu_list = CommentedSeq(mass_original_title_update)
+            motu_list.fa.set_block_style()
+            operations["mass_original_title_update"] = motu_list
+
         for field in operations_fields:
             attr_key = f"{library_type}-library_{lib_id}-attribute_{field}"
             value = attr_group.get(attr_key, None)
