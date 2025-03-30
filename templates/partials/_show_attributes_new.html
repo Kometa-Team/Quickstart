@@ -1,8 +1,8 @@
 {% import 'partials/_macros.html' as macros %}
 
-<!-- Render all dynamic sections for movie libraries -->
+<!-- Render all dynamic sections for show libraries -->
 {% for section in section_config.sections %}
-  {% if 'movie' in section.media_types %}
+  {% if 'show' in section.media_types %}
     {% if section.type == 'mass_update' %}
       {{ macros.mass_update_section(
         library,

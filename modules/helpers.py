@@ -1,4 +1,5 @@
 import hashlib
+import json
 import os
 import re
 import sys
@@ -465,3 +466,9 @@ def update_env_variable(key, value):
                 file.write(line)
         if not key_found:
             file.write(f"{key}={value}\n")
+
+
+def load_quickstart_sections():
+    json_path = os.path.join("static", "json", "quickstart_sections.json")
+    with open(json_path, "r", encoding="utf-8") as f:
+        return json.load(f)

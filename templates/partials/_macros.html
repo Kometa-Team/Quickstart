@@ -1,0 +1,121 @@
+{% macro mass_update_section(library, data, version_info, prefix, title, wiki_url, description, sources,
+has_custom_string=False) %}
+<div class="border rounded p-3 mb-2">
+    <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
+        <a href="{{ wiki_url }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            title="{{ description }}">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+
+    <div class="row mb-3">
+        {% for source, label, tooltip in sources %}
+        <div class="col-md-6 mb-2">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox"
+                    id="{{ library.id }}-attribute_{{ prefix }}_{{ source }}"
+                    name="{{ library.id }}-attribute_{{ prefix }}_{{ source }}" value="true" {% if
+                    data['libraries'][library.id ~ '-attribute_' ~ prefix ~ '_' ~ source]|string|lower=='true'
+                    %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_{{ source }}" value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_{{ source }}"
+                    data-label="{{ label }}">
+                    {{ label }}
+                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </label>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if has_custom_string %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <label class="form-label">
+                Custom {{ title }} String
+                <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="Optional: A single custom string to append.">
+                    <i class="bi bi-info-circle-fill"></i>
+                </span>
+            </label>
+            <input type="text" class="form-control" id="{{ library.id }}-{{ prefix }}_custom_input"
+                name="{{ library.id }}-attribute_{{ prefix }}_custom_string"
+                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom_string', '') }}"
+                placeholder="Enter custom string (e.g. NR)">
+        </div>
+    </div>
+    {% endif %}
+
+    <label class="form-label">Selected Sources (Drag to Reorder):</label>
+    <ul class="list-group sortable-list" id="{{ library.id }}-{{ prefix }}_sortable"></ul>
+    <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_custom" id="{{ library.id }}-{{ prefix }}_order"
+        value='{{ data["libraries"].get(library.id ~ "-attribute_" ~ prefix ~ "_custom", "[]") }}'>
+</div>
+{% endmacro %}
+
+{% macro boolean_toggle_section(library, data, prefix, title, description, wiki) %}
+<div class="border rounded p-3 mb-2">
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="{{ library.id }}-{{ prefix }}"
+            name="{{ library.id }}-{{ prefix }}" value="true" {% if data.libraries[library.id ~ '-' ~
+            prefix]|string|lower=='true' %}checked{% endif %}>
+        <input type="hidden" name="{{ library.id }}-{{ prefix }}" value="false">
+        <label class="form-check-label" for="{{ library.id }}-{{ prefix }}">
+            <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
+            <span class="text-info ms-2" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
+                <i class="bi bi-info-circle-fill"></i>
+            </span>
+        </label>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro toggle_group_section(library, data, prefix, title, description, wiki, toggles) %}
+<div class="border rounded p-3 mb-2">
+    <label class="form-check-label">
+        <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+    <div class="row mt-2">
+        {% for toggle_id, label, tooltip in toggles %}
+        <div class="col-md-6 mb-2">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="{{ library.id }}-{{ toggle_id }}"
+                    name="{{ library.id }}-{{ toggle_id }}" value="true" {% if data['libraries'][library.id ~ '-' ~
+                    toggle_id]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-{{ toggle_id }}" value="false">
+                <label class="form-check-label" for="{{ library.id }}-{{ toggle_id }}">
+                    {{ label }}
+                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </label>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endmacro %}
+
+{% macro select_section(library, data, prefix, title, description, wiki, options) %}
+<div class="border rounded p-3 mb-2">
+    <label class="form-label">
+        <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
+        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+    <select class="form-select" name="{{ library.id }}-{{ prefix }}" id="{{ library.id }}-{{ prefix }}">
+        {% for value, label in options %}
+        <option value="{{ value }}" {% if data['libraries'][library.id ~ '-' ~ prefix]==value %}selected{% endif %}>
+            {{ label }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+{% endmacro %}

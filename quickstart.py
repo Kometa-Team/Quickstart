@@ -654,6 +654,7 @@ def step(name):
         )
 
     else:
+        section_config = helpers.load_quickstart_sections()
         return render_template(
             name + ".html",
             page_info=page_info,
@@ -661,6 +662,7 @@ def step(name):
             plex_data=plex_data,
             movie_libraries=movie_libraries,
             show_libraries=show_libraries,
+            section_config=section_config,
             template_list=file_list,
             available_configs=available_configs,
         )

@@ -1,0 +1,98 @@
+{
+  "sections": [
+    {
+      "prefix": "mass_genre_update",
+      "type": "mass_update",
+      "media_types": ["movie", "show"],
+      "title": "Mass Genre Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-genre-update",
+      "description": "Updates every item's genres using selected sources or strings.",
+      "has_custom_string": true,
+      "sources": [
+        ["tmdb", "Use TMDb for Genres", "Fetch genres from <b>TMDb</b>. Recommended for most media types."],
+        ["tvdb", "Use TVDb for Genres", "Fetch genres from <b>TVDb</b>. Alternative for TV content."],
+        ["imdb", "Use IMDb for Genres", "Fetch genres directly from <b>IMDb</b>."],
+        ["omdb", "Use IMDb through OMDb for Genres", "Fetch genres via <b>OMDb API</b> (IMDb-backed)."],
+        ["anidb", "Use AniDB Main Tags for Genres", "Use only <b>Main Tags</b> from AniDB."],
+        ["anidb_3_0", "AniDB Main Tags & 3★+", "AniDB Main Tags and all <b>3-star and higher</b> tags."],
+        ["anidb_2_5", "AniDB Main Tags & 2.5★+", "AniDB Main Tags and all <b>2.5-star and higher</b> tags."],
+        ["anidb_2_0", "AniDB Main Tags & 2★+", "AniDB Main Tags and all <b>2-star and higher</b> tags."],
+        ["anidb_1_5", "AniDB Main Tags & 1.5★+", "AniDB Main Tags and all <b>1.5-star and higher</b> tags."],
+        ["anidb_1_0", "AniDB Main Tags & 1★+", "AniDB Main Tags and all <b>1-star and higher</b> tags."],
+        ["anidb_0_5", "AniDB Main Tags & 0.5★+", "AniDB Main Tags and all <b>0.5-star and higher</b> tags."],
+        ["mal", "Use MyAnimeList for Genres", "Fetch genres from <b>MyAnimeList</b> (MAL)."],
+        ["lock", "Lock all Genre Field", "Prevent genre field from being modified after this operation."],
+        ["unlock", "Unlock all Genre Field", "Allow genre field to be modified after this operation."],
+        ["remove", "Remove all Genres and Lock all Field", "Clear all genres and <b>lock</b> the field."],
+        ["reset", "Remove all Genres and Unlock all Field", "Clear all genres and <b>unlock</b> the field."]
+      ]
+    },
+    {
+      "prefix": "mass_content_rating_update",
+      "type": "mass_update",
+      "media_types": ["movie", "show"],
+      "title": "Mass Content Rating Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-content-rating-update",
+      "description": "Updates the content rating using selected sources.",
+      "has_custom_string": true,
+      "sources": [
+        ["mdb", "Use MDB for Content Rating", "Fetch content rating from <b>MDB</b>."],
+        ["mdb_commonsense", "Use MDB CommonSense", "Use <b>Common Sense Media</b> rating from MDB (string)."],
+        ["mdb_commonsense0", "Use MDB CommonSense (0)", "Use <b>Common Sense Media</b> rating from MDB (number)."],
+        ["omdb", "Use OMDb for Content Rating", "Fetch rating from <b>OMDb</b> API (IMDb-backed)."],
+        ["mal", "Use MyAnimeList", "Fetch rating from <b>MyAnimeList</b>."],
+        ["lock", "Lock Content Rating Field", "Prevent content rating from being modified after this operation."],
+        ["unlock", "Unlock Content Rating Field", "Allow future updates to the content rating field."],
+        ["remove", "Remove Content Rating and Lock Field", "Clear content rating and lock the field."],
+        ["reset", "Remove Content Rating and Unlock Field", "Clear content rating and unlock the field."]
+      ]
+    },
+    {
+      "prefix": "mass_original_title_update",
+      "type": "mass_update",
+      "media_types": ["movie", "show"],
+      "title": "Mass Original Title Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-original-title-update",
+      "description": "Updates the original title using selected sources.",
+      "has_custom_string": true,
+      "sources": [
+        ["anidb_official", "Use AniDB Official", "Fetch the official <b>AniDB title</b> for anime."],
+        ["anidb", "Use AniDB (User Preferred)", "Use the <b>preferred AniDB title</b> as set by the user."],
+        ["mal", "Use MyAnimeList", "Fetch the title from <b>MyAnimeList</b>."],
+        ["mal_english", "Use MyAnimeList English", "Use the <b>English title</b> from MAL."],
+        ["mal_japanese", "Use MyAnimeList Japanese", "Use the <b>Japanese title</b> from MAL."],
+        ["lock", "Lock Original Title Field", "Prevent original title from being modified after this operation."],
+        ["unlock", "Unlock Original Title Field", "Allow future updates to the original title field."],
+        ["remove", "Remove Original Title and Lock Field", "Clear original title and lock the field."],
+        ["reset", "Remove Original Title and Unlock Field", "Clear original title and unlock the field."]
+      ]
+    },
+    {
+      "prefix": "delete_collections",
+      "type": "toggle_group",
+      "media_types": ["movie", "show"],
+      "title": "Delete Collections",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#delete-collections",
+      "description": "If enabled, deletes all collections created by previous runs that are no longer in the source.",
+      "toggles": [
+        ["delete_collections_managed", "Managed Collections", "When enabled: Only collections <strong>with the <code>Kometa</code> label</strong> (Managed) will be deleted."],
+        ["delete_collections_configured", "Configured Collections", "When enabled: Only collections <strong>defined in the current config file</strong> will be eligible for deletion."],
+        ["ignore_empty_smart_collections", "Ignore Empty Smart Collections", "When enabled: Excludes empty smart collections from being affected by the <code>less</code> item count check. This allows retaining things like smart collections that show movies without subtitles or the like."]
+      ]
+    },
+    {
+      "prefix": "mass_collection_mode",
+      "type": "select",
+      "media_types": ["movie", "show"],
+      "title": "Mass Collection Mode",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-collection-mode",
+      "description": "Controls the collection mode behavior for all collections.",
+      "options": [
+        ["default", "Default"],
+        ["hide", "Hide"],
+        ["hide_items", "Hide Items"],
+        ["show_items", "Show Items"]
+      ]
+    }
+  ]
+}
