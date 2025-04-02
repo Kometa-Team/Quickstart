@@ -360,6 +360,414 @@
       ]
     },
     {
+      "prefix": "mass_studio_update",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Mass Studio Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-studio-update",
+      "description": "Updates the studio tag using selected sources.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom studio string (e.g. Indie)",
+      "sources": [
+        [
+          "tmdb",
+          "Use TMDb",
+          "Fetch studio from <b>TMDb</b>."
+        ],
+        [
+          "tvdb",
+          "Use TVDb",
+          "Fetch studio from <b>TVDb</b>."
+        ],
+        [
+          "imdb",
+          "Use IMDb",
+          "Fetch studio from <b>IMDb</b>."
+        ],
+        [
+          "omdb",
+          "Use OMDb",
+          "Fetch studio from <b>OMDb</b> (IMDb API)."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList",
+          "Fetch studio from <b>MyAnimeList</b>."
+        ],
+        [
+          "anidb",
+          "Use AniDB",
+          "Fetch studio from <b>AniDB</b>."
+        ],
+        [
+          "lock",
+          "Lock Studio Field",
+          "Prevent the studio field from being modified after this operation."
+        ],
+        [
+          "unlock",
+          "Unlock Studio Field",
+          "Allow future updates to the studio field."
+        ],
+        [
+          "remove",
+          "Remove Studio and Lock Field",
+          "Clear studio value and lock the field."
+        ],
+        [
+          "reset",
+          "Remove Studio and Unlock Field",
+          "Clear studio value and unlock the field."
+        ]
+      ]
+    },
+    {
+      "prefix": "mass_originally_available_update",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Mass Originally Available Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-originally-available-update",
+      "description": "Updates the originally available date using selected sources. The date is typically the release or air date for a movie or show.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom originally available date (e.g. 2020-01-01)",
+      "sources": [
+        [
+          "tmdb",
+          "Use TMDb",
+          "Fetch the originally available date from <b>TMDb</b>."
+        ],
+        [
+          "tvdb",
+          "Use TVDb",
+          "Fetch the originally available date from <b>TVDb</b>."
+        ],
+        [
+          "imdb",
+          "Use IMDb",
+          "Fetch the originally available date from <b>IMDb</b>."
+        ],
+        [
+          "omdb",
+          "Use OMDb",
+          "Fetch the originally available date from <b>OMDb</b> (IMDb API)."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList",
+          "Fetch the originally available date from <b>MyAnimeList</b>."
+        ],
+        [
+          "anidb",
+          "Use AniDB",
+          "Fetch the originally available date from <b>AniDB</b>."
+        ],
+        [
+          "lock",
+          "Lock Date Field",
+          "Prevent the originally available date from being modified after this operation."
+        ],
+        [
+          "unlock",
+          "Unlock Date Field",
+          "Allow future updates to the originally available date field."
+        ],
+        [
+          "remove",
+          "Remove Date and Lock Field",
+          "Clear the originally available date and lock the field."
+        ],
+        [
+          "reset",
+          "Remove Date and Unlock Field",
+          "Clear the originally available date and unlock the field."
+        ]
+      ]
+    },
+    {
+      "prefix": "mass_added_at_update",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Mass Added At Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-added-at-update",
+      "description": "Updates the <code>added_at</code> field of items in your library using selected sources. This field controls where the item appears in Recently Added views.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom added at date (e.g. 2020-01-01)",
+      "sources": [
+        [
+          "originallyAvailable",
+          "Use Originally Available Date",
+          "Use the <b>Originally Available</b> date as the Added At date."
+        ],
+        [
+          "added",
+          "Use Date Added to Plex",
+          "Use the date the item was <b>actually added to Plex</b>."
+        ],
+        [
+          "anidb",
+          "Use AniDB Air Date",
+          "Use the <b>air date</b> from AniDB."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList Air Date",
+          "Use the <b>air date</b> from MyAnimeList (MAL)."
+        ],
+        [
+          "lock",
+          "Lock Added At Field",
+          "Prevent future changes to the <code>added_at</code> field."
+        ],
+        [
+          "unlock",
+          "Unlock Added At Field",
+          "Allow future changes to the <code>added_at</code> field."
+        ],
+        [
+          "remove",
+          "Remove Added At and Lock Field",
+          "Clear the added at date and lock the field."
+        ],
+        [
+          "reset",
+          "Remove Added At and Unlock Field",
+          "Clear the added at date and unlock the field."
+        ]
+      ]
+    },
+    {
+      "prefix": "mass_audience_rating_update",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Mass Audience Rating Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
+      "description": "Updates the audience rating of all items in the library using the selected source(s).",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom rating (e.g. 7.5)",
+"sources": [
+  ["anidb_average", "Use AniDB Average", "Use <b>AniDB average rating</b>."],
+  ["anidb_rating", "Use AniDB Rating", "Use <b>AniDB rating</b>."],
+  ["anidb_score", "Use AniDB Review Score", "Use <b>AniDB review score</b>."],
+  ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
+  ["mal", "Use MyAnimeList Score", "Use <b>MyAnimeList score</b>."],
+  ["mdb_average", "Use MDBList Average Score", "Use <b>average score</b> from MDBList."],
+  ["mdb_imdb", "Use IMDb via MDBList", "Use <b>IMDb rating</b> via MDBList."],
+  ["mdb_letterboxd", "Use Letterboxd via MDBList", "Use <b>Letterboxd rating</b> via MDBList."],
+  ["mdb_metacritic", "Use Metacritic via MDBList", "Use <b>Metacritic critic rating</b> via MDBList."],
+  ["mdb_metacriticuser", "Use Metacritic User via MDBList", "Use <b>Metacritic user score</b> via MDBList."],
+  ["mdb_myanimelist", "Use MyAnimeList via MDBList", "Use <b>MAL score</b> via MDBList."],
+  ["mdb_tmdb", "Use TMDb via MDBList", "Use <b>TMDb rating</b> via MDBList."],
+  ["mdb_tomatoes", "Use Rotten Tomatoes via MDBList", "Use <b>Rotten Tomatoes rating</b> via MDBList."],
+  ["mdb_tomatoesaudience", "Use RT Audience via MDBList", "Use <b>Rotten Tomatoes audience rating</b> via MDBList."],
+  ["mdb_trakt", "Use Trakt via MDBList", "Use <b>Trakt score</b> via MDBList."],
+  ["mdb", "Use MDBList Score", "Use the <b>combined MDBList score</b>."],
+  ["omdb_metascore", "Use Metacritic Metascore via OMDb", "Use <b>Metacritic metascore</b> from OMDb."],
+  ["omdb_tomatoes", "Use RT via OMDb", "Use <b>Rotten Tomatoes rating</b> from OMDb."],
+  ["omdb", "Use IMDb via OMDb", "Use <b>IMDb rating</b> from OMDb."],
+  ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
+  ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
+  ["plex_tomatoes", "Use RT via Plex", "Use <b>Rotten Tomatoes rating</b> from Plex."],
+  ["plex_tomatoesaudience", "Use RT Audience via Plex", "Use <b>RT audience score</b> from Plex."],
+  ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
+  ["trakt_user", "Use Trakt User Rating", "Use your <b>personal Trakt user rating</b>."],
+  ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
+  ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
+  ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
+  ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
+  ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
+]
+    },
+    {
+      "prefix": "mass_critic_rating_update",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Mass Critic Rating Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
+      "description": "Updates the <b>critic rating</b> of all items in the library using the selected source(s). Accepts any numeric value between <code>0.0</code> and <code>10.0</code> as a custom rating.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom rating (e.g. 8.5)",
+"sources": [
+  ["anidb_average", "Use AniDB Average", "Use <b>AniDB average rating</b>."],
+  ["anidb_rating", "Use AniDB Rating", "Use <b>AniDB rating</b>."],
+  ["anidb_score", "Use AniDB Review Score", "Use <b>AniDB review score</b>."],
+  ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
+  ["mal", "Use MyAnimeList Score", "Use <b>MyAnimeList score</b>."],
+  ["mdb_average", "Use MDBList Average Score", "Use <b>average score</b> from MDBList."],
+  ["mdb_imdb", "Use IMDb via MDBList", "Use <b>IMDb rating</b> via MDBList."],
+  ["mdb_letterboxd", "Use Letterboxd via MDBList", "Use <b>Letterboxd rating</b> via MDBList."],
+  ["mdb_metacritic", "Use Metacritic via MDBList", "Use <b>Metacritic critic rating</b> via MDBList."],
+  ["mdb_metacriticuser", "Use Metacritic User via MDBList", "Use <b>Metacritic user score</b> via MDBList."],
+  ["mdb_myanimelist", "Use MyAnimeList via MDBList", "Use <b>MAL score</b> via MDBList."],
+  ["mdb_tmdb", "Use TMDb via MDBList", "Use <b>TMDb rating</b> via MDBList."],
+  ["mdb_tomatoes", "Use Rotten Tomatoes via MDBList", "Use <b>Rotten Tomatoes rating</b> via MDBList."],
+  ["mdb_tomatoesaudience", "Use RT Audience via MDBList", "Use <b>Rotten Tomatoes audience rating</b> via MDBList."],
+  ["mdb_trakt", "Use Trakt via MDBList", "Use <b>Trakt score</b> via MDBList."],
+  ["mdb", "Use MDBList Score", "Use the <b>combined MDBList score</b>."],
+  ["omdb_metascore", "Use Metacritic Metascore via OMDb", "Use <b>Metacritic metascore</b> from OMDb."],
+  ["omdb_tomatoes", "Use RT via OMDb", "Use <b>Rotten Tomatoes rating</b> from OMDb."],
+  ["omdb", "Use IMDb via OMDb", "Use <b>IMDb rating</b> from OMDb."],
+  ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
+  ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
+  ["plex_tomatoes", "Use RT via Plex", "Use <b>Rotten Tomatoes rating</b> from Plex."],
+  ["plex_tomatoesaudience", "Use RT Audience via Plex", "Use <b>RT audience score</b> from Plex."],
+  ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
+  ["trakt_user", "Use Trakt User Rating", "Use your <b>personal Trakt user rating</b>."],
+  ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
+  ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
+  ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
+  ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
+  ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
+]
+    },
+    {
+      "prefix": "mass_user_rating_update",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": ["movie", "show"],
+      "title": "Mass User Rating Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
+      "description": "Updates the user rating of all items in the library using the selected source(s).",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom rating (e.g. 8.5)",
+      "sources": [
+        ["anidb_average", "Use AniDB Average", "Use <b>AniDB average rating</b>."],
+        ["anidb_rating", "Use AniDB Rating", "Use <b>AniDB rating</b>."],
+        ["anidb_score", "Use AniDB Review Score", "Use <b>AniDB review score</b>."],
+        ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
+        ["mal", "Use MyAnimeList Score", "Use <b>MyAnimeList score</b>."],
+        ["mdb_average", "Use MDBList Average Score", "Use <b>average score</b> from MDBList."],
+        ["mdb_imdb", "Use IMDb via MDBList", "Use <b>IMDb rating</b> via MDBList."],
+        ["mdb_letterboxd", "Use Letterboxd via MDBList", "Use <b>Letterboxd rating</b> via MDBList."],
+        ["mdb_metacritic", "Use Metacritic via MDBList", "Use <b>Metacritic critic rating</b> via MDBList."],
+        ["mdb_metacriticuser", "Use Metacritic User via MDBList", "Use <b>Metacritic user score</b> via MDBList."],
+        ["mdb_myanimelist", "Use MyAnimeList via MDBList", "Use <b>MAL score</b> via MDBList."],
+        ["mdb_tmdb", "Use TMDb via MDBList", "Use <b>TMDb rating</b> via MDBList."],
+        ["mdb_tomatoes", "Use Rotten Tomatoes via MDBList", "Use <b>Rotten Tomatoes rating</b> via MDBList."],
+        ["mdb_tomatoesaudience", "Use RT Audience via MDBList", "Use <b>Rotten Tomatoes audience rating</b> via MDBList."],
+        ["mdb_trakt", "Use Trakt via MDBList", "Use <b>Trakt score</b> via MDBList."],
+        ["mdb", "Use MDBList Score", "Use the <b>combined MDBList score</b>."],
+        ["omdb_metascore", "Use Metacritic Metascore via OMDb", "Use <b>Metacritic metascore</b> from OMDb."],
+        ["omdb_tomatoes", "Use RT via OMDb", "Use <b>Rotten Tomatoes rating</b> from OMDb."],
+        ["omdb", "Use IMDb via OMDb", "Use <b>IMDb rating</b> from OMDb."],
+        ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
+        ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
+        ["plex_tomatoes", "Use RT via Plex", "Use <b>Rotten Tomatoes rating</b> from Plex."],
+        ["plex_tomatoesaudience", "Use RT Audience via Plex", "Use <b>RT audience score</b> from Plex."],
+        ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
+        ["trakt_user", "Use Trakt User Rating", "Use your <b>personal Trakt user rating</b>."],
+        ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
+        ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
+        ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
+        ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
+        ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
+      ]
+    },
+    {
+      "prefix": "mass_episode_audience_rating_update",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": ["show"],
+      "title": "Mass Episode Audience Rating Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
+      "description": "Updates the audience rating of all episodes in the library using the selected source(s).",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom rating (e.g. 8.2)",
+      "sources": [
+        ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
+        ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
+        ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
+        ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
+        ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
+        ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
+        ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
+        ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
+        ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
+      ]
+    },
+    {
+      "prefix": "mass_episode_critic_rating_update",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": ["show"],
+      "title": "Mass Episode Critic Rating Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
+      "description": "Updates the critic rating of all episodes in the library using the selected source(s).",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom rating (e.g. 7.5)",
+      "sources": [
+        ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
+        ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
+        ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
+        ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
+        ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
+        ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
+        ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
+        ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
+        ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
+      ]
+    },
+    {
+      "prefix": "mass_episode_user_rating_update",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": ["show"],
+      "title": "Mass Episode User Rating Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
+      "description": "Updates the user rating of all episodes in the library using the selected source(s).",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom rating (e.g. 9.2)",
+      "sources": [
+        ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
+        ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
+        ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
+        ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
+        ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
+        ["trakt_user", "Use Trakt User's Personal Rating", "Use <b>your personal Trakt rating</b>."],
+        ["lock", "Lock Rating Field", "Prevent user rating from being modified."],
+        ["unlock", "Unlock Rating Field", "Allow user rating to be updated."],
+        ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the user rating field."],
+        ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the user rating field."]
+      ]
+    },
+    {
       "prefix": "mass_imdb_parental_labels",
       "type": "select",
       "accordion": "library",
