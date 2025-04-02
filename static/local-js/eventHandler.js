@@ -167,7 +167,7 @@ const EventHandler = {
       })
 
       // Automatically Update Preview When Overlay Toggles or Content Rating Changes
-      library.querySelectorAll('.accordion input[type="checkbox"], .accordion input[type="radio"]').forEach(input => {
+      library.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"], #${libraryId}-overlays input[type="radio"]`).forEach(input => {
         input.addEventListener('change', () => {
           console.log(`[DEBUG] Overlay or Rating Changed: ${input.id} - Checked/Selected: ${input.checked || input.value}`)
           ImageHandler.generatePreview(libraryId, isMovie)

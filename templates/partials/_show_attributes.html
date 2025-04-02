@@ -119,9 +119,12 @@
         section.sources,
         section.has_custom_string,
         section.custom_string_placeholder,
+        section.custom_string_validation,
         tooltip_variant=section.tooltip_variant,
         container_class=section.container_class
         ) }}
+        {% elif section.prefix == 'metadata_backup' %}
+        {{ macros.metadata_backup_section(library, data, section) }}
         {% elif section.type == 'boolean_toggle' %}
         {{ macros.boolean_toggle_section(
         library,
@@ -146,20 +149,35 @@
         container_class=section.container_class
         ) }}
 
-          {% elif section.type == 'toggle_with_number' %}
-            {{ macros.toggle_with_number_section(
-              library,
-              data,
-              section.prefix,
-              section.title,
-              section.description,
-              section.wiki,
-              section.toggles,
-              section.number_input,
-              tooltip_variant=section.tooltip_variant,
-              container_class=section.container_class
-            ) }}
-    {% elif section.type == 'select' %}
+        {% elif section.type == 'toggle_with_number' %}
+        {{ macros.toggle_with_number_section(
+        library,
+        data,
+        section.prefix,
+        section.title,
+        section.description,
+        section.wiki,
+        section.toggles,
+        section.number_input,
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class
+        ) }}
+
+        {% elif section.type == "toggle_with_select" %}
+        {{ macros.toggle_with_select_section(
+        library,
+        data,
+        section.prefix,
+        section.title,
+        section.wiki,
+        section.description,
+        section.toggles,
+        section.select_input,
+        section.tooltip_variant or "info",
+        section.container_class or "border rounded p-3 mb-2"
+        ) }}
+
+        {% elif section.type == 'select' %}
         {{ macros.select_section(
         library,
         data,

@@ -1,4 +1,4 @@
-/* global showToast , localStorage, bootstrap */
+/* global showToast , localStorage, bootstrap, updateFormData, refreshOverlayPreviewImage */
 
 const ImageHandler = {
   loadAvailableImages: function (libraryId, isMovie) {
@@ -391,3 +391,21 @@ const ImageHandler = {
       })
   }
 }
+
+// ✅ Global listener to refresh image preview only if toggle is in preview overlay section
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.form-check-input').forEach((input) => {
+    input.addEventListener('change', (event) => {
+      const target = event.target
+
+      // Always update the form model
+      updateFormData(target)
+
+      // ✅ Look for the overlay section specifically (e.g., mov-library_movies-overlays)
+      const isInOverlayAccordion = target.closest('[id$="-overlays"]')
+      if (isInOverlayAccordion) {
+        refreshOverlayPreviewImage(target)
+      }
+    })
+  })
+})

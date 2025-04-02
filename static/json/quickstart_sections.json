@@ -442,6 +442,7 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom originally available date (e.g. 2020-01-01)",
+      "custom_string_validation": "date",
       "sources": [
         [
           "tmdb",
@@ -510,6 +511,7 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom added at date (e.g. 2020-01-01)",
+      "custom_string_validation": "date",
       "sources": [
         [
           "originallyAvailable",
@@ -568,6 +570,7 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom rating (e.g. 7.5)",
+      "custom_string_validation": "rating",
 "sources": [
   ["anidb_average", "Use AniDB Average", "Use <b>AniDB average rating</b>."],
   ["anidb_rating", "Use AniDB Rating", "Use <b>AniDB rating</b>."],
@@ -616,6 +619,7 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom rating (e.g. 8.5)",
+      "custom_string_validation": "rating",
 "sources": [
   ["anidb_average", "Use AniDB Average", "Use <b>AniDB average rating</b>."],
   ["anidb_rating", "Use AniDB Rating", "Use <b>AniDB rating</b>."],
@@ -661,6 +665,7 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom rating (e.g. 8.5)",
+      "custom_string_validation": "rating",
       "sources": [
         ["anidb_average", "Use AniDB Average", "Use <b>AniDB average rating</b>."],
         ["anidb_rating", "Use AniDB Rating", "Use <b>AniDB rating</b>."],
@@ -706,6 +711,7 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom rating (e.g. 8.2)",
+      "custom_string_validation": "rating",
       "sources": [
         ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
         ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
@@ -730,6 +736,7 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom rating (e.g. 7.5)",
+      "custom_string_validation": "rating",
       "sources": [
         ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
         ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
@@ -754,6 +761,7 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom rating (e.g. 9.2)",
+      "custom_string_validation": "rating",
       "sources": [
         ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
         ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
@@ -785,7 +793,7 @@
         },
         {
           "key": "mass_poster_episodes",
-          "label": "Update Season Posters",
+          "label": "Update Episode Posters",
           "tooltip": "Update episode posters while updating shows."
         },
         {
@@ -807,8 +815,8 @@
           ["", "None"],
           ["tmdb", "TMDb"],
           ["plex", "Plex"],
-          ["lock", "Locks the poster field after the poster is set."],
-          ["unlock", "Unlocks the poster field to allow future modifications."]        ]
+          ["lock", "Lock Poster Field"],
+          ["unlock", "Unlock Poster Field"]        ]
       }
     },
     {
@@ -956,27 +964,84 @@
       "prefix": "radarr_add_all",
       "type": "boolean_toggle",
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
+      "media_types": ["movie"],
       "title": "Radarr Add All",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#radarr-add-all",
       "description": "Adds every item in the library to Radarr.",
       "tooltip_variant": "info"
     },
     {
+      "prefix": "radarr_remove_by_tag",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": ["movie"],
+      "title": "Radarr Remove by Tag",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#radarr-remove-by-tag",
+      "description": "Removes items from Radarr that are tagged with any of the specified tags.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter Radarr tag(s) to remove (e.g. holiday, classic)",
+      "custom_string_behavior": "list"
+    },
+    {
       "prefix": "sonarr_add_all",
       "type": "boolean_toggle",
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
+      "media_types": ["show"],
       "title": "Sonarr Add All",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#sonarr-add-all",
       "description": "Adds every item in the library to Sonarr.",
       "tooltip_variant": "info"
+    },
+    {
+      "prefix": "sonarr_remove_by_tag",
+      "type": "mass_update",
+      "accordion": "library",
+      "media_types": ["show"],
+      "title": "Sonarr Remove by Tag",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#sonarr-remove-by-tag",
+      "description": "Removes items from Sonarr that are tagged with any of the specified tags.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "has_custom_string": true,
+      "custom_string_placeholder": "Enter Sonarr tag(s) to remove (e.g. holiday, classic)",
+      "custom_string_behavior": "list"
+    },
+    {
+      "prefix": "metadata_backup",
+      "type": "complex_group",
+      "accordion": "library",
+      "media_types": ["movie", "show"],
+      "title": "Metadata Backup",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#metadata-backup",
+      "description": "Backs up metadata to a YAML file. You can optionally set the path, exclude attributes, sync tag metadata, or add placeholders for items with no changes.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "text_input": {
+        "key": "path",
+        "label": "Backup File Path",
+        "placeholder": "<<library_name>>_Metadata_Backup.yml",
+        "tooltip": "Optional. Leave blank to use default: <code>&lt;&lt;library_name&gt;&gt;_Metadata_Backup.yml</code> in your config folder."
+      },
+      "custom_string_list": {
+        "key": "exclude",
+        "label": "Exclude Attributes",
+        "placeholder": "e.g. summary, title",
+        "tooltip": "List of attributes to exclude from the backup (comma-separated or one per line)."
+      },
+      "toggles": [
+        {
+          "key": "sync_tags",
+          "label": "Sync Tag Attributes",
+          "tooltip": "If enabled, all tag attributes will include the <code>.sync</code> option and add blank entries for syncing."
+        },
+        {
+          "key": "add_blank_entries",
+          "label": "Add Blank Entries",
+          "tooltip": "Adds a line for metadata attributes with no changes. Recommended for consistency."
+        }
+      ]
     }
   ]
 }
