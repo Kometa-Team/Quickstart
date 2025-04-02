@@ -122,13 +122,13 @@ def build_libraries_section(
 
         # Grab the full reordered list from hidden input
         custom_key = (
-            f"{library_type}-library_{lib_id}-attribute_mass_genre_update_custom_order"
+            f"{library_type}-library_{lib_id}-attribute_mass_genre_update_order"
         )
-        custom_value = attr_group.get(custom_key)
+        order_value = attr_group.get(custom_key)
 
-        if custom_value:
+        if order_value:
             try:
-                parsed = json.loads(custom_value)
+                parsed = json.loads(order_value)
                 if isinstance(parsed, list):
                     for item in parsed:
                         if (
@@ -144,7 +144,7 @@ def build_libraries_section(
                             mass_genre_update.extend(item)
             except Exception as e:
                 print(
-                    f"[DEBUG] Skipping invalid JSON in custom genre: {custom_value} — {e}"
+                    f"[DEBUG] Skipping invalid JSON in custom genre: {order_value} — {e}"
                 )
 
         # Also include custom genre strings (if any) from the other hidden input
@@ -171,7 +171,7 @@ def build_libraries_section(
         mass_content_rating_update = []
 
         # Get the ordered source list (sortable)
-        rating_custom_order_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_custom"
+        rating_custom_order_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_order"
         rating_custom_order_value = attr_group.get(rating_custom_order_key)
 
         if rating_custom_order_value:
@@ -203,7 +203,7 @@ def build_libraries_section(
         mass_original_title_update = []
 
         # Handle the toggle order list
-        original_title_order_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_custom"
+        original_title_order_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_order"
         original_title_order_value = attr_group.get(original_title_order_key)
 
         if original_title_order_value:

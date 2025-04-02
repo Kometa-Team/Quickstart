@@ -49,9 +49,11 @@ document.addEventListener('DOMContentLoaded', function () {
       ValidationHandler.updateValidationState()
     }
 
+    setupCustomStringListHandlers('mass_genre_update')
+
     function initializeSortableList (libraryId, prefix) {
-      const list = document.getElementById(`${libraryId}-${prefix}_sortable`)
-      const hiddenInput = document.getElementById(`${libraryId}-${prefix}_order`)
+      const list = document.getElementById(`${libraryId}-attribute_${prefix}_sortable`)
+      const hiddenInput = document.getElementById(`${libraryId}-attribute_${prefix}_order`)
 
       if (!list || !hiddenInput) {
         console.warn(`[WARN] Missing sortable list or hidden input for ${libraryId}-${prefix}`)
@@ -65,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function () {
       } catch (e) {
         console.warn(`[WARN] Could not parse JSON from hidden input #${hiddenInput.id}:`, hiddenInput.value)
       }
-
       renderSortableList(libraryId, prefix, list, hiddenInput, values)
     }
 
@@ -89,25 +90,14 @@ document.addEventListener('DOMContentLoaded', function () {
         li.appendChild(span)
         list.appendChild(li)
       })
-
-      // eslint-disable-next-line no-unused-vars
-      const _sortable = new Sortable(list, {
-        handle: '.drag-handle',
-        animation: 150,
-        onSort: function () {
-          const selected = [...list.querySelectorAll('li')].map(li => li.dataset.value)
-          hiddenInput.value = JSON.stringify(selected)
-          console.log(`[DEBUG] Updated order for #${hiddenInput.id}:`, selected)
-        }
-      })
     }
 
     function bindToggleToList (libraryId, prefix) {
       document.querySelectorAll(`input[type=checkbox][id^='${libraryId}-attribute_${prefix}_']`).forEach(toggle => {
         toggle.addEventListener('change', function () {
           const source = this.id.match(new RegExp(`${libraryId}-attribute_${prefix}_(.+)$`))[1]
-          const list = document.getElementById(`${libraryId}-${prefix}_sortable`)
-          const hiddenInput = document.getElementById(`${libraryId}-${prefix}_order`)
+          const list = document.getElementById(`${libraryId}-attribute_${prefix}_sortable`)
+          const hiddenInput = document.getElementById(`${libraryId}-attribute_${prefix}_order`)
 
           if (!list || !hiddenInput) return
 
@@ -131,19 +121,88 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
-    const knownPrefixes = ['mass_genre_update', 'mass_content_rating_update', 'mass_original_title_update']
-
     document.querySelectorAll('.sortable-list').forEach(list => {
-      const match = list.id.match(/^(.*?)-(mass_.*?)_sortable$/)
+      const match = list.id.match(/^(.*?)-attribute_(.+?)_sortable$/)
       if (!match) return
 
       const libraryId = match[1]
       const prefix = match[2]
 
-      if (!knownPrefixes.includes(prefix)) return
+      console.log(`[DEBUG] Initializing sortable for ${libraryId} with prefix ${prefix}`)
 
       initializeSortableList(libraryId, prefix)
       bindToggleToList(libraryId, prefix)
+
+      // Create Sortable only once here
+      Sortable.create(list, {
+        handle: '.drag-handle',
+        animation: 150,
+        onSort: function () {
+          const hiddenInput = document.getElementById(`${libraryId}-attribute_${prefix}_order`)
+          const selected = [...list.querySelectorAll('li')].map(li => li.dataset.value)
+          hiddenInput.value = JSON.stringify(selected)
+          console.log(`[DEBUG] Updated order for #${hiddenInput.id}:`, selected)
+        }
+      })
     })
   })
 })
+
+function setupCustomStringListHandlers (prefix) {
+  document.querySelectorAll(`input[id$="attribute_${prefix}_custom_hidden"]`).forEach(hidden => {
+    const libraryId = hidden.id.split('-attribute_')[0]
+    const input = document.getElementById(`${libraryId}-attribute_${prefix}_custom_input`)
+    const list = document.getElementById(`${libraryId}-attribute_${prefix}_custom_list`)
+    const button = document.getElementById(`${libraryId}-attribute_${prefix}_custom_add`)
+
+    if (!input || !list || !button) return
+
+    function renderCustomList (values) {
+      list.innerHTML = ''
+
+      values.forEach(value => {
+        const li = document.createElement('li')
+        li.className = 'list-group-item d-flex justify-content-between align-items-center'
+        li.innerHTML = `
+          <span>${value}</span>
+          <button type="button" class="btn btn-sm btn-danger" aria-label="Remove">
+            <i class="bi bi-x-lg"></i>
+          </button>`
+        list.appendChild(li)
+
+        li.querySelector('button').addEventListener('click', function () {
+          const updated = values.filter(item => item !== value)
+          hidden.value = JSON.stringify(updated)
+          renderCustomList(updated) // 🔁 Rerender the new list and update the array
+        })
+      })
+    }
+
+    // Initialize list from hidden input value
+    let current = []
+    try {
+      current = JSON.parse(hidden.value || '[]')
+    } catch (e) {
+      console.warn(`[WARN] Could not parse hidden input for ${prefix}:`, hidden.value)
+    }
+    renderCustomList(current)
+
+    // Add button logic
+    button.addEventListener('click', function () {
+      let current = []
+      try {
+        current = JSON.parse(hidden.value || '[]')
+      } catch (e) {
+        console.warn(`[WARN] Could not parse hidden input for ${prefix}:`, hidden.value)
+      }
+
+      const value = input.value.trim()
+      if (!value || current.includes(value)) return
+
+      current.push(value)
+      hidden.value = JSON.stringify(current)
+      renderCustomList(current)
+      input.value = ''
+    })
+  })
+}

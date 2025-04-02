@@ -1,14 +1,16 @@
-{% macro mass_update_section(library, data, version_info, prefix, title, wiki_url, description, sources,
-has_custom_string=False) %}
-<div class="border rounded p-3 mb-2">
+{% macro mass_update_section(library, data, version_info, prefix, title, wiki_url, description, sources=None,
+has_custom_string=False, custom_string_placeholder=None, tooltip_variant="info", container_class="border rounded p-3
+mb-2", number_input=None) %}
+<div class="{{ container_class }}">
     <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
         <a href="{{ wiki_url }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+        <span class="text-{{ tooltip_variant }}" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
             title="{{ description }}">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </label>
 
+    {% if sources %}
     <div class="row mb-3">
         {% for source, label, tooltip in sources %}
         <div class="col-md-6 mb-2">
@@ -22,7 +24,8 @@ has_custom_string=False) %}
                 <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_{{ source }}"
                     data-label="{{ label }}">
                     {{ label }}
-                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+                    <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="{{ tooltip }}">
                         <i class="bi bi-info-circle-fill"></i>
                     </span>
                 </label>
@@ -30,42 +33,98 @@ has_custom_string=False) %}
         </div>
         {% endfor %}
     </div>
+    {% endif %}
 
-    {% if has_custom_string %}
+    {% if number_input %}
     <div class="row mb-3">
-        <div class="col-12">
-            <label class="form-label">
-                Custom {{ title }} String
-                <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
-                    title="Optional: A single custom string to append.">
-                    <i class="bi bi-info-circle-fill"></i>
+        <div class="col-md-6 mb-2">
+            <div class="input-group">
+                <span class="input-group-text" id="{{ library.id }}-attribute_{{ number_input.key }}_label">
+                    {{ number_input.label }}
+                    <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                        aria-label="{{ number_input.tooltip }}" data-bs-original-title="{{ number_input.tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
                 </span>
-            </label>
-            <input type="text" class="form-control" id="{{ library.id }}-{{ prefix }}_custom_input"
-                name="{{ library.id }}-attribute_{{ prefix }}_custom_string"
-                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom_string', '') }}"
-                placeholder="Enter custom string (e.g. NR)">
+                <input type="number" class="form-control" id="{{ library.id }}-attribute_{{ number_input.key }}"
+                    name="{{ library.id }}-attribute_{{ number_input.key }}" min="{{ number_input.min | default(1) }}"
+                    value="{{ data.libraries[library.id ~ '-attribute_' ~ number_input.key] | default('') }}">
+            </div>
         </div>
     </div>
     {% endif %}
 
-    <label class="form-label">Selected Sources (Drag to Reorder):</label>
-    <ul class="list-group sortable-list" id="{{ library.id }}-{{ prefix }}_sortable"></ul>
-    <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_custom" id="{{ library.id }}-{{ prefix }}_order"
-        value='{{ data["libraries"].get(library.id ~ "-attribute_" ~ prefix ~ "_custom", "[]") }}'>
+    {% if has_custom_string %}
+    {% if prefix == "mass_genre_update" %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <label class="form-label">
+                Custom Genre Strings
+                <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="Add a list of custom genres to apply to all items in the library. Add 1 genre at a time.">
+                    <i class="bi bi-info-circle-fill"></i>
+                </span>
+            </label>
+            <div class="input-group mb-2">
+                <input type="text" class="form-control" id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
+                    placeholder="{{ custom_string_placeholder | default('Enter custom genre (e.g. Thriller)') }}">
+                <button class="btn nav-button" type="button"
+                    id="{{ library.id }}-attribute_{{ prefix }}_custom_add">Add</button>
+            </div>
+
+            <ul class="list-group mb-2" id="{{ library.id }}-attribute_{{ prefix }}_custom_list"></ul>
+            <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_custom"
+                id="{{ library.id }}-attribute_{{ prefix }}_custom_hidden"
+                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom', '[]') }}">
+        </div>
+    </div>
+    {% else %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <label class="form-label">
+                Custom {{ title }} String
+                <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="Optional: A single custom string to append.">
+                    <i class="bi bi-info-circle-fill"></i>
+                </span>
+            </label>
+            <input type="text" class="form-control" id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
+                name="{{ library.id }}-attribute_{{ prefix }}_custom_string"
+                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom_string', '') }}"
+                placeholder="{{ custom_string_placeholder | default('Enter custom string (e.g. NR)') }}">
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if sources %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <label class="form-label">
+                Selected Sources to use (Drag to Reorder):
+            </label>
+            <ul class="list-group sortable-list" id="{{ library.id }}-attribute_{{ prefix }}_sortable"></ul>
+            <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_order"
+                id="{{ library.id }}-attribute_{{ prefix }}_order"
+                value='{{ data["libraries"].get(library.id ~ "-attribute_" ~ prefix ~ "_order", "[]") }}'>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endmacro %}
 
-{% macro boolean_toggle_section(library, data, prefix, title, description, wiki) %}
-<div class="border rounded p-3 mb-2">
+{% macro boolean_toggle_section(library, data, prefix, title, description, wiki, tooltip_variant="info",
+container_class="border rounded p-3 mb-2") %}
+<div class="{{ container_class }}">
     <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" id="{{ library.id }}-{{ prefix }}"
-            name="{{ library.id }}-{{ prefix }}" value="true" {% if data.libraries[library.id ~ '-' ~
-            prefix]|string|lower=='true' %}checked{% endif %}>
-        <input type="hidden" name="{{ library.id }}-{{ prefix }}" value="false">
-        <label class="form-check-label" for="{{ library.id }}-{{ prefix }}">
+        <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_{{ prefix }}"
+            name="{{ library.id }}-attribute_{{ prefix }}" value="true" {% if data.libraries[library.id ~ '-attribute_'
+            ~ prefix]|string|lower=='true' %}checked{% endif %}>
+        <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}" value="false">
+        <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}">
             <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-            <span class="text-info ms-2" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
+            <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+                title="{{ description }}">
                 <i class="bi bi-info-circle-fill"></i>
             </span>
         </label>
@@ -73,11 +132,12 @@ has_custom_string=False) %}
 </div>
 {% endmacro %}
 
-{% macro toggle_group_section(library, data, prefix, title, description, wiki, toggles) %}
-<div class="border rounded p-3 mb-2">
+{% macro toggle_group_section(library, data, prefix, title, description, wiki, toggles, tooltip_variant="info",
+container_class="border rounded p-3 mb-2") %}
+<div class="{{ container_class }}">
     <label class="form-check-label">
         <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
+        <span class="text-{{ tooltip_variant }}" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </label>
@@ -85,13 +145,14 @@ has_custom_string=False) %}
         {% for toggle_id, label, tooltip in toggles %}
         <div class="col-md-6 mb-2">
             <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="{{ library.id }}-{{ toggle_id }}"
-                    name="{{ library.id }}-{{ toggle_id }}" value="true" {% if data['libraries'][library.id ~ '-' ~
-                    toggle_id]|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="{{ library.id }}-{{ toggle_id }}" value="false">
-                <label class="form-check-label" for="{{ library.id }}-{{ toggle_id }}">
+                <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_{{ toggle_id }}"
+                    name="{{ library.id }}-attribute_{{ toggle_id }}" value="true" {% if data['libraries'][library.id
+                    ~ '-attribute_' ~ toggle_id]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_{{ toggle_id }}" value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle_id }}">
                     {{ label }}
-                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="{{ tooltip }}">
+                    <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="{{ tooltip }}">
                         <i class="bi bi-info-circle-fill"></i>
                     </span>
                 </label>
@@ -102,20 +163,162 @@ has_custom_string=False) %}
 </div>
 {% endmacro %}
 
-{% macro select_section(library, data, prefix, title, description, wiki, options) %}
-<div class="border rounded p-3 mb-2">
-    <label class="form-label">
+{% macro select_section(library, data, prefix, title, description, wiki, options, preview_image=False,
+tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
+<div class="{{ container_class }}">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="input-group mb-2">
+                <span class="input-group-text" id="{{ library.id }}-attribute_{{ prefix }}_text">
+                    <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
+                    <span class="text-{{ tooltip_variant }}" data-bs-toggle="tooltip" data-bs-html="true"
+                        style="margin-left: 10px;" aria-label="{{ description }}"
+                        data-bs-original-title="{{ description }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <select class="form-select" id="{{ library.id }}-attribute_{{ prefix }}"
+                    name="{{ library.id }}-attribute_template_variables[{{ prefix }}]"
+                    aria-describedby="{{ library.id }}-attribute_{{ prefix }}_text" {% if preview_image
+                    %}data-preview="true" {% endif %}>
+                    {% set selected = data['libraries'].get(library.id ~ '-attribute_template_variables[' ~ prefix ~
+                    ']', '') %}
+                    {% for value, label in options %}
+                    <option value="{{ value }}" {% if selected==value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        {% if preview_image %}
+        <div class="col-md-6 d-flex align-items-center justify-content-center">
+            <div id="{{ library.id }}-separatorPreviewContainer">
+                <img id="{{ library.id }}-separatorPreviewImage" src="" alt="{{ library.id }} Separator Preview"
+                    class="img-fluid" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+{% macro custom_toggle_number_section(library, data, prefix, title, wiki, description, toggles=[], number_input=None,
+tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
+<div class="{{ container_class }}">
+    <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
         <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
+        <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+            aria-label="{{ description }}" data-bs-original-title="{{ description }}">
             <i class="bi bi-info-circle-fill"></i>
         </span>
     </label>
-    <select class="form-select" name="{{ library.id }}-{{ prefix }}" id="{{ library.id }}-{{ prefix }}">
-        {% for value, label in options %}
-        <option value="{{ value }}" {% if data['libraries'][library.id ~ '-' ~ prefix]==value %}selected{% endif %}>
-            {{ label }}
-        </option>
+
+    {% if toggles %}
+    <div class="row mt-2">
+        {% for toggle in toggles %}
+        <div class="col-md-6 mb-2">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_{{ toggle.key }}"
+                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true" {% if data.libraries[library.id
+                    ~ '-attribute_' ~ toggle.key]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle.key }}">
+                    {{ toggle.label }}
+                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                        title="{{ toggle.tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </label>
+            </div>
+        </div>
         {% endfor %}
-    </select>
+    </div>
+    {% endif %}
+
+    {% if number_input %}
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text" id="{{ library.id }}-attribute_{{ number_input.key }}_label">
+                    {{ number_input.label }}
+                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                        aria-label="{{ number_input.tooltip }}" data-bs-original-title="{{ number_input.tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="number" class="form-control" id="{{ library.id }}-attribute_{{ number_input.key }}"
+                    name="{{ library.id }}-attribute_{{ number_input.key }}" min="{{ number_input.min | default(1) }}"
+                    value="{{ data.libraries[library.id ~ '-attribute_' ~ number_input.key] | default('') }}">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro toggle_with_number_section(library, data, prefix, title, wiki, description, toggles, number_input,
+tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
+<div class="{{ container_class }}">
+    <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
+        <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
+        <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+            aria-label="{{ description }}" data-bs-original-title="{{ description }}">
+            <i class="bi bi-info-circle-fill"></i>
+        </span>
+    </label>
+
+    <div class="row mt-2">
+        {% for toggle in toggles[0:2] %}
+        <div class="col-md-6 mb-2">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_{{ toggle.key }}"
+                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true" {% if data.libraries[library.id
+                    ~ '-attribute_' ~ toggle.key]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle.key }}">
+                    {{ toggle.label }}
+                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                        aria-label="{{ toggle.tooltip }}" data-bs-original-title="{{ toggle.tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </label>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="row mt-2">
+        <div class="col-md-6 mb-2">
+            <div class="input-group">
+                <span class="input-group-text" id="{{ library.id }}-attribute_{{ number_input.key }}_label">
+                    {{ number_input.label }}
+                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                        aria-label="{{ number_input.tooltip }}" data-bs-original-title="{{ number_input.tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </span>
+                <input type="number" class="form-control" id="{{ library.id }}-attribute_{{ number_input.key }}"
+                    name="{{ library.id }}-attribute_{{ number_input.key }}" min="{{ number_input.min | default(1) }}"
+                    value="{{ data.libraries[library.id ~ '-attribute_' ~ number_input.key]|default('') }}">
+            </div>
+        </div>
+
+        {% if toggles|length > 2 %}
+        <div class="col-md-6 mb-2">
+            {% set toggle = toggles[2] %}
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_{{ toggle.key }}"
+                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true" {% if data.libraries[library.id
+                    ~ '-attribute_' ~ toggle.key]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
+                <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle.key }}">
+                    {{ toggle.label }}
+                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                        aria-label="{{ toggle.tooltip }}" data-bs-original-title="{{ toggle.tooltip }}">
+                        <i class="bi bi-info-circle-fill"></i>
+                    </span>
+                </label>
+            </div>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endmacro %}

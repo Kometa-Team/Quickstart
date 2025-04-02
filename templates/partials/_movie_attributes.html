@@ -1,10 +1,114 @@
 {% import 'partials/_macros.html' as macros %}
 
-<!-- Render all dynamic sections for movie libraries -->
-{% for section in section_config.sections %}
-  {% if 'movie' in section.media_types %}
-    {% if section.type == 'mass_update' %}
-      {{ macros.mass_update_section(
+<p>Configure various attributes for movie collections.</p>
+
+<!-- 🔹 Accordion: Separators -->
+<div class="accordion mt-3" id="{{ library.id }}-separatorsAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#{{ library.id }}-collapseSeparators" aria-expanded="false"
+        aria-controls="{{ library.id }}-collapseSeparators">
+        Separators
+      </button>
+    </h2>
+    <div id="{{ library.id }}-collapseSeparators" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-separatorsAccordion">
+      <div class="accordion-body">
+        {% for section in section_config.sections if section.media_types and 'movie' in section.media_types and
+        section.accordion == 'separators' %}
+        {{ macros.select_section(
+        library,
+        data,
+        section.prefix,
+        section.title,
+        section.description,
+        section.wiki,
+        section.options,
+        preview_image=true,
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class
+        ) }}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🔹 Accordion: Overlay Operations -->
+<div class="accordion mt-3" id="{{ library.id }}-overlayOperationsAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#{{ library.id }}-collapseOverlays" aria-expanded="false"
+        aria-controls="{{ library.id }}-collapseOverlays">
+        Overlay Operations
+      </button>
+    </h2>
+    <div id="{{ library.id }}-collapseOverlays" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-overlayOperationsAccordion">
+      <div class="accordion-body">
+        {% for section in section_config.sections if section.media_types and 'movie' in section.media_types and
+        section.accordion == 'overlays' %}
+        {% if section.type == 'select' %}
+        {{ macros.select_section(
+        library,
+        data,
+        section.prefix,
+        section.title,
+        section.description,
+        section.wiki,
+        section.options,
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class
+        ) }}
+        {% elif section.type == 'boolean_toggle' %}
+        {{ macros.boolean_toggle_section(
+        library,
+        data,
+        section.prefix,
+        section.title,
+        section.description,
+        section.wiki,
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class
+        ) }}
+        {% endif %}
+        {% endfor %}
+        <p class="text-white mt-3">
+          <span class="text-info">
+            <b>Read this Tip:</b>
+            <i class="bi bi-lightbulb-fill" data-bs-toggle="tooltip" data-bs-placement="top"
+              data-bs-custom-class="text-tooltip"
+              aria-label="Using Reset Overlays or frequently Removing and Reapplying overlays will quickly result in Image Bloat. Neither Plex nor Kometa cleans up previously-used posters with overlays. Consider using ImageMaid to clean up old, unused images."
+              data-bs-original-title="Using Reset Overlays or frequently Removing and Reapplying overlays will quickly result in Image Bloat. Neither Plex nor Kometa cleans up previously-used posters with overlays. Consider using ImageMaid to clean up old, unused images.">
+            </i>
+          </span>
+          Using <a href="https://kometa.wiki/en/nightly/kometa/scripts/imagemaid" target="_blank">ImageMaid</a> can help
+          clean up old, unused images.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🔹 Accordion: Library Operations -->
+<div class="accordion mt-3" id="{{ library.id }}-libraryOperationsAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#{{ library.id }}-collapseLibrary" aria-expanded="false"
+        aria-controls="{{ library.id }}-collapseLibrary">
+        Library Operations
+      </button>
+    </h2>
+    <div id="{{ library.id }}-collapseLibrary" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-libraryOperationsAccordion">
+      <div class="accordion-body">
+        {% for section in section_config.sections if section.media_types and 'movie' in section.media_types and
+        section.accordion == 'library' %}
+        {% if section.type == 'mass_update' %}
+        {{ macros.mass_update_section(
         library,
         data,
         version_info,
@@ -13,40 +117,63 @@
         section.wiki,
         section.description,
         section.sources,
-        section.has_custom_string
-      ) }}
-
-    {% elif section.type == 'boolean_toggle' %}
-      {{ macros.boolean_toggle_section(
-        library,
-        data,
-        section.prefix,
-        section.title,
-        section.description,
-        section.wiki
-      ) }}
-
-    {% elif section.type == 'toggle_group' %}
-      {{ macros.toggle_group_section(
+        section.has_custom_string,
+        section.custom_string_placeholder,
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class
+        ) }}
+        {% elif section.type == 'boolean_toggle' %}
+        {{ macros.boolean_toggle_section(
         library,
         data,
         section.prefix,
         section.title,
         section.description,
         section.wiki,
-        section.toggles
-      ) }}
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class
+        ) }}
+        {% elif section.type == 'toggle_group' %}
+        {{ macros.toggle_group_section(
+        library,
+        data,
+        section.prefix,
+        section.title,
+        section.description,
+        section.wiki,
+        section.toggles,
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class
+        ) }}
 
+          {% elif section.type == 'toggle_with_number' %}
+            {{ macros.toggle_with_number_section(
+              library,
+              data,
+              section.prefix,
+              section.title,
+              section.description,
+              section.wiki,
+              section.toggles,
+              section.number_input,
+              tooltip_variant=section.tooltip_variant,
+              container_class=section.container_class
+            ) }}
     {% elif section.type == 'select' %}
-      {{ macros.select_section(
+        {{ macros.select_section(
         library,
         data,
         section.prefix,
         section.title,
         section.description,
         section.wiki,
-        section.options
-      ) }}
-    {% endif %}
-  {% endif %}
-{% endfor %}
+        section.options,
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class
+        ) }}
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>

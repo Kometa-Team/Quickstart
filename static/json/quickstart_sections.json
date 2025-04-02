@@ -1,13 +1,219 @@
 {
   "sections": [
     {
+      "prefix": "use_separators",
+      "type": "select",
+      "accordion": "separators",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Separator Style",
+      "wiki": "https://kometa.wiki/en/nightly/defaults/separators/#separators-default-collection-files",
+      "description": "Separators are like index cards at a library, to categorize Collections in your library.<br><br> To enable Separators for the Defaults Collections, select your style from the drop-down.<br><br><b>Warning</b>: Plex does not officially support blank collections, which is what separators are. You may experience bugs if you enable Separators.",
+      "tooltip_variant": "danger",
+      "container_class": "",
+      "options": [
+        [
+          "none",
+          "None"
+        ],
+        [
+          "amethyst",
+          "Amethyst"
+        ],
+        [
+          "aqua",
+          "Aqua"
+        ],
+        [
+          "blue",
+          "Blue"
+        ],
+        [
+          "stb",
+          "Brown"
+        ],
+        [
+          "forest",
+          "Forest"
+        ],
+        [
+          "fuchsia",
+          "Fuchsia"
+        ],
+        [
+          "gold",
+          "Gold"
+        ],
+        [
+          "gray",
+          "Gray"
+        ],
+        [
+          "green",
+          "Green"
+        ],
+        [
+          "navy",
+          "Navy"
+        ],
+        [
+          "ocean",
+          "Ocean"
+        ],
+        [
+          "olive",
+          "Olive"
+        ],
+        [
+          "orchid",
+          "Orchid"
+        ],
+        [
+          "orig",
+          "Original"
+        ],
+        [
+          "pink",
+          "Pink"
+        ],
+        [
+          "plum",
+          "Plum"
+        ],
+        [
+          "purple",
+          "Purple"
+        ],
+        [
+          "red",
+          "Red"
+        ],
+        [
+          "rust",
+          "Rust"
+        ],
+        [
+          "salmon",
+          "Salmon"
+        ],
+        [
+          "sand",
+          "Sand"
+        ],
+        [
+          "tan",
+          "Tan"
+        ]
+      ],
+      "preview_image": true
+    },
+    {
+      "prefix": "remove_overlays",
+      "type": "boolean_toggle",
+      "accordion": "overlays",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Remove Overlays",
+      "wiki": "https://kometa.wiki/en/nightly/config/libraries/#remove-overlays",
+      "description": "Remove Overlays will remove all overlays from your library. This toggle will take priority over any previous selections.",
+      "tooltip_variant": "info",
+      "container_class": ""
+    },
+    {
+      "prefix": "reset_overlays",
+      "type": "select",
+      "accordion": "overlays",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Reset Overlays",
+      "wiki": "https://kometa.wiki/en/nightly/config/libraries/#reset-overlays",
+      "description": "Reset Overlays will grab a new base image from the source that you choose, and then use that as the source for applying your overlays.<br><br><b>Warning:</b> Once you have done a run with Reset Overlays, you should then set this value to None or remove the reset_overlays line(s) from your config.yml. If you do not do this, you will end up in a loop of your overlays being removed, a new image grabbed, and your overlays reapplying.",
+      "tooltip_variant": "danger",
+      "container_class": "",
+      "options": [
+        [
+          "",
+          "None"
+        ],
+        [
+          "tmdb",
+          "TMDb"
+        ],
+        [
+          "plex",
+          "Plex"
+        ]
+      ]
+    },
+    {
+      "prefix": "assets_for_all",
+      "type": "boolean_toggle",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Assets for All",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#assets-for-all",
+      "description": "Searches asset directories for images for all items in the library.",
+      "tooltip_variant": "info"
+    },
+    {
+      "prefix": "delete_collections",
+      "type": "toggle_with_number",
+      "accordion": "library",
+      "media_types": ["movie", "show"],
+      "title": "Delete Collections",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#delete-collections",
+      "description": "Deletes collections based on a set of given attributes. The Collection must match all set attributes to be deleted.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "toggles": [
+        {
+          "key": "delete_collections_managed",
+          "label": "Managed Collections",
+          "tooltip": "When enabled: Only collections <strong>with the <code>Kometa</code> label</strong> (Managed) will be deleted."
+        },
+        {
+          "key": "delete_collections_configured",
+          "label": "Configured Collections",
+          "tooltip": "When enabled: Only collections <strong>defined in the current config file</strong> will be eligible for deletion."
+        },
+        {
+          "key": "ignore_empty_smart_collections",
+          "label": "Ignore Empty Smart Collections",
+          "tooltip": "When enabled: Excludes empty smart collections from being affected by the <code>less</code> item count check. This allows retaining things like smart collections that show movies without subtitles or the like."
+        }
+      ],
+      "number_input": {
+        "key": "delete_collections_less",
+        "label": "Less Than (item count)",
+        "tooltip": "Only collections with <strong>fewer than this number of items</strong> will be deleted. Optional value which if undefined means collections will be deleted regardless of how many items they have.",
+        "min": 1
+      }
+    },
+    {
       "prefix": "mass_genre_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Mass Genre Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-genre-update",
       "description": "Updates every item's genres using selected sources or strings.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom genre (e.g. Thriller)",
+      "custom_string_behavior": "list",
       "sources": [
         ["tmdb", "Use TMDb for Genres", "Fetch genres from <b>TMDb</b>. Recommended for most media types."],
         ["tvdb", "Use TVDb for Genres", "Fetch genres from <b>TVDb</b>. Alternative for TV content."],
@@ -30,69 +236,255 @@
     {
       "prefix": "mass_content_rating_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Mass Content Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-content-rating-update",
       "description": "Updates the content rating using selected sources.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom content rating string (e.g. NR)",
       "sources": [
-        ["mdb", "Use MDB for Content Rating", "Fetch content rating from <b>MDB</b>."],
-        ["mdb_commonsense", "Use MDB CommonSense", "Use <b>Common Sense Media</b> rating from MDB (string)."],
-        ["mdb_commonsense0", "Use MDB CommonSense (0)", "Use <b>Common Sense Media</b> rating from MDB (number)."],
-        ["omdb", "Use OMDb for Content Rating", "Fetch rating from <b>OMDb</b> API (IMDb-backed)."],
-        ["mal", "Use MyAnimeList", "Fetch rating from <b>MyAnimeList</b>."],
-        ["lock", "Lock Content Rating Field", "Prevent content rating from being modified after this operation."],
-        ["unlock", "Unlock Content Rating Field", "Allow future updates to the content rating field."],
-        ["remove", "Remove Content Rating and Lock Field", "Clear content rating and lock the field."],
-        ["reset", "Remove Content Rating and Unlock Field", "Clear content rating and unlock the field."]
+        [
+          "mdb",
+          "Use MDB for Content Rating",
+          "Fetch content rating from <b>MDB</b>."
+        ],
+        [
+          "mdb_commonsense",
+          "Use MDB CommonSense",
+          "Use <b>Common Sense Media</b> rating from MDB (string)."
+        ],
+        [
+          "mdb_commonsense0",
+          "Use MDB CommonSense (0)",
+          "Use <b>Common Sense Media</b> rating from MDB (number)."
+        ],
+        [
+          "omdb",
+          "Use OMDb for Content Rating",
+          "Fetch rating from <b>OMDb</b> API (IMDb-backed)."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList",
+          "Fetch rating from <b>MyAnimeList</b>."
+        ],
+        [
+          "lock",
+          "Lock Content Rating Field",
+          "Prevent content rating from being modified after this operation."
+        ],
+        [
+          "unlock",
+          "Unlock Content Rating Field",
+          "Allow future updates to the content rating field."
+        ],
+        [
+          "remove",
+          "Remove Content Rating and Lock Field",
+          "Clear content rating and lock the field."
+        ],
+        [
+          "reset",
+          "Remove Content Rating and Unlock Field",
+          "Clear content rating and unlock the field."
+        ]
       ]
     },
     {
       "prefix": "mass_original_title_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Mass Original Title Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-original-title-update",
       "description": "Updates the original title using selected sources.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
+      "custom_string_placeholder": "Enter custom original title string (e.g. Unknown)",
       "sources": [
-        ["anidb_official", "Use AniDB Official", "Fetch the official <b>AniDB title</b> for anime."],
-        ["anidb", "Use AniDB (User Preferred)", "Use the <b>preferred AniDB title</b> as set by the user."],
-        ["mal", "Use MyAnimeList", "Fetch the title from <b>MyAnimeList</b>."],
-        ["mal_english", "Use MyAnimeList English", "Use the <b>English title</b> from MAL."],
-        ["mal_japanese", "Use MyAnimeList Japanese", "Use the <b>Japanese title</b> from MAL."],
-        ["lock", "Lock Original Title Field", "Prevent original title from being modified after this operation."],
-        ["unlock", "Unlock Original Title Field", "Allow future updates to the original title field."],
-        ["remove", "Remove Original Title and Lock Field", "Clear original title and lock the field."],
-        ["reset", "Remove Original Title and Unlock Field", "Clear original title and unlock the field."]
+        [
+          "anidb_official",
+          "Use AniDB Official",
+          "Fetch the official <b>AniDB title</b> for anime."
+        ],
+        [
+          "anidb",
+          "Use AniDB (User Preferred)",
+          "Use the <b>preferred AniDB title</b> as set by the user."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList",
+          "Fetch the title from <b>MyAnimeList</b>."
+        ],
+        [
+          "mal_english",
+          "Use MyAnimeList English",
+          "Use the <b>English title</b> from MAL."
+        ],
+        [
+          "mal_japanese",
+          "Use MyAnimeList Japanese",
+          "Use the <b>Japanese title</b> from MAL."
+        ],
+        [
+          "lock",
+          "Lock Original Title Field",
+          "Prevent original title from being modified after this operation."
+        ],
+        [
+          "unlock",
+          "Unlock Original Title Field",
+          "Allow future updates to the original title field."
+        ],
+        [
+          "remove",
+          "Remove Original Title and Lock Field",
+          "Clear original title and lock the field."
+        ],
+        [
+          "reset",
+          "Remove Original Title and Unlock Field",
+          "Clear original title and unlock the field."
+        ]
       ]
     },
     {
-      "prefix": "delete_collections",
-      "type": "toggle_group",
-      "media_types": ["movie", "show"],
-      "title": "Delete Collections",
-      "wiki": "https://kometa.wiki/en/nightly/config/operations/#delete-collections",
-      "description": "If enabled, deletes all collections created by previous runs that are no longer in the source.",
-      "toggles": [
-        ["delete_collections_managed", "Managed Collections", "When enabled: Only collections <strong>with the <code>Kometa</code> label</strong> (Managed) will be deleted."],
-        ["delete_collections_configured", "Configured Collections", "When enabled: Only collections <strong>defined in the current config file</strong> will be eligible for deletion."],
-        ["ignore_empty_smart_collections", "Ignore Empty Smart Collections", "When enabled: Excludes empty smart collections from being affected by the <code>less</code> item count check. This allows retaining things like smart collections that show movies without subtitles or the like."]
+      "prefix": "mass_imdb_parental_labels",
+      "type": "select",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Mass IMDb Parental Labels",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-imdb-parental-labels",
+      "description": "Adds IMDb Parental labels of every item in the library.",
+      "tooltip_variant": "info",
+      "options": [
+        [
+          "",
+          "None"
+        ],
+        [
+          "mild",
+          "Mild"
+        ],
+        [
+          "moderate",
+          "Moderate"
+        ],
+        [
+          "severe",
+          "Severe"
+        ]
       ]
     },
     {
       "prefix": "mass_collection_mode",
       "type": "select",
-      "media_types": ["movie", "show"],
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Mass Collection Mode",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-collection-mode",
       "description": "Controls the collection mode behavior for all collections.",
+      "tooltip_variant": "info",
       "options": [
-        ["default", "Default"],
-        ["hide", "Hide"],
-        ["hide_items", "Hide Items"],
-        ["show_items", "Show Items"]
+        [
+          "default",
+          "Default"
+        ],
+        [
+          "hide",
+          "Hide"
+        ],
+        [
+          "hide_items",
+          "Hide Items"
+        ],
+        [
+          "show_items",
+          "Show Items"
+        ]
       ]
+    },
+    {
+      "prefix": "update_blank_track_titles",
+      "type": "boolean_toggle",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Update Blank Track Titles",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#update-blank-track-titles",
+      "description": "Updates blank track titles of every item in the library.",
+      "tooltip_variant": "info"
+    },
+    {
+      "prefix": "remove_title_parentheses",
+      "type": "boolean_toggle",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Remove Title Parentheses",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#remove-title-parentheses",
+      "description": "Removes title parentheses of every item in the library.",
+      "tooltip_variant": "info"
+    },
+    {
+      "prefix": "split_duplicates",
+      "type": "boolean_toggle",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Split Duplicates",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#split-duplicates",
+      "description": "Splits all duplicate items found in this library.",
+      "tooltip_variant": "info"
+    },
+    {
+      "prefix": "radarr_add_all",
+      "type": "boolean_toggle",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Radarr Add All",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#radarr-add-all",
+      "description": "Adds every item in the library to Radarr.",
+      "tooltip_variant": "info"
+    },
+    {
+      "prefix": "sonarr_add_all",
+      "type": "boolean_toggle",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Sonarr Add All",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#sonarr-add-all",
+      "description": "Adds every item in the library to Sonarr.",
+      "tooltip_variant": "info"
     }
   ]
 }
