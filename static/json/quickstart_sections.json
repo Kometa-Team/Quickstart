@@ -768,6 +768,90 @@
       ]
     },
     {
+      "prefix": "mass_poster_update",
+      "type": "toggle_with_select",
+      "accordion": "library",
+      "media_types": ["movie", "show"],
+      "title": "Mass Poster Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-poster-update",
+      "description": "Updates the poster of each item in the library based on the selected source and optional toggles.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "toggles": [
+        {
+          "key": "mass_poster_seasons",
+          "label": "Update Season Posters",
+          "tooltip": "Update season posters while updating shows."
+        },
+        {
+          "key": "mass_poster_episodes",
+          "label": "Update Season Posters",
+          "tooltip": "Update episode posters while updating shows."
+        },
+        {
+          "key": "mass_poster_ignore_locked",
+          "label": "Ignore Locked Posters",
+          "tooltip": "Skip updating image if the poster field is locked."
+        },
+        {
+          "key": "mass_poster_ignore_overlays",
+          "label": "Ignore Overlaid Posters",
+          "tooltip": "Skip updating image if the current image has an Overlay."
+        }
+      ],
+      "select_input": {
+        "key": "mass_poster_source",
+        "label": "Poster Source",
+        "tooltip": "Choose the source to update the poster from.",
+        "options": [
+          ["", "None"],
+          ["tmdb", "TMDb"],
+          ["plex", "Plex"],
+          ["lock", "Locks the poster field after the poster is set."],
+          ["unlock", "Unlocks the poster field to allow future modifications."]        ]
+      }
+    },
+    {
+      "prefix": "mass_background_update",
+      "type": "toggle_with_select",
+      "accordion": "library",
+      "media_types": ["movie", "show"],
+      "title": "Mass Background Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-background-update",
+      "description": "Updates the background of each item in the library based on the selected source and optional toggles.",
+      "tooltip_variant": "info",
+      "container_class": "border rounded p-3 mb-2",
+      "toggles": [
+        {
+          "key": "mass_background_seasons",
+          "label": "Update Season Backgrounds",
+          "tooltip": "Update season backgrounds while updating shows."
+        },
+        {
+          "key": "mass_background_episodes",
+          "label": "Update Episode Backgrounds",
+          "tooltip": "Update episode backgrounds while updating shows."
+        },
+        {
+          "key": "mass_background_ignore_locked",
+          "label": "Ignore Locked Backgrounds",
+          "tooltip": "Skip updating image if the background field is locked."
+        }
+      ],
+      "select_input": {
+        "key": "mass_background_source",
+        "label": "Background Source",
+        "tooltip": "Choose the source to update the background image from.",
+        "options": [
+          ["", "None"],
+          ["tmdb", "TMDb"],
+          ["plex", "Plex"],
+          ["lock", "Lock Background Field"],
+          ["unlock", "Unlock Background Field"]
+        ]
+      }
+    },
+    {
       "prefix": "mass_imdb_parental_labels",
       "type": "select",
       "accordion": "library",
