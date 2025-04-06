@@ -124,7 +124,8 @@
         section.custom_string_placeholder,
         section.custom_string_validation,
         tooltip_variant=section.tooltip_variant,
-        container_class=section.container_class
+        container_class=section.container_class,
+        custom_string_label=section.custom_string_label
         ) }}
         {% elif section.prefix == 'metadata_backup' %}
         {{ macros.metadata_backup_section(library, data, section) }}

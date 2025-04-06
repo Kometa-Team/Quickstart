@@ -209,18 +209,16 @@
     {
       "prefix": "mass_genre_update",
       "type": "mass_update",
+      "media_types": ["movie", "show"],
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
       "title": "Mass Genre Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-genre-update",
       "description": "Updates every item's genres using selected sources or strings.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom genre (e.g. Thriller)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "List of Strings for Genres",
+      "custom_string_placeholder": "e.g. Thriller",
       "custom_string_behavior": "list",
       "sources": [
         [
@@ -309,18 +307,17 @@
     {
       "prefix": "mass_content_rating_update",
       "type": "mass_update",
+      "media_types": ["movie", "show"],
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
       "title": "Mass Content Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-content-rating-update",
-      "description": "Updates the content rating using selected sources.",
+      "description": "Update the content rating (PG, R, etc.) from various sources.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom content rating string (e.g. NR)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Any String for Content Ratings",
+      "custom_string_placeholder": "e.g. NR",
+      "custom_string_validation": "string",
       "sources": [
         [
           "mdb",
@@ -373,18 +370,17 @@
     {
       "prefix": "mass_original_title_update",
       "type": "mass_update",
+      "media_types": ["movie", "show"],
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
       "title": "Mass Original Title Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-original-title-update",
-      "description": "Updates the original title using selected sources.",
+      "description": "Update original title fields for items.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom original title string (e.g. Unknown)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Any String for Original Title",
+      "custom_string_placeholder": "e.g. Unknown",
+      "custom_string_validation": "string",
       "sources": [
         [
           "anidb_official",
@@ -437,18 +433,17 @@
     {
       "prefix": "mass_studio_update",
       "type": "mass_update",
+      "media_types": ["movie", "show"],
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
       "title": "Mass Studio Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-studio-update",
       "description": "Updates the studio tag using selected sources.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom studio string (e.g. Indie)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Any String for Studio",
+      "custom_string_placeholder": "e.g. Indie",
+      "custom_string_validation": "string",
       "sources": [
         [
           "anidb",
@@ -491,18 +486,16 @@
     {
       "prefix": "mass_originally_available_update",
       "type": "mass_update",
+      "media_types": ["movie", "show"],
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
       "title": "Mass Originally Available Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-originally-available-update",
-      "description": "Updates the originally available date using selected sources. The date is typically the release or air date for a movie or show.",
+      "description": "Update the <code>originally available</code> date for items.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom originally available date (e.g. 2020-01-01)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Originally Available Date (YYYY-MM-DD)",
+      "custom_string_placeholder": "YYYY-MM-DD",
       "custom_string_validation": "date",
       "sources": [
         [
@@ -566,18 +559,16 @@
     {
       "prefix": "mass_added_at_update",
       "type": "mass_update",
+      "media_types": ["movie", "show"],
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
       "title": "Mass Added At Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-added-at-update",
       "description": "Updates the <code>added_at</code> field of items in your library using selected sources. This field controls where the item appears in Recently Added views.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom added at date (e.g. 2020-01-01)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Added At Date (YYYY-MM-DD)",
+      "custom_string_placeholder": "YYYY-MM-DD",
       "custom_string_validation": "date",
       "sources": [
         [
@@ -641,18 +632,16 @@
     {
       "prefix": "mass_audience_rating_update",
       "type": "mass_update",
+      "media_types": ["movie", "show"],
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
       "title": "Mass Audience Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
-      "description": "Updates the audience rating of all items in the library using the selected source(s).",
+      "description": "Update audience rating from different sources.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom rating (e.g. 7.5)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Any Number between 0.0-10.0 for Audience Ratings",
+      "custom_string_placeholder": "e.g. 9.0",
       "custom_string_validation": "rating",
       "sources": [
         [
@@ -811,18 +800,16 @@
     {
       "prefix": "mass_critic_rating_update",
       "type": "mass_update",
+      "media_types": ["movie", "show"],
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
       "title": "Mass Critic Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
-      "description": "Updates the <b>critic rating</b> of all items in the library using the selected source(s). Accepts any numeric value between <code>0.0</code> and <code>10.0</code> as a custom rating.",
+      "description": "Update critic rating from different sources.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom rating (e.g. 8.5)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Any Number between 0.0-10.0 for Critic Ratings",
+      "custom_string_placeholder": "e.g. 8.3",
       "custom_string_validation": "rating",
       "sources": [
         [
@@ -981,18 +968,16 @@
     {
       "prefix": "mass_user_rating_update",
       "type": "mass_update",
+      "media_types": ["movie", "show"],
       "accordion": "library",
-      "media_types": [
-        "movie",
-        "show"
-      ],
       "title": "Mass User Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
-      "description": "Updates the user rating of all items in the library using the selected source(s).",
+      "description": "Update user rating from different sources.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom rating (e.g. 8.5)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Any Number between 0.0-10.0 for User Ratings",
+      "custom_string_placeholder": "e.g. 7.5",
       "custom_string_validation": "rating",
       "sources": [
         [
@@ -1151,17 +1136,16 @@
     {
       "prefix": "mass_episode_audience_rating_update",
       "type": "mass_update",
+      "media_types": ["show"],
       "accordion": "library",
-      "media_types": [
-        "show"
-      ],
       "title": "Mass Episode Audience Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
       "description": "Updates the audience rating of all episodes in the library using the selected source(s).",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom rating (e.g. 8.2)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Any Number between 0.0-10.0 for Episode Audience Ratings",
+      "custom_string_placeholder": "e.g. 8.2",
       "custom_string_validation": "rating",
       "sources": [
         [
@@ -1215,17 +1199,16 @@
     {
       "prefix": "mass_episode_critic_rating_update",
       "type": "mass_update",
+      "media_types": ["show"],
       "accordion": "library",
-      "media_types": [
-        "show"
-      ],
       "title": "Mass Episode Critic Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
       "description": "Updates the critic rating of all episodes in the library using the selected source(s).",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom rating (e.g. 7.5)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Any Number between 0.0-10.0 for Episode Critic Ratings",
+      "custom_string_placeholder": "e.g. 7.1",
       "custom_string_validation": "rating",
       "sources": [
         [
@@ -1279,17 +1262,16 @@
     {
       "prefix": "mass_episode_user_rating_update",
       "type": "mass_update",
+      "media_types": ["show"],
       "accordion": "library",
-      "media_types": [
-        "show"
-      ],
       "title": "Mass Episode User Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
       "description": "Updates the user rating of all episodes in the library using the selected source(s).",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter custom rating (e.g. 9.2)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Any Number between 0.0-10.0 for Episode User Ratings",
+      "custom_string_placeholder": "e.g. 9.2",
       "custom_string_validation": "rating",
       "sources": [
         [
@@ -1594,17 +1576,16 @@
     {
       "prefix": "radarr_remove_by_tag",
       "type": "mass_update",
+      "media_types": ["movie"],
       "accordion": "library",
-      "media_types": [
-        "movie"
-      ],
       "title": "Radarr Remove by Tag",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#radarr-remove-by-tag",
       "description": "Removes items from Radarr that are tagged with any of the specified tags.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter Radarr tag(s) to remove (e.g. holiday, classic)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Enter Radarr tag(s) to remove",
+      "custom_string_placeholder": "e.g. holiday, classic",
       "custom_string_behavior": "list",
       "yml_location": "attribute"
     },
@@ -1624,17 +1605,16 @@
     {
       "prefix": "sonarr_remove_by_tag",
       "type": "mass_update",
+      "media_types": ["show"],
       "accordion": "library",
-      "media_types": [
-        "show"
-      ],
       "title": "Sonarr Remove by Tag",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#sonarr-remove-by-tag",
       "description": "Removes items from Sonarr that are tagged with any of the specified tags.",
       "tooltip_variant": "info",
-      "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
-      "custom_string_placeholder": "Enter Sonarr tag(s) to remove (e.g. holiday, classic)",
+      "container_class": "border rounded p-3 mb-2",
+      "custom_string_label": "Enter Somarr tag(s) to remove",
+      "custom_string_placeholder": "e.g. holiday, classic",
       "custom_string_behavior": "list",
       "yml_location": "attribute"
     },

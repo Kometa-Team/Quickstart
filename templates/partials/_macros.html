@@ -1,7 +1,7 @@
 {% macro mass_update_section(
 library, data, version_info, prefix, title, wiki_url, description,
 sources=None, has_custom_string=False, custom_string_placeholder=None,
-custom_string_validation="string", tooltip_variant="info",
+custom_string_validation="string", custom_string_label="Custom String", tooltip_variant="info",
 container_class="border rounded p-3 mb-2", number_input=None
 ) %}
 <div class="{{ container_class }}">
@@ -62,7 +62,7 @@ container_class="border rounded p-3 mb-2", number_input=None
     <div class="row mb-3">
         <div class="col-12">
             <label class="form-label">
-                Custom Genre Strings
+                {{ custom_string_label }}
                 <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
                     title="Add a list of custom genres to apply to all items in the library. Add 1 genre at a time.">
                     <i class="bi bi-info-circle-fill"></i>
@@ -85,7 +85,7 @@ container_class="border rounded p-3 mb-2", number_input=None
     <div class="row mb-3">
         <div class="col-12">
             <label class="form-label">
-                Custom {{ title }} String
+                {{ custom_string_label }}
                 <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
                     title="Optional: A single custom string to append.">
                     <i class="bi bi-info-circle-fill"></i>
