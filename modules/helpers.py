@@ -157,18 +157,18 @@ def get_remote_version(branch):
 
 def get_branch():
     """Determine the current branch with Docker support."""
-    # ✅ If running in Docker, use the environment variable
+    # If running in Docker, use the environment variable
     if os.getenv("QUICKSTART_DOCKER", "False").lower() in ["true", "1"]:
         return os.getenv("BRANCH_NAME", "master")  # Use environment variable
 
-    # ✅ Otherwise, try GitPython (if available)
+    # Otherwise, try GitPython (if available)
     if Repo:
         try:
             return Repo(path=".").head.ref.name  # noqa
         except Exception:  # noqa
             pass  # Ignore errors if GitPython fails
 
-    # ✅ Fallback: Use BRANCH_NAME from the environment (for non-Docker cases)
+    # Fallback: Use BRANCH_NAME from the environment (for non-Docker cases)
     return os.getenv("BRANCH_NAME", "master")
 
 
@@ -268,25 +268,28 @@ def build_simple_dict(source, form_data):
 
         # Handle lists explicitly (e.g., asset_directory)
         if isinstance(value, list):
-            data[source][final_key] = value  # Retain lists as-is
+            data[source][final_key] = value
+        elif isinstance(value, dict):
+            # Keep valid nested dicts (like template_variables) untouched
+            data[source][final_key] = value
         else:
-            # Handle individual values
+            # Handle individual scalar values
             if value is not None and not isinstance(value, bool):
                 try:
-                    value = int(value)  # Convert numbers to integers
-                except ValueError:
-                    value = value.strip() if isinstance(value, str) else value  # Clean strings
+                    value = int(value)
+                except (ValueError, TypeError):
+                    value = value.strip() if isinstance(value, str) else value
 
-            # Assign the value to the appropriate place
+            # Assign the value to the appropriate key
             if final_key == "validated":
                 data[final_key] = value
             else:
                 data[source][final_key] = value
 
-    # Special handling for run_order to split and clean it into a list
+    # Handle run_order specially
     if "run_order" in data[source]:
         run_order = data[source]["run_order"]
-        if run_order is not None:
+        if run_order is not None and isinstance(run_order, str):
             run_order = [item.strip() for item in run_order.split() if item.strip()]
         else:
             run_order = ["operations", "metadata", "collections", "overlays"]

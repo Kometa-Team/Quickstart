@@ -58,7 +58,7 @@ container_class="border rounded p-3 mb-2", number_input=None
     {% endif %}
 
     {% if has_custom_string %}
-    {% if prefix == "mass_genre_update" %}
+    {% if prefix in ["mass_genre_update", "radarr_remove_by_tag", "sonarr_remove_by_tag"] %}
     <div class="row mb-3">
         <div class="col-12">
             <label class="form-label">
@@ -136,14 +136,26 @@ container_class="border rounded p-3 mb-2", number_input=None
 {% endmacro %}
 
 {% macro boolean_toggle_section(library, data, prefix, title, description, wiki, tooltip_variant="info",
-container_class="border rounded p-3 mb-2") %}
+container_class="border rounded p-3 mb-2", yml_location="attribute") %}
+
+{% set field_prefix =
+"template_variables" if yml_location == "template_variables" else
+"" if yml_location == "top_level" else
+"attribute" %}
+{% set full_id = library.id ~ "-" ~ (field_prefix ~ "_" if field_prefix) ~ prefix %}
+{% set full_name =
+library.id ~ "-" ~ (
+"attribute_template_variables[" ~ prefix ~ "]" if yml_location == "template_variables" else
+prefix if yml_location == "top_level" else
+"attribute_" ~ prefix
+)
+%}
 <div class="{{ container_class }}">
     <div class="form-check form-switch">
-        <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_{{ prefix }}"
-            name="{{ library.id }}-attribute_{{ prefix }}" value="true" {% if data.libraries[library.id ~ '-attribute_'
-            ~ prefix]|string|lower=='true' %}checked{% endif %}>
-        <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}" value="false">
-        <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}">
+        <input class="form-check-input" type="checkbox" id="{{ full_id }}" name="{{ full_name }}" value="true" {% if
+            data.libraries[full_name]|string|lower=='true' %}checked{% endif %}>
+        <input type="hidden" name="{{ full_name }}_hidden" value="false">
+        <label class="form-check-label" for="{{ full_id }}">
             <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
             <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
                 title="{{ description }}">
@@ -185,13 +197,24 @@ container_class="border rounded p-3 mb-2") %}
 </div>
 {% endmacro %}
 
-{% macro select_section(library, data, prefix, title, description, wiki, options, preview_image=False,
-tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
+{% macro select_section(library, data, prefix, title, description, wiki, options,
+preview_image=False, tooltip_variant="info", container_class="border rounded p-3 mb-2",
+yml_location="attribute") %}
+
+{# raw_prefix can contain brackets for name, but needs cleaning for id #}
+{% set raw_prefix =
+"template_variables[" ~ prefix ~ "]" if yml_location == "template_variables" else
+prefix if yml_location == "top_level" else
+"attribute_" ~ prefix
+%}
+
+{% set field_id = (library.id ~ "-" ~ raw_prefix).replace("[", "_").replace("]", "") %}
+{% set field_name = library.id ~ "-" ~ raw_prefix %}
 <div class="{{ container_class }}">
     <div class="row">
         <div class="col-md-6">
             <div class="input-group mb-2">
-                <span class="input-group-text" id="{{ library.id }}-attribute_{{ prefix }}_text">
+                <span class="input-group-text" id="{{ field_id }}_text">
                     <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
                     <span class="text-{{ tooltip_variant }}" data-bs-toggle="tooltip" data-bs-html="true"
                         style="margin-left: 10px;" aria-label="{{ description }}"
@@ -199,12 +222,9 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                         <i class="bi bi-info-circle-fill"></i>
                     </span>
                 </span>
-                <select class="form-select" id="{{ library.id }}-attribute_{{ prefix }}"
-                    name="{{ library.id }}-attribute_template_variables[{{ prefix }}]"
-                    aria-describedby="{{ library.id }}-attribute_{{ prefix }}_text" {% if preview_image
-                    %}data-preview="true" {% endif %}>
-                    {% set selected = data['libraries'].get(library.id ~ '-attribute_template_variables[' ~ prefix ~
-                    ']', '') %}
+                <select class="form-select" id="{{ field_id }}" name="{{ field_name }}"
+                    aria-describedby="{{ field_id }}_text" {% if preview_image %}data-preview="true" {% endif %}>
+                    {% set selected = data.libraries.get(field_name, '') %}
                     {% for value, label in options %}
                     <option value="{{ value }}" {% if selected==value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -213,8 +233,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
         </div>
         {% if preview_image %}
         <div class="col-md-6 d-flex align-items-center justify-content-center">
-            <div id="{{ library.id }}-separatorPreviewContainer">
-                <img id="{{ library.id }}-separatorPreviewImage" src="" alt="{{ library.id }} Separator Preview"
+            <div id="{{ field_id }}-separatorPreviewContainer">
+                <img id="{{ field_id }}-separatorPreviewImage" src="" alt="{{ field_id }} Separator Preview"
                     class="img-fluid" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
             </div>
         </div>
@@ -222,6 +242,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
     </div>
 </div>
 {% endmacro %}
+
 {% macro custom_toggle_number_section(library, data, prefix, title, wiki, description, toggles=[], number_input=None,
 tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
 <div class="{{ container_class }}">
@@ -344,10 +365,26 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
     </div>
 </div>
 {% endmacro %}
+
 {% macro toggle_with_select_section(library, data, prefix, title, wiki, description, toggles, select_input,
-tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
+tooltip_variant='info', container_class='border rounded p-3 mb-2', yml_location="attribute") %}
+
+{% set field_prefix =
+"template_variables" if yml_location == "template_variables" else
+"" if yml_location == "top_level" else
+"attribute" %}
+
+{% set select_id = library.id ~ "-" ~ (field_prefix ~ "_" if field_prefix) ~ select_input.key %}
+{% set select_name =
+library.id ~ "-" ~ (
+"attribute_template_variables[" ~ select_input.key ~ "]" if yml_location == "template_variables" else
+select_input.key if yml_location == "top_level" else
+"attribute_" ~ select_input.key
+)
+%}
+
 <div class="{{ container_class }}">
-    <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
+    <label class="form-check-label" for="{{ library.id }}-{{ field_prefix ~ '_' if field_prefix }}{{ prefix }}_header">
         <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
         <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
             aria-label="{{ description }}" data-bs-original-title="{{ description }}">
@@ -357,13 +394,20 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
 
     <div class="row mt-2">
         {% for toggle in toggles %}
+        {% set toggle_id = library.id ~ "-" ~ (field_prefix ~ "_" if field_prefix) ~ toggle.key %}
+        {% set toggle_name =
+        library.id ~ "-" ~ (
+        "attribute_template_variables[" ~ toggle.key ~ "]" if yml_location == "template_variables" else
+        toggle.key if yml_location == "top_level" else
+        "attribute_" ~ toggle.key
+        )
+        %}
         <div class="col-md-6 mb-2">
             <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="{{ library.id }}-attribute_{{ toggle.key }}"
-                    name="{{ library.id }}-attribute_{{ toggle.key }}" value="true" {% if data.libraries[library.id
-                    ~ '-attribute_' ~ toggle.key]|string|lower=='true' %}checked{% endif %}>
-                <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
-                <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle.key }}">
+                <input class="form-check-input" type="checkbox" id="{{ toggle_id }}" name="{{ toggle_name }}"
+                    value="true" {% if data.libraries[toggle_name]|string|lower=='true' %}checked{% endif %}>
+                <input type="hidden" name="{{ toggle_name }}" value="false">
+                <label class="form-check-label" for="{{ toggle_id }}">
                     {{ toggle.label }}
                     <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
                         title="{{ toggle.tooltip }}">
@@ -379,17 +423,16 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
     <div class="row mt-2">
         <div class="col-md-6 mb-2">
             <div class="input-group">
-                <span class="input-group-text" id="{{ library.id }}-attribute_{{ select_input.key }}_label">
+                <span class="input-group-text" id="{{ select_id }}_label">
                     {{ select_input.label }}
                     <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
                         title="{{ select_input.tooltip }}">
                         <i class="bi bi-info-circle-fill"></i>
                     </span>
                 </span>
-                <select class="form-select" id="{{ library.id }}-attribute_{{ select_input.key }}"
-                    name="{{ library.id }}-attribute_{{ select_input.key }}"
-                    aria-describedby="{{ library.id }}-attribute_{{ select_input.key }}_label">
-                    {% set selected = data['libraries'].get(library.id ~ '-attribute_' ~ select_input.key, '') %}
+                <select class="form-select" id="{{ select_id }}" name="{{ select_name }}"
+                    aria-describedby="{{ select_id }}_label">
+                    {% set selected = data.libraries.get(select_name, '') %}
                     {% for value, label in select_input.options %}
                     <option value="{{ value }}" {% if selected==value %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
@@ -414,7 +457,13 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
     <!-- Path input -->
     <div class="row mt-2 mb-3">
         <div class="col-12">
-            <label class="form-label">Path to Metadata Backup File</label>
+            <label class="form-label">
+                Path to Metadata Backup File
+                <span class="text-{{ section.tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="{{ section.text_input.tooltip }}">
+                    <i class="bi bi-info-circle-fill"></i>
+                </span>
+            </label>
             <input type="text" class="form-control" id="{{ library.id }}-attribute_{{ section.prefix }}_path"
                 name="{{ library.id }}-attribute_{{ section.prefix }}_path"
                 value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix ~ '_path'] | default('') }}"
@@ -422,14 +471,26 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
         </div>
     </div>
 
-    <!-- Exclude list -->
+    <!-- Exclude list using add/remove dynamic UI -->
     <div class="row mb-3">
         <div class="col-12">
-            <label class="form-label">Exclude Metadata Fields</label>
-            <textarea class="form-control" id="{{ library.id }}-attribute_{{ section.prefix }}_exclude"
-                name="{{ library.id }}-attribute_{{ section.prefix }}_exclude" rows="2"
-                placeholder="{{ section.custom_string_list.placeholder }}">{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix ~ '_exclude'] | default('') }}</textarea>
-            <div class="form-text">{{ section.custom_string_list.tooltip }}</div>
+            <label class="form-label">
+                Exclude Metadata Fields
+                <span class="text-{{ section.tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="{{ section.custom_string_list.tooltip }}">
+                    <i class="bi bi-info-circle-fill"></i>
+                </span>
+            </label>
+            <div class="input-group mb-2">
+                <input type="text" class="form-control" id="{{ library.id }}-{{ section.prefix }}_custom_input"
+                    placeholder="{{ section.custom_string_list.placeholder }}">
+                <button class="btn nav-button" type="button"
+                    id="{{ library.id }}-{{ section.prefix }}_custom_add">Add</button>
+            </div>
+            <ul class="list-group mb-2" id="{{ library.id }}-{{ section.prefix }}_custom_list"></ul>
+            <input type="hidden" name="{{ library.id }}-attribute_{{ section.prefix }}_exclude"
+                id="{{ library.id }}-{{ section.prefix }}_custom_hidden"
+                value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix ~ '_exclude'] | default('[]') }}">
         </div>
     </div>
 

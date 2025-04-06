@@ -178,7 +178,7 @@ def generate_preview():
 
     if not selected_image or selected_image == "default":
         if os.path.exists(default_image_path):
-            base_image_path = default_image_path  # ✅ Use existing `default.png`
+            base_image_path = default_image_path  # Use existing `default.png`
         else:
             base_image_path = os.path.join(PREVIEW_FOLDER, "default.png")
 
@@ -442,7 +442,7 @@ def step(name):
         persistence.save_settings(request.referrer, request.form)
         header_style = request.form.get("header_style", "standard")
 
-    # ✅ Call `refresh_plex_libraries()` BEFORE retrieving Plex settings
+    # Call `refresh_plex_libraries()` BEFORE retrieving Plex settings
     refresh_plex_libraries()
 
     # Retrieve available fonts (ensuring "none" and "single line" are always included)
@@ -517,7 +517,7 @@ def step(name):
     page_info["prev_page"] = item["prev"]
 
     try:
-        # ✅ Only split if the value is not None or empty
+        # Only split if the value is not None or empty
         if page_info["next_page"]:
             next_num = page_info["next_page"].split("-")[0]
             page_info["next_page_name"] = template_list.get(next_num, {}).get("name", "Next")
@@ -721,40 +721,40 @@ def validate_plex():
 @app.route("/refresh_plex_libraries", methods=["POST"])
 def refresh_plex_libraries():
     try:
-        # ✅ Get stored Plex credentials from DB
+        # Get stored Plex credentials from DB
         config_name = session.get("config_name")  # Ensure the session has config_name
         if not config_name:
             return jsonify({"valid": False, "error": "Missing config_name"}), 400
 
         plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")  # Fetch from DB
 
-        # ✅ Load default values from config.yml.template
+        # Load default values from config.yml.template
         dummy_plex_config = persistence.get_dummy_data("plex")  # Retrieves {"url": "...", "token": "..."}
         default_plex_url = dummy_plex_config.get("url", "")
         default_plex_token = dummy_plex_config.get("token", "")
 
-        # ✅ Exit early if the Plex credentials are still using default placeholder values
+        # Exit early if the Plex credentials are still using default placeholder values
         if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
             return jsonify({"valid": False, "error": "Plex credentials are using default placeholder values"}), 400
 
-        # ✅ Fetch latest libraries from Plex
+        # Fetch latest libraries from Plex
         plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
 
-        # ✅ Fix: Convert Flask response object to JSON before accessing data.
+        # Fix: Convert Flask response object to JSON before accessing data.
         if isinstance(plex_response, Flask.response_class):
-            plex_data = plex_response.get_json()  # ✅ Extract JSON data correctly
+            plex_data = plex_response.get_json()  # Extract JSON data correctly
         else:
             plex_data = plex_response  # If already a dict, use as-is
 
         if not plex_data.get("validated"):
             return jsonify({"valid": False, "error": "Plex validation failed"}), 500
 
-        # ✅ Extract new library data
+        # Extract new library data
         updated_movie_libraries = plex_data.get("movie_libraries", [])
         updated_show_libraries = plex_data.get("show_libraries", [])
         updated_music_libraries = plex_data.get("music_libraries", [])
 
-        # ✅ Update the DB with the latest libraries
+        # Update the DB with the latest libraries
         persistence.update_stored_plex_libraries(
             "010-plex",
             updated_movie_libraries,

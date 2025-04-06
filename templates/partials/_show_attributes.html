@@ -2,7 +2,7 @@
 
 <p>Configure various attributes for show collections.</p>
 
-<!-- 🔹 Accordion: Separators -->
+<!-- Accordion: Separators -->
 <div class="accordion mt-3" id="{{ library.id }}-separatorsAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
@@ -27,7 +27,8 @@
         section.options,
         preview_image=true,
         tooltip_variant=section.tooltip_variant,
-        container_class=section.container_class
+        container_class=section.container_class,
+        yml_location=section.yml_location
         ) }}
         {% endfor %}
       </div>
@@ -35,7 +36,7 @@
   </div>
 </div>
 
-<!-- 🔹 Accordion: Overlay Operations -->
+<!-- Accordion: Overlay Operations -->
 <div class="accordion mt-3" id="{{ library.id }}-overlayOperationsAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
@@ -60,7 +61,8 @@
         section.wiki,
         section.options,
         tooltip_variant=section.tooltip_variant,
-        container_class=section.container_class
+        container_class=section.container_class,
+        yml_location=section.yml_location
         ) }}
         {% elif section.type == 'boolean_toggle' %}
         {{ macros.boolean_toggle_section(
@@ -71,7 +73,8 @@
         section.description,
         section.wiki,
         tooltip_variant=section.tooltip_variant,
-        container_class=section.container_class
+        container_class=section.container_class,
+        yml_location=section.yml_location
         ) }}
         {% endif %}
         {% endfor %}
@@ -92,7 +95,7 @@
   </div>
 </div>
 
-<!-- 🔹 Accordion: Library Operations -->
+<!-- Accordion: Library Operations -->
 <div class="accordion mt-3" id="{{ library.id }}-libraryOperationsAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
@@ -134,7 +137,8 @@
         section.description,
         section.wiki,
         tooltip_variant=section.tooltip_variant,
-        container_class=section.container_class
+        container_class=section.container_class,
+        yml_location=section.yml_location
         ) }}
         {% elif section.type == 'toggle_group' %}
         {{ macros.toggle_group_section(
@@ -174,7 +178,8 @@
         section.toggles,
         section.select_input,
         section.tooltip_variant or "info",
-        section.container_class or "border rounded p-3 mb-2"
+        section.container_class or "border rounded p-3 mb-2",
+        yml_location=section.yml_location
         ) }}
 
         {% elif section.type == 'select' %}
@@ -187,7 +192,8 @@
         section.wiki,
         section.options,
         tooltip_variant=section.tooltip_variant,
-        container_class=section.container_class
+        container_class=section.container_class,
+        yml_location=section.yml_location
         ) }}
         {% endif %}
         {% endfor %}

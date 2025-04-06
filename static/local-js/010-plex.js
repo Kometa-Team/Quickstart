@@ -18,7 +18,7 @@ $(document).ready(function () {
     plexDbCache.style.display = 'block'
   }
 
-  // 🔥 Set initial visibility based on token value
+  // Set initial visibility based on token value
   if (plexTokenInput.value.trim() === '') {
     plexTokenInput.setAttribute('type', 'text') // Show placeholder text
     toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Set eye-slash icon

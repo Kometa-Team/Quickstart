@@ -66,6 +66,8 @@ def build_libraries_section(
     show_attributes,
     movie_templates,
     show_templates,
+    movie_top_level,
+    show_top_level,
 ):
     libraries_section = {}
 
@@ -77,6 +79,7 @@ def build_libraries_section(
         overlays,
         attributes,
         templates,
+        top_level,
     ):
         """Processes a single library and adds valid data to the output."""
         entry = {}
@@ -86,7 +89,7 @@ def build_libraries_section(
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Processing Library: {library_key} -> {library_name}")
 
-        # ✅ Process Operations Attributes
+        # Process Operations Attributes
         operations_fields = [
             "assets_for_all",
             "mass_imdb_parental_labels",
@@ -241,12 +244,12 @@ def build_libraries_section(
             if value not in [None, "", False]:
                 operations[field] = value
 
-        # ✅ Handle nested delete_collections block
+        # Handle nested delete_collections block
         delete_fields = [
             "delete_collections_configured",
             "delete_collections_managed",
             "delete_collections_less",
-            "ignore_empty_smart_collections",
+            "delete_collections_ignore_empty_smart_collections",
         ]
         delete_collections = {}
         for df in delete_fields:
@@ -262,7 +265,7 @@ def build_libraries_section(
         if operations:
             entry["operations"] = operations
 
-        # ✅ Process Collections
+        # Process Collections
         collection_key = helpers.extract_library_name(library_key)
         if collection_key and collection_key in collections:
             collection_files = [
@@ -277,7 +280,7 @@ def build_libraries_section(
             if collection_files:
                 entry["collection_files"] = collection_files
 
-        # ✅ Process Overlays
+        # Process Overlays
         overlay_key = helpers.extract_library_name(library_key)
         if overlay_key and overlay_key in overlays:
             overlay_files = []
@@ -298,7 +301,7 @@ def build_libraries_section(
             if overlay_files:
                 entry["overlay_files"] = overlay_files
 
-        # ✅ Template Variables
+        # Template Variables
         template_key = helpers.extract_library_name(library_key)
         template_data = templates.get(template_key, {})
         sep_color_key = None
@@ -315,20 +318,135 @@ def build_libraries_section(
             template_vars["sep_style"] = sep_color
         entry["template_variables"] = template_vars
 
-        # ✅ Remove/Reset Overlays
-        if library_name in attributes:
-            remove_overlays = attributes[library_name].get(
-                f"{library_type}-library_{library_name}-attribute_remove_overlays",
-                False,
-            )
-            reset_overlays = attributes[library_name].get(
-                f"{library_type}-library_{library_name}-attribute_reset_overlays"
-            )
+        # Grouped mass update operations (excluding mass_genre_update, handled earlier)
+        grouped_operations = [
+            "mass_content_rating_update", "mass_original_title_update",
+            "mass_studio_update", "mass_tagline_update", "mass_originally_available_update",
+            "mass_added_at_update", "mass_audience_rating_update", "mass_critic_rating_update",
+            "mass_user_rating_update", "mass_background_update", "mass_poster_update",
+            "radarr_remove_by_tag", "sonarr_remove_by_tag",
+        ]
 
-            if remove_overlays:
-                entry["remove_overlays"] = True
-            if reset_overlays not in [None, "None", ""]:
-                entry["reset_overlays"] = reset_overlays
+        for op in grouped_operations:
+            custom_list_key = f"{library_type}-library_{lib_id}-attribute_{op}_custom"
+            custom_string_key = f"{library_type}-library_{lib_id}-attribute_{op}_custom_string"
+            order_key = f"{library_type}-library_{lib_id}-attribute_{op}_order"
+
+            op_values = []
+
+            # 1. Ordered source list (sortable)
+            order_value = attr_group.get(order_key)
+            if order_value:
+                try:
+                    parsed = json.loads(order_value)
+                    if isinstance(parsed, list):
+                        for item in parsed:
+                            if isinstance(item, (int, float)):
+                                op_values.append(item)
+                            elif isinstance(item, str) and item.strip():
+                                # Preserve valid date strings (e.g. "2023-01-01")
+                                op_values.append(item.strip())
+                except Exception as e:
+                    print(f"[DEBUG] Skipping invalid JSON in {op}_order: {order_value} — {e}")
+
+            # 2. Custom list (JSON array from UI)
+            custom_list_value = attr_group.get(custom_list_key)
+            if custom_list_value:
+                try:
+                    parsed_custom = json.loads(custom_list_value)
+                    if isinstance(parsed_custom, list):
+                        for item in parsed_custom:
+                            if isinstance(item, (int, float)):
+                                op_values.append(item)
+                            elif isinstance(item, str) and item.strip():
+                                op_values.append(item.strip())
+                except Exception as e:
+                    print(f"[DEBUG] Skipping invalid JSON in {op}_custom: {custom_list_value} — {e}")
+
+            # 3. Fallback to single custom string (if defined)
+            elif custom_string_key in attr_group:
+                raw_value = attr_group.get(custom_string_key)
+                if isinstance(raw_value, str) and raw_value.strip():
+                    if op in ["mass_critic_rating_update", "mass_user_rating_update", "mass_audience_rating_update"]:
+                        try:
+                            op_values.append(float(raw_value.strip()))
+                        except ValueError:
+                            pass  # Invalid float, skip
+                    else:
+                        op_values.append(raw_value.strip())
+                elif isinstance(raw_value, (int, float)):
+                    op_values.append(raw_value)
+
+            # 4. Output formatting
+            if op_values:
+                seq = CommentedSeq(op_values)
+                seq.fa.set_block_style()
+                operations[op] = seq
+
+        # metadata_backup
+        backup = {}
+        path_key = f"{library_type}-library_{lib_id}-attribute_metadata_backup_path"
+        exclude_key = f"{library_type}-library_{lib_id}-attribute_metadata_backup_exclude"
+        sync_key = f"{library_type}-library_{lib_id}-attribute_sync_tags"
+        blank_key = f"{library_type}-library_{lib_id}-attribute_add_blank_entries"
+
+        if attr_group.get(exclude_key):
+            val = attr_group.get(exclude_key)
+            try:
+                parsed = json.loads(val) if isinstance(val, str) else val
+                if isinstance(parsed, list):
+                    backup["exclude"] = parsed
+            except Exception as e:
+                print(f"[DEBUG] Skipping invalid exclude value: {val} — {e}")
+        if attr_group.get(sync_key) is True:
+            backup["sync_tags"] = True
+        if attr_group.get(blank_key) is True:
+            backup["add_blank_entries"] = True
+
+        if backup:
+            operations["metadata_backup"] = backup
+
+        # mass_poster_update
+        poster = {}
+        for key in ["seasons", "episodes", "ignore_locked", "ignore_overlays", "source"]:
+            full_key = f"{library_type}-library_{lib_id}-attribute_mass_poster_{key}"
+            val = attr_group.get(full_key)
+            if val not in [None, False, ""]:
+                poster[key] = val
+        if poster:
+            operations["mass_poster_update"] = poster
+
+        # mass_background_update
+        background = {}
+        for key in ["seasons", "episodes", "ignore_locked", "source"]:
+            full_key = f"{library_type}-library_{lib_id}-attribute_mass_background_{key}"
+            val = attr_group.get(full_key)
+            if val not in [None, False, ""]:
+                background[key] = val
+        if background:
+            operations["mass_background_update"] = background
+
+        # Remove/Reset Overlays
+        top_group = top_level.get(lib_id, {})
+
+        remove_key = f"{library_type}-library_{lib_id}-top_level_remove_overlays"
+        reset_key = f"{library_type}-library_{lib_id}-top_level_reset_overlays"
+
+        remove_overlays = top_group.get(remove_key)
+        reset_overlays = top_group.get(reset_key)
+
+        if app.config["QS_DEBUG"]:
+            print(f"[DEBUG] Top Level for {lib_id}: {top_group}")
+            print(f"[DEBUG] {remove_key} = {remove_overlays}")
+            print(f"[DEBUG] {reset_key} = {reset_overlays}")
+
+        if remove_overlays:
+            entry["remove_overlays"] = True
+        if reset_overlays not in [None, "None", ""]:
+            entry["reset_overlays"] = reset_overlays
+
+        if operations:
+            entry["operations"] = operations
 
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Entry for {library_name}: {entry}")
@@ -347,6 +465,7 @@ def build_libraries_section(
             movie_overlays,
             movie_attributes,
             movie_templates,
+            movie_top_level,
         )
 
     # Process show libraries
@@ -359,6 +478,7 @@ def build_libraries_section(
             show_overlays,
             show_attributes,
             show_templates,
+            show_top_level,
         )
 
     if app.config["QS_DEBUG"]:
@@ -373,38 +493,73 @@ def build_libraries_section(
 def reorder_library_section(library_data):
     """
     Reorders library data so that:
-    - `template_variables` appears just below the library name.
-    - `remove_overlays` and `reset_overlays` appear above `overlay_files`.
-    - Other keys remain in their default order.
+    - `template_variables` appears right after the library name.
+    - `remove_overlays` and `reset_overlays` come next.
+    - Keys inside `operations` are ordered as per Kometa Wiki.
+    - Other keys retain their natural order.
     """
     reordered_data = {}
 
-    # Ensure template_variables is placed first (if it exists)
-    if "template_variables" in library_data:
-        reordered_data["template_variables"] = library_data["template_variables"]
-
-    # Add all remaining keys except overlay_files (keep existing order)
-    for key, value in library_data.items():
-        if key not in [
-            "template_variables",
-            "remove_overlays",
-            "reset_overlays",
-            "overlay_files",
-        ]:
-            reordered_data[key] = value
-
-    # Ensure remove_overlays and reset_overlays appear before overlay_files
+    # Ensure remove/reset overlays come first
     if "remove_overlays" in library_data:
         reordered_data["remove_overlays"] = library_data["remove_overlays"]
     if "reset_overlays" in library_data:
         reordered_data["reset_overlays"] = library_data["reset_overlays"]
 
-    # Finally, add overlay_files at the correct position
-    if "overlay_files" in library_data:
-        reordered_data["overlay_files"] = library_data["overlay_files"]
+    # Ensure template_variables is placed second (if it exists)
+    if "template_variables" in library_data:
+        reordered_data["template_variables"] = library_data["template_variables"]
+
+    # Reorder operations per official Kometa Wiki order
+    operations_order = [
+        "assets_for_all",
+        "delete_collections",
+        "mass_genre_update",
+        "mass_content_rating_update",
+        "mass_original_title_update",
+        "mass_studio_update",
+        "mass_originally_available_update",
+        "mass_added_at_update",
+        "mass_audience_rating_update",
+        "mass_critic_rating_update",
+        "mass_user_rating_update",
+        "mass_episode_audience_rating_update",
+        "mass_episode_critic_rating_update",
+        "mass_episode_user_rating_update",
+        "mass_poster_update",
+        "mass_background_update",
+        "mass_imdb_parental_labels",
+        "mass_collection_mode",
+        "update_blank_track_titles",
+        "remove_title_parentheses",
+        "split_duplicates",
+        "radarr_add_all",
+        "radarr_remove_by_tag",
+        "sonarr_add_all",
+        "sonarr_remove_by_tag",
+        "genre_mapper",
+        "content_rating_mapper",
+        "metadata_backup",
+    ]
+
+    if "operations" in library_data:
+        ordered_ops = {}
+        ops = library_data["operations"]
+        for key in operations_order:
+            if key in ops:
+                ordered_ops[key] = ops[key]
+        # Include any unknown keys at the end
+        for k, v in ops.items():
+            if k not in ordered_ops:
+                ordered_ops[k] = v
+        reordered_data["operations"] = ordered_ops
+
+    # Finally, add remaining keys (e.g., collection_files, overlay_files)
+    for key, value in library_data.items():
+        if key not in reordered_data:
+            reordered_data[key] = value
 
     return reordered_data
-
 
 def build_config(header_style="standard", config_name=None):
     """
@@ -426,12 +581,12 @@ def build_config(header_style="standard", config_name=None):
             header_art[config_attribute] = ""  # No headers at all
         elif (
             header_style == "single line"
-        ):  # 🔥 Standardizes "single line" as divider format
+        ):  # Standardizes "single line" as divider format
             header_art[config_attribute] = (
                 "#==================== " + item["name"] + " ====================#"
             )
         else:
-            # 🔥 Handle custom PyFiglet fonts dynamically (including "standard")
+            # Handle custom PyFiglet fonts dynamically (including "standard")
             try:
                 figlet_text = pyfiglet.figlet_format(item["name"], font=header_style)
                 header_art[config_attribute] = add_border_to_ascii_art(figlet_text)
@@ -500,7 +655,7 @@ def build_config(header_style="standard", config_name=None):
 
         # Handle case where `webhooks` is nested inside itself
         if isinstance(webhooks_data, dict) and "webhooks" in webhooks_data:
-            webhooks_data = webhooks_data["webhooks"]  # 🔥 Fix: Handle extra nesting
+            webhooks_data = webhooks_data["webhooks"]  # Fix: Handle extra nesting
 
         # Remove empty values
         cleaned_webhooks = {
@@ -513,7 +668,7 @@ def build_config(header_style="standard", config_name=None):
         if cleaned_webhooks:
             config_data["webhooks"] = {
                 "webhooks": cleaned_webhooks
-            }  # 🔥 Preserve webhooks key
+            }  # Preserve webhooks key
         else:
             config_data.pop("webhooks", None)  # 🚀 Fully remove empty webhooks
 
@@ -580,6 +735,8 @@ def build_config(header_style="standard", config_name=None):
         show_attributes = group_by_library("attribute_", show_library_names)
         movie_templates = group_by_library("template_variables", movie_library_names)
         show_templates = group_by_library("template_variables", show_library_names)
+        movie_top_level = group_by_library("top_level_", movie_library_names)
+        show_top_level = group_by_library("top_level_", show_library_names)
 
         # Debugging
         if app.config["QS_DEBUG"]:
@@ -593,6 +750,8 @@ def build_config(header_style="standard", config_name=None):
             print(f"[DEBUG] Extracted Show Attributes: {show_attributes}")
             print(f"[DEBUG] Extracted Movie Templates: {movie_templates}")
             print(f"[DEBUG] Extracted Show Templates: {show_templates}")
+            print(f"[DEBUG] Extracted Movie Top Level: {movie_top_level}")
+            print(f"[DEBUG] Extracted Show Top Level: {show_top_level}")
 
         # Build nested libraries structure
         libraries_section = build_libraries_section(
@@ -606,6 +765,8 @@ def build_config(header_style="standard", config_name=None):
             show_attributes,
             movie_templates,
             show_templates,
+            movie_top_level,
+            show_top_level,
         )
         config_data["libraries"] = libraries_section
         if app.config["QS_DEBUG"]:
@@ -735,7 +896,7 @@ def build_config(header_style="standard", config_name=None):
     # Ensure `code_verifier` is removed from mal.authorization (wherever it exists)
     if "mal" in config_data and "mal" in config_data["mal"]:
         authorization_data = config_data["mal"]["mal"].get("authorization", {})
-        authorization_data.pop("code_verifier", None)  # ✅ Remove safely
+        authorization_data.pop("code_verifier", None)  # Remove safely
 
     # Apply enforce_string_fields to ensure proper formatting
     config_data = helpers.enforce_string_fields(config_data, helpers.STRING_FIELDS)

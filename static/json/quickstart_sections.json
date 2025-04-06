@@ -107,10 +107,11 @@
           "Tan"
         ]
       ],
-      "preview_image": true
+      "preview_image": true,
+      "yml_location": "template_variables"
     },
     {
-      "prefix": "remove_overlays",
+      "prefix": "top_level_remove_overlays",
       "type": "boolean_toggle",
       "accordion": "overlays",
       "media_types": [
@@ -121,10 +122,11 @@
       "wiki": "https://kometa.wiki/en/nightly/config/libraries/#remove-overlays",
       "description": "Remove Overlays will remove all overlays from your library. This toggle will take priority over any previous selections.",
       "tooltip_variant": "info",
-      "container_class": ""
+      "container_class": "",
+      "yml_location": "top_level"
     },
     {
-      "prefix": "reset_overlays",
+      "prefix": "top_level_reset_overlays",
       "type": "select",
       "accordion": "overlays",
       "media_types": [
@@ -149,7 +151,8 @@
           "plex",
           "Plex"
         ]
-      ]
+      ],
+      "yml_location": "top_level"
     },
     {
       "prefix": "assets_for_all",
@@ -162,13 +165,17 @@
       "title": "Assets for All",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#assets-for-all",
       "description": "Searches asset directories for images for all items in the library.",
-      "tooltip_variant": "info"
+      "tooltip_variant": "info",
+      "yml_location": "attribute"
     },
     {
       "prefix": "delete_collections",
       "type": "toggle_with_number",
       "accordion": "library",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Delete Collections",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#delete-collections",
       "description": "Deletes collections based on a set of given attributes. The Collection must match all set attributes to be deleted.",
@@ -186,7 +193,7 @@
           "tooltip": "When enabled: Only collections <strong>defined in the current config file</strong> will be eligible for deletion."
         },
         {
-          "key": "ignore_empty_smart_collections",
+          "key": "delete_collections_ignore_empty_smart_collections",
           "label": "Ignore Empty Smart Collections",
           "tooltip": "When enabled: Excludes empty smart collections from being affected by the <code>less</code> item count check. This allows retaining things like smart collections that show movies without subtitles or the like."
         }
@@ -196,7 +203,8 @@
         "label": "Less Than (item count)",
         "tooltip": "Only collections with <strong>fewer than this number of items</strong> will be deleted. Optional value which if undefined means collections will be deleted regardless of how many items they have.",
         "min": 1
-      }
+      },
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_genre_update",
@@ -215,23 +223,88 @@
       "custom_string_placeholder": "Enter custom genre (e.g. Thriller)",
       "custom_string_behavior": "list",
       "sources": [
-        ["tmdb", "Use TMDb for Genres", "Fetch genres from <b>TMDb</b>. Recommended for most media types."],
-        ["tvdb", "Use TVDb for Genres", "Fetch genres from <b>TVDb</b>. Alternative for TV content."],
-        ["imdb", "Use IMDb for Genres", "Fetch genres directly from <b>IMDb</b>."],
-        ["omdb", "Use IMDb through OMDb for Genres", "Fetch genres via <b>OMDb API</b> (IMDb-backed)."],
-        ["anidb", "Use AniDB Main Tags for Genres", "Use only <b>Main Tags</b> from AniDB."],
-        ["anidb_3_0", "AniDB Main Tags & 3★+", "AniDB Main Tags and all <b>3-star and higher</b> tags."],
-        ["anidb_2_5", "AniDB Main Tags & 2.5★+", "AniDB Main Tags and all <b>2.5-star and higher</b> tags."],
-        ["anidb_2_0", "AniDB Main Tags & 2★+", "AniDB Main Tags and all <b>2-star and higher</b> tags."],
-        ["anidb_1_5", "AniDB Main Tags & 1.5★+", "AniDB Main Tags and all <b>1.5-star and higher</b> tags."],
-        ["anidb_1_0", "AniDB Main Tags & 1★+", "AniDB Main Tags and all <b>1-star and higher</b> tags."],
-        ["anidb_0_5", "AniDB Main Tags & 0.5★+", "AniDB Main Tags and all <b>0.5-star and higher</b> tags."],
-        ["mal", "Use MyAnimeList for Genres", "Fetch genres from <b>MyAnimeList</b> (MAL)."],
-        ["lock", "Lock all Genre Field", "Prevent genre field from being modified after this operation."],
-        ["unlock", "Unlock all Genre Field", "Allow genre field to be modified after this operation."],
-        ["remove", "Remove all Genres and Lock all Field", "Clear all genres and <b>lock</b> the field."],
-        ["reset", "Remove all Genres and Unlock all Field", "Clear all genres and <b>unlock</b> the field."]
-      ]
+        [
+          "tmdb",
+          "Use TMDb for Genres",
+          "Fetch genres from <b>TMDb</b>. Recommended for most media types."
+        ],
+        [
+          "tvdb",
+          "Use TVDb for Genres",
+          "Fetch genres from <b>TVDb</b>. Alternative for TV content."
+        ],
+        [
+          "imdb",
+          "Use IMDb for Genres",
+          "Fetch genres directly from <b>IMDb</b>."
+        ],
+        [
+          "omdb",
+          "Use IMDb through OMDb for Genres",
+          "Fetch genres via <b>OMDb API</b> (IMDb-backed)."
+        ],
+        [
+          "anidb",
+          "Use AniDB Main Tags for Genres",
+          "Use only <b>Main Tags</b> from AniDB."
+        ],
+        [
+          "anidb_3_0",
+          "AniDB Main Tags & 3\u2605+",
+          "AniDB Main Tags and all <b>3-star and higher</b> tags."
+        ],
+        [
+          "anidb_2_5",
+          "AniDB Main Tags & 2.5\u2605+",
+          "AniDB Main Tags and all <b>2.5-star and higher</b> tags."
+        ],
+        [
+          "anidb_2_0",
+          "AniDB Main Tags & 2\u2605+",
+          "AniDB Main Tags and all <b>2-star and higher</b> tags."
+        ],
+        [
+          "anidb_1_5",
+          "AniDB Main Tags & 1.5\u2605+",
+          "AniDB Main Tags and all <b>1.5-star and higher</b> tags."
+        ],
+        [
+          "anidb_1_0",
+          "AniDB Main Tags & 1\u2605+",
+          "AniDB Main Tags and all <b>1-star and higher</b> tags."
+        ],
+        [
+          "anidb_0_5",
+          "AniDB Main Tags & 0.5\u2605+",
+          "AniDB Main Tags and all <b>0.5-star and higher</b> tags."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList for Genres",
+          "Fetch genres from <b>MyAnimeList</b> (MAL)."
+        ],
+        [
+          "lock",
+          "Lock all Genre Field",
+          "Prevent genre field from being modified after this operation."
+        ],
+        [
+          "unlock",
+          "Unlock all Genre Field",
+          "Allow genre field to be modified after this operation."
+        ],
+        [
+          "remove",
+          "Remove all Genres and Lock all Field",
+          "Clear all genres and <b>lock</b> the field."
+        ],
+        [
+          "reset",
+          "Remove all Genres and Unlock all Field",
+          "Clear all genres and <b>unlock</b> the field."
+        ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_content_rating_update",
@@ -294,7 +367,8 @@
           "Remove Content Rating and Unlock Field",
           "Clear content rating and unlock the field."
         ]
-      ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_original_title_update",
@@ -357,7 +431,8 @@
           "Remove Original Title and Unlock Field",
           "Clear original title and unlock the field."
         ]
-      ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_studio_update",
@@ -376,24 +451,9 @@
       "custom_string_placeholder": "Enter custom studio string (e.g. Indie)",
       "sources": [
         [
-          "tmdb",
-          "Use TMDb",
-          "Fetch studio from <b>TMDb</b>."
-        ],
-        [
-          "tvdb",
-          "Use TVDb",
-          "Fetch studio from <b>TVDb</b>."
-        ],
-        [
-          "imdb",
-          "Use IMDb",
-          "Fetch studio from <b>IMDb</b>."
-        ],
-        [
-          "omdb",
-          "Use OMDb",
-          "Fetch studio from <b>OMDb</b> (IMDb API)."
+          "anidb",
+          "Use AniDB",
+          "Fetch studio from <b>AniDB</b>."
         ],
         [
           "mal",
@@ -401,9 +461,9 @@
           "Fetch studio from <b>MyAnimeList</b>."
         ],
         [
-          "anidb",
-          "Use AniDB",
-          "Fetch studio from <b>AniDB</b>."
+          "tmdb",
+          "Use TMDb",
+          "Fetch studio from <b>TMDb</b>."
         ],
         [
           "lock",
@@ -425,7 +485,8 @@
           "Remove Studio and Unlock Field",
           "Clear studio value and unlock the field."
         ]
-      ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_originally_available_update",
@@ -455,24 +516,29 @@
           "Fetch the originally available date from <b>TVDb</b>."
         ],
         [
-          "imdb",
-          "Use IMDb",
-          "Fetch the originally available date from <b>IMDb</b>."
-        ],
-        [
           "omdb",
-          "Use OMDb",
+          "Use IMDb Release Date through OMDb",
           "Fetch the originally available date from <b>OMDb</b> (IMDb API)."
         ],
         [
-          "mal",
-          "Use MyAnimeList",
-          "Fetch the originally available date from <b>MyAnimeList</b>."
+          "mdb",
+          "Use Use MDBList Release Date",
+          "Fetch the originally available date from <b>MDBList</b>."
+        ],
+        [
+          "mdb_digital",
+          "Use Use MDBList Digital Release Date",
+          "Fetch the originally available digital release date from <b>MDBList</b>."
         ],
         [
           "anidb",
           "Use AniDB",
           "Fetch the originally available date from <b>AniDB</b>."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList",
+          "Fetch the originally available date from <b>MyAnimeList</b>."
         ],
         [
           "lock",
@@ -494,7 +560,8 @@
           "Remove Date and Unlock Field",
           "Clear the originally available date and unlock the field."
         ]
-      ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_added_at_update",
@@ -514,46 +581,62 @@
       "custom_string_validation": "date",
       "sources": [
         [
-          "originallyAvailable",
-          "Use Originally Available Date",
-          "Use the <b>Originally Available</b> date as the Added At date."
+          "tmdb",
+          "Use TMDb",
+          "Fetch the originally available date from <b>TMDb</b>."
         ],
         [
-          "added",
-          "Use Date Added to Plex",
-          "Use the date the item was <b>actually added to Plex</b>."
+          "tvdb",
+          "Use TVDb",
+          "Fetch the originally available date from <b>TVDb</b>."
+        ],
+        [
+          "omdb",
+          "Use IMDb Release Date through OMDb",
+          "Fetch the originally available date from <b>OMDb</b> (IMDb API)."
+        ],
+        [
+          "mdb",
+          "Use Use MDBList Release Date",
+          "Fetch the originally available date from <b>MDBList</b>."
+        ],
+        [
+          "mdb_digital",
+          "Use Use MDBList Digital Release Date",
+          "Fetch the originally available digital release date from <b>MDBList</b>."
         ],
         [
           "anidb",
-          "Use AniDB Air Date",
-          "Use the <b>air date</b> from AniDB."
+          "Use AniDB",
+          "Fetch the originally available date from <b>AniDB</b>."
         ],
         [
           "mal",
-          "Use MyAnimeList Air Date",
-          "Use the <b>air date</b> from MyAnimeList (MAL)."
+          "Use MyAnimeList",
+          "Fetch the originally available date from <b>MyAnimeList</b>."
         ],
         [
           "lock",
-          "Lock Added At Field",
-          "Prevent future changes to the <code>added_at</code> field."
+          "Lock Date Field",
+          "Prevent the originally available date from being modified after this operation."
         ],
         [
           "unlock",
-          "Unlock Added At Field",
-          "Allow future changes to the <code>added_at</code> field."
+          "Unlock Date Field",
+          "Allow future updates to the originally available date field."
         ],
         [
           "remove",
-          "Remove Added At and Lock Field",
-          "Clear the added at date and lock the field."
+          "Remove Date and Lock Field",
+          "Clear the originally available date and lock the field."
         ],
         [
           "reset",
-          "Remove Added At and Unlock Field",
-          "Clear the added at date and unlock the field."
+          "Remove Date and Unlock Field",
+          "Clear the originally available date and unlock the field."
         ]
-      ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_audience_rating_update",
@@ -571,38 +654,159 @@
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom rating (e.g. 7.5)",
       "custom_string_validation": "rating",
-"sources": [
-  ["anidb_average", "Use AniDB Average", "Use <b>AniDB average rating</b>."],
-  ["anidb_rating", "Use AniDB Rating", "Use <b>AniDB rating</b>."],
-  ["anidb_score", "Use AniDB Review Score", "Use <b>AniDB review score</b>."],
-  ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
-  ["mal", "Use MyAnimeList Score", "Use <b>MyAnimeList score</b>."],
-  ["mdb_average", "Use MDBList Average Score", "Use <b>average score</b> from MDBList."],
-  ["mdb_imdb", "Use IMDb via MDBList", "Use <b>IMDb rating</b> via MDBList."],
-  ["mdb_letterboxd", "Use Letterboxd via MDBList", "Use <b>Letterboxd rating</b> via MDBList."],
-  ["mdb_metacritic", "Use Metacritic via MDBList", "Use <b>Metacritic critic rating</b> via MDBList."],
-  ["mdb_metacriticuser", "Use Metacritic User via MDBList", "Use <b>Metacritic user score</b> via MDBList."],
-  ["mdb_myanimelist", "Use MyAnimeList via MDBList", "Use <b>MAL score</b> via MDBList."],
-  ["mdb_tmdb", "Use TMDb via MDBList", "Use <b>TMDb rating</b> via MDBList."],
-  ["mdb_tomatoes", "Use Rotten Tomatoes via MDBList", "Use <b>Rotten Tomatoes rating</b> via MDBList."],
-  ["mdb_tomatoesaudience", "Use RT Audience via MDBList", "Use <b>Rotten Tomatoes audience rating</b> via MDBList."],
-  ["mdb_trakt", "Use Trakt via MDBList", "Use <b>Trakt score</b> via MDBList."],
-  ["mdb", "Use MDBList Score", "Use the <b>combined MDBList score</b>."],
-  ["omdb_metascore", "Use Metacritic Metascore via OMDb", "Use <b>Metacritic metascore</b> from OMDb."],
-  ["omdb_tomatoes", "Use RT via OMDb", "Use <b>Rotten Tomatoes rating</b> from OMDb."],
-  ["omdb", "Use IMDb via OMDb", "Use <b>IMDb rating</b> from OMDb."],
-  ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
-  ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
-  ["plex_tomatoes", "Use RT via Plex", "Use <b>Rotten Tomatoes rating</b> from Plex."],
-  ["plex_tomatoesaudience", "Use RT Audience via Plex", "Use <b>RT audience score</b> from Plex."],
-  ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
-  ["trakt_user", "Use Trakt User Rating", "Use your <b>personal Trakt user rating</b>."],
-  ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
-  ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
-  ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
-  ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
-  ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
-]
+      "sources": [
+        [
+          "anidb_average",
+          "Use AniDB Average",
+          "Use <b>AniDB average rating</b>."
+        ],
+        [
+          "anidb_rating",
+          "Use AniDB Rating",
+          "Use <b>AniDB rating</b>."
+        ],
+        [
+          "anidb_score",
+          "Use AniDB Review Score",
+          "Use <b>AniDB review score</b>."
+        ],
+        [
+          "imdb",
+          "Use IMDb Rating",
+          "Use <b>IMDb rating</b> directly."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList Score",
+          "Use <b>MyAnimeList score</b>."
+        ],
+        [
+          "mdb_average",
+          "Use MDBList Average Score",
+          "Use <b>average score</b> from MDBList."
+        ],
+        [
+          "mdb_imdb",
+          "Use IMDb via MDBList",
+          "Use <b>IMDb rating</b> via MDBList."
+        ],
+        [
+          "mdb_letterboxd",
+          "Use Letterboxd via MDBList",
+          "Use <b>Letterboxd rating</b> via MDBList."
+        ],
+        [
+          "mdb_metacritic",
+          "Use Metacritic via MDBList",
+          "Use <b>Metacritic critic rating</b> via MDBList."
+        ],
+        [
+          "mdb_metacriticuser",
+          "Use Metacritic User via MDBList",
+          "Use <b>Metacritic user score</b> via MDBList."
+        ],
+        [
+          "mdb_myanimelist",
+          "Use MyAnimeList via MDBList",
+          "Use <b>MAL score</b> via MDBList."
+        ],
+        [
+          "mdb_tmdb",
+          "Use TMDb via MDBList",
+          "Use <b>TMDb rating</b> via MDBList."
+        ],
+        [
+          "mdb_tomatoes",
+          "Use Rotten Tomatoes via MDBList",
+          "Use <b>Rotten Tomatoes rating</b> via MDBList."
+        ],
+        [
+          "mdb_tomatoesaudience",
+          "Use RT Audience via MDBList",
+          "Use <b>Rotten Tomatoes audience rating</b> via MDBList."
+        ],
+        [
+          "mdb_trakt",
+          "Use Trakt via MDBList",
+          "Use <b>Trakt score</b> via MDBList."
+        ],
+        [
+          "mdb",
+          "Use MDBList Score",
+          "Use the <b>combined MDBList score</b>."
+        ],
+        [
+          "omdb_metascore",
+          "Use Metacritic Metascore via OMDb",
+          "Use <b>Metacritic metascore</b> from OMDb."
+        ],
+        [
+          "omdb_tomatoes",
+          "Use RT via OMDb",
+          "Use <b>Rotten Tomatoes rating</b> from OMDb."
+        ],
+        [
+          "omdb",
+          "Use IMDb via OMDb",
+          "Use <b>IMDb rating</b> from OMDb."
+        ],
+        [
+          "plex_imdb",
+          "Use IMDb via Plex",
+          "Use <b>IMDb rating</b> from Plex metadata."
+        ],
+        [
+          "plex_tmdb",
+          "Use TMDb via Plex",
+          "Use <b>TMDb rating</b> from Plex metadata."
+        ],
+        [
+          "plex_tomatoes",
+          "Use RT via Plex",
+          "Use <b>Rotten Tomatoes rating</b> from Plex."
+        ],
+        [
+          "plex_tomatoesaudience",
+          "Use RT Audience via Plex",
+          "Use <b>RT audience score</b> from Plex."
+        ],
+        [
+          "tmdb",
+          "Use TMDb Rating",
+          "Use <b>TMDb rating</b> directly."
+        ],
+        [
+          "trakt_user",
+          "Use Trakt User Rating",
+          "Use your <b>personal Trakt user rating</b>."
+        ],
+        [
+          "trakt",
+          "Use Trakt Rating",
+          "Use <b>Trakt global rating</b>."
+        ],
+        [
+          "lock",
+          "Lock Rating Field",
+          "Prevent rating field from being modified."
+        ],
+        [
+          "unlock",
+          "Unlock Rating Field",
+          "Allow rating field to be updated."
+        ],
+        [
+          "remove",
+          "Remove Rating and Lock Field",
+          "Clear and <b>lock</b> the rating field."
+        ],
+        [
+          "reset",
+          "Remove Rating and Unlock Field",
+          "Clear and <b>unlock</b> the rating field."
+        ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_critic_rating_update",
@@ -620,44 +824,168 @@
       "has_custom_string": true,
       "custom_string_placeholder": "Enter custom rating (e.g. 8.5)",
       "custom_string_validation": "rating",
-"sources": [
-  ["anidb_average", "Use AniDB Average", "Use <b>AniDB average rating</b>."],
-  ["anidb_rating", "Use AniDB Rating", "Use <b>AniDB rating</b>."],
-  ["anidb_score", "Use AniDB Review Score", "Use <b>AniDB review score</b>."],
-  ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
-  ["mal", "Use MyAnimeList Score", "Use <b>MyAnimeList score</b>."],
-  ["mdb_average", "Use MDBList Average Score", "Use <b>average score</b> from MDBList."],
-  ["mdb_imdb", "Use IMDb via MDBList", "Use <b>IMDb rating</b> via MDBList."],
-  ["mdb_letterboxd", "Use Letterboxd via MDBList", "Use <b>Letterboxd rating</b> via MDBList."],
-  ["mdb_metacritic", "Use Metacritic via MDBList", "Use <b>Metacritic critic rating</b> via MDBList."],
-  ["mdb_metacriticuser", "Use Metacritic User via MDBList", "Use <b>Metacritic user score</b> via MDBList."],
-  ["mdb_myanimelist", "Use MyAnimeList via MDBList", "Use <b>MAL score</b> via MDBList."],
-  ["mdb_tmdb", "Use TMDb via MDBList", "Use <b>TMDb rating</b> via MDBList."],
-  ["mdb_tomatoes", "Use Rotten Tomatoes via MDBList", "Use <b>Rotten Tomatoes rating</b> via MDBList."],
-  ["mdb_tomatoesaudience", "Use RT Audience via MDBList", "Use <b>Rotten Tomatoes audience rating</b> via MDBList."],
-  ["mdb_trakt", "Use Trakt via MDBList", "Use <b>Trakt score</b> via MDBList."],
-  ["mdb", "Use MDBList Score", "Use the <b>combined MDBList score</b>."],
-  ["omdb_metascore", "Use Metacritic Metascore via OMDb", "Use <b>Metacritic metascore</b> from OMDb."],
-  ["omdb_tomatoes", "Use RT via OMDb", "Use <b>Rotten Tomatoes rating</b> from OMDb."],
-  ["omdb", "Use IMDb via OMDb", "Use <b>IMDb rating</b> from OMDb."],
-  ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
-  ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
-  ["plex_tomatoes", "Use RT via Plex", "Use <b>Rotten Tomatoes rating</b> from Plex."],
-  ["plex_tomatoesaudience", "Use RT Audience via Plex", "Use <b>RT audience score</b> from Plex."],
-  ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
-  ["trakt_user", "Use Trakt User Rating", "Use your <b>personal Trakt user rating</b>."],
-  ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
-  ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
-  ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
-  ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
-  ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
-]
+      "sources": [
+        [
+          "anidb_average",
+          "Use AniDB Average",
+          "Use <b>AniDB average rating</b>."
+        ],
+        [
+          "anidb_rating",
+          "Use AniDB Rating",
+          "Use <b>AniDB rating</b>."
+        ],
+        [
+          "anidb_score",
+          "Use AniDB Review Score",
+          "Use <b>AniDB review score</b>."
+        ],
+        [
+          "imdb",
+          "Use IMDb Rating",
+          "Use <b>IMDb rating</b> directly."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList Score",
+          "Use <b>MyAnimeList score</b>."
+        ],
+        [
+          "mdb_average",
+          "Use MDBList Average Score",
+          "Use <b>average score</b> from MDBList."
+        ],
+        [
+          "mdb_imdb",
+          "Use IMDb via MDBList",
+          "Use <b>IMDb rating</b> via MDBList."
+        ],
+        [
+          "mdb_letterboxd",
+          "Use Letterboxd via MDBList",
+          "Use <b>Letterboxd rating</b> via MDBList."
+        ],
+        [
+          "mdb_metacritic",
+          "Use Metacritic via MDBList",
+          "Use <b>Metacritic critic rating</b> via MDBList."
+        ],
+        [
+          "mdb_metacriticuser",
+          "Use Metacritic User via MDBList",
+          "Use <b>Metacritic user score</b> via MDBList."
+        ],
+        [
+          "mdb_myanimelist",
+          "Use MyAnimeList via MDBList",
+          "Use <b>MAL score</b> via MDBList."
+        ],
+        [
+          "mdb_tmdb",
+          "Use TMDb via MDBList",
+          "Use <b>TMDb rating</b> via MDBList."
+        ],
+        [
+          "mdb_tomatoes",
+          "Use Rotten Tomatoes via MDBList",
+          "Use <b>Rotten Tomatoes rating</b> via MDBList."
+        ],
+        [
+          "mdb_tomatoesaudience",
+          "Use RT Audience via MDBList",
+          "Use <b>Rotten Tomatoes audience rating</b> via MDBList."
+        ],
+        [
+          "mdb_trakt",
+          "Use Trakt via MDBList",
+          "Use <b>Trakt score</b> via MDBList."
+        ],
+        [
+          "mdb",
+          "Use MDBList Score",
+          "Use the <b>combined MDBList score</b>."
+        ],
+        [
+          "omdb_metascore",
+          "Use Metacritic Metascore via OMDb",
+          "Use <b>Metacritic metascore</b> from OMDb."
+        ],
+        [
+          "omdb_tomatoes",
+          "Use RT via OMDb",
+          "Use <b>Rotten Tomatoes rating</b> from OMDb."
+        ],
+        [
+          "omdb",
+          "Use IMDb via OMDb",
+          "Use <b>IMDb rating</b> from OMDb."
+        ],
+        [
+          "plex_imdb",
+          "Use IMDb via Plex",
+          "Use <b>IMDb rating</b> from Plex metadata."
+        ],
+        [
+          "plex_tmdb",
+          "Use TMDb via Plex",
+          "Use <b>TMDb rating</b> from Plex metadata."
+        ],
+        [
+          "plex_tomatoes",
+          "Use RT via Plex",
+          "Use <b>Rotten Tomatoes rating</b> from Plex."
+        ],
+        [
+          "plex_tomatoesaudience",
+          "Use RT Audience via Plex",
+          "Use <b>RT audience score</b> from Plex."
+        ],
+        [
+          "tmdb",
+          "Use TMDb Rating",
+          "Use <b>TMDb rating</b> directly."
+        ],
+        [
+          "trakt_user",
+          "Use Trakt User Rating",
+          "Use your <b>personal Trakt user rating</b>."
+        ],
+        [
+          "trakt",
+          "Use Trakt Rating",
+          "Use <b>Trakt global rating</b>."
+        ],
+        [
+          "lock",
+          "Lock Rating Field",
+          "Prevent rating field from being modified."
+        ],
+        [
+          "unlock",
+          "Unlock Rating Field",
+          "Allow rating field to be updated."
+        ],
+        [
+          "remove",
+          "Remove Rating and Lock Field",
+          "Clear and <b>lock</b> the rating field."
+        ],
+        [
+          "reset",
+          "Remove Rating and Unlock Field",
+          "Clear and <b>unlock</b> the rating field."
+        ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_user_rating_update",
       "type": "mass_update",
       "accordion": "library",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Mass User Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
       "description": "Updates the user rating of all items in the library using the selected source(s).",
@@ -667,43 +995,166 @@
       "custom_string_placeholder": "Enter custom rating (e.g. 8.5)",
       "custom_string_validation": "rating",
       "sources": [
-        ["anidb_average", "Use AniDB Average", "Use <b>AniDB average rating</b>."],
-        ["anidb_rating", "Use AniDB Rating", "Use <b>AniDB rating</b>."],
-        ["anidb_score", "Use AniDB Review Score", "Use <b>AniDB review score</b>."],
-        ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
-        ["mal", "Use MyAnimeList Score", "Use <b>MyAnimeList score</b>."],
-        ["mdb_average", "Use MDBList Average Score", "Use <b>average score</b> from MDBList."],
-        ["mdb_imdb", "Use IMDb via MDBList", "Use <b>IMDb rating</b> via MDBList."],
-        ["mdb_letterboxd", "Use Letterboxd via MDBList", "Use <b>Letterboxd rating</b> via MDBList."],
-        ["mdb_metacritic", "Use Metacritic via MDBList", "Use <b>Metacritic critic rating</b> via MDBList."],
-        ["mdb_metacriticuser", "Use Metacritic User via MDBList", "Use <b>Metacritic user score</b> via MDBList."],
-        ["mdb_myanimelist", "Use MyAnimeList via MDBList", "Use <b>MAL score</b> via MDBList."],
-        ["mdb_tmdb", "Use TMDb via MDBList", "Use <b>TMDb rating</b> via MDBList."],
-        ["mdb_tomatoes", "Use Rotten Tomatoes via MDBList", "Use <b>Rotten Tomatoes rating</b> via MDBList."],
-        ["mdb_tomatoesaudience", "Use RT Audience via MDBList", "Use <b>Rotten Tomatoes audience rating</b> via MDBList."],
-        ["mdb_trakt", "Use Trakt via MDBList", "Use <b>Trakt score</b> via MDBList."],
-        ["mdb", "Use MDBList Score", "Use the <b>combined MDBList score</b>."],
-        ["omdb_metascore", "Use Metacritic Metascore via OMDb", "Use <b>Metacritic metascore</b> from OMDb."],
-        ["omdb_tomatoes", "Use RT via OMDb", "Use <b>Rotten Tomatoes rating</b> from OMDb."],
-        ["omdb", "Use IMDb via OMDb", "Use <b>IMDb rating</b> from OMDb."],
-        ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
-        ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
-        ["plex_tomatoes", "Use RT via Plex", "Use <b>Rotten Tomatoes rating</b> from Plex."],
-        ["plex_tomatoesaudience", "Use RT Audience via Plex", "Use <b>RT audience score</b> from Plex."],
-        ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
-        ["trakt_user", "Use Trakt User Rating", "Use your <b>personal Trakt user rating</b>."],
-        ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
-        ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
-        ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
-        ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
-        ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
-      ]
+        [
+          "anidb_average",
+          "Use AniDB Average",
+          "Use <b>AniDB average rating</b>."
+        ],
+        [
+          "anidb_rating",
+          "Use AniDB Rating",
+          "Use <b>AniDB rating</b>."
+        ],
+        [
+          "anidb_score",
+          "Use AniDB Review Score",
+          "Use <b>AniDB review score</b>."
+        ],
+        [
+          "imdb",
+          "Use IMDb Rating",
+          "Use <b>IMDb rating</b> directly."
+        ],
+        [
+          "mal",
+          "Use MyAnimeList Score",
+          "Use <b>MyAnimeList score</b>."
+        ],
+        [
+          "mdb_average",
+          "Use MDBList Average Score",
+          "Use <b>average score</b> from MDBList."
+        ],
+        [
+          "mdb_imdb",
+          "Use IMDb via MDBList",
+          "Use <b>IMDb rating</b> via MDBList."
+        ],
+        [
+          "mdb_letterboxd",
+          "Use Letterboxd via MDBList",
+          "Use <b>Letterboxd rating</b> via MDBList."
+        ],
+        [
+          "mdb_metacritic",
+          "Use Metacritic via MDBList",
+          "Use <b>Metacritic critic rating</b> via MDBList."
+        ],
+        [
+          "mdb_metacriticuser",
+          "Use Metacritic User via MDBList",
+          "Use <b>Metacritic user score</b> via MDBList."
+        ],
+        [
+          "mdb_myanimelist",
+          "Use MyAnimeList via MDBList",
+          "Use <b>MAL score</b> via MDBList."
+        ],
+        [
+          "mdb_tmdb",
+          "Use TMDb via MDBList",
+          "Use <b>TMDb rating</b> via MDBList."
+        ],
+        [
+          "mdb_tomatoes",
+          "Use Rotten Tomatoes via MDBList",
+          "Use <b>Rotten Tomatoes rating</b> via MDBList."
+        ],
+        [
+          "mdb_tomatoesaudience",
+          "Use RT Audience via MDBList",
+          "Use <b>Rotten Tomatoes audience rating</b> via MDBList."
+        ],
+        [
+          "mdb_trakt",
+          "Use Trakt via MDBList",
+          "Use <b>Trakt score</b> via MDBList."
+        ],
+        [
+          "mdb",
+          "Use MDBList Score",
+          "Use the <b>combined MDBList score</b>."
+        ],
+        [
+          "omdb_metascore",
+          "Use Metacritic Metascore via OMDb",
+          "Use <b>Metacritic metascore</b> from OMDb."
+        ],
+        [
+          "omdb_tomatoes",
+          "Use RT via OMDb",
+          "Use <b>Rotten Tomatoes rating</b> from OMDb."
+        ],
+        [
+          "omdb",
+          "Use IMDb via OMDb",
+          "Use <b>IMDb rating</b> from OMDb."
+        ],
+        [
+          "plex_imdb",
+          "Use IMDb via Plex",
+          "Use <b>IMDb rating</b> from Plex metadata."
+        ],
+        [
+          "plex_tmdb",
+          "Use TMDb via Plex",
+          "Use <b>TMDb rating</b> from Plex metadata."
+        ],
+        [
+          "plex_tomatoes",
+          "Use RT via Plex",
+          "Use <b>Rotten Tomatoes rating</b> from Plex."
+        ],
+        [
+          "plex_tomatoesaudience",
+          "Use RT Audience via Plex",
+          "Use <b>RT audience score</b> from Plex."
+        ],
+        [
+          "tmdb",
+          "Use TMDb Rating",
+          "Use <b>TMDb rating</b> directly."
+        ],
+        [
+          "trakt_user",
+          "Use Trakt User Rating",
+          "Use your <b>personal Trakt user rating</b>."
+        ],
+        [
+          "trakt",
+          "Use Trakt Rating",
+          "Use <b>Trakt global rating</b>."
+        ],
+        [
+          "lock",
+          "Lock Rating Field",
+          "Prevent rating field from being modified."
+        ],
+        [
+          "unlock",
+          "Unlock Rating Field",
+          "Allow rating field to be updated."
+        ],
+        [
+          "remove",
+          "Remove Rating and Lock Field",
+          "Clear and <b>lock</b> the rating field."
+        ],
+        [
+          "reset",
+          "Remove Rating and Unlock Field",
+          "Clear and <b>unlock</b> the rating field."
+        ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_episode_audience_rating_update",
       "type": "mass_update",
       "accordion": "library",
-      "media_types": ["show"],
+      "media_types": [
+        "show"
+      ],
       "title": "Mass Episode Audience Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
       "description": "Updates the audience rating of all episodes in the library using the selected source(s).",
@@ -713,22 +1164,61 @@
       "custom_string_placeholder": "Enter custom rating (e.g. 8.2)",
       "custom_string_validation": "rating",
       "sources": [
-        ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
-        ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
-        ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
-        ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
-        ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
-        ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
-        ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
-        ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
-        ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
-      ]
+        [
+          "imdb",
+          "Use IMDb Rating",
+          "Use <b>IMDb rating</b> directly."
+        ],
+        [
+          "plex_imdb",
+          "Use IMDb via Plex",
+          "Use <b>IMDb rating</b> from Plex metadata."
+        ],
+        [
+          "plex_tmdb",
+          "Use TMDb via Plex",
+          "Use <b>TMDb rating</b> from Plex metadata."
+        ],
+        [
+          "tmdb",
+          "Use TMDb Rating",
+          "Use <b>TMDb rating</b> directly."
+        ],
+        [
+          "trakt",
+          "Use Trakt Rating",
+          "Use <b>Trakt global rating</b>."
+        ],
+        [
+          "lock",
+          "Lock Rating Field",
+          "Prevent rating field from being modified."
+        ],
+        [
+          "unlock",
+          "Unlock Rating Field",
+          "Allow rating field to be updated."
+        ],
+        [
+          "remove",
+          "Remove Rating and Lock Field",
+          "Clear and <b>lock</b> the rating field."
+        ],
+        [
+          "reset",
+          "Remove Rating and Unlock Field",
+          "Clear and <b>unlock</b> the rating field."
+        ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_episode_critic_rating_update",
       "type": "mass_update",
       "accordion": "library",
-      "media_types": ["show"],
+      "media_types": [
+        "show"
+      ],
       "title": "Mass Episode Critic Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
       "description": "Updates the critic rating of all episodes in the library using the selected source(s).",
@@ -738,22 +1228,61 @@
       "custom_string_placeholder": "Enter custom rating (e.g. 7.5)",
       "custom_string_validation": "rating",
       "sources": [
-        ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
-        ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
-        ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
-        ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
-        ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
-        ["lock", "Lock Rating Field", "Prevent rating field from being modified."],
-        ["unlock", "Unlock Rating Field", "Allow rating field to be updated."],
-        ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the rating field."],
-        ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the rating field."]
-      ]
+        [
+          "imdb",
+          "Use IMDb Rating",
+          "Use <b>IMDb rating</b> directly."
+        ],
+        [
+          "plex_imdb",
+          "Use IMDb via Plex",
+          "Use <b>IMDb rating</b> from Plex metadata."
+        ],
+        [
+          "plex_tmdb",
+          "Use TMDb via Plex",
+          "Use <b>TMDb rating</b> from Plex metadata."
+        ],
+        [
+          "tmdb",
+          "Use TMDb Rating",
+          "Use <b>TMDb rating</b> directly."
+        ],
+        [
+          "trakt",
+          "Use Trakt Rating",
+          "Use <b>Trakt global rating</b>."
+        ],
+        [
+          "lock",
+          "Lock Rating Field",
+          "Prevent rating field from being modified."
+        ],
+        [
+          "unlock",
+          "Unlock Rating Field",
+          "Allow rating field to be updated."
+        ],
+        [
+          "remove",
+          "Remove Rating and Lock Field",
+          "Clear and <b>lock</b> the rating field."
+        ],
+        [
+          "reset",
+          "Remove Rating and Unlock Field",
+          "Clear and <b>unlock</b> the rating field."
+        ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_episode_user_rating_update",
       "type": "mass_update",
       "accordion": "library",
-      "media_types": ["show"],
+      "media_types": [
+        "show"
+      ],
       "title": "Mass Episode User Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
       "description": "Updates the user rating of all episodes in the library using the selected source(s).",
@@ -763,23 +1292,67 @@
       "custom_string_placeholder": "Enter custom rating (e.g. 9.2)",
       "custom_string_validation": "rating",
       "sources": [
-        ["imdb", "Use IMDb Rating", "Use <b>IMDb rating</b> directly."],
-        ["plex_imdb", "Use IMDb via Plex", "Use <b>IMDb rating</b> from Plex metadata."],
-        ["plex_tmdb", "Use TMDb via Plex", "Use <b>TMDb rating</b> from Plex metadata."],
-        ["tmdb", "Use TMDb Rating", "Use <b>TMDb rating</b> directly."],
-        ["trakt", "Use Trakt Rating", "Use <b>Trakt global rating</b>."],
-        ["trakt_user", "Use Trakt User's Personal Rating", "Use <b>your personal Trakt rating</b>."],
-        ["lock", "Lock Rating Field", "Prevent user rating from being modified."],
-        ["unlock", "Unlock Rating Field", "Allow user rating to be updated."],
-        ["remove", "Remove Rating and Lock Field", "Clear and <b>lock</b> the user rating field."],
-        ["reset", "Remove Rating and Unlock Field", "Clear and <b>unlock</b> the user rating field."]
-      ]
+        [
+          "imdb",
+          "Use IMDb Rating",
+          "Use <b>IMDb rating</b> directly."
+        ],
+        [
+          "plex_imdb",
+          "Use IMDb via Plex",
+          "Use <b>IMDb rating</b> from Plex metadata."
+        ],
+        [
+          "plex_tmdb",
+          "Use TMDb via Plex",
+          "Use <b>TMDb rating</b> from Plex metadata."
+        ],
+        [
+          "tmdb",
+          "Use TMDb Rating",
+          "Use <b>TMDb rating</b> directly."
+        ],
+        [
+          "trakt",
+          "Use Trakt Rating",
+          "Use <b>Trakt global rating</b>."
+        ],
+        [
+          "trakt_user",
+          "Use Trakt User's Personal Rating",
+          "Use <b>your personal Trakt rating</b>."
+        ],
+        [
+          "lock",
+          "Lock Rating Field",
+          "Prevent user rating from being modified."
+        ],
+        [
+          "unlock",
+          "Unlock Rating Field",
+          "Allow user rating to be updated."
+        ],
+        [
+          "remove",
+          "Remove Rating and Lock Field",
+          "Clear and <b>lock</b> the user rating field."
+        ],
+        [
+          "reset",
+          "Remove Rating and Unlock Field",
+          "Clear and <b>unlock</b> the user rating field."
+        ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_poster_update",
       "type": "toggle_with_select",
       "accordion": "library",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Mass Poster Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-poster-update",
       "description": "Updates the poster of each item in the library based on the selected source and optional toggles.",
@@ -812,18 +1385,38 @@
         "label": "Poster Source",
         "tooltip": "Choose the source to update the poster from.",
         "options": [
-          ["", "None"],
-          ["tmdb", "TMDb"],
-          ["plex", "Plex"],
-          ["lock", "Lock Poster Field"],
-          ["unlock", "Unlock Poster Field"]        ]
-      }
+          [
+            "",
+            "None"
+          ],
+          [
+            "tmdb",
+            "TMDb"
+          ],
+          [
+            "plex",
+            "Plex"
+          ],
+          [
+            "lock",
+            "Lock Poster Field"
+          ],
+          [
+            "unlock",
+            "Unlock Poster Field"
+          ]
+        ]
+      },
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_background_update",
       "type": "toggle_with_select",
       "accordion": "library",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Mass Background Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-background-update",
       "description": "Updates the background of each item in the library based on the selected source and optional toggles.",
@@ -851,13 +1444,29 @@
         "label": "Background Source",
         "tooltip": "Choose the source to update the background image from.",
         "options": [
-          ["", "None"],
-          ["tmdb", "TMDb"],
-          ["plex", "Plex"],
-          ["lock", "Lock Background Field"],
-          ["unlock", "Unlock Background Field"]
+          [
+            "",
+            "None"
+          ],
+          [
+            "tmdb",
+            "TMDb"
+          ],
+          [
+            "plex",
+            "Plex"
+          ],
+          [
+            "lock",
+            "Lock Background Field"
+          ],
+          [
+            "unlock",
+            "Unlock Background Field"
+          ]
         ]
-      }
+      },
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_imdb_parental_labels",
@@ -888,7 +1497,8 @@
           "severe",
           "Severe"
         ]
-      ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "mass_collection_mode",
@@ -903,6 +1513,10 @@
       "description": "Controls the collection mode behavior for all collections.",
       "tooltip_variant": "info",
       "options": [
+        [
+          "",
+          "None"
+        ],
         [
           "default",
           "Default"
@@ -919,7 +1533,8 @@
           "show_items",
           "Show Items"
         ]
-      ]
+      ],
+      "yml_location": "attribute"
     },
     {
       "prefix": "update_blank_track_titles",
@@ -932,7 +1547,8 @@
       "title": "Update Blank Track Titles",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#update-blank-track-titles",
       "description": "Updates blank track titles of every item in the library.",
-      "tooltip_variant": "info"
+      "tooltip_variant": "info",
+      "yml_location": "attribute"
     },
     {
       "prefix": "remove_title_parentheses",
@@ -945,7 +1561,8 @@
       "title": "Remove Title Parentheses",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#remove-title-parentheses",
       "description": "Removes title parentheses of every item in the library.",
-      "tooltip_variant": "info"
+      "tooltip_variant": "info",
+      "yml_location": "attribute"
     },
     {
       "prefix": "split_duplicates",
@@ -958,23 +1575,29 @@
       "title": "Split Duplicates",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#split-duplicates",
       "description": "Splits all duplicate items found in this library.",
-      "tooltip_variant": "info"
+      "tooltip_variant": "info",
+      "yml_location": "attribute"
     },
     {
       "prefix": "radarr_add_all",
       "type": "boolean_toggle",
       "accordion": "library",
-      "media_types": ["movie"],
+      "media_types": [
+        "movie"
+      ],
       "title": "Radarr Add All",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#radarr-add-all",
       "description": "Adds every item in the library to Radarr.",
-      "tooltip_variant": "info"
+      "tooltip_variant": "info",
+      "yml_location": "attribute"
     },
     {
       "prefix": "radarr_remove_by_tag",
       "type": "mass_update",
       "accordion": "library",
-      "media_types": ["movie"],
+      "media_types": [
+        "movie"
+      ],
       "title": "Radarr Remove by Tag",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#radarr-remove-by-tag",
       "description": "Removes items from Radarr that are tagged with any of the specified tags.",
@@ -982,23 +1605,29 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter Radarr tag(s) to remove (e.g. holiday, classic)",
-      "custom_string_behavior": "list"
+      "custom_string_behavior": "list",
+      "yml_location": "attribute"
     },
     {
       "prefix": "sonarr_add_all",
       "type": "boolean_toggle",
       "accordion": "library",
-      "media_types": ["show"],
+      "media_types": [
+        "show"
+      ],
       "title": "Sonarr Add All",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#sonarr-add-all",
       "description": "Adds every item in the library to Sonarr.",
-      "tooltip_variant": "info"
+      "tooltip_variant": "info",
+      "yml_location": "attribute"
     },
     {
       "prefix": "sonarr_remove_by_tag",
       "type": "mass_update",
       "accordion": "library",
-      "media_types": ["show"],
+      "media_types": [
+        "show"
+      ],
       "title": "Sonarr Remove by Tag",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#sonarr-remove-by-tag",
       "description": "Removes items from Sonarr that are tagged with any of the specified tags.",
@@ -1006,13 +1635,17 @@
       "container_class": "border rounded p-3 mb-2",
       "has_custom_string": true,
       "custom_string_placeholder": "Enter Sonarr tag(s) to remove (e.g. holiday, classic)",
-      "custom_string_behavior": "list"
+      "custom_string_behavior": "list",
+      "yml_location": "attribute"
     },
     {
       "prefix": "metadata_backup",
       "type": "complex_group",
       "accordion": "library",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Metadata Backup",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#metadata-backup",
       "description": "Backs up metadata to a YAML file. You can optionally set the path, exclude attributes, sync tag metadata, or add placeholders for items with no changes.",
@@ -1025,10 +1658,12 @@
         "tooltip": "Optional. Leave blank to use default: <code>&lt;&lt;library_name&gt;&gt;_Metadata_Backup.yml</code> in your config folder."
       },
       "custom_string_list": {
-        "key": "exclude",
+        "key": "custom",
+        "field": "exclude",
+        "type": "custom_string_list",
         "label": "Exclude Attributes",
         "placeholder": "e.g. summary, title",
-        "tooltip": "List of attributes to exclude from the backup (comma-separated or one per line)."
+        "tooltip": "List of attributes to exclude from the backup."
       },
       "toggles": [
         {
@@ -1041,7 +1676,8 @@
           "label": "Add Blank Entries",
           "tooltip": "Adds a line for metadata attributes with no changes. Recommended for consistency."
         }
-      ]
+      ],
+      "yml_location": "attribute"
     }
   ]
 }

@@ -108,7 +108,9 @@ function jumpTo (targetPage) {
       // Redirect to the target page after successful form submission
       window.location.href = '/step/' + targetPage
     } else {
-      console.error('Form submission failed:', response.statusText)
+      response.text().then(err => {
+        console.error('Form submission failed:', response.status, err)
+      })
     }
   }).catch(error => {
     console.error('Error during form submission:', error)

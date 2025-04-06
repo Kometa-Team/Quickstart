@@ -50,6 +50,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     setupCustomStringListHandlers('mass_genre_update')
+    setupCustomStringListHandlers('radarr_remove_by_tag')
+    setupCustomStringListHandlers('sonarr_remove_by_tag')
+    setupCustomStringListHandlers('metadata_backup')
 
     function initializeSortableList (libraryId, prefix) {
       const list = document.getElementById(`${libraryId}-attribute_${prefix}_sortable`)
