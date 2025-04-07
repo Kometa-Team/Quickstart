@@ -11,3 +11,4 @@ walkthroughs
 xxxx
 yozora
 yozoraxcii
+localhost
