@@ -8,3 +8,4 @@ ui
 xxxx
 yozora
 yozoraxcii
+localhost
