@@ -175,7 +175,7 @@ const EventHandler = {
       })
 
       // Attach separator preview logic (Now handled by OverlayHandler)
-      const separatorDropdown = library.querySelector("[id$='-attribute_use_separators']")
+      const separatorDropdown = library.querySelector("[id$='-attribute_use_separator']")
       if (separatorDropdown && !separatorDropdown.dataset.listenerAdded) {
         console.log(`[DEBUG] Found separator dropdown: ${separatorDropdown.id}`)
         separatorDropdown.addEventListener('change', () => {

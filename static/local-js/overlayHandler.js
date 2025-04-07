@@ -5,7 +5,7 @@ const OverlayHandler = {
     console.log(`[DEBUG] Initializing overlays for ${libraryId} - ${isMovie ? 'Movie' : 'Show'}`)
 
     // Attach event listener for separator dropdown
-    const fieldId = `${libraryId}-template_variables[use_separators]`
+    const fieldId = `${libraryId}-template_variables[use_separator]`
     const separatorDropdown = document.querySelector(`[name="${fieldId}"]`)
 
     if (separatorDropdown && !separatorDropdown.dataset.listenerAdded) {
@@ -80,8 +80,8 @@ const OverlayHandler = {
       return
     }
 
-    const useSeparatorsDropdown = document.querySelector(`[name="${libraryId}-template_variables[use_separators]"]`)
-    let useSeparatorsInput = document.getElementById(`${libraryId}-template_variables_use_separators`)
+    const useSeparatorsDropdown = document.querySelector(`[name="${libraryId}-template_variables[use_separator]"]`)
+    let useSeparatorsInput = document.getElementById(`${libraryId}-template_variables_use_separator`)
     let sepStyleInput = document.getElementById(`${libraryId}-template_variables_sep_style`)
 
     const awardSeparatorToggle = document.getElementById(`${libraryId}-collection_separator_award`)
@@ -97,8 +97,8 @@ const OverlayHandler = {
     if (!useSeparatorsInput) {
       useSeparatorsInput = document.createElement('input')
       useSeparatorsInput.type = 'hidden'
-      useSeparatorsInput.name = `${libraryId}-template_variables[use_separators]`
-      useSeparatorsInput.id = `${libraryId}-template_variables_use_separators`
+      useSeparatorsInput.name = `${libraryId}-template_variables[use_separator]`
+      useSeparatorsInput.id = `${libraryId}-template_variables_use_separator`
       form.appendChild(useSeparatorsInput)
     }
     useSeparatorsInput.value = isEnabled ? 'true' : 'false'
@@ -122,7 +122,7 @@ const OverlayHandler = {
       chartSeparatorToggle.checked = isEnabled && chartTogglesChecked
     }
 
-    const fieldId = `${libraryId}-template_variables[use_separators]`
+    const fieldId = `${libraryId}-template_variables[use_separator]`
     OverlayHandler.updateSeparatorPreview(fieldId, selectedValue)
   }
 

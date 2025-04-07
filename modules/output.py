@@ -314,14 +314,14 @@ def build_libraries_section(
         template_data = templates.get(template_key, {})
         sep_color_key = None
         for key in template_data.keys():
-            if key.endswith("-template_variables[use_separators]") and key.startswith(
+            if key.endswith("-template_variables[use_separator]") and key.startswith(
                 f"{library_type}-library_{template_key}"
             ):
                 sep_color_key = key
                 break
 
         sep_color = template_data.get(sep_color_key)
-        template_vars = {"use_separators": True if sep_color else False}
+        template_vars = {"use_separator": True if sep_color else False}
         if sep_color:
             template_vars["sep_style"] = sep_color
         entry["template_variables"] = template_vars

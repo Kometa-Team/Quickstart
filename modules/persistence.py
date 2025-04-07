@@ -33,14 +33,14 @@ def clean_form_data(form_data):
             value_list = form_data.getlist(key)
             clean_data[key] = [v.strip() for v in value_list if v.strip()]
 
-        # Handle use_separators & sep_style correctly for both mov & sho
-        elif key.endswith("use_separators"):
+        # Handle use_separator & sep_style correctly for both mov & sho
+        elif key.endswith("use_separator"):
             prefix = "mov" if key.startswith("mov") else "sho"
-            clean_data.setdefault(f"{prefix}-template_variables", {})["use_separators"] = value if value != "none" else None  # noqa
+            clean_data.setdefault(f"{prefix}-template_variables", {})["use_separator"] = value if value != "none" else None  # noqa
 
         elif key.endswith("sep_style"):
             prefix = "mov" if key.startswith("mov") else "sho"
-            if form_data.get(f"{prefix}-template_variables[use_separators]", "false") != "none":
+            if form_data.get(f"{prefix}-template_variables[use_separator]", "false") != "none":
                 clean_data.setdefault(f"{prefix}-template_variables", {})["sep_style"] = value.strip()  # noqa
 
         # Standard processing for other string values
@@ -214,7 +214,7 @@ def retrieve_settings(target):
         for key in list(data[source_name].keys()):
             if key.startswith("mov-template_variables[") or key.startswith("sho-template_variables["):
                 prefix, variable = key.split("[")
-                variable = variable.strip("]")  # Extract 'use_separators' or 'sep_style'
+                variable = variable.strip("]")  # Extract 'use_separator' or 'sep_style'
                 data[source_name][prefix][variable] = data[source_name].pop(key)
 
     data["code_verifier"] = secrets.token_urlsafe(100)[:128]
