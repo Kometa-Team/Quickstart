@@ -165,7 +165,9 @@ def build_libraries_section(
                     custom_flow_list.fa.set_flow_style()  # Force [ "Thriller", "Action" ] formatting
                     mass_genre_update.append(custom_flow_list)
             except Exception as e:
-                print(f"[DEBUG] Skipping invalid JSON in custom genre strings: {custom_strings_value} — {e}")
+                print(
+                    f"[DEBUG] Skipping invalid JSON in custom genre strings: {custom_strings_value} — {e}"
+                )
 
         if mass_genre_update:
             operations["mass_genre_update"] = mass_genre_update
@@ -183,7 +185,9 @@ def build_libraries_section(
                 if isinstance(parsed, list):
                     mass_content_rating_update.extend(parsed)
             except Exception as e:
-                print(f"[DEBUG] Skipping invalid JSON in content rating sources: {rating_custom_order_value} — {e}")
+                print(
+                    f"[DEBUG] Skipping invalid JSON in content rating sources: {rating_custom_order_value} — {e}"
+                )
 
         # Get the optional custom string (e.g., "NR")
         rating_custom_string_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_custom_string"
@@ -219,7 +223,9 @@ def build_libraries_section(
                         elif isinstance(item, list):  # nested list — flatten it
                             mass_original_title_update.extend(item)
             except Exception as e:
-                print(f"[DEBUG] Skipping invalid JSON in original title order: {original_title_order_value} — {e}")
+                print(
+                    f"[DEBUG] Skipping invalid JSON in original title order: {original_title_order_value} — {e}"
+                )
 
         # Handle the optional custom string (e.g., "Unknown")
         original_title_custom_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_custom_string"
@@ -231,7 +237,9 @@ def build_libraries_section(
                 if stripped:
                     mass_original_title_update.append(stripped)
             except Exception as e:
-                print(f"[DEBUG] Skipping invalid original title custom string: {original_title_custom_value} — {e}")
+                print(
+                    f"[DEBUG] Skipping invalid original title custom string: {original_title_custom_value} — {e}"
+                )
 
         if mass_original_title_update:
             motu_list = CommentedSeq(mass_original_title_update)
@@ -320,16 +328,29 @@ def build_libraries_section(
 
         # Grouped mass update operations (excluding mass_genre_update, handled earlier)
         grouped_operations = [
-            "mass_content_rating_update", "mass_original_title_update",
-            "mass_studio_update", "mass_tagline_update", "mass_originally_available_update",
-            "mass_added_at_update", "mass_audience_rating_update", "mass_critic_rating_update",
-            "mass_user_rating_update", "mass_background_update", "mass_poster_update",
-            "radarr_remove_by_tag", "sonarr_remove_by_tag",
+            "mass_content_rating_update",
+            "mass_original_title_update",
+            "mass_studio_update",
+            "mass_tagline_update",
+            "mass_originally_available_update",
+            "mass_added_at_update",
+            "mass_audience_rating_update",
+            "mass_critic_rating_update",
+            "mass_user_rating_update",
+            "mass_episode_audience_rating_update",
+            "mass_episode_critic_rating_update",
+            "mass_episode_user_rating_update",
+            "mass_background_update",
+            "mass_poster_update",
+            "radarr_remove_by_tag",
+            "sonarr_remove_by_tag",
         ]
 
         for op in grouped_operations:
             custom_list_key = f"{library_type}-library_{lib_id}-attribute_{op}_custom"
-            custom_string_key = f"{library_type}-library_{lib_id}-attribute_{op}_custom_string"
+            custom_string_key = (
+                f"{library_type}-library_{lib_id}-attribute_{op}_custom_string"
+            )
             order_key = f"{library_type}-library_{lib_id}-attribute_{op}_order"
 
             op_values = []
@@ -347,7 +368,9 @@ def build_libraries_section(
                                 # Preserve valid date strings (e.g. "2023-01-01")
                                 op_values.append(item.strip())
                 except Exception as e:
-                    print(f"[DEBUG] Skipping invalid JSON in {op}_order: {order_value} — {e}")
+                    print(
+                        f"[DEBUG] Skipping invalid JSON in {op}_order: {order_value} — {e}"
+                    )
 
             # 2. Custom list (JSON array from UI)
             custom_list_value = attr_group.get(custom_list_key)
@@ -361,13 +384,22 @@ def build_libraries_section(
                             elif isinstance(item, str) and item.strip():
                                 op_values.append(item.strip())
                 except Exception as e:
-                    print(f"[DEBUG] Skipping invalid JSON in {op}_custom: {custom_list_value} — {e}")
+                    print(
+                        f"[DEBUG] Skipping invalid JSON in {op}_custom: {custom_list_value} — {e}"
+                    )
 
             # 3. Fallback to single custom string (if defined)
             elif custom_string_key in attr_group:
                 raw_value = attr_group.get(custom_string_key)
                 if isinstance(raw_value, str) and raw_value.strip():
-                    if op in ["mass_critic_rating_update", "mass_user_rating_update", "mass_audience_rating_update"]:
+                    if op in [
+                        "mass_critic_rating_update",
+                        "mass_user_rating_update",
+                        "mass_audience_rating_update",
+                        "mass_episode_critic_rating_update",
+                        "mass_episode_user_rating_update",
+                        "mass_episode_audience_rating_update",
+                    ]:
                         try:
                             op_values.append(float(raw_value.strip()))
                         except ValueError:
@@ -381,15 +413,22 @@ def build_libraries_section(
             if op_values:
                 seq = CommentedSeq(op_values)
                 seq.fa.set_block_style()
+                for i in range(len(seq)):
+                    if isinstance(seq[i], float) and seq[i].is_integer():
+                        seq[i] = float(f"{seq[i]:.1f}")
                 operations[op] = seq
 
         # metadata_backup
         backup = {}
         path_key = f"{library_type}-library_{lib_id}-attribute_metadata_backup_path"
-        exclude_key = f"{library_type}-library_{lib_id}-attribute_metadata_backup_exclude"
+        exclude_key = (
+            f"{library_type}-library_{lib_id}-attribute_metadata_backup_exclude"
+        )
         sync_key = f"{library_type}-library_{lib_id}-attribute_sync_tags"
         blank_key = f"{library_type}-library_{lib_id}-attribute_add_blank_entries"
 
+        if attr_group.get(path_key):
+            backup["path"] = attr_group.get(path_key)
         if attr_group.get(exclude_key):
             val = attr_group.get(exclude_key)
             try:
@@ -408,7 +447,13 @@ def build_libraries_section(
 
         # mass_poster_update
         poster = {}
-        for key in ["seasons", "episodes", "ignore_locked", "ignore_overlays", "source"]:
+        for key in [
+            "seasons",
+            "episodes",
+            "ignore_locked",
+            "ignore_overlays",
+            "source",
+        ]:
             full_key = f"{library_type}-library_{lib_id}-attribute_mass_poster_{key}"
             val = attr_group.get(full_key)
             if val not in [None, False, ""]:
@@ -419,7 +464,9 @@ def build_libraries_section(
         # mass_background_update
         background = {}
         for key in ["seasons", "episodes", "ignore_locked", "source"]:
-            full_key = f"{library_type}-library_{lib_id}-attribute_mass_background_{key}"
+            full_key = (
+                f"{library_type}-library_{lib_id}-attribute_mass_background_{key}"
+            )
             val = attr_group.get(full_key)
             if val not in [None, False, ""]:
                 background[key] = val
@@ -560,6 +607,7 @@ def reorder_library_section(library_data):
             reordered_data[key] = value
 
     return reordered_data
+
 
 def build_config(header_style="standard", config_name=None):
     """

@@ -1613,7 +1613,7 @@
       "tooltip_variant": "info",
       "has_custom_string": true,
       "container_class": "border rounded p-3 mb-2",
-      "custom_string_label": "Enter Somarr tag(s) to remove",
+      "custom_string_label": "Enter Sonarr tag(s) to remove",
       "custom_string_placeholder": "e.g. holiday, classic",
       "custom_string_behavior": "list",
       "yml_location": "attribute"
