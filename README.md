@@ -62,8 +62,7 @@ You should see something similar to this:
 
 ![image](static/images/running-in-pwsh.png)
 
-Navigate to [localhost/ip:717](http://localhost:7171/) with your favorite browser, and you should be taken to the Quickstart Welcome Page. You can also use the launcher in the system tray:
-
+Navigate to [localhost/ip:7171](http://localhost:7171/) with your favorite browser, and you should be taken to the Quickstart Welcome Page. You can also use the launcher in the system tray:
 ![image](static/images/system-tray-launcher.png)
 
 ## Running in Docker
