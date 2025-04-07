@@ -43,7 +43,7 @@ git clone https://github.com/Kometa-Team/Quickstart
 cd Quickstart
 ```
 
-3. Install dependencies (it is recommended to do this in a python virtual environment `venv`):
+3. Install dependencies (it is recommended to do this in a Python virtual environment `venv`):
 ```shell
 pip install -r requirements.txt
 ```
