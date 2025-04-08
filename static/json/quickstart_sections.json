@@ -1619,6 +1619,30 @@
       "yml_location": "attribute"
     },
     {
+      "prefix": "genre_mapper",
+      "type": "mapping_list",
+      "accordion": "library",
+      "media_types": ["movie", "show"],
+      "title": "Genre Mapper",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#genre-mapper",
+      "description": "Maps input genres to desired output genres or removes them.",
+      "tooltip_variant": "info",
+      "container_class": "accordion",
+      "yml_location": "attribute"
+    },
+    {
+      "prefix": "content_rating_mapper",
+      "type": "mapping_list",
+      "accordion": "library",
+      "media_types": ["movie", "show"],
+      "title": "Content Rating Mapper",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#content-rating-mapper",
+      "description": "Maps input content ratings to desired output content ratings or removes them.",
+      "tooltip_variant": "info",
+      "container_class": "accordion",
+      "yml_location": "attribute"
+    },
+    {
       "prefix": "metadata_backup",
       "type": "complex_group",
       "accordion": "library",

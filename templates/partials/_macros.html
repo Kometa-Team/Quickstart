@@ -648,3 +648,61 @@ select_input.key if yml_location == "top_level" else
 </div> {# fallback container #}
 {% endif %}
 {% endmacro %}
+
+{% macro mapping_list_section(library, data, section) %}
+{% if "accordion" in section.container_class %}
+<div class="accordion mb-3" id="{{ library.id }}-attribute_{{ section.prefix }}_accordion">
+    <div class="accordion-item {{ section.container_class.replace('accordion', '').strip() }}">
+        <h2 class="accordion-header" id="{{ library.id }}-{{ section.prefix }}-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#{{ library.id }}-{{ section.prefix }}-body" aria-expanded="false"
+                aria-controls="{{ library.id }}-{{ section.prefix }}-body">
+                {{ section.title }}
+            </button>
+        </h2>
+        <div id="{{ library.id }}-{{ section.prefix }}-body" class="accordion-collapse collapse"
+            aria-labelledby="{{ library.id }}-{{ section.prefix }}-header">
+            <div class="accordion-body">
+                {% else %}
+                <div class="{{ section.container_class }}">
+                    {% endif %}
+
+                    <label class="form-label">
+                        <a href="{{ section.wiki }}" target="_blank" rel="noopener noreferrer">{{ section.title }}</a>
+                        <span class="text-{{ section.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"
+                            data-bs-html="true" title="{{ section.description }}">
+                            <i class="bi bi-info-circle-fill"></i>
+                        </span>
+                    </label>
+
+                    <div class="row">
+                        <div class="col-md-5 mb-2">
+                            <input type="text" class="form-control"
+                                id="{{ library.id }}-attribute_{{ section.prefix }}_input"
+                                placeholder="Original Genre (e.g. Action)">
+                        </div>
+                        <div class="col-md-5 mb-2">
+                            <input type="text" class="form-control"
+                                id="{{ library.id }}-attribute_{{ section.prefix }}_output"
+                                placeholder="Mapped Genre (or leave blank to remove)">
+                        </div>
+                        <div class="col-md-2 mb-2">
+                            <button class="btn nav-button w-100" type="button"
+                                id="{{ library.id }}-attribute_{{ section.prefix }}_add">Add</button>
+                        </div>
+                    </div>
+
+                    <ul class="list-group mb-2" id="{{ library.id }}-attribute_{{ section.prefix }}_list"></ul>
+                    <input type="hidden" name="{{ library.id }}-attribute_{{ section.prefix }}"
+                        id="{{ library.id }}-attribute_{{ section.prefix }}_hidden"
+                        value="{{ data.libraries[library.id ~ '-attribute_' ~ section.prefix] | default('{}') }}">
+
+                    {% if "accordion" in section.container_class %}
+                </div> {# .accordion-body #}
+            </div> {# .accordion-collapse #}
+        </div> {# .accordion-item #}
+    </div> {# .accordion wrapper #}
+    {% else %}
+</div> {# fallback container #}
+{% endif %}
+{% endmacro %}

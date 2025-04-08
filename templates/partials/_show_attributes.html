@@ -196,6 +196,10 @@
         container_class=section.container_class,
         yml_location=section.yml_location
         ) }}
+
+        {% elif section.type == "mapping_list" %}
+        {{ macros.mapping_list_section(library, data, section) }}
+
         {% endif %}
         {% endfor %}
       </div>

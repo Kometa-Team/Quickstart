@@ -320,7 +320,7 @@ const EventHandler = {
 
       // Check if this section has selected checkboxes, radios, or dropdowns
       const isCheckedOrSelected = accordion.querySelector(
-        "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none'])"
+        "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none']), ul.list-group li"
       ) !== null
 
       if (isCheckedOrSelected) {
@@ -473,4 +473,71 @@ document.addEventListener('DOMContentLoaded', () => {
   EventHandler.attachLibraryListeners()
   ValidationHandler.restoreSelectedLibraries()
   ValidationHandler.updateValidationState()
+})
+// =============================
+// Mapping List Handler
+// =============================
+const mappingPrefixes = ['genre_mapper', 'content_rating_mapper']
+
+mappingPrefixes.forEach(prefix => {
+  console.log(`[DEBUG] Setting up mapping input for ${prefix}`)
+
+  document.querySelectorAll(`[id$='-attribute_${prefix}_hidden']`).forEach(hiddenInput => {
+    const libraryId = hiddenInput.id.split('-attribute_')[0]
+    const inputField = document.getElementById(`${libraryId}-attribute_${prefix}_input`)
+    const outputField = document.getElementById(`${libraryId}-attribute_${prefix}_output`)
+    const addButton = document.getElementById(`${libraryId}-attribute_${prefix}_add`)
+    const list = document.getElementById(`${libraryId}-attribute_${prefix}_list`)
+
+    if (!inputField || !outputField || !addButton || !list) return
+
+    function renderMappingList (mapping) {
+      list.innerHTML = ''
+      Object.entries(mapping).forEach(([key, value]) => {
+        const li = document.createElement('li')
+        li.className = 'list-group-item d-flex justify-content-between align-items-center'
+
+        const display = value ? `${key} → ${value}` : `${key} → (remove)`
+        li.innerHTML = `
+          <span>${display}</span>
+          <button type="button" class="btn btn-sm btn-danger" aria-label="Remove">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        `
+
+        li.querySelector('button').addEventListener('click', function () {
+          delete mapping[key]
+          hiddenInput.value = JSON.stringify(mapping)
+          renderMappingList(mapping)
+        })
+
+        list.appendChild(li)
+      })
+    }
+
+    // Initialize from hidden input
+    let mapping = {}
+    try {
+      mapping = JSON.parse(hiddenInput.value || '{}')
+    } catch (e) {
+      console.warn(`[WARN] Could not parse JSON for ${prefix}:`, e)
+    }
+
+    renderMappingList(mapping)
+
+    // Handle click to add new mapping
+    addButton.addEventListener('click', () => {
+      const input = inputField.value.trim()
+      const output = outputField.value.trim()
+
+      if (!input || Object.keys(mapping).includes(input)) return
+
+      mapping[input] = output || null
+      hiddenInput.value = JSON.stringify(mapping)
+      renderMappingList(mapping)
+
+      inputField.value = ''
+      outputField.value = ''
+    })
+  })
 })
