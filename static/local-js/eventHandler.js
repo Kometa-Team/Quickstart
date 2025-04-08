@@ -320,7 +320,7 @@ const EventHandler = {
 
       // Check if this section has selected checkboxes, radios, or dropdowns
       const isCheckedOrSelected = accordion.querySelector(
-        "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none']), ul.list-group li"
+        "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none']), .list-group li"
       ) !== null
 
       if (isCheckedOrSelected) {

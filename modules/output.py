@@ -378,6 +378,18 @@ def build_libraries_section(
                         seq[i] = float(f"{seq[i]:.1f}")
                 operations[op] = seq
 
+        # genre_mapper and content_rating_mapper
+        for mapper_key in ["genre_mapper", "content_rating_mapper"]:
+            full_key = f"{library_type}-library_{lib_id}-attribute_{mapper_key}"
+            mapping_value = attr_group.get(full_key)
+            if mapping_value:
+                try:
+                    parsed_mapping = json.loads(mapping_value)
+                    if isinstance(parsed_mapping, dict) and parsed_mapping:
+                        operations[mapper_key] = parsed_mapping
+                except Exception as e:
+                    print(f"[DEBUG] Skipping invalid JSON for {mapper_key}: {mapping_value} — {e}")
+
         # metadata_backup
         backup = {}
         path_key = f"{library_type}-library_{lib_id}-attribute_metadata_backup_path"
