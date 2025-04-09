@@ -56,65 +56,35 @@ function jumpTo (targetPage) {
   console.log('JumpTo initiated for target page:', targetPage)
 
   const form = document.getElementById('configForm') || document.getElementById('final-form')
-
   if (!form) {
     console.error('Form not found')
     return
   }
 
-  // Check form validity
   if (!form.checkValidity()) {
     console.warn('Form is invalid. Reporting validity.')
     form.reportValidity()
     return
   }
 
-  console.log('Form is valid. Preparing to submit.')
-
-  // Append custom webhook URLs to select elements if needed
+  // Append custom webhook URLs if needed
   $('select.form-select').each(function () {
     if ($(this).val() === 'custom') {
       const customInputId = $(this).attr('id') + '_custom'
       const customUrl = $('#' + customInputId).find('input.custom-webhook-url').val()
       if (customUrl) {
-        console.log(`Appending custom URL for ${$(this).attr('id')}:`, customUrl)
         $(this).append('<option value="' + customUrl + '" selected="selected">' + customUrl + '</option>')
         $(this).val(customUrl)
       }
     }
   })
 
-  // Create FormData object from the form
-  const formData = new FormData(form)
-
-  // Debugging FormData content
-  console.log('FormData before fetch:')
-  formData.forEach((value, key) => {
-    console.log(`${key}: ${value}`)
-  })
-
-  // Show loading spinner
-  loading('jump')
-
-  // Submit the form data via fetch without the jumpTo field
-  fetch(form.action, {
-    method: 'POST',
-    body: formData
-  }).then(response => {
-    console.log('Fetch response received:', response.status)
-
-    if (response.ok) {
-      console.log('Redirecting to target page:', targetPage)
-      // Redirect to the target page after successful form submission
-      window.location.href = '/step/' + targetPage
-    } else {
-      response.text().then(err => {
-        console.error('Form submission failed:', response.status, err)
-      })
-    }
-  }).catch(error => {
-    console.error('Error during form submission:', error)
-  })
+  // Temporarily change the action and submit the form
+  const originalAction = form.action
+  form.action = '/step/' + targetPage
+  loading('jump') // optional spinner
+  form.submit()
+  form.action = originalAction // optional restore
 }
 
 // Function to show toast messages
