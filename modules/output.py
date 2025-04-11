@@ -399,19 +399,23 @@ def build_libraries_section(
 
         if attr_group.get(path_key):
             backup["path"] = attr_group.get(path_key)
+
+        # Only add exclude if it is a non-empty list
         if attr_group.get(exclude_key):
             val = attr_group.get(exclude_key)
             try:
                 parsed = json.loads(val) if isinstance(val, str) else val
-                if isinstance(parsed, list):
+                if isinstance(parsed, list) and parsed:  # non-empty list only
                     backup["exclude"] = parsed
             except Exception as e:
                 print(f"[DEBUG] Skipping invalid exclude value: {val} — {e}")
+
         if attr_group.get(sync_key) is True:
             backup["sync_tags"] = True
         if attr_group.get(blank_key) is True:
             backup["add_blank_entries"] = True
 
+        # Only add to operations if backup has any keys
         if backup:
             operations["metadata_backup"] = backup
 
