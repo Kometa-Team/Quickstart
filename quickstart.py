@@ -965,7 +965,7 @@ if __name__ == "__main__":
 
                 print("Quickstart is Running")
                 print(f"Access it at http://localhost:{running_port}")
-                print("Go use the system tray to modify settings.")
+                print("Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your .env file")
                 # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 
@@ -1041,12 +1041,24 @@ if __name__ == "__main__":
 
             def quit_app(self):
                 global server_thread, update_thread
+
+                print("[INFO] Shutting down Quickstart...")
+
+                # Stop tray icon
                 self.tray.hide()
-                os.kill(os.getpid(), signal.SIGINT)
+
+                # Optionally stop Flask server (if you’ve added a stop hook)
+                # For now, just wait for background threads to finish
                 if server_thread and server_thread.is_alive():
-                    server_thread.join()
+                    print("[DEBUG] Waiting for server thread to exit...")
+                    server_thread.join(timeout=2)
+
                 if update_thread and update_thread.is_alive():
-                    update_thread.join()
+                    print("[DEBUG] Waiting for update thread to exit...")
+                    update_thread.join(timeout=2)
+
+                # Exit the Qt app loop
+                self.app.quit()
 
             def restart_quickstart(self):
                 """Cleanly restart the Quickstart application."""
