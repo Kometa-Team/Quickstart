@@ -9,7 +9,7 @@ pillow==11.1.0
 PlexAPI==4.16.1
 pre-commit==4.1.0
 pyfiglet==1.0.2
-pystray==0.19.5
+PyQt5>=5.15.11
 python-dotenv==1.0.1
 requests==2.32.3
 ruamel.yaml==0.18.10

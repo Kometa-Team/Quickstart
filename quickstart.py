@@ -34,7 +34,7 @@ from werkzeug.utils import secure_filename
 from flask_session import Session
 from modules import validations, output, persistence, helpers, database
 
-load_dotenv(os.path.join(helpers.CONFIG_DIR, ".env"))
+load_dotenv(os.path.join(helpers.CONFIG_DIR, ".env"), override=True)
 
 UPLOAD_FOLDER = os.path.join(helpers.CONFIG_DIR, "uploads")
 UPLOAD_FOLDER_MOVIE = os.path.join(UPLOAD_FOLDER, "movies")
@@ -901,123 +901,163 @@ if __name__ == "__main__":
     update_thread.start()
 
     if app.config["QUICKSTART_DOCKER"]:
+        print("[INFO] Running in Docker mode — no system tray will be shown.")
         start_flask_app()
+
     else:
-        import pystray
-        import tkinter
-        from tkinter.messagebox import showinfo, showwarning, showerror
+        from PyQt5.QtGui import QIcon
+        import sys
+        from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QInputDialog, QMessageBox, QWidget
+        from PyQt5.QtCore import Qt
+        from PyQt5.QtCore import QTimer
 
-        class QSApp(tkinter.Tk):
+        class QuickstartTrayApp:
             def __init__(self):
-                super().__init__()
-                global port
+                self.app = QApplication(sys.argv)
+                self.app.setQuitOnLastWindowClosed(False)
+                self.app.setApplicationName("Quickstart")
 
-                def validate_input(new_text):
-                    if not new_text:
-                        return True
-                    try:
-                        value = int(new_text)
-                        return 0 <= value <= 65535
-                    except ValueError:
-                        return False
+                self.dialog_parent = QWidget()
+                self.dialog_parent.setWindowTitle("Quickstart")
+                self.dialog_parent.setAttribute(Qt.WA_DontShowOnScreen, True)  # Optional: keep it invisible
 
-                def get_value():
-                    global port
-                    value = entry.get()
-                    if value:
-                        new_port = int(value)
-                        if new_port == port:
-                            showinfo("Port Already Selected", f"Port {new_port} is already selected to be used by Quickstart.")
-                        else:
-                            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                                if sock.connect_ex(("localhost", port)) == 0:
-                                    showwarning(
-                                        "Port Conflict",
-                                        f"Port {new_port} is already in use.\n\n"
-                                        f"Close any conflicting applications using this port or choose an unused port.\n\n"
-                                        f"Restart Quickstart for changes to apply.",
-                                    )
-                                else:
-                                    showinfo("Port Updated", f"Port number has been updated to {new_port}.\n\nA restart is required for the change to take effect.")
-                            port = new_port
-                            helpers.update_env_variable("QS_PORT", port)
-                        self.minimize_to_tray()
-                    else:
-                        showerror("Invalid Input", "Please enter a valid port number (0-65535).")
+                self.tray = QSystemTrayIcon()
+                self.icon_path = os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")
 
-                def enter_pressed(event):  # noqa
-                    get_value()
+                self.tray.setIcon(QIcon(self.icon_path))
+                self.tray.setToolTip(f"Quickstart (Port: {running_port})")
 
-                self.title("Change Port Number")
-                self.geometry("300x100")
-                self.iconphoto(True, tkinter.PhotoImage(file=os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")))
-                self.protocol("WM_DELETE_WINDOW", self.minimize_to_tray)
+                self.menu = QMenu()
 
-                label = tkinter.Label(self, text=f"Current Port Number: {port}")
-                label.pack(pady=5)
+                self.open_action = QAction(f"Open Quickstart (Port: {running_port})")
+                self.open_action.triggered.connect(self.open_quickstart)
 
-                entry = tkinter.Entry(self, validate="key", validatecommand=(self.register(validate_input), "%P"))
-                entry.pack(pady=5)
-                entry.bind("<Return>", enter_pressed)
+                self.github_action = QAction("Quickstart GitHub")
+                self.github_action.triggered.connect(lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart"))
 
-                button = tkinter.Button(self, text="Save Port Number", command=get_value)
-                button.pack(pady=5)
+                self.toggle_debug_action = QAction(f"{'Disable' if debug_mode else 'Enable'} Debug")
+                self.toggle_debug_action.triggered.connect(self.toggle_debug)
 
-                self.minimize_to_tray()
+                self.change_port_action = QAction("Change Port")
+                self.change_port_action.triggered.connect(self.change_port)
 
-            def minimize_to_tray(self):
-                self.withdraw()
+                self.quit_action = QAction("Exit")
+                self.quit_action.triggered.connect(self.quit_app)
 
-                icon_image = Image.open(os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png"))
-                pystray_icon = pystray.Icon(
-                    "Quickstart",
-                    icon_image,
-                    menu=self.get_menu(),
-                    title=f"Quickstart (Port: {running_port})",
-                )
-                pystray_icon.run()
+                self.menu.addAction(self.open_action)
+                self.menu.addAction(self.github_action)
+                self.menu.addSeparator()
+                self.menu.addAction(self.toggle_debug_action)
+                self.menu.addAction(self.change_port_action)
+                self.menu.addSeparator()
+                self.menu.addAction(self.quit_action)
 
-            def get_menu(self):
-                return pystray.Menu(
-                    pystray.MenuItem(f"Open Quickstart (Port: {running_port})", self.open_quickstart, default=True),
-                    pystray.MenuItem("Quickstart GitHub", self.open_github),
-                    pystray.Menu.SEPARATOR,
-                    pystray.MenuItem(f"{'Disable' if debug_mode else 'Enable'} Debug", self.toggle_debug),
-                    pystray.MenuItem(f"Change Port (Current: {port})", self.show_window),
-                    pystray.Menu.SEPARATOR,
-                    pystray.MenuItem("Exit", self.exit_action),
+                self.tray.setContextMenu(self.menu)
+                self.tray.show()
+
+                self.tray.showMessage(
+                    "Quickstart is Running",
+                    f"Access it at http://localhost:{running_port}",
+                    QSystemTrayIcon.NoIcon,
+                    8000  # milliseconds (8 seconds)
                 )
 
-            def show_window(self, icon):
-                icon.stop()
-                self.after(0, self.deiconify)
 
-            def open_quickstart(self, icon):  # noqa
+                print("Quickstart is Running")
+                print(f"Access it at http://localhost:{running_port}")
+                print("Go use the system tray to modify settings.")
+                # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 
-            def open_github(self, icon):  # noqa
-                webbrowser.open("https://github.com/Kometa-Team/Quickstart/")
+                # Keep the invisible parent alive
+                self.dialog_parent.showMinimized()
+                self.dialog_parent.hide()
 
-            def toggle_debug(self, icon):
+                # Ensure Qt stays alive (important in tray-only apps)
+                QTimer.singleShot(0, lambda: None)  # No-op to lock event loop
+
+            def exec(self):
+                """Run the Qt app loop."""
+                self.app.exec()
+
+            def open_quickstart(self):
+                webbrowser.open(f"http://localhost:{running_port}")
+
+            def toggle_debug(self):
                 global debug_mode
                 debug_mode = not debug_mode
                 helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
                 app.config["QS_DEBUG"] = debug_mode
-                icon.menu = self.get_menu()
-                icon.update_menu()
+                self.toggle_debug_action.setText(f"{'Disable' if debug_mode else 'Enable'} Debug")
 
-            def exit_action(self, icon):  # noqa
+            def show_messagebox(self, box_type, title, text):
+                box = QMessageBox(self.dialog_parent)
+                box.setWindowTitle(title)
+                box.setText(text)
+                box.setIcon(box_type)
+                box.setStandardButtons(QMessageBox.Ok)
+                box.setWindowFlags(box.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+                box.setWindowIcon(QIcon(self.icon_path))
+                box.exec()
+
+            def change_port(self):
+                global port
+                try:
+                    print("[DEBUG] Launching custom port input dialog...")
+
+                    dialog = QInputDialog(self.dialog_parent)
+                    dialog.setWindowTitle("Change Port")
+                    dialog.setLabelText("Enter a new port number:")
+                    dialog.setInputMode(QInputDialog.IntInput)
+                    dialog.setIntMinimum(1)
+                    dialog.setIntMaximum(65535)
+                    dialog.setIntValue(port)
+
+                    # Remove help button and set custom icon
+                    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+                    dialog.setWindowIcon(QIcon(self.icon_path))
+
+                    # Execute dialog
+                    if dialog.exec() != QInputDialog.Accepted:
+                        print("[INFO] Port change canceled by user.")
+                        return
+
+                    new_port = dialog.intValue()
+                    print(f"[INFO] User entered new port: {new_port}")
+
+                    if new_port == port:
+                        self.show_messagebox(QMessageBox.Information, "Port Already Selected", f"Port {new_port} is already selected.")
+                    else:
+                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                            if sock.connect_ex(("localhost", new_port)) == 0:
+                                self.show_messagebox(QMessageBox.Warning, "Port Conflict", f"Port {new_port} is already in use.\nClose any conflicting applications or choose another port.")
+                            else:
+                                helpers.update_env_variable("QS_PORT", new_port)
+                                self.show_messagebox(QMessageBox.Information, "Port Updated", f"Port number updated to {new_port}.\nQuickstart will now restart automatically.")
+                                self.restart_quickstart()
+
+                except Exception as e:
+                    print(f"[ERROR] Port change error: {e}")
+
+            def quit_app(self):
                 global server_thread, update_thread
-                icon.stop()
+                self.tray.hide()
                 os.kill(os.getpid(), signal.SIGINT)
                 if server_thread and server_thread.is_alive():
                     server_thread.join()
                 if update_thread and update_thread.is_alive():
                     update_thread.join()
 
+            def restart_quickstart(self):
+                """Cleanly restart the Quickstart application."""
+                print("[INFO] Restarting Quickstart...")
+                self.tray.hide()
+
+                python = sys.executable
+                os.execl(python, python, *sys.argv)
+
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
 
-        main_app = QSApp()
-        main_app.mainloop()
+        QuickstartTrayApp().exec()
