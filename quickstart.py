@@ -901,7 +901,7 @@ if __name__ == "__main__":
     update_thread.start()
 
     if app.config["QUICKSTART_DOCKER"]:
-        print("[INFO] Running in Docker mode - no system tray will be shown.")
+        print("[INFO] Running in Docker mode. Therefore no system tray will be shown.")
         start_flask_app()
 
     else:
