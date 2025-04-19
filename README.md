@@ -53,6 +53,13 @@ pip install -r requirements.txt
 pip install -r requirements.txt --ignore-installed
 ```
 
+> [!WARNING]
+> If you are running the single file executable in Ubuntu Linux, you will likely need to perform these steps first to have a system tray icon show up:
+```shell
+sudo apt update
+sudo apt install -y libxcb-xinerama0 libxcb-xinerama0-dev libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0
+```
+
 At this point Quickstart has been installed, and you can verify installation by running (it is recommended to do this in a python virtual environment `venv` as shown in the image below):
 ```shell
 python quickstart.py
