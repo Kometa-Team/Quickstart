@@ -911,7 +911,7 @@ if __name__ == "__main__":
             return True
         return False
 
-    # Headless mode: skip tray
+    # Headless mode: skip system tray
     if app.config["QUICKSTART_DOCKER"] or not is_gui_available():
         print("[INFO] Running in headless mode — no system tray will be shown.")
 
