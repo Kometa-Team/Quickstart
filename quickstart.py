@@ -900,17 +900,33 @@ if __name__ == "__main__":
     update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
     update_thread.start()
 
-    if app.config["QUICKSTART_DOCKER"]:
-        print("[INFO] Running in Docker mode. Therefore no system tray will be shown.")
-        start_flask_app()
+    def is_gui_available():
+        import os
+        if sys.platform.startswith("linux"):
+            return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+        elif sys.platform == "darwin":
+            return True
+        elif sys.platform.startswith("win"):
+            return True
+        return False
+
+    # Headless mode: skip tray
+    if app.config["QUICKSTART_DOCKER"] or not is_gui_available():
+        print("[INFO] Running in headless mode — no system tray will be shown.")
+
+        server_thread = Thread(target=start_flask_app)
+        server_thread.daemon = True
+        server_thread.start()
 
     else:
+        # GUI mode: show tray
         from PyQt5.QtGui import QIcon
-        import sys
         from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QInputDialog, QMessageBox, QWidget
-        from PyQt5.QtCore import Qt
-        from PyQt5.QtCore import QTimer
+        from PyQt5.QtCore import Qt, QTimer
 
+        server_thread = Thread(target=start_flask_app)
+        server_thread.daemon = True
+        server_thread.start()
         class QuickstartTrayApp:
             def __init__(self):
                 self.app = QApplication(sys.argv)
@@ -1063,9 +1079,5 @@ if __name__ == "__main__":
 
                 python = sys.executable
                 os.execl(python, python, *sys.argv)
-
-        server_thread = Thread(target=start_flask_app)
-        server_thread.daemon = True
-        server_thread.start()
 
         QuickstartTrayApp().exec()
