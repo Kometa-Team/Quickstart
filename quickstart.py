@@ -902,6 +902,7 @@ if __name__ == "__main__":
 
     def is_gui_available():
         import os
+
         if sys.platform.startswith("linux"):
             return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
         elif sys.platform == "darwin":
@@ -927,6 +928,7 @@ if __name__ == "__main__":
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
+
         class QuickstartTrayApp:
             def __init__(self):
                 self.app = QApplication(sys.argv)
