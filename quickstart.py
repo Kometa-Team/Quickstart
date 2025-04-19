@@ -901,7 +901,7 @@ if __name__ == "__main__":
     update_thread.start()
 
     if app.config["QUICKSTART_DOCKER"]:
-        print("[INFO] Running in Docker mode â€” no system tray will be shown.")
+        print("[INFO] Running in Docker mode — no system tray will be shown.")
         start_flask_app()
 
     else:
@@ -955,13 +955,7 @@ if __name__ == "__main__":
                 self.tray.setContextMenu(self.menu)
                 self.tray.show()
 
-                self.tray.showMessage(
-                    "Quickstart is Running",
-                    f"Access it at http://localhost:{running_port}",
-                    QSystemTrayIcon.NoIcon,
-                    8000  # milliseconds (8 seconds)
-                )
-
+                self.tray.showMessage("Quickstart is Running", f"Access it at http://localhost:{running_port}", QSystemTrayIcon.NoIcon, 8000)  # milliseconds (8 seconds)
 
                 print("Quickstart is Running")
                 print(f"Access it at http://localhost:{running_port}")
@@ -1030,7 +1024,9 @@ if __name__ == "__main__":
                     else:
                         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                             if sock.connect_ex(("localhost", new_port)) == 0:
-                                self.show_messagebox(QMessageBox.Warning, "Port Conflict", f"Port {new_port} is already in use.\nClose any conflicting applications or choose another port.")
+                                self.show_messagebox(
+                                    QMessageBox.Warning, "Port Conflict", f"Port {new_port} is already in use.\nClose any conflicting applications or choose another port."
+                                )
                             else:
                                 helpers.update_env_variable("QS_PORT", new_port)
                                 self.show_messagebox(QMessageBox.Information, "Port Updated", f"Port number updated to {new_port}.\nQuickstart will now restart automatically.")
@@ -1047,7 +1043,7 @@ if __name__ == "__main__":
                 # Stop tray icon
                 self.tray.hide()
 
-                # Optionally stop Flask server (if youâ€™ve added a stop hook)
+                # Optionally stop Flask server (if you’ve added a stop hook)
                 # For now, just wait for background threads to finish
                 if server_thread and server_thread.is_alive():
                     print("[DEBUG] Waiting for server thread to exit...")
