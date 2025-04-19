@@ -955,13 +955,7 @@ if __name__ == "__main__":
                 self.tray.setContextMenu(self.menu)
                 self.tray.show()
 
-                self.tray.showMessage(
-                    "Quickstart is Running",
-                    f"Access it at http://localhost:{running_port}",
-                    QSystemTrayIcon.NoIcon,
-                    8000  # milliseconds (8 seconds)
-                )
-
+                self.tray.showMessage("Quickstart is Running", f"Access it at http://localhost:{running_port}", QSystemTrayIcon.NoIcon, 8000)  # milliseconds (8 seconds)
 
                 print("Quickstart is Running")
                 print(f"Access it at http://localhost:{running_port}")
@@ -1030,7 +1024,9 @@ if __name__ == "__main__":
                     else:
                         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                             if sock.connect_ex(("localhost", new_port)) == 0:
-                                self.show_messagebox(QMessageBox.Warning, "Port Conflict", f"Port {new_port} is already in use.\nClose any conflicting applications or choose another port.")
+                                self.show_messagebox(
+                                    QMessageBox.Warning, "Port Conflict", f"Port {new_port} is already in use.\nClose any conflicting applications or choose another port."
+                                )
                             else:
                                 helpers.update_env_variable("QS_PORT", new_port)
                                 self.show_messagebox(QMessageBox.Information, "Port Updated", f"Port number updated to {new_port}.\nQuickstart will now restart automatically.")
