@@ -901,7 +901,7 @@ if __name__ == "__main__":
     update_thread.start()
 
     if app.config["QUICKSTART_DOCKER"]:
-        print("[INFO] Running in Docker mode — no system tray will be shown.")
+        print("[INFO] Running in Docker mode - no system tray will be shown.")
         start_flask_app()
 
     else:
@@ -1043,7 +1043,7 @@ if __name__ == "__main__":
                 # Stop tray icon
                 self.tray.hide()
 
-                # Optionally stop Flask server (if you’ve added a stop hook)
+                # Optionally stop Flask server (if you have added a stop hook)
                 # For now, just wait for background threads to finish
                 if server_thread and server_thread.is_alive():
                     print("[DEBUG] Waiting for server thread to exit...")
