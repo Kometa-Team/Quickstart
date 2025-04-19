@@ -919,7 +919,7 @@ if __name__ == "__main__":
 
                 self.dialog_parent = QWidget()
                 self.dialog_parent.setWindowTitle("Quickstart")
-                self.dialog_parent.setAttribute(Qt.WA_DontShowOnScreen, True)  # Optional: keep it invisible
+                self.dialog_parent.setAttribute(Qt.WA_DontShowOnScreen, True)
 
                 self.tray = QSystemTrayIcon()
                 self.icon_path = os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")
