@@ -32,7 +32,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('VERSION', '.'),
-        ('static/fonts', 'pyfiglet/fonts'),
+        ('static/json', 'static/fonts', 'pyfiglet/fonts'),
         ('static', 'static'),
         ('templates', 'templates'),
         ('modules', 'modules'),
