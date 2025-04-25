@@ -231,6 +231,14 @@ label {
     /* Space text from border */
 }
 
+/* Add a red left border when an accordion has invalid items */
+.accordion-header.invalid {
+    border-left: 4px solid #dc3545 !important;
+    /* Bootstrap red */
+    padding-left: 10px !important;
+    /* Same padding for symmetry */
+}
+
 /* Ensure the accordion header has a transparent background */
 .accordion-button:not(.collapsed) {
     background-color: transparent !important;

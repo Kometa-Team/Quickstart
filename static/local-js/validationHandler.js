@@ -27,7 +27,7 @@ const ValidationHandler = {
     } else {
       console.log('[DEBUG] Validation Failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
-        'You must select at least one library and at least one corresponding accordion item.',
+        'Please review your selections: ensure you have picked at least one library, selected an item inside each chosen library, and if using Separators, selected a valid <strong>Placeholder IMDb ID</strong>. Items needing attention are highlighted in red below.',
         'danger'
       )
       ValidationHandler.disableNavigation(false)
@@ -131,17 +131,66 @@ const ValidationHandler = {
 
     const allLibrariesValid = validateLibraries(libraryList)
 
-    console.log(`[DEBUG] Libraries Valid: ${allLibrariesValid}`)
+    const validatePlaceholderSelection = () => {
+      let allPlaceholdersValid = true
 
-    if (allLibrariesValid) {
+      document.querySelectorAll('.placeholder-imdb-dropdown').forEach(dropdown => {
+        dropdown.classList.remove('is-invalid')
+
+        const libraryId = dropdown.dataset.libraryId
+        const libraryType = dropdown.dataset.libraryType
+        const libraryPrefix = libraryType === 'movie' ? 'mov' : 'sho'
+
+        const separatorDropdown = document.querySelector(`[name="${libraryPrefix}-library_${libraryId.replace(/\s+/g, '').toLowerCase()}-template_variables[use_separator]"]`)
+
+        if (separatorDropdown && separatorDropdown.value !== 'none') {
+          if (!dropdown.value) {
+            console.log(`[DEBUG] Placeholder missing for library: ${libraryId}`)
+            allPlaceholdersValid = false
+            dropdown.classList.add('is-invalid')
+
+            // Bubble up red invalid highlight properly
+            let parent = dropdown.closest('.accordion-item')
+            while (parent) {
+              const header = parent.querySelector(':scope > .accordion-header')
+              if (header) {
+                header.classList.remove('selected')
+                header.classList.add('invalid')
+              }
+              parent = parent.parentElement?.closest('.accordion-item')
+            }
+          } else {
+            // Valid placeholder selected, bubble up green
+            let parent = dropdown.closest('.accordion-item')
+            while (parent) {
+              const header = parent.querySelector(':scope > .accordion-header')
+              if (header) {
+                header.classList.remove('invalid')
+                header.classList.add('selected')
+              }
+              parent = parent.parentElement?.closest('.accordion-item')
+            }
+          }
+        }
+      })
+
+      return allPlaceholdersValid
+    }
+
+    const allPlaceholdersValid = validatePlaceholderSelection()
+
+    console.log(`[DEBUG] Libraries Valid: ${allLibrariesValid}`)
+    console.log(`[DEBUG] Placeholders Valid: ${allPlaceholdersValid}`)
+
+    if (allLibrariesValid && allPlaceholdersValid) {
       console.log('[DEBUG] Validation Passed! Enabling navigation.')
       ValidationHandler.showValidationMessage('Validation successful! You may proceed.', 'success')
       ValidationHandler.enableNavigation()
       return true
     } else {
-      console.log('[DEBUG] Some selected libraries lack highlights! Disabling navigation.')
+      console.log('[DEBUG] Some validations failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
-        'Each selected library must have at least one highlighted option.',
+        'Each selected library must have at least one highlighted item, and a valid Placeholder IMDb must be selected if a Separator is enabled.',
         'danger'
       )
       ValidationHandler.disableNavigation(false)
