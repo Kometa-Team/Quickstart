@@ -668,9 +668,9 @@ def build_config(header_style="standard", config_name=None):
         if cleaned_webhooks:
             config_data["webhooks"] = {"webhooks": cleaned_webhooks}  # Preserve webhooks key
         else:
-            config_data.pop("webhooks", None)  # 🚀 Fully remove empty webhooks
+            config_data.pop("webhooks", None)  # Fully remove empty webhooks
 
-        # 🔍 Debugging: Ensure webhooks are correctly cleaned
+        # Debugging: Ensure webhooks are correctly cleaned
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Cleaned Webhooks Data AFTER Removing Empty Values: {cleaned_webhooks}")
             if "webhooks" not in config_data:

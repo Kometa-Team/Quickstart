@@ -67,7 +67,7 @@ const ValidationHandler = {
     console.log(`[DEBUG] Selected Show Libraries: ${selectedShowLibraries}`)
     console.log(`[DEBUG] Combined Library List: ${libraryList}`)
 
-    // ❌ If no libraries are selected, disable navigation immediately
+    // If no libraries are selected, disable navigation immediately
     if (libraryList.length === 0) {
       console.log('[DEBUG] No libraries selected! Disabling navigation.')
       ValidationHandler.showValidationMessage(
@@ -78,7 +78,7 @@ const ValidationHandler = {
       return false
     }
 
-    // 🚀 Validate that all selected libraries have at least one highlight
+    // Validate that all selected libraries have at least one highlight
     const validateLibraries = () => {
       const selectedLibraries = Array.from(document.querySelectorAll('.library-checkbox:checked'))
         .map(checkbox => checkbox.id.replace(/-library$/, '')) // Normalize ID

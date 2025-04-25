@@ -288,7 +288,8 @@ prefix if yml_location == "top_level" else
                 </select>
             </div>
         </div>
-        {% if preview_image %}
+        {# Only render preview image for the main dropdown, NOT for the IMDb field #}
+        {% if preview_image and prefix != "placeholder_imdb_id" %}
         <div class="col-md-6 d-flex align-items-center justify-content-center">
             <div id="{{ field_id }}-separatorPreviewContainer">
                 <img id="{{ field_id }}-separatorPreviewImage" src="" alt="{{ field_id }} Separator Preview"
@@ -298,6 +299,38 @@ prefix if yml_location == "top_level" else
         {% endif %}
     </div>
 </div>
+
+{# IMDb placeholder section: always hidden by default, no preview, only for "use_separator" #}
+{% if prefix == "use_separator" %}
+{% set imdb_select_name = library.id ~ "-attribute_template_variables[placeholder_imdb_id]" %}
+{% set imdb_select_id = imdb_select_name.replace("[", "_").replace("]", "") %}
+{% set imdb_data = data.libraries.get(imdb_select_name, "") %}
+<div class="row mt-2 imdb-placeholder-wrapper visually-hidden" data-library-id="{{ library.name }}"
+    data-library-type="{{ 'movie' if library.id.startswith('mov-') else 'show' }}">
+    <div class="col-md-6">
+        <div class="input-group mb-2">
+            <span class="input-group-text" id="{{ imdb_select_id }}_text">
+                <a href="https://kometa.wiki/en/nightly/defaults/separators/#important-note" target="_blank"
+                    rel="noopener noreferrer">Placeholder IMDb ID</a>
+                <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="Choose an item to use as the placeholder for the Separator.">
+                    <i class="bi bi-info-circle-fill"></i>
+                </span>
+            </span>
+            <select class="form-select placeholder-imdb-dropdown" id="{{ imdb_select_id }}"
+                name="{{ imdb_select_name }}" aria-describedby="{{ imdb_select_id }}_text"
+                data-library-id="{{ library.name }}"
+                data-library-type="{{ 'movie' if library.id.startswith('mov-') else 'show' }}">
+                <option value="">None</option>
+                {% if imdb_data %}
+                <option selected value="{{ imdb_data }}">{{ imdb_data }}</option>
+                {% endif %}
+            </select>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 {% endmacro %}
 
 {% macro custom_toggle_number_section(library, data, prefix, title, wiki, description, toggles=[], number_input=None,

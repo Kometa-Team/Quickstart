@@ -10,7 +10,7 @@
       ],
       "title": "Separator Style",
       "wiki": "https://kometa.wiki/en/nightly/defaults/separators/#separators-default-collection-files",
-      "description": "Separators are like index cards at a library, to categorize Collections in your library.<br><br> To enable Separators for the Defaults Collections, select your style from the drop-down.<br><br><b>Warning</b>: Plex does not officially support blank collections, which is what separators are. You may experience bugs if you enable Separators.",
+      "description": "Separators are like index cards at a library, to categorize Collections in your library.<br><br> To enable Separators for the Defaults Collections, select your style from the drop-down.<br><br><b>Warning</b>: Plex does not officially support blank collections, which is what separators are. Select a Placeholder to be safe.",
       "tooltip_variant": "danger",
       "container_class": "",
       "options": [

@@ -13,13 +13,19 @@ const OverlayHandler = {
         const selectedStyle = separatorDropdown.value !== 'none'
         OverlayHandler.updateSeparatorToggles(libraryId, selectedStyle)
         OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
+        OverlayHandler.toggleImdbPlaceholder(libraryId, isMovie ? 'movie' : 'show', selectedStyle)
+        OverlayHandler.updateHiddenInputs(libraryId, isMovie)
         EventHandler.updateAccordionHighlights()
       })
+
       separatorDropdown.dataset.listenerAdded = true
 
-      // Apply separator toggle logic on page load
-      OverlayHandler.updateSeparatorToggles(libraryId, separatorDropdown.value !== 'none')
+      // Apply separator logic on initial page load
+      const initialSelected = separatorDropdown.value !== 'none'
+      OverlayHandler.updateSeparatorToggles(libraryId, initialSelected)
       OverlayHandler.updateSeparatorPreview(fieldId, separatorDropdown.value)
+      OverlayHandler.toggleImdbPlaceholder(libraryId, isMovie ? 'movie' : 'show', initialSelected)
+      OverlayHandler.updateHiddenInputs(libraryId, isMovie)
       EventHandler.updateAccordionHighlights()
     }
   },
@@ -93,6 +99,16 @@ const OverlayHandler = {
     const selectedValue = useSeparatorsDropdown.value
     const isEnabled = selectedValue !== 'none'
 
+    // Clear IMDb placeholder selection if separator is disabled
+    if (!isEnabled) {
+      const imdbDropdown = document.querySelector(`#${libraryId}-attribute_template_variables_placeholder_imdb_id`)
+      if (imdbDropdown) {
+        imdbDropdown.value = ''
+        const optionsToRemove = [...imdbDropdown.options].slice(1) // skip the first option
+        optionsToRemove.forEach(opt => imdbDropdown.remove(opt.index))
+      }
+    }
+
     // Create hidden inputs dynamically if missing
     if (!useSeparatorsInput) {
       useSeparatorsInput = document.createElement('input')
@@ -101,7 +117,6 @@ const OverlayHandler = {
       useSeparatorsInput.id = `${libraryId}-template_variables_use_separator`
       form.appendChild(useSeparatorsInput)
     }
-    useSeparatorsInput.value = isEnabled ? 'true' : 'false'
 
     if (!sepStyleInput) {
       sepStyleInput = document.createElement('input')
@@ -124,6 +139,91 @@ const OverlayHandler = {
 
     const fieldId = `${libraryId}-template_variables[use_separator]`
     OverlayHandler.updateSeparatorPreview(fieldId, selectedValue)
+  },
+
+  toggleImdbPlaceholder: function (libraryId, mediaType, show) {
+    const dropdown = document.getElementById(`${libraryId}-attribute_template_variables_placeholder_imdb_id`)
+    if (!dropdown) {
+      console.error(`[ERROR] IMDb dropdown not found for libraryId: ${libraryId}`)
+      return
+    }
+
+    const libraryName = dropdown.dataset.libraryId
+    const imdbBlock = document.querySelector(`.imdb-placeholder-wrapper[data-library-id="${libraryName}"]`)
+    if (!imdbBlock) {
+      console.error(`[ERROR] IMDb block not found for libraryName: ${libraryName}`)
+      return
+    }
+
+    if (show) {
+      imdbBlock.classList.remove('visually-hidden')
+      const currentValue = dropdown.value
+      OverlayHandler.populateImdbDropdown(dropdown, libraryName, mediaType, currentValue)
+    } else {
+      imdbBlock.classList.add('visually-hidden')
+    }
+  },
+
+  populateImdbDropdown: function (dropdown, libraryName, mediaType, placeholderId = '') {
+    console.log(`[DEBUG] Fetching top IMDb items for "${libraryName}" (type=${mediaType})`)
+
+    const url = `/get_top_imdb_items/${encodeURIComponent(libraryName)}?type=${mediaType}` + (placeholderId ? `&placeholder_id=${placeholderId}` : '')
+
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          // Clear existing options
+          dropdown.innerHTML = ''
+
+          // Add "None" option
+          const noneOption = document.createElement('option')
+          noneOption.value = ''
+          noneOption.textContent = 'None'
+          dropdown.appendChild(noneOption)
+
+          // Add items
+          data.items.forEach(item => {
+            const option = document.createElement('option')
+            option.value = item.id
+            option.textContent = `${item.title} (${item.id})`
+            dropdown.appendChild(option)
+          })
+
+          // Insert saved placeholder item if returned separately
+          if (data.saved_item) {
+            const savedOption = document.createElement('option')
+            savedOption.value = data.saved_item.id
+            savedOption.textContent = `${data.saved_item.title} (${data.saved_item.id}) (Not in Top 25)`
+            dropdown.appendChild(savedOption)
+          }
+
+          // Restore previous selection
+          dropdown.value = placeholderId || ''
+        } else {
+          console.warn(`Failed to load IMDb titles for ${libraryName}:`, data.message)
+        }
+      })
+      .catch(err => {
+        console.error(`IMDb fetch failed for ${libraryName}:`, err)
+      })
   }
 
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+  const imdbDropdowns = document.querySelectorAll('.placeholder-imdb-dropdown')
+
+  imdbDropdowns.forEach(dropdown => {
+    const libraryId = dropdown.id.split('-attribute_template_variables')[0]
+    const isMovie = dropdown.dataset.libraryType === 'movie'
+    const libraryName = dropdown.dataset.libraryId // Movies / TestMovies etc.
+
+    // 1. Initialize separator overlay logic
+    OverlayHandler.initializeOverlays(libraryId, isMovie)
+
+    // 2. Populate IMDb Dropdown immediately
+    const currentValue = dropdown.value // current selected tt######
+    OverlayHandler.populateImdbDropdown(dropdown, libraryName, isMovie ? 'movie' : 'show', currentValue)
+  })
+})
