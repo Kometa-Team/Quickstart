@@ -280,16 +280,27 @@ def build_libraries_section(
         # Template Variables
         template_key = helpers.extract_library_name(library_key)
         template_data = templates.get(template_key, {})
+
         sep_color_key = None
+        placeholder_key = None
+
         for key in template_data.keys():
             if key.endswith("-template_variables[use_separator]") and key.startswith(f"{library_type}-library_{template_key}"):
                 sep_color_key = key
-                break
+            if key.endswith("-attribute_template_variables[placeholder_imdb_id]") and key.startswith(f"{library_type}-library_{template_key}"):
+                placeholder_key = key
 
         sep_color = template_data.get(sep_color_key)
+        placeholder_id = template_data.get(placeholder_key)
+
         template_vars = {"use_separator": True if sep_color else False}
+
         if sep_color:
             template_vars["sep_style"] = sep_color
+
+        if placeholder_id:
+            template_vars["placeholder_imdb_id"] = placeholder_id
+
         entry["template_variables"] = template_vars
 
         # Grouped mass update operations (excluding mass_genre_update, handled earlier)
