@@ -46,12 +46,8 @@ OVERLAY_FOLDER = os.path.join(IMAGES_FOLDER, "overlays")
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
-GITHUB_MASTER_VERSION_URL = (
-    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
-)
-GITHUB_DEVELOP_VERSION_URL = (
-    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
-)
+GITHUB_MASTER_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
+GITHUB_DEVELOP_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
 
 basedir = os.path.abspath
 
@@ -84,9 +80,7 @@ app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
-app.config["SESSION_CACHELIB"] = FileSystemCache(
-    cache_dir="flask_session", threshold=500
-)
+app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir="flask_session", threshold=500)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
@@ -99,9 +93,7 @@ helpers.ensure_json_schema()
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 
 parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
-parser.add_argument(
-    "--port", type=int, help="Specify the port number to run the server"
-)
+parser.add_argument("--port", type=int, help="Specify the port number to run the server")
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
 
@@ -109,9 +101,7 @@ port = args.port if args.port else int(os.getenv("QS_PORT", "7171"))
 running_port = port
 debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
-print(
-    f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
-)
+print(f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}")
 
 
 @app.route("/rename_library_image", methods=["POST"])
@@ -145,9 +135,7 @@ def rename_library_image():
     # Check if the new file name already exists
     if os.path.exists(new_path):
         return (
-            jsonify(
-                {"status": "error", "message": "File with new name already exists"}
-            ),
+            jsonify({"status": "error", "message": "File with new name already exists"}),
             400,
         )
 
@@ -174,15 +162,11 @@ def generate_preview():
     overlays = data.get("overlays", [])
     img_type = data.get("type", "movie")  # "movie" or "show"
     selected_image = data.get("selected_image", "default.png")
-    library_id = data.get(
-        "library_id", "default-library"
-    )  # Unique identifier for each library
+    library_id = data.get("library_id", "default-library")  # Unique identifier for each library
     upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
 
     if app.config["QS_DEBUG"]:
-        print(
-            f"[DEBUG] Generating preview for {library_id}, Type: {img_type}, Overlays: {overlays}"
-        )
+        print(f"[DEBUG] Generating preview for {library_id}, Type: {img_type}, Overlays: {overlays}")
 
     # Ensure preview directory exists
     if not os.path.exists(PREVIEW_FOLDER):
@@ -204,9 +188,7 @@ def generate_preview():
             # Only create grey image if both locations are missing.
             if not os.path.exists(base_image_path):
                 if app.config["QS_DEBUG"]:
-                    print(
-                        "[DEBUG] default.png not found in IMAGES_FOLDER or previews, creating grey placeholder image..."
-                    )
+                    print("[DEBUG] default.png not found in IMAGES_FOLDER or previews, creating grey placeholder image...")
 
                 base_img = Image.new("RGBA", (1000, 1500), (128, 128, 128, 255))  # grey
                 base_img.save(base_image_path)
@@ -247,12 +229,8 @@ def serve_preview_image(filename):
     if os.path.exists(filepath):
         return send_file(filepath, mimetype="image/png")
     else:
-        print(
-            f"[WARNING] Requested preview image '{filename}' not found. Returning default."
-        )
-        return send_file(
-            os.path.join(IMAGES_FOLDER, "default.png"), mimetype="image/png"
-        )
+        print(f"[WARNING] Requested preview image '{filename}' not found. Returning default.")
+        return send_file(os.path.join(IMAGES_FOLDER, "default.png"), mimetype="image/png")
 
 
 @app.route("/get_preview_image/<img_type>", methods=["GET"])
@@ -284,11 +262,7 @@ def list_uploaded_images():
     if not os.path.exists(uploads_dir):
         return jsonify({"images": []})  # Return empty list if folder doesn't exist
 
-    images = [
-        img
-        for img in os.listdir(uploads_dir)
-        if img.lower().endswith((".png", ".jpg", ".jpeg"))
-    ]
+    images = [img for img in os.listdir(uploads_dir) if img.lower().endswith((".png", ".jpg", ".jpeg"))]
 
     return jsonify({"images": images})
 
@@ -410,17 +384,12 @@ def fetch_library_image():
         img = img.resize((1000, 1500), Image.LANCZOS)  # noqa
 
         # Set save directory
-        save_folder = (
-            UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
-        )
+        save_folder = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
         os.makedirs(save_folder, exist_ok=True)
 
         # Generate a safe filename from URL
         filename = secure_filename(os.path.basename(image_url))
-        if (
-            "." not in filename
-            or filename.split(".")[-1].lower() not in ALLOWED_EXTENSIONS
-        ):
+        if "." not in filename or filename.split(".")[-1].lower() not in ALLOWED_EXTENSIONS:
             filename += ".png"  # Default to PNG if no valid extension is found
 
         # Set initial save path **before the loop**
@@ -615,17 +584,13 @@ def step(name):
         # Only split if the value is not None or empty
         if page_info["next_page"]:
             next_num = page_info["next_page"].split("-")[0]
-            page_info["next_page_name"] = template_list.get(next_num, {}).get(
-                "name", "Next"
-            )
+            page_info["next_page_name"] = template_list.get(next_num, {}).get("name", "Next")
         else:
             page_info["next_page_name"] = "Next"
 
         if page_info["prev_page"]:
             prev_num = page_info["prev_page"].split("-")[0]
-            page_info["prev_page_name"] = template_list.get(prev_num, {}).get(
-                "name", "Previous"
-            )
+            page_info["prev_page_name"] = template_list.get(prev_num, {}).get("name", "Previous")
         else:
             page_info["prev_page_name"] = "Previous"
 
@@ -706,9 +671,7 @@ def step(name):
         data["libraries"]["sho-template_variables"] = {}
 
     if app.config["QS_DEBUG"]:
-        print(
-            f"[DEBUG] ************************************************************************"
-        )
+        print(f"[DEBUG] ************************************************************************")
         print(f"[DEBUG] Data retrieved for {name}")
 
     (
@@ -731,33 +694,15 @@ def step(name):
         data["sho-template_variables"] = {}
 
     # Ensure these are lists
-    plex_data["tmp_movie_libraries"] = (
-        plex_data.get("tmp_movie_libraries", "").split(",")
-        if isinstance(plex_data.get("tmp_movie_libraries"), str)
-        else []
-    )
-    plex_data["tmp_show_libraries"] = (
-        plex_data.get("tmp_show_libraries", "").split(",")
-        if isinstance(plex_data.get("tmp_show_libraries"), str)
-        else []
-    )
-    plex_data["tmp_music_libraries"] = (
-        plex_data.get("tmp_music_libraries", "").split(",")
-        if isinstance(plex_data.get("tmp_music_libraries"), str)
-        else []
-    )
-    plex_data["tmp_user_list"] = (
-        plex_data.get("tmp_user_list", "").split(",")
-        if isinstance(plex_data.get("tmp_user_list"), str)
-        else []
-    )
+    plex_data["tmp_movie_libraries"] = plex_data.get("tmp_movie_libraries", "").split(",") if isinstance(plex_data.get("tmp_movie_libraries"), str) else []
+    plex_data["tmp_show_libraries"] = plex_data.get("tmp_show_libraries", "").split(",") if isinstance(plex_data.get("tmp_show_libraries"), str) else []
+    plex_data["tmp_music_libraries"] = plex_data.get("tmp_music_libraries", "").split(",") if isinstance(plex_data.get("tmp_music_libraries"), str) else []
+    plex_data["tmp_user_list"] = plex_data.get("tmp_user_list", "").split(",") if isinstance(plex_data.get("tmp_user_list"), str) else []
 
     # Ensure correct rendering for the final validation page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if name == "900-final":
-        validated, validation_error, config_data, yaml_content = output.build_config(
-            header_style, config_name=config_name
-        )
+        validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
 
         page_info["yaml_valid"] = validated
         session["yaml_content"] = yaml_content
@@ -790,9 +735,7 @@ def step(name):
 @app.route("/get_top_imdb_items/<library_name>")
 def get_top_imdb_items_route(library_name):
     media_type = request.args.get("type", "movie")
-    placeholder_id = request.args.get(
-        "placeholder_id"
-    )
+    placeholder_id = request.args.get("placeholder_id")
     settings = persistence.retrieve_settings("010-plex")
     plex_settings = settings.get("plex", {})
 
@@ -812,9 +755,7 @@ def get_top_imdb_items_route(library_name):
         )
 
     # Call with placeholder_id
-    items, saved_item = helpers.get_top_imdb_items(
-        library_name, media_type, placeholder_id
-    )
+    items, saved_item = helpers.get_top_imdb_items(library_name, media_type, placeholder_id)
 
     return jsonify({"status": "success", "items": items, "saved_item": saved_item})
 
@@ -877,24 +818,15 @@ def refresh_plex_libraries():
         if not config_name:
             return jsonify({"valid": False, "error": "Missing config_name"}), 400
 
-        plex_url, plex_token = persistence.get_stored_plex_credentials(
-            "010-plex"
-        )  # Fetch from DB
+        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")  # Fetch from DB
 
         # Load default values from config.yml.template
-        dummy_plex_config = persistence.get_dummy_data(
-            "plex"
-        )  # Retrieves {"url": "...", "token": "..."}
+        dummy_plex_config = persistence.get_dummy_data("plex")  # Retrieves {"url": "...", "token": "..."}
         default_plex_url = dummy_plex_config.get("url", "")
         default_plex_token = dummy_plex_config.get("token", "")
 
         # Exit early if the Plex credentials are still using default placeholder values
-        if (
-            not plex_url
-            or not plex_token
-            or plex_url == default_plex_url
-            or plex_token == default_plex_token
-        ):
+        if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
             return (
                 jsonify(
                     {
@@ -906,9 +838,7 @@ def refresh_plex_libraries():
             )
 
         # Fetch latest libraries from Plex
-        plex_response = validations.validate_plex_server(
-            {"plex_url": plex_url, "plex_token": plex_token}
-        )
+        plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
 
         # Fix: Convert Flask response object to JSON before accessing data.
         if isinstance(plex_response, Flask.response_class):
@@ -1067,9 +997,7 @@ if __name__ == "__main__":
                 print("[INFO] Checked for updates.")
                 time.sleep(86400)
 
-    update_thread = threading.Thread(
-        target=start_update_thread, args=(app,), daemon=True
-    )
+    update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
     update_thread.start()
 
     def is_gui_available():
@@ -1120,9 +1048,7 @@ if __name__ == "__main__":
                 self.dialog_parent.setAttribute(Qt.WA_DontShowOnScreen, True)
 
                 self.tray = QSystemTrayIcon()
-                self.icon_path = os.path.join(
-                    helpers.MEIPASS_DIR, "static", "favicon.png"
-                )
+                self.icon_path = os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")
 
                 self.tray.setIcon(QIcon(self.icon_path))
                 self.tray.setToolTip(f"Quickstart (Port: {running_port})")
@@ -1133,13 +1059,9 @@ if __name__ == "__main__":
                 self.open_action.triggered.connect(self.open_quickstart)
 
                 self.github_action = QAction("Quickstart GitHub")
-                self.github_action.triggered.connect(
-                    lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart")
-                )
+                self.github_action.triggered.connect(lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart"))
 
-                self.toggle_debug_action = QAction(
-                    f"{'Disable' if debug_mode else 'Enable'} Debug"
-                )
+                self.toggle_debug_action = QAction(f"{'Disable' if debug_mode else 'Enable'} Debug")
                 self.toggle_debug_action.triggered.connect(self.toggle_debug)
 
                 self.change_port_action = QAction("Change Port")
@@ -1168,9 +1090,7 @@ if __name__ == "__main__":
 
                 print("Quickstart is Running")
                 print(f"Access it at http://localhost:{running_port}")
-                print(
-                    "Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your .env file"
-                )
+                print("Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your .env file")
                 # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 
@@ -1193,9 +1113,7 @@ if __name__ == "__main__":
                 debug_mode = not debug_mode
                 helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
                 app.config["QS_DEBUG"] = debug_mode
-                self.toggle_debug_action.setText(
-                    f"{'Disable' if debug_mode else 'Enable'} Debug"
-                )
+                self.toggle_debug_action.setText(f"{'Disable' if debug_mode else 'Enable'} Debug")
 
             def show_messagebox(self, box_type, title, text):
                 box = QMessageBox(self.dialog_parent)
@@ -1221,9 +1139,7 @@ if __name__ == "__main__":
                     dialog.setIntValue(port)
 
                     # Remove help button and set custom icon
-                    dialog.setWindowFlags(
-                        dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint
-                    )
+                    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
                     dialog.setWindowIcon(QIcon(self.icon_path))
 
                     # Execute dialog
