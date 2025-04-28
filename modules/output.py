@@ -283,15 +283,19 @@ def build_libraries_section(
 
         sep_color_key = None
         placeholder_key = None
+        language_key = None
 
         for key in template_data.keys():
             if key.endswith("-template_variables[use_separator]") and key.startswith(f"{library_type}-library_{template_key}"):
                 sep_color_key = key
             if key.endswith("-attribute_template_variables[placeholder_imdb_id]") and key.startswith(f"{library_type}-library_{template_key}"):
                 placeholder_key = key
+            if key.endswith("-template_variables[language]") and key.startswith(f"{library_type}-library_{template_key}"):
+                language_key = key
 
         sep_color = template_data.get(sep_color_key)
         placeholder_id = template_data.get(placeholder_key)
+        language_value = template_data.get(language_key)
 
         template_vars = {"use_separator": True if sep_color else False}
 
@@ -300,6 +304,9 @@ def build_libraries_section(
 
         if placeholder_id:
             template_vars["placeholder_imdb_id"] = placeholder_id
+
+        if language_value:
+            template_vars["language"] = language_value
 
         entry["template_variables"] = template_vars
 
