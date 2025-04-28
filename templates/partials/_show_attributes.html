@@ -206,3 +206,37 @@
     </div>
   </div>
 </div>
+
+<!-- Accordion: Miscellaneous -->
+<div class="accordion mt-3" id="{{ library.id }}-miscellaneousAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#{{ library.id }}-collapseMiscellaneous" aria-expanded="false"
+        aria-controls="{{ library.id }}-collapseMiscellaneous">
+        Miscellaneous
+      </button>
+    </h2>
+    <div id="{{ library.id }}-collapseMiscellaneous" class="accordion-collapse collapse"
+      data-bs-parent="#{{ library.id }}-miscellaneousAccordion">
+      <div class="accordion-body">
+        {% for section in section_config.sections if section.media_types and 'show' in section.media_types and section.accordion == 'miscellaneous' %}
+          {% if section.type == 'select' %}
+            {{ macros.select_section(
+              library,
+              data,
+              section.prefix,
+              section.title,
+              section.description,
+              section.wiki,
+              section.options,
+              tooltip_variant=section.tooltip_variant,
+              container_class=section.container_class,
+              yml_location=section.yml_location
+            ) }}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>

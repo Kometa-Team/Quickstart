@@ -111,6 +111,37 @@
       "yml_location": "template_variables"
     },
     {
+      "prefix": "language",
+      "type": "select",
+      "accordion": "miscellaneous",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Language",
+      "key": "language",
+      "description": "Select the language to apply to the Separator collections.",
+      "wiki": "https://kometa.wiki/en/nightly/defaults/language/",
+      "tooltip_variant": "info",
+      "container_class": "",
+      "yml_location": "template_variables",
+      "options": [
+        ["", "None"],
+        ["ar", "Arabic"],
+        ["da", "Danish"],
+        ["de", "German"],
+        ["en", "English"],
+        ["es", "Spanish"],
+        ["fr", "French"],
+        ["it", "Italian"],
+        ["nb_NO", "Norwegian (Norway)"],
+        ["nl", "Dutch"],
+        ["pt-br", "Portuguese (Brazil)"],
+        ["ru", "Russian"],
+        ["sv", "Swedish"]
+      ]
+    },
+    {
       "prefix": "top_level_remove_overlays",
       "type": "boolean_toggle",
       "accordion": "overlays",
