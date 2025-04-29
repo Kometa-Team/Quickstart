@@ -12,3 +12,5 @@ xxxx
 yozora
 yozoraxcii
 localhost
+https
+chmod
