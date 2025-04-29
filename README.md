@@ -37,6 +37,8 @@ There are essentially 5 ways to install and run Quickstart. The order presented 
 - https://github.com/Kometa-Team/Quickstart/releases
 - Pick the build (`master` or `develop`) you are interested in and then go to the Assets section and pick the right `exe`
 - Store it in its own folder and dbl-click to run
+- Manage Quickstart from the system tray icon
+![image](static/images/system-tray-launcher.png)
 
 ## 2 - Installing on Mac
 
@@ -44,6 +46,7 @@ There are essentially 5 ways to install and run Quickstart. The order presented 
 - https://github.com/Kometa-Team/Quickstart/releases
 - Pick the build (`master` or `develop`) you are interested in and then go to the Assets section and pick the right `exe`
 - Store it in its own folder and dbl-click to run. You may need to allow for unsigned applications to run within the MacOS settings under Privacy
+- Manage Quickstart from the system tray icon
 
 ## 3 - Installing on Ubuntu (Linux)
 
@@ -51,6 +54,7 @@ There are essentially 5 ways to install and run Quickstart. The order presented 
 - https://github.com/Kometa-Team/Quickstart/releases
 - Pick the build (`master` or `develop`) you are interested in and then go to the Assets section and pick the right `exe`
 - Store it in its own folder and modify permissions to allow it to run (chmod 755). Then dbl-click it to run.
+- Manage Quickstart from the system tray icon
 
 > [!WARNING]
 > You will likely need to perform these steps first to have a system tray icon show up:
@@ -121,7 +125,9 @@ You should see something similar to this:
 
 ![image](static/images/running-in-pwsh.png)
 
-Quickstart should launch a browser automatically. If you are on a headless machine (docker or linux without GUI) open a browser and navigate to the ip address of the machine Quickstart is running on and you should be taken to the Quickstart Welcome Page. You can also use the launcher in the system tray in Windows, Mac, or Ubuntu:
+Quickstart should launch a browser automatically. If you are on a headless machine (docker or linux without GUI) open a browser and navigate to the ip address of the machine Quickstart is running on and you should be taken to the Quickstart Welcome Page. 
+
+- Manage Quickstart from the system tray icon
 ![image](static/images/system-tray-launcher.png)
 
 
@@ -129,14 +135,12 @@ Quickstart should launch a browser automatically. If you are on a headless machi
 
 Users can choose to enable debugging mode which will add verbose logging to the console window.
 
-There are two ways to enable debugging:
-- Add `--debug` to your Run Command, for example: `python quickstart.py --debug`
-- Open the `.env` file at the root of the Quickstart directory, and set `QS_DEBUG=1`.
+There are three ways to enable debugging:
+- Add `--debug` to your Run Command, for example: `python quickstart.py --debug`.
+- Open the `.env` file at the root of the Quickstart directory, and set `QS_DEBUG=1` (restart required).
+- Use the Quickstart system tray icon to toggle it on or off (no restart required).
 
-If you are already running Quickstart, you will need to re-start it from the console.
-
-Quickstart will run on port 7171 by default, this can be amended in one of two ways:
+Quickstart will run on port 7171 by default, this can be amended in one of three ways:
 - Add `--port=XXXX` to your Run Command, for example: `python quickstart.py --port=1234`
-- Open the `.env` file at the root of the Quickstart directory, and set `QS_PORT=XXXX` where XXXX is the port you want to run on.
-
-If you are already running Quickstart, you will need to re-start it from the console.
+- Open the `.env` file at the root of the Quickstart directory, and set `QS_PORT=XXXX` where XXXX is the port you want to run on. (restart required)
+- Use the Quickstart system tray icon to choose a new port (restarts automatically).
