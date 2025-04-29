@@ -1108,17 +1108,19 @@ if __name__ == "__main__":
                 self.tray.setContextMenu(self.menu)
                 self.tray.show()
 
+                ip_address = get_lan_ip()
+
                 self.tray.showMessage(
                     "Quickstart is Running",
-                    f"Access it at http://localhost:{running_port}",
+                    f"Local: http://localhost:{running_port}\nLAN: http://{ip_address}:{running_port}",
                     QSystemTrayIcon.NoIcon,
                     8000,
-                )  # milliseconds (8 seconds)
+                )
 
                 print("Quickstart is Running")
-                print(f"Access it at http://localhost:{running_port}")
-                print("Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your .env file")
-                # Open the browser automatically
+                print(f"Access it locally at: http://localhost:{running_port}")
+                print(f"Access it from other devices at: http://{ip_address}:{running_port}")
+                print("Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your .env file")                # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 
                 # Keep the invisible parent alive
