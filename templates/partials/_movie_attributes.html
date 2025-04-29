@@ -234,6 +234,19 @@
               container_class=section.container_class,
               yml_location=section.yml_location
             ) }}
+          {% elif section.type == 'text_input' %}
+            {{ macros.text_input_section(
+              library,
+              data,
+              section.prefix,
+              section.title,
+              section.description,
+              section.wiki,
+              tooltip_variant=section.tooltip_variant,
+              container_class=section.container_class,
+              yml_location=section.yml_location,
+              placeholder=section.placeholder
+            ) }}
           {% endif %}
         {% endfor %}
       </div>

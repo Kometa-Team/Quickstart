@@ -739,3 +739,20 @@ select_input.key if yml_location == "top_level" else
 </div> {# fallback container #}
 {% endif %}
 {% endmacro %}
+
+{% macro text_input_section(library, data, prefix, title, description, wiki, placeholder="", tooltip_variant="info", container_class="border rounded p-3 mb-2", yml_location="attribute") %}
+{% set field_prefix = "template_variables" if yml_location == "template_variables" else "" if yml_location == "top_level" else "attribute" %}
+{% set full_id = library.id ~ "-" ~ (field_prefix ~ "_" if field_prefix) ~ prefix %}
+{% set full_name = library.id ~ "-" ~ (field_prefix ~ "[" ~ prefix ~ "]" if field_prefix=="template_variables" else prefix) %}
+<div class="{{ container_class }}">
+    <div class="input-group mb-2">
+        <span class="input-group-text" id="{{ full_id }}_text">
+            <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
+            <span class="text-{{ tooltip_variant }}" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
+                <i class="bi bi-info-circle-fill"></i>
+            </span>
+        </span>
+        <input type="text" class="form-control" id="{{ full_id }}" name="{{ full_name }}" placeholder="{{ placeholder }}" value="{{ data.libraries.get(full_name, '') }}">
+    </div>
+</div>
+{% endmacro %}

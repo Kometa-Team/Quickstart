@@ -142,6 +142,21 @@
       ]
     },
     {
+      "prefix": "top_level_report_path",
+      "type": "text_input",
+      "accordion": "miscellaneous",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Report Path",
+      "wiki": "https://kometa.wiki/en/nightly/config/libraries/#report-path",
+      "description": "Defines a relative path to a YAML file that will store reports (e.g., missing, edited, deleted collections). The path should be relative to your configuration folder. Example: <code>config/missing/Movies_report.yml</code>.",
+      "tooltip_variant": "info",
+      "placeholder": "e.g. config/missing/Movies_report.yml",
+      "yml_location": "top_level"
+    },
+    {
       "prefix": "top_level_remove_overlays",
       "type": "boolean_toggle",
       "accordion": "overlays",

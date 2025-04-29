@@ -468,19 +468,24 @@ def build_libraries_section(
 
         remove_key = f"{library_type}-library_{lib_id}-top_level_remove_overlays"
         reset_key = f"{library_type}-library_{lib_id}-top_level_reset_overlays"
+        report_path_key = f"{library_type}-library_{lib_id}-top_level_report_path"
 
         remove_overlays = top_group.get(remove_key)
         reset_overlays = top_group.get(reset_key)
+        report_path = top_group.get(report_path_key)
 
-        if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Top Level for {lib_id}: {top_group}")
-            print(f"[DEBUG] {remove_key} = {remove_overlays}")
-            print(f"[DEBUG] {reset_key} = {reset_overlays}")
-
+        if report_path not in [None, ""]:
+            entry["report_path"] = report_path
         if remove_overlays:
             entry["remove_overlays"] = True
         if reset_overlays not in [None, "None", ""]:
             entry["reset_overlays"] = reset_overlays
+
+        if app.config["QS_DEBUG"]:
+            print(f"[DEBUG] Top Level for {lib_id}: {top_group}")
+            print(f"[DEBUG] {report_path_key} = {report_path}")
+            print(f"[DEBUG] {remove_key} = {remove_overlays}")
+            print(f"[DEBUG] {reset_key} = {reset_overlays}")
 
         if operations:
             entry["operations"] = operations
@@ -530,24 +535,29 @@ def build_libraries_section(
 def reorder_library_section(library_data):
     """
     Reorders library data so that:
-    - `template_variables` appears right after the library name.
+    - `report_path` appears first.
     - `remove_overlays` and `reset_overlays` come next.
+    - `template_variables` next.
     - Keys inside `operations` are ordered as per Kometa Wiki.
     - Other keys retain their natural order.
     """
     reordered_data = {}
 
-    # Ensure remove/reset overlays come first
+    # 1. Place report_path first if it exists
+    if "report_path" in library_data:
+        reordered_data["report_path"] = library_data["report_path"]
+
+    # 2. Then remove/reset overlays
     if "remove_overlays" in library_data:
         reordered_data["remove_overlays"] = library_data["remove_overlays"]
     if "reset_overlays" in library_data:
         reordered_data["reset_overlays"] = library_data["reset_overlays"]
 
-    # Ensure template_variables is placed second (if it exists)
+    # 3. Then template_variables
     if "template_variables" in library_data:
         reordered_data["template_variables"] = library_data["template_variables"]
 
-    # Reorder operations per official Kometa Wiki order
+    # 4. Reorder operations
     operations_order = [
         "assets_for_all",
         "delete_collections",
@@ -591,7 +601,7 @@ def reorder_library_section(library_data):
                 ordered_ops[k] = v
         reordered_data["operations"] = ordered_ops
 
-    # Finally, add remaining keys (e.g., collection_files, overlay_files)
+    # 5. Finally add any other keys that weren't handled
     for key, value in library_data.items():
         if key not in reordered_data:
             reordered_data[key] = value
