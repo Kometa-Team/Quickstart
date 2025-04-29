@@ -1019,6 +1019,13 @@ if __name__ == "__main__":
         server_thread.daemon = True
         server_thread.start()
 
+        try:
+            while True:
+                time.sleep(1)  # Keep main thread alive
+        except KeyboardInterrupt:
+            print("\n[INFO] Shutting down Quickstart...")
+            sys.exit(0)
+
     else:
         # GUI mode: show tray
         from PyQt5.QtGui import QIcon
