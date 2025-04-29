@@ -23,7 +23,7 @@ This will also familiarize you with setting up a virtual environment for running
 
 ## Installing Quickstart
 
-There are essentially 5 ways to install and run Quickstart. The order presented here is likely the simplest to the most advanced way of installing Quickstart. 
+There are essentially 5 ways to install and run Quickstart. The order presented here is likely the simplest to the most advanced way of installing Quickstart.
 
 > [!CAUTION]
 > **We strongly recommend running this yourself rather than relying on someone else to host Quickstart.**
@@ -47,6 +47,7 @@ There are essentially 5 ways to install and run Quickstart. The order presented 
 - Pick the build (`master` or `develop`) you are interested in and then go to the Assets section and pick the right `exe`
 - Store it in its own folder and dbl-click to run. You may need to allow for unsigned applications to run within the MacOS settings under Privacy
 - Manage Quickstart from the system tray icon
+![image](static/images/system-tray-launcher-mac.png)
 
 ## 3 - Installing on Ubuntu (Linux)
 
@@ -55,6 +56,7 @@ There are essentially 5 ways to install and run Quickstart. The order presented 
 - Pick the build (`master` or `develop`) you are interested in and then go to the Assets section and pick the right `exe`
 - Store it in its own folder and modify permissions to allow it to run (chmod 755). Then dbl-click it to run.
 - Manage Quickstart from the system tray icon
+![image](static/images/system-tray-launcher-ubuntu.png)
 
 > [!WARNING]
 > You will likely need to perform these steps first to have a system tray icon show up:
@@ -125,7 +127,7 @@ You should see something similar to this:
 
 ![image](static/images/running-in-pwsh.png)
 
-Quickstart should launch a browser automatically. If you are on a headless machine (docker or linux without GUI) open a browser and navigate to the ip address of the machine Quickstart is running on and you should be taken to the Quickstart Welcome Page. 
+Quickstart should launch a browser automatically. If you are on a headless machine (docker or linux without GUI) open a browser and navigate to the ip address of the machine Quickstart is running on and you should be taken to the Quickstart Welcome Page.
 
 - Manage Quickstart from the system tray icon
 ![image](static/images/system-tray-launcher.png)
