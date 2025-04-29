@@ -14,3 +14,5 @@ yozoraxcii
 localhost
 https
 chmod
+MacOS
+exe
