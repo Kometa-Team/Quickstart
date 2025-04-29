@@ -1014,6 +1014,9 @@ if __name__ == "__main__":
     # Headless mode: skip system tray
     if app.config["QUICKSTART_DOCKER"] or not is_gui_available():
         print("[INFO] Running in headless mode — no system tray will be shown.")
+        print("Quickstart is Running")
+        print(f"Access it at http://<your-server-ip>:{running_port}")
+        print("Port and Debug Settings can be amended by editing your .env file")
 
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
