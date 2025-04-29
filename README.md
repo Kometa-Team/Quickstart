@@ -93,6 +93,26 @@ services:
       - /path/to/config:/config
     restart: unless-stopped
 ```
+## Running on Windows
+
+Goto the releases page to grab a single "exe" that you can run.
+https://github.com/Kometa-Team/Quickstart/releases
+Pick the build (master or develop) you are interested in and then go to the Assets section and pick the right "exe"
+Store it in its own folder and dbl-click to run
+
+## Running on Mac
+
+Goto the releases page to grab a single "exe" that you can run.
+https://github.com/Kometa-Team/Quickstart/releases
+Pick the build (master or develop) you are interested in and then go to the Assets section and pick the right "exe"
+Store it in its own folder and dbl-click to run. You may need to allow for unsigned applications to run within the MacOS settings under Privacy
+
+## Running on Ubuntu (Linux)
+
+Goto the releases page to grab a single "exe" that you can run.
+https://github.com/Kometa-Team/Quickstart/releases
+Pick the build (master or develop) you are interested in and then go to the Assets section and pick the right "exe"
+Store it in its own folder and modify permissions to allow it to run (chmod 755). Then dbl-click it to run.
 
 ### Debugging & Changing Ports
 
