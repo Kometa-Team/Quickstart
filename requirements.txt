@@ -9,7 +9,7 @@ pillow==11.2.1
 PlexAPI==4.17.0
 pre-commit==4.1.0
 pyfiglet==1.0.2
-PyQt5==5.15.11; platform_system != "Linux" or platform_machine == "aarch64"
+PyQt5==5.15.11; platform_system != "Linux" or platform_machine != "aarch64"
 python-dotenv==1.1.0
 requests==2.32.3
 ruamel.yaml==0.18.10
