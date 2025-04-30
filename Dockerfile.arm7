@@ -11,7 +11,8 @@ RUN echo "**** install system packages ****" \
  && apt-get install -y gcc g++ libxml2-dev libxslt-dev libz-dev libjpeg62-turbo-dev zlib1g-dev wget curl ffmpeg libsm6 libxext6 \
  && wget -O /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-"$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
  && chmod +x /tini \
- && pip3 install --no-cache-dir --upgrade --requirement /requirements.txt \
+ && grep -v -i '^PyQt5' /requirements.txt > /tmp/filtered.txt \
+ && pip3 install --no-cache-dir --upgrade --requirement /tmp/filtered.txt \
  && apt-get --purge autoremove gcc g++ libxml2-dev libxslt-dev libz-dev -y \
  && apt-get clean \
  && apt-get update \
