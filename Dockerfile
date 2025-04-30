@@ -10,7 +10,7 @@ RUN echo "**** install system packages ****" \
  && apt-get install -y tzdata --no-install-recommends \
  && apt-get install -y gcc g++ libxml2-dev libxslt-dev libz-dev \
     libjpeg62-turbo-dev zlib1g-dev wget curl ffmpeg libsm6 libxext6 \
-    qtbase5-dev qt5-qmake \
+    qtbase5-dev qt5-qmake qtbase5-dev-tools qtchooser qttools5-dev-tools\
  && wget -O /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-"$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
  && chmod +x /tini \
  && pip3 install --no-cache-dir --upgrade --requirement /requirements.txt \
