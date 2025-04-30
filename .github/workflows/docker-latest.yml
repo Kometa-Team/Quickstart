@@ -61,7 +61,7 @@ jobs:
 
   create-manifest:
     runs-on: ubuntu-latest
-    needs: [ build-releases ]
+    needs: [ docker-build-latest ]
 
     steps:
 
