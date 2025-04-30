@@ -80,6 +80,8 @@ services:
   quickstart:
     image: kometateam/quickstart:develop
     container_name: quickstart
+    ports:
+      - 7171:7171
     environment:
       - TZ=TIMEZONE #optional
     volumes:
