@@ -1015,6 +1015,7 @@ if __name__ == "__main__":
         from PyQt5.QtGui import QIcon
         from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QInputDialog, QMessageBox, QWidget
         from PyQt5.QtCore import Qt, QTimer
+
         if app.config["QUICKSTART_DOCKER"]:
             has_tray = False
         elif sys.platform.startswith("linux"):
