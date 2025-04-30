@@ -1000,17 +1000,6 @@ if __name__ == "__main__":
     update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
     update_thread.start()
 
-    def is_gui_available():
-        import os
-
-        if sys.platform.startswith("linux"):
-            return bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
-        elif sys.platform == "darwin":
-            return True
-        elif sys.platform.startswith("win"):
-            return True
-        return False
-
     def get_lan_ip():
         try:
             # Connect to a dummy address to get the local IP used
@@ -1022,8 +1011,23 @@ if __name__ == "__main__":
         except Exception:
             return "localhost"
 
-    # Headless mode: skip system tray
-    if app.config["QUICKSTART_DOCKER"] or not is_gui_available():
+    try:
+        from PyQt5.QtGui import QIcon
+        from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QInputDialog, QMessageBox, QWidget
+        from PyQt5.QtCore import Qt, QTimer
+        if app.config["QUICKSTART_DOCKER"]:
+            has_tray = False
+        elif sys.platform.startswith("linux"):
+            has_tray = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+        elif sys.platform == "darwin" or sys.platform.startswith("win"):
+            has_tray = True
+        else:
+            has_tray = False
+    except (ModuleNotFoundError, ImportError) as ie:
+        has_tray = False
+
+    if has_tray:
+        # Headless mode: skip system tray
         print("[INFO] Running in headless mode — no system tray will be shown.")
         if app.config["QUICKSTART_DOCKER"]:
             print("Quickstart is Running inside Docker.")
@@ -1048,17 +1052,6 @@ if __name__ == "__main__":
 
     else:
         # GUI mode: show tray
-        from PyQt5.QtGui import QIcon
-        from PyQt5.QtWidgets import (
-            QApplication,
-            QSystemTrayIcon,
-            QMenu,
-            QAction,
-            QInputDialog,
-            QMessageBox,
-            QWidget,
-        )
-        from PyQt5.QtCore import Qt, QTimer
 
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
