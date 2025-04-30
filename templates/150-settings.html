@@ -18,11 +18,18 @@
           <div class="row mb-2">
             <div class="col-md-8">
               <div id="asset_directory_container">
-                <label>Asset Directory
+                <label>
+                  Asset Directory
                   <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                     title="Specify the directories where assets (posters, backgrounds, etc.) are located.
-                               <br><br><b>Tip:</b> Assets can be stored anywhere on the host system that Kometa has visibility of (i.e. if using Docker, the directory must be mounted/visible to the Docker container).
-                               <br><br><b>Warning:</b> Kometa will not create asset directories. Asset directories you specify here need to exist already."></i>
+                            <br><br><b>Tip:</b> Assets can be stored anywhere on the host system that Kometa has visibility of
+                            (i.e. if using Docker, the directory must be mounted/visible to the Docker container).
+                            <br><br><b>Warning:</b> Kometa will not create asset directories. Asset directories you specify here need to exist already.">
+                  </i>
+                  <a href="https://kometa.wiki/en/nightly/kometa/guides/assets/" target="_blank" class="ms-2"
+                    data-bs-toggle="tooltip" title="Open Kometa Asset Guide">
+                    <i class="bi bi-box-arrow-up-right text-primary"></i>
+                  </a>
                 </label>
 
                 {% for directory in data['settings']['asset_directory'] %}
@@ -65,7 +72,7 @@
             <label class="form-check-label" for="asset_folders">
               Asset Folders
               <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                title="While <code>true</code>, Kometa will search the <code>asset_directory</code> for a dedicated folder per item. If <code>false</code>, it will look for an image instead.<br><br><b>Example:</b> When <code>true</code>, the path would be <code><asset_directory_path>;/Star Wars/poster.png</code> instead of <code><asset_directory_path>/Star Wars.png</code>."></i>
+                title="While <code>true</code>, Kometa will search the <code>asset_directory</code> for a dedicated folder per item. If <code>false</code>, it will look for an image instead.<br><br><b>Example:</b> When <code>true</code>, the path would be <code>asset_directory_path/Star Wars/poster.png</code> instead of <code>asset_directory_path/Star Wars.png</code>."></i>
             </label>
 
           </div>
@@ -163,7 +170,7 @@
             <label class="form-check-label" for="show_asset_not_needed">
               Show Asset Not Needed
               <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
-                title="Whilst searching for assets, show or hide the 'update not needed' messages."></i>
+                title="Whilst searching for assets, show or hide the <code>update not needed</code> messages."></i>
             </label>
 
           </div>
