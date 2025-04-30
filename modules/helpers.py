@@ -22,11 +22,15 @@ GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
 MEIPASS_DIR = sys._MEIPASS if getattr(sys, "frozen", False) else BASE_DIR  # noqa
+
 JSON_SETTINGS = os.path.join(MEIPASS_DIR, "static", "json")
-JSON_SCHEMA_DIR = os.path.join(WORKING_DIR, "json-schema")
-os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
+
 CONFIG_DIR = os.path.join(WORKING_DIR, "config")
 os.makedirs(CONFIG_DIR, exist_ok=True)
+
+JSON_SCHEMA_DIR = os.path.join(CONFIG_DIR, ".schema")
+os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
+
 HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")
 VERSION_FILE = os.path.join(MEIPASS_DIR, "VERSION")
 
