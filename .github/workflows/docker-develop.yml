@@ -63,6 +63,7 @@ jobs:
             "BRANCH_NAME=develop"
           platforms: ${{ matrix.platform }}
           tags: ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop-${{ matrix.tag }}
+          push: true
 
   create-manifest:
     runs-on: ubuntu-latest
