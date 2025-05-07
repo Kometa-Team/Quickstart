@@ -67,7 +67,7 @@ sudo apt install -y libxcb-xinerama0 libxcb-xinerama0-dev libxcb-icccm4 libxcb-i
 
 ## 4 - Running in Docker
 
-NOTE: the `/config` directory in these examples is NOT the Koemta config directory.  Create a Quickstart-specific directory to map to `/config`.  
+NOTE: the `/config` directory in these examples is NOT the Kometa config directory.  Create a Quickstart-specific directory to map to `/config`.  
 
 Here are some minimal examples:
 
