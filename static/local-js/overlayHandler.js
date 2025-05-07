@@ -93,9 +93,6 @@ const OverlayHandler = {
     const awardSeparatorToggle = document.getElementById(`${libraryId}-collection_separator_award`)
     const chartSeparatorToggle = document.getElementById(`${libraryId}-collection_separator_chart`)
 
-    const awardTogglesChecked = document.querySelectorAll(`[id^="${libraryId}-awardCollectionsAccordion"] input[type="checkbox"]:checked`).length > 0
-    const chartTogglesChecked = document.querySelectorAll(`[id^="${libraryId}-chartCollectionsAccordion"] input[type="checkbox"]:checked`).length > 0
-
     const selectedValue = useSeparatorsDropdown.value
     const isEnabled = selectedValue !== 'none'
 
@@ -128,13 +125,15 @@ const OverlayHandler = {
     sepStyleInput.value = isEnabled ? selectedValue : ''
 
     if (awardSeparatorToggle) {
-      awardSeparatorToggle.disabled = !isEnabled || !awardTogglesChecked
-      awardSeparatorToggle.checked = isEnabled && awardTogglesChecked
+      // Only depend on sep_style being set to enable/disable
+      awardSeparatorToggle.disabled = !isEnabled
+      awardSeparatorToggle.checked = isEnabled
     }
 
     if (chartSeparatorToggle) {
-      chartSeparatorToggle.disabled = !isEnabled || !chartTogglesChecked
-      chartSeparatorToggle.checked = isEnabled && chartTogglesChecked
+      // Only depend on sep_style being set to enable/disable
+      chartSeparatorToggle.disabled = !isEnabled
+      chartSeparatorToggle.checked = isEnabled
     }
 
     const fieldId = `${libraryId}-template_variables[use_separator]`

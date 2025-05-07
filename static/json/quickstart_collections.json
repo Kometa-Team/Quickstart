@@ -1,0 +1,670 @@
+[
+    {
+        "accordion": "Award Collections",
+        "collections": [
+            {
+                "id": "collection_separator_award",
+                "label": "Award Separator",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/separator",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/separator_award.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ],
+                "readonly": true,
+                "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_oscars",
+                "label": "Academy Awards (Oscars)",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/oscars",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/oscars.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_berlinale",
+                "label": "Berlin International Film Festival Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/berlinale",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/berlinale.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_bafta",
+                "label": "British Academy of Film Awards (BAFTA)",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/bafta",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/bafta.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_cannes",
+                "label": "Cannes Film Festival Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/cannes",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cannes.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_cesar",
+                "label": "César Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_choice",
+                "label": "Critics Choice Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/choice",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/choice.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_emmy",
+                "label": "Emmy Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/emmy",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/emmy.png",
+                "media_types": [
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_golden",
+                "label": "Golden Globe Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/golden",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/golden.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_spirit",
+                "label": "Independent Spirit Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/spirit",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/spirit.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_nfr",
+                "label": "National Film Registry",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/nfr",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/nfr.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_pca",
+                "label": "People's Choice Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/pca",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/pca.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_razzie",
+                "label": "Razzie Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/razzie",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/razzie.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_sag",
+                "label": "Screen Actors Guild Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/sag",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/sag.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_sundance",
+                "label": "Sundance Film Festival Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/sundance",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/sundance.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_tiff",
+                "label": "Toronto International Film Festival Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/tiff",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tiff.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_venice",
+                "label": "Venice Film Festival Awards",
+                "url": "https://kometa.wiki/en/nightly/defaults/award/venice",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/venice.png",
+                "media_types": [
+                    "movie"
+                ]
+            }
+        ]
+    },
+    {
+        "accordion": "Chart Collections",
+        "collections": [
+            {
+                "id": "collection_separator_chart",
+                "label": "Chart Separator",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/separator",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/separator_chart.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ],
+                "readonly": true,
+                "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_basic",
+                "label": "Basic Charts",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/basic",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/basic.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_tautulli",
+                "label": "Tautulli Charts",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/tautulli",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tautulli.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ],
+                "tooltip": "Requires Tautulli authentication",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_imdb",
+                "label": "IMDb Charts",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/imdb",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/imdb.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_tmdb",
+                "label": "TMDb Charts",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/tmdb",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tmdb.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_trakt",
+                "label": "Trakt Charts",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/trakt",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/trakt.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ],
+                "tooltip": "Requires Trakt authentication",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_anilist",
+                "label": "AniList Charts",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/anilist",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/anilist.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_myanimelist",
+                "label": "MyAnimeList Charts",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/myanimelist",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/myanimelist.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_letterboxd",
+                "label": "Letterboxd Charts",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/letterboxd",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/letterboxd.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_other_chart",
+                "label": "Other Charts",
+                "url": "https://kometa.wiki/en/nightly/defaults/chart/other",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/other_chart.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "contentCollections",
+        "accordion": "Content Collections",
+        "collections": [
+            {
+                "id": "collection_genre",
+                "label": "Genres",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/genre/",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/genre.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_franchise",
+                "label": "Franchises",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/franchise/",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/franchise_movie.png",
+                "media_types": [
+                    "movie"
+                ],
+                "tooltip": "Disable Plex's in-built Automatic Collections feature if you use this file. Click the name of this file to go to the wiki page to learn more.",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_franchise",
+                "label": "Franchises",
+                "url": "https://kometa.wiki/en/nightly/defaults/show/franchise/",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/franchise_show.png",
+                "media_types": [
+                    "show"
+                ],
+                "tooltip": "Disable Plex's in-built Automatic Collections feature if you use this file",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_universe",
+                "label": "Universes",
+                "url": "https://kometa.wiki/en/nightly/defaults/universe/",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/universe.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_based",
+                "label": "Based On...",
+                "url": "https://kometa.wiki/en/nightly/defaults/based/",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/based.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_collectionless",
+                "label": "Collectionless",
+                "url": "https://kometa.wiki/en/nightly/defaults/collectionless/",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/collectionless.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ],
+                "tooltip": "Please visit the wiki for this file to understand what it does",
+                "tooltip_variant": "danger"
+            }
+        ]
+    },
+    {
+        "id": "contentRatingCollections",
+        "accordion": "Content Rating Collections",
+        "collections": [
+            {
+                "id": "collection_content_rating_us",
+                "label": "US Content Ratings",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/content_rating_us",
+                "image_url": "https://kometa.wiki/en/nightly/defaults/images/content_rating_us_movie.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_content_rating_us",
+                "label": "US Content Ratings",
+                "url": "https://kometa.wiki/en/nightly/defaults/show/content_rating_us",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_us_show.png",
+                "media_types": [
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_content_rating_uk",
+                "label": "UK Content Ratings",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_uk",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_uk.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_content_rating_de",
+                "label": "DE Content Ratings",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_de",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_de.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_content_rating_au",
+                "label": "AU Content Ratings",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_au",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_au.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_content_rating_nz",
+                "label": "NZ Content Ratings",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_nz",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_nz.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_content_rating_mal",
+                "label": "MyAnimeList Content Ratings",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_mal",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_mal.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_content_rating_cs",
+                "label": "Common Sense Media Content Ratings",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_cs",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_cs.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "locationCollections",
+        "accordion": "Location Collections",
+        "collections": [
+            {
+                "id": "collection_country",
+                "label": "Countries",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/country",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/country.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_country",
+                "label": "Countries",
+                "url": "https://kometa.wiki/en/nightly/defaults/show/country",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/country.png",
+                "media_types": [
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_region",
+                "label": "Regions",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/region",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/region.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_region",
+                "label": "Regions",
+                "url": "https://kometa.wiki/en/nightly/defaults/show/region",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/region.png",
+                "media_types": [
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_continent",
+                "label": "Continents",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/continent",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/continent.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_continent",
+                "label": "Continents",
+                "url": "https://kometa.wiki/en/nightly/defaults/show/continent",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/continent.png",
+                "media_types": [
+                    "show"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "mediaCollections",
+        "accordion": "Media Collections",
+        "collections": [
+            {
+                "id": "collection_aspect",
+                "label": "Aspect Ratios",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/aspect",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/aspect.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_resolution",
+                "label": "Resolutions",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/resolution",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/resolution.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_audio_language",
+                "label": "Audio Languages",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/audio_language",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/audio_language.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_subtitle_language",
+                "label": "Subtitle Languages",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/subtitle_language",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/subtitle_language.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "productionCollections",
+        "accordion": "Production Collections",
+        "collections": [
+            {
+                "id": "collection_streaming",
+                "label": "Streaming",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/streaming",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/streaming.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ],
+                "tooltip": "This will show content currently streaming on a particular service, not content that is exclusive to said service. Read the wiki for using `originals_only` to change this",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_studio",
+                "label": "Studios",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/studio",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/studio.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_network",
+                "label": "Networks",
+                "url": "https://kometa.wiki/en/nightly/defaults/show/network",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/network.png",
+                "media_types": [
+                    "show"
+                ]
+            }
+        ]
+    },
+    {
+        "id": "peopleCollections",
+        "accordion": "People Collections",
+        "collections": [
+            {
+                "id": "collection_actor",
+                "label": "Actors",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/actor",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/actor.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ],
+                "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_director",
+                "label": "Directors",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/director",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/director.png",
+                "media_types": [
+                    "movie"
+                ],
+                "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_producer",
+                "label": "Producers",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/producer",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/producer.png",
+                "media_types": [
+                    "movie"
+                ],
+                "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
+                "tooltip_variant": "danger"
+            },
+            {
+                "id": "collection_writer",
+                "label": "Writers",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/writer",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/writer.png",
+                "media_types": [
+                    "movie"
+                ],
+                "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
+                "tooltip_variant": "danger"
+            }
+        ]
+    },
+    {
+        "id": "timeCollections",
+        "accordion": "Time Collections",
+        "collections": [
+            {
+                "id": "collection_seasonal",
+                "label": "Seasonal",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/seasonal",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/seasonal.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_year",
+                "label": "Years",
+                "url": "https://kometa.wiki/en/nightly/defaults/both/year",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/year.png",
+                "media_types": [
+                    "movie",
+                    "show"
+                ]
+            },
+            {
+                "id": "collection_decade",
+                "label": "Decades",
+                "url": "https://kometa.wiki/en/nightly/defaults/movie/decade",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/decade.png",
+                "media_types": [
+                    "movie"
+                ]
+            },
+            {
+                "id": "collection_decade",
+                "label": "Decades",
+                "url": "https://kometa.wiki/en/nightly/defaults/show/decade",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/decade.png",
+                "media_types": [
+                    "show"
+                ]
+            }
+        ]
+    }
+]

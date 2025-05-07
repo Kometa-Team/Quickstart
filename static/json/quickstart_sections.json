@@ -1,6 +1,32 @@
 {
   "sections": [
     {
+      "prefix": "default_imdb",
+      "type": "default_collection",
+      "media_types": ["movie", "show"],
+      "accordion": "collections",
+      "title": "IMDb Collections",
+      "wiki": "https://kometa.wiki/en/nightly/defaults/chart/imdb/",
+      "description": "Configure `default: imdb` with optional template variables.",
+      "toggles": [
+        {
+          "key": "use_lowest",
+          "label": "Use Lowest",
+          "tooltip": "Include collections using the lowest-rated items."
+        },
+        {
+          "key": "use_popular",
+          "label": "Use Popular",
+          "tooltip": "Include collections based on popular items."
+        },
+        {
+          "key": "use_top",
+          "label": "Use Top",
+          "tooltip": "Include collections based on top-rated items."
+        }
+      ]
+    },
+    {
       "prefix": "use_separator",
       "type": "select",
       "accordion": "separators",

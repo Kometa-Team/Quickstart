@@ -718,7 +718,8 @@ def step(name):
         )
 
     else:
-        section_config = helpers.load_quickstart_sections()
+        section_config = helpers.load_quickstart_config("quickstart_sections.json")
+        collection_config = helpers.load_quickstart_config("quickstart_collections.json")
         return render_template(
             name + ".html",
             page_info=page_info,
@@ -727,6 +728,7 @@ def step(name):
             movie_libraries=movie_libraries,
             show_libraries=show_libraries,
             section_config=section_config,
+            collection_config=collection_config,
             template_list=file_list,
             available_configs=available_configs,
         )
