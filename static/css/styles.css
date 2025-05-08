@@ -294,6 +294,7 @@ label {
     opacity: 0.6;
 }
 
+
 .btn.disabled,
 .btn:disabled,
 fieldset:disabled .btn {
@@ -302,6 +303,27 @@ fieldset:disabled .btn {
     background-color: #181818;
     border-color: #495057;
     opacity: var(--bs-btn-disabled-opacity);
+}
+
+.template-toggle-group {
+    background-color: #212529;
+    color: #f8f9fa;
+    border: 1px solid #444;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    padding: 10px 12px;
+    transition: background-color 0.2s ease;
+}
+
+/* Only applies when JS toggles this class */
+.template-toggle-group-bordered {
+    background-color: #212529;
+    color: #f8f9fa;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin-bottom: 5px;
+    transition: background-color 0.2s ease;
 }
 
 /* -------------------- */

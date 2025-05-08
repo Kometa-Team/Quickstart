@@ -226,3 +226,31 @@ document.addEventListener('DOMContentLoaded', function () {
     OverlayHandler.populateImdbDropdown(dropdown, libraryName, isMovie ? 'movie' : 'show', currentValue)
   })
 })
+
+// eslint-disable-next-line no-unused-vars
+function setupParentChildToggleSync () {
+  console.log('[DEBUG] Running setupParentChildToggleSync...')
+
+  document.querySelectorAll('input[data-template-group]').forEach(parent => {
+    const childToggles = document.querySelectorAll(`input[data-parent-toggle="${parent.id}"]`)
+    console.log(`[DEBUG] Found parent: ${parent.id} with ${childToggles.length} children`)
+
+    // 1. Parent change affects children
+    parent.addEventListener('change', () => {
+      const checked = parent.checked
+      console.log(`[DEBUG] Parent ${parent.id} changed to ${checked}`)
+      childToggles.forEach(child => {
+        if (!child.disabled) child.checked = checked
+      })
+    })
+
+    // 2. Children change affects parent
+    childToggles.forEach(child => {
+      child.addEventListener('change', () => {
+        const anyChecked = Array.from(childToggles).some(c => c.checked)
+        parent.checked = anyChecked
+        console.log(`[DEBUG] Child ${child.id} changed. Setting parent ${parent.id} to ${anyChecked}`)
+      })
+    })
+  })
+}

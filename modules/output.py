@@ -255,12 +255,58 @@ def build_libraries_section(
 
         # Process Collections
         collection_key = helpers.extract_library_name(library_key)
+        if app.config["QS_DEBUG"]:
+            print(f"[DEBUG] collections keys for {collection_key}: {list(collections.get(collection_key, {}).keys())}")
+            print(f"[DEBUG] templates keys for {collection_key}: {list(templates.get(collection_key, {}).keys())}")
+
         if collection_key and collection_key in collections:
-            collection_files = [
-                {"default": key.split(f"{library_type}-library_{collection_key}-collection_")[-1]} for key, selected in collections[collection_key].items() if selected is True
-            ]
-            if collection_files:
-                entry["collection_files"] = collection_files
+            collection_files = []
+
+            for key, selected in collections[collection_key].items():
+                if "template_collection_" in key:
+                    if app.config["QS_DEBUG"]:
+                        print(f"[DEBUG] Skipping invalid collection key (template child): {key}")
+                    continue
+
+                if selected is not True:
+                    continue
+
+                raw_id = key.split(f"{library_type}-library_{collection_key}-collection_")[-1]
+                file_entry = {"default": raw_id}
+
+                # IMPORTANT: Template collection children do NOT contain '-library-' in key
+                prefix = f"{library_key}_collection_{raw_id}_"
+
+                # Build flattened version of all template keys across libraries
+                all_template_entries = {}
+                for section in templates.values():
+                    all_template_entries.update(section)
+
+                # Collect matching keys from prefix styles
+                # Find matching template children manually instead of prefix-matching
+                child_prefix = f"{library_key}-template_collection_{raw_id}_".replace(f"-library-template_collection_{raw_id}_", f"-template_collection_{raw_id}_")
+                all_children = {
+                    k[len(child_prefix):]: v
+                    for k, v in collections[collection_key].items()
+                    if k.startswith(child_prefix)
+                }
+
+                if app.config["QS_DEBUG"]:
+                    print(f"[DEBUG] Collection: {raw_id}")
+                    print(f"[DEBUG] Prefix:       {prefix}")
+                    print(f"[DEBUG] Child Prefix: {child_prefix}")
+                    print(f"[DEBUG] Found {len(all_children)} child template_variables: {all_children}")
+
+                if all_children:
+                    file_entry["template_variables"] = {
+                        k: (v is True or (isinstance(v, str) and v.lower() == "true"))
+                        if isinstance(v, (bool, str)) else v
+                        for k, v in all_children.items()
+                    }
+
+                collection_files.append(file_entry)
+
+            entry["collection_files"] = collection_files
 
         # Process Overlays
         overlay_key = helpers.extract_library_name(library_key)

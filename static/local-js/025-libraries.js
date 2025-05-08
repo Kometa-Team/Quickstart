@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, Sortable */
+/* global EventHandler, ValidationHandler, Sortable, setupParentChildToggleSync */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -41,6 +41,10 @@ document.addEventListener('DOMContentLoaded', function () {
   loadScriptsSequentially(scriptsToLoad, function () {
     console.log('[DEBUG] All dependencies loaded. Running Library Initialization...')
 
+    if (typeof setupParentChildToggleSync === 'function') {
+      setupParentChildToggleSync()
+    }
+
     if (typeof EventHandler !== 'undefined' && EventHandler.attachLibraryListeners) {
       EventHandler.attachLibraryListeners()
     }
@@ -49,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ValidationHandler.updateValidationState()
     }
 
+    setupParentChildToggleVisibility()
     setupCustomStringListHandlers('mass_genre_update')
     setupCustomStringListHandlers('radarr_remove_by_tag')
     setupCustomStringListHandlers('sonarr_remove_by_tag')
@@ -207,5 +212,37 @@ function setupCustomStringListHandlers (prefix) {
       renderCustomList(current)
       input.value = ''
     })
+  })
+}
+
+function setupParentChildToggleVisibility () {
+  document.querySelectorAll('[data-template-group]').forEach(parentToggle => {
+    const groupId = parentToggle.getAttribute('data-template-group')
+    const wrapper = parentToggle.closest('.template-toggle-group')
+    const childrenGroup = document.querySelector(`[data-toggle-parent="${groupId}"]`)
+
+    if (!childrenGroup || !wrapper) return
+
+    function updateVisibilityAndBorder () {
+      const childrenToggles = childrenGroup.querySelectorAll("input[type='checkbox']")
+      const anyChildChecked = Array.from(childrenToggles).some(el => el.checked)
+      const parentChecked = parentToggle.checked
+
+      childrenGroup.style.display = parentChecked ? 'block' : 'none'
+
+      // Only show border if parent is ON and at least one child is ON
+      if (parentChecked && anyChildChecked) {
+        wrapper.classList.add('template-toggle-group-bordered')
+      } else {
+        wrapper.classList.remove('template-toggle-group-bordered')
+      }
+    }
+
+    parentToggle.addEventListener('change', updateVisibilityAndBorder)
+    childrenGroup.querySelectorAll("input[type='checkbox']").forEach(child =>
+      child.addEventListener('change', updateVisibilityAndBorder)
+    )
+
+    updateVisibilityAndBorder() // Initial check
   })
 }
