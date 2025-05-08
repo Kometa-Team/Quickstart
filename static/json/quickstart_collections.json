@@ -1,1521 +1,1691 @@
 [
-    {
-        "accordion": "Award Collections",
-        "collections": [
-            {
-                "id": "collection_separator_award",
-                "label": "Award Separator",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/separator",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/separator_award.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "readonly": true,
-                "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
-                "tooltip_variant": "danger"
-            },
-            {
-                "id": "collection_oscars",
-                "label": "Academy Awards (Oscars)",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/oscars",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/oscars.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_best_picture",
-                        "label": "Oscars Best Picture Winners",
-                        "tooltip": "Collection of Oscars Best Picture Award Winners."
-                    },
-                    {
-                        "key": "use_best_director",
-                        "label": "Oscars Best Director Winners",
-                        "tooltip": "Collection of Oscars Best Director Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_berlinale",
-                "label": "Berlin International Film Festival Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/berlinale",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/berlinale.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_golden",
-                        "label": "Berlinale Golden Bears",
-                        "tooltip": "Collection of Berlin International Film Festival Golden Bear Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_bafta",
-                "label": "British Academy of Film Awards (BAFTA)",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/bafta",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/bafta.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_best",
-                        "label": "BAFTA Best Films",
-                        "tooltip": "Collection of British Academy of Film and Television Arts Best Film Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_cannes",
-                "label": "Cannes Film Festival Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/cannes",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cannes.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_palm",
-                        "label": "Cannes Golden Palm Winners",
-                        "tooltip": "Collection of Cannes Golden Palm Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_cesar",
-                "label": "César Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_best",
-                        "label": "César Best Film Winners",
-                        "tooltip": "Collection of César Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_choice",
-                "label": "Critics Choice Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/choice",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/choice.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_best",
-                        "label": "Critics Choice Best Picture Winners",
-                        "tooltip": "Collection of Critics Choice Best Feature Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_emmy",
-                "label": "Emmy Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/emmy",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/emmy.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_best",
-                        "label": "Emmys Best in Category Winners",
-                        "tooltip": "Collection of Emmys Best in Category Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_golden",
-                "label": "Golden Globe Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/golden",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/golden.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_best_picture",
-                        "label": "Golden Globes Best Picture Winners",
-                        "tooltip": "Collection of Golden Globe Best Picture Award Winners."
-                    },
-                    {
-                        "key": "use_best_director",
-                        "label": "Golden Globes Best Director Winners",
-                        "tooltip": "Collection of Golden Globe Best Director Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_spirit",
-                "label": "Independent Spirit Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/spirit",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/spirit.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_best",
-                        "label": "Independent Spirit Best Feature Winners",
-                        "tooltip": "Collection of Independent Spirit Best Feature Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_nfr",
-                "label": "National Film Registry",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/nfr",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/nfr.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_all_time",
-                        "label": "National Film Registry All Time",
-                        "tooltip": "Collection of Films added to the National Film Registry."
-                    }
-                ]
-            },
-            {
-                "id": "collection_pca",
-                "label": "People's Choice Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/pca",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/pca.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_pca",
-                        "label": "People's Choice Award Winners",
-                        "tooltip": "Collection of People's Choice Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_razzie",
-                "label": "Razzie Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/razzie",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/razzie.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_golden",
-                        "label": "Golden Raspberry Award Winners",
-                        "tooltip": "Collection of Razzie Golden Raspberry Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_sag",
-                "label": "Screen Actors Guild Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/sag",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/sag.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_golden",
-                        "label": "Screen Actors Guild Award Winners",
-                        "tooltip": "Collection of Screen Actors Guild Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_sundance",
-                "label": "Sundance Film Festival Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/sundance",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/sundance.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_grand",
-                        "label": "Grand Jury Winners",
-                        "tooltip": "Collection of Sundance Film Festival Grand Jury Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_tiff",
-                "label": "Toronto International Film Festival Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/tiff",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tiff.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_best",
-                        "label": "Toronto People's Choice Award Winners",
-                        "tooltip": "Collection of Toronto International Film Festival People's Choice Award Winners."
-                    }
-                ]
-            },
-            {
-                "id": "collection_venice",
-                "label": "Venice Film Festival Awards",
-                "url": "https://kometa.wiki/en/nightly/defaults/award/venice",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/venice.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_golden",
-                        "label": "Golden Lion Winners",
-                        "tooltip": "Collection of Venice Film Festival Golden Lions Award Winners."
-                    }
-                ]
-            }
+  {
+    "accordion": "Award Collections",
+    "collections": [
+      {
+        "id": "collection_separator_award",
+        "label": "Award Separator",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/separator",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/separator_award.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "readonly": true,
+        "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
+        "tooltip_variant": "danger"
+      },
+      {
+        "id": "collection_oscars",
+        "label": "Academy Awards (Oscars)",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/oscars",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/oscars.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_best_picture",
+            "label": "Oscars Best Picture Winners",
+            "tooltip": "Collection of Oscars Best Picture Award Winners.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_best_director",
+            "label": "Oscars Best Director Winners",
+            "tooltip": "Collection of Oscars Best Director Award Winners.",
+            "type": "toggle"
+          }
         ]
-    },
-    {
-        "accordion": "Chart Collections",
-        "collections": [
-            {
-                "id": "collection_separator_chart",
-                "label": "Chart Separator",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/separator",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/separator_chart.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "readonly": true,
-                "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
-                "tooltip_variant": "danger"
-            },
-            {
-                "id": "collection_basic",
-                "label": "Basic Charts",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/basic",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/basic.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_episodes",
-                        "label": "New Episodes",
-                        "tooltip": "Collection of Episodes released in the last 7 days.",
-                        "tooltip_variant": "info"
-                    },
-                    {
-                        "key": "use_released",
-                        "label": "Newly Released",
-                        "tooltip": "Media released in the last 90 days.",
-                        "tooltip_variant": "info"
-                    }
-                ]
-            },
-            {
-                "id": "collection_tautulli",
-                "label": "Tautulli Charts",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/tautulli",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tautulli.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "tooltip": "Requires Tautulli authentication",
-                "tooltip_variant": "danger",
-                "template_variables": [
-                    {
-                        "key": "use_popular",
-                        "label": "Plex Popular",
-                        "tooltip": "Enable the most Popular Movies/Shows on Plex",
-                        "tooltip_variant": "info"
-                    },
-                    {
-                        "key": "use_watched",
-                        "label": "Plex Watched",
-                        "tooltip": "Enable the most Watched Movies/Shows on Plex",
-                        "tooltip_variant": "info"
-                    }
-                ]
-            },
-            {
-                "id": "collection_imdb",
-                "label": "IMDb Charts",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/imdb",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/imdb.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_top",
-                        "label": "IMDb Top 250",
-                        "tooltip": "Collection of Top 250 Movies/Shows on IMDb.",
-                        "tooltip_variant": "info"
-                    },
-                    {
-                        "key": "use_popular",
-                        "label": "IMDb Popular",
-                        "tooltip": "Collection of the most Popular Movies/Shows on IMDb",
-                        "tooltip_variant": "info"
-                    },
-                    {
-                        "key": "use_lowest",
-                        "label": "IMDb Lowest Rated",
-                        "tooltip": "Collection of the lowest Rated Movies on IMDb.",
-                        "tooltip_variant": "info"
-                    }
-                ]
-            },
-            {
-                "id": "collection_tmdb",
-                "label": "TMDb Charts",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/tmdb",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tmdb.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_airing",
-                        "label": "TMDb Airing Today",
-                        "tooltip": "Collection of Shows Airing Today on TMDb."
-                    },
-                    {
-                        "key": "use_air",
-                        "label": "TMDb On The Air",
-                        "tooltip": "Collection of Shows currently On The Air on TMDb."
-                    },
-                    {
-                        "key": "use_popular",
-                        "label": "TMDb Popular",
-                        "tooltip": "Collection of the Most Popular Movies/Shows on TMDb."
-                    },
-                    {
-                        "key": "use_top",
-                        "label": "TMDb Top Rated",
-                        "tooltip": "Collection of the Top Rated Movies/Shows on TMDb."
-                    },
-                    {
-                        "key": "use_trending",
-                        "label": "TMDb Trending",
-                        "tooltip": "Collection of Trending Movies/Shows on TMDb."
-                    }
-                ]
-            },
-            {
-                "id": "collection_trakt",
-                "label": "Trakt Charts",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/trakt",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/trakt.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "tooltip": "Requires Trakt authentication",
-                "tooltip_variant": "danger",
-                "template_variables": [
-                    {
-                        "key": "use_collected",
-                        "label": "Trakt Collected",
-                        "tooltip": "Collection of the Most Collected Movies/Shows on Trakt."
-                    },
-                    {
-                        "key": "use_popular",
-                        "label": "Trakt Popular",
-                        "tooltip": "Collection of the Most Popular Movies/Shows on Trakt."
-                    },
-                    {
-                        "key": "use_recommended",
-                        "label": "Trakt Recommended",
-                        "tooltip": "Collection of Recommended Movies/Shows on Trakt."
-                    },
-                    {
-                        "key": "use_trending",
-                        "label": "Trakt Trending",
-                        "tooltip": "Collection of Trending Movies/Shows on Trakt."
-                    },
-                    {
-                        "key": "use_watched",
-                        "label": "Trakt Watched",
-                        "tooltip": "Collection of the Most Watched Movies/Shows on Trakt."
-                    }
-                ]
-            },
-            {
-                "id": "collection_anilist",
-                "label": "AniList Charts",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/anilist",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/anilist.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_popular",
-                        "label": "AniList Popular",
-                        "tooltip": "Collection of the most Popular Anime on AniList."
-                    },
-                    {
-                        "key": "use_season",
-                        "label": "AniList Season",
-                        "tooltip": "Collection of the Current Season's Anime on AniList."
-                    },
-                    {
-                        "key": "use_top",
-                        "label": "AniList Top Rated",
-                        "tooltip": "Collection of the Top Rated Anime on AniList."
-                    },
-                    {
-                        "key": "use_trending",
-                        "label": "AniList Trending",
-                        "tooltip": "Collection of the Trending Anime on AniList."
-                    }
-                ]
-            },
-            {
-                "id": "collection_myanimelist",
-                "label": "MyAnimeList Charts",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/myanimelist",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/myanimelist.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_favorited",
-                        "label": "MyAnimeList Favorited",
-                        "tooltip": "Collection of most Favorited Anime on MyAnimeList."
-                    },
-                    {
-                        "key": "use_popular",
-                        "label": "MyAnimeList Popular",
-                        "tooltip": "Collection of the most Popular Anime on MyAnimeList."
-                    },
-                    {
-                        "key": "use_season",
-                        "label": "MyAnimeList Season",
-                        "tooltip": "Collection of the Current Seasons Anime on MyAnimeList."
-                    },
-                    {
-                        "key": "use_airing",
-                        "label": "MyAnimeList Top Airing",
-                        "tooltip": "Collection of the Top Rated Airing on MyAnimeList."
-                    },
-                    {
-                        "key": "use_top",
-                        "label": "MyAnimeList Top Rated",
-                        "tooltip": "Collection of the Top Rated Anime on MyAnimeList."
-                    }
-                ]
-            },
-            {
-                "id": "collection_letterboxd",
-                "label": "Letterboxd Charts",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/letterboxd",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/letterboxd.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_1001_movies",
-                        "label": "1,001 To See Before You Die",
-                        "tooltip": "Collection of 1,001 Movies You Must See Before You Die."
-                    },
-                    {
-                        "key": "use_afi_100",
-                        "label": "AFI 100 Years 100 Movies",
-                        "tooltip": "Collection of AFI's 100 Years...100 Movies."
-                    },
-                    {
-                        "key": "use_boxofficemojo_100",
-                        "label": "Box Office Mojo All Time 100",
-                        "tooltip": "Collection of Box Office Mojo's all-time top 100 films."
-                    },
-                    {
-                        "key": "use_cannes",
-                        "label": "Cannes Palme d'Or Winners",
-                        "tooltip": "Collection of films that have won the Palme d'Or at the Cannes Film Festival."
-                    },
-                    {
-                        "key": "use_edgarwright",
-                        "label": "Edgar Wright's 1,000 Favorites",
-                        "tooltip": "Collection of Edgar Wright's 1,000 Favorite Movies."
-                    },
-                    {
-                        "key": "use_imdb_top_250",
-                        "label": "IMDb Top 250 (Letterboxd)",
-                        "tooltip": "Collection of the Top 250 Movies on IMDb, from Letterboxd."
-                    },
-                    {
-                        "key": "use_top_250",
-                        "label": "Letterboxd Top 250",
-                        "tooltip": "Collection of the Top 250 films on Letterboxd."
-                    },
-                    {
-                        "key": "use_oscars",
-                        "label": "Oscar Best Picture Winners",
-                        "tooltip": "Collection of films that have won the Academy Award for Best Picture."
-                    },
-                    {
-                        "key": "use_rogerebert",
-                        "label": "Roger Ebert's Great Movies",
-                        "tooltip": "Collection of films from Roger Ebert's \"Great Movies\" essays."
-                    },
-                    {
-                        "key": "use_sight_sound",
-                        "label": "Sight & Sound Greatest Films",
-                        "tooltip": "Collection of Sight and Sound's Greatest Films of All Time."
-                    },
-                    {
-                        "key": "use_animation",
-                        "label": "Top 100 Animation",
-                        "tooltip": "Collection of the Top 100 animated films on Letterboxd."
-                    },
-                    {
-                        "key": "use_black_directors",
-                        "label": "Top 100 Black-Directed",
-                        "tooltip": "Collection of the Top 100 Black-Directed films on Letterboxd."
-                    },
-                    {
-                        "key": "use_documentaries",
-                        "label": "Top 250 Documentaries",
-                        "tooltip": "Collection of the Top 250 documentary films on Letterboxd."
-                    },
-                    {
-                        "key": "use_horror",
-                        "label": "Top 250 Horror",
-                        "tooltip": "Collection of the Top 250 horror films on Letterboxd."
-                    },
-                    {
-                        "key": "use_most_fans",
-                        "label": "Top 250 Most Fans",
-                        "tooltip": "Collection of the Top 250 films with the most fans on Letterboxd."
-                    },
-                    {
-                        "key": "use_women_directors",
-                        "label": "Top 250 Women-Directed",
-                        "tooltip": "Collection of the Top 250 Women-Directed films on Letterboxd."
-                    }
-                ]
-            },
-            {
-                "id": "collection_other_chart",
-                "label": "Other Charts",
-                "url": "https://kometa.wiki/en/nightly/defaults/chart/other",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/other_chart.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_anidb",
-                        "label": "AniDB Popular",
-                        "tooltip": "Collection of the most Popular Anime on AniDB."
-                    },
-                    {
-                        "key": "use_commonsense",
-                        "label": "Common Sense Selection",
-                        "tooltip": "Collection of Common Sense Selection Movies/Shows."
-                    },
-                    {
-                        "key": "use_metacritic",
-                        "label": "Metacritic Must See Movies",
-                        "tooltip": "Collection of Metacritic Must See Movies."
-                    },
-                    {
-                        "key": "use_stevenlu",
-                        "label": "StevenLu's Popular Movies",
-                        "tooltip": "Collection of StevenLu's Popular Movies."
-                    },
-                    {
-                        "key": "use_pirated",
-                        "label": "Top 10 Pirated Movies of the Week",
-                        "tooltip": "Collection of the Top 10 Pirated Movies of the Week."
-                    }
-                ]
-            }
+      },
+      {
+        "id": "collection_berlinale",
+        "label": "Berlin International Film Festival Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/berlinale",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/berlinale.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_golden",
+            "label": "Berlinale Golden Bears",
+            "tooltip": "Collection of Berlin International Film Festival Golden Bear Award Winners.",
+            "type": "toggle"
+          }
         ]
-    },
-    {
-        "id": "contentCollections",
-        "accordion": "Content Collections",
-        "collections": [
-            {
-                "id": "collection_genre",
-                "label": "Genres",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/genre/",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/genre.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_franchise",
-                "label": "Franchises",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/franchise/",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/franchise_movie.png",
-                "media_types": [
-                    "movie"
-                ],
-                "tooltip": "Disable Plex's in-built Automatic Collections feature if you use this file. Click the name of this file to go to the wiki page to learn more.",
-                "tooltip_variant": "danger"
-            },
-            {
-                "id": "collection_franchise",
-                "label": "Franchises",
-                "url": "https://kometa.wiki/en/nightly/defaults/show/franchise/",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/franchise_show.png",
-                "media_types": [
-                    "show"
-                ],
-                "tooltip": "Disable Plex's in-built Automatic Collections feature if you use this file",
-                "tooltip_variant": "danger"
-            },
-            {
-                "id": "collection_universe",
-                "label": "Universes",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/universe/",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/universe.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_avp",
-                        "label": "Alien / Predator",
-                        "tooltip": "Collection of Movies in the Alien / Predator Universe"
-                    },
-                    {
-                        "key": "use_arrow",
-                        "label": "Arrowverse",
-                        "tooltip": "Collection of Movies in the The Arrow Universe"
-                    },
-                    {
-                        "key": "use_dca",
-                        "label": "DC Animated Universe",
-                        "tooltip": "Collection of Movies in the DC Animated Universe"
-                    },
-                    {
-                        "key": "use_dcu",
-                        "label": "DC Extended Universe",
-                        "tooltip": "Collection of Movies in the DC Extended Universe"
-                    },
-                    {
-                        "key": "use_fast",
-                        "label": "Fast & Furious",
-                        "tooltip": "Collection of Movies in the Fast & Furious Universe"
-                    },
-                    {
-                        "key": "use_marvel",
-                        "label": "In Association with Marvel",
-                        "tooltip": "Collection of Movies in the Marvel Universe (but not part of MCU)"
-                    },
-                    {
-                        "key": "use_mcu",
-                        "label": "Marvel Cinematic Universe",
-                        "tooltip": "Collection of Movies in the Marvel Cinematic Universe"
-                    },
-                    {
-                        "key": "use_middle",
-                        "label": "Middle Earth",
-                        "tooltip": "Collection of Movies in the Middle Earth Universe"
-                    },
-                    {
-                        "key": "use_rocky",
-                        "label": "Rocky / Creed",
-                        "tooltip": "Collection of Movies in the Rocky / Creed Universe"
-                    },
-                    {
-                        "key": "use_trek",
-                        "label": "Star Trek",
-                        "tooltip": "Collection of Movies in the Star Trek Universe"
-                    },
-                    {
-                        "key": "use_star",
-                        "label": "Star Wars Universe",
-                        "tooltip": "Collection of Movies in the Star Wars Universe"
-                    },
-                    {
-                        "key": "use_mummy",
-                        "label": "The Mummy Universe",
-                        "tooltip": "Collection of Movies in the The Mummy Universe"
-                    },
-                    {
-                        "key": "use_askew",
-                        "label": "View Askewverse",
-                        "tooltip": "Collection of Movies in the The View Askew Universe"
-                    },
-                    {
-                        "key": "use_wizard",
-                        "label": "Wizarding World",
-                        "tooltip": "Collection of Movies in the Wizarding World Universe"
-                    },
-                    {
-                        "key": "use_xmen",
-                        "label": "X-Men Universe",
-                        "tooltip": "Collection of Movies in the X-Men Universe"
-                    }
-                ]
-            },
-            {
-                "id": "collection_based",
-                "label": "Based On...",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/based/",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/based.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_books",
-                        "label": "Based on a Book",
-                        "tooltip": "Collection of Movies/Shows based on or inspired by books"
-                    },
-                    {
-                        "key": "use_comics",
-                        "label": "Based on a Comic",
-                        "tooltip": "Collection of Movies/Shows based on or inspired by comics"
-                    },
-                    {
-                        "key": "use_true_story",
-                        "label": "Based on a True Story",
-                        "tooltip": "Collection of Movies/Shows based on or inspired by true stories"
-                    },
-                    {
-                        "key": "use_video_games",
-                        "label": "Based on a Video Game",
-                        "tooltip": "Collection of Movies/Shows based on or inspired by video games"
-                    }
-                ]
-            },
-            {
-                "id": "collection_collectionless",
-                "label": "Collectionless",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/collectionless/",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/collectionless.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "tooltip": "Please visit the wiki for this file to understand what it does",
-                "tooltip_variant": "danger"
-            }
+      },
+      {
+        "id": "collection_bafta",
+        "label": "British Academy of Film Awards (BAFTA)",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/bafta",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/bafta.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_best",
+            "label": "BAFTA Best Films",
+            "tooltip": "Collection of British Academy of Film and Television Arts Best Film Award Winners.",
+            "type": "toggle"
+          }
         ]
-    },
-    {
-        "id": "contentRatingCollections",
-        "accordion": "Content Rating Collections",
-        "collections": [
-            {
-                "id": "collection_content_rating_us",
-                "label": "US Content Ratings",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/content_rating_us",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_us_movie.png",
-                "media_types": [
-                    "movie"
-                ]
-            },
-            {
-                "id": "collection_content_rating_us",
-                "label": "US Content Ratings",
-                "url": "https://kometa.wiki/en/nightly/defaults/show/content_rating_us",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_us_show.png",
-                "media_types": [
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_content_rating_uk",
-                "label": "UK Content Ratings",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_uk",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_uk.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_content_rating_de",
-                "label": "DE Content Ratings",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_de",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_de.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_content_rating_au",
-                "label": "AU Content Ratings",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_au",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_au.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_content_rating_nz",
-                "label": "NZ Content Ratings",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_nz",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_nz.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_content_rating_mal",
-                "label": "MyAnimeList Content Ratings",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_mal",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_mal.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_content_rating_cs",
-                "label": "Common Sense Media Content Ratings",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_cs",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_cs.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            }
+      },
+      {
+        "id": "collection_cannes",
+        "label": "Cannes Film Festival Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/cannes",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cannes.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_palm",
+            "label": "Cannes Golden Palm Winners",
+            "tooltip": "Collection of Cannes Golden Palm Award Winners.",
+            "type": "toggle"
+          }
         ]
-    },
-    {
-        "id": "locationCollections",
-        "accordion": "Location Collections",
-        "collections": [
-            {
-                "id": "collection_country",
-                "label": "Countries",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/country",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/country.png",
-                "media_types": [
-                    "movie"
-                ]
-            },
-            {
-                "id": "collection_country",
-                "label": "Countries",
-                "url": "https://kometa.wiki/en/nightly/defaults/show/country",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/country.png",
-                "media_types": [
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_region",
-                "label": "Regions",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/region",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/region.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_northern_africa",
-                        "label": "Northern Africa",
-                        "tooltip": "Collection of Movies that have been filmed in Northern Africa."
-                    },
-                    {
-                        "key": "use_eastern_africa",
-                        "label": "Eastern Africa",
-                        "tooltip": "Collection of Movies that have been filmed in Eastern Africa."
-                    },
-                    {
-                        "key": "use_central_africa",
-                        "label": "Central Africa",
-                        "tooltip": "Collection of Movies that have been filmed in Central Africa."
-                    },
-                    {
-                        "key": "use_southern_africa",
-                        "label": "Southern Africa",
-                        "tooltip": "Collection of Movies that have been filmed in Southern Africa."
-                    },
-                    {
-                        "key": "use_western_africa",
-                        "label": "Western Africa",
-                        "tooltip": "Collection of Movies that have been filmed in Western Africa."
-                    },
-                    {
-                        "key": "use_caribbean",
-                        "label": "Caribbean",
-                        "tooltip": "Collection of Movies that have been filmed in the Caribbean."
-                    },
-                    {
-                        "key": "use_central_america",
-                        "label": "Central America",
-                        "tooltip": "Collection of Movies that have been filmed in Central America."
-                    },
-                    {
-                        "key": "use_south_america",
-                        "label": "South America",
-                        "tooltip": "Collection of Movies that have been filmed in South America."
-                    },
-                    {
-                        "key": "use_north_america",
-                        "label": "North America",
-                        "tooltip": "Collection of Movies that have been filmed in North America."
-                    },
-                    {
-                        "key": "use_antarctica",
-                        "label": "Antarctica",
-                        "tooltip": "Collection of Movies that have been filmed in Antarctica."
-                    },
-                    {
-                        "key": "use_central_asia",
-                        "label": "Central Asia",
-                        "tooltip": "Collection of Movies that have been filmed in Central Asia."
-                    },
-                    {
-                        "key": "use_eastern_asia",
-                        "label": "Eastern Asia",
-                        "tooltip": "Collection of Movies that have been filmed in Eastern Asia."
-                    },
-                    {
-                        "key": "use_south_eastern_asia",
-                        "label": "South-Eastern Asia",
-                        "tooltip": "Collection of Movies that have been filmed in South-Eastern Asia."
-                    },
-                    {
-                        "key": "use_southern_asia",
-                        "label": "Southern Asia",
-                        "tooltip": "Collection of Movies that have been filmed in Southern Asia."
-                    },
-                    {
-                        "key": "use_western_asia",
-                        "label": "Western Asia",
-                        "tooltip": "Collection of Movies that have been filmed in Western Asia."
-                    },
-                    {
-                        "key": "use_eastern_europe",
-                        "label": "Eastern Europe",
-                        "tooltip": "Collection of Movies that have been filmed in Eastern Europe."
-                    },
-                    {
-                        "key": "use_northern_europe",
-                        "label": "Northern Europe",
-                        "tooltip": "Collection of Movies that have been filmed in Northern Europe."
-                    },
-                    {
-                        "key": "use_southern_europe",
-                        "label": "Southern Europe",
-                        "tooltip": "Collection of Movies that have been filmed in Southern Europe."
-                    },
-                    {
-                        "key": "use_western_europe",
-                        "label": "Western Europe",
-                        "tooltip": "Collection of Movies that have been filmed in Western Europe."
-                    },
-                    {
-                        "key": "use_australia_and_new_zealand",
-                        "label": "Australia and New Zealand",
-                        "tooltip": "Collection of Movies that have been filmed in Australia and New Zealand."
-                    },
-                    {
-                        "key": "use_melanesia",
-                        "label": "Melanesia",
-                        "tooltip": "Collection of Movies that have been filmed in Melanesia."
-                    },
-                    {
-                        "key": "use_micronesia",
-                        "label": "Micronesia",
-                        "tooltip": "Collection of Movies that have been filmed in Micronesia."
-                    },
-                    {
-                        "key": "use_polynesia",
-                        "label": "Polynesia",
-                        "tooltip": "Collection of Movies that have been filmed in Polynesia."
-                    },
-                    {
-                        "key": "use_other",
-                        "label": "Other Regions",
-                        "tooltip": "Collection of Movies that are in other uncommon Regions."
-                    }
-                ]
-            },
-            {
-                "id": "collection_continent",
-                "label": "Continents",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/continent",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/continent.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_africa",
-                        "label": "Africa",
-                        "tooltip": "Collection of Movies filmed in Africa."
-                    },
-                    {
-                        "key": "use_americas",
-                        "label": "Americas",
-                        "tooltip": "Collection of Movies filmed in Americas."
-                    },
-                    {
-                        "key": "use_antarctica",
-                        "label": "Antarctica",
-                        "tooltip": "Collection of Movies filmed in Antarctica."
-                    },
-                    {
-                        "key": "use_asia",
-                        "label": "Asia",
-                        "tooltip": "Collection of Movies filmed in Asia."
-                    },
-                    {
-                        "key": "use_europe",
-                        "label": "Europe",
-                        "tooltip": "Collection of Movies filmed in Europe."
-                    },
-                    {
-                        "key": "use_oceania",
-                        "label": "Oceania",
-                        "tooltip": "Collection of Movies filmed in Oceania."
-                    },
-                    {
-                        "key": "use_other",
-                        "label": "Other Continents",
-                        "tooltip": "Collection of Movies that are in other uncommon Continents."
-                    }
-                ]
-            }
+      },
+      {
+        "id": "collection_cesar",
+        "label": "César Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/cesar",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/cesar.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_best",
+            "label": "César Best Film Winners",
+            "tooltip": "Collection of César Award Winners.",
+            "type": "toggle"
+          }
         ]
-    },
-    {
-        "id": "mediaCollections",
-        "accordion": "Media Collections",
-        "collections": [
-            {
-                "id": "collection_aspect",
-                "label": "Aspect Ratios",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/aspect",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/aspect.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_1.33",
-                        "label": "1.33 - Academy Aperture",
-                        "tooltip": "Collection of Movies/Shows with a 1.33 aspect ratio."
-                    },
-                    {
-                        "key": "use_1.65",
-                        "label": "1.65 - Early Widescreen",
-                        "tooltip": "Collection of Movies/Shows with a 1.65 aspect ratio."
-                    },
-                    {
-                        "key": "use_1.66",
-                        "label": "1.66 - European Widescreen",
-                        "tooltip": "Collection of Movies/Shows with a 1.66 aspect ratio."
-                    },
-                    {
-                        "key": "use_1.78",
-                        "label": "1.78 - Widescreen TV",
-                        "tooltip": "Collection of Movies/Shows with a 1.78 aspect ratio."
-                    },
-                    {
-                        "key": "use_1.85",
-                        "label": "1.85 - American Widescreen",
-                        "tooltip": "Collection of Movies/Shows with a 1.85 aspect ratio."
-                    },
-                    {
-                        "key": "use_2.2",
-                        "label": "2.2 - 70mm Frame",
-                        "tooltip": "Collection of Movies/Shows with a 2.2 aspect ratio."
-                    },
-                    {
-                        "key": "use_2.35",
-                        "label": "2.35 - Anamorphic Projection",
-                        "tooltip": "Collection of Movies/Shows with a 2.35 aspect ratio."
-                    },
-                    {
-                        "key": "use_2.77",
-                        "label": "2.77 - Cinerama",
-                        "tooltip": "Collection of Movies/Shows with a 2.77 aspect ratio."
-                    }
-                ]
-            },
-            {
-                "id": "collection_resolution",
-                "label": "Resolutions",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/resolution",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/resolution.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_audio_language",
-                "label": "Audio Languages",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/audio_language",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/audio_language.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_subtitle_language",
-                "label": "Subtitle Languages",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/subtitle_language",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/subtitle_language.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            }
+      },
+      {
+        "id": "collection_choice",
+        "label": "Critics Choice Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/choice",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/choice.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_best",
+            "label": "Critics Choice Best Picture Winners",
+            "tooltip": "Collection of Critics Choice Best Feature Award Winners.",
+            "type": "toggle"
+          }
         ]
-    },
-    {
-        "id": "peopleCollections",
-        "accordion": "People Collections",
-        "collections": [
-            {
-                "id": "collection_actor",
-                "label": "Actors",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/actor",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/actor.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
-                "tooltip_variant": "danger"
-            },
-            {
-                "id": "collection_director",
-                "label": "Directors",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/director",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/director.png",
-                "media_types": [
-                    "movie"
-                ],
-                "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
-                "tooltip_variant": "danger"
-            },
-            {
-                "id": "collection_producer",
-                "label": "Producers",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/producer",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/producer.png",
-                "media_types": [
-                    "movie"
-                ],
-                "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
-                "tooltip_variant": "danger"
-            },
-            {
-                "id": "collection_writer",
-                "label": "Writers",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/writer",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/writer.png",
-                "media_types": [
-                    "movie"
-                ],
-                "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
-                "tooltip_variant": "danger"
-            }
+      },
+      {
+        "id": "collection_emmy",
+        "label": "Emmy Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/emmy",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/emmy.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_best",
+            "label": "Emmys Best in Category Winners",
+            "tooltip": "Collection of Emmys Best in Category Award Winners.",
+            "type": "toggle"
+          }
         ]
-    },
-    {
-        "id": "productionCollections",
-        "accordion": "Production Collections",
-        "collections": [
-            {
-                "id": "collection_streaming",
-                "label": "Streaming",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/streaming",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/streaming.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ],
-                "tooltip": "This will show content currently streaming on a particular service, not content that is exclusive to said service. Read the wiki for using `originals_only` to change this",
-                "tooltip_variant": "danger",
-                "template_variables": [
-                    {
-                        "key": "use_appletv",
-                        "label": "Apple TV+ Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Apple TV+."
-                    },
-                    {
-                        "key": "use_bet",
-                        "label": "BET+ Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on BET+."
-                    },
-                    {
-                        "key": "use_channel4",
-                        "label": "Channel 4 Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Channel 4."
-                    },
-                    {
-                        "key": "use_crave",
-                        "label": "Crave Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Crave."
-                    },
-                    {
-                        "key": "use_crunchyroll",
-                        "label": "Crunchyroll Shows",
-                        "tooltip": "Collection of Shows Streaming on Crunchyroll."
-                    },
-                    {
-                        "key": "use_discovery",
-                        "label": "discovery+ Shows",
-                        "tooltip": "Collection of Shows Streaming on discovery+."
-                    },
-                    {
-                        "key": "use_disney",
-                        "label": "Disney+ Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Disney+."
-                    },
-                    {
-                        "key": "use_hayu",
-                        "label": "Hayu Shows",
-                        "tooltip": "Collection of Shows Streaming on Hulu."
-                    },
-                    {
-                        "key": "use_hulu",
-                        "label": "Hulu Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Hulu."
-                    },
-                    {
-                        "key": "use_itvx",
-                        "label": "ITVX Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on ITVX."
-                    },
-                    {
-                        "key": "use_max",
-                        "label": "Max Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Max."
-                    },
-                    {
-                        "key": "use_netflix",
-                        "label": "Netflix Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Netflix."
-                    },
-                    {
-                        "key": "use_now",
-                        "label": "NOW Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on NOW."
-                    },
-                    {
-                        "key": "use_paramount",
-                        "label": "Paramount+ Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Paramount+."
-                    },
-                    {
-                        "key": "use_peacock",
-                        "label": "Peacock Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Peacock."
-                    },
-                    {
-                        "key": "use_amazon",
-                        "label": "Prime Video Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on Prime Video."
-                    },
-                    {
-                        "key": "use_youtube",
-                        "label": "YouTube Movies/Shows",
-                        "tooltip": "Collection of Movies/Shows Streaming on YouTube."
-                    }
-                ]
-            },
-            {
-                "id": "collection_studio",
-                "label": "Studios",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/studio",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/studio.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_network",
-                "label": "Networks",
-                "url": "https://kometa.wiki/en/nightly/defaults/show/network",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/network.png",
-                "media_types": [
-                    "show"
-                ],
-                "tooltip": "Requires the 'Plex TV Series' scanner and 'Plex Series' agent. Without this, Plex will return an error: plex_search attribute: network not supported.",
-                "tooltip_variant": "danger"
-            }
+      },
+      {
+        "id": "collection_golden",
+        "label": "Golden Globe Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/golden",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/golden.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_best_picture",
+            "label": "Golden Globes Best Picture Winners",
+            "tooltip": "Collection of Golden Globe Best Picture Award Winners.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_best_director",
+            "label": "Golden Globes Best Director Winners",
+            "tooltip": "Collection of Golden Globe Best Director Award Winners.",
+            "type": "toggle"
+          }
         ]
-    },
-    {
-        "id": "timeCollections",
-        "accordion": "Time Collections",
-        "collections": [
-            {
-                "id": "collection_seasonal",
-                "label": "Seasonal",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/seasonal",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/seasonal.png",
-                "media_types": [
-                    "movie"
-                ],
-                "template_variables": [
-                    {
-                        "key": "use_aapi",
-                        "label": "Asian American Pacific Islander Movies",
-                        "tooltip": "Movies related to Asian American Pacific Islander Month"
-                    },
-                    {
-                        "key": "use_black_history",
-                        "label": "Black History Month Movies",
-                        "tooltip": "Movies related to Black History Month"
-                    },
-                    {
-                        "key": "use_christmas",
-                        "label": "Christmas Movies",
-                        "tooltip": "Movies related to Christmas"
-                    },
-                    {
-                        "key": "use_disabilities",
-                        "label": "Disability Month Movies",
-                        "tooltip": "Movies related to Disability Awareness Month"
-                    },
-                    {
-                        "key": "use_easter",
-                        "label": "Easter Movies",
-                        "tooltip": "Movies related to Easter"
-                    },
-                    {
-                        "key": "use_father",
-                        "label": "Father's Day Movies",
-                        "tooltip": "Movies related to Father's Day"
-                    },
-                    {
-                        "key": "use_halloween",
-                        "label": "Halloween Movies",
-                        "tooltip": "Movies related to Halloween"
-                    },
-                    {
-                        "key": "use_independence",
-                        "label": "Independence Day Movies",
-                        "tooltip": "Movies related to Independence Day"
-                    },
-                    {
-                        "key": "use_labor",
-                        "label": "Labor Day Movies",
-                        "tooltip": "Movies related to Labor Day"
-                    },
-                    {
-                        "key": "use_lgbtq",
-                        "label": "LGBTQ Month Movies",
-                        "tooltip": "Movies related to LGBTQ Pride Month"
-                    },
-                    {
-                        "key": "use_memorial",
-                        "label": "Memorial Day Movies",
-                        "tooltip": "Movies related to Memorial Day"
-                    },
-                    {
-                        "key": "use_mother",
-                        "label": "Mother's Day Movies",
-                        "tooltip": "Movies related to Mother's Day"
-                    },
-                    {
-                        "key": "use_latinx",
-                        "label": "National Hispanic Heritage Movies",
-                        "tooltip": "Movies related to National Hispanic Heritage Month"
-                    },
-                    {
-                        "key": "use_years",
-                        "label": "New Year's Day Movies",
-                        "tooltip": "Movies related to New Year's Day"
-                    },
-                    {
-                        "key": "use_patrick",
-                        "label": "St. Patrick's Day Movies",
-                        "tooltip": "Movies related to St. Patrick's Day"
-                    },
-                    {
-                        "key": "use_thanksgiving",
-                        "label": "Thanksgiving Movies",
-                        "tooltip": "Movies related to Thanksgiving"
-                    },
-                    {
-                        "key": "use_valentine",
-                        "label": "Valentine's Day Movies",
-                        "tooltip": "Movies related to Valentine's Day"
-                    },
-                    {
-                        "key": "use_veteran",
-                        "label": "Veteran's Day Movies",
-                        "tooltip": "Movies related to Veteran's Day"
-                    },
-                    {
-                        "key": "use_women",
-                        "label": "Women's History Month Movies",
-                        "tooltip": "Movies related to Women's History Month"
-                    }
-                ]
-            },
-            {
-                "id": "collection_year",
-                "label": "Years",
-                "url": "https://kometa.wiki/en/nightly/defaults/both/year",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/year.png",
-                "media_types": [
-                    "movie",
-                    "show"
-                ]
-            },
-            {
-                "id": "collection_decade",
-                "label": "Decades",
-                "url": "https://kometa.wiki/en/nightly/defaults/movie/decade",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/decade.png",
-                "media_types": [
-                    "movie"
-                ]
-            },
-            {
-                "id": "collection_decade",
-                "label": "Decades",
-                "url": "https://kometa.wiki/en/nightly/defaults/show/decade",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/decade.png",
-                "media_types": [
-                    "show"
-                ]
-            }
+      },
+      {
+        "id": "collection_spirit",
+        "label": "Independent Spirit Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/spirit",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/spirit.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_best",
+            "label": "Independent Spirit Best Feature Winners",
+            "tooltip": "Collection of Independent Spirit Best Feature Award Winners.",
+            "type": "toggle"
+          }
         ]
-    }
+      },
+      {
+        "id": "collection_nfr",
+        "label": "National Film Registry",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/nfr",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/nfr.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_all_time",
+            "label": "National Film Registry All Time",
+            "tooltip": "Collection of Films added to the National Film Registry.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_pca",
+        "label": "People's Choice Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/pca",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/pca.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_pca",
+            "label": "People's Choice Award Winners",
+            "tooltip": "Collection of People's Choice Award Winners.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_razzie",
+        "label": "Razzie Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/razzie",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/razzie.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_golden",
+            "label": "Golden Raspberry Award Winners",
+            "tooltip": "Collection of Razzie Golden Raspberry Award Winners.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_sag",
+        "label": "Screen Actors Guild Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/sag",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/sag.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_golden",
+            "label": "Screen Actors Guild Award Winners",
+            "tooltip": "Collection of Screen Actors Guild Award Winners.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_sundance",
+        "label": "Sundance Film Festival Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/sundance",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/sundance.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_grand",
+            "label": "Grand Jury Winners",
+            "tooltip": "Collection of Sundance Film Festival Grand Jury Award Winners.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_tiff",
+        "label": "Toronto International Film Festival Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/tiff",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tiff.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_best",
+            "label": "Toronto People's Choice Award Winners",
+            "tooltip": "Collection of Toronto International Film Festival People's Choice Award Winners.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_venice",
+        "label": "Venice Film Festival Awards",
+        "url": "https://kometa.wiki/en/nightly/defaults/award/venice",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/venice.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_golden",
+            "label": "Golden Lion Winners",
+            "tooltip": "Collection of Venice Film Festival Golden Lions Award Winners.",
+            "type": "toggle"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "accordion": "Chart Collections",
+    "collections": [
+      {
+        "id": "collection_separator_chart",
+        "label": "Chart Separator",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/separator",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/separator_chart.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "readonly": true,
+        "tooltip": "Please select your desired Separator style from the respective Attributes section, which will allow you to enable this Separator.",
+        "tooltip_variant": "danger"
+      },
+      {
+        "id": "collection_basic",
+        "label": "Basic Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/basic",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/basic.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_episodes",
+            "label": "New Episodes",
+            "tooltip": "Collection of Episodes released in the last 7 days.",
+            "tooltip_variant": "info",
+            "type": "toggle"
+          },
+          {
+            "key": "use_released",
+            "label": "Newly Released",
+            "tooltip": "Media released in the last 90 days.",
+            "tooltip_variant": "info",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_tautulli",
+        "label": "Tautulli Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/tautulli",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tautulli.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "tooltip": "Requires Tautulli authentication",
+        "tooltip_variant": "danger",
+        "template_variables": [
+          {
+            "key": "use_popular",
+            "label": "Plex Popular",
+            "tooltip": "Enable the most Popular Movies/Shows on Plex",
+            "tooltip_variant": "info",
+            "type": "toggle"
+          },
+          {
+            "key": "use_watched",
+            "label": "Plex Watched",
+            "tooltip": "Enable the most Watched Movies/Shows on Plex",
+            "tooltip_variant": "info",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_imdb",
+        "label": "IMDb Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/imdb",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/imdb.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_top",
+            "label": "IMDb Top 250",
+            "tooltip": "Collection of Top 250 Movies/Shows on IMDb.",
+            "tooltip_variant": "info",
+            "type": "toggle"
+          },
+          {
+            "key": "use_popular",
+            "label": "IMDb Popular",
+            "tooltip": "Collection of the most Popular Movies/Shows on IMDb",
+            "tooltip_variant": "info",
+            "type": "toggle"
+          },
+          {
+            "key": "use_lowest",
+            "label": "IMDb Lowest Rated",
+            "tooltip": "Collection of the lowest Rated Movies on IMDb.",
+            "tooltip_variant": "info",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_tmdb",
+        "label": "TMDb Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/tmdb",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/tmdb.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_airing",
+            "label": "TMDb Airing Today",
+            "tooltip": "Collection of Shows Airing Today on TMDb.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_air",
+            "label": "TMDb On The Air",
+            "tooltip": "Collection of Shows currently On The Air on TMDb.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_popular",
+            "label": "TMDb Popular",
+            "tooltip": "Collection of the Most Popular Movies/Shows on TMDb.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_top",
+            "label": "TMDb Top Rated",
+            "tooltip": "Collection of the Top Rated Movies/Shows on TMDb.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_trending",
+            "label": "TMDb Trending",
+            "tooltip": "Collection of Trending Movies/Shows on TMDb.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_trakt",
+        "label": "Trakt Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/trakt",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/trakt.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "tooltip": "Requires Trakt authentication",
+        "tooltip_variant": "danger",
+        "template_variables": [
+          {
+            "key": "use_collected",
+            "label": "Trakt Collected",
+            "tooltip": "Collection of the Most Collected Movies/Shows on Trakt.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_popular",
+            "label": "Trakt Popular",
+            "tooltip": "Collection of the Most Popular Movies/Shows on Trakt.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_recommended",
+            "label": "Trakt Recommended",
+            "tooltip": "Collection of Recommended Movies/Shows on Trakt.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_trending",
+            "label": "Trakt Trending",
+            "tooltip": "Collection of Trending Movies/Shows on Trakt.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_watched",
+            "label": "Trakt Watched",
+            "tooltip": "Collection of the Most Watched Movies/Shows on Trakt.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_anilist",
+        "label": "AniList Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/anilist",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/anilist.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_popular",
+            "label": "AniList Popular",
+            "tooltip": "Collection of the most Popular Anime on AniList.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_season",
+            "label": "AniList Season",
+            "tooltip": "Collection of the Current Season's Anime on AniList.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_top",
+            "label": "AniList Top Rated",
+            "tooltip": "Collection of the Top Rated Anime on AniList.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_trending",
+            "label": "AniList Trending",
+            "tooltip": "Collection of the Trending Anime on AniList.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_myanimelist",
+        "label": "MyAnimeList Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/myanimelist",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/myanimelist.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_favorited",
+            "label": "MyAnimeList Favorited",
+            "tooltip": "Collection of most Favorited Anime on MyAnimeList.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_popular",
+            "label": "MyAnimeList Popular",
+            "tooltip": "Collection of the most Popular Anime on MyAnimeList.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_season",
+            "label": "MyAnimeList Season",
+            "tooltip": "Collection of the Current Seasons Anime on MyAnimeList.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_airing",
+            "label": "MyAnimeList Top Airing",
+            "tooltip": "Collection of the Top Rated Airing on MyAnimeList.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_top",
+            "label": "MyAnimeList Top Rated",
+            "tooltip": "Collection of the Top Rated Anime on MyAnimeList.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_letterboxd",
+        "label": "Letterboxd Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/letterboxd",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/letterboxd.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_1001_movies",
+            "label": "1,001 To See Before You Die",
+            "tooltip": "Collection of 1,001 Movies You Must See Before You Die.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_afi_100",
+            "label": "AFI 100 Years 100 Movies",
+            "tooltip": "Collection of AFI's 100 Years...100 Movies.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_boxofficemojo_100",
+            "label": "Box Office Mojo All Time 100",
+            "tooltip": "Collection of Box Office Mojo's all-time top 100 films.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_cannes",
+            "label": "Cannes Palme d'Or Winners",
+            "tooltip": "Collection of films that have won the Palme d'Or at the Cannes Film Festival.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_edgarwright",
+            "label": "Edgar Wright's 1,000 Favorites",
+            "tooltip": "Collection of Edgar Wright's 1,000 Favorite Movies.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_imdb_top_250",
+            "label": "IMDb Top 250 (Letterboxd)",
+            "tooltip": "Collection of the Top 250 Movies on IMDb, from Letterboxd.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_top_250",
+            "label": "Letterboxd Top 250",
+            "tooltip": "Collection of the Top 250 films on Letterboxd.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_oscars",
+            "label": "Oscar Best Picture Winners",
+            "tooltip": "Collection of films that have won the Academy Award for Best Picture.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_rogerebert",
+            "label": "Roger Ebert's Great Movies",
+            "tooltip": "Collection of films from Roger Ebert's \"Great Movies\" essays.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_sight_sound",
+            "label": "Sight & Sound Greatest Films",
+            "tooltip": "Collection of Sight and Sound's Greatest Films of All Time.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_animation",
+            "label": "Top 100 Animation",
+            "tooltip": "Collection of the Top 100 animated films on Letterboxd.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_black_directors",
+            "label": "Top 100 Black-Directed",
+            "tooltip": "Collection of the Top 100 Black-Directed films on Letterboxd.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_documentaries",
+            "label": "Top 250 Documentaries",
+            "tooltip": "Collection of the Top 250 documentary films on Letterboxd.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_horror",
+            "label": "Top 250 Horror",
+            "tooltip": "Collection of the Top 250 horror films on Letterboxd.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_most_fans",
+            "label": "Top 250 Most Fans",
+            "tooltip": "Collection of the Top 250 films with the most fans on Letterboxd.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_women_directors",
+            "label": "Top 250 Women-Directed",
+            "tooltip": "Collection of the Top 250 Women-Directed films on Letterboxd.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_other_chart",
+        "label": "Other Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/other",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/other_chart.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_anidb",
+            "label": "AniDB Popular",
+            "tooltip": "Collection of the most Popular Anime on AniDB.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_commonsense",
+            "label": "Common Sense Selection",
+            "tooltip": "Collection of Common Sense Selection Movies/Shows.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_metacritic",
+            "label": "Metacritic Must See Movies",
+            "tooltip": "Collection of Metacritic Must See Movies.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_stevenlu",
+            "label": "StevenLu's Popular Movies",
+            "tooltip": "Collection of StevenLu's Popular Movies.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_pirated",
+            "label": "Top 10 Pirated Movies of the Week",
+            "tooltip": "Collection of the Top 10 Pirated Movies of the Week.",
+            "type": "toggle"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "contentCollections",
+    "accordion": "Content Collections",
+    "collections": [
+      {
+        "id": "collection_genre",
+        "label": "Genres",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/genre/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/genre.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_franchise",
+        "label": "Franchises",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/franchise/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/franchise_movie.png",
+        "media_types": [
+          "movie"
+        ],
+        "tooltip": "Disable Plex's in-built Automatic Collections feature if you use this file. Click the name of this file to go to the wiki page to learn more.",
+        "tooltip_variant": "danger"
+      },
+      {
+        "id": "collection_franchise",
+        "label": "Franchises",
+        "url": "https://kometa.wiki/en/nightly/defaults/show/franchise/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/franchise_show.png",
+        "media_types": [
+          "show"
+        ],
+        "tooltip": "Disable Plex's in-built Automatic Collections feature if you use this file",
+        "tooltip_variant": "danger"
+      },
+      {
+        "id": "collection_universe",
+        "label": "Universes",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/universe/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/universe.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_avp",
+            "label": "Alien / Predator",
+            "tooltip": "Collection of Movies in the Alien / Predator Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_arrow",
+            "label": "Arrowverse",
+            "tooltip": "Collection of Movies in the The Arrow Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_dca",
+            "label": "DC Animated Universe",
+            "tooltip": "Collection of Movies in the DC Animated Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_dcu",
+            "label": "DC Extended Universe",
+            "tooltip": "Collection of Movies in the DC Extended Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_fast",
+            "label": "Fast & Furious",
+            "tooltip": "Collection of Movies in the Fast & Furious Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_marvel",
+            "label": "In Association with Marvel",
+            "tooltip": "Collection of Movies in the Marvel Universe (but not part of MCU)",
+            "type": "toggle"
+          },
+          {
+            "key": "use_mcu",
+            "label": "Marvel Cinematic Universe",
+            "tooltip": "Collection of Movies in the Marvel Cinematic Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_middle",
+            "label": "Middle Earth",
+            "tooltip": "Collection of Movies in the Middle Earth Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_rocky",
+            "label": "Rocky / Creed",
+            "tooltip": "Collection of Movies in the Rocky / Creed Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_trek",
+            "label": "Star Trek",
+            "tooltip": "Collection of Movies in the Star Trek Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_star",
+            "label": "Star Wars Universe",
+            "tooltip": "Collection of Movies in the Star Wars Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_mummy",
+            "label": "The Mummy Universe",
+            "tooltip": "Collection of Movies in the The Mummy Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_askew",
+            "label": "View Askewverse",
+            "tooltip": "Collection of Movies in the The View Askew Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_wizard",
+            "label": "Wizarding World",
+            "tooltip": "Collection of Movies in the Wizarding World Universe",
+            "type": "toggle"
+          },
+          {
+            "key": "use_xmen",
+            "label": "X-Men Universe",
+            "tooltip": "Collection of Movies in the X-Men Universe",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_based",
+        "label": "Based On...",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/based/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/based.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_books",
+            "label": "Based on a Book",
+            "tooltip": "Collection of Movies/Shows based on or inspired by books",
+            "type": "toggle"
+          },
+          {
+            "key": "use_comics",
+            "label": "Based on a Comic",
+            "tooltip": "Collection of Movies/Shows based on or inspired by comics",
+            "type": "toggle"
+          },
+          {
+            "key": "use_true_story",
+            "label": "Based on a True Story",
+            "tooltip": "Collection of Movies/Shows based on or inspired by true stories",
+            "type": "toggle"
+          },
+          {
+            "key": "use_video_games",
+            "label": "Based on a Video Game",
+            "tooltip": "Collection of Movies/Shows based on or inspired by video games",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_collectionless",
+        "label": "Collectionless",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/collectionless/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/collectionless.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "tooltip": "Please visit the wiki for this file to understand what it does",
+        "tooltip_variant": "danger"
+      }
+    ]
+  },
+  {
+    "id": "contentRatingCollections",
+    "accordion": "Content Rating Collections",
+    "collections": [
+      {
+        "id": "collection_content_rating_us",
+        "label": "US Content Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/content_rating_us",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_us_movie.png",
+        "media_types": [
+          "movie"
+        ]
+      },
+      {
+        "id": "collection_content_rating_us",
+        "label": "US Content Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/show/content_rating_us",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_us_show.png",
+        "media_types": [
+          "show"
+        ]
+      },
+      {
+        "id": "collection_content_rating_uk",
+        "label": "UK Content Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_uk",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_uk.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_content_rating_de",
+        "label": "DE Content Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_de",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_de.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_content_rating_au",
+        "label": "AU Content Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_au",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_au.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_content_rating_nz",
+        "label": "NZ Content Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_nz",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_nz.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_content_rating_mal",
+        "label": "MyAnimeList Content Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_mal",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_mal.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_content_rating_cs",
+        "label": "Common Sense Media Content Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/content_rating_cs",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/content_rating_cs.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "locationCollections",
+    "accordion": "Location Collections",
+    "collections": [
+      {
+        "id": "collection_country",
+        "label": "Countries",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/country",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/country.png",
+        "media_types": [
+          "movie"
+        ]
+      },
+      {
+        "id": "collection_country",
+        "label": "Countries",
+        "url": "https://kometa.wiki/en/nightly/defaults/show/country",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/country.png",
+        "media_types": [
+          "show"
+        ]
+      },
+      {
+        "id": "collection_region",
+        "label": "Regions",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/region",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/region.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_northern_africa",
+            "label": "Northern Africa",
+            "tooltip": "Collection of Movies that have been filmed in Northern Africa.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_eastern_africa",
+            "label": "Eastern Africa",
+            "tooltip": "Collection of Movies that have been filmed in Eastern Africa.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_central_africa",
+            "label": "Central Africa",
+            "tooltip": "Collection of Movies that have been filmed in Central Africa.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_southern_africa",
+            "label": "Southern Africa",
+            "tooltip": "Collection of Movies that have been filmed in Southern Africa.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_western_africa",
+            "label": "Western Africa",
+            "tooltip": "Collection of Movies that have been filmed in Western Africa.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_caribbean",
+            "label": "Caribbean",
+            "tooltip": "Collection of Movies that have been filmed in the Caribbean.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_central_america",
+            "label": "Central America",
+            "tooltip": "Collection of Movies that have been filmed in Central America.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_south_america",
+            "label": "South America",
+            "tooltip": "Collection of Movies that have been filmed in South America.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_north_america",
+            "label": "North America",
+            "tooltip": "Collection of Movies that have been filmed in North America.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_antarctica",
+            "label": "Antarctica",
+            "tooltip": "Collection of Movies that have been filmed in Antarctica.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_central_asia",
+            "label": "Central Asia",
+            "tooltip": "Collection of Movies that have been filmed in Central Asia.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_eastern_asia",
+            "label": "Eastern Asia",
+            "tooltip": "Collection of Movies that have been filmed in Eastern Asia.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_south_eastern_asia",
+            "label": "South-Eastern Asia",
+            "tooltip": "Collection of Movies that have been filmed in South-Eastern Asia.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_southern_asia",
+            "label": "Southern Asia",
+            "tooltip": "Collection of Movies that have been filmed in Southern Asia.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_western_asia",
+            "label": "Western Asia",
+            "tooltip": "Collection of Movies that have been filmed in Western Asia.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_eastern_europe",
+            "label": "Eastern Europe",
+            "tooltip": "Collection of Movies that have been filmed in Eastern Europe.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_northern_europe",
+            "label": "Northern Europe",
+            "tooltip": "Collection of Movies that have been filmed in Northern Europe.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_southern_europe",
+            "label": "Southern Europe",
+            "tooltip": "Collection of Movies that have been filmed in Southern Europe.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_western_europe",
+            "label": "Western Europe",
+            "tooltip": "Collection of Movies that have been filmed in Western Europe.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_australia_and_new_zealand",
+            "label": "Australia and New Zealand",
+            "tooltip": "Collection of Movies that have been filmed in Australia and New Zealand.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_melanesia",
+            "label": "Melanesia",
+            "tooltip": "Collection of Movies that have been filmed in Melanesia.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_micronesia",
+            "label": "Micronesia",
+            "tooltip": "Collection of Movies that have been filmed in Micronesia.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_polynesia",
+            "label": "Polynesia",
+            "tooltip": "Collection of Movies that have been filmed in Polynesia.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_other",
+            "label": "Other Regions",
+            "tooltip": "Collection of Movies that are in other uncommon Regions.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_continent",
+        "label": "Continents",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/continent",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/continent.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_africa",
+            "label": "Africa",
+            "tooltip": "Collection of Movies filmed in Africa.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_americas",
+            "label": "Americas",
+            "tooltip": "Collection of Movies filmed in Americas.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_antarctica",
+            "label": "Antarctica",
+            "tooltip": "Collection of Movies filmed in Antarctica.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_asia",
+            "label": "Asia",
+            "tooltip": "Collection of Movies filmed in Asia.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_europe",
+            "label": "Europe",
+            "tooltip": "Collection of Movies filmed in Europe.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_oceania",
+            "label": "Oceania",
+            "tooltip": "Collection of Movies filmed in Oceania.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_other",
+            "label": "Other Continents",
+            "tooltip": "Collection of Movies that are in other uncommon Continents.",
+            "type": "toggle"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "mediaCollections",
+    "accordion": "Media Collections",
+    "collections": [
+      {
+        "id": "collection_aspect",
+        "label": "Aspect Ratios",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/aspect",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/aspect.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "use_1.33",
+            "label": "1.33 - Academy Aperture",
+            "tooltip": "Collection of Movies/Shows with a 1.33 aspect ratio.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_1.65",
+            "label": "1.65 - Early Widescreen",
+            "tooltip": "Collection of Movies/Shows with a 1.65 aspect ratio.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_1.66",
+            "label": "1.66 - European Widescreen",
+            "tooltip": "Collection of Movies/Shows with a 1.66 aspect ratio.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_1.78",
+            "label": "1.78 - Widescreen TV",
+            "tooltip": "Collection of Movies/Shows with a 1.78 aspect ratio.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_1.85",
+            "label": "1.85 - American Widescreen",
+            "tooltip": "Collection of Movies/Shows with a 1.85 aspect ratio.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_2.2",
+            "label": "2.2 - 70mm Frame",
+            "tooltip": "Collection of Movies/Shows with a 2.2 aspect ratio.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_2.35",
+            "label": "2.35 - Anamorphic Projection",
+            "tooltip": "Collection of Movies/Shows with a 2.35 aspect ratio.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_2.77",
+            "label": "2.77 - Cinerama",
+            "tooltip": "Collection of Movies/Shows with a 2.77 aspect ratio.",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_resolution",
+        "label": "Resolutions",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/resolution",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/resolution.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_audio_language",
+        "label": "Audio Languages",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/audio_language",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/audio_language.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_subtitle_language",
+        "label": "Subtitle Languages",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/subtitle_language",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/subtitle_language.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "peopleCollections",
+    "accordion": "People Collections",
+    "collections": [
+      {
+        "id": "collection_actor",
+        "label": "Actors",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/actor",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/actor.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
+        "tooltip_variant": "danger"
+      },
+      {
+        "id": "collection_director",
+        "label": "Directors",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/director",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/director.png",
+        "media_types": [
+          "movie"
+        ],
+        "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
+        "tooltip_variant": "danger"
+      },
+      {
+        "id": "collection_producer",
+        "label": "Producers",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/producer",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/producer.png",
+        "media_types": [
+          "movie"
+        ],
+        "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
+        "tooltip_variant": "danger"
+      },
+      {
+        "id": "collection_writer",
+        "label": "Writers",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/writer",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/writer.png",
+        "media_types": [
+          "movie"
+        ],
+        "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
+        "tooltip_variant": "danger"
+      }
+    ]
+  },
+  {
+    "id": "productionCollections",
+    "accordion": "Production Collections",
+    "collections": [
+      {
+        "id": "collection_streaming",
+        "label": "Streaming",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/streaming",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/streaming.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "tooltip": "This will show content currently streaming on a particular service, not content that is exclusive to said service. Read the wiki for using `originals_only` to change this",
+        "tooltip_variant": "danger",
+        "template_variables": [
+          {
+            "key": "use_appletv",
+            "label": "Apple TV+ Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Apple TV+.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_bet",
+            "label": "BET+ Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on BET+.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_channel4",
+            "label": "Channel 4 Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Channel 4.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_crave",
+            "label": "Crave Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Crave.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_crunchyroll",
+            "label": "Crunchyroll Shows",
+            "tooltip": "Collection of Shows Streaming on Crunchyroll.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_discovery",
+            "label": "discovery+ Shows",
+            "tooltip": "Collection of Shows Streaming on discovery+.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_disney",
+            "label": "Disney+ Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Disney+.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_hayu",
+            "label": "Hayu Shows",
+            "tooltip": "Collection of Shows Streaming on Hulu.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_hulu",
+            "label": "Hulu Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Hulu.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_itvx",
+            "label": "ITVX Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on ITVX.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_max",
+            "label": "Max Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Max.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_netflix",
+            "label": "Netflix Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Netflix.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_now",
+            "label": "NOW Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on NOW.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_paramount",
+            "label": "Paramount+ Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Paramount+.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_peacock",
+            "label": "Peacock Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Peacock.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_amazon",
+            "label": "Prime Video Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Prime Video.",
+            "type": "toggle"
+          },
+          {
+            "key": "use_youtube",
+            "label": "YouTube Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on YouTube.",
+            "type": "toggle"
+          },
+          {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "color",
+            "options": [
+              "color",
+              "white"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "collection_studio",
+        "label": "Studios",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/studio",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/studio.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_network",
+        "label": "Networks",
+        "url": "https://kometa.wiki/en/nightly/defaults/show/network",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/network.png",
+        "media_types": [
+          "show"
+        ],
+        "tooltip": "Requires the 'Plex TV Series' scanner and 'Plex Series' agent. Without this, Plex will return an error: plex_search attribute: network not supported.",
+        "tooltip_variant": "danger"
+      }
+    ]
+  },
+  {
+    "id": "timeCollections",
+    "accordion": "Time Collections",
+    "collections": [
+      {
+        "id": "collection_seasonal",
+        "label": "Seasonal",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/seasonal",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/seasonal.png",
+        "media_types": [
+          "movie"
+        ],
+        "template_variables": [
+          {
+            "key": "use_aapi",
+            "label": "Asian American Pacific Islander Movies",
+            "tooltip": "Movies related to Asian American Pacific Islander Month",
+            "type": "toggle"
+          },
+          {
+            "key": "use_black_history",
+            "label": "Black History Month Movies",
+            "tooltip": "Movies related to Black History Month",
+            "type": "toggle"
+          },
+          {
+            "key": "use_christmas",
+            "label": "Christmas Movies",
+            "tooltip": "Movies related to Christmas",
+            "type": "toggle"
+          },
+          {
+            "key": "use_disabilities",
+            "label": "Disability Month Movies",
+            "tooltip": "Movies related to Disability Awareness Month",
+            "type": "toggle"
+          },
+          {
+            "key": "use_easter",
+            "label": "Easter Movies",
+            "tooltip": "Movies related to Easter",
+            "type": "toggle"
+          },
+          {
+            "key": "use_father",
+            "label": "Father's Day Movies",
+            "tooltip": "Movies related to Father's Day",
+            "type": "toggle"
+          },
+          {
+            "key": "use_halloween",
+            "label": "Halloween Movies",
+            "tooltip": "Movies related to Halloween",
+            "type": "toggle"
+          },
+          {
+            "key": "use_independence",
+            "label": "Independence Day Movies",
+            "tooltip": "Movies related to Independence Day",
+            "type": "toggle"
+          },
+          {
+            "key": "use_labor",
+            "label": "Labor Day Movies",
+            "tooltip": "Movies related to Labor Day",
+            "type": "toggle"
+          },
+          {
+            "key": "use_lgbtq",
+            "label": "LGBTQ Month Movies",
+            "tooltip": "Movies related to LGBTQ Pride Month",
+            "type": "toggle"
+          },
+          {
+            "key": "use_memorial",
+            "label": "Memorial Day Movies",
+            "tooltip": "Movies related to Memorial Day",
+            "type": "toggle"
+          },
+          {
+            "key": "use_mother",
+            "label": "Mother's Day Movies",
+            "tooltip": "Movies related to Mother's Day",
+            "type": "toggle"
+          },
+          {
+            "key": "use_latinx",
+            "label": "National Hispanic Heritage Movies",
+            "tooltip": "Movies related to National Hispanic Heritage Month",
+            "type": "toggle"
+          },
+          {
+            "key": "use_years",
+            "label": "New Year's Day Movies",
+            "tooltip": "Movies related to New Year's Day",
+            "type": "toggle"
+          },
+          {
+            "key": "use_patrick",
+            "label": "St. Patrick's Day Movies",
+            "tooltip": "Movies related to St. Patrick's Day",
+            "type": "toggle"
+          },
+          {
+            "key": "use_thanksgiving",
+            "label": "Thanksgiving Movies",
+            "tooltip": "Movies related to Thanksgiving",
+            "type": "toggle"
+          },
+          {
+            "key": "use_valentine",
+            "label": "Valentine's Day Movies",
+            "tooltip": "Movies related to Valentine's Day",
+            "type": "toggle"
+          },
+          {
+            "key": "use_veteran",
+            "label": "Veteran's Day Movies",
+            "tooltip": "Movies related to Veteran's Day",
+            "type": "toggle"
+          },
+          {
+            "key": "use_women",
+            "label": "Women's History Month Movies",
+            "tooltip": "Movies related to Women's History Month",
+            "type": "toggle"
+          }
+        ]
+      },
+      {
+        "id": "collection_year",
+        "label": "Years",
+        "url": "https://kometa.wiki/en/nightly/defaults/both/year",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/year.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      },
+      {
+        "id": "collection_decade",
+        "label": "Decades",
+        "url": "https://kometa.wiki/en/nightly/defaults/movie/decade",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/decade.png",
+        "media_types": [
+          "movie"
+        ]
+      },
+      {
+        "id": "collection_decade",
+        "label": "Decades",
+        "url": "https://kometa.wiki/en/nightly/defaults/show/decade",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/decade.png",
+        "media_types": [
+          "show"
+        ]
+      }
+    ]
+  }
 ]
