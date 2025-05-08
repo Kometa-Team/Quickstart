@@ -1,4 +1,12 @@
 /* global bootstrap, $ */
+
+if (typeof window.QS_DEBUG !== 'undefined' && !window.QS_DEBUG) {
+  console.debug = function () {}
+  console.log = function () {}
+  console.warn = function () {}
+  // console.error = function () {};
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   // Prevent form submission on "Enter" key press, except for textarea
   document.addEventListener('keydown', function (event) {
