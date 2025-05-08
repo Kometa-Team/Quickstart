@@ -285,11 +285,7 @@ def build_libraries_section(
                 # Collect matching keys from prefix styles
                 # Find matching template children manually instead of prefix-matching
                 child_prefix = f"{library_key}-template_collection_{raw_id}_".replace(f"-library-template_collection_{raw_id}_", f"-template_collection_{raw_id}_")
-                all_children = {
-                    k[len(child_prefix):]: v
-                    for k, v in collections[collection_key].items()
-                    if k.startswith(child_prefix)
-                }
+                all_children = {k[len(child_prefix) :]: v for k, v in collections[collection_key].items() if k.startswith(child_prefix)}
 
                 if app.config["QS_DEBUG"]:
                     print(f"[DEBUG] Collection: {raw_id}")
@@ -299,9 +295,7 @@ def build_libraries_section(
 
                 if all_children:
                     file_entry["template_variables"] = {
-                        k: (v is True or (isinstance(v, str) and v.lower() == "true"))
-                        if isinstance(v, (bool, str)) else v
-                        for k, v in all_children.items()
+                        k: (v is True or (isinstance(v, str) and v.lower() == "true")) if isinstance(v, (bool, str)) else v for k, v in all_children.items()
                     }
 
                 collection_files.append(file_entry)
