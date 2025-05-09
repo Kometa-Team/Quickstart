@@ -35,7 +35,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "use_best_director",
@@ -48,7 +49,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -133,7 +135,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -218,7 +221,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -303,7 +307,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -388,7 +393,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -473,7 +479,16 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
+          },
+          {
+            "key": "sonarr_add_missing_best",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": ["show"]
           },
           {
             "key": "collection_mode",
@@ -559,7 +574,16 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
+          },
+          {
+            "key": "sonarr_add_missing_best",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": ["show"]
           },
           {
             "key": "collection_mode",
@@ -645,7 +669,16 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
+          },
+          {
+            "key": "sonarr_add_missing_best_picture",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": ["show"]
           },
           {
             "key": "use_best_director",
@@ -658,7 +691,16 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
+          },
+          {
+            "key": "sonarr_add_missing_best_director",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": ["show"]
           },
           {
             "key": "collection_mode",
@@ -743,7 +785,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -828,7 +871,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -914,7 +958,16 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
+          },
+          {
+            "key": "sonarr_add_missing_pca",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": ["show"]
           },
           {
             "key": "collection_mode",
@@ -999,7 +1052,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -1084,7 +1138,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -1169,7 +1224,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -1254,7 +1310,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",
@@ -1339,7 +1396,8 @@
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
             "tooltip_variant": "danger",
-            "type": "toggle"
+            "type": "toggle",
+            "media_types": ["movie"]
           },
           {
             "key": "collection_mode",

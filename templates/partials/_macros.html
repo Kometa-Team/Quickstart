@@ -835,7 +835,7 @@ prefix) %}
                     {% if collection.template_variables %}
                     <div class="child-toggle-wrapper ms-4 mt-2"
                         data-toggle-parent="{{ library.id }}-{{ collection.id }}" style="display: none;">
-                        {% for item in collection.template_variables %}
+                        {% for item in collection.template_variables if not item.media_types or library.type in item.media_types %}
                         {% set clean_id = collection.id.replace('collection_', '') %}
                         {% set input_name = library.id ~ '-template_collection_' ~ clean_id ~ '_' ~ item.key %}
 
