@@ -867,10 +867,25 @@ prefix) %}
                             <select class="form-select" id="{{ input_name }}" name="{{ input_name }}"
                                 aria-describedby="{{ input_name }}_text">
                                 {% for val in item.options %}
-                                <option value="{{ val }}" {% if data['libraries'][input_name]==val or (not
-                                    data['libraries'][input_name] and item.default==val) %} selected {% endif %}>
-                                    {{ val | capitalize }}
+                                {# Determine value and label #}
+                                {% if val is string %}
+                                {% set option_value = val %}
+                                {% set option_label = val|capitalize %}
+                                {% set show_option = true %}
+                                {% else %}
+                                {% set option_value = val.value %}
+                                {% set option_label = val.label %}
+                                {% set show_option = (val.media_types is not defined) or (library.type in
+                                val.media_types) %}
+                                {% endif %}
+
+                                {% if show_option %}
+                                <option value="{{ option_value }}" {% if data['libraries'][input_name]==option_value or
+                                    (not data['libraries'][input_name] and item.default==option_value) %} selected {%
+                                    endif %}>
+                                    {{ option_label }}
                                 </option>
+                                {% endif %}
                                 {% endfor %}
                             </select>
                         </div>
