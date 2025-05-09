@@ -31,9 +31,23 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_best_picture",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "use_best_director",
             "label": "Oscars Best Director Winners",
             "tooltip": "Collection of Oscars Best Director Award Winners.",
+            "type": "toggle"
+          },
+          {
+            "key": "radarr_add_missing_best_director",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
             "type": "toggle"
           },
           {
@@ -115,6 +129,13 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_golden",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -190,6 +211,13 @@
             "key": "use_best",
             "label": "BAFTA Best Films",
             "tooltip": "Collection of British Academy of Film and Television Arts Best Film Award Winners.",
+            "type": "toggle"
+          },
+          {
+            "key": "radarr_add_missing_best",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
             "type": "toggle"
           },
           {
@@ -271,6 +299,13 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_palm",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -349,6 +384,13 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_best",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -424,6 +466,13 @@
             "key": "use_best",
             "label": "Critics Choice Best Picture Winners",
             "tooltip": "Collection of Critics Choice Best Feature Award Winners.",
+            "type": "toggle"
+          },
+          {
+            "key": "radarr_add_missing_best",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
             "type": "toggle"
           },
           {
@@ -506,6 +555,13 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_best",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -585,9 +641,23 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_best_picture",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "use_best_director",
             "label": "Golden Globes Best Director Winners",
             "tooltip": "Collection of Golden Globe Best Director Award Winners.",
+            "type": "toggle"
+          },
+          {
+            "key": "radarr_add_missing_best_director",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
             "type": "toggle"
           },
           {
@@ -669,6 +739,13 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_best",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -744,6 +821,13 @@
             "key": "use_all_time",
             "label": "National Film Registry All Time",
             "tooltip": "Collection of Films added to the National Film Registry.",
+            "type": "toggle"
+          },
+          {
+            "key": "radarr_add_missing_all_time",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
             "type": "toggle"
           },
           {
@@ -826,6 +910,13 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_pca",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -901,6 +992,13 @@
             "key": "use_golden",
             "label": "Golden Raspberry Award Winners",
             "tooltip": "Collection of Razzie Golden Raspberry Award Winners.",
+            "type": "toggle"
+          },
+          {
+            "key": "radarr_add_missing_golden",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
             "type": "toggle"
           },
           {
@@ -982,6 +1080,13 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_golden",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -1057,6 +1162,13 @@
             "key": "use_grand",
             "label": "Grand Jury Winners",
             "tooltip": "Collection of Sundance Film Festival Grand Jury Award Winners.",
+            "type": "toggle"
+          },
+          {
+            "key": "radarr_add_missing_grand",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
             "type": "toggle"
           },
           {
@@ -1138,6 +1250,13 @@
             "type": "toggle"
           },
           {
+            "key": "radarr_add_missing_best",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
+            "type": "toggle"
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -1213,6 +1332,13 @@
             "key": "use_golden",
             "label": "Golden Lion Winners",
             "tooltip": "Collection of Venice Film Festival Golden Lions Award Winners.",
+            "type": "toggle"
+          },
+          {
+            "key": "radarr_add_missing_golden",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. Use with caution.",
+            "tooltip_variant": "danger",
             "type": "toggle"
           },
           {
