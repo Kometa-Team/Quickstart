@@ -37,6 +37,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -100,6 +113,19 @@
             "label": "Berlinale Golden Bears",
             "tooltip": "Collection of Berlin International Film Festival Golden Bear Award Winners.",
             "type": "toggle"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
           },
           {
             "key": "sort_by",
@@ -167,6 +193,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -230,6 +269,19 @@
             "label": "Cannes Golden Palm Winners",
             "tooltip": "Collection of Cannes Golden Palm Award Winners.",
             "type": "toggle"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
           },
           {
             "key": "sort_by",
@@ -297,6 +349,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -360,6 +425,19 @@
             "label": "Critics Choice Best Picture Winners",
             "tooltip": "Collection of Critics Choice Best Feature Award Winners.",
             "type": "toggle"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
           },
           {
             "key": "sort_by",
@@ -426,6 +504,19 @@
             "label": "Emmys Best in Category Winners",
             "tooltip": "Collection of Emmys Best in Category Award Winners.",
             "type": "toggle"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
           },
           {
             "key": "sort_by",
@@ -500,6 +591,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -565,6 +669,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -628,6 +745,19 @@
             "label": "National Film Registry All Time",
             "tooltip": "Collection of Films added to the National Film Registry.",
             "type": "toggle"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
           },
           {
             "key": "sort_by",
@@ -696,6 +826,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -759,6 +902,19 @@
             "label": "Golden Raspberry Award Winners",
             "tooltip": "Collection of Razzie Golden Raspberry Award Winners.",
             "type": "toggle"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
           },
           {
             "key": "sort_by",
@@ -826,6 +982,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -889,6 +1058,19 @@
             "label": "Grand Jury Winners",
             "tooltip": "Collection of Sundance Film Festival Grand Jury Award Winners.",
             "type": "toggle"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
           },
           {
             "key": "sort_by",
@@ -956,6 +1138,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -1019,6 +1214,19 @@
             "label": "Golden Lion Winners",
             "tooltip": "Collection of Venice Film Festival Golden Lions Award Winners.",
             "type": "toggle"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
           },
           {
             "key": "sort_by",
@@ -1124,6 +1332,19 @@
             ]
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -1208,6 +1429,19 @@
             "options": [
               "color",
               "white"
+            ]
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
             ]
           },
           {
@@ -1300,6 +1534,19 @@
             "options": [
               "color",
               "white"
+            ]
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
             ]
           },
           {
@@ -1401,6 +1648,19 @@
             "options": [
               "color",
               "white"
+            ]
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
             ]
           },
           {
@@ -1507,6 +1767,19 @@
             ]
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -1599,6 +1872,19 @@
             "options": [
               "color",
               "white"
+            ]
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
             ]
           },
           {
@@ -1858,6 +2144,19 @@
             ]
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -1959,6 +2258,19 @@
             ]
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -2025,6 +2337,19 @@
         ],
         "template_variables":[
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -2086,6 +2411,19 @@
         "tooltip_variant": "danger",
         "template_variables":[
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -2146,6 +2484,19 @@
         "tooltip": "Disable Plex's in-built Automatic Collections feature if you use this file",
         "tooltip_variant": "danger",
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -2297,6 +2648,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -2381,6 +2745,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -2442,6 +2819,19 @@
         "tooltip": "Please visit the wiki for this file to understand what it does",
         "tooltip_variant": "danger",
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -2508,6 +2898,19 @@
         ],
         "template_variables": [
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -2566,6 +2969,19 @@
           "show"
         ],
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -2627,6 +3043,19 @@
         ],
         "template_variables":[
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -2686,6 +3115,19 @@
           "show"
         ],
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -2747,6 +3189,19 @@
         ],
         "template_variables":[
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -2806,6 +3261,19 @@
           "show"
         ],
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -2867,6 +3335,19 @@
         ],
         "template_variables":[
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -2926,6 +3407,19 @@
           "show"
         ],
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -2992,6 +3486,19 @@
         ],
         "template_variables":[
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -3050,6 +3557,19 @@
           "show"
         ],
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -3255,6 +3775,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -3355,6 +3888,19 @@
             "label": "Other Continents",
             "tooltip": "Collection of Movies that are in other uncommon Continents.",
             "type": "toggle"
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
           },
           {
             "key": "sort_by",
@@ -3471,6 +4017,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -3530,6 +4089,19 @@
           "show"
         ],
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -3651,6 +4223,19 @@
         ],
         "template_variables":[
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -3719,6 +4304,19 @@
         "tooltip_variant": "danger",
         "template_variables": [
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -3779,6 +4377,19 @@
         "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
         "tooltip_variant": "danger",
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -3841,6 +4452,19 @@
         "tooltip_variant": "danger",
         "template_variables":[
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -3901,6 +4525,19 @@
         "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
         "tooltip_variant": "danger",
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -4083,6 +4720,19 @@
             ]
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -4142,6 +4792,19 @@
           "show"
         ],
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
@@ -4212,6 +4875,19 @@
             "options": [
               "color",
               "white"
+            ]
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
             ]
           },
           {
@@ -4394,6 +5070,19 @@
             "type": "toggle"
           },
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -4454,6 +5143,19 @@
         ],
         "template_variables":[
           {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
             "key": "sort_by",
             "label": "Sort By",
             "type": "select",
@@ -4511,7 +5213,21 @@
         "media_types": [
           "movie"
         ],
-        "template_variables":[          {
+        "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
+          {
           "key": "sort_by",
           "label": "Sort By",
           "type": "select",
@@ -4570,6 +5286,19 @@
           "show"
         ],
         "template_variables":[
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.",
+            "default": "default",
+            "options": [
+              { "value": "default", "label": "Library default" },
+              { "value": "hide", "label": "Hide Collection" },
+              { "value": "hide_items", "label": "Hide Items in this Collection" },
+              { "value": "show_items", "label": "Show this Collection and its Items" }
+            ]
+          },
           {
             "key": "sort_by",
             "label": "Sort By",
