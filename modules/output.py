@@ -295,9 +295,7 @@ def build_libraries_section(
 
                 if all_children:
                     file_entry["template_variables"] = {
-                        k: (True if isinstance(v, (bool, str)) and str(v).lower() == "true"
-                            else False if isinstance(v, (bool, str)) and str(v).lower() == "false"
-                            else v)
+                        k: (True if isinstance(v, (bool, str)) and str(v).lower() == "true" else False if isinstance(v, (bool, str)) and str(v).lower() == "false" else v)
                         for k, v in all_children.items()
                     }
 
