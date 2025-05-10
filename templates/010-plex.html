@@ -33,6 +33,17 @@
         Validate <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
     </button>
 </div>
+
+<!-- Display status messages directly below the validation button -->
+<div class="mt-2">
+    <div id="statusMessage" class="status-message mb-2"></div>
+    <div id="plex-pass-status-success" class="status-message status-success d-none mb-3">
+        <i class="bi bi-patch-check-fill me-1"></i>Plex Pass detected
+    </div>
+    <div id="plex-pass-status-warning" class="status-message status-warning d-none mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>Plex Pass not detected — some features may be unavailable.
+    </div>
+</div>
 <input type="hidden" class="form-control" id="tmp_user_list" name="tmp_user_list"
     value="{{ data['plex']['tmp_user_list'] }}" title="">
 <input type="hidden" class="form-control" id="tmp_music_libraries" name="tmp_music_libraries"
@@ -46,7 +57,6 @@
         title="">
     <label for="plex_validated">Plex Validated</label>
 </div>
-<div id="statusMessage" class="status-message mb-2"></div>
 <div class="hidden" id="hidden" style="display:none;">
     <div class="row">
         <div class="col">

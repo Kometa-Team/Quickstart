@@ -74,6 +74,27 @@ document.getElementById('validateButton').addEventListener('click', function () 
   })
     .then(response => response.json())
     .then(data => {
+      const passSuccess = document.getElementById('plex-pass-status-success')
+      const passWarning = document.getElementById('plex-pass-status-warning')
+
+      console.log('has_plex_pass:', data.has_plex_pass)
+      console.log('success div:', passSuccess)
+      console.log('warning div:', passWarning)
+
+      if (data.has_plex_pass) {
+        passSuccess.classList.remove('d-none')
+        passSuccess.style.display = 'block'
+
+        passWarning.classList.add('d-none')
+        passWarning.style.display = 'none'
+      } else {
+        passSuccess.classList.add('d-none')
+        passSuccess.style.display = 'none'
+
+        passWarning.classList.remove('d-none')
+        passWarning.style.display = 'block'
+      }
+
       if (data.validated) {
         hideSpinner('validate')
         validateButton.disabled = true

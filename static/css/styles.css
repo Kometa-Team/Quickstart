@@ -337,6 +337,18 @@ fieldset:disabled .btn {
     font-size: 0.875em;
 }
 
+.status-success {
+    color: #75b798 !important;
+}
+
+.status-warning {
+    color: #ffc107 !important;
+}
+
+.status-error {
+    color: #ea868f !important;
+}
+
 /* -------------------- */
 /* MESSAGE STYLES       */
 /* -------------------- */

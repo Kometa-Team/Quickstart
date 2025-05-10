@@ -50,7 +50,10 @@ def validate_plex_server(data):
 
         # Retrieve user list with only usernames
         user_list = [user.title for user in plex.myPlexAccount().users()]
+        has_plex_pass = plex.myPlexAccount().subscriptionActive
+
         app.logger.info(f"User list retrieved from Plex: {user_list}")
+        app.logger.info(f"User has Plex Pass: {has_plex_pass}")
 
         # Retrieve library sections
         music_libraries = [section.title for section in plex.library.sections() if section.type == "artist"]
@@ -75,6 +78,7 @@ def validate_plex_server(data):
             "music_libraries": music_libraries,
             "movie_libraries": movie_libraries,
             "show_libraries": show_libraries,
+            "has_plex_pass": has_plex_pass,
         }
     )
 
