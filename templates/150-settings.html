@@ -20,7 +20,7 @@
               <div id="asset_directory_container">
                 <label>
                   Asset Directory
-                  <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                  <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                     title="Specify the directories where assets (posters, backgrounds, etc.) are located.
                             <br><br><b>Tip:</b> Assets can be stored anywhere on the host system that Kometa has visibility of
                             (i.e. if using Docker, the directory must be mounted/visible to the Docker container).
@@ -28,7 +28,7 @@
                   </i>
                   <a href="https://kometa.wiki/en/nightly/kometa/guides/assets/" target="_blank" class="ms-2"
                     data-bs-toggle="tooltip" title="Open Kometa Asset Guide">
-                    <i class="bi bi-box-arrow-up-right text-primary"></i>
+                    <i class="bi bi-box-arrow-up-right"></i>
                   </a>
                 </label>
 
@@ -71,7 +71,7 @@
             <input type="hidden" name="asset_folders" value="false">
             <label class="form-check-label" for="asset_folders">
               Asset Folders
-              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                 title="While <code>true</code>, Kometa will search the <code>asset_directory</code> for a dedicated folder per item. If <code>false</code>, it will look for an image instead.<br><br><b>Example:</b> When <code>true</code>, the path would be <code>asset_directory_path/Star Wars/poster.png</code> instead of <code>asset_directory_path/Star Wars.png</code>."></i>
             </label>
 
@@ -83,7 +83,7 @@
             <input type="hidden" name="create_asset_folders" value="false">
             <label class="form-check-label" for="create_asset_folders">
               Create Asset Folders
-              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                 title="Whilst searching for assets, if an asset folder cannot be found within the <code>asset_directory</code> one will be created.<br><br><b>Tip:</b> This is useful when automatically managing large libraries where new assets may be added dynamically."></i>
             </label>
           </div>
@@ -95,7 +95,7 @@
             <input type="hidden" name="prioritize_assets" value="false">
             <label class="form-check-label" for="prioritize_assets">
               Prioritize Assets
-              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                 title="When determining which image to use on an item, prioritize the <code>asset_directory</code> over all other image sources.<br><br><b>Tip:</b> This setting is useful when you want to ensure that local assets are always used over externally sourced images."></i>
             </label>
 
@@ -108,7 +108,7 @@
             <input type="hidden" name="dimensional_asset_rename" value="false">
             <label class="form-check-label" for="dimensional_asset_rename">
               Dimensional Asset Rename
-              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                 title="Whilst searching for assets, scan the folders within the <code>asset_directory</code> and if an asset poster (i.e. <code>/ASSET_NAME/poster.ext</code>) was not found, rename the first image found that has a height greater than or equal to its width to <code>poster.ext</code>. If an asset background (i.e. <code>/ASSET_NAME/background.ext</code>), rename the first image found that has a width greater than its height to <code>background.ext</code>.<br><br><b>Tip:</b> <code>asset_folders</code> must be set to <code>true</code> for this to take effect."></i>
             </label>
 
@@ -119,7 +119,7 @@
             <input type="hidden" name="download_url_assets" value="false">
             <label class="form-check-label" for="download_url_assets">
               Download URL Assets
-              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                 title="Whilst searching for assets, download images set within Collection/Metadata/Playlist files (i.e. images set by <code>url_poster</code> or <code>url_background</code>) into the asset folder if none are already present."></i>
             </label>
 
@@ -131,7 +131,7 @@
             <input type="hidden" name="show_missing_assets" value="false">
             <label class="form-check-label" for="show_missing_assets">
               Show Missing Assets
-              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                 title="Display missing asset warnings for items, collections, and playlists."></i>
             </label>
 
@@ -144,7 +144,7 @@
             <input type="hidden" name="show_missing_season_assets" value="false">
             <label class="form-check-label" for="show_missing_season_assets">
               Show Missing Season Assets
-              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                 title="Whilst searching for assets, when scanning for assets for a TV Show, if Season posters are found (i.e. <code>/ASSET_NAME/Season##.ext</code>), notify the user of any seasons which do not have an asset image.<br><br><b>Tip:</b> Shows/Hides messages like these for seasons/albums:<br> - 'Asset Warning: No poster found for {item_title} in the assets folder {directory}'<br> - 'Asset Warning: No poster {name} found in the assets folders'<br> - 'Missing Season {season_number} Poster'"></i>
             </label>
 
@@ -157,7 +157,7 @@
             <input type="hidden" name="show_missing_episode_assets" value="false">
             <label class="form-check-label" for="show_missing_episode_assets">
               Show Missing Episode Assets
-              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                 title="Whilst searching for assets, when scanning for assets for a TV Show, if an Episode Title Card is found (i.e. <code>/ASSET_NAME/S##E##.ext</code>), notify the user of any episodes which do not have an asset image.<br><br><b>Tip:</b> Shows/Hides messages like these for episodes:<br> - 'Asset Warning: No poster found for {item_title} in the assets folder {directory}'<br> - 'Asset Warning: No poster {name} found in the assets folders'<br> - 'Missing S##E## Title Card'"></i>
             </label>
 
@@ -169,7 +169,7 @@
             <input type="hidden" name="show_asset_not_needed" value="false">
             <label class="form-check-label" for="show_asset_not_needed">
               Show Asset Not Needed
-              <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+              <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                 title="Whilst searching for assets, show or hide the <code>update not needed</code> messages."></i>
             </label>
 
@@ -421,7 +421,7 @@
           <h6 class="fw-bold mt-3"><u>Playlist Settings</u>
             <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/config/settings/#playlist-sync-to-users"
               target="_blank">
-              <i class="bi bi-info-circle"></i>
+              <i class="bi bi-box-arrow-up-right"></i>
             </a>
           </h6>
 
@@ -766,7 +766,7 @@
                 <input type="hidden" name="show_options" value="false">
                 <label class="form-check-label" for="show_options">
                   Show Options
-                  <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                  <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                     title="When enabled, displays available attribute options for use with plex_search, smart_filter, or filters.">
                   </i>
                 </label>
@@ -782,7 +782,7 @@
                 <input type="hidden" name="verify_ssl" value="false">
                 <label class="form-check-label" for="verify_ssl">
                   Verify SSL
-                  <i class="bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
+                  <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                     title="When enabled, verifies SSL certificates for secure requests. If disabled, Kometa will ignore SSL verification errors.">
                   </i>
                 </label>
@@ -795,7 +795,7 @@
               <div class="input-group">
                 <span class="input-group-text" style="width: 141px; justify-content: space-between;">
                   Run Order
-                  <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                  <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                     title="Specify the run order of the library components, including Library Operations, Collection Files, and Overlay Files.">
                   </i>
                 </span>
@@ -841,7 +841,7 @@
               <div class="input-group">
                 <span class="input-group-text" style="width: 141px; justify-content: space-between;">
                   Custom Repo
-                  <i class="bi-info-circle-fill text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                  <i class="bi bi-info-circle-fill text-info" data-bs-toggle="tooltip" data-bs-html="true"
                     title="Specify a custom repository URL or path to use for additional collection, metadata, or overlay files.">
                   </i>
                 </span>

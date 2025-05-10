@@ -126,19 +126,58 @@
       "container_class": "",
       "yml_location": "template_variables",
       "options": [
-        ["", "None"],
-        ["ar", "Arabic"],
-        ["da", "Danish"],
-        ["de", "German"],
-        ["en", "English"],
-        ["es", "Spanish"],
-        ["fr", "French"],
-        ["it", "Italian"],
-        ["nb_NO", "Norwegian (Norway)"],
-        ["nl", "Dutch"],
-        ["pt-br", "Portuguese (Brazil)"],
-        ["ru", "Russian"],
-        ["sv", "Swedish"]
+        [
+          "",
+          "None"
+        ],
+        [
+          "ar",
+          "Arabic"
+        ],
+        [
+          "da",
+          "Danish"
+        ],
+        [
+          "de",
+          "German"
+        ],
+        [
+          "en",
+          "English"
+        ],
+        [
+          "es",
+          "Spanish"
+        ],
+        [
+          "fr",
+          "French"
+        ],
+        [
+          "it",
+          "Italian"
+        ],
+        [
+          "nb_NO",
+          "Norwegian (Norway)"
+        ],
+        [
+          "nl",
+          "Dutch"
+        ],
+        [
+          "pt-br",
+          "Portuguese (Brazil)"
+        ],
+        [
+          "ru",
+          "Russian"
+        ],
+        [
+          "sv",
+          "Swedish"
+        ]
       ]
     },
     {
@@ -255,7 +294,10 @@
     {
       "prefix": "mass_genre_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Genre Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-genre-update",
@@ -353,7 +395,10 @@
     {
       "prefix": "mass_content_rating_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Content Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-content-rating-update",
@@ -416,7 +461,10 @@
     {
       "prefix": "mass_original_title_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Original Title Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-original-title-update",
@@ -479,7 +527,10 @@
     {
       "prefix": "mass_studio_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Studio Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-studio-update",
@@ -532,7 +583,10 @@
     {
       "prefix": "mass_originally_available_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Originally Available Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-originally-available-update",
@@ -605,7 +659,10 @@
     {
       "prefix": "mass_added_at_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Added At Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-added-at-update",
@@ -678,7 +735,10 @@
     {
       "prefix": "mass_audience_rating_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Audience Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
@@ -846,7 +906,10 @@
     {
       "prefix": "mass_critic_rating_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Critic Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
@@ -1014,7 +1077,10 @@
     {
       "prefix": "mass_user_rating_update",
       "type": "mass_update",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass User Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-star-rating-update",
@@ -1182,7 +1248,9 @@
     {
       "prefix": "mass_episode_audience_rating_update",
       "type": "mass_update",
-      "media_types": ["show"],
+      "media_types": [
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Episode Audience Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
@@ -1245,7 +1313,9 @@
     {
       "prefix": "mass_episode_critic_rating_update",
       "type": "mass_update",
-      "media_types": ["show"],
+      "media_types": [
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Episode Critic Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
@@ -1308,7 +1378,9 @@
     {
       "prefix": "mass_episode_user_rating_update",
       "type": "mass_update",
-      "media_types": ["show"],
+      "media_types": [
+        "show"
+      ],
       "accordion": "library",
       "title": "Mass Episode User Rating Update",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-episode-star-rating-update",
@@ -1622,7 +1694,9 @@
     {
       "prefix": "radarr_remove_by_tag",
       "type": "mass_update",
-      "media_types": ["movie"],
+      "media_types": [
+        "movie"
+      ],
       "accordion": "library",
       "title": "Radarr Remove by Tag",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#radarr-remove-by-tag",
@@ -1651,7 +1725,9 @@
     {
       "prefix": "sonarr_remove_by_tag",
       "type": "mass_update",
-      "media_types": ["show"],
+      "media_types": [
+        "show"
+      ],
       "accordion": "library",
       "title": "Sonarr Remove by Tag",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#sonarr-remove-by-tag",
@@ -1668,7 +1744,10 @@
       "prefix": "genre_mapper",
       "type": "mapping_list",
       "accordion": "library",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Genre Mapper",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#genre-mapper",
       "description": "Maps input genres to desired output genres or removes them.",
@@ -1680,7 +1759,10 @@
       "prefix": "content_rating_mapper",
       "type": "mapping_list",
       "accordion": "library",
-      "media_types": ["movie", "show"],
+      "media_types": [
+        "movie",
+        "show"
+      ],
       "title": "Content Rating Mapper",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#content-rating-mapper",
       "description": "Maps input content ratings to desired output content ratings or removes them.",
