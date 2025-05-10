@@ -718,7 +718,7 @@ def step(name):
         )
 
     else:
-        section_config = helpers.load_quickstart_config("quickstart_sections.json")
+        section_config = helpers.load_quickstart_config("quickstart_attributes.json")
         collection_config = helpers.load_quickstart_config("quickstart_collections.json")
         return render_template(
             name + ".html",
