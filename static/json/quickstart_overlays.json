@@ -1,205 +1,433 @@
-{
-  "overlays": [
-    {
-      "name": "Ribbon",
-      "description": "IMDb Top 250 Ribbon, RT Fresh Ribbon",
-      "default_path": "ribbon",
-      "media_types": [
-        "movies",
-        "shows"
-      ],
-      "template_variables": {}
+[
+  {
+    "name": "AU Content Ratings",
+    "description": "G, PG, M, MA15+, R18+, X18+, NR",
+    "default_path": "content_rating_au",
+    "media_types": [
+      "movies",
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {},
+    "id": "overlay_au_content_ratings"
+  },
+  {
+    "category": "Content Rating",
+    "id": "overlay_content_rating_au",
+    "label": "AU Content Ratings",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_au/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_au.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "category": "Media",
+    "id": "overlay_aspect",
+    "label": "Aspect Ratio",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/aspect/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/aspect.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "category": "Media",
+    "id": "overlay_audio_codec",
+    "label": "Audio Codec",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/audio_codec/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/audio_codec.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "category": "Media",
+    "id": "overlay_language_count",
+    "label": "Audio/Subtitle Language Count",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/language_count/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/language_count.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "category": "Media",
+    "id": "overlay_languages",
+    "label": "Audio/Subtitle Language Flags",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/languages/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "Common Sense Age Rating",
+    "description": "1+, 2+, 3+, ..., 17+, 18+, NR",
+    "default_path": "commonsense",
+    "media_types": [
+      "movies",
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {},
+    "id": "overlay_common_sense_age_rating"
+  },
+  {
+    "category": "Content Rating",
+    "id": "overlay_content_rating_commonsense",
+    "label": "Common Sense Age Rating",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/commonsense/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/commonsense.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "DE Content Ratings",
+    "description": "0, 6, 12, 16, 18, BPjM, NR",
+    "default_path": "content_rating_de",
+    "media_types": [
+      "movies",
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {},
+    "id": "overlay_de_content_ratings"
+  },
+  {
+    "category": "Content Rating",
+    "id": "overlay_content_rating_de",
+    "label": "DE Content Ratings",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_de/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_de.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "category": "Utility",
+    "id": "overlay_direct_play",
+    "label": "Direct Play Only",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/direct_play/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/direct_play.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "Episode Info",
+    "description": "Displays episode information like 'S01E01'",
+    "default_path": "episode_info",
+    "media_types": [
+      "episodes"
+    ],
+    "template_variables": {},
+    "id": "overlay_episode_info"
+  },
+  {
+    "name": "Mediastinger",
+    "description": "Indicates after/during credit scenes",
+    "default_path": "mediastinger",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "template_variables": {},
+    "id": "overlay_mediastinger",
+    "category": "Content",
+    "label": "Mediastinger",
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/mediastinger/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/mediastinger.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "NZ Content Ratings",
+    "description": "G, PG, M, R13, RP13, R15, R16, RP16, R18, RP18, R, NR",
+    "default_path": "content_rating_nz",
+    "media_types": [
+      "movies",
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {},
+    "id": "overlay_nz_content_ratings"
+  },
+  {
+    "category": "Content Rating",
+    "id": "overlay_content_rating_nz",
+    "label": "NZ Content Ratings",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_nz/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_nz.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "Network",
+    "description": "Displays the network of the show",
+    "default_path": "network",
+    "media_types": [
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {
+      "style": "white"
     },
-    {
-      "name": "Episode Info",
-      "description": "Displays episode information like 'S01E01'",
-      "default_path": "episode_info",
-      "media_types": [
-        "episodes"
-      ],
-      "template_variables": {}
+    "id": "overlay_network",
+    "category": "Production",
+    "label": "Networks",
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/network/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/network.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "Ratings",
+    "description": "IMDb Audience Rating, Metacritic Critic Rating",
+    "default_path": "ratings",
+    "media_types": [
+      "movies",
+      "shows",
+      "episodes"
+    ],
+    "template_variables": {
+      "rating1": "critic",
+      "rating2": "audience",
+      "rating3": "user",
+      "rating1_image": "imdb",
+      "rating2_image": "rt_popcorn",
+      "rating3_image": "tmdb"
     },
-    {
-      "name": "Mediastinger",
-      "description": "Indicates after/during credit scenes",
-      "default_path": "mediastinger",
-      "media_types": [
-        "movies",
-        "shows"
-      ],
-      "template_variables": {}
+    "id": "overlay_ratings"
+  },
+  {
+    "name": "Resolution/Edition",
+    "description": "Displays resolution and edition information",
+    "default_path": "resolution",
+    "media_types": [
+      "movies",
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {},
+    "id": "overlay_resolution/edition"
+  },
+  {
+    "category": "Media",
+    "id": "overlay_resolution",
+    "label": "Resolutions/Editions",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/resolution/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/resolution.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "Ribbon",
+    "description": "IMDb Top 250 Ribbon, RT Fresh Ribbon",
+    "default_path": "ribbon",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "template_variables": {},
+    "id": "overlay_ribbon",
+    "category": "Chart",
+    "label": "Ribbon",
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/ribbon/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ribbon.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "category": "Media",
+    "id": "overlay_runtimes",
+    "label": "Runtimes",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/runtimes/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/runtimes.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "Status",
+    "description": "Airing, Returning, Canceled, Ended",
+    "default_path": "status",
+    "media_types": [
+      "shows"
+    ],
+    "template_variables": {},
+    "id": "overlay_status",
+    "category": "Content",
+    "label": "Status",
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/status/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/status.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "category": "Production",
+    "id": "overlay_streaming",
+    "label": "Streaming",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/streaming/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/streaming.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "Studio",
+    "description": "Displays the studio of the show",
+    "default_path": "studio",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "template_variables": {
+      "style": "bigger"
     },
-    {
-      "name": "Ratings",
-      "description": "IMDb Audience Rating, Metacritic Critic Rating",
-      "default_path": "ratings",
-      "media_types": [
-        "movies",
-        "shows",
-        "episodes"
-      ],
-      "template_variables": {
-        "rating1": "critic",
-        "rating2": "audience",
-        "rating3": "user",
-        "rating1_image": "imdb",
-        "rating2_image": "rt_popcorn",
-        "rating3_image": "tmdb"
-      }
+    "id": "overlay_studio",
+    "category": "Production",
+    "label": "Studio",
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/studio/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/studio.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "UK Content Ratings",
+    "description": "U, PG, 12, 12a, 15, 18, R18, NR",
+    "default_path": "content_rating_uk",
+    "media_types": [
+      "movies",
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {},
+    "id": "overlay_uk_content_ratings"
+  },
+  {
+    "category": "Content Rating",
+    "id": "overlay_content_rating_uk",
+    "label": "UK Content Ratings",
+    "media_types": [
+      "movies",
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_uk/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_uk.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "category": "Content Rating",
+    "id": "overlay_content_rating_us_movie",
+    "label": "US Content Ratings",
+    "media_types": [
+      "movies"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_us_movie/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_movie.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "category": "Content Rating",
+    "id": "overlay_content_rating_us_show",
+    "label": "US Content Ratings",
+    "media_types": [
+      "shows"
+    ],
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_us_show/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_show.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "US Content Ratings (Movie)",
+    "description": "G, PG, PG-13, R, NC-17, NR",
+    "default_path": "content_rating_us_movie",
+    "media_types": [
+      "movies"
+    ],
+    "template_variables": {},
+    "id": "overlay_us_content_ratings_(movie)"
+  },
+  {
+    "name": "US Content Ratings (Show)",
+    "description": "TV-G, TV-Y, TV-PG, TV-14, TV-MA, NR",
+    "default_path": "content_rating_us_show",
+    "media_types": [
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {},
+    "id": "overlay_us_content_ratings_(show)"
+  },
+  {
+    "name": "Versions",
+    "description": "Indicates multiple versions within your library",
+    "default_path": "versions",
+    "media_types": [
+      "movies",
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {
+      "builder_level": "season"
     },
-    {
-      "name": "Status",
-      "description": "Airing, Returning, Canceled, Ended",
-      "default_path": "status",
-      "media_types": [
-        "shows"
-      ],
-      "template_variables": {}
+    "id": "overlay_versions",
+    "category": "Media",
+    "label": "Versions",
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/versions/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/version.png",
+    "tooltip_variant": "info"
+  },
+  {
+    "name": "Video Format",
+    "description": "Displays video format like REMUX, BLU-RAY, WEB",
+    "default_path": "video_format",
+    "media_types": [
+      "movies",
+      "shows",
+      "seasons",
+      "episodes"
+    ],
+    "template_variables": {
+      "builder_level": "episode"
     },
-    {
-      "name": "US Content Ratings (Movie)",
-      "description": "G, PG, PG-13, R, NC-17, NR",
-      "default_path": "content_rating_us_movie",
-      "media_types": [
-        "movies"
-      ],
-      "template_variables": {}
-    },
-    {
-      "name": "US Content Ratings (Show)",
-      "description": "TV-G, TV-Y, TV-PG, TV-14, TV-MA, NR",
-      "default_path": "content_rating_us_show",
-      "media_types": [
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {}
-    },
-    {
-      "name": "UK Content Ratings",
-      "description": "U, PG, 12, 12a, 15, 18, R18, NR",
-      "default_path": "content_rating_uk",
-      "media_types": [
-        "movies",
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {}
-    },
-    {
-      "name": "DE Content Ratings",
-      "description": "0, 6, 12, 16, 18, BPjM, NR",
-      "default_path": "content_rating_de",
-      "media_types": [
-        "movies",
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {}
-    },
-    {
-      "name": "AU Content Ratings",
-      "description": "G, PG, M, MA15+, R18+, X18+, NR",
-      "default_path": "content_rating_au",
-      "media_types": [
-        "movies",
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {}
-    },
-    {
-      "name": "NZ Content Ratings",
-      "description": "G, PG, M, R13, RP13, R15, R16, RP16, R18, RP18, R, NR",
-      "default_path": "content_rating_nz",
-      "media_types": [
-        "movies",
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {}
-    },
-    {
-      "name": "Common Sense Age Rating",
-      "description": "1+, 2+, 3+, ..., 17+, 18+, NR",
-      "default_path": "commonsense",
-      "media_types": [
-        "movies",
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {}
-    },
-    {
-      "name": "Versions",
-      "description": "Indicates multiple versions within your library",
-      "default_path": "versions",
-      "media_types": [
-        "movies",
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {
-        "builder_level": "season"
-      }
-    },
-    {
-      "name": "Video Format",
-      "description": "Displays video format like REMUX, BLU-RAY, WEB",
-      "default_path": "video_format",
-      "media_types": [
-        "movies",
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {
-        "builder_level": "episode"
-      }
-    },
-    {
-      "name": "Studio",
-      "description": "Displays the studio of the show",
-      "default_path": "studio",
-      "media_types": [
-        "movies",
-        "shows"
-      ],
-      "template_variables": {
-        "style": "bigger"
-      }
-    },
-    {
-      "name": "Network",
-      "description": "Displays the network of the show",
-      "default_path": "network",
-      "media_types": [
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {
-        "style": "white"
-      }
-    },
-    {
-      "name": "Resolution/Edition",
-      "description": "Displays resolution and edition information",
-      "default_path": "resolution",
-      "media_types": [
-        "movies",
-        "shows",
-        "seasons",
-        "episodes"
-      ],
-      "template_variables": {}
-    }
-  ]
-}
+    "id": "overlay_video_format",
+    "category": "Media",
+    "label": "Video Format",
+    "url": "https://kometa.wiki/en/nightly/defaults/overlays/video_format/",
+    "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/video_format.png",
+    "tooltip_variant": "info"
+  }
+]
