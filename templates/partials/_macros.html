@@ -43,7 +43,7 @@ container_class="border rounded p-3 mb-2", number_input=None
                                 <label class="form-check-label"
                                     for="{{ library.id }}-attribute_{{ prefix }}_{{ source }}" data-label="{{ label }}">
                                     {{ label }}
-                                    <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip"
+                                    <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                         data-bs-html="true" title="{{ tooltip }}">
                                         <i
                                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -62,7 +62,7 @@ container_class="border rounded p-3 mb-2", number_input=None
                                 <span class="input-group-text"
                                     id="{{ library.id }}-attribute_{{ number_input.key }}_label">
                                     {{ number_input.label }}
-                                    <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip"
+                                    <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                         data-bs-html="true" aria-label="{{ number_input.tooltip }}"
                                         data-bs-original-title="{{ number_input.tooltip }}">
                                         <i
@@ -85,7 +85,7 @@ container_class="border rounded p-3 mb-2", number_input=None
                         <div class="col-12">
                             <label class="form-label">
                                 {{ custom_string_label }}
-                                <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip"
+                                <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                     data-bs-html="true"
                                     title="Add a list of custom genres to apply to all items in the library. Add 1 genre at a time.">
                                     <i
@@ -110,7 +110,7 @@ container_class="border rounded p-3 mb-2", number_input=None
                         <div class="col-12">
                             <label class="form-label">
                                 {{ custom_string_label }}
-                                <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip"
+                                <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                     data-bs-html="true" title="Optional: A single custom string to append.">
                                     <i
                                         class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -194,7 +194,7 @@ prefix if yml_location == "top_level" else
         <input type="hidden" name="{{ full_name }}_hidden" value="false">
         <label class="form-check-label" for="{{ full_id }}">
             <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-            <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+            <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                 title="{{ description }}">
                 <i
                     class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -242,7 +242,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                             <input type="hidden" name="{{ library.id }}-attribute_{{ toggle_id }}" value="false">
                             <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle_id }}">
                                 {{ label }}
-                                <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip"
+                                <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                     data-bs-html="true" title="{{ tooltip }}">
                                     <i
                                         class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -281,7 +281,7 @@ prefix if yml_location == "top_level" else
             <div class="input-group">
                 <span class="input-group-text" id="{{ field_id }}_text">
                     <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-                    <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                         title="{{ description }}">
                         <i
                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -320,7 +320,7 @@ prefix if yml_location == "top_level" else
             <span class="input-group-text" id="{{ imdb_select_id }}_text">
                 <a href="https://kometa.wiki/en/nightly/defaults/separators/#important-note" target="_blank"
                     rel="noopener noreferrer">Placeholder IMDb ID</a>
-                <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                     title="Choose an item to use as the placeholder for the Separator.">
                     <i
                         class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -347,7 +347,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
 <div class="{{ container_class }}">
     <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
         <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-        <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+        <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
             aria-label="{{ description }}" data-bs-original-title="{{ description }}">
             <i
                 class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -365,7 +365,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                 <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
                 <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle.key }}">
                     {{ toggle.label }}
-                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                         title="{{ toggle.tooltip }}">
                         <i
                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -383,7 +383,7 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
             <div class="input-group">
                 <span class="input-group-text" id="{{ library.id }}-attribute_{{ number_input.key }}_label">
                     {{ number_input.label }}
-                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                         aria-label="{{ number_input.tooltip }}" data-bs-original-title="{{ number_input.tooltip }}">
                         <i
                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -418,7 +418,7 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                 <div class="{{ container_class }}">
                     <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
                         <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-                        <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+                        <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                             aria-label="{{ description }}" data-bs-original-title="{{ description }}">
                             <i
                                 class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -438,7 +438,7 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                                 <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
                                 <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle.key }}">
                                     {{ toggle.label }}
-                                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                                         aria-label="{{ toggle.tooltip }}" data-bs-original-title="{{ toggle.tooltip }}">
                                         <i
                                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -453,11 +453,11 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                         <div class="col-md-6 mb-2">
                             <div class="input-group">
                                 <span class="input-group-text"
-                                    id="{{ library.id }}-attribute_{{ number_input.key }}_label">
-                                    {{ number_input.label }}
-                                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
-                                        aria-label="{{ number_input.tooltip }}"
-                                        data-bs-original-title="{{ number_input.tooltip }}">
+                                    id="{{ library.id }}-attribute_{{ number_input.key }}_text">
+                                    <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ number_input.label
+                                        }}</a>
+                                    <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
+                                        data-bs-html="true" title="{{ number_input.tooltip }}">
                                         <i
                                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
                                     </span>
@@ -466,7 +466,8 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                                     id="{{ library.id }}-attribute_{{ number_input.key }}"
                                     name="{{ library.id }}-attribute_{{ number_input.key }}"
                                     min="{{ number_input.min | default(1) }}"
-                                    value="{{ data.libraries[library.id ~ '-attribute_' ~ number_input.key]|default('') }}">
+                                    value="{{ data.libraries[library.id ~ '-attribute_' ~ number_input.key]|default('') }}"
+                                    aria-describedby="{{ library.id }}-attribute_{{ number_input.key }}_text">
                             </div>
                         </div>
 
@@ -482,7 +483,7 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                                 <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
                                 <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle.key }}">
                                     {{ toggle.label }}
-                                    <span class="text-info ms-1" data-bs-toggle="tooltip" data-bs-html="true"
+                                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                                         aria-label="{{ toggle.tooltip }}" data-bs-original-title="{{ toggle.tooltip }}">
                                         <i
                                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -536,7 +537,7 @@ select_input.key if yml_location == "top_level" else
                     <label class="form-check-label"
                         for="{{ library.id }}-{{ field_prefix ~ '_' if field_prefix }}{{ prefix }}_header">
                         <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-                        <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+                        <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                             aria-label="{{ description }}" data-bs-original-title="{{ description }}">
                             <i
                                 class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -562,7 +563,7 @@ select_input.key if yml_location == "top_level" else
                                 <input type="hidden" name="{{ toggle_name }}" value="false">
                                 <label class="form-check-label" for="{{ toggle_id }}">
                                     {{ toggle.label }}
-                                    <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip"
+                                    <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                         data-bs-html="true" title="{{ toggle.tooltip }}">
                                         <i
                                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -579,7 +580,7 @@ select_input.key if yml_location == "top_level" else
                             <div class="input-group">
                                 <span class="input-group-text" id="{{ select_id }}_label">
                                     {{ select_input.label }}
-                                    <span class="text-{{ tooltip_variant }} ms-1" data-bs-toggle="tooltip"
+                                    <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                         data-bs-html="true" title="{{ select_input.tooltip }}">
                                         <i
                                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -630,10 +631,10 @@ select_input.key if yml_location == "top_level" else
                         <div class="col-12">
                             <label class="form-label">
                                 Path to Metadata Backup File
-                                <span class="text-{{ section.tooltip_variant }} ms-1" data-bs-toggle="tooltip"
+                                <span class="text-{{ section.tooltip_variant }}" data-bs-toggle="tooltip"
                                     data-bs-html="true" title="{{ section.text_input.tooltip }}">
                                     <i
-                                        class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                        class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} ms-3"></i>
                                 </span>
                             </label>
                             <input type="text" class="form-control"
@@ -649,10 +650,10 @@ select_input.key if yml_location == "top_level" else
                         <div class="col-12">
                             <label class="form-label">
                                 Exclude Metadata Fields
-                                <span class="text-{{ section.tooltip_variant }} ms-1" data-bs-toggle="tooltip"
-                                    data-bs-html="true" title="{{ section.custom_string_list.tooltip }}">
+                                <span class="text-{{ section.tooltip_variant }}" data-bs-toggle="tooltip"
+                                    data-bs-html="true" title="{{ section.text_input.tooltip }}">
                                     <i
-                                        class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                        class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} ms-3"></i>
                                 </span>
                             </label>
                             <div class="input-group mb-2">
@@ -682,7 +683,7 @@ select_input.key if yml_location == "top_level" else
                                 <input type="hidden" name="{{ library.id }}-attribute_{{ toggle.key }}" value="false">
                                 <label class="form-check-label" for="{{ library.id }}-attribute_{{ toggle.key }}">
                                     {{ toggle.label }}
-                                    <span class="text-{{ section.tooltip_variant }} ms-1" data-bs-toggle="tooltip"
+                                    <span class="text-{{ section.tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                         data-bs-html="true" title="{{ toggle.tooltip }}">
                                         <i
                                             class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -723,7 +724,7 @@ select_input.key if yml_location == "top_level" else
 
                     <label class="form-label">
                         <a href="{{ section.wiki }}" target="_blank" rel="noopener noreferrer">{{ section.title }}</a>
-                        <span class="text-{{ section.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"
+                        <span class="text-{{ section.tooltip_variant or 'info' }} ms-3" data-bs-toggle="tooltip"
                             data-bs-html="true" title="{{ section.description }}">
                             <i
                                 class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -800,7 +801,7 @@ prefix) %}
             data-bs-parent="#{{ library.id }}-{{ accordion_safe }}Accordion">
             <div class="accordion-body">
                 {% for collection in group.collections if library.type in collection.media_types %}
-                <div class="template-toggle-group ms-2 mb-2">
+                <div class="template-toggle-group ms-3 mb-2">
                     <div class="form-check form-switch">
                         <input class="form-check-input{% if collection.readonly %} readonly-toggle{% endif %}"
                             type="checkbox" id="{{ library.id }}-{{ collection.id }}"

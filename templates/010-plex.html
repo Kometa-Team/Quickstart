@@ -4,7 +4,7 @@
 <div class="input-group mb-2">
     <span class="input-group-text" id="plex_url_text" style="width: 180px; justify-content: space-between;">
         Plex URL
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+        <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
             title="You must provide the direct address you use to access your server, including the port. You cannot use https://app.plex.tv<br><br>
             <b>NOTE:</b> If Plex, Quickstart or Kometa are running in Docker, they must be on the same Docker network (e.g., a user-defined bridge network) for the containers to communicate.">
             <i class="bi bi-info-circle-fill"></i>
@@ -17,7 +17,7 @@
 <div class="input-group mb-2">
     <span class="input-group-text" id="plex_token_text" style="width: 180px; justify-content: space-between;">
         Plex Token
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+        <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
             title="Your token may change if you sign out of your devices, <b>do not</b> use the token that is found in Preferences.xml<br><br>
             If you do not know how to get your token, search Plex's guidance on finding an authentication token / X-Plex-Token">
             <i class="bi bi-info-circle-fill"></i>
@@ -64,7 +64,7 @@
                 <span class="input-group-text" id="plex_db_cache_text"
                     style="width: 180px; justify-content: space-between;">
                     Cache Size (MB)
-                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                         title="Set the size of the main database cache, in MB. The default value is 40 and should be sufficient for just about every user. Increasing much beyond the default value is likely to only benefit users with extremely large media collections (as in, hundreds of thousands of episodes or movies).<br><br>
                         <b>This value will update automatically based on your Plex settings</b> and you can override the value if desired.">
                         <i class="bi bi-info-circle-fill"></i>
@@ -81,7 +81,7 @@
                 <span class="input-group-text" id="plex_timeout_text"
                     style="width: 180px; justify-content: space-between;">
                     Timeout (seconds)
-                    <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+                    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                         title="Set how long Kometa will attempt to communicate with Plex for.<br><br>If Plex does not respond to Kometa requests in the timeout, all Kometa can do is wait longer - it cannot try to communicate in any other way.">
                         <i class="bi bi-info-circle-fill"></i>
                     </span>
@@ -98,7 +98,7 @@
             data['plex']['verify_ssl']|string|lower=='true' %}checked{% endif %}>
         <input type="hidden" name="plex_verify_ssl" value="false">
         <label class="form-check-label" for="plex_verify_ssl">Verify SSL
-            <span class="text-info" data-bs-html="true" data-bs-toggle="tooltip" style="margin-left: 10px;" title="Turns SSL verification on/off for only Plex<br><br>
+            <span class="text-info ms-3" data-bs-html="true" data-bs-toggle="tooltip" style="margin-left: 10px;" title="Turns SSL verification on/off for only Plex<br><br>
                 <b>Note:</b> If you get errors related to SSL or Certificate verification, disable SSL Verification.">
                 <i class="bi bi-info-circle-fill"></i>
             </span>
@@ -109,7 +109,7 @@
             {% if data['plex']['clean_bundles']|string|lower=='true' %}checked{% endif %}>
         <input type="hidden" name="plex_clean_bundles" value="false">
         <label class="form-check-label" for="plex_clean_bundles">Clean Bundles
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                 title="Poster images and other metadata for items in your library are kept in “bundle” packages. When you remove items from your library, these bundles aren’t immediately removed. Removing these old bundles can reduce the size of your install.">
                 <i class="bi bi-info-circle-fill"></i>
             </span>
@@ -120,7 +120,7 @@
             data['plex']['empty_trash']|string|lower=='true' %}checked{% endif %}>
         <input type="hidden" name="plex_empty_trash" value="false">
         <label class="form-check-label" for="plex_empty_trash">Empty Trash
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                 title="If an item is currently in the trash, it can be restored back to the Library by making the file for the library item available again at the expected location. Conversely, if you perform an “Empty Trash” on your Server, then the item is discarded from the trash and can no longer be automatically restored.">
                 <i class="bi bi-info-circle-fill"></i>
             </span>
@@ -131,7 +131,7 @@
             data['plex']['optimize']|string|lower=='true' %}checked{% endif %}>
         <input type="hidden" name="plex_optimize" value="false">
         <label class="form-check-label" for="plex_optimize">Optimize Database
-            <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+            <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
                 title="The Optimize Database option cleans up the server database from unused or fragmented data. For example, if you have deleted or added an entire library or many items in a library, you may like to optimize the database. Confirmation is given once the optimization for the server is complete.<br><br>
                 <b>Note:</b> Plex may become unresponsive at the end of the Kometa run while the Database Optimize is running, this is expected.">
                 <i class="bi bi-info-circle-fill"></i>

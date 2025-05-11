@@ -7,7 +7,7 @@
     <span class="input-group-text" id="webhooks_{{ webhook }}_text"
       style="width: 222px; justify-content: space-between;">
       {{ webhook|replace('_', ' ')|title }} Webhook
-      <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
         title="{% if webhook == 'error' %}The Error notification will be sent whenever an error occurs. The payload that is sent is different depending on which level the error occurs.{% elif webhook == 'version' %}The Version notification will be sent at the beginning of a run if there is a newer version available.{% elif webhook == 'run_start' %}The Run Start notification will be sent at the beginning of every run.{% elif webhook == 'run_end' %}The Run End notification will be sent at the end of every run with statistics.{% elif webhook == 'delete' %}The Delete Notification will be sent whenever a collection/playlist is deleted containing the following payload.{% elif webhook == 'changes' %}The Changes Notification will be sent after each collection/playlist containing the following payload if the collection/playlist has been created, has new items, or has had items removed.{% endif %}">
         <i class="bi bi-info-circle-fill"></i>
       </span>
@@ -45,7 +45,7 @@
       <span class="input-group-text" id="webhooks_{{ webhook }}_text"
         style="width: 222px; justify-content: space-between;">
         {{ webhook|replace('_', ' ')|title }} Webhook URL
-        <span class="text-info" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+        <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
           title="Enter the webhook URL to receive notifications for {{ webhook|replace('_', ' ')|title }}.">
           <i class="bi bi-info-circle-fill"></i>
         </span>
