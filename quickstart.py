@@ -34,7 +34,8 @@ from werkzeug.utils import secure_filename
 from flask_session import Session
 from modules import validations, output, persistence, helpers, database
 
-load_dotenv(os.path.join(helpers.CONFIG_DIR, ".env"), override=True)
+DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
+load_dotenv(DOTENV, override=True)
 
 UPLOAD_FOLDER = os.path.join(helpers.CONFIG_DIR, "uploads")
 UPLOAD_FOLDER_MOVIE = os.path.join(UPLOAD_FOLDER, "movies")
@@ -1031,7 +1032,7 @@ if __name__ == "__main__":
     except (ModuleNotFoundError, ImportError) as ie:
         has_tray = False
 
-    if has_tray:
+    if not has_tray:
         # Headless mode: skip system tray
         print("[INFO] Running in headless mode — no system tray will be shown.")
         if app.config["QUICKSTART_DOCKER"]:
@@ -1043,7 +1044,7 @@ if __name__ == "__main__":
             print("Quickstart is Running")
             print(f"Access it at http://{ip_address}:{running_port}")
 
-        print("Port and Debug Settings can be amended by editing your .env file")
+        print(f"Port and Debug Settings can be amended by editing your {DOTENV} file")
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
