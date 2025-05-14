@@ -216,14 +216,32 @@ document.addEventListener('DOMContentLoaded', function () {
   imdbDropdowns.forEach(dropdown => {
     const libraryId = dropdown.id.split('-attribute_template_variables')[0]
     const isMovie = dropdown.dataset.libraryType === 'movie'
-    const libraryName = dropdown.dataset.libraryId // Movies / TestMovies etc.
+    const libraryName = dropdown.dataset.libraryId
 
-    // 1. Initialize separator overlay logic
+    // 1. Initialize overlay dropdowns and separator preview
     OverlayHandler.initializeOverlays(libraryId, isMovie)
 
-    // 2. Populate IMDb Dropdown immediately
-    const currentValue = dropdown.value // current selected tt######
+    // 2. Populate IMDb dropdown options
+    const currentValue = dropdown.value
     OverlayHandler.populateImdbDropdown(dropdown, libraryName, isMovie ? 'movie' : 'show', currentValue)
+  })
+
+  // 3. Sync parent/child toggle checked state
+  setupParentChildToggleSync()
+
+  // 4. Toggle child wrapper visibility for both collections and overlays
+  document.querySelectorAll('input[data-template-group]').forEach(parent => {
+    const parentId = parent.id
+    const childWrapper = document.querySelector(`.child-toggle-wrapper[data-toggle-parent="${parentId}"]`)
+    if (!childWrapper) return
+
+    // Initial visibility
+    childWrapper.style.display = parent.checked ? '' : 'none'
+
+    // Toggle visibility on change
+    parent.addEventListener('change', () => {
+      childWrapper.style.display = parent.checked ? '' : 'none'
+    })
   })
 })
 

@@ -75,7 +75,31 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": ["show"]
+          }
         ]
+
       },
       {
         "id": "overlay_content_rating_uk",
@@ -88,6 +112,29 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": ["show"]
+          }
         ]
       },
       {
@@ -101,6 +148,29 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": ["show"]
+          }
         ]
       },
       {
@@ -114,6 +184,29 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": ["show"]
+          }
         ]
       },
       {
@@ -127,6 +220,29 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": ["show"]
+          }
         ]
       },
       {
@@ -140,6 +256,29 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": ["show"]
+          }
         ]
       }
     ]
@@ -164,7 +303,36 @@
         ],
         "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
         "tooltip_variant": "danger",
-        "extra_url": "https://trash-guides.info/"
+        "extra_url": "https://trash-guides.info/",
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
       },
       {
         "id": "overlay_audio_codec",
@@ -179,7 +347,36 @@
         ],
         "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
         "tooltip_variant": "danger",
-        "extra_url": "https://trash-guides.info/"
+        "extra_url": "https://trash-guides.info/",
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
       },
       {
         "id": "overlay_language_count",
@@ -191,6 +388,35 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
         ]
       },
       {
@@ -203,6 +429,35 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
         ]
       },
       {
@@ -218,7 +473,36 @@
         ],
         "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
         "tooltip_variant": "danger",
-        "extra_url": "https://trash-guides.info/"
+        "extra_url": "https://trash-guides.info/",
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
       },
       {
         "id": "overlay_runtime",
@@ -229,6 +513,26 @@
           "movie",
           "show",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
         ]
       },
       {
@@ -241,6 +545,35 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
         ]
       },
       {
@@ -256,7 +589,36 @@
         ],
         "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
         "tooltip_variant": "danger",
-        "extra_url": "https://trash-guides.info/"
+        "extra_url": "https://trash-guides.info/",
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
       }
     ]
   },
@@ -298,6 +660,29 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": ["show"]
+          }
         ]
       }
     ]
@@ -319,6 +704,29 @@
           "show",
           "season",
           "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": ["show"]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": ["show"]
+          }
         ]
       }
     ]
