@@ -160,11 +160,14 @@ const ValidationHandler = {
               parent = parent.parentElement?.closest('.accordion-item')
             }
           } else {
-            // Valid placeholder selected, bubble up green
+            console.log(`[DEBUG] Valid placeholder selected for: ${libraryId}`)
+
+            // Valid and relevant placeholder, bubble up green
             let parent = dropdown.closest('.accordion-item')
             while (parent) {
               const header = parent.querySelector(':scope > .accordion-header')
               if (header) {
+                console.log(`[DEBUG] Adding .selected to: ${header.textContent.trim()}`)
                 header.classList.remove('invalid')
                 header.classList.add('selected')
               }
