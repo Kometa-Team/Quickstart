@@ -247,27 +247,80 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // eslint-disable-next-line no-unused-vars
 function setupParentChildToggleSync () {
-  console.log('[DEBUG] Running setupParentChildToggleSync...')
+  let syncing = false
 
-  document.querySelectorAll('input[data-template-group]').forEach(parent => {
-    const childToggles = document.querySelectorAll(`input[data-parent-toggle="${parent.id}"]`)
-    console.log(`[DEBUG] Found parent: ${parent.id} with ${childToggles.length} children`)
+  document.querySelectorAll('.template-parent-toggle').forEach(parent => {
+    const groupId = parent.dataset.templateGroup
+    const childWrapper = document.querySelector(`[data-toggle-parent="${groupId}"]`)
+    if (!childWrapper) return
 
-    // 1. Parent change affects children
-    parent.addEventListener('change', () => {
+    const childToggles = childWrapper.querySelectorAll('.template-child-toggle')
+    const isRadio = parent.type === 'radio'
+
+    // === Parent -> Children ===
+    const handleParentChange = () => {
+      if (syncing) return
+      syncing = true
+
+      if (isRadio) {
+        const groupName = parent.name
+        document.querySelectorAll(`input[name="${groupName}"]`).forEach(otherParent => {
+          const otherGroupId = otherParent.dataset.templateGroup
+          const otherWrapper = document.querySelector(`[data-toggle-parent="${otherGroupId}"]`)
+          const otherChildren = document.querySelectorAll(`[data-toggle-parent="${otherGroupId}"] .template-child-toggle`)
+
+          if (otherParent !== parent) {
+            otherParent.checked = false
+            otherChildren.forEach(child => {
+              child.checked = false
+              child.dispatchEvent(new Event('change', { bubbles: true }))
+            })
+            if (otherWrapper) otherWrapper.style.display = 'none'
+          }
+        })
+      }
+
       const checked = parent.checked
-      console.log(`[DEBUG] Parent ${parent.id} changed to ${checked}`)
+
       childToggles.forEach(child => {
-        if (!child.disabled) child.checked = checked
+        if (child.checked !== checked) {
+          child.checked = checked
+          child.dispatchEvent(new Event('change', { bubbles: true }))
+        }
       })
+
+      if (childWrapper) {
+        childWrapper.style.display = checked ? '' : 'none'
+      }
+
+      syncing = false
+    }
+
+    // Handles deselecting if clicked again
+    parent.addEventListener('click', (e) => {
+      if (isRadio && parent.checked) {
+        e.preventDefault() // stop default toggle
+        parent.checked = false
+        handleParentChange()
+      }
     })
 
-    // 2. Children change affects parent
+    parent.addEventListener('change', handleParentChange)
+
+    // === Children -> Parent ===
     childToggles.forEach(child => {
       child.addEventListener('change', () => {
+        if (syncing) return
+        syncing = true
+
         const anyChecked = Array.from(childToggles).some(c => c.checked)
         parent.checked = anyChecked
-        console.log(`[DEBUG] Child ${child.id} changed. Setting parent ${parent.id} to ${anyChecked}`)
+
+        if (childWrapper) {
+          childWrapper.style.display = anyChecked ? '' : 'none'
+        }
+
+        syncing = false
       })
     })
   })

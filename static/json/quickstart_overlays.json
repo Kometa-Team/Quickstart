@@ -505,7 +505,7 @@
         ]
       },
       {
-        "id": "overlay_runtime",
+        "id": "overlay_runtimes",
         "label": "Runtimes",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/runtimes/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/runtimes.png",

@@ -281,6 +281,8 @@ const EventHandler = {
         }
       })
     })
+    // === Expand child toggle sections if any are checked ===
+    expandCheckedChildToggleSections()
   },
 
   /**
@@ -311,6 +313,8 @@ const EventHandler = {
       const headerText = accordionHeader.textContent.trim()
       const isPreviewOverlay = headerText.toLowerCase().includes('preview overlays')
 
+      const accordionBody = accordion.querySelector('.accordion-body')
+
       // Skip Preview Overlays
       if (isPreviewOverlay) {
         console.log(`🚫 [DEBUG] Skipping Preview Overlays: ${headerText}`)
@@ -319,8 +323,11 @@ const EventHandler = {
       }
 
       // Check if this section has selected checkboxes, radios, or dropdowns
-      const isCheckedOrSelected = accordion.querySelector(
-        "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none']), .list-group li"
+      const isCheckedOrSelected = accordionBody?.querySelector(
+        "input[type='checkbox']:checked:not(.readonly-toggle):not([hidden]):not([type='hidden']), " +
+        "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
+        "select[data-user-modified='true'] option:checked:not([value='']):not([value='none']), " +
+        '.list-group li'
       ) !== null
 
       if (isCheckedOrSelected) {
@@ -423,14 +430,19 @@ const EventHandler = {
     const accordionId = accordionItem.id || ''
     const isPreviewOverlay = accordionId.includes('-previewOverlays')
 
+    const accordionBody = accordionItem.querySelector('.accordion-body')
+
     if (isPreviewOverlay) {
       console.log(`🚫 [DEBUG] Preventing highlight removal check for Preview Overlays: ${accordionId}`)
       return
     }
 
-    const hasSelections = accordionItem.querySelector(
-      "input[type='checkbox']:checked, input[type='radio']:checked, select option:checked:not([value='']):not([value='none'])"
-    )
+    const hasSelections = accordionBody?.querySelector(
+      "input[type='checkbox']:checked:not(.readonly-toggle):not([hidden]):not([type='hidden']), " +
+      "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
+      "select[data-user-modified='true'] option:checked:not([value='']):not([value='none']), " +
+      '.list-group li'
+    ) !== null
 
     if (!hasSelections) {
       element.classList.remove('selected')
@@ -474,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ValidationHandler.restoreSelectedLibraries()
   ValidationHandler.updateValidationState()
 })
+
 // =============================
 // Mapping List Handler
 // =============================
@@ -541,3 +554,14 @@ mappingPrefixes.forEach(prefix => {
     })
   })
 })
+
+function expandCheckedChildToggleSections () {
+  document.querySelectorAll('.child-toggle-wrapper').forEach(wrapper => {
+    const anyChecked = wrapper.querySelector('.template-child-toggle:checked')
+    console.log(`[DEBUG] Child section check: ${wrapper.id || 'unknown'}, checked: ${!!anyChecked}`)
+
+    if (anyChecked) {
+      wrapper.style.display = 'block'
+    }
+  })
+}

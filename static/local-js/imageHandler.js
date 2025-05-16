@@ -96,7 +96,7 @@ const ImageHandler = {
 
     // Ensure rating overlay is included
     const selectedRating = document.querySelector(
-      `#${libraryId}-contentRatingOverlays input[type='radio']:checked`
+      `#${libraryId}-ContentRatingOverlays input[type='radio']:checked`
     )
 
     if (selectedRating) {
