@@ -258,30 +258,31 @@ function setupParentChildToggleSync () {
     const isRadio = parent.type === 'radio'
 
     // === Parent -> Children ===
-    const handleParentChange = () => {
+    parent.addEventListener('change', () => {
       if (syncing) return
       syncing = true
 
       if (isRadio) {
+        // Deselect other radio group options and clear their children
         const groupName = parent.name
         document.querySelectorAll(`input[name="${groupName}"]`).forEach(otherParent => {
-          const otherGroupId = otherParent.dataset.templateGroup
-          const otherWrapper = document.querySelector(`[data-toggle-parent="${otherGroupId}"]`)
-          const otherChildren = document.querySelectorAll(`[data-toggle-parent="${otherGroupId}"] .template-child-toggle`)
-
           if (otherParent !== parent) {
             otherParent.checked = false
+            const otherGroupId = otherParent.dataset.templateGroup
+            const otherChildren = document.querySelectorAll(`[data-toggle-parent="${otherGroupId}"] .template-child-toggle`)
             otherChildren.forEach(child => {
               child.checked = false
               child.dispatchEvent(new Event('change', { bubbles: true }))
             })
+
+            const otherWrapper = document.querySelector(`[data-toggle-parent="${otherGroupId}"]`)
             if (otherWrapper) otherWrapper.style.display = 'none'
           }
         })
       }
 
+      // Update own children
       const checked = parent.checked
-
       childToggles.forEach(child => {
         if (child.checked !== checked) {
           child.checked = checked
@@ -289,23 +290,13 @@ function setupParentChildToggleSync () {
         }
       })
 
+      // Show/hide wrapper
       if (childWrapper) {
         childWrapper.style.display = checked ? '' : 'none'
       }
 
       syncing = false
-    }
-
-    // Handles deselecting if clicked again
-    parent.addEventListener('click', (e) => {
-      if (isRadio && parent.checked) {
-        e.preventDefault() // stop default toggle
-        parent.checked = false
-        handleParentChange()
-      }
     })
-
-    parent.addEventListener('change', handleParentChange)
 
     // === Children -> Parent ===
     childToggles.forEach(child => {
