@@ -932,10 +932,11 @@ prefix) %}
                     <div class="form-check form-switch">
                         <input
                             class="form-check-input template-parent-toggle{% if overlay.readonly %} readonly-toggle{% endif %}"
-                            type="{{ input_type }}" id="{{ library.id }}-{{ overlay.id }}" name="{{ input_name }}"
-                            value="{{ input_value }}" {% if is_checked %}checked{% endif %}
-                            data-template-group="{{ library.id }}-{{ overlay.id }}" {% if input_type=='radio'
-                            %}data-was-checked="{{ 'true' if is_checked else 'false' }}" {% endif %}>
+                            type="checkbox" {% if input_type=='radio' %}data-radio-group="true" {% endif %}
+                            id="{{ library.id }}-{{ overlay.id }}" name="{{ input_name }}" value="{{ input_value }}" {%
+                            if is_checked %}checked{% endif %} data-template-group="{{ library.id }}-{{ overlay.id }}"
+                            {% if input_type=='radio' %}data-was-checked="{{ 'true' if is_checked else 'false' }}" {%
+                            endif %}>
 
                         {% if input_type == "checkbox" %}
                         <input type="hidden" name="{{ input_name }}" value="false">

@@ -96,9 +96,8 @@ const ImageHandler = {
 
     // Ensure rating overlay is included
     const selectedRating = document.querySelector(
-      `#${libraryId}-ContentRatingOverlays input[type='radio']:checked`
+      `#${libraryId}-ContentRatingOverlays input.template-parent-toggle[data-radio-group="true"]:checked`
     )
-
     if (selectedRating) {
       overlays.push(selectedRating.value)
     } else {

@@ -249,56 +249,63 @@ document.addEventListener('DOMContentLoaded', function () {
 function setupParentChildToggleSync () {
   let syncing = false
 
-  document.querySelectorAll('.template-parent-toggle').forEach(parent => {
+  const parents = document.querySelectorAll('.template-parent-toggle')
+
+  parents.forEach(parent => {
     const groupId = parent.dataset.templateGroup
-    const childWrapper = document.querySelector(`[data-toggle-parent="${groupId}"]`)
-    if (!childWrapper) return
+    const wrapper = document.querySelector(`[data-toggle-parent="${groupId}"]`)
+    const isRadioStyle = parent.type === 'radio' || parent.dataset.radioGroup === 'true'
 
-    const childToggles = childWrapper.querySelectorAll('.template-child-toggle')
-    const isRadio = parent.type === 'radio'
+    // Simulate radio behavior using data-radio-group (add this attribute in Jinja if needed)
+    const groupName = parent.name
 
-    // === Parent -> Children ===
-    parent.addEventListener('change', () => {
+    const childToggles = wrapper?.querySelectorAll('.template-child-toggle') || []
+
+    parent.addEventListener('click', () => {
       if (syncing) return
       syncing = true
 
-      if (isRadio) {
-        // Deselect other radio group options and clear their children
-        const groupName = parent.name
-        document.querySelectorAll(`input[name="${groupName}"]`).forEach(otherParent => {
-          if (otherParent !== parent) {
-            otherParent.checked = false
-            const otherGroupId = otherParent.dataset.templateGroup
-            const otherChildren = document.querySelectorAll(`[data-toggle-parent="${otherGroupId}"] .template-child-toggle`)
+      const isChecked = parent.checked
+
+      if (isRadioStyle) {
+        const groupParents = document.querySelectorAll(`input[name="${groupName}"]`)
+
+        groupParents.forEach(other => {
+          if (other !== parent) {
+            other.checked = false
+            const otherWrapper = document.querySelector(`[data-toggle-parent="${other.dataset.templateGroup}"]`)
+            const otherChildren = otherWrapper?.querySelectorAll('.template-child-toggle') || []
             otherChildren.forEach(child => {
               child.checked = false
               child.dispatchEvent(new Event('change', { bubbles: true }))
             })
-
-            const otherWrapper = document.querySelector(`[data-toggle-parent="${otherGroupId}"]`)
             if (otherWrapper) otherWrapper.style.display = 'none'
           }
         })
-      }
 
-      // Update own children
-      const checked = parent.checked
-      childToggles.forEach(child => {
-        if (child.checked !== checked) {
-          child.checked = checked
-          child.dispatchEvent(new Event('change', { bubbles: true }))
+        // Toggle off if already checked (simulate deselection)
+        if (isChecked && parent.dataset.wasChecked === 'true') {
+          parent.checked = false
+          childToggles.forEach(child => {
+            child.checked = false
+            child.dispatchEvent(new Event('change', { bubbles: true }))
+          })
+          if (wrapper) wrapper.style.display = 'none'
+        } else {
+          childToggles.forEach(child => {
+            child.checked = true
+            child.dispatchEvent(new Event('change', { bubbles: true }))
+          })
+          if (wrapper) wrapper.style.display = ''
         }
-      })
 
-      // Show/hide wrapper
-      if (childWrapper) {
-        childWrapper.style.display = checked ? '' : 'none'
+        parent.dataset.wasChecked = parent.checked.toString()
       }
 
       syncing = false
     })
 
-    // === Children -> Parent ===
+    // Sync back from children
     childToggles.forEach(child => {
       child.addEventListener('change', () => {
         if (syncing) return
@@ -306,9 +313,11 @@ function setupParentChildToggleSync () {
 
         const anyChecked = Array.from(childToggles).some(c => c.checked)
         parent.checked = anyChecked
+        if (wrapper) wrapper.style.display = anyChecked ? '' : 'none'
 
-        if (childWrapper) {
-          childWrapper.style.display = anyChecked ? '' : 'none'
+        // If none checked and radio style, simulate uncheck
+        if (!anyChecked && isRadioStyle) {
+          parent.dataset.wasChecked = 'false'
         }
 
         syncing = false
