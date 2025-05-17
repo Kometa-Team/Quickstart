@@ -44,6 +44,12 @@ os.makedirs(UPLOAD_FOLDER_MOVIE, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER_SHOW, exist_ok=True)
 IMAGES_FOLDER = os.path.join(helpers.MEIPASS_DIR, "static", "images")
 OVERLAY_FOLDER = os.path.join(IMAGES_FOLDER, "overlays")
+DEFAULT_IMAGE_MAP = {
+    "movie": os.path.join(IMAGES_FOLDER, "default.png"),
+    "show": os.path.join(IMAGES_FOLDER, "default-sho_preview.png"),
+    "season": os.path.join(IMAGES_FOLDER, "default-season_preview.png"),
+    "episode": os.path.join(IMAGES_FOLDER, "default-episode_preview.png"),
+}
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
@@ -177,23 +183,23 @@ def generate_preview():
     preview_filename = f"{library_id}-{img_type}_preview.png"
     preview_filepath = os.path.join(PREVIEW_FOLDER, preview_filename)
 
-    # First, check if `default.png` exists in `IMAGES_FOLDER`
-    default_image_path = os.path.join(IMAGES_FOLDER, "default.png")
-
+    # Determine default image based on type
     if not selected_image or selected_image == "default":
-        if os.path.exists(default_image_path):
-            base_image_path = default_image_path  # Use existing `default.png`
-        else:
-            base_image_path = os.path.join(PREVIEW_FOLDER, "default.png")
+        base_image_path = DEFAULT_IMAGE_MAP.get(img_type, DEFAULT_IMAGE_MAP["movie"])
 
-            # Only create grey image if both locations are missing.
-            if not os.path.exists(base_image_path):
-                if app.config["QS_DEBUG"]:
-                    print("[DEBUG] default.png not found in IMAGES_FOLDER or previews, creating grey placeholder image...")
+        if not os.path.exists(base_image_path):
+            if app.config["QS_DEBUG"]:
+                print(f"[DEBUG] Default image not found for type '{img_type}', generating placeholder.")
+            # Determine fallback dimensions
+            if img_type == "episode":
+                fallback_size = (1920, 1080)  # Landscape
+            else:
+                fallback_size = (1000, 1500)  # Portrait
 
-                base_img = Image.new("RGBA", (1000, 1500), (128, 128, 128, 255))  # grey
-                base_img.save(base_image_path)
+            base_img = Image.new("RGBA", fallback_size, (128, 128, 128, 255))  # gray fallback
+            base_img.save(base_image_path)
     else:
+        upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
         base_image_path = os.path.join(upload_folder, selected_image)
 
     if not os.path.exists(base_image_path):
@@ -202,7 +208,8 @@ def generate_preview():
     base_img = Image.open(base_image_path).convert("RGBA")
 
     # Ensure base image is 1000x1500
-    base_img = base_img.resize((1000, 1500), Image.LANCZOS)  # noqa
+    target_size = (1920, 1080) if img_type == "episode" else (1000, 1500)
+    base_img = base_img.resize(target_size, Image.LANCZOS)
 
     # Apply overlays
     for overlay in overlays:

@@ -1,5 +1,4 @@
 <!-- Preview Overlays Accordion -->
-
 <div class="accordion mt-3" id="{{ library.id }}-previewOverlaysAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
@@ -12,48 +11,59 @@
     <div id="{{ library.id }}-overlayPreviewContainer" class="accordion-collapse collapse show"
       data-bs-parent="#{{ library.id }}-previewOverlaysAccordion">
       <div class="accordion-body overlay-toggle-group">
-        <div class="row">
-          <!-- Left Column: Form Elements -->
-          <div class="col-md-6">
-            <p class="mb-3">
-              Selecting any Overlays will automatically update the preview image here. You can upload your
-              custom base image from a file or a URL to preview your Overlays against that image.
-            </p>
-            <div class="form-floating mb-4">
-              <select id="{{ library.id }}-image-dropdown" class="form-select">
-                <option value="default">Default Kometa</option>
-              </select>
-              <label for="{{ library.id }}-image-dropdown">Select Custom Show Image</label>
+        <p class="mb-3">
+          Selecting any overlays will automatically update the preview. You can upload different base images for Show,
+          Season, and Episode posters.
+        </p>
+
+        {% for level in ['show', 'season', 'episode'] %}
+        <div class="card mb-4 border shadow-sm">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <!-- Controls Column (Left) -->
+              <div class="col-md-6">
+                <div class="form-floating mb-2">
+                  <select id="{{ library.id }}-{{ level }}-image-dropdown" class="form-select">
+                    <option value="default">Default Kometa</option>
+                  </select>
+                  <label for="{{ library.id }}-{{ level }}-image-dropdown">Select {{ level.title() }} Image</label>
+                </div>
+
+                <input type="file" id="{{ library.id }}-{{ level }}-upload-image"
+                  accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/bmp" class="form-control mb-2">
+
+                <div class="input-group mb-2">
+                  <input type="url" id="{{ library.id }}-{{ level }}-image-url" class="form-control"
+                    placeholder="Enter Image URL">
+                  <button type="button" id="{{ library.id }}-{{ level }}-fetch-url-btn"
+                    class="btn btn-secondary">Fetch</button>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <button type="button" id="{{ library.id }}-{{ level }}-delete-image-btn"
+                    class="btn btn-danger btn-sm">
+                    <i class="bi bi-trash"></i> Delete
+                  </button>
+                  <button type="button" id="{{ library.id }}-{{ level }}-rename-image-btn"
+                    class="btn btn-warning btn-sm">
+                    <i class="fa fa-pencil-alt"></i> Rename
+                  </button>
+                </div>
+              </div>
+
+              <!-- Preview Column (Right) -->
+              <div class="col-md-6 text-center">
+                <h6 class="fw-bold text-capitalize">{{ level }} Image</h6>
+                <img id="{{ library.id }}-overlayPreviewImage-{{ level }}"
+                  src="/config/previews/{{ library.id }}-{{ level }}_preview.png" class="img-fluid mt-2"
+                  alt="{{ level.title() }} Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+              </div>
             </div>
-
-            <!-- Upload an image automatically when selected -->
-            <input type="file" id="{{ library.id }}-upload-image"
-              accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/bmp" class="form-control mb-2">
-
-            <!-- Fetch an image from a URL -->
-            <div class="input-group mt-2">
-              <input type="url" id="{{ library.id }}-image-url" class="form-control" placeholder="Enter Image URL">
-              <button type="button" id="{{ library.id }}-fetch-url-btn" class="btn btn-secondary">Fetch</button>
-            </div>
-
-            <button type="button" id="{{ library.id }}-delete-image-btn" class="btn btn-danger mt-2">
-              <i class="bi bi-trash"></i> Delete Selected
-            </button>
-            <button type="button" id="{{ library.id }}-rename-image-btn" class="btn btn-warning mt-2">
-              <i class="fa fa-pencil-alt"></i> Rename Selected
-            </button>
-
-          </div>
-
-          <!-- Right Column: Image Preview -->
-          <div class="col-md-6 d-flex align-items-center justify-content-center">
-            <img id="{{ library.id }}-overlayPreviewImage" src="/config/previews/{{ library.id }}-sho_preview.png"
-              class="img-fluid" alt="Show Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
           </div>
         </div>
+        {% endfor %}
       </div>
     </div>
-
   </div>
 </div>
 
