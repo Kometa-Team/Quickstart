@@ -24,45 +24,59 @@ const EventHandler = {
       const isMovie = libraryId.startsWith('mov-library_')
 
       console.log(`[DEBUG] Attaching listeners for Library: ${libraryId}, Type: ${isMovie ? 'Movie' : 'Show'}`)
-      ImageHandler.loadAvailableImages(libraryId, isMovie)
-      OverlayHandler.initializeOverlays(libraryId, isMovie)
+      // Load custom images based on type
+      const types = isMovie ? ['movie'] : ['show', 'season', 'episode']
+      types.forEach(type => {
+        ImageHandler.loadAvailableImages(libraryId, type)
 
-      // Attach dropdown change listener for main library image
-      library.querySelectorAll("[id$='-image-dropdown']").forEach((dropdown) => {
-        if (!dropdown.dataset.listenerAdded) {
-          console.log(`[DEBUG] Attaching dropdown listener for ${dropdown.id}`)
-          dropdown.addEventListener('change', () => {
-            console.log(`[DEBUG] Dropdown changed: ${dropdown.id}`)
-            ImageHandler.generatePreview(libraryId, isMovie)
-            ImageHandler.toggleDeleteButton(libraryId, isMovie)
+        const uploadInput = document.getElementById(`${libraryId}-${type}-upload-image`)
+        if (uploadInput && !uploadInput.dataset.listenerAdded) {
+          uploadInput.addEventListener('change', event => {
+            if (event.target.files.length > 0) {
+              console.log(`[DEBUG] Upload triggered for ${libraryId} - ${type}`)
+              ImageHandler.uploadLibraryImage(libraryId, type)
+            }
           })
-          dropdown.dataset.listenerAdded = true
+          uploadInput.dataset.listenerAdded = 'true'
+        }
+
+        const fetchBtn = document.getElementById(`${libraryId}-${type}-fetch-url-btn`)
+        if (fetchBtn && !fetchBtn.dataset.listenerAdded) {
+          fetchBtn.addEventListener('click', () => {
+            console.log(`[DEBUG] Fetch triggered for ${libraryId} - ${type}`)
+            ImageHandler.fetchLibraryImage(libraryId, type)
+          })
+          fetchBtn.dataset.listenerAdded = 'true'
+        }
+
+        const deleteBtn = document.getElementById(`${libraryId}-${type}-delete-image-btn`)
+        if (deleteBtn && !deleteBtn.dataset.listenerAdded) {
+          deleteBtn.addEventListener('click', () => {
+            ImageHandler.deleteCustomImage(libraryId, type)
+          })
+          deleteBtn.dataset.listenerAdded = 'true'
+        }
+
+        const renameBtn = document.getElementById(`${libraryId}-${type}-rename-image-btn`)
+        if (renameBtn && !renameBtn.dataset.listenerAdded) {
+          renameBtn.addEventListener('click', () => {
+            ImageHandler.openRenameModal(libraryId, type)
+          })
+          renameBtn.dataset.listenerAdded = 'true'
+        }
+
+        const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+        if (dropdown && !dropdown.dataset.listenerAdded) {
+          dropdown.addEventListener('change', () => {
+            console.log(`[DEBUG] Dropdown changed: ${dropdown.id} -> ${dropdown.value}`)
+            ImageHandler.generateSinglePreview(libraryId, type)
+          })
+          dropdown.dataset.listenerAdded = 'true'
         }
       })
 
-      // Attach Fetch & Upload button listeners
-      const fetchButton = document.getElementById(`${libraryId}-fetch-url-btn`)
-      if (fetchButton && !fetchButton.dataset.listenerAdded) {
-        console.log(`[DEBUG] Attaching fetch listener for ${libraryId}`)
-        fetchButton.addEventListener('click', () => {
-          ImageHandler.fetchLibraryImage(libraryId, isMovie)
-        })
-        fetchButton.dataset.listenerAdded = true
-      }
-
-      const uploadButton = document.getElementById(`${libraryId}-upload-image`)
-      if (uploadButton && !uploadButton.dataset.listenerAdded) {
-        console.log(`[DEBUG] Attaching upload listener for ${libraryId}`)
-        uploadButton.addEventListener('change', (event) => {
-          if (event.target.files.length > 0) {
-            console.log(`[DEBUG] File selected, starting upload for ${libraryId}`)
-            ImageHandler.uploadLibraryImage(libraryId, isMovie)
-          } else {
-            console.log('[DEBUG] No file selected, upload not triggered.')
-          }
-        })
-        uploadButton.dataset.listenerAdded = true
-      }
+      // Initialize overlays after image listeners
+      OverlayHandler.initializeOverlays(libraryId, isMovie)
 
       // Allow unselecting Content Rating radio buttons
       library.querySelectorAll('input[type="radio"][id*="-overlay_content_rating_"]').forEach(radio => {
@@ -183,24 +197,6 @@ const EventHandler = {
         })
         separatorDropdown.dataset.listenerAdded = true
         OverlayHandler.updateHiddenInputs(libraryId, isMovie)
-      }
-
-      const deleteButton = document.getElementById(`${libraryId}-delete-image-btn`)
-      if (deleteButton && !deleteButton.dataset.listenerAdded) {
-        console.log(`[DEBUG] Attaching delete listener for ${libraryId}`)
-        deleteButton.addEventListener('click', () =>
-          ImageHandler.deleteCustomImage(libraryId, isMovie)
-        )
-        deleteButton.dataset.listenerAdded = true
-      }
-
-      const renameButton = document.getElementById(`${libraryId}-rename-image-btn`)
-      if (renameButton && !renameButton.dataset.listenerAdded) {
-        console.log(`[DEBUG] Attaching rename listener for ${libraryId}`)
-        renameButton.addEventListener('click', () =>
-          ImageHandler.openRenameModal(libraryId, isMovie)
-        )
-        renameButton.dataset.listenerAdded = true
       }
 
       // Attach listener for custom genre "Add" button

@@ -1,62 +1,69 @@
 /* global showToast , localStorage, bootstrap, updateFormData, refreshOverlayPreviewImage */
 
 const ImageHandler = {
-  loadAvailableImages: function (libraryId, isMovie) {
-    console.log(`[DEBUG] Loading uploaded images for Library: ${libraryId}, Type: ${isMovie ? 'Movie' : 'Show'}`)
+  loadAvailableImages: function (libraryId, type = 'movie', callback = null) {
+    const dropdownId = `${libraryId}-${type}-image-dropdown`
+    const dropdown = document.getElementById(dropdownId)
+    if (!dropdown) return
 
-    fetch(`/list_uploaded_images?type=${isMovie ? 'movie' : 'show'}`)
-      .then(response => response.json())
+    fetch(`/list_uploaded_images?type=${type}`)
+      .then(res => res.json())
       .then(data => {
-        if (data.status === 'error') {
-          showToast('error', data.message)
+        if (data.status !== 'success') {
+          showToast('error', data.message || 'Failed to load images.')
           return
         }
 
-        const dropdown = document.querySelector(`[id="${libraryId}-image-dropdown"]`)
-        if (!dropdown) {
-          console.error(`[ERROR] Dropdown for uploaded images for library ${libraryId} not found!`)
-          return
-        }
+        dropdown.innerHTML = ''
 
-        dropdown.innerHTML = "<option value='default'>Default Kometa</option>"
+        const defaultOption = document.createElement('option')
+        defaultOption.value = 'default'
+        defaultOption.textContent = `Select ${type} image`
+        dropdown.appendChild(defaultOption)
 
-        data.images.forEach(img => {
+        data.images.forEach(image => {
           const option = document.createElement('option')
-          option.value = img
-          option.textContent = img
+          option.value = image
+          option.textContent = image
           dropdown.appendChild(option)
         })
 
-        // Restore last selected image after dropdown reloads on page
-        const storedImage = localStorage.getItem(`${libraryId}-selected-image`)
-        if (storedImage && [...dropdown.options].some(option => option.value === storedImage)) {
-          dropdown.value = storedImage
+        const saved = localStorage.getItem(`${libraryId}-selected-image-${type}`)
+        console.log(`[DEBUG] Trying to reselect saved image for ${libraryId} - ${type}: ${saved}`)
+
+        if (saved && data.images.includes(saved)) {
+          dropdown.value = saved
+          console.log(`[DEBUG] Successfully reselected saved image: ${saved}`)
+        } else {
+          console.log(`[DEBUG] Saved image not found in list for ${type}:`, data.images)
         }
 
-        // Store selection when changed
-        dropdown.addEventListener('change', function () {
-          localStorage.setItem(`${libraryId}-selected-image`, dropdown.value)
-        })
-
-        ImageHandler.generatePreview(libraryId, isMovie)
-        ImageHandler.toggleDeleteButton(libraryId, isMovie)
+        if (callback) callback()
       })
-      .catch(error => {
-        console.error('[ERROR] Loading uploaded images:', error)
-        showToast('error', 'Failed to load available images. Please check your network or try again.')
+      .catch(err => {
+        console.error('[ERROR] Failed to load images:', err)
+        showToast('error', 'Could not load image list.')
       })
   },
 
   generatePreview: function (libraryId, isMovie) {
-    console.log(`[DEBUG] Generating preview for Library: ${libraryId}`)
-
-    const dropdown = document.querySelector(`[id="${libraryId}-image-dropdown"]`)
-    if (!dropdown) {
-      console.error(`[ERROR] Dropdown not found for library ${libraryId}`)
-      return
+    if (isMovie) {
+      ImageHandler.generateSinglePreview(libraryId, 'movie')
+    } else {
+      ['show', 'season', 'episode'].forEach(type => {
+        ImageHandler.generateSinglePreview(libraryId, type)
+      })
     }
+  },
 
-    const selectedImage = dropdown ? dropdown.value : 'default.png'
+  generateSinglePreview: function (libraryId, type) {
+    const dropdownId = `${libraryId}-${type}-image-dropdown`
+    const imageElementId = `${libraryId}-overlayPreviewImage-${type}`
+    const dropdown = document.getElementById(dropdownId)
+    if (!dropdown) return
+
+    const selectedImage = dropdown.value || 'default'
+    const isMovie = libraryId.startsWith('mov-library_')
     const selectedOverlays = ImageHandler.getLibraryOverlays(libraryId, isMovie)
 
     fetch('/generate_preview', {
@@ -65,51 +72,127 @@ const ImageHandler = {
       body: JSON.stringify({
         library_id: libraryId,
         overlays: selectedOverlays,
-        type: isMovie ? 'movie' : 'show',
+        type,
         selected_image: selectedImage
       })
     })
       .then(response => response.json())
       .then(data => {
         if (data.status === 'success') {
-          const newPreviewURL = `/config/previews/${libraryId}-${isMovie ? 'movie' : 'show'}_preview.png?t=` + new Date().getTime()
-          const previewImage = document.querySelector(`[id="${libraryId}-overlayPreviewImage"]`)
-
-          if (previewImage) {
-            previewImage.src = newPreviewURL
-            console.log(`[DEBUG] Updated preview image for ${libraryId}: ${newPreviewURL}`)
-          } else {
-            console.error(`[ERROR] Overlay preview image not found for library ${libraryId}`)
-          }
+          const previewUrl = `/config/previews/${libraryId}-${type}_preview.png?t=` + new Date().getTime()
+          const img = document.getElementById(imageElementId)
+          if (img) img.src = previewUrl
         }
       })
-      .catch(error => console.error('[ERROR] Generating overlay preview:', error))
+      .catch(error => console.error(`[ERROR] Generating preview for ${type}:`, error))
   },
 
   getLibraryOverlays: function (libraryId, isMovie) {
     let overlays = []
 
-    // Get all selected overlay checkboxes within the library section
     document.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"]:checked`).forEach(input => {
       overlays.push(input.name)
     })
 
-    // Ensure rating overlay is included
     const selectedRating = document.querySelector(
       `#${libraryId}-ContentRatingOverlays input.template-parent-toggle[data-radio-group="true"]:checked`
     )
     if (selectedRating) {
       overlays.push(selectedRating.value)
     } else {
-      // Remove previous content rating overlays if none is selected
       overlays = overlays.filter(overlay => !overlay.startsWith('content_rating'))
     }
 
-    // **Fix: Strip out `library_<library_name>-` from overlay names**
     overlays = overlays.map(overlay => overlay.replace(new RegExp(`^${libraryId}-`), `${isMovie ? 'mov' : 'sho'}-`))
 
     console.log(`[DEBUG] Overlays found for ${libraryId}:`, overlays)
     return overlays
+  },
+
+  uploadLibraryImage: function (libraryId, type) {
+    console.log(`[DEBUG] Uploading image for Library: ${libraryId}, Type: ${type}`)
+
+    const fileInput = document.getElementById(`${libraryId}-${type}-upload-image`)
+    if (!fileInput || !fileInput.files.length) {
+      showToast('warning', 'Please select an image file.')
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('image', fileInput.files[0])
+    formData.append('type', type)
+
+    fetch('/upload_library_image', {
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          showToast('success', data.message)
+
+          // Store and set dropdown
+          localStorage.setItem(`${libraryId}-selected-image-${type}`, data.filename)
+          ImageHandler.loadAvailableImages(libraryId, type)
+
+          // Slight delay to allow dropdown update before regenerating preview
+          setTimeout(() => {
+            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+            if (dropdown) dropdown.value = data.filename
+            ImageHandler.generateSinglePreview(libraryId, type)
+          }, 300)
+        } else {
+          showToast('error', data.message)
+        }
+      })
+      .catch(error => {
+        console.error('[ERROR] Uploading image failed:', error)
+        showToast('error', 'Failed to upload image.')
+      })
+  },
+
+  fetchLibraryImage: function (libraryId, type) {
+    console.log(`[DEBUG] Fetching image for Library: ${libraryId}, Type: ${type}`)
+
+    const urlInput = document.getElementById(`${libraryId}-${type}-image-url`)
+    const imageUrl = urlInput.value.trim()
+
+    if (!imageUrl) {
+      showToast('warning', 'Please enter a valid image URL.')
+      return
+    }
+
+    fetch('/fetch_library_image', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        url: imageUrl,
+        type
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          showToast('success', data.message)
+
+          // Store and set dropdown
+          localStorage.setItem(`${libraryId}-selected-image-${type}`, data.filename)
+          ImageHandler.loadAvailableImages(libraryId, type)
+
+          // Slight delay to allow dropdown update before regenerating preview
+          setTimeout(() => {
+            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+            if (dropdown) dropdown.value = data.filename
+            ImageHandler.generateSinglePreview(libraryId, type)
+          }, 300)
+        } else {
+          showToast('error', data.message)
+        }
+      })
+      .catch(error => {
+        console.error('[ERROR] Fetching image failed:', error)
+        showToast('error', 'Failed to fetch image.')
+      })
   },
 
   toggleDeleteButton: function (libraryId, isMovie) {
@@ -130,49 +213,43 @@ const ImageHandler = {
     console.log(`[DEBUG] Toggled delete/rename buttons for ${libraryId} - Delete: ${deleteBtn.style.display}, Rename: ${renameBtn.style.display}`)
   },
 
-  deleteCustomImage: function (libraryId, isMovie) {
-    const dropdown = document.querySelector(`[id="${libraryId}-image-dropdown"]`)
-    if (!dropdown) {
-      console.error(`[ERROR] Dropdown for library ${libraryId} not found!`)
-      return
-    }
-
-    const selectedImage = dropdown.value
+  deleteCustomImage: function (libraryId, type = 'movie') {
+    const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+    const selectedImage = dropdown?.value
     if (!selectedImage || selectedImage === 'default') {
-      showToast('warning', 'Please select an image before deleting.')
+      showToast('warning', 'Please select an image to delete.')
       return
     }
 
-    console.log(`[DEBUG] Deleting image: ${selectedImage} from Library: ${libraryId}`)
-
-    fetch(`/delete_library_image/${encodeURIComponent(selectedImage)}?type=${isMovie ? 'movie' : 'show'}`, {
+    fetch(`/delete_library_image/${encodeURIComponent(selectedImage)}?type=${type}`, {
       method: 'DELETE'
     })
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
         if (data.status === 'success') {
           showToast('success', data.message)
-          console.log(`[DEBUG] Image "${selectedImage}" deleted successfully.`)
-
-          // Reload dropdown list to remove the deleted image
-          ImageHandler.loadAvailableImages(libraryId, isMovie)
+          ImageHandler.loadAvailableImages(libraryId, type)
+          setTimeout(() => {
+            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+            if (dropdown) dropdown.value = 'default'
+            ImageHandler.generateSinglePreview(libraryId, type)
+          }, 300)
         } else {
           showToast('error', data.message)
-          console.error(`[ERROR] Failed to delete image: ${data.message}`)
         }
       })
-      .catch(error => {
-        console.error('[ERROR] Deleting image failed:', error)
-        showToast('error', 'Failed to delete image.')
+      .catch(err => {
+        console.error('[ERROR] Failed to delete image:', err)
+        showToast('error', 'Image deletion failed.')
       })
   },
 
-  openRenameModal: function (libraryId, isMovie) {
-    console.log(`[DEBUG] Open Rename Modal for Library: ${libraryId} - ${isMovie ? 'Movies' : 'Shows'}`)
+  openRenameModal: function (libraryId, type) {
+    console.log(`[DEBUG] Open Rename Modal for Library: ${libraryId} - Type: ${type}`)
 
-    const dropdown = document.querySelector(`[id="${libraryId}-image-dropdown"]`)
+    const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
     if (!dropdown) {
-      console.error(`[ERROR] No dropdown found for ${libraryId}`)
+      console.error(`[ERROR] No dropdown found for ${libraryId} - ${type}`)
       return
     }
 
@@ -182,211 +259,118 @@ const ImageHandler = {
       return
     }
 
-    const renameImagePreview = document.getElementById('rename-image-preview')
-    const renameCurrentName = document.getElementById('rename-current-name')
-    const renameNewNameMovie = document.getElementById('mov-image-name')
-    const renameNewNameShow = document.getElementById('sho-image-name')
+    // DOM elements
+    const preview = document.getElementById('rename-image-preview')
+    const currentName = document.getElementById('rename-current-name')
     const renameModalElement = document.getElementById('renameModal')
+    const inputMap = {
+      movie: document.getElementById('mov-image-name'),
+      show: document.getElementById('sho-image-name'),
+      season: document.getElementById('sea-image-name'),
+      episode: document.getElementById('epi-image-name')
+    }
 
-    if (!renameImagePreview || !renameCurrentName || !renameNewNameMovie || !renameNewNameShow || !renameModalElement) {
-      console.error('[ERROR] Missing modal elements.')
+    if (!preview || !currentName || !renameModalElement || Object.values(inputMap).some(el => !el)) {
+      console.error('[ERROR] One or more modal elements are missing.')
       return
     }
 
-    renameNewNameMovie.style.display = isMovie ? 'block' : 'none'
-    renameNewNameShow.style.display = isMovie ? 'none' : 'block'
+    // Hide all inputs, show only the one for the current type
+    Object.entries(inputMap).forEach(([key, input]) => {
+      input.style.display = key === type ? 'block' : 'none'
+      input.value = ''
+    })
 
-    renameImagePreview.src = `/config/uploads/${isMovie ? 'movies' : 'shows'}/${selectedImage}`
-    renameCurrentName.textContent = `Current Name: ${selectedImage}`
-    renameNewNameMovie.value = ''
-    renameNewNameShow.value = ''
+    // Update modal content
+    preview.src = `/config/uploads/${type}s/${selectedImage}`
+    currentName.textContent = `Current Name: ${selectedImage}`
 
-    const renameModal = new bootstrap.Modal(renameModalElement)
-    renameModal.show()
+    // Show modal
+    const modal = new bootstrap.Modal(renameModalElement)
+    modal.show()
 
-    document.getElementById('rename-current-name').textContent = `Current Name: ${selectedImage}`
-    document.getElementById(isMovie ? 'mov-image-name' : 'sho-image-name').value = ''
-    document.getElementById('rename-confirm-btn').dataset.libraryId = libraryId
-    document.getElementById('rename-confirm-btn').dataset.selectedImage = selectedImage
-    document.getElementById('rename-confirm-btn').dataset.isMovie = isMovie
-    document.getElementById('rename-confirm-btn').onclick = function () {
-      ImageHandler.confirmRenameImage()
-    }
-    // Ensure "Enter" key triggers OK button
-    renameModalElement.addEventListener('keydown', function (event) {
+    // Prepare confirm button
+    const confirmBtn = document.getElementById('rename-confirm-btn')
+    confirmBtn.dataset.libraryId = libraryId
+    confirmBtn.dataset.selectedImage = selectedImage
+    confirmBtn.dataset.type = type
+
+    confirmBtn.onclick = () => ImageHandler.confirmRenameImage()
+
+    // Clean previous Enter key handler and add a fresh one
+    renameModalElement.onkeydown = function (event) {
       if (event.key === 'Enter') {
         event.preventDefault()
-        document.getElementById('rename-confirm-btn').click()
+        confirmBtn.click()
       }
-    })
+    }
+
+    // Clear Enter handler after modal closes
+    renameModalElement.addEventListener('hidden.bs.modal', () => {
+      renameModalElement.onkeydown = null
+    }, { once: true })
   },
 
   confirmRenameImage: function () {
-    const renameConfirmBtn = document.getElementById('rename-confirm-btn')
-    const libraryId = renameConfirmBtn.dataset.libraryId
-    const selectedImage = renameConfirmBtn.dataset.selectedImage
-    const isMovie = renameConfirmBtn.dataset.isMovie === 'true'
+    const confirmBtn = document.getElementById('rename-confirm-btn')
+    const libraryId = confirmBtn.dataset.libraryId
+    const selectedImage = confirmBtn.dataset.selectedImage
+    const type = confirmBtn.dataset.type
 
-    const renameNewNameMovie = document.getElementById('mov-image-name').value.trim()
-    const renameNewNameShow = document.getElementById('sho-image-name').value.trim()
-    const newImageName = isMovie ? renameNewNameMovie : renameNewNameShow
+    const inputMap = {
+      movie: document.getElementById('mov-image-name'),
+      show: document.getElementById('sho-image-name'),
+      season: document.getElementById('sea-image-name'),
+      episode: document.getElementById('epi-image-name')
+    }
 
-    if (!newImageName) {
+    const inputField = inputMap[type]
+    const baseName = inputField?.value.trim()
+
+    if (!baseName) {
       showToast('error', 'Please enter a new image name.')
       return
     }
 
-    console.log(`[DEBUG] Renaming ${selectedImage} to ${newImageName} in ${isMovie ? 'movies' : 'shows'}`)
+    const extension = selectedImage.split('.').pop()
+    const newName = `${baseName}.${extension}`
+
+    console.log(`[DEBUG] Renaming ${selectedImage} to ${newName} in type: ${type}`)
 
     fetch('/rename_library_image', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         old_name: selectedImage,
-        new_name: newImageName,
-        type: isMovie ? 'movie' : 'show'
-      })
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'success') {
-          showToast('success', 'Image renamed successfully.')
-
-          // Reload the dropdown list to reflect new name
-          ImageHandler.loadAvailableImages(libraryId, isMovie)
-
-          // Hide the modal after renaming
-          bootstrap.Modal.getInstance(document.getElementById('renameModal')).hide()
-        } else {
-          showToast('error', data.message)
-        }
-      })
-      .catch(error => {
-        console.error('[ERROR] Failed to rename image:', error)
-        showToast('error', 'Failed to rename image.')
-      })
-  },
-
-  renameLibraryImage: function () {
-    const confirmBtn = document.getElementById('rename-confirm-btn')
-    const libraryId = confirmBtn.dataset.libraryId
-
-    const dropdown = document.querySelector(`[id="${libraryId}-image-dropdown"]`)
-    if (!dropdown) {
-      console.error(`[ERROR] Dropdown not found for library ${libraryId}`)
-      return
-    }
-
-    const oldName = dropdown.value
-    const newNameInput = document.getElementById(libraryId.startsWith('mov') ? 'mov-image-name' : 'sho-image-name')
-    const newName = newNameInput.value.trim()
-
-    if (!oldName || oldName === 'default' || !newName) {
-      showToast('warning', 'Please enter a valid new name.')
-      return
-    }
-
-    console.log(`[DEBUG] Renaming image: ${oldName} to ${newName} in ${libraryId}`)
-
-    fetch('/rename_library_image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        old_name: oldName,
         new_name: newName,
-        type: libraryId.startsWith('mov') ? 'movie' : 'show'
+        type
       })
     })
-      .then(response => response.json())
+      .then(res => res.json())
       .then(data => {
         if (data.status === 'success') {
-          showToast('success', 'Image renamed successfully.')
+          showToast('success', data.message)
 
-          // Store the new name temporarily before reloading the dropdown
-          localStorage.setItem(`${libraryId}-selected-image`, newName)
+          localStorage.setItem(`${libraryId}-selected-image-${type}`, newName)
 
-          // Reload the dropdown and reselect the renamed file
-          ImageHandler.loadAvailableImages(libraryId, libraryId.startsWith('mov'))
+          // Refresh dropdown and regenerate preview only after it's repopulated
+          ImageHandler.loadAvailableImages(libraryId, type, () => {
+            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+            if (dropdown) {
+              dropdown.value = newName
+              ImageHandler.generateSinglePreview(libraryId, type)
+            }
 
-          // Close the modal after successful rename
-          const renameModalElement = document.getElementById('renameModal')
-          const renameModal = bootstrap.Modal.getInstance(renameModalElement)
-          if (renameModal) renameModal.hide()
+            const modal = bootstrap.Modal.getInstance(document.getElementById('renameModal'))
+            if (modal) modal.hide()
+          })
         } else {
           showToast('error', data.message)
         }
       })
-      .catch(error => {
-        console.error('[ERROR] Renaming image failed:', error)
-        showToast('error', 'Failed to rename image.')
-      })
-  },
-
-  uploadLibraryImage: function (libraryId, isMovie) {
-    console.log(`[DEBUG] Uploading image for Library: ${libraryId}`)
-
-    const fileInput = document.getElementById(`${libraryId}-upload-image`)
-    if (!fileInput || !fileInput.files.length) {
-      showToast('warning', 'Please select an image file.')
-      return
-    }
-
-    const formData = new FormData()
-    formData.append('image', fileInput.files[0])
-    formData.append('type', isMovie ? 'movie' : 'show')
-
-    fetch('/upload_library_image', {
-      method: 'POST',
-      body: formData
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'success') {
-          showToast(data.status === 'success' ? 'success' : 'error', data.message)
-          localStorage.setItem(`${libraryId}-selected-image`, data.filename)
-          ImageHandler.loadAvailableImages(libraryId, isMovie)
-        } else {
-          showToast('error', data.message)
-        }
-      })
-      .catch(error => {
-        console.error('[ERROR] Uploading image failed:', error)
-        showToast('error', 'Failed to upload image.')
-      })
-  },
-
-  fetchLibraryImage: function (libraryId, isMovie) {
-    console.log(`[DEBUG] Fetching image for Library: ${libraryId}`)
-
-    const urlInput = document.getElementById(`${libraryId}-image-url`)
-    const imageUrl = urlInput.value.trim()
-
-    if (!imageUrl) {
-      showToast('warning', 'Please enter a valid image URL.')
-      return
-    }
-
-    fetch('/fetch_library_image', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url: imageUrl,
-        type: isMovie ? 'movie' : 'show'
-      })
-    })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status === 'success') {
-          showToast(data.status === 'success' ? 'success' : 'error', data.message)
-          localStorage.setItem(`${libraryId}-selected-image`, data.filename)
-          ImageHandler.loadAvailableImages(libraryId, isMovie)
-        } else {
-          showToast('error', data.message)
-        }
-      })
-      .catch(error => {
-        console.error('[ERROR] Fetching image failed:', error)
-        showToast('error', 'Failed to fetch image.')
+      .catch(err => {
+        console.error('[ERROR] Rename failed:', err)
+        showToast('error', 'Rename failed.')
       })
   }
 }
