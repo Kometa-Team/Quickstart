@@ -87,25 +87,29 @@ const ImageHandler = {
       .catch(error => console.error(`[ERROR] Generating preview for ${type}:`, error))
   },
 
-  getLibraryOverlays: function (libraryId, isMovie) {
-    let overlays = []
+  getLibraryOverlays: function (libraryId, isMovie, type = 'movie') {
+    const overlays = []
 
+    // 1. Handle all checked toggles (standard overlays)
     document.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"]:checked`).forEach(input => {
-      overlays.push(input.name)
+      const cleaned = input.name.replace(new RegExp(`^${libraryId}-`), '')
+      const prefix = type === 'episode' ? 'epi-sho-' : isMovie ? 'mov-' : 'sho-'
+      overlays.push(`${prefix}${cleaned}`)
     })
 
+    // 2. Handle Content Rating overlay radio
     const selectedRating = document.querySelector(
       `#${libraryId}-ContentRatingOverlays input.template-parent-toggle[data-radio-group="true"]:checked`
     )
     if (selectedRating) {
-      overlays.push(selectedRating.value)
-    } else {
-      overlays = overlays.filter(overlay => !overlay.startsWith('content_rating'))
+      const value = selectedRating.value // e.g., "de"
+      const prefix = type === 'episode'
+        ? 'epi-sho-overlay_content_rating_'
+        : isMovie ? 'mov-overlay_content_rating_' : 'sho-overlay_content_rating_'
+      overlays.push(prefix + value)
     }
 
-    overlays = overlays.map(overlay => overlay.replace(new RegExp(`^${libraryId}-`), `${isMovie ? 'mov' : 'sho'}-`))
-
-    console.log(`[DEBUG] Overlays found for ${libraryId}:`, overlays)
+    console.log(`[DEBUG] Overlays found for ${libraryId}, type: ${type}:`, overlays)
     return overlays
   },
 

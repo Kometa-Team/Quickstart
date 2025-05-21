@@ -31,8 +31,27 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/mediastinger/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/mediastinger.png",
         "media_types": [
-          "movie",
+          "movie"
+        ]
+      },
+      {
+        "id": "overlay_episode_info",
+        "label": "Episode Info",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/episode_info/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/episode_info.png",
+        "media_types": [
           "show"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
         ]
       },
       {
@@ -82,24 +101,29 @@
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Season",
             "value": "season",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Episode",
             "value": "episode",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           }
         ]
-
       },
       {
         "id": "overlay_content_rating_uk",
@@ -119,21 +143,27 @@
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Season",
             "value": "season",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Episode",
             "value": "episode",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -155,21 +185,27 @@
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Season",
             "value": "season",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Episode",
             "value": "episode",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -191,21 +227,27 @@
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Season",
             "value": "season",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Episode",
             "value": "episode",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -227,21 +269,27 @@
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Season",
             "value": "season",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Episode",
             "value": "episode",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           }
         ]
       },
@@ -263,21 +311,27 @@
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Season",
             "value": "season",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Episode",
             "value": "episode",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           }
         ]
       }
@@ -647,8 +701,38 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/studio/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/studio.png",
         "media_types": [
-          "movie",
-          "show"
+          "show",
+          "season",
+          "episode"
+        ],
+                "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
         ]
       },
       {
@@ -667,21 +751,27 @@
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Season",
             "value": "season",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Episode",
             "value": "episode",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           }
         ]
       }
@@ -711,21 +801,27 @@
             "key": "builder_level",
             "label": "Apply to Show",
             "value": "show",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Season",
             "value": "season",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           },
           {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Episode",
             "value": "episode",
-            "media_types": ["show"]
+            "media_types": [
+              "show"
+            ]
           }
         ]
       }

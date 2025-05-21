@@ -361,7 +361,8 @@ def generate_preview():
     base_img = base_img.resize(size, Image.LANCZOS)
 
     for overlay in overlays:
-        overlay_path = os.path.join(OVERLAY_FOLDER, f"{overlay}.png")
+        filename = f"epi-{overlay}.png" if img_type == "episode" else f"{overlay}.png"
+        overlay_path = os.path.join(OVERLAY_FOLDER, filename)
         if os.path.exists(overlay_path):
             overlay_img = Image.open(overlay_path).convert("RGBA")
             base_img.paste(overlay_img, (0, 0), overlay_img)
