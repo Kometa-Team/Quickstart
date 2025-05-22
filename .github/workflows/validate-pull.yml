@@ -31,15 +31,15 @@ jobs:
           exit 1
 
       - name: Check for Remote Branch
-        if: !contains(github.event.pull_request.labels.*.name, 'approved')
+        if: "!contains(github.event.pull_request.labels.*.name, 'approved')"
         run: |
-            repo_name=${{ github.event.pull_request.head.repo.full_name }}
-            base_name="${repo_name%/*}"
-          
-            if [[ "${base_name}" != "Kometa-Team" ]]; then
-                echo "ERROR: Pull Requests must be approved before they can be run workflows"
-                exit 1
-            fi
+          repo_name=${{ github.event.pull_request.head.repo.full_name }}
+          base_name="${repo_name%/*}"
+        
+          if [[ "${base_name}" != "Kometa-Team" ]]; then
+              echo "ERROR: Pull Requests must be approved before they can be run workflows"
+              exit 1
+          fi
 
       - name: Checkout Repo
         uses: actions/checkout@v4
