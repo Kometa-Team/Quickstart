@@ -1,5 +1,5 @@
 cachelib==0.13.0
-Flask==3.1.0
+Flask==3.1.1
 Flask-Session==0.8.0
 GitPython==3.1.44
 gunicorn==23.0.0
