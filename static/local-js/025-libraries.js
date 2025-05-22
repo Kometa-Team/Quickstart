@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, Sortable, setupParentChildToggleSync */
+/* global EventHandler, ValidationHandler, Sortable, setupParentChildToggleSync, bootstrap */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -246,3 +246,31 @@ function setupParentChildToggleVisibility () {
     updateVisibilityAndBorder() // Initial check
   })
 }
+
+function showZoomPreviewModal (imageSrc) {
+  const zoomImg = document.getElementById('zoom-preview-img')
+  const caption = document.getElementById('zoom-preview-caption')
+  const modalElement = document.getElementById('zoomPreviewModal')
+
+  if (!modalElement || !zoomImg || !caption) {
+    console.error('[Zoom Modal] Required DOM elements missing.')
+    return
+  }
+
+  // Set image and caption
+  zoomImg.src = imageSrc
+  caption.textContent = imageSrc.split('/').pop()
+
+  // Ensure Bootstrap Modal is available
+  if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+    try {
+      const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement)
+      modalInstance.show()
+    } catch (err) {
+      console.error('[Zoom Modal] Failed to show modal:', err)
+    }
+  } else {
+    console.error('[Zoom Modal] Bootstrap Modal not available.')
+  }
+}
+window.showZoomPreviewModal = showZoomPreviewModal

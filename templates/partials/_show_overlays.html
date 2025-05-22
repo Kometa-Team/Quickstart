@@ -56,7 +56,9 @@
                 <h6 class="fw-bold text-capitalize">{{ level }} Image</h6>
                 <img id="{{ library.id }}-overlayPreviewImage-{{ level }}"
                   src="/config/previews/{{ library.id }}-{{ level }}_preview.png" class="img-fluid mt-2"
-                  alt="{{ level.title() }} Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                  alt="{{ level.title() }} Preview"
+                  style="max-width: 100%; height: auto; border: 1px solid #ccc; cursor: zoom-in;"
+                  onclick="showZoomPreviewModal(this.src)">
               </div>
             </div>
           </div>

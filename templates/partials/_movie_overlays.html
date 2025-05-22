@@ -53,7 +53,9 @@
                 <h6 class="fw-bold">Movie Image</h6>
                 <img id="{{ library.id }}-overlayPreviewImage-movie"
                   src="/config/previews/{{ library.id }}-movie_preview.png" class="img-fluid mt-2"
-                  alt="Movie Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
+                  alt="Movie Preview"
+                  style="max-width: 100%; height: auto; border: 1px solid #ccc; cursor: zoom-in;"
+                  onclick="showZoomPreviewModal(this.src)">
               </div>
             </div>
           </div>

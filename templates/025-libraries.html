@@ -85,4 +85,20 @@
 <!-- Toast Notifications -->
 <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toastContainer"></div>
 
+<!-- Zoom Preview Modal -->
+<div class="modal fade" id="zoomPreviewModal" tabindex="-1" aria-labelledby="zoomPreviewModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="zoomPreviewModalLabel">Zoomed Image Preview</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="zoom-preview-img" src="" class="img-fluid mb-3" style="max-height: 90vh;" alt="Zoomed Preview">
+        <p id="zoom-preview-caption" class="text-muted small"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
