@@ -230,12 +230,22 @@ function setupParentChildToggleVisibility () {
 
       childrenGroup.style.display = parentChecked ? 'block' : 'none'
 
-      // Only show border if parent is ON and at least one child is ON
+      if (!parentChecked) {
+        childrenToggles.forEach(child => {
+          child.checked = false
+          const hidden = document.querySelector(`input[type="hidden"][name="${child.name}"]`)
+          if (hidden) hidden.value = 'false'
+        })
+      }
+
       if (parentChecked && anyChildChecked) {
         wrapper.classList.add('template-toggle-group-bordered')
       } else {
         wrapper.classList.remove('template-toggle-group-bordered')
       }
+
+      EventHandler.updateAccordionHighlights()
+      ValidationHandler.updateValidationState()
     }
 
     parentToggle.addEventListener('change', updateVisibilityAndBorder)

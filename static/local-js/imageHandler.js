@@ -34,8 +34,9 @@ const ImageHandler = {
         if (saved && data.images.includes(saved)) {
           dropdown.value = saved
           console.log(`[DEBUG] Successfully reselected saved image: ${saved}`)
+          ImageHandler.generateSinglePreview(libraryId, type) // Ensure preview syncs
         } else {
-          console.log(`[DEBUG] Saved image not found in list for ${type}:`, data.images)
+          console.warn(`[DEBUG] Saved image not found in dropdown for ${libraryId} - ${type}. Available options:`, data.images)
         }
 
         if (callback) callback()

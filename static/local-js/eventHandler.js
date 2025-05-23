@@ -84,9 +84,9 @@ const EventHandler = {
           radio.addEventListener('click', function () {
             console.log(`[DEBUG] Radio button clicked: ${this.name} -> ${this.value}`)
 
-            // Extract libraryId strictly from content rating radios only
-            const match = this.id.match(/^(mov|sho)-library_([^-]+(?:-[^-]+)*)-overlay_content_rating_/)
-            const clickedLibraryId = match ? match[0].replace('-overlay_content_rating_', '') : null
+            // More reliable way to get libraryId from DOM
+            const cardContainer = this.closest('.library-settings-card')
+            const clickedLibraryId = cardContainer?.id?.replace('-card-container', '')
             if (!clickedLibraryId) {
               console.warn(`[WARNING] Could not determine libraryId from ${this.id}`)
               return
@@ -101,22 +101,19 @@ const EventHandler = {
               // Clear corresponding hidden input
               const hiddenInput = document.querySelector(`input[name="${clickedLibraryId}-overlay_selected_content_rating"]`)
               if (hiddenInput) {
-                hiddenInput.value = '' // Clear hidden input when unselected
+                hiddenInput.value = ''
               }
 
               console.log(`[DEBUG] Unselected radio button: ${this.name}`)
             } else {
-              // Mark this radio as checked and reset others in the group
+              // Reset all radios in group
               document.querySelectorAll(`input[name="${this.name}"]`).forEach(r => {
                 r.dataset.wasChecked = 'false'
               })
               this.dataset.wasChecked = 'true'
 
               const selectedValue = this.value
-
-              // Update hidden input
-              const hiddenInputName = `${clickedLibraryId}-overlay_selected_content_rating`
-              const hiddenInput = document.querySelector(`input[name="${hiddenInputName}"]`)
+              const hiddenInput = document.querySelector(`input[name="${clickedLibraryId}-overlay_selected_content_rating"]`)
               if (hiddenInput) {
                 hiddenInput.value = selectedValue
               }
@@ -124,17 +121,22 @@ const EventHandler = {
               console.log(`[DEBUG] Selected radio button: ${this.name} -> ${selectedValue}`)
             }
 
-            // Ensure preview updates after selection/unselection
+            // Update UI and preview
             EventHandler.updateAccordionHighlights()
             ValidationHandler.updateValidationState()
-            ImageHandler.generatePreview(clickedLibraryId, isMovieRadio)
+            if (isMovieRadio) {
+              ImageHandler.generatePreview(clickedLibraryId, true)
+            } else {
+              ['show', 'season', 'episode'].forEach(type => {
+                ImageHandler.generateSinglePreview(clickedLibraryId, type)
+              })
+            }
           })
 
           radio.dataset.listenerAdded = 'true'
           radio.dataset.wasChecked = 'false'
         }
       })
-
       // Attach overlay selection listeners (CHANGE events)
       library.querySelectorAll('.accordion input').forEach((input) => {
         library.querySelectorAll('.accordion select').forEach(select => {
