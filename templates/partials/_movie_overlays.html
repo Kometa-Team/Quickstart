@@ -24,7 +24,16 @@
                 <div class="form-floating mb-2">
                   <select id="{{ library.id }}-movie-image-dropdown" class="form-select">
                     <option value="default">Default Kometa</option>
+                    {% for filename in movie_images %}
+                    <option value="{{ filename }}" {% if data.libraries.get(library.id ~ '-movie_selected_image'
+                      )==filename %}selected{% endif %}>
+                      {{ filename }}
+                    </option>
+                    {% endfor %}
                   </select>
+
+                  <input type="hidden" id="{{ library.id }}-movie-hidden" name="{{ library.id }}-movie-hidden"
+                    value="{{ data.libraries.get(library.id ~ '-movie_selected_image', '') }}">
                   <label for="{{ library.id }}-movie-image-dropdown">Select Movie Image</label>
                 </div>
 
@@ -52,8 +61,7 @@
               <div class="col-md-6 text-center">
                 <h6 class="fw-bold">Movie Image</h6>
                 <img id="{{ library.id }}-overlayPreviewImage-movie"
-                  src="/config/previews/{{ library.id }}-movie_preview.png" class="img-fluid mt-2"
-                  alt="Movie Preview"
+                  src="/config/previews/{{ library.id }}-movie_preview.png" class="img-fluid mt-2" alt="Movie Preview"
                   style="max-width: 100%; height: auto; border: 1px solid #ccc; cursor: zoom-in;"
                   onclick="showZoomPreviewModal(this.src)">
               </div>

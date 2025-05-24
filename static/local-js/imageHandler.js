@@ -1,9 +1,12 @@
-/* global showToast , localStorage, bootstrap, updateFormData, refreshOverlayPreviewImage */
+/* global showToast , bootstrap, updateFormData, refreshOverlayPreviewImage */
 
 const ImageHandler = {
   loadAvailableImages: function (libraryId, type = 'movie', callback = null) {
     const dropdownId = `${libraryId}-${type}-image-dropdown`
+    const hiddenInputId = `${libraryId}-${type}-hidden`
     const dropdown = document.getElementById(dropdownId)
+    const hiddenInput = document.getElementById(hiddenInputId)
+
     if (!dropdown) return
 
     fetch(`/list_uploaded_images?type=${type}`)
@@ -28,15 +31,15 @@ const ImageHandler = {
           dropdown.appendChild(option)
         })
 
-        const saved = localStorage.getItem(`${libraryId}-selected-image-${type}`)
-        console.log(`[DEBUG] Trying to reselect saved image for ${libraryId} - ${type}: ${saved}`)
+        const saved = hiddenInput?.value
+        console.log(`[DEBUG] Trying to reselect hidden input image for ${libraryId} - ${type}: ${saved}`)
 
         if (saved && data.images.includes(saved)) {
           dropdown.value = saved
-          console.log(`[DEBUG] Successfully reselected saved image: ${saved}`)
-          ImageHandler.generateSinglePreview(libraryId, type) // Ensure preview syncs
+          console.log(`[DEBUG] Successfully reselected image from hidden input: ${saved}`)
+          ImageHandler.generateSinglePreview(libraryId, type)
         } else {
-          console.warn(`[DEBUG] Saved image not found in dropdown for ${libraryId} - ${type}. Available options:`, data.images)
+          console.warn(`[DEBUG] Hidden input image not found in dropdown for ${libraryId} - ${type}.`)
         }
 
         if (callback) callback()
@@ -47,16 +50,6 @@ const ImageHandler = {
       })
   },
 
-  generatePreview: function (libraryId, isMovie) {
-    if (isMovie) {
-      ImageHandler.generateSinglePreview(libraryId, 'movie')
-    } else {
-      ['show', 'season', 'episode'].forEach(type => {
-        ImageHandler.generateSinglePreview(libraryId, type)
-      })
-    }
-  },
-
   generateSinglePreview: function (libraryId, type) {
     const dropdownId = `${libraryId}-${type}-image-dropdown`
     const imageElementId = `${libraryId}-overlayPreviewImage-${type}`
@@ -64,6 +57,13 @@ const ImageHandler = {
     if (!dropdown) return
 
     const selectedImage = dropdown.value || 'default'
+
+    const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
+    if (hiddenInput) {
+      hiddenInput.value = selectedImage
+      console.debug(`[SYNC] Set hidden input: ${hiddenInput.id} = ${selectedImage}`)
+    }
+
     const isMovie = libraryId.startsWith('mov-library_')
     const selectedOverlays = ImageHandler.getLibraryOverlays(libraryId, isMovie)
 
@@ -136,14 +136,21 @@ const ImageHandler = {
         if (data.status === 'success') {
           showToast('success', data.message)
 
-          // Store and set dropdown
-          localStorage.setItem(`${libraryId}-selected-image-${type}`, data.filename)
+          // Set dropdown value to new filename
+          const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+          if (dropdown) dropdown.value = data.filename
+
+          // Sync to hidden input
+          const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
+          if (hiddenInput) {
+            hiddenInput.value = data.filename
+            console.debug(`[SYNC] Updated hidden input after upload: ${hiddenInput.id} = ${data.filename}`)
+          }
+
           ImageHandler.loadAvailableImages(libraryId, type)
 
           // Slight delay to allow dropdown update before regenerating preview
           setTimeout(() => {
-            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
-            if (dropdown) dropdown.value = data.filename
             ImageHandler.generateSinglePreview(libraryId, type)
           }, 300)
         } else {
@@ -180,14 +187,20 @@ const ImageHandler = {
         if (data.status === 'success') {
           showToast('success', data.message)
 
-          // Store and set dropdown
-          localStorage.setItem(`${libraryId}-selected-image-${type}`, data.filename)
+          // Update dropdown to reflect new image
+          const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+          if (dropdown) dropdown.value = data.filename
+
+          // Sync to hidden input
+          const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
+          if (hiddenInput) {
+            hiddenInput.value = data.filename
+            console.debug(`[SYNC] Updated hidden input after fetch: ${hiddenInput.id} = ${data.filename}`)
+          }
+
           ImageHandler.loadAvailableImages(libraryId, type)
 
-          // Slight delay to allow dropdown update before regenerating preview
           setTimeout(() => {
-            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
-            if (dropdown) dropdown.value = data.filename
             ImageHandler.generateSinglePreview(libraryId, type)
           }, 300)
         } else {
@@ -233,10 +246,20 @@ const ImageHandler = {
       .then(data => {
         if (data.status === 'success') {
           showToast('success', data.message)
+
+          // Set dropdown to default
+          if (dropdown) dropdown.value = 'default'
+
+          // Clear hidden input
+          const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
+          if (hiddenInput) {
+            hiddenInput.value = 'default'
+            console.debug(`[SYNC] Cleared hidden input after delete: ${hiddenInput.id}`)
+          }
+
           ImageHandler.loadAvailableImages(libraryId, type)
+
           setTimeout(() => {
-            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
-            if (dropdown) dropdown.value = 'default'
             ImageHandler.generateSinglePreview(libraryId, type)
           }, 300)
         } else {
@@ -356,15 +379,20 @@ const ImageHandler = {
         if (data.status === 'success') {
           showToast('success', data.message)
 
-          localStorage.setItem(`${libraryId}-selected-image-${type}`, newName)
-
-          // Refresh dropdown and regenerate preview only after it's repopulated
+          // Sync new name to dropdown and hidden input
           ImageHandler.loadAvailableImages(libraryId, type, () => {
             const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
             if (dropdown) {
               dropdown.value = newName
-              ImageHandler.generateSinglePreview(libraryId, type)
             }
+
+            const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
+            if (hiddenInput) {
+              hiddenInput.value = newName
+              console.debug(`[SYNC] Renamed image synced to hidden input: ${hiddenInput.id} = ${newName}`)
+            }
+
+            ImageHandler.generateSinglePreview(libraryId, type)
 
             const modal = bootstrap.Modal.getInstance(document.getElementById('renameModal'))
             if (modal) modal.hide()

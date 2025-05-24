@@ -330,10 +330,18 @@ def list_uploaded_images():
 @app.route("/generate_preview", methods=["POST"])
 def generate_preview():
     data = request.json
-    overlays = data.get("overlays", [])
     img_type = data.get("type", "movie")
     selected_image = data.get("selected_image", "default.png")
     library_id = data.get("library_id", "default-library")
+
+    # Normalize overlays from dict (by type) or flat list
+    raw_overlays = data.get("overlays", {})
+    if isinstance(raw_overlays, dict):
+        overlays = raw_overlays.get(img_type, [])
+    elif isinstance(raw_overlays, list):
+        overlays = raw_overlays
+    else:
+        overlays = []
 
     if img_type not in ["movie", "show", "season", "episode"]:
         return jsonify({"status": "error", "message": "Invalid type"}), 400
@@ -344,6 +352,7 @@ def generate_preview():
     preview_filename = f"{library_id}-{img_type}_preview.png"
     preview_filepath = os.path.join(PREVIEW_FOLDER, preview_filename)
 
+    # Resolve base image
     if not selected_image or selected_image == "default":
         base_image_path = DEFAULT_IMAGE_MAP.get(img_type, DEFAULT_IMAGE_MAP["movie"])
         if not os.path.exists(base_image_path):
@@ -356,10 +365,12 @@ def generate_preview():
     if not os.path.exists(base_image_path):
         return jsonify({"status": "error", "message": "Selected image not found."}), 400
 
+    # Open and resize base image
     base_img = Image.open(base_image_path).convert("RGBA")
     size = (1920, 1080) if img_type == "episode" else (1000, 1500)
     base_img = base_img.resize(size, Image.LANCZOS)
 
+    # Apply overlays
     for overlay in overlays:
         filename = f"epi-{overlay}.png" if img_type == "episode" else f"{overlay}.png"
         overlay_path = os.path.join(OVERLAY_FOLDER, filename)
@@ -733,6 +744,12 @@ def step(name):
             overlay_config=overlay_config,
             template_list=file_list,
             available_configs=available_configs,
+            image_data={
+                "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
+                "show": os.listdir(UPLOAD_FOLDERS["show"]),
+                "season": os.listdir(UPLOAD_FOLDERS["season"]),
+                "episode": os.listdir(UPLOAD_FOLDERS["episode"]),
+            },
         )
 
 

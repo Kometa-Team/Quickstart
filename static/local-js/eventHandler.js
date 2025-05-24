@@ -68,9 +68,19 @@ const EventHandler = {
         const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
         if (dropdown && !dropdown.dataset.listenerAdded) {
           dropdown.addEventListener('change', () => {
-            console.log(`[DEBUG] Dropdown changed: ${dropdown.id} -> ${dropdown.value}`)
+            const selectedImage = dropdown.value || 'default'
+            console.log(`[DEBUG] Dropdown changed: ${dropdown.id} -> ${selectedImage}`)
+
+            const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
+            if (hiddenInput) {
+              hiddenInput.value = selectedImage
+              console.debug(`[SYNC] Updated hidden input: ${hiddenInput.id} = ${selectedImage}`)
+            }
+
+            // Trigger preview generation
             ImageHandler.generateSinglePreview(libraryId, type)
           })
+
           dropdown.dataset.listenerAdded = 'true'
         }
       })
@@ -184,10 +194,14 @@ const EventHandler = {
 
       // Automatically Update Preview When Overlay Toggles or Content Rating Changes
       library.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"], #${libraryId}-overlays input[type="radio"]`).forEach(input => {
-        input.addEventListener('change', () => {
-          console.log(`[DEBUG] Overlay or Rating Changed: ${input.id} - Checked/Selected: ${input.checked || input.value}`)
-          ImageHandler.generatePreview(libraryId, isMovie)
-        })
+        console.log(`[DEBUG] Overlay or Rating Changed: ${input.id} - Checked/Selected: ${input.checked || input.value}`)
+        if (isMovie) {
+          ImageHandler.generateSinglePreview(libraryId, 'movie')
+        } else {
+          ['show', 'season', 'episode'].forEach(type => {
+            ImageHandler.generateSinglePreview(libraryId, type)
+          })
+        }
       })
 
       // Attach separator preview logic (Now handled by OverlayHandler)

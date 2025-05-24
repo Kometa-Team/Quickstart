@@ -25,7 +25,17 @@
                 <div class="form-floating mb-2">
                   <select id="{{ library.id }}-{{ level }}-image-dropdown" class="form-select">
                     <option value="default">Default Kometa</option>
+                    {% for filename in image_data[level] %}
+                    <option value="{{ filename }}" {% if data.libraries.get(library.id ~ '-' ~ level ~ '_selected_image'
+                      )==filename %}selected{% endif %}>
+                      {{ filename }}
+                    </option>
+                    {% endfor %}
                   </select>
+
+                  <input type="hidden" id="{{ library.id }}-{{ level }}-hidden"
+                    name="{{ library.id }}-{{ level }}-hidden"
+                    value="{{ data.libraries.get(library.id ~ '-' ~ level ~ '_selected_image', '') }}">
                   <label for="{{ library.id }}-{{ level }}-image-dropdown">Select {{ level.title() }} Image</label>
                 </div>
 
