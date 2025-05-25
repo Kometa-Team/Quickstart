@@ -33,8 +33,8 @@
                     {% endfor %}
                   </select>
 
-                  <input type="hidden" id="{{ library.id }}-{{ level }}-hidden"
-                    name="{{ library.id }}-{{ level }}-hidden"
+                  <input type="hidden" id="{{ library.id }}-{{ level }}_selected_image"
+                    name="{{ library.id }}-{{ level }}_selected_image"
                     value="{{ data.libraries.get(library.id ~ '-' ~ level ~ '_selected_image', '') }}">
                   <label for="{{ library.id }}-{{ level }}-image-dropdown">Select {{ level.title() }} Image</label>
                 </div>

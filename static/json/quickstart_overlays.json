@@ -40,7 +40,7 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/episode_info/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/episode_info.png",
         "media_types": [
-          "show"
+          "episode"
         ],
         "template_variables": [
           {
@@ -701,6 +701,7 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/studio/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/studio.png",
         "media_types": [
+          "movie",
           "show",
           "season",
           "episode"

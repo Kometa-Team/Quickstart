@@ -1,9 +1,9 @@
-/* global showToast , bootstrap, updateFormData, refreshOverlayPreviewImage */
+/* global showToast , bootstrap, updateFormData */
 
 const ImageHandler = {
   loadAvailableImages: function (libraryId, type = 'movie', callback = null) {
     const dropdownId = `${libraryId}-${type}-image-dropdown`
-    const hiddenInputId = `${libraryId}-${type}-hidden`
+    const hiddenInputId = `${libraryId}-${type}_selected_image` // FIXED to match stored key
     const dropdown = document.getElementById(dropdownId)
     const hiddenInput = document.getElementById(hiddenInputId)
 
@@ -65,7 +65,7 @@ const ImageHandler = {
     }
 
     const isMovie = libraryId.startsWith('mov-library_')
-    const selectedOverlays = ImageHandler.getLibraryOverlays(libraryId, isMovie)
+    const selectedOverlays = ImageHandler.getLibraryOverlays(libraryId, isMovie, type)
 
     fetch('/generate_preview', {
       method: 'POST',
@@ -91,25 +91,45 @@ const ImageHandler = {
   getLibraryOverlays: function (libraryId, isMovie, type = 'movie') {
     const overlays = []
 
-    // 1. Handle all checked toggles (standard overlays)
+    // Determine prefix
+    const prefix = isMovie
+      ? 'mov-'
+      : type === 'episode'
+        ? 'epi-sho-'
+        : type === 'season'
+          ? 'sho-season-'
+          : 'sho-'
+
+    // Valid type suffix pattern to filter keys
+    const suffix = `-${type}-`
+
+    // Checked checkboxes that match the current type context
     document.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"]:checked`).forEach(input => {
-      const cleaned = input.name.replace(new RegExp(`^${libraryId}-`), '')
-      const prefix = type === 'episode' ? 'epi-sho-' : isMovie ? 'mov-' : 'sho-'
-      overlays.push(`${prefix}${cleaned}`)
+      if (input.name.includes(suffix)) {
+        const cleanedKey = input.name.replace(`${libraryId}-`, '')
+        overlays.push(`${prefix}${cleanedKey}`)
+      }
     })
 
-    // 2. Handle Content Rating overlay radio
+    // Content rating logic with precise type-based prefixes
     const selectedRating = document.querySelector(
       `#${libraryId}-ContentRatingOverlays input.template-parent-toggle[data-radio-group="true"]:checked`
     )
     if (selectedRating) {
-      const value = selectedRating.value // e.g., "de"
-      const prefix = type === 'episode'
-        ? 'epi-sho-overlay_content_rating_'
-        : isMovie ? 'mov-overlay_content_rating_' : 'sho-overlay_content_rating_'
-      overlays.push(prefix + value)
-    }
+      let ratingPrefix = ''
 
+      if (isMovie) {
+        ratingPrefix = 'mov-movie-overlay_'
+      } else if (type === 'episode') {
+        ratingPrefix = 'epi-sho-episode-overlay_'
+      } else if (type === 'season') {
+        ratingPrefix = 'sho-season-season-overlay_'
+      } else if (type === 'show') {
+        ratingPrefix = 'sho-show-overlay_'
+      }
+
+      overlays.push(`${ratingPrefix}content_rating_${selectedRating.value}`)
+    }
     console.log(`[DEBUG] Overlays found for ${libraryId}, type: ${type}:`, overlays)
     return overlays
   },
@@ -136,22 +156,22 @@ const ImageHandler = {
         if (data.status === 'success') {
           showToast('success', data.message)
 
-          // Set dropdown value to new filename
-          const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
-          if (dropdown) dropdown.value = data.filename
-
-          // Sync to hidden input
-          const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
-          if (hiddenInput) {
-            hiddenInput.value = data.filename
-            console.debug(`[SYNC] Updated hidden input after upload: ${hiddenInput.id} = ${data.filename}`)
-          }
-
+          // Reload dropdown to include new image
           ImageHandler.loadAvailableImages(libraryId, type)
 
-          // Slight delay to allow dropdown update before regenerating preview
+          // Delay ensures dropdown is repopulated before setting value and syncing
           setTimeout(() => {
+            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+            if (dropdown) dropdown.value = data.filename
+
+            const hiddenInput = document.getElementById(`${libraryId}-${type}_selected_image`)
+            if (hiddenInput) {
+              hiddenInput.value = data.filename
+              console.debug(`[SYNC] Updated hidden input after upload: ${hiddenInput.id} = ${data.filename}`)
+            }
+
             ImageHandler.generateSinglePreview(libraryId, type)
+            ImageHandler.toggleDeleteButton(libraryId, type)
           }, 300)
         } else {
           showToast('error', data.message)
@@ -187,21 +207,21 @@ const ImageHandler = {
         if (data.status === 'success') {
           showToast('success', data.message)
 
-          // Update dropdown to reflect new image
-          const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
-          if (dropdown) dropdown.value = data.filename
-
-          // Sync to hidden input
-          const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
-          if (hiddenInput) {
-            hiddenInput.value = data.filename
-            console.debug(`[SYNC] Updated hidden input after fetch: ${hiddenInput.id} = ${data.filename}`)
-          }
-
+          // Reload dropdown to include fetched image
           ImageHandler.loadAvailableImages(libraryId, type)
 
           setTimeout(() => {
+            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+            if (dropdown) dropdown.value = data.filename
+
+            const hiddenInput = document.getElementById(`${libraryId}-${type}_selected_image`)
+            if (hiddenInput) {
+              hiddenInput.value = data.filename
+              console.debug(`[SYNC] Updated hidden input after fetch: ${hiddenInput.id} = ${data.filename}`)
+            }
+
             ImageHandler.generateSinglePreview(libraryId, type)
+            ImageHandler.toggleDeleteButton(libraryId, type)
           }, 300)
         } else {
           showToast('error', data.message)
@@ -213,22 +233,24 @@ const ImageHandler = {
       })
   },
 
-  toggleDeleteButton: function (libraryId, isMovie) {
-    const dropdown = document.querySelector(`[id="${libraryId}-image-dropdown"]`)
-    const deleteBtn = document.getElementById(`${libraryId}-delete-image-btn`)
-    const renameBtn = document.getElementById(`${libraryId}-rename-image-btn`)
+  toggleDeleteButton: function (libraryId, type = 'movie') {
+    const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+    const deleteBtn = document.getElementById(`${libraryId}-${type}-delete-image-btn`)
+    const renameBtn = document.getElementById(`${libraryId}-${type}-rename-image-btn`)
 
     if (!dropdown || !deleteBtn || !renameBtn) {
-      console.error(`[ERROR] Missing dropdown, delete button, or rename button for ${isMovie ? 'movie' : 'show'} in library ${libraryId}`)
+      console.error(`[ERROR] Missing dropdown, delete button, or rename button for ${type} in ${libraryId}`)
       return
     }
 
     const isDefaultSelected = dropdown.value === 'default'
     const onlyDefaultExists = dropdown.options.length === 1 && isDefaultSelected
 
-    deleteBtn.style.display = (isDefaultSelected || onlyDefaultExists) ? 'none' : 'block'
-    renameBtn.style.display = (isDefaultSelected || onlyDefaultExists) ? 'none' : 'block'
-    console.log(`[DEBUG] Toggled delete/rename buttons for ${libraryId} - Delete: ${deleteBtn.style.display}, Rename: ${renameBtn.style.display}`)
+    const show = !(isDefaultSelected || onlyDefaultExists)
+    deleteBtn.style.display = show ? 'block' : 'none'
+    renameBtn.style.display = show ? 'block' : 'none'
+
+    console.debug(`[DEBUG] Toggled delete/rename buttons for ${libraryId} - ${type} | Delete: ${deleteBtn.style.display}, Rename: ${renameBtn.style.display}`)
   },
 
   deleteCustomImage: function (libraryId, type = 'movie') {
@@ -258,6 +280,7 @@ const ImageHandler = {
           }
 
           ImageHandler.loadAvailableImages(libraryId, type)
+          ImageHandler.toggleDeleteButton(libraryId, type)
 
           setTimeout(() => {
             ImageHandler.generateSinglePreview(libraryId, type)
@@ -379,24 +402,25 @@ const ImageHandler = {
         if (data.status === 'success') {
           showToast('success', data.message)
 
-          // Sync new name to dropdown and hidden input
-          ImageHandler.loadAvailableImages(libraryId, type, () => {
-            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
-            if (dropdown) {
-              dropdown.value = newName
-            }
+          ImageHandler.loadAvailableImages(libraryId, type)
 
-            const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
+          setTimeout(() => {
+            const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+            if (dropdown) dropdown.value = newName
+
+            const hiddenInput = document.getElementById(`${libraryId}-${type}_selected_image`)
             if (hiddenInput) {
               hiddenInput.value = newName
-              console.debug(`[SYNC] Renamed image synced to hidden input: ${hiddenInput.id} = ${newName}`)
+              console.debug(`[SYNC] Updated hidden input after rename: ${hiddenInput.id} = ${newName}`)
             }
 
             ImageHandler.generateSinglePreview(libraryId, type)
+            ImageHandler.toggleDeleteButton(libraryId, type)
 
+            // Close modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('renameModal'))
             if (modal) modal.hide()
-          })
+          }, 300)
         } else {
           showToast('error', data.message)
         }
@@ -420,7 +444,16 @@ document.addEventListener('DOMContentLoaded', () => {
       // Look for the overlay section specifically (e.g., mov-library_movies-overlays)
       const isInOverlayAccordion = target.closest('[id$="-overlays"]')
       if (isInOverlayAccordion) {
-        refreshOverlayPreviewImage(target)
+        const container = target.closest('.library-settings-card')
+        const libraryId = container?.id?.replace('-card-container', '')
+        if (!libraryId) return
+
+        const isMovie = libraryId.startsWith('mov-library_')
+        const types = isMovie ? ['movie'] : ['show', 'season', 'episode']
+
+        types.forEach(type => {
+          ImageHandler.generateSinglePreview(libraryId, type)
+        })
       }
     })
   })

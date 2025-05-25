@@ -32,7 +32,7 @@
                     {% endfor %}
                   </select>
 
-                  <input type="hidden" id="{{ library.id }}-movie-hidden" name="{{ library.id }}-movie-hidden"
+                  <input type="hidden" id="{{ library.id }}-movie_selected_image" name="{{ library.id }}-movie_selected_image"
                     value="{{ data.libraries.get(library.id ~ '-movie_selected_image', '') }}">
                   <label for="{{ library.id }}-movie-image-dropdown">Select Movie Image</label>
                 </div>

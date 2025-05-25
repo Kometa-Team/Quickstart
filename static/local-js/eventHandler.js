@@ -40,6 +40,24 @@ const EventHandler = {
           uploadInput.dataset.listenerAdded = 'true'
         }
 
+        const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
+        if (dropdown && !dropdown.dataset.listenerAdded) {
+          dropdown.addEventListener('change', () => {
+            const selectedImage = dropdown.value || 'default'
+            console.log(`[DEBUG] Dropdown changed: ${dropdown.id} -> ${selectedImage}`)
+
+            const hiddenInput = document.getElementById(`${libraryId}-${type}_selected_image`)
+            if (hiddenInput) {
+              hiddenInput.value = selectedImage
+              console.debug(`[SYNC] Updated hidden input: ${hiddenInput.id} = ${selectedImage}`)
+            }
+
+            ImageHandler.generateSinglePreview(libraryId, type)
+            ImageHandler.toggleDeleteButton(libraryId, type)
+          })
+          dropdown.dataset.listenerAdded = 'true'
+        }
+
         const fetchBtn = document.getElementById(`${libraryId}-${type}-fetch-url-btn`)
         if (fetchBtn && !fetchBtn.dataset.listenerAdded) {
           fetchBtn.addEventListener('click', () => {
@@ -63,25 +81,6 @@ const EventHandler = {
             ImageHandler.openRenameModal(libraryId, type)
           })
           renameBtn.dataset.listenerAdded = 'true'
-        }
-
-        const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
-        if (dropdown && !dropdown.dataset.listenerAdded) {
-          dropdown.addEventListener('change', () => {
-            const selectedImage = dropdown.value || 'default'
-            console.log(`[DEBUG] Dropdown changed: ${dropdown.id} -> ${selectedImage}`)
-
-            const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
-            if (hiddenInput) {
-              hiddenInput.value = selectedImage
-              console.debug(`[SYNC] Updated hidden input: ${hiddenInput.id} = ${selectedImage}`)
-            }
-
-            // Trigger preview generation
-            ImageHandler.generateSinglePreview(libraryId, type)
-          })
-
-          dropdown.dataset.listenerAdded = 'true'
         }
       })
 
@@ -135,7 +134,7 @@ const EventHandler = {
             EventHandler.updateAccordionHighlights()
             ValidationHandler.updateValidationState()
             if (isMovieRadio) {
-              ImageHandler.generatePreview(clickedLibraryId, true)
+              ImageHandler.generateSinglePreview(clickedLibraryId, 'movie')
             } else {
               ['show', 'season', 'episode'].forEach(type => {
                 ImageHandler.generateSinglePreview(clickedLibraryId, type)
@@ -192,15 +191,23 @@ const EventHandler = {
         }
       })
 
-      // Automatically Update Preview When Overlay Toggles or Content Rating Changes
+      // Automatically trigger preview updates when overlays are toggled or content rating changes
       library.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"], #${libraryId}-overlays input[type="radio"]`).forEach(input => {
-        console.log(`[DEBUG] Overlay or Rating Changed: ${input.id} - Checked/Selected: ${input.checked || input.value}`)
-        if (isMovie) {
-          ImageHandler.generateSinglePreview(libraryId, 'movie')
-        } else {
-          ['show', 'season', 'episode'].forEach(type => {
-            ImageHandler.generateSinglePreview(libraryId, type)
+        if (!input.dataset.listenerAdded) {
+          input.addEventListener('change', () => {
+            console.log(`[DEBUG] Overlay toggle changed: ${input.id} -> ${input.checked || input.value}`)
+
+            // Determine the specific type based on the input ID
+            const id = input.id || ''
+            const match = id.match(/-(movie|show|season|episode)-overlay_/)
+            const inputType = match ? match[1] : (isMovie ? 'movie' : 'show')
+
+            // Trigger preview regeneration
+            console.log(`[DEBUG] Triggering generateSinglePreview for type: ${inputType}`)
+            ImageHandler.generateSinglePreview(libraryId, inputType)
           })
+
+          input.dataset.listenerAdded = 'true'
         }
       })
 
