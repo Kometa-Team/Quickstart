@@ -72,7 +72,7 @@
       "show"
     ],
     "input_type": "radio",
-    "radio_group_name": "overlay_selected_content_rating",
+    "radio_group_name": "overlay_content_rating",
     "overlays": [
       {
         "id": "overlay_content_rating_us_movie",

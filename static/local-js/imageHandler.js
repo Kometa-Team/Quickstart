@@ -111,9 +111,9 @@ const ImageHandler = {
       }
     })
 
-    // Content rating logic with precise type-based prefixes
+    // Type-specific content rating logic
     const selectedRating = document.querySelector(
-      `#${libraryId}-ContentRatingOverlays input.template-parent-toggle[data-radio-group="true"]:checked`
+      `#${libraryId}-ContentRatingOverlays .overlay-group[data-type="${type}"] input.template-parent-toggle[data-radio-group="true"]:checked`
     )
     if (selectedRating) {
       let ratingPrefix = ''
@@ -130,6 +130,7 @@ const ImageHandler = {
 
       overlays.push(`${ratingPrefix}content_rating_${selectedRating.value}`)
     }
+
     console.log(`[DEBUG] Overlays found for ${libraryId}, type: ${type}:`, overlays)
     return overlays
   },

@@ -108,7 +108,7 @@ const EventHandler = {
               this.dataset.wasChecked = 'false'
 
               // Clear corresponding hidden input
-              const hiddenInput = document.querySelector(`input[name="${clickedLibraryId}-overlay_selected_content_rating"]`)
+              const hiddenInput = document.querySelector(`input[name="${clickedLibraryId}-overlay_content_rating"]`)
               if (hiddenInput) {
                 hiddenInput.value = ''
               }
@@ -122,7 +122,7 @@ const EventHandler = {
               this.dataset.wasChecked = 'true'
 
               const selectedValue = this.value
-              const hiddenInput = document.querySelector(`input[name="${clickedLibraryId}-overlay_selected_content_rating"]`)
+              const hiddenInput = document.querySelector(`input[name="${clickedLibraryId}-overlay_content_rating"]`)
               if (hiddenInput) {
                 hiddenInput.value = selectedValue
               }

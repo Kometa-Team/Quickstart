@@ -926,11 +926,11 @@ prefix) %}
             <div class="accordion-body">
 
                 {% set input_type = group.input_type or "checkbox" %}
-                {% set radio_name = library.id ~ '-' ~ group.radio_group_name if input_type == "radio" else None %}
-                {% set current_radio_value = data.libraries.get(radio_name) %}
                 {% set overlay_types = ['movie'] if library.type == 'movie' else ['show', 'season', 'episode'] %}
 
                 {% for type in overlay_types %}
+                {% set radio_safe_name = library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name %}
+                {% set current_radio_value = data.libraries.get(radio_safe_name) %}
                 {% set has_type_overlays = [] %}
                 {% for overlay in group.overlays %}
                 {% if overlay.media_types and (type in overlay.media_types) %}

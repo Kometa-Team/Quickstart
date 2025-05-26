@@ -273,6 +273,8 @@ function setupParentChildToggleSync () {
         groupParents.forEach(other => {
           if (other !== parent) {
             other.checked = false
+            other.dataset.wasChecked = 'false'
+
             const otherWrapper = document.querySelector(`[data-toggle-parent="${other.dataset.templateGroup}"]`)
             const otherChildren = otherWrapper?.querySelectorAll('.template-child-toggle') || []
             otherChildren.forEach(child => {
@@ -283,23 +285,30 @@ function setupParentChildToggleSync () {
           }
         })
 
-        // Toggle off if already checked (simulate deselection)
+        // Ensure only one is selected
         if (isChecked && parent.dataset.wasChecked === 'true') {
           parent.checked = false
+          parent.dataset.wasChecked = 'false'
+          if (wrapper) wrapper.style.display = 'none'
           childToggles.forEach(child => {
             child.checked = false
             child.dispatchEvent(new Event('change', { bubbles: true }))
           })
-          if (wrapper) wrapper.style.display = 'none'
+          // Clear hidden input
+          const hidden = document.querySelector(`input[type="hidden"][name="${groupName}"]`)
+          if (hidden) hidden.value = ''
         } else {
+          parent.dataset.wasChecked = 'true'
+          if (wrapper) wrapper.style.display = ''
           childToggles.forEach(child => {
             child.checked = true
             child.dispatchEvent(new Event('change', { bubbles: true }))
           })
-          if (wrapper) wrapper.style.display = ''
-        }
 
-        parent.dataset.wasChecked = parent.checked.toString()
+          // Set hidden input to selected value
+          const hidden = document.querySelector(`input[type="hidden"][name="${groupName}"]`)
+          if (hidden) hidden.value = parent.value
+        }
       }
 
       syncing = false
