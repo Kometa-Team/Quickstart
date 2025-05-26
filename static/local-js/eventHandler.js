@@ -192,23 +192,13 @@ const EventHandler = {
       })
 
       // Automatically trigger preview updates when overlays are toggled or content rating changes
-      library.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"], #${libraryId}-overlays input[type="radio"]`).forEach(input => {
-        if (!input.dataset.listenerAdded) {
-          input.addEventListener('change', () => {
-            console.log(`[DEBUG] Overlay toggle changed: ${input.id} -> ${input.checked || input.value}`)
-
-            // Determine the specific type based on the input ID
-            const id = input.id || ''
-            const match = id.match(/-(movie|show|season|episode)-overlay_/)
-            const inputType = match ? match[1] : (isMovie ? 'movie' : 'show')
-
-            // Trigger preview regeneration
-            console.log(`[DEBUG] Triggering generateSinglePreview for type: ${inputType}`)
-            ImageHandler.generateSinglePreview(libraryId, inputType)
-          })
-
-          input.dataset.listenerAdded = 'true'
-        }
+      library.querySelectorAll('input[type="checkbox"].overlay-toggle, input[type="radio"].overlay-toggle').forEach(input => {
+        input.addEventListener('change', () => {
+          console.log(`[DEBUG] Overlay toggle changed: ${input.id}`)
+          const match = input.id.match(/-(movie|show|season|episode)-overlay_/)
+          const inputType = match ? match[1] : (isMovie ? 'movie' : 'show')
+          ImageHandler.generateSinglePreview(libraryId, inputType)
+        })
       })
 
       // Attach separator preview logic (Now handled by OverlayHandler)

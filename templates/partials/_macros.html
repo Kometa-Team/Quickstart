@@ -924,19 +924,30 @@ prefix) %}
         <div id="{{ library.id }}-{{ accordion_safe }}" class="accordion-collapse collapse"
             data-bs-parent="#{{ library.id }}-{{ accordion_safe }}Accordion">
             <div class="accordion-body">
+
                 {% set input_type = group.input_type or "checkbox" %}
                 {% set radio_name = library.id ~ '-' ~ group.radio_group_name if input_type == "radio" else None %}
                 {% set current_radio_value = data.libraries.get(radio_name) %}
-
-                {# Determine types to render #}
                 {% set overlay_types = ['movie'] if library.type == 'movie' else ['show', 'season', 'episode'] %}
 
                 {% for type in overlay_types %}
-                <div class="overlay-group mb-4" data-type="{{ type }}">
-                    <h6 class="text-capitalize">{{ type }} Overlays</h6>
+                {% set has_type_overlays = [] %}
+                {% for overlay in group.overlays %}
+                {% if overlay.media_types and (type in overlay.media_types) %}
+                {% set _ = has_type_overlays.append(1) %}
+                {% endif %}
+                {% endfor %}
 
-                    {% for overlay in group.overlays if type in overlay.media_types %}
-                    {% set input_name = radio_name if input_type == "radio" else library.id ~ '-' ~ type ~ '-' ~
+                {% if has_type_overlays | length > 0 %}
+                <div class="overlay-group mb-4" data-type="{{ type }}">
+                    {% if overlay_types | length > 1 %}
+                    <h6 class="text-capitalize">{{ type }} Overlays</h6>
+                    {% endif %}
+
+                    {% for overlay in group.overlays %}
+                    {% if overlay.media_types and (type in overlay.media_types) %}
+                    {% set radio_safe_name = library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name %}
+                    {% set input_name = radio_safe_name if input_type == "radio" else library.id ~ '-' ~ type ~ '-' ~
                     overlay.id %}
                     {% set input_value = overlay.value if input_type == "radio" else "true" %}
                     {% set is_checked = (
@@ -950,8 +961,8 @@ prefix) %}
                                 class="form-check-input overlay-toggle template-parent-toggle{% if overlay.readonly %} readonly-toggle{% endif %}"
                                 type="checkbox" id="{{ library.id }}-{{ type }}-{{ overlay.id }}"
                                 name="{{ input_name }}" value="{{ input_value }}" {% if is_checked %}checked{% endif %}
-                                data-template-group="{{ library.id }}-{{ overlay.id }}" {% if input_type=='radio'
-                                %}data-radio-group="true" data-was-checked="{{ 'true' if is_checked else 'false' }}" {%
+                                data-template-group="{{ radio_safe_name }}-{{ overlay.id }}" {% if input_type=='radio'
+                                %} data-radio-group="true" data-was-checked="{{ 'true' if is_checked else 'false' }}" {%
                                 endif %}>
 
                             {% if input_type == "checkbox" %}
@@ -962,6 +973,7 @@ prefix) %}
                                 <label class="form-check-label me-3" for="{{ library.id }}-{{ type }}-{{ overlay.id }}">
                                     <a target="_blank" href="{{ overlay.url }}">{{ overlay.label }}</a>
                                 </label>
+
                                 {% if overlay.image_url %}
                                 <i class="bi bi-search text-success" data-bs-toggle="tooltip" data-bs-html="true"
                                     title='<img src="{{ overlay.image_url }}" height="200" style="opacity: 1;">'></i>
@@ -979,13 +991,19 @@ prefix) %}
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                     {% endfor %}
                 </div>
+                {% endif %}
                 {% endfor %}
 
                 {% if input_type == "radio" %}
-                <input type="hidden" name="{{ radio_name }}" value="{{ current_radio_value | default('') }}">
+                {% for type in overlay_types %}
+                <input type="hidden" name="{{ library.id }}-{{ type }}-{{ group.radio_group_name }}"
+                    value="{{ data.libraries.get(library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name, '') }}">
+                {% endfor %}
                 {% endif %}
+
             </div>
         </div>
     </div>
