@@ -71,7 +71,6 @@ def save_settings(raw_source, form_data):
     source = os.path.basename(path)
     # Log raw form data
     if app.config["QS_DEBUG"]:
-        # print(f"[DEBUG] Raw form data received: {form_data}")
         clean_dict = {k: form_data.getlist(k) if len(form_data.getlist(k)) > 1 else form_data.get(k) for k in form_data}
         debug_dir = os.path.join(helpers.CONFIG_DIR, "debug_logs")
         os.makedirs(debug_dir, exist_ok=True)

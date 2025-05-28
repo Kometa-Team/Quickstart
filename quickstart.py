@@ -561,24 +561,19 @@ def step(name):
 
     # Retrieve data from storage
     data = persistence.retrieve_settings(name)
+    debug_dir = os.path.join(helpers.CONFIG_DIR, "debug_logs")
+    os.makedirs(debug_dir, exist_ok=True)
+
+    debug_path = os.path.join(debug_dir, f"{name}_retrieved_data.json")
+
     if app.config["QS_DEBUG"]:
-        # print(f"[DEBUG] Raw data retrieved for {name}: {data}")
-        debug_dir = os.path.join(helpers.CONFIG_DIR, "debug_logs")
-        os.makedirs(debug_dir, exist_ok=True)
-
-        debug_path = os.path.join(debug_dir, f"{name}_retrieved_data.json")
-
         with open(debug_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-    print(f"[DEBUG] Raw data written to {debug_path}")
+        print(f"[DEBUG] Raw data written to {debug_path}")
 
     # Fetch Plex settings
     all_libraries = persistence.retrieve_settings("010-plex")
-
-    # Debug: Print entire structure
-    # if app.config["QS_DEBUG"]:
-    # print("[DEBUG] all_libraries content:", all_libraries)
 
     # Ensure 'plex' key exists before accessing sub-keys
     plex_data = all_libraries.get("plex", {})
