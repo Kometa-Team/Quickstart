@@ -920,12 +920,33 @@ def build_config(header_style="standard", config_name=None):
 
         lines = yaml_string.splitlines()
         output = []
-        for line in lines:
-            if line.strip().startswith("collection_files:"):
+        in_libraries_block = False
+
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+
+            # Detect when we've entered the top-level libraries block
+            if stripped == "libraries:":
+                in_libraries_block = True
+                output.append(line)
+                continue
+
+            # Exit the block once indentation resets or we hit a new top-level key
+            if in_libraries_block and not line.startswith("  ") and not line.strip().startswith("#") and ":" in line:
+                in_libraries_block = False
+
+            # Only inject header for lines like "  Movies:" or "  TV Shows:" inside the libraries block
+            if in_libraries_block and line.startswith("  ") and not line.startswith("   ") and line.strip().endswith(":") and not line.strip().startswith("-"):
+                library_name = line.strip().rstrip(":")
+                output.append(art(library_name))
+
+            elif stripped.startswith("collection_files:"):
                 output.append(art("Collections"))
-            elif line.strip().startswith("overlay_files:"):
+            elif stripped.startswith("overlay_files:"):
                 output.append(art("Overlays"))
+
             output.append(line)
+
         return "\n".join(output)
 
     # Function to dump YAML sections
@@ -985,7 +1006,8 @@ def build_config(header_style="standard", config_name=None):
         with io.StringIO() as stream:
             dump_yaml.dump(cleaned_data, stream)
             section_output = stream.getvalue().strip()
-            section_output = inject_section_headers(section_output, header_style)
+            if header_style != "none":
+                section_output = inject_section_headers(section_output, header_style)
             return f"{title}\n{section_output}\n\n"
 
     ordered_sections = [
