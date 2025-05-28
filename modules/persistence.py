@@ -1,10 +1,12 @@
 import os
 import secrets
+import json
 
 from flask import current_app as app
 from flask import session
 from ruamel.yaml import YAML
 from ruamel.yaml.constructor import DuplicateKeyError  # noqa
+from urllib.parse import urlparse
 
 from modules import database, helpers, iso
 
@@ -65,9 +67,21 @@ def clean_form_data(form_data):
 def save_settings(raw_source, form_data):
     # Extract the source and source_name
     source, source_name = extract_names(raw_source)
+    path = urlparse(raw_source).path  # e.g., /step/025-libraries
+    source = os.path.basename(path)
     # Log raw form data
     if app.config["QS_DEBUG"]:
-        print(f"[DEBUG] Raw form data received: {form_data}")
+        # print(f"[DEBUG] Raw form data received: {form_data}")
+        clean_dict = {k: form_data.getlist(k) if len(form_data.getlist(k)) > 1 else form_data.get(k) for k in form_data}
+        debug_dir = os.path.join(helpers.CONFIG_DIR, "debug_logs")
+        os.makedirs(debug_dir, exist_ok=True)
+
+        debug_path = os.path.join(debug_dir, f"{source}_form_data.json")
+
+        with open(debug_path, "w", encoding="utf-8") as f:
+            json.dump(clean_dict, f, indent=2, ensure_ascii=False)
+
+        print(f"[DEBUG] Form data saved to: {debug_path}")
 
     # grab new config name if they entered one:
     if "config_name" in form_data:

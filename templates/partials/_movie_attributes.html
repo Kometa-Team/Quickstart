@@ -15,7 +15,7 @@
     <div id="{{ library.id }}-collapseSeparators" class="accordion-collapse collapse"
       data-bs-parent="#{{ library.id }}-separatorsAccordion">
       <div class="accordion-body">
-        {% for section in section_config.sections if section.media_types and 'movie' in section.media_types and
+        {% for section in attribute_config.sections if section.media_types and 'movie' in section.media_types and
         section.accordion == 'separators' %}
         {{ macros.select_section(
         library,
@@ -49,7 +49,7 @@
     <div id="{{ library.id }}-collapseOverlays" class="accordion-collapse collapse"
       data-bs-parent="#{{ library.id }}-overlayOperationsAccordion">
       <div class="accordion-body">
-        {% for section in section_config.sections if section.media_types and 'movie' in section.media_types and
+        {% for section in attribute_config.sections if section.media_types and 'movie' in section.media_types and
         section.accordion == 'overlays' %}
         {% if section.type == 'select' %}
         {{ macros.select_section(
@@ -108,7 +108,7 @@
     <div id="{{ library.id }}-collapseLibrary" class="accordion-collapse collapse"
       data-bs-parent="#{{ library.id }}-libraryOperationsAccordion">
       <div class="accordion-body">
-        {% for section in section_config.sections if section.media_types and 'movie' in section.media_types and
+        {% for section in attribute_config.sections if section.media_types and 'movie' in section.media_types and
         section.accordion == 'library' %}
         {% if section.type == 'mass_update' %}
         {{ macros.mass_update_section(
@@ -220,7 +220,7 @@
     <div id="{{ library.id }}-collapseMiscellaneous" class="accordion-collapse collapse"
       data-bs-parent="#{{ library.id }}-miscellaneousAccordion">
       <div class="accordion-body">
-        {% for section in section_config.sections if section.media_types and 'movie' in section.media_types and section.accordion == 'miscellaneous' %}
+        {% for section in attribute_config.sections if section.media_types and 'movie' in section.media_types and section.accordion == 'miscellaneous' %}
           {% if section.type == 'select' %}
             {{ macros.select_section(
               library,

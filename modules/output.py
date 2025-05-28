@@ -305,18 +305,55 @@ def build_libraries_section(
 
         # Process Overlays
         overlay_key = helpers.extract_library_name(library_key)
+        overlay_entries = []
+
         if overlay_key and overlay_key in overlays:
-            overlay_files = []
-            for key, value in overlays[overlay_key].items():
-                if isinstance(value, bool) and value:
-                    overlay_files.append({"default": key.split(f"{library_type}-library_{overlay_key}-overlay_")[-1]})
-                elif isinstance(value, str) and value:
-                    if value.lower() == "commonsense":
-                        overlay_files.append({"default": "commonsense"})
-                    else:
-                        overlay_files.append({"default": f"content_rating_{value}"})
-            if overlay_files:
-                entry["overlay_files"] = overlay_files
+            raw_overlay_entries = overlays[overlay_key]
+
+            if library_type == "mov":
+                # Flat overlay keys for movies
+                for key, value in raw_overlay_entries.items():
+                    if not key.startswith(f"{library_type}-library_{overlay_key}-movie-overlay_"):
+                        continue
+                    overlay_name = key.split("-overlay_")[-1]
+                    if isinstance(value, bool) and value:
+                        overlay_entries.append({"default": overlay_name})
+                    elif isinstance(value, str) and value:
+                        overlay_entries.append({"default": "commonsense" if value.lower() == "commonsense" else f"content_rating_{value}"})
+
+            elif library_type == "sho":
+                # Step 1: Bucket overlays by name and builder_level
+                overlay_groups = {}
+                builder_levels = ["show", "season", "episode"]
+                for level in builder_levels:
+                    prefix = f"{library_type}-library_{overlay_key}-{level}-overlay_"
+                    for key, value in raw_overlay_entries.items():
+                        if not key.startswith(prefix):
+                            continue
+
+                        raw_name = key.split("-overlay_")[-1]
+                        overlay_name = (
+                            "commonsense" if value == "commonsense"
+                            else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str)
+                            else raw_name
+                        )
+
+                        if not overlay_name:
+                            continue  # skip malformed
+
+                        overlay_groups.setdefault(overlay_name, {})[level] = True
+
+                # Step 2: Output with `builder_level: show` omitted
+                for overlay_name, levels in overlay_groups.items():
+                    if "show" in levels:
+                        overlay_entries.append({"default": overlay_name})
+                    if "season" in levels:
+                        overlay_entries.append({"default": overlay_name, "template_variables": {"builder_level": "season"}})
+                    if "episode" in levels:
+                        overlay_entries.append({"default": overlay_name, "template_variables": {"builder_level": "episode"}})
+
+        if overlay_entries:
+            entry["overlay_files"] = overlay_entries
 
         # Template Variables
         template_key = helpers.extract_library_name(library_key)
@@ -766,24 +803,39 @@ def build_config(header_style="standard", config_name=None):
             print("[DEBUG] Movie Library Names:", movie_library_names)
             print("[DEBUG] Show Library Names:", show_library_names)
 
-        def group_by_library(prefix, names):
+        def group_by_library(prefix, names, normalize_overlays=False):
             """
-            Groups collection, overlay, and attribute data by library.
+            Groups data (collections, overlays, attributes, etc.) by base library name.
+
+            If `normalize_overlays` is True, it strips builder-level suffixes
+            (e.g. `tvshows-show` → `tvshows`) to match show library names.
             """
             grouped = {}
-            for key, value in [(k, v) for k, v in nested_libraries_data.items() if prefix in k and helpers.extract_library_name(k) in names]:
-                library_name = helpers.extract_library_name(key)
-                if library_name:
-                    if library_name not in grouped:
-                        grouped[library_name] = {}
-                    grouped[library_name][key] = value
+
+            for key, value in nested_libraries_data.items():
+                if prefix not in key:
+                    continue
+
+                lib_name_raw = helpers.extract_library_name(key)
+
+                # Normalize if overlay and builder level suffix is present
+                if normalize_overlays and "-" in lib_name_raw:
+                    lib_name = lib_name_raw.split("-")[0]
+                else:
+                    lib_name = lib_name_raw
+
+                if lib_name in names:
+                    grouped.setdefault(lib_name, {})[key] = value
+
             return grouped
 
         # Group collections, overlays, attributes, and templates only for selected libraries
         movie_collections = group_by_library("collection_", movie_library_names)
         show_collections = group_by_library("collection_", show_library_names)
-        movie_overlays = group_by_library("overlay_", movie_library_names)
-        show_overlays = group_by_library("overlay_", show_library_names)
+        # movie_overlays = group_by_library("overlay_", movie_library_names)
+        # show_overlays = group_by_library("overlay_", show_library_names)
+        movie_overlays = group_by_library("overlay_", movie_library_names, normalize_overlays=True)
+        show_overlays = group_by_library("overlay_", show_library_names, normalize_overlays=True)
         movie_attributes = group_by_library("attribute_", movie_library_names)
         show_attributes = group_by_library("attribute_", show_library_names)
         movie_templates = group_by_library("template_variables", movie_library_names)
@@ -845,15 +897,57 @@ def build_config(header_style="standard", config_name=None):
     version_info = helpers.check_for_update()
     kometa_branch = version_info.get("kometa_branch", "nightly")  # Default to nightly if not found
 
+    # Fetch other Quickstart details
+    quickstart_branch = version_info.get("branch", "unknown")
+    quickstart_version = version_info.get("local_version", "unknown")
+    quickstart_environment = version_info.get("running_on", "unknown")
+
     # Get the current timestamp in a readable format
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     yaml_content = (
         f"# yaml-language-server: $schema=https://raw.githubusercontent.com/Kometa-Team/Kometa/{kometa_branch}/json-schema/config-schema.json\n\n"
         f"{add_border_to_ascii_art(section_heading('KOMETA', font=header_style)) if header_style not in ['none', 'single line'] else section_heading('KOMETA', font=header_style)}\n\n"
-        f"# {config_name} config created by Quickstart on {timestamp}\n\n"
+        f"# {config_name} config created by Quickstart on {timestamp}\n"
+        f"# Libraries configured: {len(movie_libraries)} movie, {len(show_libraries)} show\n"
+        f"# Quickstart version: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}\n"
         f"{header_comment}\n\n"
     )
+
+    def inject_section_headers(yaml_string, font):
+        def art(title):
+            return add_border_to_ascii_art(pyfiglet.figlet_format(title, font=font)) if font not in ['none', 'single line'] else f"#==================== {title} ====================#"
+
+        lines = yaml_string.splitlines()
+        output = []
+        in_libraries_block = False
+
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+
+            # Detect when we've entered the top-level libraries block
+            if stripped == "libraries:":
+                in_libraries_block = True
+                output.append(line)
+                continue
+
+            # Exit the block once indentation resets or we hit a new top-level key
+            if in_libraries_block and not line.startswith("  ") and not line.strip().startswith("#") and ":" in line:
+                in_libraries_block = False
+
+            # Only inject header for lines like "  Movies:" or "  TV Shows:" inside the libraries block
+            if in_libraries_block and line.startswith("  ") and not line.startswith("   ") and line.strip().endswith(":") and not line.strip().startswith("-"):
+                library_name = line.strip().rstrip(":")
+                output.append(art(library_name))
+
+            elif stripped.startswith("collection_files:"):
+                output.append(art("Collections"))
+            elif stripped.startswith("overlay_files:"):
+                output.append(art("Overlays"))
+
+            output.append(line)
+
+        return "\n".join(output)
 
     # Function to dump YAML sections
     def dump_section(title, dump_name, data):
@@ -911,7 +1005,10 @@ def build_config(header_style="standard", config_name=None):
         # Dump the cleaned data to YAML
         with io.StringIO() as stream:
             dump_yaml.dump(cleaned_data, stream)
-            return f"{title}\n{stream.getvalue().strip()}\n\n"
+            section_output = stream.getvalue().strip()
+            if header_style != "none":
+                section_output = inject_section_headers(section_output, header_style)
+            return f"{title}\n{section_output}\n\n"
 
     ordered_sections = [
         ("libraries", "025-libraries"),

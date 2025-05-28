@@ -1,9 +1,9 @@
 /* global bootstrap, $ */
 
 if (typeof window.QS_DEBUG !== 'undefined' && !window.QS_DEBUG) {
-  console.debug = function () {}
-  console.log = function () {}
-  console.warn = function () {}
+  console.debug = function () { }
+  console.log = function () { }
+  console.warn = function () { }
   // console.error = function () {};
 }
 
@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   })
+})
+
+document.addEventListener('DOMContentLoaded', function () {
+  // Track user-modified <select> fields
+  trackModifiedSelects()
 })
 
 // Loading spinner functionality
@@ -145,6 +150,15 @@ function showToast (type, message) {
 
   // Show the toast
   toast.show()
+}
+
+// Mark all <select> elements when changed, so we can tell if a user modified them
+function trackModifiedSelects () {
+  document.querySelectorAll('select').forEach(select => {
+    select.addEventListener('change', () => {
+      select.setAttribute('data-user-modified', 'true')
+    })
+  })
 }
 
 /* eslint-enable no-unused-vars */

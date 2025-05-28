@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, Sortable, setupParentChildToggleSync */
+/* global EventHandler, ValidationHandler, Sortable, setupParentChildToggleSync, bootstrap */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -230,12 +230,22 @@ function setupParentChildToggleVisibility () {
 
       childrenGroup.style.display = parentChecked ? 'block' : 'none'
 
-      // Only show border if parent is ON and at least one child is ON
+      if (!parentChecked) {
+        childrenToggles.forEach(child => {
+          child.checked = false
+          const hidden = document.querySelector(`input[type="hidden"][name="${child.name}"]`)
+          if (hidden) hidden.value = 'false'
+        })
+      }
+
       if (parentChecked && anyChildChecked) {
         wrapper.classList.add('template-toggle-group-bordered')
       } else {
         wrapper.classList.remove('template-toggle-group-bordered')
       }
+
+      EventHandler.updateAccordionHighlights()
+      ValidationHandler.updateValidationState()
     }
 
     parentToggle.addEventListener('change', updateVisibilityAndBorder)
@@ -246,3 +256,31 @@ function setupParentChildToggleVisibility () {
     updateVisibilityAndBorder() // Initial check
   })
 }
+
+function showZoomPreviewModal (imageSrc) {
+  const zoomImg = document.getElementById('zoom-preview-img')
+  const caption = document.getElementById('zoom-preview-caption')
+  const modalElement = document.getElementById('zoomPreviewModal')
+
+  if (!modalElement || !zoomImg || !caption) {
+    console.error('[Zoom Modal] Required DOM elements missing.')
+    return
+  }
+
+  // Set image and caption
+  zoomImg.src = imageSrc
+  caption.textContent = imageSrc.split('/').pop()
+
+  // Ensure Bootstrap Modal is available
+  if (typeof bootstrap !== 'undefined' && typeof bootstrap.Modal === 'function') {
+    try {
+      const modalInstance = bootstrap.Modal.getOrCreateInstance(modalElement)
+      modalInstance.show()
+    } catch (err) {
+      console.error('[Zoom Modal] Failed to show modal:', err)
+    }
+  } else {
+    console.error('[Zoom Modal] Bootstrap Modal not available.')
+  }
+}
+window.showZoomPreviewModal = showZoomPreviewModal

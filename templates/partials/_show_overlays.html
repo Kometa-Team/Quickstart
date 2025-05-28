@@ -1,5 +1,4 @@
 <!-- Preview Overlays Accordion -->
-
 <div class="accordion mt-3" id="{{ library.id }}-previewOverlaysAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header">
@@ -12,500 +11,75 @@
     <div id="{{ library.id }}-overlayPreviewContainer" class="accordion-collapse collapse show"
       data-bs-parent="#{{ library.id }}-previewOverlaysAccordion">
       <div class="accordion-body overlay-toggle-group">
-        <div class="row">
-          <!-- Left Column: Form Elements -->
-          <div class="col-md-6">
-            <p class="mb-3">
-              Selecting any Overlays will automatically update the preview image here. You can upload your
-              custom base image from a file or a URL to preview your Overlays against that image.
-            </p>
-            <div class="form-floating mb-4">
-              <select id="{{ library.id }}-image-dropdown" class="form-select">
-                <option value="default">Default Kometa</option>
-              </select>
-              <label for="{{ library.id }}-image-dropdown">Select Custom Show Image</label>
+        <p class="mb-3">
+          Selecting any overlays will automatically update the preview. You can upload different base images for Show,
+          Season, and Episode posters.
+        </p>
+
+        {% for level in ['show', 'season', 'episode'] %}
+        <div class="card mb-4 border shadow-sm">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <!-- Controls Column (Left) -->
+              <div class="col-md-6">
+                <div class="form-floating mb-2">
+                  <select id="{{ library.id }}-{{ level }}-image-dropdown" class="form-select">
+                    <option value="default">Default Kometa</option>
+                    {% for filename in image_data[level] %}
+                    <option value="{{ filename }}" {% if data.libraries.get(library.id ~ '-' ~ level ~ '_selected_image'
+                      )==filename %}selected{% endif %}>
+                      {{ filename }}
+                    </option>
+                    {% endfor %}
+                  </select>
+
+                  <input type="hidden" id="{{ library.id }}-{{ level }}_selected_image"
+                    name="{{ library.id }}-{{ level }}_selected_image"
+                    value="{{ data.libraries.get(library.id ~ '-' ~ level ~ '_selected_image', '') }}">
+                  <label for="{{ library.id }}-{{ level }}-image-dropdown">Select {{ level.title() }} Image</label>
+                </div>
+
+                <input type="file" id="{{ library.id }}-{{ level }}-upload-image"
+                  accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/bmp" class="form-control mb-2">
+
+                <div class="input-group mb-2">
+                  <input type="url" id="{{ library.id }}-{{ level }}-image-url" class="form-control"
+                    placeholder="Enter Image URL">
+                  <button type="button" id="{{ library.id }}-{{ level }}-fetch-url-btn"
+                    class="btn btn-secondary">Fetch</button>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <button type="button" id="{{ library.id }}-{{ level }}-delete-image-btn"
+                    class="btn btn-danger btn-sm">
+                    <i class="bi bi-trash"></i> Delete
+                  </button>
+                  <button type="button" id="{{ library.id }}-{{ level }}-rename-image-btn"
+                    class="btn btn-warning btn-sm">
+                    <i class="fa fa-pencil-alt"></i> Rename
+                  </button>
+                </div>
+              </div>
+
+              <!-- Preview Column (Right) -->
+              <div class="col-md-6 text-center">
+                <h6 class="fw-bold text-capitalize">{{ level }} Image</h6>
+                <img id="{{ library.id }}-overlayPreviewImage-{{ level }}"
+                  src="/config/previews/{{ library.id }}-{{ level }}_preview.png" class="img-fluid mt-2"
+                  alt="{{ level.title() }} Preview"
+                  style="max-width: 100%; height: auto; border: 1px solid #ccc; cursor: zoom-in;"
+                  onclick="showZoomPreviewModal(this.src)">
+              </div>
             </div>
-
-            <!-- Upload an image automatically when selected -->
-            <input type="file" id="{{ library.id }}-upload-image"
-              accept="image/png, image/jpeg, image/jpg, image/webp, image/gif, image/bmp" class="form-control mb-2">
-
-            <!-- Fetch an image from a URL -->
-            <div class="input-group mt-2">
-              <input type="url" id="{{ library.id }}-image-url" class="form-control" placeholder="Enter Image URL">
-              <button type="button" id="{{ library.id }}-fetch-url-btn" class="btn btn-secondary">Fetch</button>
-            </div>
-
-            <button type="button" id="{{ library.id }}-delete-image-btn" class="btn btn-danger mt-2">
-              <i class="bi bi-trash"></i> Delete Selected
-            </button>
-            <button type="button" id="{{ library.id }}-rename-image-btn" class="btn btn-warning mt-2">
-              <i class="fa fa-pencil-alt"></i> Rename Selected
-            </button>
-
-          </div>
-
-          <!-- Right Column: Image Preview -->
-          <div class="col-md-6 d-flex align-items-center justify-content-center">
-            <img id="{{ library.id }}-overlayPreviewImage" src="/config/previews/{{ library.id }}-sho_preview.png"
-              class="img-fluid" alt="Show Preview" style="max-width: 100%; height: auto; border: 1px solid #ccc;">
           </div>
         </div>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-<!-- Chart Overlays Accordion -->
-<div class="accordion mt-3" id="{{ library.id }}-chartOverlaysAccordion">
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-chartOverlays" aria-expanded="false"
-        aria-controls="{{ library.id }}-chartOverlays">
-        Chart Overlays
-      </button>
-    </h2>
-    <div id="{{ library.id }}-chartOverlays" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-chartOverlaysAccordion">
-      <div class="accordion-body">
-        <!-- Chart Overlay Toggles -->
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_ribbon"
-            name="{{ library.id }}-overlay_ribbon" value="true" {% if data['libraries'][library.id ~ '-overlay_ribbon'
-            ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_ribbon" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_ribbon">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/ribbon/">Ribbon</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/ribbon.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
+        {% endfor %}
       </div>
     </div>
   </div>
 </div>
-<!-- Content Overlays Accordion -->
-<div class="accordion mt-3" id="{{ library.id }}-contentOverlaysAccordion">
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-contentOverlays" aria-expanded="false"
-        aria-controls="{{ library.id }}-contentOverlays">
-        Content Overlays
-      </button>
-    </h2>
-    <div id="{{ library.id }}-contentOverlays" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-contentOverlaysAccordion">
-      <div class="accordion-body">
-        <!-- Content Overlay Toggles -->
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_mediastinger"
-            name="{{ library.id }}-overlay_mediastinger" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_mediastinger' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_mediastinger" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_mediastinger">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/mediastinger/">Mediastinger</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/mediastinger.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
 
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_status"
-            name="{{ library.id }}-overlay_status" value="true" {% if data['libraries'][library.id ~ '-overlay_status'
-            ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_status" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_status">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/status/">Status</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/status.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Content Rating Overlays Accordion -->
-<div class="accordion mt-3" id="{{ library.id }}-contentRatingOverlaysAccordion">
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-contentRatingOverlays" aria-expanded="false"
-        aria-controls="{{ library.id }}-contentRatingOverlays">
-        Content Rating Overlays
-      </button>
-    </h2>
-    <div id="{{ library.id }}-contentRatingOverlays" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-contentRatingOverlaysAccordion">
-      <div class="accordion-body">
-        <!-- Content Rating Overlay Toggles -->
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_us_show"
-            name="{{ library.id }}-content-rating-group" value="us_show" {% if data['libraries'][library.id
-            ~ '-overlay_selected_content_rating' ]=='us_show' %}checked{% endif %}>
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_us_show">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_us_show/">US
-                Content Ratings</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/content_rating_us_show.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_uk"
-            name="{{ library.id }}-content-rating-group" value="uk" {% if data['libraries'][library.id
-            ~ '-overlay_selected_content_rating' ]=='uk' %}checked{% endif %}>
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_uk">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_uk/">UK
-                Content Ratings</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/content_rating_uk.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_de"
-            name="{{ library.id }}-content-rating-group" value="de" {% if data['libraries'][library.id
-            ~ '-overlay_selected_content_rating' ]=='de' %}checked{% endif %}>
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_de">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_de/">DE
-                Content Ratings</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/content_rating_de.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_au"
-            name="{{ library.id }}-content-rating-group" value="au" {% if data['libraries'][library.id
-            ~ '-overlay_selected_content_rating' ]=='au' %}checked{% endif %}>
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_au">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_au/">AU
-                Content Ratings</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/content_rating_au.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_nz"
-            name="{{ library.id }}-content-rating-group" value="nz" {% if data['libraries'][library.id
-            ~ '-overlay_selected_content_rating' ]=='nz' %}checked{% endif %}>
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_nz">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/content_rating_nz/">NZ
-                Content Ratings</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/content_rating_nz.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="radio" id="{{ library.id }}-overlay_content_rating_commonsense"
-            name="{{ library.id }}-content-rating-group" value="commonsense" {% if data['libraries'][library.id
-            ~ '-overlay_selected_content_rating' ]=='commonsense' %}checked{% endif %}>
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_content_rating_commonsense">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/commonsense/">Common
-                Sense Age Rating</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/commonsense.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <input type="hidden" name="{{ library.id }}-overlay_selected_content_rating"
-          id="{{ library.id }}-overlay_selected_content_rating"
-          value="{{ data['libraries'][library.id ~ '-overlay_selected_content_rating']|default('') }}">
-
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Media Overlays Accordion -->
-<div class="accordion mt-3" id="{{ library.id }}-mediaOverlaysAccordion">
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-mediaOverlays" aria-expanded="false"
-        aria-controls="{{ library.id }}-mediaOverlays">
-        Media Overlays
-      </button>
-    </h2>
-    <div id="{{ library.id }}-mediaOverlays" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-mediaOverlaysAccordion">
-      <div class="accordion-body">
-        <!-- Media Overlay Toggles -->
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_aspect"
-            name="{{ library.id }}-overlay_aspect" value="true" {% if data['libraries'][library.id ~ '-overlay_aspect'
-            ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_aspect" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_aspect">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/aspect/">Aspect
-                Ratio</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/aspect.png" height="300" style="opacity: 1;">'></i>
-            <a target="_blank" href="https://trash-guides.info/" target="_blank" class="text-decoration-none">
-              <i class="bi bi-exclamation-circle-fill text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
-                title="Designed to use the TRaSH Guides filename naming scheme. Click on the exclamation mark to go to the TRaSH Guides website."></i>
-            </a>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_audio_codec"
-            name="{{ library.id }}-overlay_audio_codec" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_audio_codec' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_audio_codec" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_audio_codec">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/audio_codec/">Audio
-                Codec</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/audio_codec.png" height="300" style="opacity: 1;">'></i>
-            <a target="_blank" href="https://trash-guides.info/" target="_blank" class="text-decoration-none">
-              <i class="bi bi-exclamation-circle-fill text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
-                title="Designed to use the TRaSH Guides filename naming scheme. Click on the exclamation mark to go to the TRaSH Guides website."></i>
-            </a>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_language_count"
-            name="{{ library.id }}-overlay_language_count" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_language_count' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_language_count" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_language_count">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/language_count/">Audio/Subtitle
-                Language Count</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/language_count.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_languages"
-            name="{{ library.id }}-overlay_languages" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_languages' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_languages" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_languages">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/languages/">Audio/Subtitle
-                Language Flags</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/languages.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_resolution"
-            name="{{ library.id }}-overlay_resolution" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_resolution' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_resolution" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_resolution">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/resolution/">Resolutions/Editions</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/resolution.png" height="300" style="opacity: 1;">'></i>
-            <a target="_blank" href="https://trash-guides.info/" target="_blank" class="text-decoration-none">
-              <i class="bi bi-exclamation-circle-fill text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
-                title="DEditions overlay is designed to use the Editions field within Plex [which requires Plex Pass to use] or the TRaSH Guides filename naming scheme. Click on the exclamation mark to go to the TRaSH Guides website."></i>
-            </a>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_runtimes"
-            name="{{ library.id }}-overlay_runtimes" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_runtimes' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_runtimes" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_runtimes">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/runtimes/">Runtimes</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/runtimes.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_versions"
-            name="{{ library.id }}-overlay_versions" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_versions' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_versions" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_versions">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/versions/">Versions</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/version.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_video_format"
-            name="{{ library.id }}-overlay_video_format" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_video_format' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_video_format" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_video_format">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/video_format/">Video
-                Format</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/video_format.png" height="300" style="opacity: 1;">'></i>
-            <a target="_blank" href="https://trash-guides.info/" target="_blank" class="text-decoration-none">
-              <i class="bi bi-exclamation-circle-fill text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
-                title="Designed to use the TRaSH Guides filename naming scheme. Click on the exclamation mark to go to the TRaSH Guides website."></i>
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Production Overlays Accordion -->
-<div class="accordion mt-3" id="{{ library.id }}-productionOverlaysAccordion">
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-productionOverlays" aria-expanded="false"
-        aria-controls="{{ library.id }}-productionOverlays">
-        Production Overlays
-      </button>
-    </h2>
-    <div id="{{ library.id }}-productionOverlays" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-productionOverlaysAccordion">
-      <div class="accordion-body">
-        <!-- Production Overlay Toggles -->
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_network"
-            name="{{ library.id }}-overlay_network" value="true" {% if data['libraries'][library.id ~ '-overlay_network'
-            ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_network" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_network">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/network/">Networks</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/network.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_streaming"
-            name="{{ library.id }}-overlay_streaming" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_streaming' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_streaming" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_streaming">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/streaming/">Streaming</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/streaming.png" height="300" style="opacity: 1;">'></i>
-            <i class="bi bi-exclamation-circle-fill text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
-              title="This will display content currently streaming on a particular service, not content that is exclusive to said service. Read the wiki for using `originals_only` to change this"></i>
-          </div>
-        </div>
-
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_studio"
-            name="{{ library.id }}-overlay_studio" value="true" {% if data['libraries'][library.id ~ '-overlay_studio'
-            ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_studio" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_studio">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/studio/">Studio</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/studio.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-<!-- Utility Overlays Accordion -->
-<div class="accordion mt-3" id="{{ library.id }}-utilityOverlaysAccordion">
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#{{ library.id }}-utilityOverlays" aria-expanded="false"
-        aria-controls="{{ library.id }}-utilityOverlays">
-        Utility Overlays
-      </button>
-    </h2>
-    <div id="{{ library.id }}-utilityOverlays" class="accordion-collapse collapse"
-      data-bs-parent="#{{ library.id }}-utilityOverlaysAccordion">
-      <div class="accordion-body">
-        <!-- Utility Overlay Toggles -->
-        <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="{{ library.id }}-overlay_direct_play"
-            name="{{ library.id }}-overlay_direct_play" value="true" {% if data['libraries'][library.id
-            ~ '-overlay_direct_play' ]|string|lower=='true' %}checked{% endif %}>
-          <input type="hidden" name="{{ library.id }}-overlay_direct_play" value="false">
-          <div class="d-flex align-items-center">
-            <label class="form-check-label me-3" for="{{ library.id }}-overlay_direct_play">
-              <a target="_blank"
-                href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/overlays/direct_play/">Direct
-                Play Only</a>
-            </label>
-            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
-              title='<img src="https://kometa.wiki/en/{{ version_info.kometa_branch }}/assets/images/defaults/overlays/direct_play.png" height="300" style="opacity: 1;">'></i>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
+{% import 'partials/_macros.html' as macros %}
+{% for group in overlay_config %}
+{{ macros.overlay_group_section(library, data, version_info, group) }}
+{% endfor %}

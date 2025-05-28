@@ -19,14 +19,14 @@ container_class="border rounded p-3 mb-2", number_input=None
             <div class="accordion-body">
                 {% else %}
                 <div class="{{ container_class }}">
-                    <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
+                    <div class="form-label">
                         <a href="{{ wiki_url }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-                        <span class="text-{{ tooltip_variant }}" data-bs-toggle="tooltip" data-bs-html="true"
-                            style="margin-left: 10px;" title="{{ description }}">
+                        <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
+                            title="{{ description }}">
                             <i
                                 class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
                         </span>
-                    </label>
+                    </div>
                     {% endif %}
                     {% if sources %}
                     <div class="row mb-3">
@@ -72,8 +72,10 @@ container_class="border rounded p-3 mb-2", number_input=None
                                 <input type="number" class="form-control"
                                     id="{{ library.id }}-attribute_{{ number_input.key }}"
                                     name="{{ library.id }}-attribute_{{ number_input.key }}"
-                                    min="{{ number_input.min | default(1) }}"
-                                    value="{{ data.libraries[library.id ~ '-attribute_' ~ number_input.key] | default('') }}">
+                                    min="{{ number_input.min | default(1) }}" {% set
+                                    raw_number=data.libraries[library.id ~ '-attribute_' ~ number_input.key] %} {% set
+                                    safe_number='' if raw_number in [None, 'None' ] else raw_number %}
+                                    value="{{ safe_number }}">
                             </div>
                         </div>
                     </div>
@@ -83,7 +85,8 @@ container_class="border rounded p-3 mb-2", number_input=None
                     {% if prefix in ["mass_genre_update", "radarr_remove_by_tag", "sonarr_remove_by_tag"] %}
                     <div class="row mb-3">
                         <div class="col-12">
-                            <label class="form-label">
+                            {% set input_id = library.id ~ '-attribute_' ~ prefix ~ '_custom_input' %}
+                            <label class="form-label" for="{{ input_id }}">
                                 {{ custom_string_label }}
                                 <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                     data-bs-html="true"
@@ -108,7 +111,8 @@ container_class="border rounded p-3 mb-2", number_input=None
                     {% else %}
                     <div class="row mb-3">
                         <div class="col-12">
-                            <label class="form-label">
+                            {% set input_id = library.id ~ '-attribute_' ~ prefix ~ '_custom' %}
+                            <label class="form-label" for="{{ input_id }}">
                                 {{ custom_string_label }}
                                 <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                     data-bs-html="true" title="Optional: A single custom string to append.">
@@ -116,30 +120,35 @@ container_class="border rounded p-3 mb-2", number_input=None
                                         class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
                                 </span>
                             </label>
+                            <input type="text" class="form-control" id="{{ input_id }}" name="{{ input_id }}"
+                                value="{{ data['libraries'][input_id] | default('') }}"
+                                placeholder="{{ custom_string_placeholder | default('Enter custom value') }}">
+                            {% set raw_val = data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~
+                            '_custom_string') %}
+                            {% set safe_val = '' if raw_val in [None, 'None'] else raw_val %}
+
                             {% set val_type = custom_string_validation %}
                             {% if val_type == "date" %}
                             <input type="date" class="form-control"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
-                                name="{{ library.id }}-attribute_{{ prefix }}_custom_string"
-                                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom_string', '') }}"
+                                name="{{ library.id }}-attribute_{{ prefix }}_custom_string" value="{{ safe_val }}"
                                 placeholder="{{ custom_string_placeholder | default('YYYY-MM-DD') }}">
                             {% elif val_type == "rating" %}
                             <input type="number" class="form-control"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
                                 name="{{ library.id }}-attribute_{{ prefix }}_custom_string" min="0" max="10" step="0.1"
-                                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom_string', '') }}"
+                                value="{{ safe_val }}"
                                 placeholder="{{ custom_string_placeholder | default('Enter rating between 0.0 and 10.0') }}">
                             {% elif val_type == "number_gt_0" %}
                             <input type="number" class="form-control"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
                                 name="{{ library.id }}-attribute_{{ prefix }}_custom_string" min="1" step="1"
-                                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom_string', '') }}"
+                                value="{{ safe_val }}"
                                 placeholder="{{ custom_string_placeholder | default('Enter number greater than 0') }}">
                             {% else %}
                             <input type="text" class="form-control"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
-                                name="{{ library.id }}-attribute_{{ prefix }}_custom_string"
-                                value="{{ data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~ '_custom_string', '') }}"
+                                name="{{ library.id }}-attribute_{{ prefix }}_custom_string" value="{{ safe_val }}"
                                 placeholder="{{ custom_string_placeholder | default('Enter custom string') }}">
                             {% endif %}
                         </div>
@@ -150,9 +159,9 @@ container_class="border rounded p-3 mb-2", number_input=None
                     {% if sources %}
                     <div class="row mb-3">
                         <div class="col-12">
-                            <label class="form-label">
+                            <p class="form-label">
                                 Selected Sources to use (Drag to Reorder):
-                            </label>
+                            </p>
                             <ul class="list-group sortable-list" id="{{ library.id }}-attribute_{{ prefix }}_sortable">
                             </ul>
                             <input type="hidden" name="{{ library.id }}-attribute_{{ prefix }}_order"
@@ -391,7 +400,8 @@ tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
                 </span>
                 <input type="number" class="form-control" id="{{ library.id }}-attribute_{{ number_input.key }}"
                     name="{{ library.id }}-attribute_{{ number_input.key }}" min="{{ number_input.min | default(1) }}"
-                    value="{{ data.libraries[library.id ~ '-attribute_' ~ number_input.key] | default('') }}">
+                    {% set raw_number=data.libraries[library.id ~ '-attribute_' ~ number_input.key] %} {% set
+                    safe_number='' if raw_number in [None, 'None' ] else raw_number %} value="{{ safe_number }}">
             </div>
         </div>
     </div>
@@ -465,8 +475,10 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                                 <input type="number" class="form-control"
                                     id="{{ library.id }}-attribute_{{ number_input.key }}"
                                     name="{{ library.id }}-attribute_{{ number_input.key }}"
-                                    min="{{ number_input.min | default(1) }}"
-                                    value="{{ data.libraries[library.id ~ '-attribute_' ~ number_input.key]|default('') }}"
+                                    min="{{ number_input.min | default(1) }}" {% set
+                                    raw_number=data.libraries[library.id ~ '-attribute_' ~ number_input.key] %} {% set
+                                    safe_number='' if raw_number in [None, 'None' ] else raw_number %}
+                                    value="{{ safe_number }}"
                                     aria-describedby="{{ library.id }}-attribute_{{ number_input.key }}_text">
                             </div>
                         </div>
@@ -629,12 +641,12 @@ select_input.key if yml_location == "top_level" else
                     <!-- Path input -->
                     <div class="row mt-2 mb-3">
                         <div class="col-12">
-                            <label class="form-label">
+                            <label class="form-label" for="{{ library.id }}-attribute_{{ section.prefix }}_path">
                                 Path to Metadata Backup File
                                 <span class="text-{{ section.tooltip_variant }}" data-bs-toggle="tooltip"
                                     data-bs-html="true" title="{{ section.text_input.tooltip }}">
                                     <i
-                                        class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} ms-3"></i>
+                                        class="bi {% if section.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} ms-3"></i>
                                 </span>
                             </label>
                             <input type="text" class="form-control"
@@ -648,12 +660,12 @@ select_input.key if yml_location == "top_level" else
                     <!-- Exclude list using add/remove dynamic UI -->
                     <div class="row mb-3">
                         <div class="col-12">
-                            <label class="form-label">
+                            <label class="form-label" for="{{ library.id }}-{{ section.prefix }}_custom_input">
                                 Exclude Metadata Fields
                                 <span class="text-{{ section.tooltip_variant }}" data-bs-toggle="tooltip"
                                     data-bs-html="true" title="{{ section.text_input.tooltip }}">
                                     <i
-                                        class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} ms-3"></i>
+                                        class="bi {% if section.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} ms-3"></i>
                                 </span>
                             </label>
                             <div class="input-group mb-2">
@@ -722,14 +734,14 @@ select_input.key if yml_location == "top_level" else
                 <div class="{{ section.container_class }}">
                     {% endif %}
 
-                    <label class="form-label">
+                    <div class="form-label">
                         <a href="{{ section.wiki }}" target="_blank" rel="noopener noreferrer">{{ section.title }}</a>
                         <span class="text-{{ section.tooltip_variant or 'info' }} ms-3" data-bs-toggle="tooltip"
                             data-bs-html="true" title="{{ section.description }}">
                             <i
-                                class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                class="bi {% if section.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
                         </span>
-                    </label>
+                    </div>
 
                     <div class="row">
                         <div class="col-md-5 mb-2">
@@ -774,7 +786,7 @@ prefix) %}
     <div class="input-group mb-2">
         <span class="input-group-text" id="{{ full_id }}_text">
             <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
-            <span class="text-{{ tooltip_variant }}" data-bs-toggle="tooltip" data-bs-html="true"
+            <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip" data-bs-html="true"
                 title="{{ description }}">
                 <i
                     class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
@@ -787,7 +799,7 @@ prefix) %}
 {% endmacro %}
 {% macro collection_group_section(library, data, version_info, group) %}
 {% set accordion_safe = group.accordion | replace(' ', '') %}
-<!-- {{ group.accordion }} Accordion -->
+<!-- {{ group.accordion }} Collection Accordion -->
 <div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion">
     <div class="accordion-item">
         <h2 class="accordion-header">
@@ -815,7 +827,7 @@ prefix) %}
                                 <a target="_blank" href="{{ collection.url }}">{{ collection.label }}</a>
                             </label>
                             {% if collection.image_url %}
-                            <i class="bi bi-search text-success me-3" data-bs-toggle="tooltip" data-bs-html="true"
+                            <i class="bi bi-search text-success" data-bs-toggle="tooltip" data-bs-html="true"
                                 title='<img src="{{ collection.image_url }}" height="200" style="opacity: 1;">'></i>
                             {% endif %}
                             {% if collection.tooltip %}
@@ -894,5 +906,107 @@ prefix) %}
         </div>
     </div>
 </div>
-<!-- End of {{ group.accordion }} Accordion -->
+<!-- End of {{ group.accordion }} Collection Accordion -->
+{% endmacro %}
+
+{% macro overlay_group_section(library, data, version_info, group) %}
+{% set accordion_safe = group.accordion | replace(' ', '') %}
+<!-- {{ group.accordion }} Overlay Accordion -->
+<div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion">
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#{{ library.id }}-{{ accordion_safe }}" aria-expanded="false"
+                aria-controls="{{ library.id }}-{{ accordion_safe }}">
+                {{ group.accordion }}
+            </button>
+        </h2>
+        <div id="{{ library.id }}-{{ accordion_safe }}" class="accordion-collapse collapse"
+            data-bs-parent="#{{ library.id }}-{{ accordion_safe }}Accordion">
+            <div class="accordion-body">
+
+                {% set input_type = group.input_type or "checkbox" %}
+                {% set overlay_types = ['movie'] if library.type == 'movie' else ['show', 'season', 'episode'] %}
+
+                {% for type in overlay_types %}
+                {% set radio_safe_name = library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name %}
+                {% set current_radio_value = data.libraries.get(radio_safe_name) %}
+                {% set has_type_overlays = [] %}
+                {% for overlay in group.overlays %}
+                {% if overlay.media_types and (type in overlay.media_types) %}
+                {% set _ = has_type_overlays.append(1) %}
+                {% endif %}
+                {% endfor %}
+
+                {% if has_type_overlays | length > 0 %}
+                <div class="overlay-group mb-4" data-type="{{ type }}">
+                    {% if overlay_types | length > 1 %}
+                    <h6 class="text-capitalize">{{ type }} Overlays</h6>
+                    {% endif %}
+
+                    {% for overlay in group.overlays %}
+                    {% if overlay.media_types and (type in overlay.media_types) %}
+                    {% set radio_safe_name = library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name %}
+                    {% set input_name = radio_safe_name if input_type == "radio" else library.id ~ '-' ~ type ~ '-' ~
+                    overlay.id %}
+                    {% set input_value = overlay.value if input_type == "radio" else "true" %}
+                    {% set is_checked = (
+                    current_radio_value == input_value if input_type == "radio"
+                    else data.libraries[input_name]|string|lower == "true"
+                    ) %}
+
+                    <div class="template-toggle-group ms-3 mb-2">
+                        <div class="form-check form-switch">
+                            <input
+                                class="form-check-input overlay-toggle template-parent-toggle{% if overlay.readonly %} readonly-toggle{% endif %}"
+                                type="checkbox" id="{{ library.id }}-{{ type }}-{{ overlay.id }}"
+                                name="{{ input_name }}" value="{{ input_value }}" {% if is_checked %}checked{% endif %}
+                                data-template-group="{{ radio_safe_name }}-{{ overlay.id }}" {% if input_type=='radio'
+                                %} data-radio-group="true" data-was-checked="{{ 'true' if is_checked else 'false' }}" {%
+                                endif %}>
+
+                            {% if input_type == "checkbox" %}
+                            <input type="hidden" name="{{ input_name }}" value="false">
+                            {% endif %}
+
+                            <div class="d-flex align-items-center">
+                                <label class="form-check-label me-3" for="{{ library.id }}-{{ type }}-{{ overlay.id }}">
+                                    <a target="_blank" href="{{ overlay.url }}">{{ overlay.label }}</a>
+                                </label>
+
+                                {% if overlay.image_url %}
+                                <i class="bi bi-search text-success" data-bs-toggle="tooltip" data-bs-html="true"
+                                    title='<img src="{{ overlay.image_url }}" height="200" style="opacity: 1;">'></i>
+                                {% endif %}
+                                {% if overlay.tooltip %}
+                                <i class="bi {% if overlay.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ overlay.tooltip_variant or 'info' }} ms-3"
+                                    data-bs-toggle="tooltip" data-bs-html="true" title="{{ overlay.tooltip }}"></i>
+                                {% endif %}
+                                {% if overlay.extra_url %}
+                                <a href="{{ overlay.extra_url }}" target="_blank" class="text-decoration-none ms-3">
+                                    <i class="bi bi-box-arrow-up-right text-info" data-bs-toggle="tooltip"
+                                        title="Open related guide or documentation."></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                {% endfor %}
+
+                {% if input_type == "radio" %}
+                {% for type in overlay_types %}
+                <input type="hidden" name="{{ library.id }}-{{ type }}-{{ group.radio_group_name }}"
+                    value="{{ data.libraries.get(library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name, '') }}">
+                {% endfor %}
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End of {{ group.accordion }} Overlay Accordion -->
 {% endmacro %}

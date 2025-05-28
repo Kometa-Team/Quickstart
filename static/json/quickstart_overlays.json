@@ -1,0 +1,831 @@
+[
+  {
+    "accordion": "Chart Overlays",
+    "media_types": [
+      "movie",
+      "show"
+    ],
+    "overlays": [
+      {
+        "id": "overlay_ribbon",
+        "label": "Ribbon",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/ribbon/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ribbon.png",
+        "media_types": [
+          "movie",
+          "show"
+        ]
+      }
+    ]
+  },
+  {
+    "accordion": "Content Overlays",
+    "media_types": [
+      "movie",
+      "show"
+    ],
+    "overlays": [
+      {
+        "id": "overlay_mediastinger",
+        "label": "Mediastinger",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/mediastinger/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/mediastinger.png",
+        "media_types": [
+          "movie"
+        ]
+      },
+      {
+        "id": "overlay_episode_info",
+        "label": "Episode Info",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/episode_info/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/episode_info.png",
+        "media_types": [
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_status",
+        "label": "Status",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/status/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/status.png",
+        "media_types": [
+          "show"
+        ]
+      }
+    ]
+  },
+  {
+    "accordion": "Content Rating Overlays",
+    "media_types": [
+      "movie",
+      "show"
+    ],
+    "input_type": "radio",
+    "radio_group_name": "overlay_content_rating",
+    "overlays": [
+      {
+        "id": "overlay_content_rating_us_movie",
+        "label": "US Content Ratings",
+        "value": "us_movie",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_us_movie/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_movie.png",
+        "media_types": [
+          "movie"
+        ]
+      },
+      {
+        "id": "overlay_content_rating_us_show",
+        "label": "US Content Ratings",
+        "value": "us_show",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_us_show/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_show.png",
+        "media_types": [
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_content_rating_uk",
+        "label": "UK Content Ratings",
+        "value": "uk",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_uk/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_uk.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_content_rating_de",
+        "label": "DE Content Ratings",
+        "value": "de",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_de/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_de.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_content_rating_au",
+        "label": "AU Content Ratings",
+        "value": "au",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_au/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_au.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_content_rating_nz",
+        "label": "NZ Content Ratings",
+        "value": "nz",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_nz/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_nz.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_content_rating_commonsense",
+        "label": "Common Sense Age Rating",
+        "value": "commonsense",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/commonsense/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/commonsense.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "accordion": "Media Overlays",
+    "media_types": [
+      "movie",
+      "show"
+    ],
+    "overlays": [
+      {
+        "id": "overlay_aspect",
+        "label": "Aspect Ratio",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/aspect/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/aspect.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
+        "tooltip_variant": "danger",
+        "extra_url": "https://trash-guides.info/",
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_audio_codec",
+        "label": "Audio Codec",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/audio_codec/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/audio_codec.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
+        "tooltip_variant": "danger",
+        "extra_url": "https://trash-guides.info/",
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_language_count",
+        "label": "Audio/Subtitle Language Count",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/language_count/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/language_count.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_languages",
+        "label": "Audio/Subtitle Language Flags",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/languages/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_resolution",
+        "label": "Resolutions/Editions",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/resolution/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/resolution.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
+        "tooltip_variant": "danger",
+        "extra_url": "https://trash-guides.info/",
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_runtimes",
+        "label": "Runtimes",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/runtimes/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/runtimes.png",
+        "media_types": [
+          "movie",
+          "show",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_versions",
+        "label": "Versions",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/versions/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/versions.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_video_format",
+        "label": "Video Format",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/video_format/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/video_format.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
+        "tooltip_variant": "danger",
+        "extra_url": "https://trash-guides.info/",
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "accordion": "Production Overlays",
+    "media_types": [
+      "movie",
+      "show"
+    ],
+    "overlays": [
+      {
+        "id": "overlay_streaming",
+        "label": "Streaming",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/streaming/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/streaming.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "tooltip": "This will display content currently streaming on a particular service, not content that is exclusive to said service. Read the wiki for using <code>originals_only</code> to change this",
+        "tooltip_variant": "danger"
+      },
+      {
+        "id": "overlay_studio",
+        "label": "Studio",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/studio/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/studio.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+                "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "overlay_network",
+        "label": "Networks",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/network/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/network.png",
+        "media_types": [
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "accordion": "Utility Overlays",
+    "media_types": [
+      "movie",
+      "show"
+    ],
+    "overlays": [
+      {
+        "id": "overlay_direct_play",
+        "label": "Direct Play Only",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/direct_play/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/direct_play.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": [
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Show",
+            "value": "show",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Season",
+            "value": "season",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "type": "toggle",
+            "key": "builder_level",
+            "label": "Apply to Episode",
+            "value": "episode",
+            "media_types": [
+              "show"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

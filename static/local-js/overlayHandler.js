@@ -216,40 +216,120 @@ document.addEventListener('DOMContentLoaded', function () {
   imdbDropdowns.forEach(dropdown => {
     const libraryId = dropdown.id.split('-attribute_template_variables')[0]
     const isMovie = dropdown.dataset.libraryType === 'movie'
-    const libraryName = dropdown.dataset.libraryId // Movies / TestMovies etc.
+    const libraryName = dropdown.dataset.libraryId
 
-    // 1. Initialize separator overlay logic
+    // 1. Initialize overlay dropdowns and separator preview
     OverlayHandler.initializeOverlays(libraryId, isMovie)
 
-    // 2. Populate IMDb Dropdown immediately
-    const currentValue = dropdown.value // current selected tt######
+    // 2. Populate IMDb dropdown options
+    const currentValue = dropdown.value
     OverlayHandler.populateImdbDropdown(dropdown, libraryName, isMovie ? 'movie' : 'show', currentValue)
+  })
+
+  // 3. Sync parent/child toggle checked state
+  setupParentChildToggleSync()
+
+  // 4. Toggle child wrapper visibility for both collections and overlays
+  document.querySelectorAll('input[data-template-group]').forEach(parent => {
+    const parentId = parent.id
+    const childWrapper = document.querySelector(`.child-toggle-wrapper[data-toggle-parent="${parentId}"]`)
+    if (!childWrapper) return
+
+    // Initial visibility
+    childWrapper.style.display = parent.checked ? '' : 'none'
+
+    // Toggle visibility on change
+    parent.addEventListener('change', () => {
+      childWrapper.style.display = parent.checked ? '' : 'none'
+    })
   })
 })
 
 // eslint-disable-next-line no-unused-vars
 function setupParentChildToggleSync () {
-  console.log('[DEBUG] Running setupParentChildToggleSync...')
+  let syncing = false
 
-  document.querySelectorAll('input[data-template-group]').forEach(parent => {
-    const childToggles = document.querySelectorAll(`input[data-parent-toggle="${parent.id}"]`)
-    console.log(`[DEBUG] Found parent: ${parent.id} with ${childToggles.length} children`)
+  const parents = document.querySelectorAll('.template-parent-toggle')
 
-    // 1. Parent change affects children
-    parent.addEventListener('change', () => {
-      const checked = parent.checked
-      console.log(`[DEBUG] Parent ${parent.id} changed to ${checked}`)
-      childToggles.forEach(child => {
-        if (!child.disabled) child.checked = checked
-      })
+  parents.forEach(parent => {
+    const groupId = parent.dataset.templateGroup
+    const wrapper = document.querySelector(`[data-toggle-parent="${groupId}"]`)
+    const isRadioStyle = parent.type === 'radio' || parent.dataset.radioGroup === 'true'
+
+    // Simulate radio behavior using data-radio-group (add this attribute in Jinja if needed)
+    const groupName = parent.name
+
+    const childToggles = wrapper?.querySelectorAll('.template-child-toggle') || []
+
+    parent.addEventListener('click', () => {
+      if (syncing) return
+      syncing = true
+
+      const isChecked = parent.checked
+
+      if (isRadioStyle) {
+        const groupParents = document.querySelectorAll(`input[name="${groupName}"]`)
+
+        groupParents.forEach(other => {
+          if (other !== parent) {
+            other.checked = false
+            other.dataset.wasChecked = 'false'
+
+            const otherWrapper = document.querySelector(`[data-toggle-parent="${other.dataset.templateGroup}"]`)
+            const otherChildren = otherWrapper?.querySelectorAll('.template-child-toggle') || []
+            otherChildren.forEach(child => {
+              child.checked = false
+              child.dispatchEvent(new Event('change', { bubbles: true }))
+            })
+            if (otherWrapper) otherWrapper.style.display = 'none'
+          }
+        })
+
+        // Ensure only one is selected
+        if (isChecked && parent.dataset.wasChecked === 'true') {
+          parent.checked = false
+          parent.dataset.wasChecked = 'false'
+          if (wrapper) wrapper.style.display = 'none'
+          childToggles.forEach(child => {
+            child.checked = false
+            child.dispatchEvent(new Event('change', { bubbles: true }))
+          })
+          // Clear hidden input
+          const hidden = document.querySelector(`input[type="hidden"][name="${groupName}"]`)
+          if (hidden) hidden.value = ''
+        } else {
+          parent.dataset.wasChecked = 'true'
+          if (wrapper) wrapper.style.display = ''
+          childToggles.forEach(child => {
+            child.checked = true
+            child.dispatchEvent(new Event('change', { bubbles: true }))
+          })
+
+          // Set hidden input to selected value
+          const hidden = document.querySelector(`input[type="hidden"][name="${groupName}"]`)
+          if (hidden) hidden.value = parent.value
+        }
+      }
+
+      syncing = false
     })
 
-    // 2. Children change affects parent
+    // Sync back from children
     childToggles.forEach(child => {
       child.addEventListener('change', () => {
+        if (syncing) return
+        syncing = true
+
         const anyChecked = Array.from(childToggles).some(c => c.checked)
         parent.checked = anyChecked
-        console.log(`[DEBUG] Child ${child.id} changed. Setting parent ${parent.id} to ${anyChecked}`)
+        if (wrapper) wrapper.style.display = anyChecked ? '' : 'none'
+
+        // If none checked and radio style, simulate uncheck
+        if (!anyChecked && isRadioStyle) {
+          parent.dataset.wasChecked = 'false'
+        }
+
+        syncing = false
       })
     })
   })

@@ -1,5 +1,6 @@
 import argparse
 import io
+import json
 import os
 import signal
 import socket
@@ -34,20 +35,36 @@ from werkzeug.utils import secure_filename
 from flask_session import Session
 from modules import validations, output, persistence, helpers, database
 
-load_dotenv(os.path.join(helpers.CONFIG_DIR, ".env"), override=True)
+DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
+load_dotenv(DOTENV, override=True)
 
 UPLOAD_FOLDER = os.path.join(helpers.CONFIG_DIR, "uploads")
-UPLOAD_FOLDER_MOVIE = os.path.join(UPLOAD_FOLDER, "movies")
-UPLOAD_FOLDER_SHOW = os.path.join(UPLOAD_FOLDER, "shows")
-os.makedirs(UPLOAD_FOLDER_MOVIE, exist_ok=True)
-os.makedirs(UPLOAD_FOLDER_SHOW, exist_ok=True)
+UPLOAD_FOLDERS = {
+    "movie": os.path.join(UPLOAD_FOLDER, "movies"),
+    "show": os.path.join(UPLOAD_FOLDER, "shows"),
+    "season": os.path.join(UPLOAD_FOLDER, "seasons"),
+    "episode": os.path.join(UPLOAD_FOLDER, "episodes"),
+}
+# Ensure all upload subdirectories exist
+for folder in UPLOAD_FOLDERS.values():
+    os.makedirs(folder, exist_ok=True)
 IMAGES_FOLDER = os.path.join(helpers.MEIPASS_DIR, "static", "images")
 OVERLAY_FOLDER = os.path.join(IMAGES_FOLDER, "overlays")
+DEFAULT_IMAGE_MAP = {
+    "movie": os.path.join(IMAGES_FOLDER, "default.png"),
+    "show": os.path.join(IMAGES_FOLDER, "default-sho_preview.png"),
+    "season": os.path.join(IMAGES_FOLDER, "default-season_preview.png"),
+    "episode": os.path.join(IMAGES_FOLDER, "default-episode_preview.png"),
+}
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
-GITHUB_MASTER_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
-GITHUB_DEVELOP_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
+GITHUB_MASTER_VERSION_URL = (
+    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
+)
+GITHUB_DEVELOP_VERSION_URL = (
+    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
+)
 
 basedir = os.path.abspath
 
@@ -80,7 +97,9 @@ app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
-app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir="flask_session", threshold=500)
+app.config["SESSION_CACHELIB"] = FileSystemCache(
+    cache_dir="flask_session", threshold=500
+)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
@@ -90,10 +109,10 @@ server_thread = None
 # Ensure json-schema files are up to date at startup
 helpers.ensure_json_schema()
 
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
-
 parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
-parser.add_argument("--port", type=int, help="Specify the port number to run the server")
+parser.add_argument(
+    "--port", type=int, help="Specify the port number to run the server"
+)
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
 
@@ -101,170 +120,9 @@ port = args.port if args.port else int(os.getenv("QS_PORT", "7171"))
 running_port = port
 debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
-print(f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}")
-
-
-@app.route("/rename_library_image", methods=["POST"])
-def rename_library_image():
-    data = request.json
-    old_name = data.get("old_name")
-    new_name = data.get("new_name")
-    image_type = data.get("type")  # "movie" or "show"
-
-    if not old_name or not new_name or image_type not in ["movie", "show"]:
-        return jsonify({"status": "error", "message": "Invalid parameters"}), 400
-
-    save_folder = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
-    old_path = os.path.join(save_folder, old_name)
-
-    # Ensure old file exists
-    if not os.path.exists(old_path):
-        return jsonify({"status": "error", "message": "File not found"}), 404
-
-    # Extract original extension
-    old_ext = os.path.splitext(old_name)[1]  # e.g., ".jpg"
-
-    # Ensure new name has correct extension
-    if "." not in new_name:  # No extension provided
-        new_name += old_ext  # Append original extension
-    elif not new_name.endswith(old_ext):  # Wrong extension provided
-        new_name += old_ext  # Append original extension
-
-    new_path = os.path.join(save_folder, new_name)
-
-    # Check if the new file name already exists
-    if os.path.exists(new_path):
-        return (
-            jsonify({"status": "error", "message": "File with new name already exists"}),
-            400,
-        )
-
-    try:
-        os.rename(old_path, new_path)
-        return jsonify({"status": "success", "message": "File renamed successfully"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-
-@app.route("/config/uploads/<path:filename>")
-def serve_uploaded_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
-
-
-@app.route("/config/previews/<path:filename>")
-def serve_previews(filename):
-    return send_from_directory(PREVIEW_FOLDER, filename)
-
-
-@app.route("/generate_preview", methods=["POST"])
-def generate_preview():
-    data = request.json
-    overlays = data.get("overlays", [])
-    img_type = data.get("type", "movie")  # "movie" or "show"
-    selected_image = data.get("selected_image", "default.png")
-    library_id = data.get("library_id", "default-library")  # Unique identifier for each library
-    upload_folder = UPLOAD_FOLDER_MOVIE if img_type == "movie" else UPLOAD_FOLDER_SHOW
-
-    if app.config["QS_DEBUG"]:
-        print(f"[DEBUG] Generating preview for {library_id}, Type: {img_type}, Overlays: {overlays}")
-
-    # Ensure preview directory exists
-    if not os.path.exists(PREVIEW_FOLDER):
-        os.makedirs(PREVIEW_FOLDER)
-
-    # Generate a unique preview filename per library
-    preview_filename = f"{library_id}-{img_type}_preview.png"
-    preview_filepath = os.path.join(PREVIEW_FOLDER, preview_filename)
-
-    # First, check if `default.png` exists in `IMAGES_FOLDER`
-    default_image_path = os.path.join(IMAGES_FOLDER, "default.png")
-
-    if not selected_image or selected_image == "default":
-        if os.path.exists(default_image_path):
-            base_image_path = default_image_path  # Use existing `default.png`
-        else:
-            base_image_path = os.path.join(PREVIEW_FOLDER, "default.png")
-
-            # Only create grey image if both locations are missing.
-            if not os.path.exists(base_image_path):
-                if app.config["QS_DEBUG"]:
-                    print("[DEBUG] default.png not found in IMAGES_FOLDER or previews, creating grey placeholder image...")
-
-                base_img = Image.new("RGBA", (1000, 1500), (128, 128, 128, 255))  # grey
-                base_img.save(base_image_path)
-    else:
-        base_image_path = os.path.join(upload_folder, selected_image)
-
-    if not os.path.exists(base_image_path):
-        return jsonify({"status": "error", "message": "Selected image not found."}), 400
-
-    base_img = Image.open(base_image_path).convert("RGBA")
-
-    # Ensure base image is 1000x1500
-    base_img = base_img.resize((1000, 1500), Image.LANCZOS)  # noqa
-
-    # Apply overlays
-    for overlay in overlays:
-        overlay_path = os.path.join(OVERLAY_FOLDER, f"{overlay}.png")
-        if os.path.exists(overlay_path):
-            overlay_img = Image.open(overlay_path).convert("RGBA")
-            base_img.paste(overlay_img, (0, 0), overlay_img)
-
-    # Save the generated preview
-    base_img.save(preview_filepath)
-
-    if app.config["QS_DEBUG"]:
-        print(f"[DEBUG] Preview saved at {preview_filepath}")
-
-    return jsonify({"status": "success", "preview_url": f"/{preview_filepath}"})
-
-
-@app.route("/config/previews/<filename>")
-def serve_preview_image(filename):
-    """
-    Serves the requested preview image. If not found, returns a default placeholder.
-    """
-    filepath = os.path.join(PREVIEW_FOLDER, filename)
-
-    if os.path.exists(filepath):
-        return send_file(filepath, mimetype="image/png")
-    else:
-        print(f"[WARNING] Requested preview image '{filename}' not found. Returning default.")
-        return send_file(os.path.join(IMAGES_FOLDER, "default.png"), mimetype="image/png")
-
-
-@app.route("/get_preview_image/<img_type>", methods=["GET"])
-def get_preview_image(img_type):
-    preview_filename = f"{img_type}_preview.png"
-    preview_path = os.path.join(PREVIEW_FOLDER, preview_filename)
-
-    # Generate preview if it doesn't exist
-    if not os.path.exists(preview_path):
-        print(f"[WARNING] Preview not found for {img_type}. Generating...")
-        generate_preview()
-
-    if os.path.exists(preview_path):
-        return send_file(preview_path, mimetype="image/png")
-
-    return jsonify({"status": "error", "message": "Preview image not found"}), 400
-
-
-@app.route("/list_uploaded_images", methods=["GET"])
-def list_uploaded_images():
-    image_type = request.args.get("type")  # Expecting "movie" or "show"
-
-    if image_type not in ["movie", "show"]:
-        return jsonify({"status": "error", "message": "Invalid image type"}), 400
-
-    # Ensure the correct directory is used
-    uploads_dir = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
-
-    if not os.path.exists(uploads_dir):
-        return jsonify({"images": []})  # Return empty list if folder doesn't exist
-
-    images = [img for img in os.listdir(uploads_dir) if img.lower().endswith((".png", ".jpg", ".jpeg"))]
-
-    return jsonify({"images": images})
+print(
+    f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
+)
 
 
 @app.route("/upload_library_image", methods=["POST"])
@@ -272,61 +130,53 @@ def upload_library_image():
     if "image" not in request.files:
         return jsonify({"status": "error", "message": "No image uploaded"}), 400
     image = request.files["image"]
+    image_type = request.form.get("type")
 
-    image_type = request.form.get("type")  # "movie" or "show"
-
-    if not image or not image_type or image_type not in ["movie", "show"]:
+    if not image or image_type not in UPLOAD_FOLDERS:
         return (
             jsonify({"status": "error", "message": "Invalid request parameters"}),
             400,
         )
 
-    # Validate file extension
+    # Validate extension
     filename = secure_filename(image.filename)
     ext = filename.rsplit(".", 1)[-1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
+    if ext not in helpers.ALLOWED_EXTENSIONS:
         return (
             jsonify(
                 {
                     "status": "error",
-                    "message": "Invalid file type. Allowed: png, jpg, jpeg, webp",
+                    "message": f"Invalid file type. Allowed: {helpers.allowed_extensions_string()}",
                 }
             ),
             400,
         )
 
     # Open and validate image
-    img = Image.open(image)  # noqa
-    if not helpers.is_valid_aspect_ratio(img):
-        return (
-            jsonify(
-                {
-                    "status": "error",
-                    "message": "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500).",
-                }
-            ),
-            400,
+    img = Image.open(image)
+    aspect_ratio = "16:9" if image_type == "episode" else "2:3"
+    if not helpers.is_valid_aspect_ratio(img, target_ratio=aspect_ratio):
+        message = (
+            "Image must have a 16:9 aspect ratio (e.g., 1920x1080)."
+            if image_type == "episode"
+            else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
         )
+        return jsonify({"status": "error", "message": message}), 400
 
-    # Resize if needed
-    img = img.resize((1000, 1500), Image.LANCZOS)  # noqa
+    # Resize to target size
+    target_size = (1920, 1080) if image_type == "episode" else (1000, 1500)
+    img = img.resize(target_size, Image.LANCZOS)
 
-    # Set save directory
-    save_folder = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
+    # Save image
+    save_folder = UPLOAD_FOLDERS[image_type]
     os.makedirs(save_folder, exist_ok=True)
-
-    # Set initial save path **before the loop**
     save_path = os.path.join(save_folder, filename)
-
-    # Prevent overwriting existing files
     base, ext = os.path.splitext(filename)
     counter = 1
-    while os.path.exists(os.path.join(save_folder, filename)):
+    while os.path.exists(save_path):
         filename = f"{base}_{counter}{ext}"
         save_path = os.path.join(save_folder, filename)
         counter += 1
-
-    # Save the validated and resized image
     img.save(save_path)
 
     return jsonify(
@@ -342,9 +192,9 @@ def upload_library_image():
 def fetch_library_image():
     data = request.json
     image_url = data.get("url")
-    image_type = data.get("type")  # "movie" or "show"
+    image_type = data.get("type")
 
-    if not image_url or not image_type or image_type not in ["movie", "show"]:
+    if not image_url or image_type not in UPLOAD_FOLDERS:
         return (
             jsonify({"status": "error", "message": "Invalid request parameters"}),
             400,
@@ -355,55 +205,50 @@ def fetch_library_image():
         response.raise_for_status()
         img = Image.open(BytesIO(response.content))
 
-        # Validate file extension
         file_extension = img.format.lower()
-        if file_extension not in ALLOWED_EXTENSIONS:
+        if file_extension not in helpers.ALLOWED_EXTENSIONS:
             return (
                 jsonify(
                     {
                         "status": "error",
-                        "message": "Invalid file type. Allowed: png, jpg, jpeg, webp",
+                        "message": f"Invalid file type. Allowed: {helpers.allowed_extensions_string()}",
                     }
                 ),
                 400,
             )
 
-        # Ensure the correct aspect ratio
-        if not helpers.is_valid_aspect_ratio(img):
-            return (
-                jsonify(
-                    {
-                        "status": "error",
-                        "message": "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500).",
-                    }
-                ),
-                400,
+        # Validate aspect ratio
+        aspect_ratio = "16:9" if image_type == "episode" else "2:3"
+        if not helpers.is_valid_aspect_ratio(img, target_ratio=aspect_ratio):
+            message = (
+                "Image must have a 16:9 aspect ratio (e.g., 1920x1080)."
+                if image_type == "episode"
+                else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
             )
+            return jsonify({"status": "error", "message": message}), 400
 
-        # Resize if necessary
-        img = img.resize((1000, 1500), Image.LANCZOS)  # noqa
+        # Resize to target size
+        target_size = (1920, 1080) if image_type == "episode" else (1000, 1500)
+        img = img.resize(target_size, Image.LANCZOS)
 
-        # Set save directory
-        save_folder = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
-        os.makedirs(save_folder, exist_ok=True)
-
-        # Generate a safe filename from URL
+        # Generate filename
         filename = secure_filename(os.path.basename(image_url))
-        if "." not in filename or filename.split(".")[-1].lower() not in ALLOWED_EXTENSIONS:
-            filename += ".png"  # Default to PNG if no valid extension is found
+        if (
+            "." not in filename
+            or filename.split(".")[-1].lower() not in helpers.ALLOWED_EXTENSIONS
+        ):
+            filename += ".png"
 
-        # Set initial save path **before the loop**
+        # Save image
+        save_folder = UPLOAD_FOLDERS[image_type]
+        os.makedirs(save_folder, exist_ok=True)
         save_path = os.path.join(save_folder, filename)
-
-        # Prevent overwriting existing files
         base, ext = os.path.splitext(filename)
         counter = 1
         while os.path.exists(save_path):
             filename = f"{base}_{counter}{ext}"
             save_path = os.path.join(save_folder, filename)
             counter += 1
-
-        # Save the validated and resized image
         img.save(save_path)
 
         return jsonify(
@@ -426,14 +271,166 @@ def fetch_library_image():
         )
 
 
-@app.route("/delete_library_image/<filename>", methods=["DELETE"])
-def delete_library_image(filename):
-    image_type = request.args.get("type")  # "movie" or "show"
+@app.route("/rename_library_image", methods=["POST"])
+def rename_library_image():
+    data = request.json
+    old_name = data.get("old_name")
+    new_name = data.get("new_name")
+    image_type = data.get("type")
 
-    if image_type not in ["movie", "show"]:
+    if not old_name or not new_name or image_type not in UPLOAD_FOLDERS:
+        return jsonify({"status": "error", "message": "Invalid parameters"}), 400
+
+    save_folder = UPLOAD_FOLDERS[image_type]
+    old_path = os.path.join(save_folder, old_name)
+
+    if not os.path.exists(old_path):
+        return jsonify({"status": "error", "message": "File not found"}), 404
+
+    old_ext = os.path.splitext(old_name)[1]
+    if "." not in new_name:
+        new_name += old_ext
+    elif not new_name.endswith(old_ext):
+        new_name += old_ext
+
+    new_path = os.path.join(save_folder, new_name)
+    if os.path.exists(new_path):
+        return (
+            jsonify(
+                {"status": "error", "message": "File with new name already exists"}
+            ),
+            400,
+        )
+
+    try:
+        os.rename(old_path, new_path)
+        return jsonify({"status": "success", "message": "File renamed successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/list_uploaded_images", methods=["GET"])
+def list_uploaded_images():
+    image_type = request.args.get("type")
+    if image_type not in UPLOAD_FOLDERS:
         return jsonify({"status": "error", "message": "Invalid image type"}), 400
 
-    uploads_dir = UPLOAD_FOLDER_MOVIE if image_type == "movie" else UPLOAD_FOLDER_SHOW
+    uploads_dir = UPLOAD_FOLDERS[image_type]
+    if not os.path.exists(uploads_dir):
+        return jsonify({"images": []})
+
+    images = [
+        img
+        for img in os.listdir(uploads_dir)
+        if any(img.lower().endswith(f".{ext}") for ext in helpers.ALLOWED_EXTENSIONS)
+    ]
+
+    return jsonify({"status": "success", "images": images})
+
+
+@app.route("/generate_preview", methods=["POST"])
+def generate_preview():
+    data = request.json
+    img_type = data.get("type", "movie")
+    selected_image = data.get("selected_image", "default.png")
+    library_id = data.get("library_id", "default-library")
+
+    # Normalize overlays from dict (by type) or flat list
+    raw_overlays = data.get("overlays", {})
+    if isinstance(raw_overlays, dict):
+        overlays = raw_overlays.get(img_type, [])
+    elif isinstance(raw_overlays, list):
+        overlays = raw_overlays
+    else:
+        overlays = []
+
+    if img_type not in ["movie", "show", "season", "episode"]:
+        return jsonify({"status": "error", "message": "Invalid type"}), 400
+
+    if not os.path.exists(PREVIEW_FOLDER):
+        os.makedirs(PREVIEW_FOLDER)
+
+    preview_filename = f"{library_id}-{img_type}_preview.png"
+    preview_filepath = os.path.join(PREVIEW_FOLDER, preview_filename)
+
+    # Resolve base image
+    if not selected_image or selected_image == "default":
+        base_image_path = DEFAULT_IMAGE_MAP.get(img_type, DEFAULT_IMAGE_MAP["movie"])
+        if not os.path.exists(base_image_path):
+            fallback_size = (1920, 1080) if img_type == "episode" else (1000, 1500)
+            base_img = Image.new("RGBA", fallback_size, (128, 128, 128, 255))
+            base_img.save(base_image_path)
+    else:
+        base_image_path = os.path.join(UPLOAD_FOLDERS[img_type], selected_image)
+
+    if not os.path.exists(base_image_path):
+        return jsonify({"status": "error", "message": "Selected image not found."}), 400
+
+    # Open and resize base image
+    base_img = Image.open(base_image_path).convert("RGBA")
+    size = (1920, 1080) if img_type == "episode" else (1000, 1500)
+    base_img = base_img.resize(size, Image.LANCZOS)
+
+    # Apply overlays
+    for overlay in overlays:
+        filename = f"{overlay}.png"
+        overlay_path = os.path.join(OVERLAY_FOLDER, filename)
+        if os.path.exists(overlay_path):
+            overlay_img = Image.open(overlay_path).convert("RGBA")
+            base_img.paste(overlay_img, (0, 0), overlay_img)
+
+    base_img.save(preview_filepath)
+
+    return jsonify({"status": "success", "preview_url": f"/{preview_filepath}"})
+
+
+@app.route("/config/previews/<path:filename>")
+def serve_previews(filename):
+    return send_from_directory(PREVIEW_FOLDER, filename)
+
+
+@app.route("/config/uploads/<path:filename>")
+def serve_uploaded_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
+
+
+@app.route("/get_preview_image/<img_type>", methods=["GET"])
+def get_preview_image(img_type):
+    preview_filename = f"{img_type}_preview.png"
+    preview_path = os.path.join(PREVIEW_FOLDER, preview_filename)
+
+    if not os.path.exists(preview_path):
+        generate_preview()
+
+    if os.path.exists(preview_path):
+        return send_file(preview_path, mimetype="image/png")
+
+    return jsonify({"status": "error", "message": "Preview image not found"}), 400
+
+
+@app.route("/config/previews/<filename>")
+def serve_preview_image(filename):
+    path = os.path.join(PREVIEW_FOLDER, filename)
+    if os.path.exists(path):
+        return send_file(path, mimetype="image/png")
+    return send_file(os.path.join(IMAGES_FOLDER, "default.png"), mimetype="image/png")
+    try:
+        data = request.get_json()
+        app.logger.info("Received data: %s", data)  # Log the received data
+        return jsonify({"status": "success"})
+    except Exception as e:
+        app.logger.error("Error updating libraries: %s", str(e))
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route("/delete_library_image/<filename>", methods=["DELETE"])
+def delete_library_image(filename):
+    image_type = request.args.get("type")
+
+    if image_type not in UPLOAD_FOLDERS:
+        return jsonify({"status": "error", "message": "Invalid image type"}), 400
+
+    uploads_dir = UPLOAD_FOLDERS[image_type]
     file_path = os.path.join(uploads_dir, filename)
 
     if not os.path.exists(file_path):
@@ -443,17 +440,6 @@ def delete_library_image(filename):
         os.remove(file_path)
         return jsonify({"status": "success", "message": f"Deleted {filename}"}), 200
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-
-@app.route("/update_libraries", methods=["POST"])
-def update_libraries():
-    try:
-        data = request.get_json()
-        app.logger.info("Received data: %s", data)  # Log the received data
-        return jsonify({"status": "success"})
-    except Exception as e:
-        app.logger.error("Error updating libraries: %s", str(e))
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -584,13 +570,17 @@ def step(name):
         # Only split if the value is not None or empty
         if page_info["next_page"]:
             next_num = page_info["next_page"].split("-")[0]
-            page_info["next_page_name"] = template_list.get(next_num, {}).get("name", "Next")
+            page_info["next_page_name"] = template_list.get(next_num, {}).get(
+                "name", "Next"
+            )
         else:
             page_info["next_page_name"] = "Next"
 
         if page_info["prev_page"]:
             prev_num = page_info["prev_page"].split("-")[0]
-            page_info["prev_page_name"] = template_list.get(prev_num, {}).get("name", "Previous")
+            page_info["prev_page_name"] = template_list.get(prev_num, {}).get(
+                "name", "Previous"
+            )
         else:
             page_info["prev_page_name"] = "Previous"
 
@@ -603,14 +593,23 @@ def step(name):
     # Retrieve data from storage
     data = persistence.retrieve_settings(name)
     if app.config["QS_DEBUG"]:
-        print(f"[DEBUG] Raw data retrieved for {name}: {data}")
+        # print(f"[DEBUG] Raw data retrieved for {name}: {data}")
+        debug_dir = os.path.join(helpers.CONFIG_DIR, "debug_logs")
+        os.makedirs(debug_dir, exist_ok=True)
+
+        debug_path = os.path.join(debug_dir, f"{name}_retrieved_data.json")
+
+        with open(debug_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+    print(f"[DEBUG] Raw data written to {debug_path}")
 
     # Fetch Plex settings
     all_libraries = persistence.retrieve_settings("010-plex")
 
     # Debug: Print entire structure
-    if app.config["QS_DEBUG"]:
-        print("[DEBUG] all_libraries content:", all_libraries)
+    # if app.config["QS_DEBUG"]:
+        # print("[DEBUG] all_libraries content:", all_libraries)
 
     # Ensure 'plex' key exists before accessing sub-keys
     plex_data = all_libraries.get("plex", {})
@@ -671,7 +670,9 @@ def step(name):
         data["libraries"]["sho-template_variables"] = {}
 
     if app.config["QS_DEBUG"]:
-        print(f"[DEBUG] ************************************************************************")
+        print(
+            f"[DEBUG] ************************************************************************"
+        )
         print(f"[DEBUG] Data retrieved for {name}")
 
     (
@@ -694,15 +695,33 @@ def step(name):
         data["sho-template_variables"] = {}
 
     # Ensure these are lists
-    plex_data["tmp_movie_libraries"] = plex_data.get("tmp_movie_libraries", "").split(",") if isinstance(plex_data.get("tmp_movie_libraries"), str) else []
-    plex_data["tmp_show_libraries"] = plex_data.get("tmp_show_libraries", "").split(",") if isinstance(plex_data.get("tmp_show_libraries"), str) else []
-    plex_data["tmp_music_libraries"] = plex_data.get("tmp_music_libraries", "").split(",") if isinstance(plex_data.get("tmp_music_libraries"), str) else []
-    plex_data["tmp_user_list"] = plex_data.get("tmp_user_list", "").split(",") if isinstance(plex_data.get("tmp_user_list"), str) else []
+    plex_data["tmp_movie_libraries"] = (
+        plex_data.get("tmp_movie_libraries", "").split(",")
+        if isinstance(plex_data.get("tmp_movie_libraries"), str)
+        else []
+    )
+    plex_data["tmp_show_libraries"] = (
+        plex_data.get("tmp_show_libraries", "").split(",")
+        if isinstance(plex_data.get("tmp_show_libraries"), str)
+        else []
+    )
+    plex_data["tmp_music_libraries"] = (
+        plex_data.get("tmp_music_libraries", "").split(",")
+        if isinstance(plex_data.get("tmp_music_libraries"), str)
+        else []
+    )
+    plex_data["tmp_user_list"] = (
+        plex_data.get("tmp_user_list", "").split(",")
+        if isinstance(plex_data.get("tmp_user_list"), str)
+        else []
+    )
 
     # Ensure correct rendering for the final validation page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if name == "900-final":
-        validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
+        validated, validation_error, config_data, yaml_content = output.build_config(
+            header_style, config_name=config_name
+        )
 
         page_info["yaml_valid"] = validated
         session["yaml_content"] = yaml_content
@@ -718,8 +737,11 @@ def step(name):
         )
 
     else:
-        section_config = helpers.load_quickstart_config("quickstart_attributes.json")
-        collection_config = helpers.load_quickstart_config("quickstart_collections.json")
+        attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
+        collection_config = helpers.load_quickstart_config(
+            "quickstart_collections.json"
+        )
+        overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
         return render_template(
             name + ".html",
             page_info=page_info,
@@ -727,10 +749,17 @@ def step(name):
             plex_data=plex_data,
             movie_libraries=movie_libraries,
             show_libraries=show_libraries,
-            section_config=section_config,
+            attribute_config=attribute_config,
             collection_config=collection_config,
+            overlay_config=overlay_config,
             template_list=file_list,
             available_configs=available_configs,
+            image_data={
+                "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
+                "show": os.listdir(UPLOAD_FOLDERS["show"]),
+                "season": os.listdir(UPLOAD_FOLDERS["season"]),
+                "episode": os.listdir(UPLOAD_FOLDERS["episode"]),
+            },
         )
 
 
@@ -757,7 +786,9 @@ def get_top_imdb_items_route(library_name):
         )
 
     # Call with placeholder_id
-    items, saved_item = helpers.get_top_imdb_items(library_name, media_type, placeholder_id)
+    items, saved_item = helpers.get_top_imdb_items(
+        library_name, media_type, placeholder_id
+    )
 
     return jsonify({"status": "success", "items": items, "saved_item": saved_item})
 
@@ -820,15 +851,24 @@ def refresh_plex_libraries():
         if not config_name:
             return jsonify({"valid": False, "error": "Missing config_name"}), 400
 
-        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")  # Fetch from DB
+        plex_url, plex_token = persistence.get_stored_plex_credentials(
+            "010-plex"
+        )  # Fetch from DB
 
         # Load default values from config.yml.template
-        dummy_plex_config = persistence.get_dummy_data("plex")  # Retrieves {"url": "...", "token": "..."}
+        dummy_plex_config = persistence.get_dummy_data(
+            "plex"
+        )  # Retrieves {"url": "...", "token": "..."}
         default_plex_url = dummy_plex_config.get("url", "")
         default_plex_token = dummy_plex_config.get("token", "")
 
         # Exit early if the Plex credentials are still using default placeholder values
-        if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
+        if (
+            not plex_url
+            or not plex_token
+            or plex_url == default_plex_url
+            or plex_token == default_plex_token
+        ):
             return (
                 jsonify(
                     {
@@ -840,7 +880,9 @@ def refresh_plex_libraries():
             )
 
         # Fetch latest libraries from Plex
-        plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
+        plex_response = validations.validate_plex_server(
+            {"plex_url": plex_url, "plex_token": plex_token}
+        )
 
         # Fix: Convert Flask response object to JSON before accessing data.
         if isinstance(plex_response, Flask.response_class):
@@ -999,7 +1041,9 @@ if __name__ == "__main__":
                 print("[INFO] Checked for updates.")
                 time.sleep(86400)
 
-    update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
+    update_thread = threading.Thread(
+        target=start_update_thread, args=(app,), daemon=True
+    )
     update_thread.start()
 
     def get_lan_ip():
@@ -1015,13 +1059,23 @@ if __name__ == "__main__":
 
     try:
         from PyQt5.QtGui import QIcon
-        from PyQt5.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QAction, QInputDialog, QMessageBox, QWidget
+        from PyQt5.QtWidgets import (
+            QApplication,
+            QSystemTrayIcon,
+            QMenu,
+            QAction,
+            QInputDialog,
+            QMessageBox,
+            QWidget,
+        )
         from PyQt5.QtCore import Qt, QTimer
 
         if app.config["QUICKSTART_DOCKER"]:
             has_tray = False
         elif sys.platform.startswith("linux"):
-            has_tray = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+            has_tray = bool(
+                os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
+            )
         elif sys.platform == "darwin" or sys.platform.startswith("win"):
             has_tray = True
         else:
@@ -1029,7 +1083,7 @@ if __name__ == "__main__":
     except (ModuleNotFoundError, ImportError) as ie:
         has_tray = False
 
-    if has_tray:
+    if not has_tray:
         # Headless mode: skip system tray
         print("[INFO] Running in headless mode — no system tray will be shown.")
         if app.config["QUICKSTART_DOCKER"]:
@@ -1041,7 +1095,7 @@ if __name__ == "__main__":
             print("Quickstart is Running")
             print(f"Access it at http://{ip_address}:{running_port}")
 
-        print("Port and Debug Settings can be amended by editing your .env file")
+        print(f"Port and Debug Settings can be amended by editing your {DOTENV} file")
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
@@ -1071,7 +1125,9 @@ if __name__ == "__main__":
                 self.dialog_parent.setAttribute(Qt.WA_DontShowOnScreen, True)
 
                 self.tray = QSystemTrayIcon()
-                self.icon_path = os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")
+                self.icon_path = os.path.join(
+                    helpers.MEIPASS_DIR, "static", "favicon.png"
+                )
 
                 self.tray.setIcon(QIcon(self.icon_path))
                 self.tray.setToolTip(f"Quickstart (Port: {running_port})")
@@ -1082,9 +1138,13 @@ if __name__ == "__main__":
                 self.open_action.triggered.connect(self.open_quickstart)
 
                 self.github_action = QAction("Quickstart GitHub")
-                self.github_action.triggered.connect(lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart"))
+                self.github_action.triggered.connect(
+                    lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart")
+                )
 
-                self.toggle_debug_action = QAction(f"{'Disable' if debug_mode else 'Enable'} Debug")
+                self.toggle_debug_action = QAction(
+                    f"{'Disable' if debug_mode else 'Enable'} Debug"
+                )
                 self.toggle_debug_action.triggered.connect(self.toggle_debug)
 
                 self.change_port_action = QAction("Change Port")
@@ -1115,8 +1175,12 @@ if __name__ == "__main__":
 
                 print("Quickstart is Running")
                 print(f"Access it locally at: http://localhost:{running_port}")
-                print(f"Access it from other devices at: http://{ip_address}:{running_port}")
-                print("Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your .env file")  # Open the browser automatically
+                print(
+                    f"Access it from other devices at: http://{ip_address}:{running_port}"
+                )
+                print(
+                    f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file"
+                )  # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 
                 # Keep the invisible parent alive
@@ -1138,7 +1202,9 @@ if __name__ == "__main__":
                 debug_mode = not debug_mode
                 helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
                 app.config["QS_DEBUG"] = debug_mode
-                self.toggle_debug_action.setText(f"{'Disable' if debug_mode else 'Enable'} Debug")
+                self.toggle_debug_action.setText(
+                    f"{'Disable' if debug_mode else 'Enable'} Debug"
+                )
 
             def show_messagebox(self, box_type, title, text):
                 box = QMessageBox(self.dialog_parent)
@@ -1164,7 +1230,9 @@ if __name__ == "__main__":
                     dialog.setIntValue(port)
 
                     # Remove help button and set custom icon
-                    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+                    dialog.setWindowFlags(
+                        dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint
+                    )
                     dialog.setWindowIcon(QIcon(self.icon_path))
 
                     # Execute dialog
