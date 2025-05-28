@@ -333,9 +333,7 @@ def build_libraries_section(
 
                         raw_name = key.split("-overlay_")[-1]
                         overlay_name = (
-                            "commonsense" if value == "commonsense"
-                            else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str)
-                            else raw_name
+                            "commonsense" if value == "commonsense" else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str) else raw_name
                         )
 
                         if not overlay_name:
@@ -916,7 +914,9 @@ def build_config(header_style="standard", config_name=None):
 
     def inject_section_headers(yaml_string, font):
         def art(title):
-            return add_border_to_ascii_art(pyfiglet.figlet_format(title, font=font)) if font not in ['none', 'single line'] else f"#==================== {title} ====================#"
+            return (
+                add_border_to_ascii_art(pyfiglet.figlet_format(title, font=font)) if font not in ["none", "single line"] else f"#==================== {title} ====================#"
+            )
 
         lines = yaml_string.splitlines()
         output = []
