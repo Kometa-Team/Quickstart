@@ -1,3 +1,4 @@
+import namesgenerator
 import os
 import secrets
 import json
@@ -124,6 +125,12 @@ def save_settings(raw_source, form_data):
     base_data = get_dummy_data(source_name)
     user_entered = data != base_data
     validated = data.get("validated", False)
+
+    # Ensure config_name exists even if session expired
+    if "config_name" not in session:
+        session["config_name"] = namesgenerator.get_random_name()
+        if app.config["QS_DEBUG"]:
+            print(f"[DEBUG] Session expired or missing config_name. Generated new one: {session['config_name']}")
 
     database.save_section_data(
         name=session["config_name"],
