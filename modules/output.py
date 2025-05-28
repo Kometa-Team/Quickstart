@@ -322,26 +322,35 @@ def build_libraries_section(
                         overlay_entries.append({"default": "commonsense" if value.lower() == "commonsense" else f"content_rating_{value}"})
 
             elif library_type == "sho":
-                # Grouped by builder level for shows
+                # Step 1: Bucket overlays by name and builder_level
+                overlay_groups = {}
                 builder_levels = ["show", "season", "episode"]
                 for level in builder_levels:
                     prefix = f"{library_type}-library_{overlay_key}-{level}-overlay_"
                     for key, value in raw_overlay_entries.items():
                         if not key.startswith(prefix):
                             continue
-                        overlay_name = key.split("-overlay_")[-1]
 
-                        if "content_rating" in overlay_name:
-                            if isinstance(value, str) and value:
-                                overlay_name = "commonsense" if value == "commonsense" else f"content_rating_{value}"
-                            else:
-                                continue  # skip malformed content rating
+                        raw_name = key.split("-overlay_")[-1]
+                        overlay_name = (
+                            "commonsense" if value == "commonsense"
+                            else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str)
+                            else raw_name
+                        )
 
-                        overlay_entry = {"default": overlay_name}
-                        # Only include builder_level if not "show"
-                        if level != "show":
-                            overlay_entry["template_variables"] = {"builder_level": level}
-                        overlay_entries.append(overlay_entry)
+                        if not overlay_name:
+                            continue  # skip malformed
+
+                        overlay_groups.setdefault(overlay_name, {})[level] = True
+
+                # Step 2: Output with `builder_level: show` omitted
+                for overlay_name, levels in overlay_groups.items():
+                    if "show" in levels:
+                        overlay_entries.append({"default": overlay_name})
+                    if "season" in levels:
+                        overlay_entries.append({"default": overlay_name, "template_variables": {"builder_level": "season"}})
+                    if "episode" in levels:
+                        overlay_entries.append({"default": overlay_name, "template_variables": {"builder_level": "episode"}})
 
         if overlay_entries:
             entry["overlay_files"] = overlay_entries
