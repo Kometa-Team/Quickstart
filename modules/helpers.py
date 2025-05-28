@@ -617,3 +617,27 @@ def find_item_by_imdb_id(library_name, imdb_id, media_type):
 
 def allowed_extensions_string():
     return ", ".join(sorted(ALLOWED_EXTENSIONS))
+
+
+def get_plex_summary():
+    try:
+        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+        plex = PlexServer(plex_url, plex_token)
+
+        version = plex.version
+        plex_pass = "Yes" if plex.isPlexPass else "No"
+        maintenance = plex.preferences.get('ScheduledLibraryUpdateTime', "Unknown")
+
+        return {
+            "version": version,
+            "plex_pass": plex_pass,
+            "maintenance": maintenance,
+        }
+
+    except Exception as e:
+        return {
+            "version": "Unavailable",
+            "plex_pass": "Unavailable",
+            "maintenance": "Unavailable",
+            "error": str(e),
+        }
