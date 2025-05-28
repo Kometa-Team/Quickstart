@@ -59,12 +59,8 @@ DEFAULT_IMAGE_MAP = {
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
-GITHUB_MASTER_VERSION_URL = (
-    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
-)
-GITHUB_DEVELOP_VERSION_URL = (
-    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
-)
+GITHUB_MASTER_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
+GITHUB_DEVELOP_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
 
 basedir = os.path.abspath
 
@@ -97,9 +93,7 @@ app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
-app.config["SESSION_CACHELIB"] = FileSystemCache(
-    cache_dir="flask_session", threshold=500
-)
+app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir="flask_session", threshold=500)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
@@ -110,9 +104,7 @@ server_thread = None
 helpers.ensure_json_schema()
 
 parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
-parser.add_argument(
-    "--port", type=int, help="Specify the port number to run the server"
-)
+parser.add_argument("--port", type=int, help="Specify the port number to run the server")
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
 
@@ -120,9 +112,7 @@ port = args.port if args.port else int(os.getenv("QS_PORT", "7171"))
 running_port = port
 debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
-print(
-    f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
-)
+print(f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}")
 
 
 @app.route("/upload_library_image", methods=["POST"])
@@ -156,11 +146,7 @@ def upload_library_image():
     img = Image.open(image)
     aspect_ratio = "16:9" if image_type == "episode" else "2:3"
     if not helpers.is_valid_aspect_ratio(img, target_ratio=aspect_ratio):
-        message = (
-            "Image must have a 16:9 aspect ratio (e.g., 1920x1080)."
-            if image_type == "episode"
-            else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
-        )
+        message = "Image must have a 16:9 aspect ratio (e.g., 1920x1080)." if image_type == "episode" else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
         return jsonify({"status": "error", "message": message}), 400
 
     # Resize to target size
@@ -220,11 +206,7 @@ def fetch_library_image():
         # Validate aspect ratio
         aspect_ratio = "16:9" if image_type == "episode" else "2:3"
         if not helpers.is_valid_aspect_ratio(img, target_ratio=aspect_ratio):
-            message = (
-                "Image must have a 16:9 aspect ratio (e.g., 1920x1080)."
-                if image_type == "episode"
-                else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
-            )
+            message = "Image must have a 16:9 aspect ratio (e.g., 1920x1080)." if image_type == "episode" else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
             return jsonify({"status": "error", "message": message}), 400
 
         # Resize to target size
@@ -233,10 +215,7 @@ def fetch_library_image():
 
         # Generate filename
         filename = secure_filename(os.path.basename(image_url))
-        if (
-            "." not in filename
-            or filename.split(".")[-1].lower() not in helpers.ALLOWED_EXTENSIONS
-        ):
+        if "." not in filename or filename.split(".")[-1].lower() not in helpers.ALLOWED_EXTENSIONS:
             filename += ".png"
 
         # Save image
@@ -296,9 +275,7 @@ def rename_library_image():
     new_path = os.path.join(save_folder, new_name)
     if os.path.exists(new_path):
         return (
-            jsonify(
-                {"status": "error", "message": "File with new name already exists"}
-            ),
+            jsonify({"status": "error", "message": "File with new name already exists"}),
             400,
         )
 
@@ -319,11 +296,7 @@ def list_uploaded_images():
     if not os.path.exists(uploads_dir):
         return jsonify({"images": []})
 
-    images = [
-        img
-        for img in os.listdir(uploads_dir)
-        if any(img.lower().endswith(f".{ext}") for ext in helpers.ALLOWED_EXTENSIONS)
-    ]
+    images = [img for img in os.listdir(uploads_dir) if any(img.lower().endswith(f".{ext}") for ext in helpers.ALLOWED_EXTENSIONS)]
 
     return jsonify({"status": "success", "images": images})
 
@@ -570,17 +543,13 @@ def step(name):
         # Only split if the value is not None or empty
         if page_info["next_page"]:
             next_num = page_info["next_page"].split("-")[0]
-            page_info["next_page_name"] = template_list.get(next_num, {}).get(
-                "name", "Next"
-            )
+            page_info["next_page_name"] = template_list.get(next_num, {}).get("name", "Next")
         else:
             page_info["next_page_name"] = "Next"
 
         if page_info["prev_page"]:
             prev_num = page_info["prev_page"].split("-")[0]
-            page_info["prev_page_name"] = template_list.get(prev_num, {}).get(
-                "name", "Previous"
-            )
+            page_info["prev_page_name"] = template_list.get(prev_num, {}).get("name", "Previous")
         else:
             page_info["prev_page_name"] = "Previous"
 
@@ -609,7 +578,7 @@ def step(name):
 
     # Debug: Print entire structure
     # if app.config["QS_DEBUG"]:
-        # print("[DEBUG] all_libraries content:", all_libraries)
+    # print("[DEBUG] all_libraries content:", all_libraries)
 
     # Ensure 'plex' key exists before accessing sub-keys
     plex_data = all_libraries.get("plex", {})
@@ -670,9 +639,7 @@ def step(name):
         data["libraries"]["sho-template_variables"] = {}
 
     if app.config["QS_DEBUG"]:
-        print(
-            f"[DEBUG] ************************************************************************"
-        )
+        print(f"[DEBUG] ************************************************************************")
         print(f"[DEBUG] Data retrieved for {name}")
 
     (
@@ -695,33 +662,15 @@ def step(name):
         data["sho-template_variables"] = {}
 
     # Ensure these are lists
-    plex_data["tmp_movie_libraries"] = (
-        plex_data.get("tmp_movie_libraries", "").split(",")
-        if isinstance(plex_data.get("tmp_movie_libraries"), str)
-        else []
-    )
-    plex_data["tmp_show_libraries"] = (
-        plex_data.get("tmp_show_libraries", "").split(",")
-        if isinstance(plex_data.get("tmp_show_libraries"), str)
-        else []
-    )
-    plex_data["tmp_music_libraries"] = (
-        plex_data.get("tmp_music_libraries", "").split(",")
-        if isinstance(plex_data.get("tmp_music_libraries"), str)
-        else []
-    )
-    plex_data["tmp_user_list"] = (
-        plex_data.get("tmp_user_list", "").split(",")
-        if isinstance(plex_data.get("tmp_user_list"), str)
-        else []
-    )
+    plex_data["tmp_movie_libraries"] = plex_data.get("tmp_movie_libraries", "").split(",") if isinstance(plex_data.get("tmp_movie_libraries"), str) else []
+    plex_data["tmp_show_libraries"] = plex_data.get("tmp_show_libraries", "").split(",") if isinstance(plex_data.get("tmp_show_libraries"), str) else []
+    plex_data["tmp_music_libraries"] = plex_data.get("tmp_music_libraries", "").split(",") if isinstance(plex_data.get("tmp_music_libraries"), str) else []
+    plex_data["tmp_user_list"] = plex_data.get("tmp_user_list", "").split(",") if isinstance(plex_data.get("tmp_user_list"), str) else []
 
     # Ensure correct rendering for the final validation page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if name == "900-final":
-        validated, validation_error, config_data, yaml_content = output.build_config(
-            header_style, config_name=config_name
-        )
+        validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
 
         page_info["yaml_valid"] = validated
         session["yaml_content"] = yaml_content
@@ -738,9 +687,7 @@ def step(name):
 
     else:
         attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
-        collection_config = helpers.load_quickstart_config(
-            "quickstart_collections.json"
-        )
+        collection_config = helpers.load_quickstart_config("quickstart_collections.json")
         overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
         return render_template(
             name + ".html",
@@ -786,9 +733,7 @@ def get_top_imdb_items_route(library_name):
         )
 
     # Call with placeholder_id
-    items, saved_item = helpers.get_top_imdb_items(
-        library_name, media_type, placeholder_id
-    )
+    items, saved_item = helpers.get_top_imdb_items(library_name, media_type, placeholder_id)
 
     return jsonify({"status": "success", "items": items, "saved_item": saved_item})
 
@@ -851,24 +796,15 @@ def refresh_plex_libraries():
         if not config_name:
             return jsonify({"valid": False, "error": "Missing config_name"}), 400
 
-        plex_url, plex_token = persistence.get_stored_plex_credentials(
-            "010-plex"
-        )  # Fetch from DB
+        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")  # Fetch from DB
 
         # Load default values from config.yml.template
-        dummy_plex_config = persistence.get_dummy_data(
-            "plex"
-        )  # Retrieves {"url": "...", "token": "..."}
+        dummy_plex_config = persistence.get_dummy_data("plex")  # Retrieves {"url": "...", "token": "..."}
         default_plex_url = dummy_plex_config.get("url", "")
         default_plex_token = dummy_plex_config.get("token", "")
 
         # Exit early if the Plex credentials are still using default placeholder values
-        if (
-            not plex_url
-            or not plex_token
-            or plex_url == default_plex_url
-            or plex_token == default_plex_token
-        ):
+        if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
             return (
                 jsonify(
                     {
@@ -880,9 +816,7 @@ def refresh_plex_libraries():
             )
 
         # Fetch latest libraries from Plex
-        plex_response = validations.validate_plex_server(
-            {"plex_url": plex_url, "plex_token": plex_token}
-        )
+        plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
 
         # Fix: Convert Flask response object to JSON before accessing data.
         if isinstance(plex_response, Flask.response_class):
@@ -1041,9 +975,7 @@ if __name__ == "__main__":
                 print("[INFO] Checked for updates.")
                 time.sleep(86400)
 
-    update_thread = threading.Thread(
-        target=start_update_thread, args=(app,), daemon=True
-    )
+    update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
     update_thread.start()
 
     def get_lan_ip():
@@ -1073,9 +1005,7 @@ if __name__ == "__main__":
         if app.config["QUICKSTART_DOCKER"]:
             has_tray = False
         elif sys.platform.startswith("linux"):
-            has_tray = bool(
-                os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
-            )
+            has_tray = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
         elif sys.platform == "darwin" or sys.platform.startswith("win"):
             has_tray = True
         else:
@@ -1125,9 +1055,7 @@ if __name__ == "__main__":
                 self.dialog_parent.setAttribute(Qt.WA_DontShowOnScreen, True)
 
                 self.tray = QSystemTrayIcon()
-                self.icon_path = os.path.join(
-                    helpers.MEIPASS_DIR, "static", "favicon.png"
-                )
+                self.icon_path = os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")
 
                 self.tray.setIcon(QIcon(self.icon_path))
                 self.tray.setToolTip(f"Quickstart (Port: {running_port})")
@@ -1138,13 +1066,9 @@ if __name__ == "__main__":
                 self.open_action.triggered.connect(self.open_quickstart)
 
                 self.github_action = QAction("Quickstart GitHub")
-                self.github_action.triggered.connect(
-                    lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart")
-                )
+                self.github_action.triggered.connect(lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart"))
 
-                self.toggle_debug_action = QAction(
-                    f"{'Disable' if debug_mode else 'Enable'} Debug"
-                )
+                self.toggle_debug_action = QAction(f"{'Disable' if debug_mode else 'Enable'} Debug")
                 self.toggle_debug_action.triggered.connect(self.toggle_debug)
 
                 self.change_port_action = QAction("Change Port")
@@ -1175,12 +1099,8 @@ if __name__ == "__main__":
 
                 print("Quickstart is Running")
                 print(f"Access it locally at: http://localhost:{running_port}")
-                print(
-                    f"Access it from other devices at: http://{ip_address}:{running_port}"
-                )
-                print(
-                    f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file"
-                )  # Open the browser automatically
+                print(f"Access it from other devices at: http://{ip_address}:{running_port}")
+                print(f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file")  # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 
                 # Keep the invisible parent alive
@@ -1202,9 +1122,7 @@ if __name__ == "__main__":
                 debug_mode = not debug_mode
                 helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
                 app.config["QS_DEBUG"] = debug_mode
-                self.toggle_debug_action.setText(
-                    f"{'Disable' if debug_mode else 'Enable'} Debug"
-                )
+                self.toggle_debug_action.setText(f"{'Disable' if debug_mode else 'Enable'} Debug")
 
             def show_messagebox(self, box_type, title, text):
                 box = QMessageBox(self.dialog_parent)
@@ -1230,9 +1148,7 @@ if __name__ == "__main__":
                     dialog.setIntValue(port)
 
                     # Remove help button and set custom icon
-                    dialog.setWindowFlags(
-                        dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint
-                    )
+                    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
                     dialog.setWindowIcon(QIcon(self.icon_path))
 
                     # Execute dialog
