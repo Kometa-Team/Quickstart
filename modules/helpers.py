@@ -5,6 +5,7 @@ import re
 import sys
 from pathlib import Path
 from plexapi.server import PlexServer
+from plexapi.exceptions import BadRequest, NotFound, Unauthorized
 from modules import persistence
 
 import requests
@@ -597,20 +598,93 @@ def get_plex_summary():
         plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
         plex = PlexServer(plex_url, plex_token)
 
-        version = plex.version
-        plex_pass = "Yes" if plex.isPlexPass else "No"
-        maintenance = plex.preferences.get("ScheduledLibraryUpdateTime", "Unknown")
+        # Core metadata
+        server_name = plex.friendlyName or "Plex Server"
+        version = plex.version or "Unknown Version"
+        platform = plex.platform or "Unknown OS"
+        platform_version = plex.platformVersion or "Unknown Version"
 
-        return {
-            "version": version,
-            "plex_pass": plex_pass,
-            "maintenance": maintenance,
-        }
+        # Settings
+        settings = plex.settings
+
+        # DB Cache
+        try:
+            db_cache_size = settings.get("DatabaseCacheSize").value
+            db_cache_str = f"{db_cache_size} MB"
+        except NotFound:
+            db_cache_str = "Unknown"
+
+        # Update Channel
+        try:
+            update_channel = settings.get("butlerUpdateChannel").value
+            if update_channel == "16":
+                update_channel_str = "Public update channel."
+            elif update_channel == "8":
+                update_channel_str = "PlexPass update channel."
+            else:
+                update_channel_str = f"Unknown update channel ({update_channel})."
+        except NotFound:
+            update_channel_str = "Unknown update channel."
+
+        # Plex Pass Status
+        try:
+            plex_pass = plex.myPlexAccount().subscriptionActive
+        except Exception:
+            plex_pass = "Unknown"
+
+        plex_pass_str = f"PlexPass: {plex_pass} on {update_channel_str}"
+
+        # Maintenance Window
+        try:
+            start_hour = int(settings.get("butlerStartHour").value)
+            end_hour = int(settings.get("butlerEndHour").value)
+            maintenance_window = f"Scheduled maintenance running between {start_hour}:00 and {end_hour}:00"
+        except Exception:
+            maintenance_window = "Scheduled maintenance times could not be found."
+
+        # Final summary string
+        return (
+            f"Connected to server {server_name} version {version}\n"
+            f"Running on {platform} version {platform_version}\n"
+            f"Plex DB cache setting: {db_cache_str}\n"
+            f"{plex_pass_str}\n"
+            f"{maintenance_window}"
+        )
 
     except Exception as e:
-        return {
-            "version": "Unavailable",
-            "plex_pass": "Unavailable",
-            "maintenance": "Unavailable",
-            "error": str(e),
-        }
+        return f"Plex summary unavailable due to error: {e}"
+
+
+def get_library_summaries(configured_library_names):
+    try:
+        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+        plex = PlexServer(plex_url, plex_token)
+
+        output_lines = []
+        for lib_name in configured_library_names:
+            matching_section = next((s for s in plex.library.sections() if s.title == lib_name), None)
+            if not matching_section:
+                output_lines.append(f"Library '{lib_name}' not found on Plex server.")
+                continue
+
+            try:
+                agent = matching_section.agent or "Unknown"
+                scanner = matching_section.scanner or "Unknown"
+                lib_type = matching_section.type.capitalize()
+
+                ratings_setting = next((s for s in matching_section.settings() if s.id == "ratingsSource"), None)
+                ratings_source = ratings_setting.enumValues[ratings_setting.value] if ratings_setting else "N/A"
+
+                output_lines.append(f"Information on library {lib_name}")
+                output_lines.append(f"Type: {lib_type}")
+                output_lines.append(f"Agent: {agent}")
+                output_lines.append(f"Scanner: {scanner}")
+                output_lines.append(f"Ratings Source: {ratings_source}")
+                output_lines.append("")  # Blank line between libraries
+            except Exception as lib_err:
+                output_lines.append(f"Error retrieving details for {lib_name}: {lib_err}")
+
+        return "\n".join(output_lines).strip()
+
+    except Exception as e:
+        return f"Plex library summary unavailable: {str(e)}"
