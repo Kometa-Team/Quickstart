@@ -21,9 +21,7 @@ GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-WORKING_DIR = (
-    os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
-)
+WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
 MEIPASS_DIR = sys._MEIPASS if getattr(sys, "frozen", False) else BASE_DIR  # noqa
 
 JSON_SETTINGS = os.path.join(MEIPASS_DIR, "static", "json")
@@ -93,9 +91,7 @@ def get_pyfiglet_fonts():
 
     # Append all .flf files, removing extension
     if os.path.exists(fonts_dir):
-        fonts.update(
-            f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf")
-        )
+        fonts.update(f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf"))
 
     # Sort remaining fonts (excluding predefined ones)
     sorted_fonts = sorted(fonts - set(predefined_fonts))
@@ -151,9 +147,7 @@ def ensure_json_schema():
             f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template",
         ),
     ]:
-        file_path = os.path.join(
-            JSON_SCHEMA_DIR, filename
-        )  # Store everything in json-schema
+        file_path = os.path.join(JSON_SCHEMA_DIR, filename)  # Store everything in json-schema
 
         try:
             response = requests.get(url, timeout=10)
@@ -297,9 +291,7 @@ def build_oauth_dict(source, form_data):
             data[final_key] = value
         else:
             if final_key != "url":
-                data[source]["authorization"][
-                    final_key
-                ] = value  # Everything else goes into authorization
+                data[source]["authorization"][final_key] = value  # Everything else goes into authorization
 
     return data
 
@@ -307,9 +299,7 @@ def build_oauth_dict(source, form_data):
 def build_simple_dict(source, form_data):
     data = {source: {}}
     for key in form_data:
-        final_key = key.replace(
-            source + "_", "", 1
-        )  # Retain the original key transformation logic
+        final_key = key.replace(source + "_", "", 1)  # Retain the original key transformation logic
         value = form_data[key]
 
         # Handle lists explicitly (e.g., asset_directory)
@@ -398,9 +388,7 @@ def booler(thing):
             return False
         else:
             if app.config["QS_DEBUG"]:
-                print(
-                    f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False."
-                )
+                print(f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False.")
             return False
     return bool(thing)
 
@@ -436,11 +424,7 @@ def template_record(file, prev_record, next_record):
 
 def get_menu_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(
-        item
-        for item in os.listdir(templates_dir)
-        if os.path.isfile(os.path.join(templates_dir, item))
-    )
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
     final_list = []
 
     for file in file_list:
@@ -453,11 +437,7 @@ def get_menu_list():
 
 def get_template_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(
-        item
-        for item in os.listdir(templates_dir)
-        if os.path.isfile(os.path.join(templates_dir, item))
-    )
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
 
     templates = {}
     type_counter = {"012": 0, "013": 0}  # Counters for movie, show types
@@ -465,9 +445,7 @@ def get_template_list():
 
     for file in file_list:
         if belongs_in_template_list(file):
-            match = re.match(
-                r"^(\d+)-", file
-            )  # Match any length of digits followed by '-'
+            match = re.match(r"^(\d+)-", file)  # Match any length of digits followed by '-'
             if match:
                 file_prefix = match.group(1)
             else:
@@ -547,12 +525,7 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
 
     print(f"[DEBUG] Searching for section with ID or title: {library_id}")
     section = next(
-        (
-            s
-            for s in plex.library.sections()
-            if str(s.key) == str(library_id)
-            or s.title.lower() == str(library_id).lower()
-        ),
+        (s for s in plex.library.sections() if str(s.key) == str(library_id) or s.title.lower() == str(library_id).lower()),
         None,
     )
 
@@ -626,7 +599,7 @@ def get_plex_summary():
 
         version = plex.version
         plex_pass = "Yes" if plex.isPlexPass else "No"
-        maintenance = plex.preferences.get('ScheduledLibraryUpdateTime', "Unknown")
+        maintenance = plex.preferences.get("ScheduledLibraryUpdateTime", "Unknown")
 
         return {
             "version": version,
