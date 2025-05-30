@@ -806,7 +806,7 @@ def build_config(header_style="standard", config_name=None):
             Groups data (collections, overlays, attributes, etc.) by base library name.
 
             If `normalize_overlays` is True, it strips builder-level suffixes
-            (e.g. `tvshows-show` → `tvshows`) to match show library names.
+            (e.g. `tv_shows-show` → `tv_shows`) to match show library names.
             """
             grouped = {}
 

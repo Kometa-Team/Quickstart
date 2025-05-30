@@ -256,9 +256,7 @@ function setupParentChildToggleSync () {
     const wrapper = document.querySelector(`[data-toggle-parent="${groupId}"]`)
     const isRadioStyle = parent.type === 'radio' || parent.dataset.radioGroup === 'true'
 
-    // Simulate radio behavior using data-radio-group (add this attribute in Jinja if needed)
     const groupName = parent.name
-
     const childToggles = wrapper?.querySelectorAll('.template-child-toggle') || []
 
     parent.addEventListener('click', () => {
@@ -285,8 +283,8 @@ function setupParentChildToggleSync () {
           }
         })
 
-        // Ensure only one is selected
         if (isChecked && parent.dataset.wasChecked === 'true') {
+          // Toggle OFF previously checked pseudo-radio
           parent.checked = false
           parent.dataset.wasChecked = 'false'
           if (wrapper) wrapper.style.display = 'none'
@@ -294,9 +292,6 @@ function setupParentChildToggleSync () {
             child.checked = false
             child.dispatchEvent(new Event('change', { bubbles: true }))
           })
-          // Clear hidden input
-          const hidden = document.querySelector(`input[type="hidden"][name="${groupName}"]`)
-          if (hidden) hidden.value = ''
         } else {
           parent.dataset.wasChecked = 'true'
           if (wrapper) wrapper.style.display = ''
@@ -304,11 +299,19 @@ function setupParentChildToggleSync () {
             child.checked = true
             child.dispatchEvent(new Event('change', { bubbles: true }))
           })
-
-          // Set hidden input to selected value
-          const hidden = document.querySelector(`input[type="hidden"][name="${groupName}"]`)
-          if (hidden) hidden.value = parent.value
         }
+
+        // Always sync hidden input after processing toggle group
+        setTimeout(() => {
+          const groupToggles = document.querySelectorAll(`input[name="${groupName}"][data-radio-group="true"]`)
+          const anyChecked = Array.from(groupToggles).some(t => t.checked)
+          const selectedToggle = Array.from(groupToggles).find(t => t.checked)
+          const hidden = document.querySelector(`input[type="hidden"][name="${groupName}"]`)
+          if (hidden) {
+            hidden.value = anyChecked ? (selectedToggle?.value || '') : ''
+            console.debug(`[SYNC] Hidden input for ${groupName} = "${hidden.value}"`)
+          }
+        }, 0)
       }
 
       syncing = false
@@ -324,9 +327,19 @@ function setupParentChildToggleSync () {
         parent.checked = anyChecked
         if (wrapper) wrapper.style.display = anyChecked ? '' : 'none'
 
-        // If none checked and radio style, simulate uncheck
         if (!anyChecked && isRadioStyle) {
           parent.dataset.wasChecked = 'false'
+
+          // Clear hidden if no toggle remains selected
+          setTimeout(() => {
+            const groupToggles = document.querySelectorAll(`input[name="${groupName}"][data-radio-group="true"]`)
+            const anyLeftChecked = Array.from(groupToggles).some(t => t.checked)
+            const hidden = document.querySelector(`input[type="hidden"][name="${groupName}"]`)
+            if (hidden) {
+              hidden.value = anyLeftChecked ? (Array.from(groupToggles).find(t => t.checked)?.value || '') : ''
+              console.debug(`[SYNC] Hidden input for ${groupName} = "${hidden.value}"`)
+            }
+          }, 0)
         }
 
         syncing = false
