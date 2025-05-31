@@ -797,6 +797,7 @@ prefix) %}
     </div>
 </div>
 {% endmacro %}
+
 {% macro collection_group_section(library, data, version_info, group) %}
 {% set accordion_safe = group.accordion | replace(' ', '') %}
 <!-- {{ group.accordion }} Collection Accordion -->
@@ -831,7 +832,7 @@ prefix) %}
                                 title='<img src="{{ collection.image_url }}" height="200" style="opacity: 1;">'></i>
                             {% endif %}
                             {% if collection.tooltip %}
-                            <i class="bi {% if (collection.tooltip_variant or 'info') == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ collection.tooltip_variant or 'info' }}"
+                            <i class="bi {% if (collection.tooltip_variant or 'info') == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ collection.tooltip_variant or 'info' }} ms-3"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
                                 data-bs-custom-class="text-tooltip" title="{{ collection.tooltip }}"></i> {% endif %}
                         </div>

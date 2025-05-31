@@ -706,7 +706,7 @@
           "season",
           "episode"
         ],
-                "template_variables": [
+        "template_variables": [
           {
             "type": "toggle",
             "key": "builder_level",
@@ -772,6 +772,22 @@
             "value": "episode",
             "media_types": [
               "show"
+            ]
+          },
+          {
+            "type": "select",
+            "key": "style",
+            "label": "Network Style",
+            "default": "color",
+            "options": [
+              {
+                "value": "color",
+                "label": "Color"
+              },
+              {
+                "value": "white",
+                "label": "White"
+              }
             ]
           }
         ]
