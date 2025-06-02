@@ -336,9 +336,7 @@ def build_libraries_section(
 
                         raw_name = key.split("-overlay_")[-1]
                         overlay_name = (
-                            "commonsense" if value == "commonsense"
-                            else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str)
-                            else raw_name
+                            "commonsense" if value == "commonsense" else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str) else raw_name
                         )
 
                         if not overlay_name:

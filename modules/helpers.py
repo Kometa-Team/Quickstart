@@ -727,12 +727,9 @@ def get_plex_metadata():
         }
 
     except Exception as e:
-        return {
-            "plex_pass": False,
-            "update_channel": None,
-            "error": str(e),
-            "libraries": {}
-        }
+        return {"plex_pass": False, "update_channel": None, "error": str(e), "libraries": {}}
+
+
 def get_library_metadata():
     try:
         plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")

@@ -78,10 +78,7 @@ def save_settings(raw_source, form_data):
     # Log raw form data
     if app.config["QS_DEBUG"]:
         if is_form:
-            clean_dict = {
-                k: form_data.getlist(k) if len(form_data.getlist(k)) > 1 else form_data.get(k)
-                for k in form_data
-            }
+            clean_dict = {k: form_data.getlist(k) if len(form_data.getlist(k)) > 1 else form_data.get(k) for k in form_data}
         else:
             clean_dict = form_data  # Already a clean dictionary
 
