@@ -5,6 +5,45 @@
 
 <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;"></div>
 
+<div class="accordion mb-3" id="plexPassAccordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="plexPassHeading">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#plexPassStatus" aria-expanded="false" aria-controls="plexPassStatus">
+        Plex Pass Status
+      </button>
+    </h2>
+    <div id="plexPassStatus" class="accordion-collapse collapse" aria-labelledby="plexPassHeading"
+      data-bs-parent="#plexPassAccordion">
+      <div class="accordion-body">
+        {% if telemetry.plex_pass %}
+        <div class="alert alert-success" role="alert">
+          <strong>Plex Pass is enabled.</strong><br>
+          You have access to all Kometa features, including:
+          <ul class="mb-0">
+            <li><code>visible_home</code></li>
+            <li><code>visible_library</code></li>
+            <li><code>visible_shared</code></li>
+          </ul>
+        </div>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+          <strong>Plex Pass not detected.</strong><br>
+          Some features are unavailable — collections or overlays that use:
+          <ul class="mb-1">
+            <li><code>visible_home</code></li>
+            <li><code>visible_library</code></li>
+            <li><code>visible_shared</code></li>
+          </ul>
+          will not appear on this page.<br>
+          These features require an active Plex Pass subscription.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Hidden Container for Selected Libraries -->
 <div id="selected-libraries-container" style="display: none;">
   <!-- Selected Movie Libraries -->

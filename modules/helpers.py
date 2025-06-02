@@ -703,9 +703,18 @@ def get_plex_metadata():
 
         # Update Channel
         try:
-            update_channel = plex.settings.get("butlerUpdateChannel").value
+            update_channel_value = plex.settings.get("butlerUpdateChannel").value
+            if update_channel_value == "16":
+                update_channel = "Public update channel"
+            elif update_channel_value == "8":
+                update_channel = "PlexPass update channel"
+            else:
+                update_channel = f"Unknown update channel (raw: {update_channel_value})"
         except Exception:
-            update_channel = None
+            update_channel = "Unknown update channel"
+
+        # Get per-library metadata
+        library_metadata = get_library_metadata()
 
         # Return structured metadata
         return {
@@ -714,6 +723,7 @@ def get_plex_metadata():
             "server_name": plex.friendlyName,
             "version": plex.version,
             "platform": plex.platform,
+            "libraries": library_metadata,
         }
 
     except Exception as e:
@@ -721,9 +731,8 @@ def get_plex_metadata():
             "plex_pass": False,
             "update_channel": None,
             "error": str(e),
+            "libraries": {}
         }
-
-
 def get_library_metadata():
     try:
         plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")

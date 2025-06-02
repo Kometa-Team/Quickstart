@@ -525,7 +525,7 @@
           "season",
           "episode"
         ],
-        "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
+        "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Editions overlay is designed to use the Editions field within Plex <code>which requires Plex Pass to use</code>. Click on the link to go to the TRaSH Guides website.",
         "tooltip_variant": "danger",
         "extra_url": "https://trash-guides.info/",
         "template_variables": [
