@@ -4,5 +4,5 @@
   {% import 'partials/_macros.html' as macros %}
 
   {% for group in collection_config %}
-  {{ macros.collection_group_section(library, data, version_info, group) }}
+  {{ macros.collection_group_section(library, data, version_info, group, telemetry) }}
   {% endfor %}

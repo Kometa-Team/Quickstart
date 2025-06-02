@@ -798,8 +798,9 @@ prefix) %}
 </div>
 {% endmacro %}
 
-{% macro collection_group_section(library, data, version_info, group) %}
+{% macro collection_group_section(library, data, version_info, group, telemetry) %}
 {% set accordion_safe = group.accordion | replace(' ', '') %}
+<!-- Plex Pass Value: {{ telemetry.plex_pass }} | Type: {{ telemetry.plex_pass.__class__.__name__ }} -->
 <!-- {{ group.accordion }} Collection Accordion -->
 <div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion">
     <div class="accordion-item">
@@ -814,6 +815,7 @@ prefix) %}
             data-bs-parent="#{{ library.id }}-{{ accordion_safe }}Accordion">
             <div class="accordion-body">
                 {% for collection in group.collections if library.type in collection.media_types %}
+                <!-- Rendering Collection: {{ collection.id }} -->
                 <div class="template-toggle-group ms-3 mb-2">
                     <div class="form-check form-switch">
                         <input class="form-check-input{% if collection.readonly %} readonly-toggle{% endif %}"
@@ -834,15 +836,17 @@ prefix) %}
                             {% if collection.tooltip %}
                             <i class="bi {% if (collection.tooltip_variant or 'info') == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ collection.tooltip_variant or 'info' }} ms-3"
                                 data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="top"
-                                data-bs-custom-class="text-tooltip" title="{{ collection.tooltip }}"></i> {% endif %}
+                                data-bs-custom-class="text-tooltip" title="{{ collection.tooltip }}"></i>
+                            {% endif %}
                         </div>
                     </div>
 
                     {% if collection.template_variables %}
                     <div class="child-toggle-wrapper ms-4 mt-2"
                         data-toggle-parent="{{ library.id }}-{{ collection.id }}" style="display: none;">
-                        {% for item in collection.template_variables if not item.media_types or library.type in
-                        item.media_types %}
+                        {% for item in collection.template_variables
+                            if (not item.media_types or library.type in item.media_types)
+                            and (not item.key.startswith('visible_') or telemetry.plex_pass) %}
                         {% set clean_id = collection.id.replace('collection_', '') %}
                         {% set input_name = library.id ~ '-template_collection_' ~ clean_id ~ '_' ~ item.key %}
 
@@ -875,7 +879,6 @@ prefix) %}
                             <select class="form-select" id="{{ input_name }}" name="{{ input_name }}"
                                 aria-describedby="{{ input_name }}_text">
                                 {% for val in item.options %}
-                                {# Determine value and label #}
                                 {% if val is string %}
                                 {% set option_value = val %}
                                 {% set option_label = val|capitalize %}
@@ -883,14 +886,12 @@ prefix) %}
                                 {% else %}
                                 {% set option_value = val.value %}
                                 {% set option_label = val.label %}
-                                {% set show_option = (val.media_types is not defined) or (library.type in
-                                val.media_types) %}
+                                {% set show_option = (val.media_types is not defined) or (library.type in val.media_types) %}
                                 {% endif %}
 
                                 {% if show_option %}
                                 <option value="{{ option_value }}" {% if data['libraries'][input_name]==option_value or
-                                    (not data['libraries'][input_name] and item.default==option_value) %} selected {%
-                                    endif %}>
+                                    (not data['libraries'][input_name] and item.default==option_value) %} selected {% endif %}>
                                     {{ option_label }}
                                 </option>
                                 {% endif %}

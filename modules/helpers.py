@@ -688,3 +688,56 @@ def get_library_summaries(configured_library_names):
 
     except Exception as e:
         return f"Plex library summary unavailable: {str(e)}"
+
+
+def get_plex_metadata():
+    try:
+        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+        plex = PlexServer(plex_url, plex_token)
+
+        # Plex Pass
+        try:
+            plex_pass = plex.myPlexAccount().subscriptionActive
+        except Exception:
+            plex_pass = False
+
+        # Update Channel
+        try:
+            update_channel = plex.settings.get("butlerUpdateChannel").value
+        except Exception:
+            update_channel = None
+
+        # Return structured metadata
+        return {
+            "plex_pass": plex_pass,
+            "update_channel": update_channel,
+            "server_name": plex.friendlyName,
+            "version": plex.version,
+            "platform": plex.platform,
+        }
+
+    except Exception as e:
+        return {
+            "plex_pass": False,
+            "update_channel": None,
+            "error": str(e),
+        }
+
+
+def get_library_metadata():
+    try:
+        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+        plex = PlexServer(plex_url, plex_token)
+
+        library_data = {}
+        for section in plex.library.sections():
+            library_data[section.title] = {
+                "agent": section.agent,
+                "scanner": section.scanner,
+                "type": section.type,
+            }
+
+        return library_data
+
+    except Exception as e:
+        return {"error": str(e)}

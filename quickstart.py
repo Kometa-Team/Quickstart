@@ -468,6 +468,19 @@ def step(name):
     # Call `refresh_plex_libraries()` BEFORE retrieving Plex settings
     refresh_plex_libraries()
 
+    if name in ["010-plex", "025-libraries", "900-final"]:
+
+        telemetry = helpers.get_plex_metadata()
+        if app.config["QS_DEBUG"]:
+            print(f"[DEBUG] Refreshed telemetry for {name} step:")
+            print(json.dumps(telemetry, indent=2))
+
+        persistence.save_settings("plex_telemetry", telemetry)
+    else:
+        telemetry = persistence.retrieve_settings("plex_telemetry")
+
+    page_info["telemetry"] = telemetry
+
     # Retrieve available fonts (ensuring "none" and "single line" are always included)
     available_fonts = helpers.get_pyfiglet_fonts()
 
@@ -688,6 +701,7 @@ def step(name):
             name + ".html",
             page_info=page_info,
             data=data,
+            telemetry=telemetry,
             plex_data=plex_data,
             movie_libraries=movie_libraries,
             show_libraries=show_libraries,

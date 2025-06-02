@@ -8,6 +8,7 @@ from flask import session
 from ruamel.yaml import YAML
 from ruamel.yaml.constructor import DuplicateKeyError  # noqa
 from urllib.parse import urlparse
+from werkzeug.datastructures import MultiDict
 
 from modules import database, helpers, iso
 
@@ -28,6 +29,10 @@ def extract_names(raw_source):
 
 
 def clean_form_data(form_data):
+    # Make sure form_data is MultiDict for compatibility
+    if not hasattr(form_data, "getlist"):
+        form_data = MultiDict(form_data)
+
     clean_data = {}
 
     for key, value in form_data.items():
@@ -36,17 +41,15 @@ def clean_form_data(form_data):
             value_list = form_data.getlist(key)
             clean_data[key] = [v.strip() for v in value_list if v.strip()]
 
-        # Handle use_separator & sep_style correctly for both mov & sho
         elif key.endswith("use_separator"):
             prefix = "mov" if key.startswith("mov") else "sho"
-            clean_data.setdefault(f"{prefix}-template_variables", {})["use_separator"] = value if value != "none" else None  # noqa
+            clean_data.setdefault(f"{prefix}-template_variables", {})["use_separator"] = value if value != "none" else None
 
         elif key.endswith("sep_style"):
             prefix = "mov" if key.startswith("mov") else "sho"
             if form_data.get(f"{prefix}-template_variables[use_separator]", "false") != "none":
-                clean_data.setdefault(f"{prefix}-template_variables", {})["sep_style"] = value.strip()  # noqa
+                clean_data.setdefault(f"{prefix}-template_variables", {})["sep_style"] = value.strip()
 
-        # Standard processing for other string values
         elif isinstance(value, str):
             lc_value = value.lower().strip()
             if len(value) == 0 or lc_value == "none":
@@ -58,7 +61,6 @@ def clean_form_data(form_data):
             else:
                 clean_data[key] = value.strip()
 
-        # Keep other values unchanged
         else:
             clean_data[key] = value
 
@@ -70,34 +72,40 @@ def save_settings(raw_source, form_data):
     source, source_name = extract_names(raw_source)
     path = urlparse(raw_source).path  # e.g., /step/025-libraries
     source = os.path.basename(path)
+
+    is_form = hasattr(form_data, "getlist")  # True if MultiDict (from request.form), else False
+
     # Log raw form data
     if app.config["QS_DEBUG"]:
-        clean_dict = {k: form_data.getlist(k) if len(form_data.getlist(k)) > 1 else form_data.get(k) for k in form_data}
+        if is_form:
+            clean_dict = {
+                k: form_data.getlist(k) if len(form_data.getlist(k)) > 1 else form_data.get(k)
+                for k in form_data
+            }
+        else:
+            clean_dict = form_data  # Already a clean dictionary
+
         debug_dir = os.path.join(helpers.CONFIG_DIR, "debug_logs")
         os.makedirs(debug_dir, exist_ok=True)
-
         debug_path = os.path.join(debug_dir, f"{source}_form_data.json")
-
         with open(debug_path, "w", encoding="utf-8") as f:
             json.dump(clean_dict, f, indent=2, ensure_ascii=False)
-
         print(f"[DEBUG] Form data saved to: {debug_path}")
 
-    # grab new config name if they entered one:
+    # Grab new config name if they entered one
     if "config_name" in form_data:
         session["config_name"] = form_data["config_name"]
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Received config name in form: {session['config_name']}")
 
     # Handle asset_directory specifically
-    if "asset_directory" in form_data:
-        # Use getlist to retrieve all values for asset_directory
+    if is_form and "asset_directory" in form_data:
         asset_directories = form_data.getlist("asset_directory")
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] All asset_directory values from form: {asset_directories}")
 
-    # Clean the data
-    clean_data = clean_form_data(form_data)
+    # Ensure form_data is a MultiDict before cleaning
+    clean_data = clean_form_data(form_data if is_form else MultiDict(form_data))
 
     # Debug specific fields for Plex
     for field in ["plex_url", "plex_token"]:
@@ -105,28 +113,23 @@ def save_settings(raw_source, form_data):
             print(f"[DEBUG] Cleaned value for {field}: {clean_data.get(field)}")
 
     # Log the cleaned asset_directory
-    if "asset_directory" in clean_data:
-        if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Cleaned asset_directory: {clean_data['asset_directory']}")
+    if "asset_directory" in clean_data and app.config["QS_DEBUG"]:
+        print(f"[DEBUG] Cleaned asset_directory: {clean_data['asset_directory']}")
 
     # Build the dictionary to save
     data = helpers.build_config_dict(source_name, clean_data)
 
-    # Debug final data to be saved
     if app.config["QS_DEBUG"]:
         print(f"[DEBUG] Final data structure to save: {data}")
 
-    # Log the final data structure for asset_directory
     if source_name == "settings" and "asset_directory" in data.get("settings", {}):
-        if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Final asset_directory structure to save: {data['settings']['asset_directory']}")
+        print(f"[DEBUG] Final asset_directory structure to save: {data['settings']['asset_directory']}")
 
     # Proceed with saving
     base_data = get_dummy_data(source_name)
     user_entered = data != base_data
     validated = data.get("validated", False)
 
-    # Ensure config_name exists even if session expired
     if "config_name" not in session:
         session["config_name"] = namesgenerator.get_random_name()
         if app.config["QS_DEBUG"]:
@@ -140,7 +143,6 @@ def save_settings(raw_source, form_data):
         data=data,
     )
 
-    # Confirm successful save
     if app.config["QS_DEBUG"]:
         print(f"[DEBUG] Data saved successfully.")
 
