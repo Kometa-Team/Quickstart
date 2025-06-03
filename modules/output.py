@@ -783,6 +783,7 @@ def build_config(header_style="standard", config_name=None):
             if "webhooks" not in config_data:
                 print("[DEBUG] Webhooks section completely removed.")
 
+    # Initialize movie and show libraries
     movie_libraries = {}
     show_libraries = {}
 
