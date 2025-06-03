@@ -783,6 +783,9 @@ def build_config(header_style="standard", config_name=None):
             if "webhooks" not in config_data:
                 print("[DEBUG] Webhooks section completely removed.")
 
+    movie_libraries = {}
+    show_libraries = {}
+
     # Process the libraries section
     if "libraries" in config_data and "libraries" in config_data["libraries"]:
         nested_libraries_data = config_data["libraries"]["libraries"]

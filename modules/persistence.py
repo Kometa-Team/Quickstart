@@ -43,12 +43,19 @@ def clean_form_data(form_data):
 
         elif key.endswith("use_separator"):
             prefix = "mov" if key.startswith("mov") else "sho"
-            clean_data.setdefault(f"{prefix}-template_variables", {})["use_separator"] = value if value != "none" else None
+            clean_data.setdefault(f"{prefix}-template_variables", {})[
+                "use_separator"
+            ] = (value if value != "none" else None)
 
         elif key.endswith("sep_style"):
             prefix = "mov" if key.startswith("mov") else "sho"
-            if form_data.get(f"{prefix}-template_variables[use_separator]", "false") != "none":
-                clean_data.setdefault(f"{prefix}-template_variables", {})["sep_style"] = value.strip()
+            if (
+                form_data.get(f"{prefix}-template_variables[use_separator]", "false")
+                != "none"
+            ):
+                clean_data.setdefault(f"{prefix}-template_variables", {})[
+                    "sep_style"
+                ] = value.strip()
 
         elif isinstance(value, str):
             lc_value = value.lower().strip()
@@ -70,18 +77,33 @@ def clean_form_data(form_data):
 def save_settings(raw_source, form_data):
     # Extract the source and source_name
     source, source_name = extract_names(raw_source)
-    path = urlparse(raw_source).path  # e.g., /step/025-libraries
+    path = urlparse(raw_source).path
     source = os.path.basename(path)
 
-    is_form = hasattr(form_data, "getlist")  # True if MultiDict (from request.form), else False
+    # Ensure session config_name exists once
+    if "config_name" not in session:
+        session["config_name"] = namesgenerator.get_random_name()
+        if app.config["QS_DEBUG"]:
+            print(
+                f"[DEBUG] Initialized missing session config_name: {session['config_name']}"
+            )
 
-    # Log raw form data
+    is_form = hasattr(form_data, "getlist")
+
+    # Debug raw form data
     if app.config["QS_DEBUG"]:
-        if is_form:
-            clean_dict = {k: form_data.getlist(k) if len(form_data.getlist(k)) > 1 else form_data.get(k) for k in form_data}
-        else:
-            clean_dict = form_data  # Already a clean dictionary
-
+        clean_dict = (
+            {
+                k: (
+                    form_data.getlist(k)
+                    if len(form_data.getlist(k)) > 1
+                    else form_data.get(k)
+                )
+                for k in form_data
+            }
+            if is_form
+            else form_data
+        )
         debug_dir = os.path.join(helpers.CONFIG_DIR, "debug_logs")
         os.makedirs(debug_dir, exist_ok=True)
         debug_path = os.path.join(debug_dir, f"{source}_form_data.json")
@@ -89,49 +111,41 @@ def save_settings(raw_source, form_data):
             json.dump(clean_dict, f, indent=2, ensure_ascii=False)
         print(f"[DEBUG] Form data saved to: {debug_path}")
 
-    # Grab new config name if they entered one
+    # Respect config_name from form
     if "config_name" in form_data:
         session["config_name"] = form_data["config_name"]
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Received config name in form: {session['config_name']}")
 
-    # Handle asset_directory specifically
     if is_form and "asset_directory" in form_data:
         asset_directories = form_data.getlist("asset_directory")
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] All asset_directory values from form: {asset_directories}")
 
-    # Ensure form_data is a MultiDict before cleaning
     clean_data = clean_form_data(form_data if is_form else MultiDict(form_data))
 
-    # Debug specific fields for Plex
     for field in ["plex_url", "plex_token"]:
         if app.config["QS_DEBUG"]:
             print(f"[DEBUG] Cleaned value for {field}: {clean_data.get(field)}")
 
-    # Log the cleaned asset_directory
     if "asset_directory" in clean_data and app.config["QS_DEBUG"]:
         print(f"[DEBUG] Cleaned asset_directory: {clean_data['asset_directory']}")
 
-    # Build the dictionary to save
     data = helpers.build_config_dict(source_name, clean_data)
 
     if app.config["QS_DEBUG"]:
         print(f"[DEBUG] Final data structure to save: {data}")
+        if source_name == "settings" and "asset_directory" in data.get("settings", {}):
+            print(
+                f"[DEBUG] Final asset_directory structure to save: {data['settings']['asset_directory']}"
+            )
 
-    if source_name == "settings" and "asset_directory" in data.get("settings", {}):
-        print(f"[DEBUG] Final asset_directory structure to save: {data['settings']['asset_directory']}")
-
-    # Proceed with saving
+    # Validation
     base_data = get_dummy_data(source_name)
     user_entered = data != base_data
     validated = data.get("validated", False)
 
-    if "config_name" not in session:
-        session["config_name"] = namesgenerator.get_random_name()
-        if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Session expired or missing config_name. Generated new one: {session['config_name']}")
-
+    # Save to DB
     database.save_section_data(
         name=session["config_name"],
         section=source_name,
@@ -162,7 +176,9 @@ def get_stored_plex_credentials(name):
     return None, None
 
 
-def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_libraries):
+def update_stored_plex_libraries(
+    name, movie_libraries, show_libraries, music_libraries
+):
     """Update the stored Plex libraries in the database and preserve `validated`."""
     try:
         # Fetch existing settings from DB before updating
@@ -177,21 +193,33 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
         validated_before = settings_before.get("validated", True)
 
         # Update library data
-        settings_before["plex"]["tmp_movie_libraries"] = ",".join(movie_libraries) if movie_libraries else ""
-        settings_before["plex"]["tmp_show_libraries"] = ",".join(show_libraries) if show_libraries else ""
-        settings_before["plex"]["tmp_music_libraries"] = ",".join(music_libraries) if music_libraries else ""
+        settings_before["plex"]["tmp_movie_libraries"] = (
+            ",".join(movie_libraries) if movie_libraries else ""
+        )
+        settings_before["plex"]["tmp_show_libraries"] = (
+            ",".join(show_libraries) if show_libraries else ""
+        )
+        settings_before["plex"]["tmp_music_libraries"] = (
+            ",".join(music_libraries) if music_libraries else ""
+        )
 
         # Convert to a format that `save_settings()` expects
         settings_formatted = settings_before["plex"]  # Pass only the `plex` section
 
         # Restore `validated` before saving
-        settings_formatted["validated"] = validated_before  # Prevents losing validation state
+        settings_formatted["validated"] = (
+            validated_before  # Prevents losing validation state
+        )
 
         if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Sending updated Plex settings to save_settings(): {settings_formatted}")
+            print(
+                f"[DEBUG] Sending updated Plex settings to save_settings(): {settings_formatted}"
+            )
 
         # Corrected function call (use "010-plex" as the raw_source)
-        save_settings("010-plex", settings_formatted)  # Pass only `plex` settings, not full config
+        save_settings(
+            "010-plex", settings_formatted
+        )  # Pass only `plex` settings, not full config
 
         # Fetch updated settings from DB after updating
         settings_after = retrieve_settings(name)
@@ -203,6 +231,10 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
 
 
 def retrieve_settings(target):
+    # Ensure session config_name is set
+    if "config_name" not in session:
+        session["config_name"] = namesgenerator.get_random_name()
+
     # target will be `010-plex`
     data = {}
 
@@ -212,7 +244,9 @@ def retrieve_settings(target):
     # source_name will be `plex`
 
     # Fetch stored data from DB
-    db_data = database.retrieve_section_data(name=session["config_name"], section=source_name)
+    db_data = database.retrieve_section_data(
+        name=session["config_name"], section=source_name
+    )
     # db_data is a tuple of validated, user_entered, data
 
     # Extract validation flags
@@ -231,7 +265,9 @@ def retrieve_settings(target):
 
         # Migrate incorrectly stored flat keys into the correct nested structure
         for key in list(data[source_name].keys()):
-            if key.startswith("mov-template_variables[") or key.startswith("sho-template_variables["):
+            if key.startswith("mov-template_variables[") or key.startswith(
+                "sho-template_variables["
+            ):
                 prefix, variable = key.split("[")
                 variable = variable.strip("]")  # Extract 'use_separator' or 'sep_style'
                 data[source_name][prefix][variable] = data[source_name].pop(key)
@@ -251,7 +287,9 @@ def retrieve_status(target):
     # source will be `010-plex`
     # source_name will be `plex`
 
-    db_data = database.retrieve_section_data(name=session["config_name"], section=source_name)
+    db_data = database.retrieve_section_data(
+        name=session["config_name"], section=source_name
+    )
     # db_data is a tuple of validated, user_entered, data
 
     validated = helpers.booler(db_data[0])
@@ -270,7 +308,9 @@ def get_dummy_data(target):
     helpers.ensure_json_schema()
 
     try:
-        with open(os.path.join(helpers.JSON_SCHEMA_DIR, "config.yml.template"), "r") as file:
+        with open(
+            os.path.join(helpers.JSON_SCHEMA_DIR, "config.yml.template"), "r"
+        ) as file:
             base_config = yaml.load(file)
     except DuplicateKeyError as e:
         print(f"[WARNING] Duplicate key detected in config.yml.template: {e}")
@@ -292,7 +332,11 @@ def check_minimum_settings():
 def flush_session_storage(name):
     if not name:
         name = session["config_name"]
-    [session.pop(key) for key in list(session.keys()) if not key.startswith("config_name")]
+    [
+        session.pop(key)
+        for key in list(session.keys())
+        if not key.startswith("config_name")
+    ]
     database.reset_data(name)
 
 
