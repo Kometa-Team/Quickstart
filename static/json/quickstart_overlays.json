@@ -14,7 +14,19 @@
         "media_types": [
           "movie",
           "show"
-        ]
+        ],
+        "template_variables": {
+          "style": {
+            "input_type": "select",
+            "default": "yellow",
+            "options": [
+              "yellow",
+              "gray",
+              "black",
+              "red"
+            ]
+          }
+        }
       }
     ]
   },
@@ -402,35 +414,36 @@
         "tooltip": "Designed to use the TRaSH Guides filename naming scheme. Click on the link to go to the TRaSH Guides website.",
         "tooltip_variant": "danger",
         "extra_url": "https://trash-guides.info/",
-        "template_variables": [
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Show",
-            "value": "show",
-            "media_types": [
-              "show"
+        "template_variables": {
+          "style": {
+            "input_type": "select",
+            "default": "compact",
+            "options": [
+              "compact",
+              "standard"
             ]
           },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Season",
-            "value": "season",
+          "builder_level": {
+            "input_type": "toggle",
             "media_types": [
               "show"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Episode",
-            "value": "episode",
-            "media_types": [
-              "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
             ]
           }
-        ]
+        }
       },
       {
         "id": "overlay_language_count",

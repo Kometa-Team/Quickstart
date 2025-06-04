@@ -992,8 +992,8 @@ prefix) %}
                     {% for overlay in group.overlays %}
                     {% if overlay.media_types and (type in overlay.media_types) %}
                     {% set radio_safe_name = library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name %}
-                    {% set input_name = radio_safe_name if input_type == "radio" else library.id ~ '-' ~ type ~ '-' ~
-                    overlay.id %}
+                    {% set base_id = library.id ~ '-' ~ type ~ '-' ~ overlay.id %}
+                    {% set input_name = radio_safe_name if input_type == "radio" else base_id %}
                     {% set input_value = overlay.value if input_type == "radio" else "true" %}
                     {% set is_checked = (
                     current_radio_value == input_value if input_type == "radio"
@@ -1004,8 +1004,8 @@ prefix) %}
                         <div class="form-check form-switch">
                             <input
                                 class="form-check-input overlay-toggle template-parent-toggle{% if overlay.readonly %} readonly-toggle{% endif %}"
-                                type="checkbox" id="{{ library.id }}-{{ type }}-{{ overlay.id }}"
-                                name="{{ input_name }}" value="{{ input_value }}" {% if is_checked %}checked{% endif %}
+                                type="checkbox" id="{{ base_id }}" name="{{ input_name }}" value="{{ input_value }}" {%
+                                if is_checked %}checked{% endif %}
                                 data-template-group="{{ radio_safe_name }}-{{ overlay.id }}" {% if input_type=='radio'
                                 %} data-radio-group="true" data-was-checked="{{ 'true' if is_checked else 'false' }}" {%
                                 endif %}>
@@ -1015,7 +1015,7 @@ prefix) %}
                             {% endif %}
 
                             <div class="d-flex align-items-center">
-                                <label class="form-check-label me-3" for="{{ library.id }}-{{ type }}-{{ overlay.id }}">
+                                <label class="form-check-label me-3" for="{{ base_id }}">
                                     <a target="_blank" href="{{ overlay.url }}">{{ overlay.label }}</a>
                                 </label>
 
@@ -1035,6 +1035,40 @@ prefix) %}
                                 {% endif %}
                             </div>
                         </div>
+
+                        {% if overlay.template_variables is mapping %}
+                        {% for var_name, var_details in overlay.template_variables.items() %}
+                        {% if var_details.input_type == "select" %}
+                        {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
+                        {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
+                        {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
+
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" id="{{ template_name }}-{{ var_name }}_text"
+                                style="width: 170px;">
+                                {{ var_name|capitalize }}
+                                {% if var_details.tooltip %}
+                                <span class="text-{{ var_details.tooltip_variant or 'info' }} ms-2"
+                                    data-bs-toggle="tooltip" data-bs-html="true" title="{{ var_details.tooltip }}">
+                                    <i
+                                        class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                </span>
+                                {% endif %}
+                            </span>
+                            <select class="form-select template-variable-select" id="{{ template_name }}-{{ var_name }}"
+                                name="{{ template_name }}[{{ var_name }}]"
+                                aria-describedby="{{ template_name }}-{{ var_name }}_text" {% if selected_value
+                                !=var_details.default %}data-user-modified="true" {% endif %}>
+                                {% for option in var_details.options %}
+                                <option value="{{ option }}" {% if selected_value==option %}selected{% endif %}>
+                                    {{ option|capitalize }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        {% endif %}
                     </div>
                     {% endif %}
                     {% endfor %}

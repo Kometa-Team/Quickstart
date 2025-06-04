@@ -353,6 +353,35 @@ def build_libraries_section(
                     if "episode" in levels:
                         overlay_entries.append({"default": overlay_name, "template_variables": {"builder_level": "episode"}})
 
+        # Handle template variables for overlays (movies and shows)
+        template_overlay_entries = {}
+        for key, val in raw_overlay_entries.items():
+            if "-template_overlay_" not in key:
+                continue
+            base_key, var_part = key.split("[", 1)
+            var_name = var_part.rstrip("]")
+            # Only include if the parent overlay toggle is truthy
+            # Translate "-template_overlay_" to "-overlay_" to find toggle key
+            parent_key = base_key.replace("-template_overlay_", "-overlay_")
+            parent_enabled = raw_overlay_entries.get(parent_key)
+            if not parent_enabled:
+                continue
+            entry_dict = template_overlay_entries.setdefault(base_key, {})
+            entry_dict[var_name] = val
+
+        # Apply template_variables to corresponding overlays
+        for overlay_entry in overlay_entries:
+            overlay_name = overlay_entry["default"]
+            if library_type == "mov":
+                full_key = f"{library_type}-library_{overlay_key}-movie-template_overlay_{overlay_name}"
+            else:  # sho
+                level = overlay_entry.get("template_variables", {}).get("builder_level", "show")
+                full_key = f"{library_type}-library_{overlay_key}-{level}-template_overlay_{overlay_name}"
+            if full_key in template_overlay_entries:
+                if "template_variables" not in overlay_entry:
+                    overlay_entry["template_variables"] = {}
+                overlay_entry["template_variables"].update(template_overlay_entries[full_key])
+
         if overlay_entries:
             entry["overlay_files"] = overlay_entries
 

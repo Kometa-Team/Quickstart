@@ -344,10 +344,41 @@ def generate_preview():
     size = (1920, 1080) if img_type == "episode" else (1000, 1500)
     base_img = base_img.resize(size, Image.LANCZOS)
 
-    # Apply overlays
-    for overlay in overlays:
-        filename = f"{overlay}.png"
+    # Determine filename prefix
+    if img_type == "movie":
+        prefix = "mov-"
+    elif img_type == "episode":
+        prefix = "epi-sho-"
+    elif img_type == "season":
+        prefix = "sho-season-"
+    elif img_type == "show":
+        prefix = "sho-"
+    else:
+        prefix = ""
+
+    # Apply overlays with template_variables support
+    for overlay_entry in overlays:
+        if isinstance(overlay_entry, str):
+            overlay_id = overlay_entry
+            template_vars = {}
+        elif isinstance(overlay_entry, dict):
+            overlay_id = overlay_entry.get("id")
+            template_vars = overlay_entry.get("template_variables", {})
+        else:
+            continue  # skip invalid overlay data
+
+        # Handle style suffix (e.g., for ribbon overlay)
+        style_suffix = f"_{template_vars['style']}" if "style" in template_vars else ""
+        filename = f"{prefix}{img_type}-{overlay_id}{style_suffix}.png"
         overlay_path = os.path.join(OVERLAY_FOLDER, filename)
+
+        # Fallback to default overlay if specific style not found
+        if not os.path.exists(overlay_path) and style_suffix:
+            fallback_filename = f"{prefix}{img_type}-{overlay_id}.png"
+            fallback_path = os.path.join(OVERLAY_FOLDER, fallback_filename)
+            if os.path.exists(fallback_path):
+                overlay_path = fallback_path
+
         if os.path.exists(overlay_path):
             overlay_img = Image.open(overlay_path).convert("RGBA")
             base_img.paste(overlay_img, (0, 0), overlay_img)

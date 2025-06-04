@@ -66,6 +66,7 @@ const ImageHandler = {
 
     const isMovie = libraryId.startsWith('mov-library_')
     const selectedOverlays = ImageHandler.getLibraryOverlays(libraryId, isMovie, type)
+    console.debug('[DEBUG] Selected Overlays:', selectedOverlays)
 
     fetch('/generate_preview', {
       method: 'POST',
@@ -91,47 +92,46 @@ const ImageHandler = {
   getLibraryOverlays: function (libraryId, isMovie, type = 'movie') {
     const overlays = []
 
-    // Determine prefix
-    const prefix = isMovie
-      ? 'mov-'
-      : type === 'episode'
-        ? 'epi-sho-'
-        : type === 'season'
-          ? 'sho-season-'
-          : 'sho-'
-
-    // Valid type suffix pattern to filter keys
-    const suffix = `-${type}-`
-
-    // Checked checkboxes that match the current type context
+    // Find all enabled checkboxes in this overlay group
     document.querySelectorAll(`#${libraryId}-overlays input[type="checkbox"]:checked`).forEach(input => {
-      if (input.name.includes(suffix)) {
-        const cleanedKey = input.name.replace(`${libraryId}-`, '')
-        overlays.push(`${prefix}${cleanedKey}`)
+      if (!input.name.includes(`-${type}-`)) return
+
+      const fullName = input.name // e.g., mov-library_movies-movie-overlay_ribbon
+      const overlayIdMatch = fullName.match(/overlay_([a-zA-Z0-9_]+)/)
+      if (!overlayIdMatch) return
+
+      const overlayId = `overlay_${overlayIdMatch[1]}`
+
+      const overlayObj = {
+        id: overlayId,
+        template_variables: {}
       }
+
+      // Find any selects like mov-library_movies-movie-overlay_ribbon[style]
+      document.querySelectorAll(`select[name^="${fullName.replace('-overlay_', '-template_overlay_')}["]`).forEach((select) => {
+        const match = select.name.match(/\[([^\]]+)\]/)
+        if (match) {
+          const varName = match[1]
+          overlayObj.template_variables[varName] = select.value
+        }
+      })
+
+      overlays.push(overlayObj)
     })
 
-    // Type-specific content rating logic
+    // Content rating logic (radio buttons)
     const selectedRating = document.querySelector(
       `#${libraryId}-ContentRatingOverlays .overlay-group[data-type="${type}"] input.template-parent-toggle[data-radio-group="true"]:checked`
     )
     if (selectedRating) {
-      let ratingPrefix = ''
+      const value = selectedRating.value // e.g., us_movie
 
-      if (isMovie) {
-        ratingPrefix = 'mov-movie-overlay_'
-      } else if (type === 'episode') {
-        ratingPrefix = 'epi-sho-episode-overlay_'
-      } else if (type === 'season') {
-        ratingPrefix = 'sho-season-season-overlay_'
-      } else if (type === 'show') {
-        ratingPrefix = 'sho-show-overlay_'
-      }
+      const overlayId = `overlay_content_rating_${value}`
 
-      overlays.push(`${ratingPrefix}content_rating_${selectedRating.value}`)
+      overlays.push({ id: overlayId, template_variables: {} })
     }
 
-    console.log(`[DEBUG] Overlays found for ${libraryId}, type: ${type}:`, overlays)
+    console.debug(`[DEBUG] Overlays found for ${libraryId}, type: ${type}:`, overlays)
     return overlays
   },
 
