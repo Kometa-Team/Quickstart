@@ -497,35 +497,45 @@
           "season",
           "episode"
         ],
-        "template_variables": [
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Show",
-            "value": "show",
-            "media_types": [
-              "show"
+        "template_variables": {
+          "size": {
+            "input_type": "select",
+            "default": "small",
+            "options": [
+              "small",
+              "big"
             ]
           },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Season",
-            "value": "season",
-            "media_types": [
-              "show"
+          "style": {
+            "input_type": "select",
+            "default": "round",
+            "options": [
+              "round",
+              "square",
+              "half"
             ]
           },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Episode",
-            "value": "episode",
+          "builder_level": {
+            "input_type": "toggle",
             "media_types": [
               "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
             ]
           }
-        ]
+        }
       },
       {
         "id": "overlay_resolution",
