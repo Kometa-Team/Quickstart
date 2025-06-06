@@ -811,7 +811,6 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/network/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/network.png",
         "media_types": [
-          "movie",
           "show",
           "season",
           "episode"
