@@ -367,13 +367,18 @@ def generate_preview():
         else:
             continue  # skip invalid overlay data
 
-        # Handle style suffix (e.g., for ribbon overlay)
-        style_suffix = f"_{template_vars['style']}" if "style" in template_vars else ""
-        filename = f"{prefix}{img_type}-{overlay_id}{style_suffix}.png"
+        # Build filename suffix from all template_variables (sorted for consistency)
+        suffix_parts = [
+            f"{key}_{value}"
+            for key, value in sorted(template_vars.items())
+            if key in {"style", "size"}  # only include known preview-affecting keys
+        ]
+        suffix = "_" + "_".join(suffix_parts) if suffix_parts else ""
+        filename = f"{prefix}{img_type}-{overlay_id}{suffix}.png"
         overlay_path = os.path.join(OVERLAY_FOLDER, filename)
 
         # Fallback to default overlay if specific style not found
-        if not os.path.exists(overlay_path) and style_suffix:
+        if not os.path.exists(overlay_path) and suffix:
             fallback_filename = f"{prefix}{img_type}-{overlay_id}.png"
             fallback_path = os.path.join(OVERLAY_FOLDER, fallback_filename)
             if os.path.exists(fallback_path):
