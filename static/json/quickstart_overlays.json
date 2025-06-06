@@ -94,7 +94,17 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_movie.png",
         "media_types": [
           "movie"
-        ]
+        ],
+        "template_variables": {
+          "color": {
+            "input_type": "select",
+            "default": "true",
+            "options": [
+              "true",
+              "false"
+            ]
+          }
+        }
       },
       {
         "id": "overlay_content_rating_us_show",
@@ -107,35 +117,36 @@
           "season",
           "episode"
         ],
-        "template_variables": [
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Show",
-            "value": "show",
-            "media_types": [
-              "show"
+        "template_variables": {
+          "color": {
+            "input_type": "select",
+            "default": "true",
+            "options": [
+              "true",
+              "false"
             ]
           },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Season",
-            "value": "season",
+          "builder_level": {
+            "input_type": "toggle",
             "media_types": [
               "show"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Episode",
-            "value": "episode",
-            "media_types": [
-              "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
             ]
           }
-        ]
+        }
       },
       {
         "id": "overlay_content_rating_uk",
@@ -149,35 +160,36 @@
           "season",
           "episode"
         ],
-        "template_variables": [
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Show",
-            "value": "show",
-            "media_types": [
-              "show"
+        "template_variables": {
+          "color": {
+            "input_type": "select",
+            "default": "true",
+            "options": [
+              "true",
+              "false"
             ]
           },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Season",
-            "value": "season",
+          "builder_level": {
+            "input_type": "toggle",
             "media_types": [
               "show"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Episode",
-            "value": "episode",
-            "media_types": [
-              "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
             ]
           }
-        ]
+        }
       },
       {
         "id": "overlay_content_rating_de",
@@ -191,35 +203,36 @@
           "season",
           "episode"
         ],
-        "template_variables": [
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Show",
-            "value": "show",
-            "media_types": [
-              "show"
+        "template_variables": {
+          "color": {
+            "input_type": "select",
+            "default": "true",
+            "options": [
+              "true",
+              "false"
             ]
           },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Season",
-            "value": "season",
+          "builder_level": {
+            "input_type": "toggle",
             "media_types": [
               "show"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Episode",
-            "value": "episode",
-            "media_types": [
-              "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
             ]
           }
-        ]
+        }
       },
       {
         "id": "overlay_content_rating_au",
@@ -233,35 +246,36 @@
           "season",
           "episode"
         ],
-        "template_variables": [
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Show",
-            "value": "show",
-            "media_types": [
-              "show"
+        "template_variables": {
+          "color": {
+            "input_type": "select",
+            "default": "true",
+            "options": [
+              "true",
+              "false"
             ]
           },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Season",
-            "value": "season",
+          "builder_level": {
+            "input_type": "toggle",
             "media_types": [
               "show"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Episode",
-            "value": "episode",
-            "media_types": [
-              "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
             ]
           }
-        ]
+        }
       },
       {
         "id": "overlay_content_rating_nz",
@@ -275,35 +289,36 @@
           "season",
           "episode"
         ],
-        "template_variables": [
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Show",
-            "value": "show",
-            "media_types": [
-              "show"
+        "template_variables": {
+          "color": {
+            "input_type": "select",
+            "default": "true",
+            "options": [
+              "true",
+              "false"
             ]
           },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Season",
-            "value": "season",
+          "builder_level": {
+            "input_type": "toggle",
             "media_types": [
               "show"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Episode",
-            "value": "episode",
-            "media_types": [
-              "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
             ]
           }
-        ]
+        }
       },
       {
         "id": "overlay_content_rating_commonsense",
@@ -716,7 +731,37 @@
           "show"
         ],
         "tooltip": "This will display content currently streaming on a particular service, not content that is exclusive to said service. Read the wiki for using <code>originals_only</code> to change this",
-        "tooltip_variant": "danger"
+        "tooltip_variant": "danger",
+        "template_variables": {
+          "style": {
+            "input_type": "select",
+            "default": "color",
+            "options": [
+              "color",
+              "white"
+            ]
+          },
+          "builder_level": {
+            "input_type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
+            ]
+          }
+        }
       },
       {
         "id": "overlay_studio",
@@ -729,91 +774,78 @@
           "season",
           "episode"
         ],
-        "template_variables": [
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Show",
-            "value": "show",
-            "media_types": [
-              "show"
+        "template_variables": {
+          "size": {
+            "input_type": "select",
+            "default": "standard",
+            "options": [
+              "standard",
+              "bigger"
             ]
           },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Season",
-            "value": "season",
+          "builder_level": {
+            "input_type": "toggle",
             "media_types": [
               "show"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Episode",
-            "value": "episode",
-            "media_types": [
-              "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
             ]
           }
-        ]
+        }
       },
       {
         "id": "overlay_network",
-        "label": "Networks",
+        "label": "Network",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/network/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/network.png",
         "media_types": [
+          "movie",
           "show",
           "season",
           "episode"
         ],
-        "template_variables": [
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Show",
-            "value": "show",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Season",
-            "value": "season",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "type": "toggle",
-            "key": "builder_level",
-            "label": "Apply to Episode",
-            "value": "episode",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
-            "type": "select",
-            "key": "style",
-            "label": "Network Style",
+        "template_variables": {
+          "style": {
+            "input_type": "select",
             "default": "color",
             "options": [
+              "color",
+              "white"
+            ]
+          },
+          "builder_level": {
+            "input_type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "toggles": [
               {
-                "value": "color",
-                "label": "Color"
+                "label": "Apply to Show",
+                "value": "show"
               },
               {
-                "value": "white",
-                "label": "White"
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
               }
             ]
           }
-        ]
+        }
       }
     ]
   },
