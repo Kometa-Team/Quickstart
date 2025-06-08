@@ -775,7 +775,7 @@
           "episode"
         ],
         "template_variables": {
-          "size": {
+          "style": {
             "input_type": "select",
             "default": "standard",
             "options": [
