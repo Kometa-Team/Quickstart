@@ -32,6 +32,9 @@ from flask import (
 from waitress import serve
 from werkzeug.utils import secure_filename
 
+from werkzeug.wrappers import Request
+Request.max_form_parts = 100000  # Allow more form fields if needed
+
 from flask_session import Session
 from modules import validations, output, persistence, helpers, database
 
@@ -96,6 +99,22 @@ app.config["SESSION_TYPE"] = "cachelib"
 app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir="flask_session", threshold=500)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
+
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB, adjust as needed
+app.config["MAX_FORM_MEMORY_SIZE"] = 16 * 1024 * 1024  # 16 MB
+
+@app.before_request
+def check_request_size():
+    if request.content_length:
+        print(f"[DEBUG] Incoming request size: {request.content_length / 1024:.2f} KB")
+
+    # Only applies to form-encoded POSTs
+    if request.method == "POST" and request.content_type.startswith("application/x-www-form-urlencoded"):
+        try:
+            form_data = request.form  # triggers parsing
+            print(f"[DEBUG] Form field count: {len(form_data)}")
+        except Exception as e:
+            print(f"[DEBUG] Failed to parse form: {e}")
 
 server_session = Session(app)
 server_thread = None
@@ -368,7 +387,11 @@ def generate_preview():
             continue  # skip invalid overlay data
 
         # Build filename suffix from all template_variables (sorted for consistency)
-        suffix_parts = [f"{key}_{value}" for key, value in sorted(template_vars.items()) if key in {"style", "size"}]  # only include known preview-affecting keys
+        suffix_parts = [
+            f"{key}_{value}"
+            for key, value in sorted(template_vars.items())
+            if key in {"style", "size"}  # only include known preview-affecting keys
+        ]
         suffix = "_" + "_".join(suffix_parts) if suffix_parts else ""
         filename = f"{prefix}{img_type}-{overlay_id}{suffix}.png"
         overlay_path = os.path.join(OVERLAY_FOLDER, filename)
@@ -1007,7 +1030,7 @@ update_thread = None
 if __name__ == "__main__":
 
     def start_flask_app():
-        serve(app, host="0.0.0.0", port=port)
+        serve(app, host="0.0.0.0", port=port, max_request_body_size=16 * 1024 * 1024)
 
     def start_update_thread(app_in):
         with app_in.app_context():
