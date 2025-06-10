@@ -124,11 +124,23 @@ const ImageHandler = {
       `#${libraryId}-ContentRatingOverlays .overlay-group[data-type="${type}"] input.template-parent-toggle[data-radio-group="true"]:checked`
     )
     if (selectedRating) {
-      const value = selectedRating.value // e.g., us_movie
+      const value = selectedRating.value // e.g., "nz"
+      const overlaySuffix = `content_rating_${value}`
+      const overlayId = `overlay_${overlaySuffix}`
 
-      const overlayId = `overlay_content_rating_${value}`
+      // eslint-disable-next-line camelcase
+      const template_variables = {}
 
-      overlays.push({ id: overlayId, template_variables: {} })
+      const colorInput = document.querySelector(
+        `#${libraryId}-ContentRatingOverlays .overlay-group[data-type="${type}"] select[name="${libraryId}-${type}-template_overlay_${overlaySuffix}[color]"]`
+      )
+      if (colorInput) {
+        // eslint-disable-next-line camelcase
+        template_variables.color = colorInput.value.toString()
+      }
+
+      // eslint-disable-next-line camelcase
+      overlays.push({ id: overlayId, template_variables })
     }
 
     console.debug(`[DEBUG] Overlays found for ${libraryId}, type: ${type}:`, overlays)

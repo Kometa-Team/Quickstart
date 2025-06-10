@@ -386,11 +386,17 @@ def generate_preview():
         elif isinstance(overlay_entry, dict):
             overlay_id = overlay_entry.get("id")
             template_vars = overlay_entry.get("template_variables", {})
+
+            # Normalize booleans to lowercase strings (e.g., True → "true")
+            template_vars = {
+                k: str(v).lower() if isinstance(v, bool) else v
+                for k, v in template_vars.items()
+            }
         else:
             continue  # skip invalid overlay data
 
         # Build filename suffix from all template_variables (sorted for consistency)
-        suffix_parts = [f"{key}_{value}" for key, value in sorted(template_vars.items()) if key in {"style", "size"}]  # only include known preview-affecting keys
+        suffix_parts = [f"{key}_{value}" for key, value in sorted(template_vars.items()) if key in {"style", "size", "color"}]  # only include known preview-affecting keys
         suffix = "_" + "_".join(suffix_parts) if suffix_parts else ""
         filename = f"{prefix}{img_type}-{overlay_id}{suffix}.png"
         overlay_path = os.path.join(OVERLAY_FOLDER, filename)
