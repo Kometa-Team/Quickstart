@@ -735,7 +735,7 @@ def build_config(header_style="standard", config_name=None):
         # Handle all header styles
         if header_style == "none":
             header_art[config_attribute] = ""  # No headers at all
-        elif header_style == "single line":  # Standardizes "single line" as divider format
+        elif header_style == "single line" or helpers.contains_non_latin(item["name"]):  # Standardizes "single line" as divider format
             header_art[config_attribute] = "#==================== " + item["name"] + " ====================#"
         else:
             # Handle custom PyFiglet fonts dynamically (including "standard")
@@ -962,9 +962,12 @@ def build_config(header_style="standard", config_name=None):
 
     def inject_section_headers(yaml_string, font):
         def art(title):
-            return (
-                add_border_to_ascii_art(pyfiglet.figlet_format(title, font=font)) if font not in ["none", "single line"] else f"#==================== {title} ====================#"
-            )
+            if font in ["none", "single line"] or helpers.contains_non_latin(title):
+                return f"#==================== {title} ====================#"
+            try:
+                return add_border_to_ascii_art(pyfiglet.figlet_format(title, font=font))
+            except pyfiglet.FontNotFound:
+                return f"#==================== {title} ====================#"
 
         lines = yaml_string.splitlines()
         output = []
