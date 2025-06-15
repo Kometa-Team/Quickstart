@@ -344,7 +344,7 @@ const EventHandler = {
 
       const accordionBody = accordion.querySelector('.accordion-body')
 
-      // Skip Preview Overlays
+      // Skip the Preview Overlays
       if (isPreviewOverlay) {
         console.log(`🚫 [DEBUG] Skipping Preview Overlays: ${headerText}`)
         accordionHeader.classList.remove('selected')
