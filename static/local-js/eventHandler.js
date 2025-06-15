@@ -323,6 +323,18 @@ const EventHandler = {
   updateAccordionHighlights: function () {
     console.log('🔍 [DEBUG] Updating accordion highlights...')
 
+    // Plex Pass Status (special case)
+    const plexPassHeader = document.getElementById('plexPassHeading')
+    if (plexPassHeader) {
+      const plexPassDetected = (document.body.dataset.plexPass || '').toLowerCase() === 'true'
+      if (plexPassDetected) {
+        plexPassHeader.classList.add('selected') // green
+        plexPassHeader.classList.remove('warning')
+      } else {
+        plexPassHeader.classList.add('warning') // yellow
+        plexPassHeader.classList.remove('selected')
+      }
+    }
     document.querySelectorAll('.accordion-item').forEach((accordion) => {
       const accordionHeader = accordion.querySelector('.accordion-header')
       if (!accordionHeader) return
@@ -502,6 +514,14 @@ document.addEventListener('DOMContentLoaded', () => {
   EventHandler.attachLibraryListeners()
   ValidationHandler.restoreSelectedLibraries()
   ValidationHandler.updateValidationState()
+})
+
+document.querySelectorAll('select.template-variable-select').forEach(select => {
+  const selectedValue = select.dataset.selected
+  if (selectedValue !== undefined && selectedValue !== null) {
+    select.value = selectedValue
+    console.debug(`[RESTORE] Select value set: ${select.name} = ${selectedValue}`)
+  }
 })
 
 // =============================

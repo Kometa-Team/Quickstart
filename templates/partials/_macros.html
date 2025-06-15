@@ -1057,8 +1057,9 @@ prefix) %}
                             </span>
                             <select class="form-select template-variable-select" id="{{ template_name }}-{{ var_name }}"
                                 name="{{ template_name }}[{{ var_name }}]"
-                                aria-describedby="{{ template_name }}-{{ var_name }}_text" {% if selected_value
-                                !=var_details.default %}data-user-modified="true" {% endif %}>
+                                aria-describedby="{{ template_name }}-{{ var_name }}_text"
+                                data-selected="{{ selected_value|string|lower }}" {% if selected_value !=var_details.default
+                                %}data-user-modified="true" {% endif %}>
                                 {% for option in var_details.options %}
                                 <option value="{{ option }}" {% if selected_value==option %}selected{% endif %}>
                                     {{ option|capitalize }}

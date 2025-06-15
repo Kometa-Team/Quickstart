@@ -239,6 +239,13 @@ label {
     /* Same padding for symmetry */
 }
 
+/* Add a yellow left border when an accordion has selected items */
+.accordion-header.warning {
+    border-left: 4px solid #ffc107 !important;
+    padding-left: 10px !important;
+    /* Space text from border */
+}
+
 /* Ensure the accordion header has a transparent background */
 .accordion-button:not(.collapsed) {
     background-color: transparent !important;

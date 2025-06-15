@@ -1,6 +1,7 @@
 import io
 import os
 import json
+import re
 from datetime import datetime
 
 import jsonschema
@@ -303,87 +304,117 @@ def build_libraries_section(
 
             entry["collection_files"] = collection_files
 
-        # Process Overlays
-        overlay_key = helpers.extract_library_name(library_key)
-        overlay_entries = []
+            # Process Overlays
+            overlay_key = helpers.extract_library_name(library_key)
+            overlay_entries = []
 
-        if overlay_key and overlay_key in overlays:
-            raw_overlay_entries = overlays[overlay_key]
+            if overlay_key and overlay_key in overlays:
+                raw_overlay_entries = overlays[overlay_key]
 
-            if library_type == "mov":
-                # Flat overlay keys for movies
-                for key, value in raw_overlay_entries.items():
-                    if not key.startswith(f"{library_type}-library_{overlay_key}-movie-overlay_"):
-                        continue
-                    overlay_name = key.split("-overlay_")[-1]
-                    if isinstance(value, bool) and value:
-                        overlay_entries.append({"default": overlay_name})
-                    elif isinstance(value, str) and value:
-                        overlay_entries.append({"default": "commonsense" if value.lower() == "commonsense" else f"content_rating_{value}"})
-
-            elif library_type == "sho":
-                # Step 1: Bucket overlays by name and builder_level
-                overlay_groups = {}
-                builder_levels = ["show", "season", "episode"]
-                for level in builder_levels:
-                    prefix = f"{library_type}-library_{overlay_key}-{level}-overlay_"
+                if library_type == "mov":
                     for key, value in raw_overlay_entries.items():
-                        if not key.startswith(prefix):
+                        if not key.startswith(f"{library_type}-library_{overlay_key}-movie-overlay_"):
                             continue
+                        overlay_name = key.split("-overlay_")[-1]
+                        if isinstance(value, bool) and value:
+                            overlay_entries.append({"default": overlay_name})
+                        elif isinstance(value, str) and value:
+                            overlay_entries.append({"default": "commonsense" if value.lower() == "commonsense" else f"content_rating_{value}"})
 
-                        if not value:
-                            continue
+                elif library_type == "sho":
+                    overlay_groups = {}
+                    builder_levels = ["show", "season", "episode"]
+                    for level in builder_levels:
+                        prefix = f"{library_type}-library_{overlay_key}-{level}-overlay_"
+                        for key, value in raw_overlay_entries.items():
+                            print(f"[DEBUG] {key=} {value=}")
+                            if not key.startswith(prefix):
+                                continue
+                            if not value:
+                                continue
+                            raw_name = key.split("-overlay_")[-1]
+                            overlay_name = (
+                                "commonsense" if value == "commonsense" else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str) else raw_name
+                            )
+                            if not overlay_name:
+                                continue
+                            overlay_groups.setdefault(overlay_name, {})[level] = True
 
-                        raw_name = key.split("-overlay_")[-1]
-                        overlay_name = (
-                            "commonsense" if value == "commonsense" else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str) else raw_name
-                        )
+                    for overlay_name, levels in overlay_groups.items():
+                        if "show" in levels:
+                            overlay_entries.append({"default": overlay_name})
+                        if "season" in levels:
+                            overlay_entries.append({"default": overlay_name, "template_variables": {"builder_level": "season"}})
+                        if "episode" in levels:
+                            overlay_entries.append({"default": overlay_name, "template_variables": {"builder_level": "episode"}})
 
-                        if not overlay_name:
-                            continue  # malformed, skip
+                # Handle template variables for content_rating overlays
+                template_overlay_entries = {}
+                for key, val in raw_overlay_entries.items():
+                    if "-template_overlay_content_rating_" not in key:
+                        continue
+                    match = re.match(rf"{library_type}-library_{overlay_key}-(\\w+)-template_overlay_content_rating_([\\w\\d_]+)\\[(\\w+)\\]", key)
+                    if not match:
+                        continue
+                    level, variant, var_name = match.groups()
+                    parent_overlay_key = f"{library_type}-library_{overlay_key}-{level}-overlay_content_rating"
+                    variant_match = raw_overlay_entries.get(parent_overlay_key)
+                    if variant_match != variant:
+                        continue
+                    if isinstance(val, str):
+                        val = True if val.lower() == "true" else False if val.lower() == "false" else val
+                    full_overlay_key = f"{variant}|{level}"
+                    entry_dict = template_overlay_entries.setdefault(full_overlay_key, {})
+                    entry_dict[var_name] = val
 
-                        overlay_groups.setdefault(overlay_name, {})[level] = True
-
-                # Step 2: Output with `builder_level: show` omitted
-                for overlay_name, levels in overlay_groups.items():
-                    if "show" in levels:
-                        overlay_entries.append({"default": overlay_name})
-                    if "season" in levels:
-                        overlay_entries.append({"default": overlay_name, "template_variables": {"builder_level": "season"}})
-                    if "episode" in levels:
-                        overlay_entries.append({"default": overlay_name, "template_variables": {"builder_level": "episode"}})
-
-        # Handle template variables for overlays (movies and shows)
-        template_overlay_entries = {}
-        for key, val in raw_overlay_entries.items():
-            if "-template_overlay_" not in key:
-                continue
-            base_key, var_part = key.split("[", 1)
-            var_name = var_part.rstrip("]")
-            # Only include if the parent overlay toggle is truthy
-            # Translate "-template_overlay_" to "-overlay_" to find toggle key
-            parent_key = base_key.replace("-template_overlay_", "-overlay_")
-            parent_enabled = raw_overlay_entries.get(parent_key)
-            if not parent_enabled:
-                continue
-            entry_dict = template_overlay_entries.setdefault(base_key, {})
-            entry_dict[var_name] = val
-
-        # Apply template_variables to corresponding overlays
+        # Ensure template_variables (e.g. color) are attached to overlays like content_rating_*
         for overlay_entry in overlay_entries:
             overlay_name = overlay_entry["default"]
-            if library_type == "mov":
-                full_key = f"{library_type}-library_{overlay_key}-movie-template_overlay_{overlay_name}"
-            else:  # sho
-                level = overlay_entry.get("template_variables", {}).get("builder_level", "show")
-                full_key = f"{library_type}-library_{overlay_key}-{level}-template_overlay_{overlay_name}"
-            if full_key in template_overlay_entries:
-                if "template_variables" not in overlay_entry:
-                    overlay_entry["template_variables"] = {}
-                overlay_entry["template_variables"].update(template_overlay_entries[full_key])
 
-        if overlay_entries:
-            entry["overlay_files"] = overlay_entries
+            # Determine builder level
+            if library_type == "sho":
+                level = overlay_entry.get("template_variables", {}).get("builder_level", "show")
+                full_key_prefix = f"{library_type}-library_{overlay_key}-{level}-template_overlay_{overlay_name}"
+            else:
+                full_key_prefix = f"{library_type}-library_{overlay_key}-movie-template_overlay_{overlay_name}"
+
+            # Special handling for content_rating_* overlays
+            if overlay_name.startswith("content_rating_"):
+                variant = overlay_name[len("content_rating_"):]
+                if library_type == "sho":
+                    level = overlay_entry.get("template_variables", {}).get("builder_level", "show")
+                    color_key = f"{library_type}-library_{overlay_key}-{level}-template_overlay_content_rating_{variant}[color]"
+                else:
+                    color_key = f"{library_type}-library_{overlay_key}-movie-template_overlay_content_rating_{variant}[color]"
+
+                color_value = raw_overlay_entries.get(color_key)
+
+                # Convert string "true"/"false" to bool
+                if isinstance(color_value, str):
+                    color_value = color_value.lower() == "true"
+
+                # Force presence of color, defaulting to False
+                overlay_entry.setdefault("template_variables", {})
+                overlay_entry["template_variables"]["color"] = True if str(color_value).strip().lower() == "true" else False
+
+            # Add other template_variables if matched by exact full_key_prefix
+            for raw_key, raw_value in raw_overlay_entries.items():
+                if not raw_key.startswith(full_key_prefix + "["):
+                    continue
+                var_name = raw_key[len(full_key_prefix) + 1 : -1]  # strip brackets
+
+                # Interpret string booleans correctly
+                if isinstance(raw_value, str):
+                    raw_value = True if raw_value.lower() == "true" else False if raw_value.lower() == "false" else raw_value
+
+                overlay_entry.setdefault("template_variables", {})
+                if var_name == "color":
+                    overlay_entry["template_variables"][var_name] = True if str(raw_value).lower() == "true" else False
+                else:
+                    overlay_entry["template_variables"][var_name] = raw_value
+
+                if overlay_entries:
+                    entry["overlay_files"] = overlay_entries
 
         # Template Variables
         template_key = helpers.extract_library_name(library_key)
