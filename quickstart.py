@@ -388,10 +388,7 @@ def generate_preview():
             template_vars = overlay_entry.get("template_variables", {})
 
             # Normalize booleans to lowercase strings (e.g., True → "true")
-            template_vars = {
-                k: str(v).lower() if isinstance(v, bool) else v
-                for k, v in template_vars.items()
-            }
+            template_vars = {k: str(v).lower() if isinstance(v, bool) else v for k, v in template_vars.items()}
         else:
             continue  # skip invalid overlay data
 

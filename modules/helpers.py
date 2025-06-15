@@ -750,4 +750,4 @@ def get_library_metadata():
 
 
 def contains_non_latin(text):
-    return bool(re.search(r'[^\x00-\x7F]', text))
+    return bool(re.search(r"[^\x00-\x7F]", text))

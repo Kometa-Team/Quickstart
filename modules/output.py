@@ -380,7 +380,7 @@ def build_libraries_section(
 
             # Special handling for content_rating_* overlays
             if overlay_name.startswith("content_rating_"):
-                variant = overlay_name[len("content_rating_"):]
+                variant = overlay_name[len("content_rating_") :]
                 if library_type == "sho":
                     level = overlay_entry.get("template_variables", {}).get("builder_level", "show")
                     color_key = f"{library_type}-library_{overlay_key}-{level}-template_overlay_content_rating_{variant}[color]"
