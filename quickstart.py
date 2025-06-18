@@ -512,7 +512,6 @@ def clear_data(name):
     flash("SQLite storage cleared successfully.", "success")
     return redirect(url_for("start"))
 
-
 @app.route("/step/<name>", methods=["GET", "POST"])
 def step(name):
     page_info = {}
@@ -522,21 +521,18 @@ def step(name):
         persistence.save_settings(request.referrer, request.form)
         header_style = request.form.get("header_style", "standard")
 
-    # Call `refresh_plex_libraries()` BEFORE retrieving Plex settings
-    refresh_plex_libraries()
+    # --- Detect config change ---
+    previous_config = session.get("config_name")
+    selected_config = request.form.get("configSelector") or previous_config
+    new_config_name = request.form.get("newConfigName")
 
-    if name in ["010-plex", "025-libraries", "900-final"]:
+    if selected_config == "add_config" and new_config_name:
+        selected_config = new_config_name.strip()
 
-        telemetry = helpers.get_plex_metadata()
-        if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Refreshed telemetry for {name} step:")
-            print(json.dumps(telemetry, indent=2))
+    if not selected_config:
+        selected_config = previous_config or namesgenerator.get_random_name()
 
-        persistence.save_settings("plex_telemetry", telemetry)
-    else:
-        telemetry = persistence.retrieve_settings("plex_telemetry")
-
-    page_info["telemetry"] = telemetry
+    config_changed = selected_config != previous_config
 
     # Retrieve available fonts (ensuring "none" and "single line" are always included)
     available_fonts = helpers.get_pyfiglet_fonts()
@@ -647,6 +643,37 @@ def step(name):
 
     # Ensure 'plex' key exists before accessing sub-keys
     plex_data = all_libraries.get("plex", {})
+
+    # --- Refresh Plex data if needed ---
+    if name in ["010-plex", "025-libraries", "900-final"] or config_changed:
+        refresh_plex_libraries()
+        telemetry = persistence.retrieve_settings("plex_telemetry")
+    else:
+        telemetry = persistence.retrieve_settings("plex_telemetry")
+
+    telemetry_data = telemetry.get("plex_telemetry")
+
+    # If telemetry is fresher in plex_data, use that
+    telemetry_data = plex_data.get("telemetry")
+    if not isinstance(telemetry_data, dict) or "plex_pass" not in telemetry_data:
+        telemetry_data = telemetry.get("plex_telemetry", {})
+
+        # Fallback if DB is also missing it
+        if not isinstance(telemetry_data, dict) or "plex_pass" not in telemetry_data:
+            telemetry_data = {
+                "plex_pass": None,
+                "server_name": "Unavailable",
+                "version": "Unavailable",
+                "platform": "Unavailable",
+                "update_channel": "Unavailable",
+                "libraries": {},
+            }
+            app.logger.warning(f"[WARN] Telemetry fallback triggered due to missing or invalid telemetry for config: {selected_config}")
+    else:
+        if app.config["QS_DEBUG"]:
+            print("[DEBUG] Using telemetry from fresh plex_data")
+
+    page_info["telemetry"] = telemetry_data
 
     # Extract the movie and show libraries
     movie_libraries_raw = plex_data.get("tmp_movie_libraries", "")
@@ -857,56 +884,43 @@ def validate_plex():
 @app.route("/refresh_plex_libraries", methods=["POST"])
 def refresh_plex_libraries():
     try:
-        # Get stored Plex credentials from DB
-        config_name = session.get("config_name")  # Ensure the session has config_name
+        config_name = session.get("config_name")
         if not config_name:
             return jsonify({"valid": False, "error": "Missing config_name"}), 400
 
-        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")  # Fetch from DB
+        # Get stored Plex credentials
+        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+        dummy = persistence.get_dummy_data("plex")
+        default_plex_url = dummy.get("url", "")
+        default_plex_token = dummy.get("token", "")
 
-        # Load default values from config.yml.template
-        dummy_plex_config = persistence.get_dummy_data("plex")  # Retrieves {"url": "...", "token": "..."}
-        default_plex_url = dummy_plex_config.get("url", "")
-        default_plex_token = dummy_plex_config.get("token", "")
-
-        # Exit early if the Plex credentials are still using default placeholder values
+        # Validate credentials
         if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
-            return (
-                jsonify(
-                    {
-                        "valid": False,
-                        "error": "Plex credentials are using default placeholder values",
-                    }
-                ),
-                400,
-            )
+            return jsonify({"valid": False, "error": "Plex credentials are using default placeholder values"}), 400
 
-        # Fetch latest libraries from Plex
+        # Validate Plex server and get updated libraries
         plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
-
-        # Fix: Convert Flask response object to JSON before accessing data.
-        if isinstance(plex_response, Flask.response_class):
-            plex_data = plex_response.get_json()  # Extract JSON data correctly
-        else:
-            plex_data = plex_response  # If already a dict, use as-is
+        plex_data = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
 
         if not plex_data.get("validated"):
             return jsonify({"valid": False, "error": "Plex validation failed"}), 500
 
-        # Extract new library data
-        updated_movie_libraries = plex_data.get("movie_libraries", [])
-        updated_show_libraries = plex_data.get("show_libraries", [])
-        updated_music_libraries = plex_data.get("music_libraries", [])
-
-        # Update the DB with the latest libraries
+        # Update stored libraries
         persistence.update_stored_plex_libraries(
             "010-plex",
-            updated_movie_libraries,
-            updated_show_libraries,
-            updated_music_libraries,
+            plex_data.get("movie_libraries", []),
+            plex_data.get("show_libraries", []),
+            plex_data.get("music_libraries", []),
         )
 
-        return jsonify(plex_data)  # Return refreshed data
+        # Get fresh telemetry using helpers and store it
+        telemetry = helpers.get_plex_metadata()
+        persistence.save_settings("plex_telemetry", telemetry)
+
+        # Merge both plex_data and telemetry for response
+        merged_response = {**plex_data, **telemetry}
+
+        return jsonify(merged_response)
 
     except Exception as e:
         return jsonify({"valid": False, "error": f"Server error: {str(e)}"}), 500

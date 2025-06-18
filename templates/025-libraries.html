@@ -3,20 +3,46 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
 
-<div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;"></div>
+{# Determine highlight class explicitly #}
+{% set plex_pass_status = (
+'plex-pass-true' if page_info.telemetry.plex_pass is sameas true else
+'plex-pass-false' if page_info.telemetry.plex_pass is sameas false else
+'plex-pass-unknown'
+) %}
+{% set server_name = page_info.telemetry.server_name or "Unknown" %}
+{% set version = page_info.telemetry.version or "Unknown" %}
+{% set platform = page_info.telemetry.platform or "Unknown" %}
+{% set platformVersion = page_info.telemetry.platformVersion or "Unknown" %}
+{% set update_channel = page_info.telemetry.update_channel or "Unknown" %}
+{% set db_cache = page_info.telemetry.db_cache or "Unknown" %}
+{% set maintenance_window = page_info.telemetry.maintenance_window or "Unknown" %}
+{% set has_plex_pass = page_info.telemetry.plex_pass is sameas true %}
 
-<div class="accordion mb-3" id="plexPassAccordion">
+<div class="accordion mb-3" id="plexInfoAccordion">
   <div class="accordion-item">
-    <h2 class="accordion-header" id="plexPassHeading">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-        data-bs-target="#plexPassStatus" aria-expanded="false" aria-controls="plexPassStatus">
-        Plex Pass Status
+    <h2 class="accordion-header {{ plex_pass_status }}" id="plexPassHeading">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#plexInfoPanel"
+        aria-expanded="false" aria-controls="plexInfoPanel">
+        Plex Information
+        <span class="ms-3 badge {{ 'bg-success' if has_plex_pass else 'bg-danger' }}">
+          {{ server_name }}
+        </span>
+        <span class="ms-2 badge bg-secondary">
+          Config: {{ page_info.config_name }}
+        </span>
       </button>
     </h2>
-    <div id="plexPassStatus" class="accordion-collapse collapse" aria-labelledby="plexPassHeading"
-      data-bs-parent="#plexPassAccordion">
+    <div id="plexInfoPanel" class="accordion-collapse collapse" aria-labelledby="plexPassHeading"
+      data-bs-parent="#plexInfoAccordion">
       <div class="accordion-body">
-        {% if telemetry.plex_pass %}
+
+        {% if page_info.telemetry.server_name == "Unavailable" %}
+        <div class="alert alert-danger" role="alert">
+          ⚠️ Unable to connect to Plex server. Please check your Plex URL and token.
+        </div>
+        {% endif %}
+
+        {% if has_plex_pass %}
         <div class="alert alert-success" role="alert">
           <strong>Plex Pass is enabled.</strong><br>
           You have access to all Kometa features, including:
@@ -39,6 +65,75 @@
           These features require an active Plex Pass subscription.
         </div>
         {% endif %}
+
+        <dl class="row mt-3 small">
+          <dt class="col-sm-4">Server Name</dt>
+          <dd class="col-sm-8">{{ server_name }}</dd>
+
+          <dt class="col-sm-4">Plex URL</dt>
+          <dd class="col-sm-8">{{ plex_data.url }}</dd>
+
+          <dt class="col-sm-4">Plex Version</dt>
+          <dd class="col-sm-8">{{ version }}</dd>
+
+          <dt class="col-sm-4">Platform</dt>
+          <dd class="col-sm-8">{{ platform }}</dd>
+
+          <dt class="col-sm-4">Platform Version</dt>
+          <dd class="col-sm-8">{{ platformVersion }}</dd>
+
+          <dt class="col-sm-4">Update Channel</dt>
+          <dd class="col-sm-8">{{ update_channel }}</dd>
+
+          <dt class="col-sm-4">Database Cache</dt>
+          <dd class="col-sm-8">{{ db_cache }}</dd>
+
+          <dt class="col-sm-4">Maintenance Window</dt>
+          <dd class="col-sm-8">{{ maintenance_window }}</dd>
+
+          <dt class="col-sm-4">Plex Pass</dt>
+          <dd class="col-sm-8">{{ has_plex_pass }}</dd>
+        </dl>
+        {% set library_counts = {'movie': 0, 'show': 0, 'artist': 0, 'photo': 0, 'other': 0} %}
+        {% for lib in page_info.telemetry.libraries.values() %}
+        {% set lib_type = lib.type if lib.type in library_counts else 'other' %}
+        {% set _ = library_counts.__setitem__(lib_type, library_counts[lib_type] + 1) %}
+        {% endfor %}
+
+        <p class="text-muted">
+          This server has {{ page_info.telemetry.libraries | length }} libraries:
+          {{ library_counts.movie }} movie,
+          {{ library_counts.show }} show,
+          {{ library_counts.artist }} music,
+          {{ library_counts.photo }} photo,
+          {{ library_counts.other }} other.
+        </p>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-sm table-bordered text-light align-middle" style="background-color: #212529;">
+            <thead>
+              <tr style="background-color: #343a40; color: #ffffff;">
+                <th scope="col">Library Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Scanner</th>
+                <th scope="col">Agent</th>
+                <th scope="col">Ratings Source</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lib_name, lib_info in page_info.telemetry.libraries.items() %}
+              <tr>
+                <td>{{ lib_name }}</td>
+                <td><span class="badge bg-secondary text-uppercase">{{ lib_info.type }}</span></td>
+                <td><code>{{ lib_info.scanner }}</code></td>
+                <td><code>{{ lib_info.agent }}</code></td>
+                <td><code>{{ lib_info.ratings_source }}</code></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
       </div>
     </div>
   </div>
@@ -83,7 +178,7 @@
 {% for library in movie_libraries %}
 <div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
   <div class="card-header bg-dark">
-    <h4 class="mb-0">{{ library.name }} (Movie)</h4> <!-- Library name in header -->
+    <h4 class="mb-0">{{ library.name }} (Movie)</h4>
   </div>
   <div class="card-body">
     {% include "partials/_movie_library_settings.html" %}
@@ -95,7 +190,7 @@
 {% for library in show_libraries %}
 <div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
   <div class="card-header bg-dark">
-    <h4 class="mb-0">{{ library.name }} (TV Show)</h4> <!-- Library name in header -->
+    <h4 class="mb-0">{{ library.name }} (TV Show)</h4>
   </div>
   <div class="card-body">
     {% include "partials/_show_library_settings.html" %}

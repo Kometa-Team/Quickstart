@@ -223,12 +223,33 @@ label {
     padding-bottom: 10px;
 }
 
+.accordion-header.plex-pass-true {
+    border-left: 4px solid #00bc8c !important;
+    padding-left: 10px !important;
+}
+
+.accordion-header.plex-pass-false {
+    border-left: 4px solid #ffc107 !important;
+    padding-left: 10px !important;
+}
+
+.accordion-header.plex-pass-unknown {
+    border-left: 4px solid #6c757d !important;
+    padding-left: 10px !important;
+}
+
 /* Add a green left border when an accordion has selected items */
 .accordion-header.selected {
     border-left: 4px solid #00bc8c !important;
     /* Bright green left border */
     padding-left: 10px !important;
     /* Space text from border */
+}
+
+/* Add a gray left border when an accordion has unknown items */
+.accordion-header.unknown {
+    border-left: 4px solid #6c757d !important;
+    padding-left: 10px !important;
 }
 
 /* Add a red left border when an accordion has invalid items */

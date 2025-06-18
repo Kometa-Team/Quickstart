@@ -713,21 +713,46 @@ def get_plex_metadata():
         except Exception:
             update_channel = "Unknown update channel"
 
-        # Get per-library metadata
+        # DB Cache
+        try:
+            db_cache_size = plex.settings.get("DatabaseCacheSize").value
+            db_cache_str = f"{db_cache_size} MB"
+        except Exception:
+            db_cache_str = "Unknown"
+
+        # Maintenance window
+        try:
+            start_hour = int(plex.settings.get("butlerStartHour").value)
+            end_hour = int(plex.settings.get("butlerEndHour").value)
+            maintenance_window = f"{start_hour:02d}:00 – {end_hour:02d}:00"
+        except Exception:
+            maintenance_window = "Unavailable"
+
+        # Per-library info
         library_metadata = get_library_metadata()
 
-        # Return structured metadata
         return {
             "plex_pass": plex_pass,
             "update_channel": update_channel,
             "server_name": plex.friendlyName,
             "version": plex.version,
             "platform": plex.platform,
+            "platformVersion": plex.platformVersion,
+            "db_cache": db_cache_str,
+            "maintenance_window": maintenance_window,
             "libraries": library_metadata,
         }
 
     except Exception as e:
-        return {"plex_pass": False, "update_channel": None, "error": str(e), "libraries": {}}
+        return {
+            "plex_pass": False,
+            "update_channel": None,
+            "error": str(e),
+            "libraries": {},
+            "ratings_source": "Unavailable",
+            "db_cache": "Unavailable",
+            "maintenance_window": "Unavailable"
+        }
 
 
 def get_library_metadata():
@@ -737,11 +762,32 @@ def get_library_metadata():
 
         library_data = {}
         for section in plex.library.sections():
-            library_data[section.title] = {
-                "agent": section.agent,
-                "scanner": section.scanner,
-                "type": section.type,
-            }
+            try:
+                # Default metadata
+                lib_info = {
+                    "agent": section.agent,
+                    "scanner": section.scanner,
+                    "type": section.type,
+                    "ratings_source": "N/A"
+                }
+
+                # Try to extract ratings source
+                try:
+                    settings = section.settings()
+                    ratings_setting = next((s for s in settings if s.id == "ratingsSource"), None)
+                    if ratings_setting:
+                        lib_info["ratings_source"] = ratings_setting.enumValues.get(ratings_setting.value, "Unknown")
+                except Exception:
+                    pass  # Keep "N/A" if ratingsSource isn't available
+
+                library_data[section.title] = lib_info
+            except Exception as lib_err:
+                library_data[section.title] = {
+                    "agent": "Unknown",
+                    "scanner": "Unknown",
+                    "type": "Unknown",
+                    "ratings_source": f"Error: {lib_err}"
+                }
 
         return library_data
 
