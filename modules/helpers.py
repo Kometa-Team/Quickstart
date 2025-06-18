@@ -751,7 +751,7 @@ def get_plex_metadata():
             "libraries": {},
             "ratings_source": "Unavailable",
             "db_cache": "Unavailable",
-            "maintenance_window": "Unavailable"
+            "maintenance_window": "Unavailable",
         }
 
 
@@ -764,12 +764,7 @@ def get_library_metadata():
         for section in plex.library.sections():
             try:
                 # Default metadata
-                lib_info = {
-                    "agent": section.agent,
-                    "scanner": section.scanner,
-                    "type": section.type,
-                    "ratings_source": "N/A"
-                }
+                lib_info = {"agent": section.agent, "scanner": section.scanner, "type": section.type, "ratings_source": "N/A"}
 
                 # Try to extract ratings source
                 try:
@@ -782,12 +777,7 @@ def get_library_metadata():
 
                 library_data[section.title] = lib_info
             except Exception as lib_err:
-                library_data[section.title] = {
-                    "agent": "Unknown",
-                    "scanner": "Unknown",
-                    "type": "Unknown",
-                    "ratings_source": f"Error: {lib_err}"
-                }
+                library_data[section.title] = {"agent": "Unknown", "scanner": "Unknown", "type": "Unknown", "ratings_source": f"Error: {lib_err}"}
 
         return library_data
 

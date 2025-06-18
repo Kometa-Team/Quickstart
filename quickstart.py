@@ -512,6 +512,7 @@ def clear_data(name):
     flash("SQLite storage cleared successfully.", "success")
     return redirect(url_for("start"))
 
+
 @app.route("/step/<name>", methods=["GET", "POST"])
 def step(name):
     page_info = {}
