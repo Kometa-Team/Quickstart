@@ -393,7 +393,7 @@ def generate_preview():
             continue  # skip invalid overlay data
 
         # Build filename suffix from all template_variables (sorted for consistency)
-        suffix_parts = [f"{key}_{value}" for key, value in sorted(template_vars.items()) if key in {"style", "size", "color"}]  # only include known preview-affecting keys
+        suffix_parts = [f"{key}_{value}" for key, value in sorted(template_vars.items()) if key in {"style", "size", "color"}]
         suffix = "_" + "_".join(suffix_parts) if suffix_parts else ""
         filename = f"{prefix}{img_type}-{overlay_id}{suffix}.png"
         overlay_path = os.path.join(OVERLAY_FOLDER, filename)

@@ -503,7 +503,7 @@
       },
       {
         "id": "overlay_languages",
-        "label": "Audio/Subtitle Language Flags",
+        "label": "Audio Language Flags",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/languages/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
         "media_types": [
@@ -529,6 +529,61 @@
               "square",
               "half"
             ]
+          },
+          "builder_level": {
+            "input_type": "toggle",
+            "media_types": [
+              "show"
+            ],
+            "toggles": [
+              {
+                "label": "Apply to Show",
+                "value": "show"
+              },
+              {
+                "label": "Apply to Season",
+                "value": "season"
+              },
+              {
+                "label": "Apply to Episode",
+                "value": "episode"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "overlay_languages_subtitles",
+        "label": "Subtitle Language Flags",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/languages/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
+        "media_types": [
+          "movie",
+          "show",
+          "season",
+          "episode"
+        ],
+        "template_variables": {
+          "size": {
+            "input_type": "select",
+            "default": "small",
+            "options": [
+              "small",
+              "big"
+            ]
+          },
+          "style": {
+            "input_type": "select",
+            "default": "round",
+            "options": [
+              "round",
+              "square",
+              "half"
+            ]
+          },
+          "use_subtitles": {
+            "input_type": "hidden",
+            "default": true
           },
           "builder_level": {
             "input_type": "toggle",
