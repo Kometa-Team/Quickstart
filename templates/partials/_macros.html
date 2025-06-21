@@ -977,6 +977,7 @@ prefix) %}
                 {% set radio_safe_name = library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name %}
                 {% set current_radio_value = data.libraries.get(radio_safe_name) %}
                 {% set has_type_overlays = [] %}
+
                 {% for overlay in group.overlays %}
                 {% if overlay.media_types and (type in overlay.media_types) %}
                 {% set _ = has_type_overlays.append(1) %}
@@ -991,7 +992,6 @@ prefix) %}
 
                     {% for overlay in group.overlays %}
                     {% if overlay.media_types and (type in overlay.media_types) %}
-                    {% set radio_safe_name = library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name %}
                     {% set base_id = library.id ~ '-' ~ type ~ '-' ~ overlay.id %}
                     {% set input_name = radio_safe_name if input_type == "radio" else base_id %}
                     {% set input_value = overlay.value if input_type == "radio" else "true" %}
@@ -1037,45 +1037,47 @@ prefix) %}
                         </div>
 
                         {% if overlay.template_variables is mapping %}
-                        {% for var_name, var_details in overlay.template_variables.items() %}
-                        {% if var_details.input_type == "select" %}
-                        {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
-                        {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
-                        {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
+                        <div class="overlay-template-section mt-2">
+                            {% for var_name, var_details in overlay.template_variables.items() %}
+                            {% if var_details.input_type == "select" %}
+                            {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
+                            {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
+                            {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
 
-                        <div class="input-group mb-2">
-                            <span class="input-group-text" id="{{ template_name }}-{{ var_name }}_text"
-                                style="width: 170px;">
-                                {{ var_name|capitalize }}
-                                {% if var_details.tooltip %}
-                                <span class="text-{{ var_details.tooltip_variant or 'info' }} ms-2"
-                                    data-bs-toggle="tooltip" data-bs-html="true" title="{{ var_details.tooltip }}">
-                                    <i
-                                        class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                            <div class="input-group mb-2">
+                                <span class="input-group-text" id="{{ template_name }}-{{ var_name }}_text"
+                                    style="width: 170px;">
+                                    {{ var_name|capitalize }}
+                                    {% if var_details.tooltip %}
+                                    <span class="text-{{ var_details.tooltip_variant or 'info' }} ms-2"
+                                        data-bs-toggle="tooltip" data-bs-html="true" title="{{ var_details.tooltip }}">
+                                        <i
+                                            class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                    </span>
+                                    {% endif %}
                                 </span>
-                                {% endif %}
-                            </span>
-                            <select class="form-select template-variable-select" id="{{ template_name }}-{{ var_name }}"
-                                name="{{ template_name }}[{{ var_name }}]"
-                                aria-describedby="{{ template_name }}-{{ var_name }}_text"
-                                data-selected="{{ selected_value|string|lower }}" {% if selected_value !=var_details.default
-                                %}data-user-modified="true" {% endif %}>
-                                {% for option in var_details.options %}
-                                <option value="{{ option }}" {% if selected_value==option %}selected{% endif %}>
-                                    {{ option|capitalize }}
-                                </option>
-                                {% endfor %}
-                            </select>
+                                <select class="form-select template-variable-select"
+                                    id="{{ template_name }}-{{ var_name }}" name="{{ template_name }}[{{ var_name }}]"
+                                    aria-describedby="{{ template_name }}-{{ var_name }}_text"
+                                    data-selected="{{ selected_value|string|lower }}" {% if selected_value
+                                    !=var_details.default %}data-user-modified="true" {% endif %}>
+                                    {% for option in var_details.options %}
+                                    <option value="{{ option }}" {% if selected_value==option %}selected{% endif %}>
+                                        {{ option|capitalize }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
                         </div>
                         {% endif %}
-                        {% endfor %}
-                        {% endif %}
                     </div>
-                    {% endif %}
-                    {% endfor %}
+                    {% endif %} {# overlay.media_types check #}
+                    {% endfor %} {# end overlay loop #}
                 </div>
-                {% endif %}
-                {% endfor %}
+                {% endif %} {# end has_type_overlays #}
+                {% endfor %} {# end overlay_types #}
 
                 {% if input_type == "radio" %}
                 {% for type in overlay_types %}

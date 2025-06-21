@@ -59,6 +59,17 @@ document.addEventListener('DOMContentLoaded', function () {
     setupCustomStringListHandlers('sonarr_remove_by_tag')
     setupCustomStringListHandlers('metadata_backup')
 
+    document.querySelectorAll('.overlay-template-section').forEach((el) => {
+      el.style.display = 'none'
+    })
+
+    document.querySelectorAll('.overlay-toggle').forEach((checkbox) => {
+      checkbox.addEventListener('change', function () {
+        toggleOverlayTemplateSection(this)
+      })
+      toggleOverlayTemplateSection(checkbox) // immediate init
+    })
+
     function initializeSortableList (libraryId, prefix) {
       const list = document.getElementById(`${libraryId}-attribute_${prefix}_sortable`)
       const hiddenInput = document.getElementById(`${libraryId}-attribute_${prefix}_order`)
@@ -155,6 +166,15 @@ document.addEventListener('DOMContentLoaded', function () {
     })
   })
 })
+
+function toggleOverlayTemplateSection (checkbox) {
+  const groupContainer = checkbox.closest('.template-toggle-group') // <== FIXED
+  const templateSection = groupContainer?.querySelector('.overlay-template-section')
+
+  if (templateSection) {
+    templateSection.style.display = checkbox.checked ? '' : 'none'
+  }
+}
 
 function setupCustomStringListHandlers (prefix) {
   document.querySelectorAll(`input[id$="attribute_${prefix}_custom_hidden"]`).forEach(hidden => {
