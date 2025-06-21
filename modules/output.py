@@ -324,16 +324,15 @@ def build_libraries_section(
                         is_subtitles = raw_name == "languages_subtitles"
 
                         overlay_name = (
-                            "languages_subtitles" if is_subtitles else
-                            "commonsense" if value == "commonsense" else
-                            f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str) else
-                            raw_name
+                            "languages_subtitles"
+                            if is_subtitles
+                            else "commonsense" if value == "commonsense" else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str) else raw_name
                         )
 
                         key_tuple = (overlay_name, is_subtitles)
                         overlay_groups.setdefault(key_tuple, {})
 
-                    for (overlay_name, is_subtitles) in overlay_groups:
+                    for overlay_name, is_subtitles in overlay_groups:
                         entry_obj = {"default": overlay_name}
                         if is_subtitles:
                             entry_obj["template_variables"] = {"use_subtitles": True}
@@ -344,7 +343,7 @@ def build_libraries_section(
                         full_key_prefix = f"{library_type}-library_{overlay_key}-movie-template_overlay_{overlay_name}"
 
                         if overlay_name.startswith("content_rating_"):
-                            variant = overlay_name[len("content_rating_"):]
+                            variant = overlay_name[len("content_rating_") :]
                             color_key = f"{library_type}-library_{overlay_key}-movie-template_overlay_content_rating_{variant}[color]"
                             color_value = raw_overlay_entries.get(color_key, False)
                             if isinstance(color_value, str):
@@ -380,16 +379,15 @@ def build_libraries_section(
                             is_subtitles = raw_name == "languages_subtitles"
 
                             overlay_name = (
-                                "languages_subtitles" if is_subtitles else
-                                "commonsense" if value == "commonsense" else
-                                f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str) else
-                                raw_name
+                                "languages_subtitles"
+                                if is_subtitles
+                                else "commonsense" if value == "commonsense" else f"content_rating_{value}" if "content_rating" in raw_name and isinstance(value, str) else raw_name
                             )
 
                             key_tuple = (overlay_name, is_subtitles, level)
                             overlay_groups.setdefault(key_tuple, True)
 
-                    for (overlay_name, is_subtitles, level) in overlay_groups:
+                    for overlay_name, is_subtitles, level in overlay_groups:
                         entry_obj = {"default": overlay_name}
                         tv = {}
 
@@ -408,7 +406,7 @@ def build_libraries_section(
                         full_key_prefix = f"{library_type}-library_{overlay_key}-{level}-template_overlay_{overlay_name}"
 
                         if overlay_name.startswith("content_rating_"):
-                            variant = overlay_name[len("content_rating_"):]
+                            variant = overlay_name[len("content_rating_") :]
                             color_key = f"{library_type}-library_{overlay_key}-{level}-template_overlay_content_rating_{variant}[color]"
                             color_value = raw_overlay_entries.get(color_key, False)
                             if isinstance(color_value, str):
