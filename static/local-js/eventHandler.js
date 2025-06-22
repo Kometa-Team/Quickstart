@@ -329,69 +329,80 @@ const EventHandler = {
 
       const headerText = accordionHeader.textContent.trim()
       const isPreviewOverlay = headerText.toLowerCase().includes('preview overlays')
-
       const accordionBody = accordion.querySelector('.accordion-body')
 
-      // Skip the Preview Overlays
+      // Skip preview overlays
       if (isPreviewOverlay) {
-        console.log(`🚫 [DEBUG] Skipping Preview Overlays: ${headerText}`)
         accordionHeader.classList.remove('selected')
         return
       }
 
-      // Check if this section has selected checkboxes, radios, or dropdowns
-      const isCheckedOrSelected = accordionBody?.querySelector(
-        "input[type='checkbox']:checked:not(.readonly-toggle):not([hidden]):not([type='hidden']), " +
-        "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
-        "select[data-user-modified='true'] option:checked:not([value='']):not([value='none']), " +
-        '.list-group li'
-      ) !== null
+      let isCheckedOrSelected = false
+
+      if (accordionBody) {
+        // 1. Check for directly selected inputs (checkboxes, radios, list selections)
+        isCheckedOrSelected = accordionBody.querySelector(
+          "input[type='checkbox']:checked:not(.readonly-toggle):not([hidden]):not([type='hidden']), " +
+          "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
+          '.list-group li'
+        ) !== null
+
+        // 2. Check for modified template selects, but only if toggle is still ON
+        if (!isCheckedOrSelected) {
+          isCheckedOrSelected = Array.from(
+            accordionBody.querySelectorAll('.template-variable-select[data-user-modified="true"]')
+          ).some((select) => {
+            const group = select.closest('.template-toggle-group')
+            const toggle = group?.querySelector('.overlay-toggle')
+            return toggle?.checked
+          })
+        }
+      }
 
       if (isCheckedOrSelected) {
-        console.log(`[DEBUG] Highlighting: ${headerText}`)
         accordionHeader.classList.add('selected')
-
-        // Ensure the **IMMEDIATE PARENT** gets highlighted before moving up
         EventHandler.highlightParentAccordions(accordionHeader)
       } else {
         EventHandler.removeHighlightIfEmpty(accordionHeader)
       }
     })
 
-    // Ensure Overlays does NOT highlight if only Preview Overlays are active
+    // Special case: don't highlight parent "Overlays" if only preview overlays are selected
     document.querySelectorAll('.accordion-item').forEach((accordion) => {
       const accordionHeader = accordion.querySelector('.accordion-header')
-      if (!accordionHeader) return
+      const headerText = accordionHeader?.textContent.trim().toLowerCase()
+      if (headerText !== 'overlays') return
 
-      const headerText = accordionHeader.textContent.trim()
-      const isOverlaysSection = headerText.toLowerCase() === 'overlays'
+      const childItems = accordion.querySelectorAll('.accordion-item')
+      const hasNonPreviewSelection = Array.from(childItems).some((child) => {
+        const childHeader = child.querySelector('.accordion-header')
+        const isPreview = childHeader?.textContent.trim().toLowerCase().includes('preview overlays')
 
-      if (isOverlaysSection) {
-        console.log(`🔍 [DEBUG] Checking Overlays: ${headerText}`)
+        if (isPreview) return false
 
-        // Ensure at least one non-preview child is active
-        const hasValidChild = Array.from(accordion.querySelectorAll('.accordion-item')).some(child => {
-          const childHeader = child.querySelector('.accordion-header')
-          if (!childHeader) return false
+        // Only highlight if child toggle is on or has modified select tied to an enabled toggle
+        const hasActiveToggle = child.querySelector(
+          "input[type='checkbox']:checked:not(.readonly-toggle):not([hidden]):not([type='hidden']), " +
+          "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
+          '.list-group li'
+        )
+        if (hasActiveToggle) return true
 
-          const childText = childHeader.textContent.trim()
-          const isPreviewChild = childText.toLowerCase().includes('preview overlays')
-
-          if (!isPreviewChild && child.querySelector("input:checked, input[type='radio']:checked")) {
-            console.log(`[DEBUG] Valid selection found under: ${childText}`)
-            childHeader.classList.add('selected')
-            return true
-          }
-          return false
+        const hasModifiedSelectWithToggle = Array.from(
+          child.querySelectorAll('.template-variable-select[data-user-modified="true"]')
+        ).some((select) => {
+          const group = select.closest('.template-toggle-group')
+          const toggle = group?.querySelector('.overlay-toggle')
+          return toggle?.checked
         })
 
-        if (!hasValidChild) {
-          console.log(`🚫 [DEBUG] Overlays should NOT highlight: ${headerText}`)
-          accordionHeader.classList.remove('selected')
-        } else {
-          console.log(`[DEBUG] Highlighting Overlays: ${headerText}`)
-          accordionHeader.classList.add('selected')
-        }
+        return hasModifiedSelectWithToggle
+      })
+
+      if (hasNonPreviewSelection) {
+        accordionHeader.classList.add('selected')
+      } else {
+        accordionHeader.classList.remove('selected')
       }
     })
   },
