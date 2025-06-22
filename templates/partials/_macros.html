@@ -974,110 +974,126 @@ prefix) %}
                 {% set overlay_types = ['movie'] if library.type == 'movie' else ['show', 'season', 'episode'] %}
 
                 {% for type in overlay_types %}
+                {% set type_label = type|capitalize %}
                 {% set radio_safe_name = library.id ~ '-' ~ type ~ '-' ~ group.radio_group_name %}
                 {% set current_radio_value = data.libraries.get(radio_safe_name) %}
                 {% set has_type_overlays = [] %}
-
                 {% for overlay in group.overlays %}
-                {% if overlay.media_types and (type in overlay.media_types) %}
-                {% set _ = has_type_overlays.append(1) %}
-                {% endif %}
+                    {% if overlay.media_types and (type in overlay.media_types) %}
+                    {% set _ = has_type_overlays.append(1) %}
+                    {% endif %}
                 {% endfor %}
 
                 {% if has_type_overlays | length > 0 %}
-                <div class="overlay-group mb-4" data-type="{{ type }}">
-                    {% if overlay_types | length > 1 %}
-                    <h6 class="text-capitalize">{{ type }} Overlays</h6>
-                    {% endif %}
+                <!-- Sub-accordion for builder level -->
+                <div class="accordion mb-3" id="{{ library.id }}-{{ accordion_safe }}-{{ type }}Accordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#{{ library.id }}-{{ accordion_safe }}-{{ type }}" aria-expanded="false"
+                                aria-controls="{{ library.id }}-{{ accordion_safe }}-{{ type }}">
+                                {{ type_label }} Overlays
+                            </button>
+                        </h2>
+                        <div id="{{ library.id }}-{{ accordion_safe }}-{{ type }}" class="accordion-collapse collapse"
+                            data-bs-parent="#{{ library.id }}-{{ accordion_safe }}-{{ type }}Accordion">
+                            <div class="accordion-body">
+                                <div class="overlay-group mb-4" data-type="{{ type }}">
+                                    {% for overlay in group.overlays %}
+                                    {% if overlay.media_types and (type in overlay.media_types) %}
+                                    {% set base_id = library.id ~ '-' ~ type ~ '-' ~ overlay.id %}
+                                    {% set input_name = radio_safe_name if input_type == "radio" else base_id %}
+                                    {% set input_value = overlay.value if input_type == "radio" else "true" %}
+                                    {% set is_checked = (
+                                        current_radio_value == input_value if input_type == "radio"
+                                        else data.libraries[input_name]|string|lower == "true"
+                                    ) %}
 
-                    {% for overlay in group.overlays %}
-                    {% if overlay.media_types and (type in overlay.media_types) %}
-                    {% set base_id = library.id ~ '-' ~ type ~ '-' ~ overlay.id %}
-                    {% set input_name = radio_safe_name if input_type == "radio" else base_id %}
-                    {% set input_value = overlay.value if input_type == "radio" else "true" %}
-                    {% set is_checked = (
-                    current_radio_value == input_value if input_type == "radio"
-                    else data.libraries[input_name]|string|lower == "true"
-                    ) %}
+                                    <div class="template-toggle-group ms-3 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input overlay-toggle template-parent-toggle{% if overlay.readonly %} readonly-toggle{% endif %}"
+                                                type="checkbox"
+                                                id="{{ base_id }}"
+                                                name="{{ input_name }}"
+                                                value="{{ input_value }}"
+                                                {% if is_checked %}checked{% endif %}
+                                                data-template-group="{{ radio_safe_name }}-{{ overlay.id }}"
+                                                {% if input_type == 'radio' %}
+                                                data-radio-group="true"
+                                                data-was-checked="{{ 'true' if is_checked else 'false' }}"
+                                                {% endif %}>
+                                            {% if input_type == "checkbox" %}
+                                            <input type="hidden" name="{{ input_name }}" value="false">
+                                            {% endif %}
 
-                    <div class="template-toggle-group ms-3 mb-2">
-                        <div class="form-check form-switch">
-                            <input
-                                class="form-check-input overlay-toggle template-parent-toggle{% if overlay.readonly %} readonly-toggle{% endif %}"
-                                type="checkbox" id="{{ base_id }}" name="{{ input_name }}" value="{{ input_value }}" {%
-                                if is_checked %}checked{% endif %}
-                                data-template-group="{{ radio_safe_name }}-{{ overlay.id }}" {% if input_type=='radio'
-                                %} data-radio-group="true" data-was-checked="{{ 'true' if is_checked else 'false' }}" {%
-                                endif %}>
+                                            <div class="d-flex align-items-center">
+                                                <label class="form-check-label me-3" for="{{ base_id }}">
+                                                    <a target="_blank" href="{{ overlay.url }}">{{ overlay.label }}</a>
+                                                </label>
 
-                            {% if input_type == "checkbox" %}
-                            <input type="hidden" name="{{ input_name }}" value="false">
-                            {% endif %}
+                                                {% if overlay.image_url %}
+                                                <i class="bi bi-search text-success" data-bs-toggle="tooltip" data-bs-html="true"
+                                                    title='<img src="{{ overlay.image_url }}" height="200" style="opacity: 1;">'></i>
+                                                {% endif %}
+                                                {% if overlay.tooltip %}
+                                                <i class="bi {% if overlay.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ overlay.tooltip_variant or 'info' }} ms-3"
+                                                    data-bs-toggle="tooltip" data-bs-html="true" title="{{ overlay.tooltip }}"></i>
+                                                {% endif %}
+                                                {% if overlay.extra_url %}
+                                                <a href="{{ overlay.extra_url }}" target="_blank" class="text-decoration-none ms-3">
+                                                    <i class="bi bi-box-arrow-up-right text-info" data-bs-toggle="tooltip"
+                                                        title="Open related guide or documentation."></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
 
-                            <div class="d-flex align-items-center">
-                                <label class="form-check-label me-3" for="{{ base_id }}">
-                                    <a target="_blank" href="{{ overlay.url }}">{{ overlay.label }}</a>
-                                </label>
+                                        {% if overlay.template_variables is mapping %}
+                                        <div class="overlay-template-section mt-2">
+                                            {% for var_name, var_details in overlay.template_variables.items() %}
+                                            {% if var_details.input_type == "select" %}
+                                            {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
+                                            {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
+                                            {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
 
-                                {% if overlay.image_url %}
-                                <i class="bi bi-search text-success" data-bs-toggle="tooltip" data-bs-html="true"
-                                    title='<img src="{{ overlay.image_url }}" height="200" style="opacity: 1;">'></i>
-                                {% endif %}
-                                {% if overlay.tooltip %}
-                                <i class="bi {% if overlay.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ overlay.tooltip_variant or 'info' }} ms-3"
-                                    data-bs-toggle="tooltip" data-bs-html="true" title="{{ overlay.tooltip }}"></i>
-                                {% endif %}
-                                {% if overlay.extra_url %}
-                                <a href="{{ overlay.extra_url }}" target="_blank" class="text-decoration-none ms-3">
-                                    <i class="bi bi-box-arrow-up-right text-info" data-bs-toggle="tooltip"
-                                        title="Open related guide or documentation."></i>
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        {% if overlay.template_variables is mapping %}
-                        <div class="overlay-template-section mt-2">
-                            {% for var_name, var_details in overlay.template_variables.items() %}
-                            {% if var_details.input_type == "select" %}
-                            {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
-                            {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
-                            {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
-
-                            <div class="input-group mb-2">
-                                <span class="input-group-text" id="{{ template_name }}-{{ var_name }}_text"
-                                    style="width: 170px;">
-                                    {{ var_name|capitalize }}
-                                    {% if var_details.tooltip %}
-                                    <span class="text-{{ var_details.tooltip_variant or 'info' }} ms-2"
-                                        data-bs-toggle="tooltip" data-bs-html="true" title="{{ var_details.tooltip }}">
-                                        <i
-                                            class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
-                                    </span>
+                                            <div class="input-group mb-2">
+                                                <span class="input-group-text" id="{{ template_name }}-{{ var_name }}_text"
+                                                    style="width: 170px;">
+                                                    {{ var_name|capitalize }}
+                                                    {% if var_details.tooltip %}
+                                                    <span class="text-{{ var_details.tooltip_variant or 'info' }} ms-2"
+                                                        data-bs-toggle="tooltip" data-bs-html="true" title="{{ var_details.tooltip }}">
+                                                        <i class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                                    </span>
+                                                    {% endif %}
+                                                </span>
+                                                <select class="form-select template-variable-select"
+                                                    id="{{ template_name }}-{{ var_name }}"
+                                                    name="{{ template_name }}[{{ var_name }}]"
+                                                    aria-describedby="{{ template_name }}-{{ var_name }}_text"
+                                                    data-selected="{{ selected_value|string|lower }}"
+                                                    {% if selected_value != var_details.default %}data-user-modified="true"{% endif %}>
+                                                    {% for option in var_details.options %}
+                                                    <option value="{{ option }}" {% if selected_value == option %}selected{% endif %}>
+                                                        {{ option|capitalize }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
                                     {% endif %}
-                                </span>
-                                <select class="form-select template-variable-select"
-                                    id="{{ template_name }}-{{ var_name }}" name="{{ template_name }}[{{ var_name }}]"
-                                    aria-describedby="{{ template_name }}-{{ var_name }}_text"
-                                    data-selected="{{ selected_value|string|lower }}" {% if selected_value
-                                    !=var_details.default %}data-user-modified="true" {% endif %}>
-                                    {% for option in var_details.options %}
-                                    <option value="{{ option }}" {% if selected_value==option %}selected{% endif %}>
-                                        {{ option|capitalize }}
-                                    </option>
                                     {% endfor %}
-                                </select>
+                                </div>
                             </div>
-                            {% endif %}
-                            {% endfor %}
                         </div>
-                        {% endif %}
                     </div>
-                    {% endif %} {# overlay.media_types check #}
-                    {% endfor %} {# end overlay loop #}
                 </div>
-                {% endif %} {# end has_type_overlays #}
-                {% endfor %} {# end overlay_types #}
+                {% endif %}
+                {% endfor %}
 
                 {% if input_type == "radio" %}
                 {% for type in overlay_types %}
