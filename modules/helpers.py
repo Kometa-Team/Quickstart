@@ -793,7 +793,7 @@ def save_to_named_config(yaml_text, config_name):
     config_dir = Path(CONFIG_DIR)
 
     # Normalize config name
-    name = config_name.strip().lower().replace(' ', '_') or 'default'
+    name = config_name.strip().lower().replace(" ", "_") or "default"
     latest_filename = f"{name}_config.yml"
     latest_path = config_dir / latest_filename
 
@@ -809,7 +809,7 @@ def save_to_named_config(yaml_text, config_name):
             counter += 1
 
     # Save the new config
-    with open(latest_path, 'w', encoding='utf-8') as f:
+    with open(latest_path, "w", encoding="utf-8") as f:
         f.write(yaml_text)
     app.logger.info(f"Saved new config to: {latest_path}")
 

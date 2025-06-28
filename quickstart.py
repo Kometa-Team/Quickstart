@@ -775,17 +775,9 @@ def step(name):
 
         for key, value in library_settings.items():
             if key.startswith("mov-library_") and key.endswith("-library"):
-                movie_libraries.append({
-                    "id": key.split("-library")[0],
-                    "name": value,
-                    "type": "movie"
-                })
+                movie_libraries.append({"id": key.split("-library")[0], "name": value, "type": "movie"})
             elif key.startswith("sho-library_") and key.endswith("-library"):
-                show_libraries.append({
-                    "id": key.split("-library")[0],
-                    "name": value,
-                    "type": "show"
-                })
+                show_libraries.append({"id": key.split("-library")[0], "name": value, "type": "show"})
 
         return render_template(
             "900-final.html",
