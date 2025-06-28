@@ -787,3 +787,31 @@ def get_library_metadata():
 
 def contains_non_latin(text):
     return bool(re.search(r"[^\x00-\x7F]", text))
+
+
+def save_to_named_config(yaml_text, config_name):
+    config_dir = Path(CONFIG_DIR)
+
+    # Normalize config name
+    name = config_name.strip().lower().replace(' ', '_') or 'default'
+    latest_filename = f"{name}_config.yml"
+    latest_path = config_dir / latest_filename
+
+    # If latest exists, archive it to _1, _2, etc.
+    if latest_path.exists():
+        counter = 1
+        while True:
+            archive_path = config_dir / f"{name}_config_{counter}.yml"
+            if not archive_path.exists():
+                latest_path.rename(archive_path)
+                app.logger.info(f"Archived old config to: {archive_path}")
+                break
+            counter += 1
+
+    # Save the new config
+    with open(latest_path, 'w', encoding='utf-8') as f:
+        f.write(yaml_text)
+    app.logger.info(f"Saved new config to: {latest_path}")
+
+    # Return POSIX-style string (e.g., config/my_config.yml)
+    return latest_path.name  # Just return filename for CLI use like: /config/filename.yml

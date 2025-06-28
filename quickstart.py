@@ -764,9 +764,28 @@ def step(name):
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if name == "900-final":
         validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
-
+        saved_filename = helpers.save_to_named_config(yaml_content, config_name)
+        page_info["saved_filename"] = saved_filename
         page_info["yaml_valid"] = validated
         session["yaml_content"] = yaml_content
+        library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
+        movie_libraries = []
+        show_libraries = []
+        existing_ids = set()
+
+        for key, value in library_settings.items():
+            if key.startswith("mov-library_") and key.endswith("-library"):
+                movie_libraries.append({
+                    "id": key.split("-library")[0],
+                    "name": value,
+                    "type": "movie"
+                })
+            elif key.startswith("sho-library_") and key.endswith("-library"):
+                show_libraries.append({
+                    "id": key.split("-library")[0],
+                    "name": value,
+                    "type": "show"
+                })
 
         return render_template(
             "900-final.html",
@@ -776,6 +795,8 @@ def step(name):
             validation_error=validation_error,
             template_list=file_list,
             available_configs=available_configs,
+            movie_libraries=movie_libraries,
+            show_libraries=show_libraries,
         )
 
     else:

@@ -1,6 +1,9 @@
-{% extends "000-base.html" %} {% block content %}
+{% extends "000-base.html" %}
+{% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+
+<!-- Header Style Dropdown -->
 <div class="form-floating mb-2">
   <select id="header-style" name="header_style" class="form-select">
     {% for font in page_info.available_fonts %}
@@ -12,11 +15,10 @@
   <label for="header-style">Header Style</label>
 </div>
 
-<div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
-</div>
+<!-- Validation Error Section -->
+<div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;"></div>
 <div class="alert alert-danger" role="alert" id="yaml-warning-msg">
-  The inputs you entered <b>did not</b> pass validation, a valid config
-  <b>could not</b> be generated. Please try again.
+  The inputs you entered <b>did not</b> pass validation, a valid config <b>could not</b> be generated. Please try again.
 </div>
 <div class="form-floating mb-2">
   <div class="form-text" id="yaml-warnings">
@@ -25,23 +27,144 @@
   <textarea class="form-control" placeholder="Leave a comment here" id="validation-error"
     style="height: 300px">{{ validation_error }}</textarea>
 </div>
-</div>
+
+<!-- YAML Output -->
 <div class="form-floating mb-2">
   <div class="form-text" id="yaml-content">
     <br>
     <h5>Here is the YAML that was generated as a result of your inputs.</h5><br>
-
     <div class="alert alert-warning" role="alert" id="no-validation-warning">
       As a reminder, this will most likely <b>NOT</b> work with Kometa as it has not passed validation.
     </div>
   </div>
   <textarea readonly id="final-yaml" class="form-control" rows="20">{{ yaml_content }}</textarea>
 </div>
+
+<!-- Download Buttons -->
 {% if yaml_content %}
 <br>
 <a href="{{ url_for('download') }}" id="download-btn" class="btn btn-success d-none">Download Config</a>
 <a href="{{ url_for('download_redacted') }}" id="download-redacted-btn" class="btn btn-warning d-none">Download Redacted
   Config</a>
+
+<!-- Run Command Builder -->
+{% if page_info.saved_filename %}
+<hr>
+<h5 class="mt-3">
+  Build Your Kometa Run Command
+  <a href="https://kometa.wiki/en/nightly/kometa/environmental/" target="_blank" class="text-decoration-none ms-2">
+    <i class="bi bi-box-arrow-up-right text-info" data-bs-toggle="tooltip"
+      aria-label="Open Kometa CLI flag documentation"
+      data-bs-original-title="Open Kometa CLI flag documentation - Run Commands & Environment Variables"></i>
+  </a>
+</h5>
+<div class="mt-4" id="run-command-section">
+
+  <!-- Execution Mode -->
+  <div class="mb-2">
+    <label class="form-label">Execution Mode</label>
+    <div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="run-mode" value="docker" id="runModeDocker" checked>
+        <label class="form-check-label" for="runModeDocker">Docker</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="run-mode" value="python" id="runModePython">
+        <label class="form-check-label" for="runModePython">Local Python</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Run Option -->
+  <div class="mb-2">
+    <label class="form-label">Run Option</label>
+    <div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="run-option" value="--run" id="opt-run" checked>
+        <label class="form-check-label" for="opt-run">--run</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="run-option" value="--run-libraries" id="opt-run-libraries">
+        <label class="form-check-label" for="opt-run-libraries">--run-libraries</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Target Libraries (Conditional) -->
+  {% if movie_libraries or show_libraries %}
+  <div class="mb-2 d-none" id="library-selection-block">
+    <label for="library-multiselect" class="form-label">Target Libraries (required)</label>
+    <select multiple class="form-select" id="library-multiselect">
+      {% for lib in movie_libraries + show_libraries %}
+      <option value="{{ lib.name }}">{{ lib.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
+  <!-- Mode Flags -->
+  <div class="mb-3">
+    <label class="form-label">Optional Mode Flags</label>
+    <div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="mode-flag" id="opt-mode-none" value="" checked>
+        <label class="form-check-label" for="opt-mode-none">None</label>
+      </div>
+      {% for opt in ["operations-only", "collections-only", "metadata-only", "playlists-only", "overlays-only"] %}
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="mode-flag" id="opt-{{ opt }}" value="--{{ opt }}">
+        <label class="form-check-label" for="opt-{{ opt }}">--{{ opt }}</label>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Log Level Flags -->
+  <div class="mb-3">
+    <label class="form-label">Logging Options</label>
+    <div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="log-flag" id="opt-log-none" value="" checked>
+        <label class="form-check-label" for="opt-log-none">None</label>
+      </div>
+      {% for opt in ["debug", "trace", "log-requests"] %}
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="log-flag" id="opt-{{ opt }}" value="--{{ opt }}">
+        <label class="form-check-label" for="opt-{{ opt }}">--{{ opt }}</label>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Independent Flags -->
+  <div class="mb-3">
+    <label class="form-label">Other Flags</label>
+    <div class="row">
+      {% for opt in ["delete-collections", "delete-labels", "read-only-config", "low-priority", "no-report",
+      "no-missing", "no-countdown", "ignore-ghost", "ignore-schedules", "no-verify-ssl", "tests"] %}
+      <div class="col-md-4">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="opt-{{ opt }}" value="--{{ opt }}">
+          <label class="form-check-label" for="opt-{{ opt }}">--{{ opt }}</label>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Command Output -->
+  <div class="position-relative border rounded bg-body-tertiary p-3 mt-3">
+    <label class="form-label">Command</label>
+    <pre class="mb-0"><code id="run-command-output" data-config-filename="{{ page_info.saved_filename }}"></code></pre>
+    <button type="button" id="copy-command"
+      class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 d-flex align-items-center gap-2">
+      <i class="bi bi-files" id="copy-icon"></i>
+      <span id="copy-text">Copy</span>
+    </button>
+  </div>
+
+</div>
+{% endif %}
 {% endif %}
 </form>
 {% endblock %}
