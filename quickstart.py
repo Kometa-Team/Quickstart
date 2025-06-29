@@ -2,6 +2,8 @@ import argparse
 import io
 import json
 import os
+import psutil
+import shutil
 import signal
 import socket
 import subprocess
@@ -11,6 +13,8 @@ import time
 import webbrowser
 from io import BytesIO
 from threading import Thread
+from pathlib import Path
+from collections import deque
 
 import namesgenerator
 import requests
@@ -63,15 +67,26 @@ DEFAULT_IMAGE_MAP = {
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
-GITHUB_MASTER_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
-GITHUB_DEVELOP_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
+GITHUB_MASTER_VERSION_URL = (
+    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
+)
+GITHUB_DEVELOP_VERSION_URL = (
+    "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
+)
 
 basedir = os.path.abspath
+kometa_process = None
 
 app = Flask(__name__)
 
 # Run version check at startup
 app.config["VERSION_CHECK"] = helpers.check_for_update()
+
+# Path to the 'kometa' directory next to 'quickstart'
+base_dir = os.path.dirname(os.path.abspath(__file__))
+kometa_path = os.path.abspath(os.path.join(base_dir, "..", "kometa"))
+
+app.config["KOMETA_ROOT"] = kometa_path
 
 
 def start_update_thread():
@@ -92,12 +107,18 @@ def inject_version_info():
     return {"version_info": helpers.check_for_update()}
 
 
+def inject_kometa_root():
+    return {"kometa_root": app.config["KOMETA_ROOT"]}
+
+
 # Use booler() for FLASK_DEBUG conversion
 app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
-app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir="flask_session", threshold=500)
+app.config["SESSION_CACHELIB"] = FileSystemCache(
+    cache_dir="flask_session", threshold=500
+)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
@@ -111,7 +132,9 @@ def check_request_size():
         print(f"[DEBUG] Incoming request size: {request.content_length / 1024:.2f} KB")
 
     # Only applies to form-encoded POSTs
-    if request.method == "POST" and (request.content_type or "").startswith("application/x-www-form-urlencoded"):
+    if request.method == "POST" and (request.content_type or "").startswith(
+        "application/x-www-form-urlencoded"
+    ):
         try:
             form_data = request.form  # triggers parsing
             print(f"[DEBUG] Form field count: {len(form_data)}")
@@ -126,7 +149,9 @@ server_thread = None
 helpers.ensure_json_schema()
 
 parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
-parser.add_argument("--port", type=int, help="Specify the port number to run the server")
+parser.add_argument(
+    "--port", type=int, help="Specify the port number to run the server"
+)
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
 args = parser.parse_args()
 
@@ -134,7 +159,9 @@ port = args.port if args.port else int(os.getenv("QS_PORT", "7171"))
 running_port = port
 debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
-print(f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}")
+print(
+    f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}"
+)
 
 
 @app.route("/upload_library_image", methods=["POST"])
@@ -168,7 +195,11 @@ def upload_library_image():
     img = Image.open(image)
     aspect_ratio = "16:9" if image_type == "episode" else "2:3"
     if not helpers.is_valid_aspect_ratio(img, target_ratio=aspect_ratio):
-        message = "Image must have a 16:9 aspect ratio (e.g., 1920x1080)." if image_type == "episode" else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
+        message = (
+            "Image must have a 16:9 aspect ratio (e.g., 1920x1080)."
+            if image_type == "episode"
+            else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
+        )
         return jsonify({"status": "error", "message": message}), 400
 
     # Resize to target size
@@ -228,7 +259,11 @@ def fetch_library_image():
         # Validate aspect ratio
         aspect_ratio = "16:9" if image_type == "episode" else "2:3"
         if not helpers.is_valid_aspect_ratio(img, target_ratio=aspect_ratio):
-            message = "Image must have a 16:9 aspect ratio (e.g., 1920x1080)." if image_type == "episode" else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
+            message = (
+                "Image must have a 16:9 aspect ratio (e.g., 1920x1080)."
+                if image_type == "episode"
+                else "Image must have a 1:1.5 aspect ratio (e.g., 1000x1500)."
+            )
             return jsonify({"status": "error", "message": message}), 400
 
         # Resize to target size
@@ -237,7 +272,10 @@ def fetch_library_image():
 
         # Generate filename
         filename = secure_filename(os.path.basename(image_url))
-        if "." not in filename or filename.split(".")[-1].lower() not in helpers.ALLOWED_EXTENSIONS:
+        if (
+            "." not in filename
+            or filename.split(".")[-1].lower() not in helpers.ALLOWED_EXTENSIONS
+        ):
             filename += ".png"
 
         # Save image
@@ -297,7 +335,9 @@ def rename_library_image():
     new_path = os.path.join(save_folder, new_name)
     if os.path.exists(new_path):
         return (
-            jsonify({"status": "error", "message": "File with new name already exists"}),
+            jsonify(
+                {"status": "error", "message": "File with new name already exists"}
+            ),
             400,
         )
 
@@ -318,7 +358,11 @@ def list_uploaded_images():
     if not os.path.exists(uploads_dir):
         return jsonify({"images": []})
 
-    images = [img for img in os.listdir(uploads_dir) if any(img.lower().endswith(f".{ext}") for ext in helpers.ALLOWED_EXTENSIONS)]
+    images = [
+        img
+        for img in os.listdir(uploads_dir)
+        if any(img.lower().endswith(f".{ext}") for ext in helpers.ALLOWED_EXTENSIONS)
+    ]
 
     return jsonify({"status": "success", "images": images})
 
@@ -388,12 +432,19 @@ def generate_preview():
             template_vars = overlay_entry.get("template_variables", {})
 
             # Normalize booleans to lowercase strings (e.g., True → "true")
-            template_vars = {k: str(v).lower() if isinstance(v, bool) else v for k, v in template_vars.items()}
+            template_vars = {
+                k: str(v).lower() if isinstance(v, bool) else v
+                for k, v in template_vars.items()
+            }
         else:
             continue  # skip invalid overlay data
 
         # Build filename suffix from all template_variables (sorted for consistency)
-        suffix_parts = [f"{key}_{value}" for key, value in sorted(template_vars.items()) if key in {"style", "size", "color"}]
+        suffix_parts = [
+            f"{key}_{value}"
+            for key, value in sorted(template_vars.items())
+            if key in {"style", "size", "color"}
+        ]
         suffix = "_" + "_".join(suffix_parts) if suffix_parts else ""
         filename = f"{prefix}{img_type}-{overlay_id}{suffix}.png"
         overlay_path = os.path.join(OVERLAY_FOLDER, filename)
@@ -610,13 +661,17 @@ def step(name):
         # Only split if the value is not None or empty
         if page_info["next_page"]:
             next_num = page_info["next_page"].split("-")[0]
-            page_info["next_page_name"] = template_list.get(next_num, {}).get("name", "Next")
+            page_info["next_page_name"] = template_list.get(next_num, {}).get(
+                "name", "Next"
+            )
         else:
             page_info["next_page_name"] = "Next"
 
         if page_info["prev_page"]:
             prev_num = page_info["prev_page"].split("-")[0]
-            page_info["prev_page_name"] = template_list.get(prev_num, {}).get("name", "Previous")
+            page_info["prev_page_name"] = template_list.get(prev_num, {}).get(
+                "name", "Previous"
+            )
         else:
             page_info["prev_page_name"] = "Previous"
 
@@ -638,6 +693,10 @@ def step(name):
             json.dump(data, f, indent=2, ensure_ascii=False)
 
         print(f"[DEBUG] Raw data written to {debug_path}")
+
+    # Check for kometa_root
+    if "kometa_root" not in session:
+        session["kometa_root"] = app.config.get("KOMETA_ROOT", "")
 
     # Fetch Plex settings
     all_libraries = persistence.retrieve_settings("010-plex")
@@ -669,7 +728,9 @@ def step(name):
                 "update_channel": "Unavailable",
                 "libraries": {},
             }
-            app.logger.warning(f"[WARN] Telemetry fallback triggered due to missing or invalid telemetry for config: {selected_config}")
+            app.logger.warning(
+                f"[WARN] Telemetry fallback triggered due to missing or invalid telemetry for config: {selected_config}"
+            )
     else:
         if app.config["QS_DEBUG"]:
             print("[DEBUG] Using telemetry from fresh plex_data")
@@ -732,7 +793,9 @@ def step(name):
         data["libraries"]["sho-template_variables"] = {}
 
     if app.config["QS_DEBUG"]:
-        print(f"[DEBUG] ************************************************************************")
+        print(
+            f"[DEBUG] ************************************************************************"
+        )
         print(f"[DEBUG] Data retrieved for {name}")
 
     (
@@ -755,29 +818,53 @@ def step(name):
         data["sho-template_variables"] = {}
 
     # Ensure these are lists
-    plex_data["tmp_movie_libraries"] = plex_data.get("tmp_movie_libraries", "").split(",") if isinstance(plex_data.get("tmp_movie_libraries"), str) else []
-    plex_data["tmp_show_libraries"] = plex_data.get("tmp_show_libraries", "").split(",") if isinstance(plex_data.get("tmp_show_libraries"), str) else []
-    plex_data["tmp_music_libraries"] = plex_data.get("tmp_music_libraries", "").split(",") if isinstance(plex_data.get("tmp_music_libraries"), str) else []
-    plex_data["tmp_user_list"] = plex_data.get("tmp_user_list", "").split(",") if isinstance(plex_data.get("tmp_user_list"), str) else []
+    plex_data["tmp_movie_libraries"] = (
+        plex_data.get("tmp_movie_libraries", "").split(",")
+        if isinstance(plex_data.get("tmp_movie_libraries"), str)
+        else []
+    )
+    plex_data["tmp_show_libraries"] = (
+        plex_data.get("tmp_show_libraries", "").split(",")
+        if isinstance(plex_data.get("tmp_show_libraries"), str)
+        else []
+    )
+    plex_data["tmp_music_libraries"] = (
+        plex_data.get("tmp_music_libraries", "").split(",")
+        if isinstance(plex_data.get("tmp_music_libraries"), str)
+        else []
+    )
+    plex_data["tmp_user_list"] = (
+        plex_data.get("tmp_user_list", "").split(",")
+        if isinstance(plex_data.get("tmp_user_list"), str)
+        else []
+    )
 
     # Ensure correct rendering for the final validation page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if name == "900-final":
-        validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
+        validated, validation_error, config_data, yaml_content = output.build_config(
+            header_style, config_name=config_name
+        )
         saved_filename = helpers.save_to_named_config(yaml_content, config_name)
         page_info["saved_filename"] = saved_filename
         page_info["yaml_valid"] = validated
         session["yaml_content"] = yaml_content
-        library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
+        library_settings = persistence.retrieve_settings("025-libraries").get(
+            "libraries", {}
+        )
         movie_libraries = []
         show_libraries = []
         existing_ids = set()
 
         for key, value in library_settings.items():
             if key.startswith("mov-library_") and key.endswith("-library"):
-                movie_libraries.append({"id": key.split("-library")[0], "name": value, "type": "movie"})
+                movie_libraries.append(
+                    {"id": key.split("-library")[0], "name": value, "type": "movie"}
+                )
             elif key.startswith("sho-library_") and key.endswith("-library"):
-                show_libraries.append({"id": key.split("-library")[0], "name": value, "type": "show"})
+                show_libraries.append(
+                    {"id": key.split("-library")[0], "name": value, "type": "show"}
+                )
 
         return render_template(
             "900-final.html",
@@ -793,7 +880,9 @@ def step(name):
 
     else:
         attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
-        collection_config = helpers.load_quickstart_config("quickstart_collections.json")
+        collection_config = helpers.load_quickstart_config(
+            "quickstart_collections.json"
+        )
         overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
         return render_template(
             name + ".html",
@@ -840,7 +929,9 @@ def get_top_imdb_items_route(library_name):
         )
 
     # Call with placeholder_id
-    items, saved_item = helpers.get_top_imdb_items(library_name, media_type, placeholder_id)
+    items, saved_item = helpers.get_top_imdb_items(
+        library_name, media_type, placeholder_id
+    )
 
     return jsonify({"status": "success", "items": items, "saved_item": saved_item})
 
@@ -909,12 +1000,31 @@ def refresh_plex_libraries():
         default_plex_token = dummy.get("token", "")
 
         # Validate credentials
-        if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
-            return jsonify({"valid": False, "error": "Plex credentials are using default placeholder values"}), 400
+        if (
+            not plex_url
+            or not plex_token
+            or plex_url == default_plex_url
+            or plex_token == default_plex_token
+        ):
+            return (
+                jsonify(
+                    {
+                        "valid": False,
+                        "error": "Plex credentials are using default placeholder values",
+                    }
+                ),
+                400,
+            )
 
         # Validate Plex server and get updated libraries
-        plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
-        plex_data = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+        plex_response = validations.validate_plex_server(
+            {"plex_url": plex_url, "plex_token": plex_token}
+        )
+        plex_data = (
+            plex_response.get_json()
+            if isinstance(plex_response, Flask.response_class)
+            else plex_response
+        )
 
         if not plex_data.get("validated"):
             return jsonify({"valid": False, "error": "Plex validation failed"}), 500
@@ -1055,6 +1165,152 @@ def shutdown():
     return "Shutting down...", 200
 
 
+@app.route("/start-kometa", methods=["POST"])
+def start_kometa():
+    global kometa_process
+    data = request.get_json()
+    command = data.get("command")
+
+    if not command:
+        return jsonify({"error": "No command provided"}), 400
+
+    venv_python = os.path.join(
+        app.config["KOMETA_ROOT"], "kometa-venv", "Scripts", "python.exe"
+    )  # Windows
+    command_parts = command.split()
+    if command_parts[0] == "python":
+        command_parts[0] = f'"{venv_python}"'
+
+    try:
+        kometa_process = subprocess.Popen(
+            " ".join(command_parts), cwd=app.config["KOMETA_ROOT"], shell=True
+        )
+        return jsonify({"status": "Kometa started"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/stop-kometa", methods=["POST"])
+def stop_kometa():
+    global kometa_process
+
+    if kometa_process and kometa_process.poll() is None:
+        try:
+            parent = psutil.Process(kometa_process.pid)
+            for child in parent.children(recursive=True):
+                try:
+                    child.kill()
+                except psutil.NoSuchProcess:
+                    pass  # Child already exited
+            parent.kill()
+            kometa_process = None
+            return jsonify({"success": True}), 200
+        except psutil.NoSuchProcess:
+            kometa_process = None
+            return jsonify({"warning": "Process already terminated"}), 200
+        except Exception as e:
+            return jsonify({"error": f"Failed to terminate Kometa: {str(e)}"}), 500
+    else:
+        return jsonify({"warning": "No active Kometa process"}), 200
+
+
+@app.route("/tail-log")
+def tail_log():
+    kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
+    log_path = kometa_root / "config" / "logs" / "meta.log"
+
+    if not log_path.exists():
+        return jsonify({"error": "Log file not found"}), 404
+
+    try:
+        with log_path.open("r", encoding="utf-8", errors="replace") as f:
+            last_500 = deque(f, maxlen=500)
+        return jsonify({"log": "".join(last_500)})
+    except Exception as e:
+        return jsonify({"error": f"Failed to read log: {str(e)}"}), 500
+
+
+@app.route("/validate-kometa-root", methods=["POST"])
+def validate_kometa_root():
+    root_path = request.json.get("path", "").strip()
+    logs = []
+
+    def log(msg):
+        print(msg, file=sys.stderr)
+        logs.append(msg)
+
+    if not root_path:
+        log("❌ No path provided.")
+        return jsonify(success=False, error="No path provided.", log=logs), 400
+
+    kometa_root = Path(root_path)
+    log(f"🔍 Checking path: {kometa_root}")
+
+    if not kometa_root.exists():
+        log("❌ Path does not exist.")
+        return jsonify(success=False, error="Path does not exist.", log=logs), 400
+
+    required_files = ["kometa.py", "requirements.txt"]
+    for fname in required_files:
+        fpath = kometa_root / fname
+        if not fpath.exists():
+            log(f"❌ Required file missing: {fname}")
+            return jsonify(success=False, error=f"{fname} not found.", log=logs), 400
+        log(f"✔️ Found required file: {fname}")
+
+    is_windows = sys.platform.startswith("win")
+    venv_dir = kometa_root / "kometa-venv"
+    bin_dir = venv_dir / ("Scripts" if is_windows else "bin")
+    python_bin = bin_dir / ("python.exe" if is_windows else "python")
+    pip_bin = bin_dir / ("pip.exe" if is_windows else "pip")
+
+    if not venv_dir.exists():
+        log("📦 Creating virtual environment...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "venv", str(venv_dir)])
+            log("✅ Virtual environment created.")
+        except subprocess.CalledProcessError as e:
+            log(f"❌ Failed to create venv: {str(e)}")
+            return jsonify(success=False, error="Failed to create venv.", log=logs), 500
+    else:
+        log("ℹ️ Virtual environment already exists.")
+
+    if not pip_bin.exists():
+        log(f"❌ pip not found in venv at {pip_bin}")
+        return jsonify(success=False, error=f"pip not found in {pip_bin}", log=logs), 500
+
+    try:
+        log("⬆️ Upgrading pip...")
+        subprocess.check_call([str(python_bin), "-m", "pip", "install", "--upgrade", "pip"])
+        log("✅ pip upgraded.")
+
+        log("📦 Installing requirements.txt...")
+        subprocess.check_call([str(python_bin), "-m", "pip", "install", "-r", str(kometa_root / "requirements.txt")])
+        log("✅ requirements.txt installed.")
+    except subprocess.CalledProcessError as e:
+        log(f"❌ Error installing requirements: {str(e)}")
+        return jsonify(success=False, error="Failed pip install.", log=logs), 500
+
+    config_name = request.json.get("config_name", "kometa")
+    src_yaml = Path("config") / f"{config_name}"
+
+    if not src_yaml.exists():
+        log(f"❌ Source YAML does not exist: {src_yaml}")
+        return jsonify(success=False, error="Generated YAML not found.", log=logs), 500
+
+    dest_yaml = kometa_root / "config" / f"{config_name}"
+
+    try:
+        os.makedirs(dest_yaml.parent, exist_ok=True)
+        shutil.copy2(src_yaml, dest_yaml)
+        log(f"✅ YAML copied to Kometa config folder at: {dest_yaml}")
+    except Exception as e:
+        log(f"⚠️ Failed to copy YAML: {e}")
+
+    log("✅ Kometa root is valid and ready.")
+    return jsonify(success=True, log=logs), 200
+
+
 server_thread = None
 update_thread = None
 if __name__ == "__main__":
@@ -1069,7 +1325,9 @@ if __name__ == "__main__":
                 print("[INFO] Checked for updates.")
                 time.sleep(86400)
 
-    update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
+    update_thread = threading.Thread(
+        target=start_update_thread, args=(app,), daemon=True
+    )
     update_thread.start()
 
     def get_lan_ip():
@@ -1099,7 +1357,9 @@ if __name__ == "__main__":
         if app.config["QUICKSTART_DOCKER"]:
             has_tray = False
         elif sys.platform.startswith("linux"):
-            has_tray = bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"))
+            has_tray = bool(
+                os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
+            )
         elif sys.platform == "darwin" or sys.platform.startswith("win"):
             has_tray = True
         else:
@@ -1149,7 +1409,9 @@ if __name__ == "__main__":
                 self.dialog_parent.setAttribute(Qt.WA_DontShowOnScreen, True)
 
                 self.tray = QSystemTrayIcon()
-                self.icon_path = os.path.join(helpers.MEIPASS_DIR, "static", "favicon.png")
+                self.icon_path = os.path.join(
+                    helpers.MEIPASS_DIR, "static", "favicon.png"
+                )
 
                 self.tray.setIcon(QIcon(self.icon_path))
                 self.tray.setToolTip(f"Quickstart (Port: {running_port})")
@@ -1160,9 +1422,13 @@ if __name__ == "__main__":
                 self.open_action.triggered.connect(self.open_quickstart)
 
                 self.github_action = QAction("Quickstart GitHub")
-                self.github_action.triggered.connect(lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart"))
+                self.github_action.triggered.connect(
+                    lambda: webbrowser.open("https://github.com/Kometa-Team/Quickstart")
+                )
 
-                self.toggle_debug_action = QAction(f"{'Disable' if debug_mode else 'Enable'} Debug")
+                self.toggle_debug_action = QAction(
+                    f"{'Disable' if debug_mode else 'Enable'} Debug"
+                )
                 self.toggle_debug_action.triggered.connect(self.toggle_debug)
 
                 self.change_port_action = QAction("Change Port")
@@ -1193,8 +1459,12 @@ if __name__ == "__main__":
 
                 print("Quickstart is Running")
                 print(f"Access it locally at: http://localhost:{running_port}")
-                print(f"Access it from other devices at: http://{ip_address}:{running_port}")
-                print(f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file")  # Open the browser automatically
+                print(
+                    f"Access it from other devices at: http://{ip_address}:{running_port}"
+                )
+                print(
+                    f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file"
+                )  # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 
                 # Keep the invisible parent alive
@@ -1216,7 +1486,9 @@ if __name__ == "__main__":
                 debug_mode = not debug_mode
                 helpers.update_env_variable("QS_DEBUG", "1" if debug_mode else "0")
                 app.config["QS_DEBUG"] = debug_mode
-                self.toggle_debug_action.setText(f"{'Disable' if debug_mode else 'Enable'} Debug")
+                self.toggle_debug_action.setText(
+                    f"{'Disable' if debug_mode else 'Enable'} Debug"
+                )
 
             def show_messagebox(self, box_type, title, text):
                 box = QMessageBox(self.dialog_parent)
@@ -1242,7 +1514,9 @@ if __name__ == "__main__":
                     dialog.setIntValue(port)
 
                     # Remove help button and set custom icon
-                    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+                    dialog.setWindowFlags(
+                        dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint
+                    )
                     dialog.setWindowIcon(QIcon(self.icon_path))
 
                     # Execute dialog

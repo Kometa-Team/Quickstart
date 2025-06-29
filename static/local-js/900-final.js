@@ -1,4 +1,4 @@
-/* global $, bootstrap, alert */
+/* global $, bootstrap, showToast */
 
 $(document).ready(function () {
   const plexValid = $('#plex_valid').data('plex-valid') === 'True'
@@ -33,29 +33,123 @@ $(document).ready(function () {
     }
   }
 
-  const tooltipMap = {
-    '--run': 'Execute all configured features (collections, overlays, operations, metadata) across your libraries.',
-    '--run-libraries': 'Run Kometa only on selected libraries—useful for targeting specific libraries rather than all.',
-    '--operations-only': 'Only perform operations (e.g., rating/poster updates), skip collections, metadata, overlays.',
-    '--collections-only': 'Only build collections without running operations, metadata edits, or overlays.',
-    '--metadata-only': 'Only apply metadata edits, skip collections, operations, and overlays.',
-    '--playlists-only': 'Only build playlists as defined in playlist files; collections, overlays, and metadata are skipped.',
-    '--overlays-only': 'Only generate overlays on posters (e.g., ratings, resolution), skip other functions.',
-    '--debug': 'Enable debug-level logging to see detailed runtime information in logs.',
-    '--trace': 'Enable trace-level (very verbose) logging for deep troubleshooting.',
-    '--log-requests': 'Log all HTTP requests made (e.g. to Plex, TMDb), helpful for diagnosing API issues.',
-    '--delete-collections': 'Remove collections in Plex that are not defined by Kometa during this run.',
-    '--delete-labels': 'Delete labels added by Kometa that are no longer applied in your config/YAML.',
-    '--read-only-config': 'Run in read-only mode—do not write to Plex or make changes; for testing.',
-    '--low-priority': 'Run Kometa with lower CPU priority; reduces system load.',
-    '--no-report': 'Skip generating the final report YAML file about added/removed/missing items.',
-    '--no-missing': 'Do not process items marked as missing; skip missing item actions.',
-    '--no-countdown': 'Suppress the countdown prompt before operations begin.',
-    '--ignore-ghost': 'Ignore ghost metadata entries (removed items still showing); do not act.',
-    '--ignore-schedules': 'Ignore any scheduling settings (library/file), run immediately regardless of schedule.',
-    '--no-verify-ssl': 'Disable SSL certificate verification for HTTPS requests (e.g., Plex/TMDb), dangerous!',
-    '--tests': 'Run in test mode: perform validation but do not make any changes to Plex.'
+  const flagsMap = {
+    '--run': {
+      label: 'Run Everything',
+      description: 'Execute all configured features (collections, overlays, operations, metadata).'
+    },
+    '--run-libraries': {
+      label: 'Run Specific Libraries',
+      description: 'Run Kometa only on selected libraries.'
+    },
+    '--operations-only': {
+      label: 'Only Operations',
+      description: 'Only perform operations (e.g., rating/poster updates).'
+    },
+    '--collections-only': {
+      label: 'Only Collections',
+      description: 'Only build collections.'
+    },
+    '--playlists-only': {
+      label: 'Only Playlists',
+      description: 'Only build playlists, skip everything else.'
+    },
+    '--overlays-only': {
+      label: 'Only Overlays',
+      description: 'Only apply overlays to media posters.'
+    },
+    '--debug': {
+      label: 'Debug Logging',
+      description: 'Enable debug-level logging.'
+    },
+    '--trace': {
+      label: 'Trace Logging',
+      description: 'Enable trace-level (very verbose) logging.'
+    },
+    '--log-requests': {
+      label: 'Log Requests',
+      description: 'Log all HTTP requests (to Plex, TMDb, etc.).'
+    },
+    '--delete-collections': {
+      label: 'Delete Collections',
+      description: 'Remove collections in Plex not defined in config.'
+    },
+    '--delete-labels': {
+      label: 'Delete Labels',
+      description: 'Delete Kometa labels that are no longer used.'
+    },
+    '--read-only-config': {
+      label: 'Read-Only Mode',
+      description: 'Validate but don’t change Plex.'
+    },
+    '--low-priority': {
+      label: 'Low Priority Mode',
+      description: 'Lower CPU usage while running.'
+    },
+    '--no-report': {
+      label: 'Skip Report',
+      description: 'Skip generating the final report file.'
+    },
+    '--no-missing': {
+      label: 'Skip Missing Items',
+      description: 'Do not process missing items.'
+    },
+    '--no-countdown': {
+      label: 'No Countdown',
+      description: 'Skip the countdown before starting.'
+    },
+    '--ignore-ghost': {
+      label: 'Ignore Ghost Metadata',
+      description: 'Skip removed-but-visible Plex items.'
+    },
+    '--ignore-schedules': {
+      label: 'Ignore Schedules',
+      description: 'Run now regardless of scheduling settings.'
+    },
+    '--no-verify-ssl': {
+      label: 'Skip SSL Verification',
+      description: 'Disable HTTPS cert validation (⚠ dangerous!).'
+    },
+    '--tests': {
+      label: 'Test Mode',
+      description: 'Validate but don’t update Plex.'
+    }
   }
+
+  function updateFlagLabels (showCli) {
+    const runOptions = ['--run', '--run-libraries']
+    const modeFlags = ['--operations-only', '--collections-only', '--playlists-only', '--overlays-only']
+    const logFlags = ['--debug', '--trace', '--log-requests']
+    const otherFlags = [
+      '--delete-collections', '--delete-labels', '--read-only-config', '--low-priority',
+      '--no-report', '--no-missing', '--no-countdown', '--ignore-ghost',
+      '--ignore-schedules', '--no-verify-ssl', '--tests'
+    ]
+
+    function updateLabels (group, prefix = '') {
+      group.forEach(flag => {
+        const id = `${prefix}${flag.replace(/^--/, '')}`
+        const label = $(`label[for="${id}"]`)
+        if (label.length) {
+          const content = showCli ? flag : (flagsMap[flag]?.label || flag)
+          label.html(`${content} <span class="text-info" data-bs-toggle="tooltip" title="${flagsMap[flag]?.description || ''}"><i class="bi bi-info-circle-fill ms-1"></i></span>`)
+        }
+      })
+    }
+
+    updateLabels(runOptions, 'opt-')
+    updateLabels(modeFlags, 'opt-')
+    updateLabels(logFlags, 'opt-')
+    updateLabels(otherFlags, 'opt-')
+
+    $('[data-bs-toggle="tooltip"]').tooltip()
+  }
+
+  updateFlagLabels(false) // Default to friendly labels
+  $('#show-cli-toggle').on('change', function () {
+    const showCli = $(this).is(':checked')
+    updateFlagLabels(showCli)
+  })
 
   function buildCommand () {
     const baseDocker = 'docker run --rm -v /your/config/dir:/config kometa:nightly'
@@ -66,11 +160,6 @@ $(document).ready(function () {
     const selectedLibs = $('#library-multiselect').length ? $('#library-multiselect').val() || [] : []
 
     let cli = runMode === 'docker' ? baseDocker : basePython
-
-    if (!mainOption || (mainOption !== '--run' && mainOption !== '--run-libraries')) {
-      $('#run-command-output').text('⚠️ Please select a valid run mode (--run or --run-libraries).')
-      return
-    }
 
     cli += ` ${mainOption}`
 
@@ -130,20 +219,51 @@ $(document).ready(function () {
     if (checkbox.length) checkbox.on('change', buildCommand)
   })
 
-  const specialIdMap = {}
+  function validateKometaRoot () {
+    const rootPath = $('#kometa-root-path').val().trim()
+    const $logBox = $('#kometa-validation-log')
+    const $spinner = $('#spinner_validate')
+    const $runNow = $('#run-now')
+    const configName = $('#run-command-output').data('config-filename')
 
-  Object.entries(tooltipMap).forEach(([flag, description]) => {
-    const inputId = specialIdMap?.[flag] || `opt-${flag.replace(/^--/, '')}`
-    const $label = $(`label[for="${inputId}"]`)
-    if ($label.length && !$label.find('.bi-info-circle-fill').length) {
-      const $tooltipIcon = $(`
-        <span class="text-info ms-2" data-bs-toggle="tooltip" data-bs-html="true" data-bs-original-title="${description}">
-          <i class="bi bi-info-circle-fill"></i>
-        </span>
-      `)
-      $label.append($tooltipIcon)
-    }
-  })
+    $logBox.text('🔄 Please wait while we validate your Kometa installation...\nThis may take a few seconds as we verify the folder structure, Python environment, and Kometa version.\n\n')
+    $spinner.show()
+    $runNow.prop('disabled', true)
+
+    $.ajax({
+      type: 'POST',
+      url: '/validate-kometa-root',
+      contentType: 'application/json',
+      data: JSON.stringify({ path: rootPath, config_name: configName }),
+      success: (res) => {
+        if (res.log && Array.isArray(res.log)) {
+          res.log.forEach(line => $logBox.append(`${line}\n`))
+        }
+
+        if (res.success) {
+          $logBox.append('✅ Kometa root validated successfully.\n')
+          $runNow.prop('disabled', false)
+        } else {
+          $logBox.append(`❌ ${res.error || 'Validation failed.'}\n`)
+          $runNow.prop('disabled', true)
+        }
+
+        $spinner.hide()
+      },
+      error: (xhr) => {
+        const msg = xhr?.responseJSON?.error || 'The Kometa root path is invalid or inaccessible. Please check the folder and try again.'
+        $logBox.append(`❌ ${msg}\n`)
+        $runNow.prop('disabled', true)
+        $spinner.hide()
+      }
+    })
+  }
+
+  // Run immediately on page load
+  validateKometaRoot()
+
+  // Run when clicking "Validate" button
+  $('#validateButton').on('click', validateKometaRoot)
 
   if ($('#run-command-output').length > 0) {
     const mainOption = $('input[name="run-option"]:checked').val()
@@ -172,7 +292,7 @@ $(document).ready(function () {
         $('#copy-text').text('Copy')
       }, 1500)
     }).catch(() => {
-      alert('Copy failed. Please copy manually.')
+      showToast('error', 'Copy failed. Please copy manually.')
     })
   })
 })
@@ -181,4 +301,72 @@ if (document.getElementById('header-style')) {
   document.getElementById('header-style').addEventListener('change', function () {
     document.getElementById('configForm').submit()
   })
+}
+
+let kometaInterval = null
+
+$('#run-now').on('click', function () {
+  const command = $('#run-command-output').text().trim()
+
+  if (!command || command.startsWith('⚠️')) {
+    showToast('error', 'Cannot run invalid command.')
+    return
+  }
+
+  $('#run-now').prop('disabled', true).text('Running...')
+  $('#stop-now').removeClass('d-none') // SHOW stop button here
+  $('#run-output').removeClass('d-none')
+  $('#run-output-log').text('Starting Kometa...\n')
+
+  fetch('/start-kometa', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ command })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        $('#run-output-log').text(`❌ ${data.error}`)
+        $('#run-now').prop('disabled', false).text('Run Now')
+        $('#stop-now').addClass('d-none') // hide stop on error
+        return
+      }
+
+      kometaInterval = setInterval(fetchKometaLog, 5000)
+    })
+})
+
+// Stop button click handler
+$('#stop-now').on('click', function () {
+  fetch('/stop-kometa', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        $('#run-output-log').append(`\n⚠️ ${data.error}`)
+      } else {
+        $('#run-output-log').append('\n🟥 Kometa process stopped.')
+      }
+      clearInterval(kometaInterval)
+      $('#run-now').prop('disabled', false).text('Run Now')
+      $('#stop-now').addClass('d-none') // hide stop again
+    })
+    .catch(err => {
+      console.error('Error stopping Kometa process:', err) // Optional for debugging
+      $('#run-output-log').append('\n⚠️ Error stopping process.')
+    })
+})
+
+function fetchKometaLog () {
+  fetch('/tail-log')
+    .then(res => res.json())
+    .then(data => {
+      if (data.error) {
+        $('#run-output-log').text(`❌ ${data.error}`)
+        clearInterval(kometaInterval)
+        $('#run-now').prop('disabled', false).text('Run Now')
+        return
+      }
+
+      $('#run-output-log').text(data.log)
+    })
 }

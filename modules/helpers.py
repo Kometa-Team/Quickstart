@@ -791,11 +791,13 @@ def contains_non_latin(text):
 
 def save_to_named_config(yaml_text, config_name):
     config_dir = Path(CONFIG_DIR)
-
+    kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
+    kometa_config_dir = kometa_root / "config"
     # Normalize config name
     name = config_name.strip().lower().replace(" ", "_") or "default"
     latest_filename = f"{name}_config.yml"
     latest_path = config_dir / latest_filename
+    kometa_path = kometa_config_dir / latest_filename
 
     # If latest exists, archive it to _1, _2, etc.
     if latest_path.exists():
@@ -808,10 +810,17 @@ def save_to_named_config(yaml_text, config_name):
                 break
             counter += 1
 
-    # Save the new config
+    # Save the new config to both locations
+    config_dir.mkdir(parents=True, exist_ok=True)
+    kometa_config_dir.mkdir(parents=True, exist_ok=True)
+
     with open(latest_path, "w", encoding="utf-8") as f:
         f.write(yaml_text)
-    app.logger.info(f"Saved new config to: {latest_path}")
+    with open(kometa_path, "w", encoding="utf-8") as f:
+        f.write(yaml_text)
 
-    # Return POSIX-style string (e.g., config/my_config.yml)
-    return latest_path.name  # Just return filename for CLI use like: /config/filename.yml
+    app.logger.info(f"Saved new config to: {latest_path}")
+    app.logger.info(f"Also copied config to: {kometa_path}")
+
+    # Return POSIX-style filename (used for CLI path like --config config/name_config.yml)
+    return latest_path.name
