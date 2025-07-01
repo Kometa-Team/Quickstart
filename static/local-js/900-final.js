@@ -15,13 +15,21 @@ $(document).ready(function () {
   if (!libsValid) validationMessages.push('Libraries page settings have not been validated successfully...<br>')
   if (!settValid) validationMessages.push('Settings page values have likely been skipped...<br>')
 
+  $('#run-now').prop('disabled', true)
+  $('#run-now-label').text('Run Now')
+
   if (!showYAML) {
     $('#validation-messages').html(validationMessages.join('<br>')).show()
     $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').removeClass('d-none')
     $('#download-btn, #download-redacted-btn').addClass('d-none')
+    $('#run-controls-container').addClass('d-none') // Hide run section
   } else {
+    $('#validation-messages').hide()
     $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').addClass('d-none')
     $('#yaml-content, #final-yaml, #download-btn, #download-redacted-btn').removeClass('d-none')
+    $('#run-controls-container').removeClass('d-none') // Show run section
+    $('#run-now').prop('disabled', true)
+    $('#run-now-label').text('Run Now')
   }
 
   function updateLibraryVisibility (mainOption) {
@@ -226,7 +234,7 @@ $(document).ready(function () {
     const $runNow = $('#run-now')
     const configName = $('#run-command-output').data('config-filename')
 
-    $logBox.text('🔄 Please wait while we validate your Kometa installation...\nThis may take a few seconds as we verify the folder structure, Python environment, and Kometa version.\n\n')
+    $logBox.text('🔄 Please wait while we validate your Kometa installation...\nThis may take a few seconds as we verify the folder structure, Python environment, and Kometa information.\n\n')
     $spinner.show()
     $runNow.prop('disabled', true)
 
@@ -242,10 +250,20 @@ $(document).ready(function () {
 
         if (res.success) {
           $logBox.append('✅ Kometa root validated successfully.\n')
-          $runNow.prop('disabled', false)
-        } else {
-          $logBox.append(`❌ ${res.error || 'Validation failed.'}\n`)
-          $runNow.prop('disabled', true)
+
+          // Recheck ALL other validations
+          const allValid =
+            $('#plex_valid').data('plex-valid') === 'True' &&
+            $('#tmdb_valid').data('tmdb-valid') === 'True' &&
+            $('#libs_valid').data('libs-valid') === 'True' &&
+            $('#sett_valid').data('sett-valid') === 'True' &&
+            $('#yaml_valid').data('yaml-valid') === 'True'
+
+          if (allValid) {
+            showRunCommandSectionAfterValidated()
+          } else {
+            $runNow.prop('disabled', true)
+          }
         }
 
         $spinner.hide()
@@ -295,6 +313,27 @@ $(document).ready(function () {
       showToast('error', 'Copy failed. Please copy manually.')
     })
   })
+
+  function hideRunCommandSectionUntilValidated () {
+    const box = $('#run-command-box')
+    box.removeClass('fade-in').addClass('d-none') // Hide instantly
+    $('#run-now').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Waiting...')
+  }
+
+  function showRunCommandSectionAfterValidated () {
+    const box = $('#run-command-box')
+
+    box.removeClass('d-none') // Reveal element (opacity still 0)
+    setTimeout(() => {
+      box.addClass('fade-in') // Let browser register change, then fade in
+    }, 10)
+
+    $('#run-now').prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Run Now')
+  }
+
+  // Ensure we check Kometa status once on page load to catch unclean exits
+  hideRunCommandSectionUntilValidated()
+  checkKometaStatus()
 })
 
 if (document.getElementById('header-style')) {
@@ -304,6 +343,7 @@ if (document.getElementById('header-style')) {
 }
 
 let kometaInterval = null
+let kometaStatusInterval = null
 
 $('#run-now').on('click', function () {
   const command = $('#run-command-output').text().trim()
@@ -313,7 +353,8 @@ $('#run-now').on('click', function () {
     return
   }
 
-  $('#run-now').prop('disabled', true).text('Running...')
+  $('#run-now').prop('disabled', true)
+  $('#run-now-label').text('Running...')
   $('#stop-now').removeClass('d-none') // SHOW stop button here
   $('#run-output').removeClass('d-none')
   $('#run-output-log').text('Starting Kometa...\n')
@@ -327,12 +368,17 @@ $('#run-now').on('click', function () {
     .then(data => {
       if (data.error) {
         $('#run-output-log').text(`❌ ${data.error}`)
-        $('#run-now').prop('disabled', false).text('Run Now')
-        $('#stop-now').addClass('d-none') // hide stop on error
+        $('#run-now').prop('disabled', false)
+        $('#run-now-label').text('Run Now')
+        $('#stop-now').addClass('d-none')
         return
       }
 
-      kometaInterval = setInterval(fetchKometaLog, 5000)
+      // ✅ Delay polling slightly to allow Kometa to start
+      setTimeout(() => {
+        kometaInterval = setInterval(fetchKometaLog, 3000)
+        kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+      }, 5500) // <-- 1.5 second delay
     })
 })
 
@@ -347,7 +393,9 @@ $('#stop-now').on('click', function () {
         $('#run-output-log').append('\n🟥 Kometa process stopped.')
       }
       clearInterval(kometaInterval)
-      $('#run-now').prop('disabled', false).text('Run Now')
+      clearInterval(kometaStatusInterval)
+      $('#run-now').prop('disabled', false)
+      $('#run-now-label').text('Run Now')
       $('#stop-now').addClass('d-none') // hide stop again
     })
     .catch(err => {
@@ -362,11 +410,32 @@ function fetchKometaLog () {
     .then(data => {
       if (data.error) {
         $('#run-output-log').text(`❌ ${data.error}`)
-        clearInterval(kometaInterval)
-        $('#run-now').prop('disabled', false).text('Run Now')
         return
       }
-
       $('#run-output-log').text(data.log)
+    })
+}
+
+function checkKometaStatus () {
+  fetch('/kometa-status')
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'done' || data.status === 'not started') {
+        clearInterval(kometaInterval)
+        clearInterval(kometaStatusInterval)
+        $('#run-now').prop('disabled', false)
+        $('#run-now-label').text('Run Now')
+        $('#stop-now').addClass('d-none')
+
+        if (data.status === 'done') {
+          $('#run-output-log').append(`\n✅ Kometa finished with code ${data.return_code}`)
+        } else {
+          $('#run-output-log').append('\n🟥 Kometa is not running.')
+        }
+      }
+    })
+    .catch(err => {
+      console.error('Error checking Kometa status:', err)
+      $('#run-output-log').append('\n⚠️ Failed to check Kometa status.')
     })
 }

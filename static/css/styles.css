@@ -659,3 +659,14 @@ div#loading {
 .drag-handle:hover {
     color: #fff;
 }
+
+#run-command-box {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  pointer-events: none;
+}
+
+#run-command-box.fade-in {
+  opacity: 1;
+  pointer-events: auto;
+}

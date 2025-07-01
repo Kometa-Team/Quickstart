@@ -4,6 +4,7 @@ import json
 import os
 import psutil
 import shutil
+import shlex
 import signal
 import socket
 import subprocess
@@ -1174,17 +1175,26 @@ def start_kometa():
     if not command:
         return jsonify({"error": "No command provided"}), 400
 
-    venv_python = os.path.join(
-        app.config["KOMETA_ROOT"], "kometa-venv", "Scripts", "python.exe"
-    )  # Windows
-    command_parts = command.split()
-    if command_parts[0] == "python":
-        command_parts[0] = f'"{venv_python}"'
+    # Determine platform-specific Python path in virtual environment
+    if sys.platform.startswith("win"):
+        venv_python = os.path.join(app.config["KOMETA_ROOT"], "kometa-venv", "Scripts", "python.exe")
+    else:
+        venv_python = os.path.join(app.config["KOMETA_ROOT"], "kometa-venv", "bin", "python")
 
     try:
+        # Use shlex to safely split the command
+        command_parts = shlex.split(command)
+        if command_parts[0] == "python":
+            command_parts[0] = venv_python if os.path.exists(venv_python) else sys.executable
+
         kometa_process = subprocess.Popen(
-            " ".join(command_parts), cwd=app.config["KOMETA_ROOT"], shell=True
+            command_parts,
+            cwd=app.config["KOMETA_ROOT"]
         )
+
+        # Store it for status check
+        app.config["kometa_process"] = kometa_process
+
         return jsonify({"status": "Kometa started"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1311,6 +1321,17 @@ def validate_kometa_root():
     return jsonify(success=True, log=logs), 200
 
 
+@app.route("/kometa-status", methods=["GET"])
+def kometa_status():
+    process = app.config.get("kometa_process")
+    if process is None:
+        return jsonify(status="not started")
+
+    retcode = process.poll()
+    if retcode is None:
+        return jsonify(status="running")
+    else:
+        return jsonify(status="done", return_code=retcode)
 server_thread = None
 update_thread = None
 if __name__ == "__main__":

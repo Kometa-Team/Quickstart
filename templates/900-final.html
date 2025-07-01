@@ -49,162 +49,224 @@
 
 <!-- Run Command Builder -->
 {% if page_info.saved_filename %}
-<hr>
-<h5 class="mt-3">
-  Build Your Kometa Run Command
-  <a href="https://kometa.wiki/en/nightly/kometa/environmental/" target="_blank" class="text-decoration-none ms-2">
-    <i class="bi bi-box-arrow-up-right text-info" data-bs-toggle="tooltip"
-      aria-label="Open Kometa CLI flag documentation"
-      data-bs-original-title="Open Kometa CLI flag documentation - Run Commands & Environment Variables"></i>
-  </a>
-</h5>
-<div class="mt-4" id="run-command-section">
+<div id="run-controls-container" class="d-none">
+  <hr>
+  <h5 class="mt-3">
+    Build Your Kometa Run Command
+    <a href="https://kometa.wiki/en/nightly/kometa/environmental/" target="_blank" class="text-decoration-none ms-2">
+      <i class="bi bi-box-arrow-up-right text-info" data-bs-toggle="tooltip"
+        aria-label="Open Kometa CLI flag documentation"
+        data-bs-original-title="Open Kometa CLI flag documentation - Run Commands & Environment Variables"></i>
+    </a>
+  </h5>
 
-  <!-- Execution Mode -->
-  <div class="mb-2">
-    <label class="form-label">Execution Mode</label>
-    <div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="run-mode" value="docker" id="runModeDocker" checked>
-        <label class="form-check-label" for="runModeDocker">Docker</label>
-      </div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="run-mode" value="python" id="runModePython">
-        <label class="form-check-label" for="runModePython">Local Python</label>
-      </div>
-    </div>
-  </div>
+  <div class="mt-4" id="run-command-section">
+    <!-- Existing content remains unchanged inside this block -->
+    <div class="accordion mt-4" id="run-command-accordion">
 
-  <div class="form-check form-switch mb-2">
-    <input class="form-check-input" type="checkbox" id="show-cli-toggle">
-    <label class="form-check-label" for="show-cli-toggle">Show CLI Flags</label>
-  </div>
-
-  <!-- Run Option -->
-  <div class="mb-2">
-    <label class="form-label">Run Option</label>
-    <div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="run-option" value="" id="opt-none" checked>
-        <label class="form-check-label" for="opt-none">None (use Kometa’s schedule)</label>
-      </div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="run-option" value="--run" id="opt-run" checked>
-        <label class="form-check-label" for="opt-run">--run</label>
-      </div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="run-option" value="--run-libraries" id="opt-run-libraries">
-        <label class="form-check-label" for="opt-run-libraries">--run-libraries</label>
-      </div>
-    </div>
-  </div>
-
-  <!-- Target Libraries (Conditional) -->
-  {% if movie_libraries or show_libraries %}
-  <div class="mb-2 d-none" id="library-selection-block">
-    <label for="library-multiselect" class="form-label">Target Libraries (required)</label>
-    <select multiple class="form-select" id="library-multiselect">
-      {% for lib in movie_libraries + show_libraries %}
-      <option value="{{ lib.name }}">{{ lib.name }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  {% endif %}
-
-  <!-- Mode Flags -->
-  <div class="mb-3">
-    <label class="form-label">Optional Mode Flags</label>
-    <div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="mode-flag" id="opt-mode-none" value="" checked>
-        <label class="form-check-label" for="opt-mode-none">None</label>
-      </div>
-      {% for opt in ["operations-only", "collections-only", "playlists-only", "overlays-only"] %}
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="mode-flag" id="opt-{{ opt }}" value="--{{ opt }}">
-        <label class="form-check-label" for="opt-{{ opt }}">--{{ opt }}</label>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Log Level Flags -->
-  <div class="mb-3">
-    <label class="form-label">Logging Options</label>
-    <div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="log-flag" id="opt-log-none" value="" checked>
-        <label class="form-check-label" for="opt-log-none">None</label>
-      </div>
-      {% for opt in ["debug", "trace", "log-requests"] %}
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="log-flag" id="opt-{{ opt }}" value="--{{ opt }}">
-        <label class="form-check-label" for="opt-{{ opt }}">--{{ opt }}</label>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Independent Flags -->
-  <div class="mb-3">
-    <label class="form-label">Other Flags</label>
-    <div class="row">
-      {% for opt in ["delete-collections", "delete-labels", "read-only-config", "low-priority", "no-report",
-      "no-missing", "no-countdown", "ignore-ghost", "ignore-schedules", "no-verify-ssl", "tests"] %}
-      <div class="col-md-4">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="opt-{{ opt }}" value="--{{ opt }}">
-          <label class="form-check-label" for="opt-{{ opt }}">--{{ opt }}</label>
+      <!-- Execution Mode & CLI Toggle -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-mode">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-mode"
+            aria-expanded="true" aria-controls="collapse-mode">
+            Execution Mode & CLI Toggle
+          </button>
+        </h2>
+        <div id="collapse-mode" class="accordion-collapse collapse show" aria-labelledby="heading-mode"
+          data-bs-parent="#run-command-accordion">
+          <div class="accordion-body">
+            <div class="mb-2">
+              <div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="run-mode" value="docker" id="runModeDocker" {% if
+                    version_info.running_on !="Local" %}checked{% endif %}>
+                  <label class="form-check-label" for="runModeDocker">Docker</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="run-mode" value="python" id="runModePython" {% if
+                    version_info.running_on=="Local" %}checked{% endif %}>
+                  <label class="form-check-label" for="runModePython">Local Python</label>
+                </div>
+              </div>
+            </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="show-cli-toggle">
+              <label class="form-check-label" for="show-cli-toggle">Show CLI Flags</label>
+            </div>
+          </div>
         </div>
       </div>
-      {% endfor %}
-    </div>
-  </div>
-  <div id="kometa-root-section" class="mb-3">
-    <label for="kometa-root-path" class="form-label">Kometa Root Path</label>
-    <div class="input-group mt-2">
-      <input type="text" id="kometa-root-path" class="form-control" value="{{ session.get('kometa_root', '') }}">
-      <button class="btn btn-success" id="validateButton" type="button">
-        Validate <i id="spinner_validate" class="spinner-border spinner-border-sm ms-2" style="display: none;"></i>
-      </button>
-    </div>
-    <div class="form-text">This is the folder where <code>kometa.py</code> and <code>kometa-venv</code> reside.</div>
-    <div id="kometa-status" class="mt-1 small"></div>
-  </div>
-  <div class="mt-3">
-    <label for="kometa-validation-log" class="form-label">Kometa Validation Log</label>
-    <pre id="kometa-validation-log" class="form-control bg-dark text-light"
-      style="height: 200px; overflow-y: scroll; white-space: pre-wrap;">Waiting for validation...</pre>
-  </div>
 
-  <!-- Command Output -->
-  <div class="position-relative border rounded bg-body-tertiary p-3 mt-3">
-    <label class="form-label">Command</label>
-    <pre class="mb-0">
-      <code id="run-command-output"
-        data-config-filename="{{ page_info.saved_filename }}"
-        data-venv-python="{{ kometa_root | replace('\\', '\\\\') }}/kometa-venv/Scripts/python.exe">
-      </code>
-    </pre>
-    <button type="button" id="copy-command"
-      class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 d-flex align-items-center gap-2">
-      <i class="bi bi-files" id="copy-icon"></i>
-      <span id="copy-text">Copy</span>
-    </button>
-    <button type="button" id="run-now" class="btn btn-primary mt-3">
-      <i class="bi bi-play-fill me-1"></i> Run Now
-    </button>
-    <button type="button" id="stop-now" class="btn btn-danger mt-3 ms-2 d-none">
-      <i class="bi bi-stop-fill me-1"></i> Stop
-    </button>
-    <div id="run-output" class="mt-3 d-none">
-      <label class="form-label">Output</label>
-      <pre class="bg-dark text-light p-2 rounded" id="run-output-log"
-        style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">
+      <!-- Run Option -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-runopt">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#collapse-runopt" aria-expanded="false" aria-controls="collapse-runopt">
+            Run Option
+          </button>
+        </h2>
+        <div id="collapse-runopt" class="accordion-collapse collapse" aria-labelledby="heading-runopt"
+          data-bs-parent="#run-command-accordion">
+          <div class="accordion-body">
+            <fieldset>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="run-option" value="" id="opt-none" checked>
+                <label class="form-check-label" for="opt-none">Default (use Kometa’s schedule)</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="run-option" value="--run" id="opt-run">
+                <label class="form-check-label" for="opt-run">--run</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="run-option" value="--run-libraries"
+                  id="opt-run-libraries">
+                <label class="form-check-label" for="opt-run-libraries">--run-libraries</label>
+              </div>
+            </fieldset>
+            {% if movie_libraries or show_libraries %}
+            <div class="mb-2 mt-3 d-none" id="library-selection-block">
+              <label for="library-multiselect" class="form-label">Target Libraries (required)</label>
+              <select multiple class="form-select" id="library-multiselect">
+                {% for lib in movie_libraries + show_libraries %}
+                <option value="{{ lib.name }}">{{ lib.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Mode Flags -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-modeflags">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#collapse-modeflags" aria-expanded="false" aria-controls="collapse-modeflags">
+            Optional Mode Flags
+          </button>
+        </h2>
+        <div id="collapse-modeflags" class="accordion-collapse collapse" aria-labelledby="heading-modeflags"
+          data-bs-parent="#run-command-accordion">
+          <div class="accordion-body">
+            <fieldset>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="mode-flag" id="opt-mode-none" value="" checked>
+                <label class="form-check-label" for="opt-mode-none">Default</label>
+              </div>
+              {% for opt in ["operations-only", "collections-only", "playlists-only", "overlays-only"] %}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="mode-flag" id="opt-{{ opt }}" value="--{{ opt }}">
+                <label class="form-check-label" for="opt-{{ opt }}">--{{ opt }}</label>
+              </div>
+              {% endfor %}
+            </fieldset>
+          </div>
+        </div>
+      </div>
+
+      <!-- Logging Options -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-logflags">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#collapse-logflags" aria-expanded="false" aria-controls="collapse-logflags">
+            Logging Options
+          </button>
+        </h2>
+        <div id="collapse-logflags" class="accordion-collapse collapse" aria-labelledby="heading-logflags"
+          data-bs-parent="#run-command-accordion">
+          <div class="accordion-body">
+            <fieldset>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="log-flag" id="opt-log-none" value="" checked>
+                <label class="form-check-label" for="opt-log-none">Default</label>
+              </div>
+              {% for opt in ["debug", "trace", "log-requests"] %}
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="log-flag" id="opt-{{ opt }}" value="--{{ opt }}">
+                <label class="form-check-label" for="opt-{{ opt }}">--{{ opt }}</label>
+              </div>
+              {% endfor %}
+            </fieldset>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other Flags -->
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="heading-otherflags">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#collapse-otherflags" aria-expanded="false" aria-controls="collapse-otherflags">
+            Other Flags
+          </button>
+        </h2>
+        <div id="collapse-otherflags" class="accordion-collapse collapse" aria-labelledby="heading-otherflags"
+          data-bs-parent="#run-command-accordion">
+          <div class="accordion-body">
+            <fieldset>
+              <div class="row">
+                {% for opt in ["delete-collections", "delete-labels", "read-only-config", "low-priority", "no-report",
+                "no-missing", "no-countdown", "ignore-ghost", "ignore-schedules", "no-verify-ssl", "tests"] %}
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="opt-{{ opt }}" value="--{{ opt }}">
+                    <label class="form-check-label" for="opt-{{ opt }}">--{{ opt }}</label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="kometa-root-section" class="mb-3">
+      <label for="kometa-root-path" class="form-label">Kometa Root Path</label>
+      <div class="input-group mt-2">
+        <input type="text" id="kometa-root-path" class="form-control" value="{{ session.get('kometa_root', '') }}">
+        <button class="btn btn-success" id="validateButton" type="button">
+          Validate <i id="spinner_validate" class="spinner-border spinner-border-sm ms-2" style="display: none;"></i>
+        </button>
+      </div>
+      <div class="form-text">This is the folder where <code>kometa.py</code> and <code>kometa-venv</code> reside.</div>
+      <div id="kometa-status" class="mt-1 small"></div>
+    </div>
+
+    <div class="mt-3">
+      <p class="form-label mb-1">Kometa Validation Log</p>
+      <pre id="kometa-validation-log" class="form-control bg-dark text-light"
+        style="height: 200px; overflow-y: scroll; white-space: pre-wrap;">
+          Waiting for validation...
       </pre>
     </div>
-  </div>
 
+    <!-- Command Output -->
+    <div id="run-command-box" class="position-relative border rounded bg-body-tertiary p-3 mt-3 d-none">
+      <p class="form-label">Command</p>
+      <pre class="mb-0"><code id="run-command-output"
+  data-config-filename="{{ page_info.saved_filename }}"
+  data-venv-python="{{ kometa_root | replace('\\', '\\\\') }}/kometa-venv/Scripts/python.exe"></code></pre>
+      <button type="button" id="copy-command"
+        class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 d-flex align-items-center gap-2">
+        <i class="bi bi-files" id="copy-icon"></i>
+        <span id="copy-text">Copy</span>
+      </button>
+      <button id="run-now" class="btn btn-primary mt-3" disabled>
+        <i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run Now</span>
+      </button>
+      <button type="button" id="stop-now" class="btn btn-danger mt-3 ms-2 d-none">
+        <i class="bi bi-stop-fill me-1"></i> Stop
+      </button>
+      <div id="run-output" class="mt-3 d-none">
+        <p class="form-label">Output</p>
+        <pre class="bg-dark text-light p-2 rounded" id="run-output-log"
+          style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">
+        </pre>
+      </div>
+    </div>
+
+  </div>
 </div>
 {% endif %}
 {% endif %}
