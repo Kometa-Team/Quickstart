@@ -43,8 +43,8 @@ $(document).ready(function () {
 
   const flagsMap = {
     '--run': {
-      label: 'Run Everything',
-      description: 'Execute all configured features (collections, overlays, operations, metadata).'
+      label: 'Run Now',
+      description: 'If you want Kometa to run immediately rather than waiting until 5AM, set this flag'
     },
     '--run-libraries': {
       label: 'Run Specific Libraries',
@@ -76,51 +76,51 @@ $(document).ready(function () {
     },
     '--log-requests': {
       label: 'Log Requests',
-      description: 'Log all HTTP requests (to Plex, TMDb, etc.).'
+      description: 'Most verbose logging. If you enable this, every external network request made by Kometa will be logged, along with the data that is returned. This will add a lot of data to the logs, and will probably contain things like tokens, since the auto-redaction of such things is not generalized enough to catch any token that may be in any URL.<br><strong>WARNING</strong>:<br><code>This can potentially have personal information in it.</code>'
     },
     '--delete-collections': {
       label: 'Delete Collections',
-      description: 'Remove collections in Plex not defined in config.'
+      description: 'Delete all collections in each library as the first step in the run.<br><strong>WARNING</strong>:<br><code>You will lose all collections in the library - this will delete all collections, including ones not created or maintained by Kometa.</code>'
     },
     '--delete-labels': {
       label: 'Delete Labels',
-      description: 'Delete Kometa labels that are no longer used.'
+      description: 'Delete all labels [except one, see below] on every item in a Library prior to running collections/operations.<br><strong>WARNING</strong>:<br><code>To preserve functionality of Kometa, this will not remove the Overlay label, which is required for Kometa to know which items have Overlays applied. This will impact any Smart Label Collections that you have in your library. We do not recommend using this on a regular basis if you also use any operations or collections that update labels, as you are effectively deleting and adding labels on each run.</code>'
     },
     '--read-only-config': {
       label: 'Read-Only Mode',
-      description: 'Validate but don’t change Plex.'
+      description: 'Kometa reads in and then writes out a properly formatted version of your config.yml on each run;this makes the formatting consistent and ensures that you have visibility into new settings that get added. If you want to disable this behavior and tell Kometa to leave your config.yml as-is, use this flag.'
     },
     '--low-priority': {
       label: 'Low Priority Mode',
-      description: 'Lower CPU usage while running.'
+      description: 'Run the Kometa process at a lower priority. Will default to normal priority if not specified.'
     },
     '--no-report': {
       label: 'Skip Report',
-      description: 'Skip generating the final report file.'
+      description: 'Kometa can produce a report of missing items, collections, and other information. If you have this report enabled but want to disable it for a specific run, use this flag.'
     },
     '--no-missing': {
       label: 'Skip Missing Items',
-      description: 'Do not process missing items.'
+      description: 'Kometa can take various actions on missing items, such as sending them to Radarr, listing them in the log, or saving a report. If you want to disable all of these actions, use this flag.'
     },
     '--no-countdown': {
       label: 'No Countdown',
-      description: 'Skip the countdown before starting.'
+      description: 'Typically, when not doing an immediate run, Kometa displays a countdown in the terminal where it is running. If you want to hide this countdown, use this flag.'
     },
     '--ignore-ghost': {
       label: 'Ignore Ghost Metadata',
-      description: 'Skip removed-but-visible Plex items.'
+      description: 'Kometa prints some things to the log that do not actually go into the log file on disk. Typically these are things like status messages while loading and/or filtering. If you want to hide all ghost logging for the run, use this flag.'
     },
     '--ignore-schedules': {
       label: 'Ignore Schedules',
-      description: 'Run now regardless of scheduling settings.'
+      description: 'Ignore all schedules for the run. Range Scheduled collections (such as Christmas movies) will still be ignored.'
     },
     '--no-verify-ssl': {
       label: 'Skip SSL Verification',
-      description: 'Disable HTTPS cert validation (⚠ dangerous!).'
+      description: 'Turn SSL Verification off.<br><strong>NOTE</strong>:<br>Set this if your log file shows any errors similar to <code>SSL: CERTIFICATE_VERIFY_FAILED</code>'
     },
     '--tests': {
       label: 'Test Mode',
-      description: 'Validate but don’t update Plex.'
+      description: 'If you set this flag to true, Kometa will run only collections that you have marked as test immediately, like KOMETA_RUN.<br><strong>NOTE</strong>:<br>This will only run collections with <code>test: true</code> in the definition.'
     }
   }
 
@@ -150,7 +150,7 @@ $(document).ready(function () {
     updateLabels(logFlags, 'opt-')
     updateLabels(otherFlags, 'opt-')
 
-    $('[data-bs-toggle="tooltip"]').tooltip()
+    $('[data-bs-toggle="tooltip"]').tooltip({ html: true })
   }
 
   updateFlagLabels(false) // Default to friendly labels
@@ -294,7 +294,7 @@ $(document).ready(function () {
   const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
   tooltipTriggerList.forEach(function (tooltipTriggerEl) {
     // eslint-disable-next-line no-new
-    new bootstrap.Tooltip(tooltipTriggerEl)
+    new bootstrap.Tooltip(tooltipTriggerEl, { html: true })
   })
 
   $('#copy-command').on('click', function () {
