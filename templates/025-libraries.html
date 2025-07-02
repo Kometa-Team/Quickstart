@@ -178,7 +178,9 @@
 {% for library in movie_libraries %}
 <div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
   <div class="card-header bg-dark">
-    <h4 class="mb-0">{{ library.name }} (Movie)</h4>
+    <h4 class="mb-0">
+      <i class="bi bi-film text-muted me-2" title="Movie"></i>{{ library.name }}
+    </h4>
   </div>
   <div class="card-body">
     {% include "partials/_movie_library_settings.html" %}
@@ -190,7 +192,9 @@
 {% for library in show_libraries %}
 <div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
   <div class="card-header bg-dark">
-    <h4 class="mb-0">{{ library.name }} (TV Show)</h4>
+    <h4 class="mb-0">
+      <i class="bi bi-tv text-muted me-2" title="TV Show"></i>{{ library.name }}
+    </h4>
   </div>
   <div class="card-body">
     {% include "partials/_show_library_settings.html" %}

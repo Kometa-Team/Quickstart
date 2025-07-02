@@ -161,7 +161,9 @@ $(document).ready(function () {
 
   function buildCommand () {
     const baseDocker = 'docker run --rm -v /your/config/dir:/config kometa:nightly'
-    const basePython = 'python kometa.py'
+    const runCmdOutput = $('#run-command-output')
+    const pythonBinary = runCmdOutput.data('venv-python') || 'python3'
+    const basePython = `${pythonBinary} kometa.py`
     const configFilename = $('#run-command-output').data('config-filename')
     const runMode = $('input[name="run-mode"]:checked').val()
     const mainOption = $('input[name="run-option"]:checked').val()

@@ -1,4 +1,5 @@
 import hashlib
+import platform
 import json
 import os
 import re
@@ -244,20 +245,35 @@ def check_for_update():
 
 
 def get_running_os():
+    # Preserve build for backward compatibility, even if unused
     build = os.getenv("BUILD_OS", "local").lower()
 
+    # 1. Docker check via env
     if os.getenv("QUICKSTART_DOCKER", "False").lower() in ["true", "1"]:
         return "Docker", ""
-    elif not getattr(sys, "frozen", False):
-        return "Local", ""
-    elif build == "windows":
-        return "Windows", ".exe"
-    elif build == "macos":
-        return "macOS", ".app"
-    elif build == "linux":
-        return "Linux", ""
+
+    # 2. Frozen build (e.g., PyInstaller)
+    if getattr(sys, "frozen", False):
+        system = platform.system()
+        if system == "Windows":
+            return "Frozen-Windows", ".exe"
+        elif system == "Darwin":
+            return "Frozen-macOS", ".app"
+        elif system == "Linux":
+            return "Frozen-Linux", ""
+        else:
+            return "Frozen-Unknown", ""
+
+    # 3. Local run
+    system = platform.system()
+    if system == "Windows":
+        return "Local-Windows", ".exe"
+    elif system == "Darwin":
+        return "Local-macOS", ".app"
+    elif system == "Linux":
+        return "Local-Linux", ""
     else:
-        return "Unknown", ""
+        return "Local-Unknown", ""
 
 
 def enforce_string_fields(data, enforce=False):

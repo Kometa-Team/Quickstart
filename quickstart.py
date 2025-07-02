@@ -1249,6 +1249,37 @@ def validate_kometa_root():
         print(msg, file=sys.stderr)
         logs.append(msg)
 
+    # External tool check — fail early if missing
+    missing_tools = []
+
+    if shutil.which("git") is None:
+        missing_tools.append("git")
+
+    if shutil.which("python") is None and shutil.which("python3") is None:
+        missing_tools.append("python or python3")
+
+    if missing_tools:
+        for tool in missing_tools:
+            log(f"❌ Required tool not found: {tool}")
+        return jsonify(success=False, error=f"Missing required tools: {', '.join(missing_tools)}", log=logs), 400
+
+    log("✅ All required external tools are available.")
+
+    # Check Python version
+    try:
+        python_cmd = shutil.which("python") or shutil.which("python3")
+        version_output = subprocess.check_output([python_cmd, "--version"], stderr=subprocess.STDOUT, text=True)
+        log(f"🐍 Detected Python version: {version_output.strip()}")
+    except Exception as e:
+        log(f"⚠️ Failed to detect Python version: {e}")
+
+    # Check Git version
+    try:
+        git_output = subprocess.check_output(["git", "--version"], stderr=subprocess.STDOUT, text=True)
+        log(f"🔧 Detected Git version: {git_output.strip()}")
+    except Exception as e:
+        log(f"⚠️ Failed to detect Git version: {e}")
+
     if not root_path:
         log("❌ No path provided.")
         return jsonify(success=False, error="No path provided.", log=logs), 400
