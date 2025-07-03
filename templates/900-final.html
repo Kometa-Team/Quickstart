@@ -244,11 +244,9 @@
     <!-- Command Output -->
     <div id="run-command-box" class="position-relative border rounded bg-body-tertiary p-3 mt-3 d-none">
       <p class="form-label">Command</p>
-      <p>Running on: <code>{{ version_info.running_on }}</code></p>
-<pre class="mb-0">
+      <pre class="mb-0 text-wrap" style="white-space: pre-wrap; word-break: break-word;">
   <code id="run-command-output"
-        data-config-filename="{{ page_info.saved_filename }}"
-        data-venv-python="{% if version_info.running_on.startswith('Local-Windows') or version_info.running_on.startswith('Frozen-Windows') -%}{{ kometa_root | replace('\\', '\\\\') }}/kometa-venv/Scripts/python.exe{%- else -%}{{ kometa_root }}/kometa-venv/bin/python3{%- endif %}">
+        data-config-filename="{{ page_info.saved_filename }}">
   </code>
 </pre>
       <button type="button" id="copy-command"
@@ -263,7 +261,9 @@
         <i class="bi bi-stop-fill me-1"></i> Stop
       </button>
       <div id="run-output" class="mt-3 d-none">
-        <p class="form-label">Output</p>
+        <small class="text-muted d-block mt-1">
+          <i class="bi bi-info-circle"></i> Showing last 2000 lines of the log
+        </small>
         <pre class="bg-dark text-light p-2 rounded" id="run-output-log"
           style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">
         </pre>

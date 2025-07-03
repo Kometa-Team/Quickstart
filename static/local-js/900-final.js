@@ -1,5 +1,9 @@
 /* global $, bootstrap, showToast */
 
+function quoteIfNeeded (str) {
+  return /\s/.test(str) ? `"${str}"` : str
+}
+
 $(document).ready(function () {
   const plexValid = $('#plex_valid').data('plex-valid') === 'True'
   const tmdbValid = $('#tmdb_valid').data('tmdb-valid') === 'True'
@@ -161,10 +165,13 @@ $(document).ready(function () {
 
   function buildCommand () {
     const baseDocker = 'docker run --rm -v /your/config/dir:/config kometa:nightly'
-    const runCmdOutput = $('#run-command-output')
-    const pythonBinary = runCmdOutput.data('venv-python') || 'python3'
-    const basePython = `${pythonBinary} kometa.py`
     const configFilename = $('#run-command-output').data('config-filename')
+    const runCmdOutput = $('#run-command-output')
+    const pythonBinary = quoteIfNeeded(runCmdOutput.data('venv-python') || 'python3')
+    const kometaRoot = runCmdOutput.data('kometa-root') || ''
+    const fullKometaPy = `${kometaRoot}/kometa.py`
+    const fullConfigPath = `${kometaRoot}/config/${configFilename}`
+    const basePython = `${quoteIfNeeded(pythonBinary)} ${quoteIfNeeded(fullKometaPy)}`
     const runMode = $('input[name="run-mode"]:checked').val()
     const mainOption = $('input[name="run-option"]:checked').val()
     const selectedLibs = $('#library-multiselect').length ? $('#library-multiselect').val() || [] : []
@@ -202,7 +209,7 @@ $(document).ready(function () {
 
     cli += runMode === 'docker'
       ? ` --config /config/${configFilename}`
-      : ` --config config/${configFilename}`
+      : ` --config ${quoteIfNeeded(fullConfigPath)}`
 
     $('#run-command-output').text(cli)
   }
@@ -252,6 +259,12 @@ $(document).ready(function () {
 
         if (res.success) {
           $logBox.append('✅ Kometa root validated successfully.\n')
+
+          // ✅ Inject the Python path based on validated Kometa root
+          const pythonPath = `${rootPath.replace(/\\/g, '/')}/kometa-venv/${navigator.platform.startsWith('Win') ? 'Scripts/python.exe' : 'bin/python3'}`
+          $('#run-command-output').data('venv-python', pythonPath)
+          $('#run-command-output').data('kometa-root', rootPath.replace(/\\/g, '/'))
+          buildCommand()
 
           // Recheck ALL other validations
           const allValid =
@@ -303,17 +316,48 @@ $(document).ready(function () {
     const command = $('#run-command-output').text().trim()
     if (!command || command.startsWith('⚠️')) return
 
-    navigator.clipboard.writeText(command).then(() => {
+    // Try clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(command).then(() => {
+        showCopySuccess()
+      }).catch(() => {
+        fallbackCopy(command)
+      })
+    } else {
+      fallbackCopy(command)
+    }
+
+    function showCopySuccess () {
       $('#copy-icon').removeClass('bi-clipboard').addClass('bi-check2')
       $('#copy-text').text('Copied')
-
       setTimeout(() => {
         $('#copy-icon').removeClass('bi-check2').addClass('bi-clipboard')
         $('#copy-text').text('Copy')
       }, 1500)
-    }).catch(() => {
-      showToast('error', 'Copy failed. Please copy manually.')
-    })
+    }
+
+    function fallbackCopy (text) {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.setAttribute('readonly', '')
+      textarea.style.position = 'absolute'
+      textarea.style.left = '-9999px'
+      document.body.appendChild(textarea)
+      textarea.select()
+
+      try {
+        const success = document.execCommand('copy')
+        if (success) {
+          showCopySuccess()
+        } else {
+          showToast('error', 'Copy failed. Please copy manually.')
+        }
+      } catch (err) {
+        showToast('error', 'Copy failed. Please copy manually.')
+      }
+
+      document.body.removeChild(textarea)
+    }
   })
 
   function hideRunCommandSectionUntilValidated () {
@@ -430,7 +474,11 @@ function checkKometaStatus () {
         $('#stop-now').addClass('d-none')
 
         if (data.status === 'done') {
-          $('#run-output-log').append(`\n✅ Kometa finished with code ${data.return_code}`)
+          if (data.return_code === 0) {
+            $('#run-output-log').append('\n✅ Kometa finished successfully.')
+          } else {
+            $('#run-output-log').append(`\n⚠️ Kometa exited with code ${data.return_code}. Check logs for details.`)
+          }
         } else {
           $('#run-output-log').append('\n🟥 Kometa is not running.')
         }

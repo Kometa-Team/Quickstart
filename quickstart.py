@@ -1175,24 +1175,28 @@ def start_kometa():
     if not command:
         return jsonify({"error": "No command provided"}), 400
 
-    # Determine platform-specific Python path in virtual environment
+    kometa_root = app.config["KOMETA_ROOT"]
+
+    # Get venv Python path
     if sys.platform.startswith("win"):
-        venv_python = os.path.join(app.config["KOMETA_ROOT"], "kometa-venv", "Scripts", "python.exe")
+        venv_python = os.path.join(kometa_root, "kometa-venv", "Scripts", "python.exe")
     else:
-        venv_python = os.path.join(app.config["KOMETA_ROOT"], "kometa-venv", "bin", "python")
+        venv_python = os.path.join(kometa_root, "kometa-venv", "bin", "python3")
 
     try:
-        # Use shlex to safely split the command
         command_parts = shlex.split(command)
-        if command_parts[0] == "python":
-            command_parts[0] = venv_python if os.path.exists(venv_python) else sys.executable
+
+        # Remove any Python interpreter already in the command
+        if os.path.basename(command_parts[0]).lower() in ["python", "python3", "python.exe"]:
+            command_parts.pop(0)
+
+        # Prepend your trusted path
+        command_parts.insert(0, venv_python)
 
         kometa_process = subprocess.Popen(
             command_parts,
-            cwd=app.config["KOMETA_ROOT"]
+            cwd=kometa_root
         )
-
-        # Store it for status check
         app.config["kometa_process"] = kometa_process
 
         return jsonify({"status": "Kometa started"})
@@ -1234,8 +1238,8 @@ def tail_log():
 
     try:
         with log_path.open("r", encoding="utf-8", errors="replace") as f:
-            last_500 = deque(f, maxlen=500)
-        return jsonify({"log": "".join(last_500)})
+            last_2000 = deque(f, maxlen=2000)
+        return jsonify({"log": "".join(last_2000)})
     except Exception as e:
         return jsonify({"error": f"Failed to read log: {str(e)}"}), 500
 
@@ -1291,6 +1295,17 @@ def validate_kometa_root():
         log("❌ Path does not exist.")
         return jsonify(success=False, error="Path does not exist.", log=logs), 400
 
+    # Read Kometa VERSION file
+    version_path = kometa_root / "VERSION"
+    kometa_version = "Unknown"
+
+    if version_path.exists():
+        try:
+            kometa_version = version_path.read_text(encoding="utf-8").strip()
+            log(f"📦 Kometa version detected: {kometa_version}")
+        except Exception as e:
+            log(f"⚠️ Failed to read VERSION file: {e}")
+
     required_files = ["kometa.py", "requirements.txt"]
     for fname in required_files:
         fpath = kometa_root / fname
@@ -1320,14 +1335,42 @@ def validate_kometa_root():
         log(f"❌ pip not found in venv at {pip_bin}")
         return jsonify(success=False, error=f"pip not found in {pip_bin}", log=logs), 500
 
+    log("⬆️ Checking pip version and attempting upgrade...")
     try:
-        log("⬆️ Upgrading pip...")
-        subprocess.check_call([str(python_bin), "-m", "pip", "install", "--upgrade", "pip"])
-        log("✅ pip upgraded.")
+        result = subprocess.run(
+            [str(python_bin), "-m", "pip", "install", "--upgrade", "pip"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=True
+        )
+        output = result.stdout.strip()
+        if "Requirement already satisfied" in output:
+            log("ℹ️ pip is already up to date.")
+        else:
+            log("✅ pip upgraded.")
+        for line in output.splitlines():
+            log(f"    {line}")
+    except subprocess.CalledProcessError as e:
+        log(f"❌ pip upgrade failed: {e}")
+        return jsonify(success=False, error="pip upgrade failed.", log=logs), 500
 
-        log("📦 Installing requirements.txt...")
-        subprocess.check_call([str(python_bin), "-m", "pip", "install", "-r", str(kometa_root / "requirements.txt")])
-        log("✅ requirements.txt installed.")
+    log("📦 Installing requirements.txt...")
+    try:
+        result = subprocess.run(
+            [str(python_bin), "-m", "pip", "install", "-r", str(kometa_root / "requirements.txt")],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=True
+        )
+        output = result.stdout.strip()
+        if "Requirement already satisfied" in output and "Successfully installed" not in output:
+            log("ℹ️ All requirements are already satisfied.")
+        else:
+            log("✅ requirements.txt installed or updated.")
+        for line in output.splitlines():
+            log(f"    {line}")
     except subprocess.CalledProcessError as e:
         log(f"❌ Error installing requirements: {str(e)}")
         return jsonify(success=False, error="Failed pip install.", log=logs), 500
@@ -1349,7 +1392,8 @@ def validate_kometa_root():
         log(f"⚠️ Failed to copy YAML: {e}")
 
     log("✅ Kometa root is valid and ready.")
-    return jsonify(success=True, log=logs), 200
+    # return jsonify(success=True, kometa_root=str(kometa_root), log=logs), 200
+    return jsonify(success=True, kometa_root=str(kometa_root), kometa_version=kometa_version, log=logs), 200
 
 
 @app.route("/kometa-status", methods=["GET"])
@@ -1363,6 +1407,8 @@ def kometa_status():
         return jsonify(status="running")
     else:
         return jsonify(status="done", return_code=retcode)
+
+
 server_thread = None
 update_thread = None
 if __name__ == "__main__":
