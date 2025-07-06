@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await res.json()
 
         resultBox.classList.remove('d-none')
-        resultBox.classList.add('border', 'border-secondary', 'p-2', 'rounded', 'bg-light', 'text-dark')
+        resultBox.classList.add('border', 'rounded', 'bg-body-tertiary', 'p-3', 'text-dark')
 
         resultBox.innerHTML = data.success
           ? `<strong>Update Successful!</strong><br><pre>${data.git_output}${data.pip_output}</pre>
