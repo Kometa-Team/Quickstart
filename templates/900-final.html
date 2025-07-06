@@ -78,11 +78,6 @@
             <div class="mb-2">
               <div>
                 <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="run-mode" value="docker" id="runModeDocker" {% if
-                    version_info.running_on !="Local" %}checked{% endif %}>
-                  <label class="form-check-label" for="runModeDocker">Docker</label>
-                </div>
-                <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" name="run-mode" value="python" id="runModePython" {% if
                     version_info.running_on.startswith("Local") %}checked{% endif %}>
                   <label class="form-check-label" for="runModePython">Local Python</label>
