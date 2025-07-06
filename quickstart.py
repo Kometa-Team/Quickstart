@@ -135,6 +135,32 @@ def check_request_size():
             print(f"[DEBUG] Failed to parse form: {e}")
 
 
+@app.route('/update-quickstart', methods=['POST'])
+def update_quickstart():
+    try:
+        result = subprocess.run(
+            ["git", "pull"],
+            cwd=app.root_path,
+            capture_output=True,
+            text=True
+        )
+
+        pip_result = subprocess.run(
+            ["pip", "install", "-r", "requirements.txt"],
+            cwd=app.root_path,
+            capture_output=True,
+            text=True
+        )
+
+        return {
+            "success": True,
+            "git_output": result.stdout + result.stderr,
+            "pip_output": pip_result.stdout + pip_result.stderr
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}, 500
+
+
 server_session = Session(app)
 server_thread = None
 

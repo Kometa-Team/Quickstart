@@ -162,3 +162,46 @@ function trackModifiedSelects () {
 }
 
 /* eslint-enable no-unused-vars */
+document.addEventListener('DOMContentLoaded', () => {
+  const updateBtn = document.getElementById('updateQuickstartBtn')
+  const resultBox = document.getElementById('updateResult')
+
+  if (updateBtn && resultBox) {
+    updateBtn.addEventListener('click', async () => {
+      updateBtn.disabled = true
+      updateBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Updating...'
+
+      try {
+        const res = await fetch('/update-quickstart', { method: 'POST' })
+        const data = await res.json()
+
+        resultBox.classList.remove('d-none')
+        resultBox.classList.add('border', 'border-secondary', 'p-2', 'rounded', 'bg-light', 'text-dark')
+
+        resultBox.innerHTML = data.success
+          ? `<strong>Update Successful!</strong><br><pre>${data.git_output}${data.pip_output}</pre>
+             <button class="btn btn-sm btn-success mt-2" onclick="location.reload()">Reload Quickstart</button>`
+          : `<strong>Error:</strong> ${data.error}`
+      } catch (err) {
+        resultBox.classList.remove('d-none')
+        resultBox.innerHTML = `<strong>Request Failed:</strong> ${err}`
+      }
+
+      updateBtn.disabled = false
+      updateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Run Update Now'
+    })
+  }
+})
+
+// Optional: Rotate icon spinner style
+const style = document.createElement('style')
+style.innerHTML = `
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`
+document.head.appendChild(style)
