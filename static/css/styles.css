@@ -661,12 +661,19 @@ div#loading {
 }
 
 #run-command-box {
-  opacity: 0;
-  transition: opacity 0.5s ease-in-out;
-  pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    pointer-events: none;
 }
 
 #run-command-box.fade-in {
-  opacity: 1;
-  pointer-events: auto;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+.rotate-icon.rotate {
+    transform: rotate(180deg);
 }

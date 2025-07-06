@@ -815,7 +815,9 @@ def step(name):
         attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
         collection_config = helpers.load_quickstart_config("quickstart_collections.json")
         overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
-        return render_template(
+        start_time = time.perf_counter()
+
+        html = render_template(
             name + ".html",
             page_info=page_info,
             data=data,
@@ -835,6 +837,10 @@ def step(name):
                 "episode": os.listdir(UPLOAD_FOLDERS["episode"]),
             },
         )
+
+        end_time = time.perf_counter()
+        print(f"[PROFILE] Rendered {name}.html in {end_time - start_time:.2f} seconds")
+        return html
 
 
 @app.route("/get_top_imdb_items/<library_name>")
