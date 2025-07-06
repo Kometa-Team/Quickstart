@@ -795,6 +795,7 @@ def step(name):
     # Ensure correct rendering for the final validation page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if name == "900-final":
+        start_time = time.perf_counter()
         validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
         saved_filename = helpers.save_to_named_config(yaml_content, config_name)
         page_info["saved_filename"] = saved_filename
@@ -811,7 +812,7 @@ def step(name):
             elif key.startswith("sho-library_") and key.endswith("-library"):
                 show_libraries.append({"id": key.split("-library")[0], "name": value, "type": "show"})
 
-        return render_template(
+        html = render_template(
             "900-final.html",
             page_info=page_info,
             data=data,
@@ -822,6 +823,10 @@ def step(name):
             movie_libraries=movie_libraries,
             show_libraries=show_libraries,
         )
+
+        end_time = time.perf_counter()
+        print(f"[PROFILE] Rendered 900-final.html in {end_time - start_time:.2f} seconds")
+        return html
 
     else:
         attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
