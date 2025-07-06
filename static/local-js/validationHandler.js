@@ -185,7 +185,8 @@ const ValidationHandler = {
     console.log(`[DEBUG] Libraries Valid: ${allLibrariesValid}`)
     console.log(`[DEBUG] Placeholders Valid: ${allPlaceholdersValid}`)
 
-    if (allLibrariesValid && allPlaceholdersValid) {
+    // if (allLibrariesValid && allPlaceholdersValid) {
+    if (allPlaceholdersValid) {
       console.log('[DEBUG] Validation Passed! Enabling navigation.')
       ValidationHandler.showValidationMessage('Validation successful! You may proceed.', 'success')
       ValidationHandler.enableNavigation()
