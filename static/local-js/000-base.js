@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         resultBox.innerHTML = data.success
           ? `<strong>Update Successful!</strong><br><pre>${data.git_output}${data.pip_output}</pre>
-             <button class="btn btn-sm btn-success mt-2" onclick="location.reload()">Reload Quickstart</button>`
+              <button class="btn btn-sm btn-success mt-2" onclick="location.reload()">Reload Quickstart</button>`
           : `<strong>Error:</strong> ${data.error}`
       } catch (err) {
         resultBox.classList.remove('d-none')
