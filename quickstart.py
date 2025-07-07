@@ -1326,15 +1326,18 @@ def validate_kometa_root():
         log(f"⬆️ Update available: {kometa_update_info['local_version']} → {kometa_update_info['remote_version']}")
     else:
         log(f"✅ Kometa is up to date: {kometa_update_info['local_version']}")
-    return jsonify(
-        success=True,
-        kometa_root=str(kometa_root),
-        kometa_version=kometa_version,
-        local_version=kometa_update_info["local_version"],
-        remote_version=kometa_update_info["remote_version"],
-        kometa_update_available=kometa_update_info["update_available"],
-        log=logs
-    ), 200
+    return (
+        jsonify(
+            success=True,
+            kometa_root=str(kometa_root),
+            kometa_version=kometa_version,
+            local_version=kometa_update_info["local_version"],
+            remote_version=kometa_update_info["remote_version"],
+            kometa_update_available=kometa_update_info["update_available"],
+            log=logs,
+        ),
+        200,
+    )
 
 
 @app.route("/update-kometa", methods=["POST"])
