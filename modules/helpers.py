@@ -940,11 +940,6 @@ def perform_kometa_update(kometa_root):
         is_windows = sys.platform.startswith("win")
 
         venv_path = kometa_root / "kometa-venv"
-        python_bin = (
-            venv_path
-            / ("Scripts" if is_windows else "bin")
-            / ("python.exe" if is_windows else "python")
-        )
         pip_bin = (
             venv_path
             / ("Scripts" if is_windows else "bin")

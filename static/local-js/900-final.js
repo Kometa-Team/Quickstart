@@ -392,7 +392,7 @@ $(document).ready(function () {
   }
 
   // Kometa Update Button Click
-  $('#update-kometa-now').on('click', function () {
+  $('#update-kometa-btn').on('click', function () {
     const $btn = $(this)
     const $logBox = $('#kometa-validation-log')
 

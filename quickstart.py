@@ -1226,6 +1226,7 @@ def validate_kometa_root():
         return jsonify(success=False, error="No path provided.", log=logs), 400
 
     kometa_root = Path(root_path)
+    session["kometa_root"] = str(kometa_root)
     log(f"🔍 Checking path: {kometa_root}")
 
     if not kometa_root.exists():
