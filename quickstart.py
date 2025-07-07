@@ -1320,7 +1320,7 @@ def validate_kometa_root():
 
     log("✅ Kometa root is valid and ready.")
 
-    kometa_update_info = helpers.check_kometa_update()
+    kometa_update_info = helpers.check_kometa_update(kometa_root)
     if kometa_update_info["update_available"]:
         log(f"⬆️ Update available: {kometa_update_info['local_version']} → {kometa_update_info['remote_version']}")
     else:

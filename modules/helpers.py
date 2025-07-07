@@ -24,7 +24,9 @@ GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
+WORKING_DIR = (
+    os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
+)
 MEIPASS_DIR = sys._MEIPASS if getattr(sys, "frozen", False) else BASE_DIR  # noqa
 
 JSON_SETTINGS = os.path.join(MEIPASS_DIR, "static", "json")
@@ -94,7 +96,9 @@ def get_pyfiglet_fonts():
 
     # Append all .flf files, removing extension
     if os.path.exists(fonts_dir):
-        fonts.update(f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf"))
+        fonts.update(
+            f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf")
+        )
 
     # Sort remaining fonts (excluding predefined ones)
     sorted_fonts = sorted(fonts - set(predefined_fonts))
@@ -150,7 +154,9 @@ def ensure_json_schema():
             f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template",
         ),
     ]:
-        file_path = os.path.join(JSON_SCHEMA_DIR, filename)  # Store everything in json-schema
+        file_path = os.path.join(
+            JSON_SCHEMA_DIR, filename
+        )  # Store everything in json-schema
 
         try:
             response = requests.get(url, timeout=10)
@@ -309,7 +315,9 @@ def build_oauth_dict(source, form_data):
             data[final_key] = value
         else:
             if final_key != "url":
-                data[source]["authorization"][final_key] = value  # Everything else goes into authorization
+                data[source]["authorization"][
+                    final_key
+                ] = value  # Everything else goes into authorization
 
     return data
 
@@ -317,7 +325,9 @@ def build_oauth_dict(source, form_data):
 def build_simple_dict(source, form_data):
     data = {source: {}}
     for key in form_data:
-        final_key = key.replace(source + "_", "", 1)  # Retain the original key transformation logic
+        final_key = key.replace(
+            source + "_", "", 1
+        )  # Retain the original key transformation logic
         value = form_data[key]
 
         # Handle lists explicitly (e.g., asset_directory)
@@ -406,7 +416,9 @@ def booler(thing):
             return False
         else:
             if app.config["QS_DEBUG"]:
-                print(f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False.")
+                print(
+                    f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False."
+                )
             return False
     return bool(thing)
 
@@ -442,7 +454,11 @@ def template_record(file, prev_record, next_record):
 
 def get_menu_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
+    file_list = sorted(
+        item
+        for item in os.listdir(templates_dir)
+        if os.path.isfile(os.path.join(templates_dir, item))
+    )
     final_list = []
 
     for file in file_list:
@@ -455,7 +471,11 @@ def get_menu_list():
 
 def get_template_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
+    file_list = sorted(
+        item
+        for item in os.listdir(templates_dir)
+        if os.path.isfile(os.path.join(templates_dir, item))
+    )
 
     templates = {}
     type_counter = {"012": 0, "013": 0}  # Counters for movie, show types
@@ -463,7 +483,9 @@ def get_template_list():
 
     for file in file_list:
         if belongs_in_template_list(file):
-            match = re.match(r"^(\d+)-", file)  # Match any length of digits followed by '-'
+            match = re.match(
+                r"^(\d+)-", file
+            )  # Match any length of digits followed by '-'
             if match:
                 file_prefix = match.group(1)
             else:
@@ -543,7 +565,12 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
 
     print(f"[DEBUG] Searching for section with ID or title: {library_id}")
     section = next(
-        (s for s in plex.library.sections() if str(s.key) == str(library_id) or s.title.lower() == str(library_id).lower()),
+        (
+            s
+            for s in plex.library.sections()
+            if str(s.key) == str(library_id)
+            or s.title.lower() == str(library_id).lower()
+        ),
         None,
     )
 
@@ -679,7 +706,9 @@ def get_library_summaries(configured_library_names):
 
         output_lines = []
         for lib_name in configured_library_names:
-            matching_section = next((s for s in plex.library.sections() if s.title == lib_name), None)
+            matching_section = next(
+                (s for s in plex.library.sections() if s.title == lib_name), None
+            )
             if not matching_section:
                 output_lines.append(f"Library '{lib_name}' not found on Plex server.")
                 continue
@@ -689,8 +718,15 @@ def get_library_summaries(configured_library_names):
                 scanner = matching_section.scanner or "Unknown"
                 lib_type = matching_section.type.capitalize()
 
-                ratings_setting = next((s for s in matching_section.settings() if s.id == "ratingsSource"), None)
-                ratings_source = ratings_setting.enumValues[ratings_setting.value] if ratings_setting else "N/A"
+                ratings_setting = next(
+                    (s for s in matching_section.settings() if s.id == "ratingsSource"),
+                    None,
+                )
+                ratings_source = (
+                    ratings_setting.enumValues[ratings_setting.value]
+                    if ratings_setting
+                    else "N/A"
+                )
 
                 output_lines.append(f"Information on library: {lib_name}")
                 output_lines.append(f"Type: {lib_type}")
@@ -699,7 +735,9 @@ def get_library_summaries(configured_library_names):
                 output_lines.append(f"Ratings Source: {ratings_source}")
                 output_lines.append("")  # Blank line between libraries
             except Exception as lib_err:
-                output_lines.append(f"Error retrieving details for {lib_name}: {lib_err}")
+                output_lines.append(
+                    f"Error retrieving details for {lib_name}: {lib_err}"
+                )
 
         return "\n".join(output_lines).strip()
 
@@ -781,20 +819,34 @@ def get_library_metadata():
         for section in plex.library.sections():
             try:
                 # Default metadata
-                lib_info = {"agent": section.agent, "scanner": section.scanner, "type": section.type, "ratings_source": "N/A"}
+                lib_info = {
+                    "agent": section.agent,
+                    "scanner": section.scanner,
+                    "type": section.type,
+                    "ratings_source": "N/A",
+                }
 
                 # Try to extract ratings source
                 try:
                     settings = section.settings()
-                    ratings_setting = next((s for s in settings if s.id == "ratingsSource"), None)
+                    ratings_setting = next(
+                        (s for s in settings if s.id == "ratingsSource"), None
+                    )
                     if ratings_setting:
-                        lib_info["ratings_source"] = ratings_setting.enumValues.get(ratings_setting.value, "Unknown")
+                        lib_info["ratings_source"] = ratings_setting.enumValues.get(
+                            ratings_setting.value, "Unknown"
+                        )
                 except Exception:
                     pass  # Keep "N/A" if ratingsSource isn't available
 
                 library_data[section.title] = lib_info
             except Exception as lib_err:
-                library_data[section.title] = {"agent": "Unknown", "scanner": "Unknown", "type": "Unknown", "ratings_source": f"Error: {lib_err}"}
+                library_data[section.title] = {
+                    "agent": "Unknown",
+                    "scanner": "Unknown",
+                    "type": "Unknown",
+                    "ratings_source": f"Error: {lib_err}",
+                }
 
         return library_data
 
@@ -853,17 +905,21 @@ def get_kometa_remote_version(branch="nightly"):
         return None
 
 
-def get_kometa_local_version():
-    kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
+def get_kometa_local_version(kometa_root=None):
+    if kometa_root is None:
+        kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
+    else:
+        kometa_root = Path(kometa_root)
+
     version_path = kometa_root / "VERSION"
     if version_path.exists():
         return version_path.read_text(encoding="utf-8").strip()
     return "unknown"
 
 
-def check_kometa_update():
+def check_kometa_update(kometa_root=None):
     branch = get_kometa_branch()
-    local_version = get_kometa_local_version()
+    local_version = get_kometa_local_version(kometa_root)
     remote_version = get_kometa_remote_version(branch)
     update_available = remote_version and remote_version != local_version
 
@@ -884,12 +940,26 @@ def perform_kometa_update(kometa_root):
         is_windows = sys.platform.startswith("win")
 
         venv_path = kometa_root / "kometa-venv"
-        python_bin = venv_path / ("Scripts" if is_windows else "bin") / ("python.exe" if is_windows else "python")
-        pip_bin = venv_path / ("Scripts" if is_windows else "bin") / ("pip.exe" if is_windows else "pip")
+        python_bin = (
+            venv_path
+            / ("Scripts" if is_windows else "bin")
+            / ("python.exe" if is_windows else "python")
+        )
+        pip_bin = (
+            venv_path
+            / ("Scripts" if is_windows else "bin")
+            / ("pip.exe" if is_windows else "pip")
+        )
 
         # 1. Git pull
         logs.append("🔄 Running: git pull")
-        result = subprocess.run(["git", "pull"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
+        result = subprocess.run(
+            ["git", "pull"],
+            cwd=kometa_root,
+            capture_output=True,
+            text=True,
+            shell=is_windows,
+        )
         logs.append(result.stdout.strip() or "(no output)")
         if result.returncode != 0:
             logs.append(result.stderr.strip())
@@ -898,8 +968,21 @@ def perform_kometa_update(kometa_root):
         # 2. Pip install -r requirements.txt
         if success:
             logs.append("\n📦 Reinstalling requirements...")
-            pip_cmd = [str(pip_bin), "install", "--no-cache-dir", "--upgrade", "-r", "requirements.txt"]
-            result = subprocess.run(pip_cmd, cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
+            pip_cmd = [
+                str(pip_bin),
+                "install",
+                "--no-cache-dir",
+                "--upgrade",
+                "-r",
+                "requirements.txt",
+            ]
+            result = subprocess.run(
+                pip_cmd,
+                cwd=kometa_root,
+                capture_output=True,
+                text=True,
+                shell=is_windows,
+            )
             logs.append(result.stdout.strip() or "(no output)")
             if result.returncode != 0:
                 logs.append(result.stderr.strip())

@@ -265,8 +265,9 @@ $(document).ready(function () {
           if (res.remote_version && res.local_version) {
             if (res.kometa_update_available) {
               $logBox.append(`⬆️ Update available: ${res.local_version} → ${res.remote_version}\n`)
-              $('#kometa-update-box').removeClass('d-none') // <-- Show optional update UI
-              $('#kometa-update-version').text(`${res.local_version} → ${res.remote_version}`)
+              $('#kometa-update-box').removeClass('d-none')
+              $('#kometa-local-version').text(res.local_version)
+              $('#kometa-remote-version').text(res.remote_version)
             } else {
               $logBox.append('✅ Kometa is up to date.\n')
               $('#kometa-update-box').addClass('d-none')
@@ -390,6 +391,43 @@ $(document).ready(function () {
     $('#run-now').prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Run Now')
   }
 
+  // Kometa Update Button Click
+  $('#update-kometa-now').on('click', function () {
+    const $btn = $(this)
+    const $logBox = $('#kometa-validation-log')
+
+    $btn.prop('disabled', true).html('<i class="bi bi-arrow-repeat me-1"></i> Updating...')
+    $logBox.append('\n🔧 Starting Kometa update...\n')
+
+    fetch('/update-kometa', {
+      method: 'POST'
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.log && Array.isArray(data.log)) {
+          data.log.forEach(line => $logBox.append(`${line}\n`))
+        }
+
+        if (data.success) {
+          showToast('success', '✅ Kometa updated successfully.')
+          $logBox.append('✅ Kometa update completed successfully.\n')
+        } else {
+          showToast('error', '❌ Kometa update failed.')
+          $logBox.append('❌ Kometa update failed.\n')
+        }
+
+        $btn.prop('disabled', false).html('🔄 Update Kometa Now')
+
+        // Optional: revalidate to refresh version UI
+        validateKometaRoot()
+      })
+      .catch(err => {
+        console.error(err)
+        $logBox.append('❌ Error occurred during Kometa update.\n')
+        showToast('error', '❌ Error during Kometa update.')
+        $btn.prop('disabled', false).html('🔄 Update Kometa Now')
+      })
+  })
   // Ensure we check Kometa status once on page load to catch unclean exits
   hideRunCommandSectionUntilValidated()
   checkKometaStatus()
