@@ -1319,8 +1319,39 @@ def validate_kometa_root():
         log(f"⚠️ Failed to copy YAML: {e}")
 
     log("✅ Kometa root is valid and ready.")
-    # return jsonify(success=True, kometa_root=str(kometa_root), log=logs), 200
-    return jsonify(success=True, kometa_root=str(kometa_root), kometa_version=kometa_version, log=logs), 200
+
+    kometa_update_info = helpers.check_kometa_update()
+    if kometa_update_info["update_available"]:
+        log(f"⬆️ Update available: {kometa_update_info['local_version']} → {kometa_update_info['remote_version']}")
+    else:
+        log(f"✅ Kometa is up to date: {kometa_update_info['local_version']}")
+    return jsonify(
+        success=True,
+        kometa_root=str(kometa_root),
+        kometa_version=kometa_version,
+        local_version=kometa_update_info["local_version"],
+        remote_version=kometa_update_info["remote_version"],
+        kometa_update_available=kometa_update_info["update_available"],
+        log=logs
+    ), 200
+
+
+@app.route("/update-kometa", methods=["POST"])
+def update_kometa():
+    logs = []
+
+    try:
+        kometa_root = session.get("kometa_root")
+        if not kometa_root:
+            return jsonify(success=False, log=["Kometa root path is not set."]), 400
+
+        result = helpers.perform_kometa_update(kometa_root)
+        logs.extend(result["log"])
+        return jsonify(success=result["success"], log=logs)
+
+    except Exception as e:
+        logs.append(f"Exception during Kometa update: {str(e)}")
+        return jsonify(success=False, log=logs), 500
 
 
 @app.route("/kometa-status", methods=["GET"])

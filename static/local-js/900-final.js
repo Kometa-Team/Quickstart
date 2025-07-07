@@ -259,6 +259,19 @@ $(document).ready(function () {
 
         if (res.success) {
           $logBox.append('✅ Kometa root validated successfully.\n')
+          if (res.kometa_version) {
+            $logBox.append(`📦 Local Kometa version: ${res.kometa_version}\n`)
+          }
+          if (res.remote_version && res.local_version) {
+            if (res.kometa_update_available) {
+              $logBox.append(`⬆️ Update available: ${res.local_version} → ${res.remote_version}\n`)
+              $('#kometa-update-box').removeClass('d-none') // <-- Show optional update UI
+              $('#kometa-update-version').text(`${res.local_version} → ${res.remote_version}`)
+            } else {
+              $logBox.append('✅ Kometa is up to date.\n')
+              $('#kometa-update-box').addClass('d-none')
+            }
+          }
 
           // ✅ Inject the Python path based on validated Kometa root
           const pythonPath = `${rootPath.replace(/\\/g, '/')}/kometa-venv/${navigator.platform.startsWith('Win') ? 'Scripts/python.exe' : 'bin/python3'}`
