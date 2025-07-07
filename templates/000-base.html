@@ -43,7 +43,7 @@
 
 <body>
   <script>
-    window.QS_DEBUG = {{ 'true' if config['QS_DEBUG'] else 'false' }};
+    window.QS_DEBUG = "{{ 'true' if config['QS_DEBUG'] else 'false' }}";
   </script>
   <script type="text/javascript" src="{{ url_for('static', filename='local-js/000-base.js') }}"></script>
   <div class="header-container text-center">
