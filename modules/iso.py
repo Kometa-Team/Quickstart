@@ -15,11 +15,22 @@ def _read_csv(url):
 
 
 _tag_dict = {}
-for c in _read_csv(_tag_url):
-    if c[1] not in _tag_dict:
-        _tag_dict[c[1]] = []
-    if c[0] not in _tag_dict[c[1]]:
-        _tag_dict[c[1]].append(c[0])
+
+for i, c in enumerate(_read_csv(_tag_url)):
+    if i == 0:
+        continue  # skip header row
+    if len(c) < 2:
+        continue  # skip malformed lines
+    tag = c[0].strip()
+    code = c[1].strip()
+
+    if len(tag) == 0 or len(code) == 0:
+        continue  # skip blank tag/code
+
+    if code not in _tag_dict:
+        _tag_dict[code] = []
+    if tag not in _tag_dict[code]:
+        _tag_dict[code].append(tag)
 
 
 class Country:
@@ -85,8 +96,16 @@ class Languages:
             ]
 
 
-countries = [Country(c) for c in _read_csv(_country_url)]
-languages = [Languages(c) for c in _read_csv(_language_url)]
+countries = [
+    Country(c)
+    for i, c in enumerate(_read_csv(_country_url))
+    if i > 0 and len(c) > 9 and len(c[9].strip()) == 2
+]
+languages = [
+    Languages(c)
+    for i, c in enumerate(_read_csv(_language_url))
+    if i > 0 and len(c[0].strip()) == 3 and len(c[2].strip()) == 2
+]
 
 
 def get_country(name=None, alpha2=None, alpha3=None):
