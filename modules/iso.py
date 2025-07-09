@@ -96,16 +96,8 @@ class Languages:
             ]
 
 
-countries = [
-    Country(c)
-    for i, c in enumerate(_read_csv(_country_url))
-    if i > 0 and len(c) > 9 and len(c[9].strip()) == 2
-]
-languages = [
-    Languages(c)
-    for i, c in enumerate(_read_csv(_language_url))
-    if i > 0 and len(c[0].strip()) == 3 and len(c[2].strip()) == 2
-]
+countries = [Country(c) for i, c in enumerate(_read_csv(_country_url)) if i > 0 and len(c) > 9 and len(c[9].strip()) == 2]
+languages = [Languages(c) for i, c in enumerate(_read_csv(_language_url)) if i > 0 and len(c[0].strip()) == 3 and len(c[2].strip()) == 2]
 
 
 def get_country(name=None, alpha2=None, alpha3=None):
