@@ -3,6 +3,8 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
 
+<div id="plex-maintenance-window" data-window="{{ page_info.telemetry.maintenance_window }}"></div>
+
 <!-- Header Style Dropdown -->
 <div class="form-floating mb-2">
   <select id="header-style" name="header_style" class="form-select">
@@ -116,6 +118,22 @@
                 <input class="form-check-input" type="radio" name="run-option" value="--run-libraries"
                   id="opt-run-libraries">
                 <label class="form-check-label" for="opt-run-libraries">--run-libraries</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="run-option" value="--times" id="opt-times">
+                <label class="form-check-label" for="opt-times">--times</label>
+              </div>
+              <div id="times-input-container" class="mt-2 d-none">
+                <label for="times-input" class="form-label">Enter times (24h, comma-separated, e.g.,
+                  <code>06:00,15:00</code>)</label>
+                <input type="text" id="times-input" class="form-control" placeholder="06:00,15:00">
+                <div id="times-error" class="form-text text-danger d-none">Invalid format. Use HH:MM in 24-hour format,
+                  comma-separated.</div>
+              </div>
+              <div id="times-warning" class="form-text text-warning d-none">
+                ⚠️ One or more times may overlap with Plex scheduled maintenance ({{
+                page_info.telemetry.maintenance_window }}).
+                It's recommended to run Kometa after this window.
               </div>
             </fieldset>
             {% if movie_libraries or show_libraries %}

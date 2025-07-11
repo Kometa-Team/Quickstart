@@ -54,6 +54,10 @@ $(document).ready(function () {
       label: 'Run Specific Libraries',
       description: 'Run Kometa only on selected libraries.'
     },
+    '--times': {
+      label: 'Time to Run',
+      description: 'Run at these times. Kometa wakes up at 5:00 AM to process the config file. If you want to change that time, or tell Kometa to wake up at multiple times, use this flag.'
+    },
     '--operations-only': {
       label: 'Only Operations',
       description: 'Only perform operations (e.g., rating/poster updates).'
@@ -129,7 +133,7 @@ $(document).ready(function () {
   }
 
   function updateFlagLabels (showCli) {
-    const runOptions = ['--run', '--run-libraries']
+    const runOptions = ['--run', '--run-libraries', '--times']
     const modeFlags = ['--operations-only', '--collections-only', '--playlists-only', '--overlays-only']
     const logFlags = ['--debug', '--trace', '--log-requests']
     const otherFlags = [
@@ -180,6 +184,25 @@ $(document).ready(function () {
 
     cli += ` ${mainOption}`
 
+    if (mainOption === '--times') {
+      const timesInput = $('#times-input').val().trim()
+      const isValid = isValidTimesFormat(timesInput)
+
+      toggleTimesInputVisibility('--times')
+
+      if (!isValid) {
+        $('#times-error').removeClass('d-none')
+        $('#run-command-output').text('⚠️ Invalid time format. Please enter comma-separated 24h times like 06:00,15:00.')
+        return
+      } else {
+        $('#times-error').addClass('d-none')
+        checkMaintenanceWarning(mainOption)
+        cli += ` "${timesInput}"`
+      }
+    } else {
+      toggleTimesInputVisibility(mainOption)
+    }
+
     if (mainOption === '--run-libraries') {
       if (!selectedLibs.length) {
         $('#run-command-output').text('⚠️ Please select at least one library when using --run-libraries.')
@@ -218,8 +241,11 @@ $(document).ready(function () {
   $('input[name="run-option"]').on('change', function () {
     const value = $(this).val()
     updateLibraryVisibility(value)
+    checkMaintenanceWarning(value)
     buildCommand()
   })
+
+  $('#times-input').on('input', buildCommand)
 
   $('#library-multiselect').on('change', buildCommand)
   $('input[name="mode-flag"]').on('change', buildCommand)
@@ -314,6 +340,7 @@ $(document).ready(function () {
 
   if ($('#run-command-output').length > 0) {
     const mainOption = $('input[name="run-option"]:checked').val()
+    checkMaintenanceWarning(mainOption)
     updateLibraryVisibility(mainOption)
     buildCommand()
   }
@@ -539,4 +566,64 @@ function checkKometaStatus () {
       console.error('Error checking Kometa status:', err)
       $('#run-output-log').append('\n⚠️ Failed to check Kometa status.')
     })
+}
+
+function isValidTimesFormat (timesStr) {
+  if (!timesStr.trim()) return false
+  const times = timesStr.split(',')
+  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
+  return times.every(t => timeRegex.test(t.trim()))
+}
+
+function toggleTimesInputVisibility (mainOption) {
+  const timesContainer = $('#times-input-container')
+  if (mainOption === '--times') {
+    timesContainer.removeClass('d-none')
+  } else {
+    timesContainer.addClass('d-none')
+    $('#times-error').addClass('d-none')
+  }
+}
+
+function getMaintenanceWindow () {
+  const windowStr = $('#plex-maintenance-window').data('window') // e.g., "03:00–05:00"
+  if (!windowStr || !windowStr.includes('–')) return null
+
+  const [start, end] = windowStr.split('–').map(t => t.trim())
+  return { start, end } // Strings in "HH:MM" format
+}
+
+function isTimeWithinRange (time, rangeStart, rangeEnd) {
+  const toMinutes = t => {
+    const [h, m] = t.split(':').map(Number)
+    return h * 60 + m
+  }
+  const timeMin = toMinutes(time)
+  return timeMin >= toMinutes(rangeStart) && timeMin < toMinutes(rangeEnd)
+}
+
+function checkMaintenanceWarning (mainOption) {
+  const warningBox = $('#times-warning')
+  const maintenance = getMaintenanceWindow()
+  warningBox.addClass('d-none')
+
+  if (!maintenance) return
+
+  if (mainOption === '') {
+    const defaultTime = '05:00'
+    if (isTimeWithinRange(defaultTime, maintenance.start, maintenance.end)) {
+      warningBox.removeClass('d-none')
+    }
+  }
+
+  if (mainOption === '--times') {
+    const timesInput = $('#times-input').val().trim()
+    if (isValidTimesFormat(timesInput)) {
+      const times = timesInput.split(',').map(t => t.trim())
+      const overlaps = times.some(t => isTimeWithinRange(t, maintenance.start, maintenance.end))
+      if (overlaps) {
+        warningBox.removeClass('d-none')
+      }
+    }
+  }
 }
