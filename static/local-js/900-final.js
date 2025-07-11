@@ -132,7 +132,15 @@ $(document).ready(function () {
     },
     '--timeout': {
       label: 'Timeout',
-      description: 'Change the timeout in seconds for all non-Plex services (such as TMDb, Radarr, and Trakt). This will default to 180 when not specified and is overwritten by any timeouts mentioned for specific services in the Configuration File.'
+      description: 'Change the timeout in seconds for all non-Plex services (such as TMDb, Radarr, and Trakt). This will default to <code>180</code> when not specified and is overwritten by any timeouts mentioned for specific services in the Configuration File.'
+    },
+    '--divider': {
+      label: 'Divider',
+      description: 'Customize the divider shown between repeated output elements (e.g., <code>></code>) Default is <code>=</code>'
+    },
+    '--width': {
+      label: 'Width',
+      description: 'The log is formatted to fit within a certain width. If you wish to change that width, you can do that with this flag. Not that long lines are not wrapped or truncated to this width; this controls the minimum width of the log. Default is <code>100</code>'
     }
   }
 
@@ -143,7 +151,7 @@ $(document).ready(function () {
     const otherFlags = [
       '--delete-collections', '--delete-labels', '--read-only-config', '--low-priority',
       '--no-report', '--no-missing', '--no-countdown', '--ignore-ghost',
-      '--ignore-schedules', '--no-verify-ssl', '--tests', '--timeout'
+      '--ignore-schedules', '--no-verify-ssl', '--tests', '--timeout', '--divider', '--width'
     ]
 
     function updateLabels (group, prefix = '') {
@@ -224,7 +232,7 @@ $(document).ready(function () {
     const checkboxFlags = [
       'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
       'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-      'ignore-schedules', 'no-verify-ssl', 'tests', 'timeout'
+      'ignore-schedules', 'no-verify-ssl', 'tests'
     ]
 
     checkboxFlags.forEach(opt => {
@@ -238,8 +246,9 @@ $(document).ready(function () {
       ? ` --config /config/${configFilename}`
       : ` --config ${quoteIfNeeded(fullConfigPath)}`
 
-    const timeoutValue = $('#opt-timeout').val().trim()
-    if (timeoutValue !== '') {
+    const timeoutChecked = $('#opt-timeout').is(':checked')
+    const timeoutValue = $('#opt-timeout-val').val().trim()
+    if (timeoutChecked) {
       if (!/^\d+$/.test(timeoutValue) || parseInt(timeoutValue, 10) <= 0) {
         $('#timeout-error').removeClass('d-none')
         $('#run-command-output').text('⚠️ Invalid timeout. Please enter a positive whole number.')
@@ -247,6 +256,33 @@ $(document).ready(function () {
       } else {
         $('#timeout-error').addClass('d-none')
         cli += ` --timeout ${parseInt(timeoutValue, 10)}`
+      }
+    }
+
+    const widthChecked = $('#opt-width').is(':checked')
+    const widthValue = $('#opt-width-val').val().trim()
+    if (widthChecked) {
+      const widthNum = parseInt(widthValue, 10)
+      if (!/^\d+$/.test(widthValue) || widthNum < 90 || widthNum > 300) {
+        $('#width-error').removeClass('d-none')
+        $('#run-command-output').text('⚠️ Width must be a number between 90 and 300.')
+        return
+      } else {
+        $('#width-error').addClass('d-none')
+        cli += ` --width ${widthNum}`
+      }
+    }
+
+    if ($('#opt-divider').is(':checked')) {
+      const dividerValue = $('#opt-divider-val').val().trim()
+
+      if (!dividerValue || dividerValue.length !== 1) {
+        $('#divider-error').removeClass('d-none')
+        $('#run-command-output').text('⚠️ Divider must be a single character.')
+        return
+      } else {
+        $('#divider-error').addClass('d-none')
+        cli += ` --divider "${dividerValue}"`
       }
     }
 
@@ -270,7 +306,7 @@ $(document).ready(function () {
   const checkboxFlags = [
     'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
     'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-    'ignore-schedules', 'no-verify-ssl', 'tests', 'timeout'
+    'ignore-schedules', 'no-verify-ssl', 'tests'
   ]
 
   checkboxFlags.forEach(opt => {
@@ -470,6 +506,61 @@ $(document).ready(function () {
         showToast('error', '❌ Error during Kometa update.')
         $btn.prop('disabled', false).html('🔄 Update Kometa Now')
       })
+  })
+  // Sync visibility for timeout and divider on page load
+  $('#opt-timeout-container').toggleClass('d-none', !$('#opt-timeout').is(':checked'))
+  $('#opt-divider-container').toggleClass('d-none', !$('#opt-divider').is(':checked'))
+  $('#opt-width-container').toggleClass('d-none', !$('#opt-width').is(':checked'))
+
+  $('#opt-timeout').on('change', function () {
+    $('#opt-timeout-container').toggleClass('d-none', !this.checked)
+    if (!this.checked) {
+      $('#opt-timeout-val').val('')
+      $('#timeout-error').addClass('d-none')
+    }
+    buildCommand()
+  })
+
+  $('#opt-width').on('change', function () {
+    $('#opt-width-container').toggleClass('d-none', !this.checked)
+    if (!this.checked) {
+      $('#opt-width-val').val('')
+      $('#width-error').addClass('d-none')
+    }
+    buildCommand()
+  })
+
+  // Restrict divider input
+  $('#opt-divider-val').on('input', function () {
+    this.value = this.value.replace(/\s/g, '').slice(0, 1)
+    buildCommand()
+  })
+
+  // Prevent non-numeric input for Timeout
+  $('#opt-timeout-val').on('input', function () {
+    const sanitized = this.value.replace(/[^0-9]/g, '')
+    if (this.value !== sanitized) {
+      this.value = sanitized
+    }
+    buildCommand()
+  })
+
+  // Prevent non-numeric input for Width
+  $('#opt-width-val').on('input', function () {
+    const sanitized = this.value.replace(/[^0-9]/g, '')
+    if (this.value !== sanitized) {
+      this.value = sanitized
+    }
+    buildCommand()
+  })
+
+  $('#opt-divider').on('change', function () {
+    $('#opt-divider-container').toggleClass('d-none', !this.checked)
+    if (!this.checked) {
+      $('#opt-divider-val').val('')
+      $('#divider-error').addClass('d-none')
+    }
+    buildCommand()
   })
   // Ensure we check Kometa status once on page load to catch unclean exits
   hideRunCommandSectionUntilValidated()

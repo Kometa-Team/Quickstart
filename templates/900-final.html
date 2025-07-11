@@ -226,19 +226,43 @@
                   </div>
                 </div>
                 {% endfor %}
-              </div>
-              <div class="mb-2">
-                <label for="opt-timeout" class="form-label">
-                  Timeout (seconds)
-                  <span class="text-info" data-bs-toggle="tooltip"
-                    title="Specify how long Kometa should wait for an external API call before timing out (in seconds). Must be an integer > 0.">
-                    <i class="bi bi-info-circle-fill ms-1"></i>
-                  </span>
-                </label>
-                <input type="number" id="opt-timeout" class="form-control" min="1" placeholder="Default is 180">
-                <div id="timeout-error" class="text-danger d-none small mt-1">Please enter a valid timeout greater than
-                  0.</div>
-              </div>
+                <!-- Timeout Option -->
+                <div class="option-box mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="opt-timeout" value="--timeout">
+                    <label class="form-check-label" for="opt-timeout">--timeout</label>
+                  </div>
+                  <div id="opt-timeout-container" class="mt-2 d-none">
+                    <input type="text" class="form-control" id="opt-timeout-val" placeholder="e.g., 180" min="1"
+                      step="1">
+                    <div id="timeout-error" class="text-danger small d-none mt-1"></div>
+                  </div>
+                </div>
+
+                <!-- Divider Option -->
+                <div class="option-box mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="opt-divider" value="--divider">
+                    <label class="form-check-label" for="opt-divider">--divider</label>
+                  </div>
+                  <div id="opt-divider-container" class="mt-2 d-none">
+                    <input type="text" class="form-control" id="opt-divider-val" placeholder="e.g., >" maxlength="1">
+                    <div id="divider-error" class="text-danger small d-none mt-1"></div>
+                  </div>
+                </div>
+
+                <!-- Width Option -->
+                <div class="option-box mb-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="opt-width" value="--width">
+                    <label class="form-check-label" for="opt-width">--width</label>
+                  </div>
+                  <div id="opt-width-container" class="mb-2 d-none">
+                    <input type="text" class="form-control" id="opt-width-val" placeholder="Enter width (90–300)"
+                      min="90" max="300">
+                    <div id="width-error" class="text-danger small d-none mt-1"></div>
+                  </div>
+                </div>
             </fieldset>
           </div>
         </div>
