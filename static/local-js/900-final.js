@@ -129,6 +129,10 @@ $(document).ready(function () {
     '--tests': {
       label: 'Test Mode',
       description: 'If you set this flag to true, Kometa will run only collections that you have marked as test immediately, like KOMETA_RUN.<br><strong>NOTE</strong>:<br>This will only run collections with <code>test: true</code> in the definition.'
+    },
+    '--timeout': {
+      label: 'Timeout',
+      description: 'Change the timeout in seconds for all non-Plex services (such as TMDb, Radarr, and Trakt). This will default to 180 when not specified and is overwritten by any timeouts mentioned for specific services in the Configuration File.'
     }
   }
 
@@ -139,7 +143,7 @@ $(document).ready(function () {
     const otherFlags = [
       '--delete-collections', '--delete-labels', '--read-only-config', '--low-priority',
       '--no-report', '--no-missing', '--no-countdown', '--ignore-ghost',
-      '--ignore-schedules', '--no-verify-ssl', '--tests'
+      '--ignore-schedules', '--no-verify-ssl', '--tests', '--timeout'
     ]
 
     function updateLabels (group, prefix = '') {
@@ -220,7 +224,7 @@ $(document).ready(function () {
     const checkboxFlags = [
       'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
       'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-      'ignore-schedules', 'no-verify-ssl', 'tests'
+      'ignore-schedules', 'no-verify-ssl', 'tests', 'timeout'
     ]
 
     checkboxFlags.forEach(opt => {
@@ -233,6 +237,18 @@ $(document).ready(function () {
     cli += runMode === 'docker'
       ? ` --config /config/${configFilename}`
       : ` --config ${quoteIfNeeded(fullConfigPath)}`
+
+    const timeoutValue = $('#opt-timeout').val().trim()
+    if (timeoutValue !== '') {
+      if (!/^\d+$/.test(timeoutValue) || parseInt(timeoutValue, 10) <= 0) {
+        $('#timeout-error').removeClass('d-none')
+        $('#run-command-output').text('⚠️ Invalid timeout. Please enter a positive whole number.')
+        return
+      } else {
+        $('#timeout-error').addClass('d-none')
+        cli += ` --timeout ${parseInt(timeoutValue, 10)}`
+      }
+    }
 
     $('#run-command-output').text(cli)
   }
@@ -254,7 +270,7 @@ $(document).ready(function () {
   const checkboxFlags = [
     'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
     'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
-    'ignore-schedules', 'no-verify-ssl', 'tests'
+    'ignore-schedules', 'no-verify-ssl', 'tests', 'timeout'
   ]
 
   checkboxFlags.forEach(opt => {

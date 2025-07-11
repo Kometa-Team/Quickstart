@@ -227,6 +227,18 @@
                 </div>
                 {% endfor %}
               </div>
+              <div class="mb-2">
+                <label for="opt-timeout" class="form-label">
+                  Timeout (seconds)
+                  <span class="text-info" data-bs-toggle="tooltip"
+                    title="Specify how long Kometa should wait for an external API call before timing out (in seconds). Must be an integer > 0.">
+                    <i class="bi bi-info-circle-fill ms-1"></i>
+                  </span>
+                </label>
+                <input type="number" id="opt-timeout" class="form-control" min="1" placeholder="Default is 180">
+                <div id="timeout-error" class="text-danger d-none small mt-1">Please enter a valid timeout greater than
+                  0.</div>
+              </div>
             </fieldset>
           </div>
         </div>
