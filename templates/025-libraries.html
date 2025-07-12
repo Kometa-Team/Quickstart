@@ -118,6 +118,8 @@
                 <th scope="col">Scanner</th>
                 <th scope="col">Agent</th>
                 <th scope="col">Ratings Source</th>
+                <th scope="col">Content Count</th>
+
               </tr>
             </thead>
             <tbody>
@@ -128,6 +130,15 @@
                 <td><code>{{ lib_info.scanner }}</code></td>
                 <td><code>{{ lib_info.agent }}</code></td>
                 <td><code>{{ lib_info.ratings_source }}</code></td>
+                <td>
+                  {% if lib_info.type == "movie" %}
+                  {{ lib_info.movie_count }} movies
+                  {% elif lib_info.type == "show" %}
+                  {{ lib_info.show_count }} shows / {{ lib_info.episode_count }} episodes
+                  {% else %}
+                  {{ lib_info.item_count }} items
+                  {% endif %}
+                </td>
               </tr>
               {% endfor %}
             </tbody>

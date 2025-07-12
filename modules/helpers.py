@@ -801,6 +801,19 @@ def get_library_metadata():
                     pass  # Keep "N/A" if ratingsSource isn't available
 
                 library_data[section.title] = lib_info
+                try:
+                    if section.type == "movie":
+                        lib_info["movie_count"] = section.totalViewSize()
+                    elif section.type == "show":
+                        lib_info["show_count"] = section.totalViewSize()
+                        lib_info["episode_count"] = sum(
+                            show.episodeCount for show in section.all()
+                        )
+                    else:
+                        lib_info["item_count"] = section.totalViewSize()
+                except Exception as e:
+                    lib_info["error"] = str(e)
+
             except Exception as lib_err:
                 library_data[section.title] = {
                     "agent": "Unknown",
