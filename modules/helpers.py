@@ -689,18 +689,44 @@ def get_library_summaries(configured_library_names):
                 scanner = matching_section.scanner or "Unknown"
                 lib_type = matching_section.type.capitalize()
 
+                # Ratings source
                 ratings_setting = next(
                     (s for s in matching_section.settings() if s.id == "ratingsSource"),
                     None,
                 )
-                ratings_source = ratings_setting.enumValues[ratings_setting.value] if ratings_setting else "N/A"
+                ratings_source = (
+                    ratings_setting.enumValues[ratings_setting.value]
+                    if ratings_setting else "N/A"
+                )
 
+                # Start summary output
                 output_lines.append(f"Information on library: {lib_name}")
                 output_lines.append(f"Type: {lib_type}")
                 output_lines.append(f"Agent: {agent}")
                 output_lines.append(f"Scanner: {scanner}")
                 output_lines.append(f"Ratings Source: {ratings_source}")
+
+                # Content counts
+                if matching_section.type == "movie":
+                    movie_count = len(matching_section.search())
+                    output_lines.append(f"Content Count: {movie_count} movies")
+
+                elif matching_section.type == "show":
+                    shows = matching_section.search()
+                    show_count = len(shows)
+                    try:
+                        episode_count = sum(len(show.episodes()) for show in shows)
+                    except Exception as e:
+                        episode_count = 0
+                        output_lines.append(f"⚠️ Error getting episode counts: {e}")
+                    output_lines.append(f"Content Count: {show_count} shows / {episode_count} episodes")
+
+                else:
+                    item_count = len(matching_section.search())
+                    output_lines.append(f"Content Count: {item_count} items")
+
                 output_lines.append("")  # Blank line between libraries
+
             except Exception as lib_err:
                 output_lines.append(f"Error retrieving details for {lib_name}: {lib_err}")
 
@@ -800,19 +826,24 @@ def get_library_metadata():
                 except Exception:
                     pass  # Keep "N/A" if ratingsSource isn't available
 
-                library_data[section.title] = lib_info
+                # Count items per library type
                 try:
                     if section.type == "movie":
-                        lib_info["movie_count"] = section.totalViewSize()
+                        lib_info["movie_count"] = len(section.search())
                     elif section.type == "show":
-                        lib_info["show_count"] = section.totalViewSize()
-                        lib_info["episode_count"] = sum(
-                            show.episodeCount for show in section.all()
-                        )
+                        shows = section.search()
+                        lib_info["show_count"] = len(shows)
+                        try:
+                            lib_info["episode_count"] = sum(len(show.episodes()) for show in shows)
+                        except Exception as count_err:
+                            lib_info["episode_count"] = 0
+                            lib_info["episode_error"] = str(count_err)
                     else:
-                        lib_info["item_count"] = section.totalViewSize()
+                        lib_info["item_count"] = len(section.search())
                 except Exception as e:
                     lib_info["error"] = str(e)
+
+                library_data[section.title] = lib_info
 
             except Exception as lib_err:
                 library_data[section.title] = {
