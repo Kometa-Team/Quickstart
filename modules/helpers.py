@@ -694,10 +694,7 @@ def get_library_summaries(configured_library_names):
                     (s for s in matching_section.settings() if s.id == "ratingsSource"),
                     None,
                 )
-                ratings_source = (
-                    ratings_setting.enumValues[ratings_setting.value]
-                    if ratings_setting else "N/A"
-                )
+                ratings_source = ratings_setting.enumValues[ratings_setting.value] if ratings_setting else "N/A"
 
                 # Start summary output
                 output_lines.append(f"Information on library: {lib_name}")
