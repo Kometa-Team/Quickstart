@@ -67,7 +67,7 @@ sudo apt install -y libxcb-xinerama0 libxcb-xinerama0-dev libxcb-icccm4 libxcb-i
 
 ## 4 - Running in Docker
 
-NOTE: the `/config` directory in these examples is NOT the Kometa config directory.  Create a Quickstart-specific directory to map to `/config`.  
+NOTE: the `/config` directory in these examples is NOT the Kometa config directory.  Create a Quickstart-specific directory to map to `/config`.
 
 Here are some minimal examples:
 
@@ -91,43 +91,140 @@ services:
     restart: unless-stopped
 ```
 
-## 5 - Installing on local (python and git already installed)
+## 5 - Installing on local:
 
 These are high-level steps which assume the user has knowledge of python and pip, and the general ability to troubleshoot issues.
 
 1. Clone or download and unzip the repo.
 ```shell
+git clone https://github.com/Kometa-Team/Kometa
+```
+```shell
 git clone https://github.com/Kometa-Team/Quickstart
 ```
 
-2. Move into the Quickstart directory.
+1. Move into the Quickstart directory.
 ```shell
 cd Quickstart
 ```
 
-3. Install dependencies (it is recommended to do this in a Python virtual environment `venv`):
+1. Install dependencies (it is recommended to do this in a Python virtual environment `venv`):
 ```shell
 pip install -r requirements.txt
 ```
 
-4. If the above command fails, run the following command:
+1. If the above command fails, run the following command:
 ```shell
 pip install -r requirements.txt --ignore-installed
 ```
+## Detailed Steps if the high-level instructions are not clear enough
 
-> [!WARNING]
-> If you are running the single file executable in Ubuntu Linux, you will likely need to perform these steps first to have a system tray icon show up:
+### Installation Steps for Windows :
+
+At the end of this you will end up with side by side installs of Kometa and Quickstart:
+```
+c:/this/dir/has/Kometa
+c:/this/dir/has/Quickstart
+```
+1. Ensure git and python are installed
+
+Git Install: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+
+Python Install: https://www.python.org/downloads/windows/
+
+
+1. git clone Kometa and switch to preferred branch (nightly, develop, master) (no need to do more at this point as Quickstart will perform the other steps automatically)
+
+Open up a command prompt and run this (pick your directory and checkout nightly, develop, or master)
+
 ```shell
-sudo apt update
-sudo apt install -y libxcb-xinerama0 libxcb-xinerama0-dev libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0
+cd c:/this/dir/has
+git clone https://github.com/Kometa-Team/Kometa
+cd Kometa
+git checkout nightly
+git stash
+git stash clear
+git pull
+
+```
+3. git clone Quickstart, switch to develop branch, create venv, activate it, upgrade pip, install requirements
+
+```shell
+cd ..
+git clone https://github.com/Kometa-Team/Quickstart
+cd Quickstart
+git checkout develop
+git stash
+git stash clear
+git pull
+python -m venv venv
+venv/Scripts/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+
 ```
 
-At this point Quickstart has been installed, and you can verify installation by running (it is recommended to do this in a python virtual environment `venv` as shown in the image below):
+4. Run Quickstart and on final page, it will automatically create the kometa-venv, install requirements and then allow you to run kometa.py with your validated config created with Quickstart
+
 ```shell
 python quickstart.py
 ```
 
-You should see something similar to this:
+### Installation Steps for Linux/Mac:
+
+At the end of this you will end up with side by side installs of Kometa and Quickstart:
+```
+/this/dir/has/Kometa
+/this/dir/has/Quickstart
+```
+1. Ensure git and python are installed
+
+Git install: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
+
+Python Install:
+
+Mac: https://www.python.org/downloads/macos/
+
+Ubuntu/Debian: ```sudo apt-get install python3```
+
+Fedora: ```sudo dnf install python3```
+
+2. git clone Kometa and switch to preferred branch (nightly, develop, master) (no need to do more at this point as Quickstart will perform the other steps automatically)
+
+Open up a command prompt and run this (pick your directory and checkout nightly, develop, or master)
+
+```shell
+cd /this/dir/has
+git clone https://github.com/Kometa-Team/Kometa
+cd Kometa
+git checkout nightly
+git stash
+git stash clear
+git pull
+```
+3. git clone Quickstart, switch to develop branch, create venv, activate it, upgrade pip, install requirements
+
+```shell
+cd ..
+git clone https://github.com/Kometa-Team/Quickstart
+cd Quickstart
+git checkout develop
+git stash
+git stash clear
+git pull
+python3 -m venv venv
+source venv/bin/activate
+python3 -m pip install --upgrade pip
+python3 -m pip install -r requirements.txt
+```
+
+4 Run quickstart and on final page, it will automatically create the kometa-venv, install requirements and then allow you to run kometa.py with your validated config created with Quickstart
+
+```shell
+python3 quickstart.py
+```
+
+At this point Quickstart has been installed and you should see something similar to this:
 
 ![image](static/images/running-in-pwsh.png)
 
