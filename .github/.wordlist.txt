@@ -18,3 +18,5 @@ MacOS
 exe
 py
 venv
+txt
+scm
