@@ -108,7 +108,14 @@
             <fieldset>
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="run-option" value="" id="opt-none">
-                <label class="form-check-label" for="opt-none">Run at next Kometa scheduled time</label>
+                <label class="form-check-label" for="opt-none">
+                  Run at scheduled time
+                  <span class="text-info" data-bs-toggle="tooltip"
+                    aria-label="Kometa will run automatically at its next scheduled time (usually 05:00 AM). No flags are passed when this is selected."
+                    data-bs-original-title="Kometa will run automatically at its next scheduled time (usually 05:00 AM). No flags are passed when this is selected.">
+                    <i class="bi bi-info-circle-fill ms-1"></i>
+                  </span>
+                </label>
               </div>
               <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="run-option" value="--run" id="opt-run" checked>
