@@ -85,7 +85,6 @@ kometa_path = os.path.abspath(os.path.join(base_dir, "..", "kometa"))
 
 app.config["KOMETA_ROOT"] = kometa_path
 
-
 def start_update_thread():
     """Ensure update_checker_loop runs inside the Flask app context."""
     with app.app_context():
@@ -800,6 +799,7 @@ def step(name):
         saved_filename = helpers.save_to_named_config(yaml_content, config_name)
         page_info["saved_filename"] = saved_filename
         page_info["yaml_valid"] = validated
+        page_info["quickstart_root"] = helpers.get_app_root()
         session["yaml_content"] = yaml_content
         library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
         movie_libraries = []
@@ -833,6 +833,7 @@ def step(name):
         collection_config = helpers.load_quickstart_config("quickstart_collections.json")
         overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
         start_time = time.perf_counter()
+        page_info["quickstart_root"] = helpers.get_app_root()
 
         html = render_template(
             name + ".html",
@@ -1369,6 +1370,86 @@ def kometa_status():
         return jsonify(status="running")
     else:
         return jsonify(status="done", return_code=retcode)
+
+
+@app.route("/check-test-libraries")
+def check_test_libraries():
+    quickstart_root = helpers.get_app_root()
+    parent_dir = os.path.dirname(quickstart_root)
+    target_path = os.path.join(parent_dir, "plex_test_libraries")
+
+    found = os.path.isdir(target_path)
+    is_git_repo = os.path.isdir(os.path.join(target_path, ".git"))
+
+    return jsonify({
+        "found": found,
+        "is_git_repo": is_git_repo
+    })
+
+
+@app.route("/clone-test-libraries", methods=["POST"])
+def clone_test_libraries():
+    data = request.get_json(silent=True) or {}
+    quickstart_root = data.get("quickstart_root", "")
+    if not quickstart_root:
+        return jsonify(success=False, message="Quickstart root path not provided.")
+
+    parent_dir = os.path.dirname(quickstart_root)
+    target_path = os.path.join(parent_dir, "plex_test_libraries")
+
+    try:
+        # Always try to enable long paths (harmless on Mac/Linux)
+        subprocess.run(["git", "config", "--global", "core.longpaths", "true"], check=False)
+
+        if os.path.exists(target_path):
+            if os.path.isdir(os.path.join(target_path, ".git")):
+                # Valid Git repo, try pulling
+                result = subprocess.run(
+                    ["git", "-C", target_path, "pull"],
+                    capture_output=True,
+                    text=True,
+                    timeout=300
+                )
+                output = result.stdout + result.stderr
+
+                if result.returncode != 0:
+                    if "Filename too long" in output or "unable to checkout working tree" in output:
+                        return jsonify(success=False, message=(
+                            "One or more filenames are too long for Windows to handle by default. "
+                            "To fix this, run the following in an elevated Command Prompt, then reboot:\n\n"
+                            "reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f"
+                        ))
+                    return jsonify(success=False, message=f"Git pull failed:\n{output.strip()}")
+
+                return jsonify(success=True, message="Test libraries updated successfully.")
+            else:
+                return jsonify(success=False, message=(
+                    "The 'plex_test_libraries' folder exists but is not a valid Git repository.\n"
+                    "Please delete or rename the folder and try again."
+                ))
+
+        # Fresh clone if folder doesn't exist
+        result = subprocess.run(
+            ["git", "clone", "https://github.com/chazlarson/plex-test-libraries.git", target_path],
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        output = result.stdout + result.stderr
+
+        if result.returncode != 0:
+            if "Filename too long" in output or "unable to checkout working tree" in output:
+                return jsonify(success=False, message=(
+                    "One or more filenames are too long for Windows to handle by default. "
+                    "To fix this, run the following in an elevated Command Prompt, then reboot:\n\n"
+                    "reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f"
+                ))
+            return jsonify(success=False, message=f"Clone failed:\n{output.strip()}")
+
+        return jsonify(success=True, message="Test libraries cloned successfully.")
+
+    except Exception as e:
+        return jsonify(success=False, message=f"Unexpected error: {str(e)}")
 
 
 server_thread = None

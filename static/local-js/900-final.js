@@ -488,10 +488,10 @@ $(document).ready(function () {
         }
 
         if (data.success) {
-          showToast('success', '✅ Kometa updated successfully.')
+          showToast('success', 'Kometa updated successfully.')
           $logBox.append('✅ Kometa update completed successfully.\n')
         } else {
-          showToast('error', '❌ Kometa update failed.')
+          showToast('error', 'Kometa update failed.')
           $logBox.append('❌ Kometa update failed.\n')
         }
 
@@ -503,7 +503,7 @@ $(document).ready(function () {
       .catch(err => {
         console.error(err)
         $logBox.append('❌ Error occurred during Kometa update.\n')
-        showToast('error', '❌ Error during Kometa update.')
+        showToast('error', 'Error during Kometa update.')
         $btn.prop('disabled', false).html('🔄 Update Kometa Now')
       })
   })

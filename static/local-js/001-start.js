@@ -175,6 +175,81 @@ document.addEventListener('DOMContentLoaded', function () {
     })
   }
 
+  // Show test libraries banner or silently pull if valid
+  if (window.pageInfo?.install_type?.startsWith('Local-')) {
+    const testLibStatus = document.getElementById('test-lib-status')
+    const cloneBtn = document.getElementById('clone-test-lib-btn')
+
+    if (testLibStatus && cloneBtn) {
+      fetch('/check-test-libraries')
+        .then(res => res.json())
+        .then(data => {
+          if (!data.found) {
+            // Folder doesn't exist → show clone banner
+            testLibStatus.classList.remove('d-none')
+          } else if (data.found && data.is_git_repo) {
+            // Folder exists and is a git repo → show permanent success message and silently pull
+            testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
+            testLibStatus.classList.add('alert-success')
+            testLibStatus.innerHTML = '<strong>✅ Test libraries already set up.</strong>'
+            // Folder exists and is a git repo → silently pull
+            fetch('/clone-test-libraries', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ quickstart_root: window.pageInfo.quickstart_root })
+            })
+              .then(res => res.json())
+              .then(result => {
+                if (result.success) {
+                  showToast('success', result.message || 'Test libraries updated successfully.')
+                } else {
+                  showToast('error', result.message)
+                }
+              })
+              .catch(err => showToast('error', `Update failed: ${err.message}`))
+          } else {
+            // Folder exists but not a git repo → show error banner
+            testLibStatus.classList.remove('d-none')
+            testLibStatus.classList.remove('alert-warning')
+            testLibStatus.classList.add('alert-danger')
+            testLibStatus.innerHTML = `
+            <strong>⚠️ Existing folder is not a git repo.</strong>
+            <br>Please delete the <code>plex_test_libraries</code> folder manually and try again.
+          `
+          }
+        })
+
+      // Manual clone button
+      cloneBtn.addEventListener('click', () => {
+        cloneBtn.disabled = true
+        cloneBtn.innerHTML = 'Cloning...'
+
+        fetch('/clone-test-libraries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ quickstart_root: window.pageInfo.quickstart_root })
+        })
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              testLibStatus.classList.remove('alert-warning')
+              testLibStatus.classList.add('alert-success')
+              testLibStatus.innerHTML = `<strong>✅ ${result.message}</strong>`
+            } else {
+              testLibStatus.classList.remove('alert-warning')
+              testLibStatus.classList.add('alert-danger')
+              testLibStatus.innerHTML = `<strong>❌ ${result.message}</strong>`
+            }
+          })
+          .catch(err => {
+            testLibStatus.classList.remove('alert-warning')
+            testLibStatus.classList.add('alert-danger')
+            testLibStatus.innerHTML = `<strong>❌ Clone failed:</strong> ${err.message}`
+          })
+      })
+    }
+  }
+
   function checkDuplicateConfigName () {
     const newConfigName = newConfigInput.value.trim().toLowerCase()
     let isDuplicate = false

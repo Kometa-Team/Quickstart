@@ -16,6 +16,12 @@
   <p class="fs-5">To use Quickstart, you will need at least a Plex URL & Token, and a TMDb API Key.</p>
   <p class="fs-5">We <b>strongly</b> suggest you set up test libraries if this is your first time running
     Quickstart/Kometa, <a href="#" data-bs-toggle="modal" data-bs-target="#Modal2">click here</a> to learn more</p>
+  <div id="test-lib-status" class="alert alert-warning d-none mt-3">
+    <strong>Test media libraries not found.</strong>
+    <span class="ms-1">We recommend setting them up for testing with Kometa. Be patient as the repository is about 7GB.</span>
+    <br>
+    <button class="btn btn-sm btn-primary mt-2" id="clone-test-lib-btn">Clone Test Libraries</button>
+  </div>
   <p class="fs-5">Review the Config Data section below and press the arrow button above when you are ready to begin.</p>
 </div><br>
 <label class="form-label">
@@ -85,4 +91,10 @@
     </div>
   </div>
 </div>
+<script>
+  window.pageInfo = {
+    quickstart_root: "{{ page_info.quickstart_root | escape | replace('\\', '\\\\') }}",
+    install_type: "{{ version_info.running_on }}"
+  };
+</script>
 {% endblock %}

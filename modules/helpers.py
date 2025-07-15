@@ -987,3 +987,49 @@ def perform_kometa_update(kometa_root):
     except Exception as e:
         logs.append(f"❌ Exception: {str(e)}")
         return {"success": False, "log": logs}
+
+
+def check_for_test_libraries(quickstart_root):
+    """
+    Returns True if 'plex-test-libraries' exists as a sibling to quickstart_root
+    """
+    if not quickstart_root:
+        return {"found": False, "error": "Quickstart root not detected."}
+
+    parent_dir = os.path.dirname(quickstart_root)
+    target_path = os.path.join(parent_dir, "plex-test-libraries")
+
+    return {"found": os.path.isdir(target_path)}
+
+
+def clone_test_libraries(quickstart_root):
+    """
+    Clones plex-test-libraries as a sibling to Quickstart root.
+    """
+    import subprocess
+
+    if not quickstart_root:
+        return {"success": False, "output": "Quickstart root not detected."}
+
+    parent_dir = os.path.dirname(quickstart_root)
+    target_path = os.path.join(parent_dir, "plex-test-libraries")
+
+    if os.path.exists(target_path):
+        return {"success": True, "output": "Test libraries already exist."}
+
+    try:
+        result = subprocess.run(
+            ["git", "clone", "https://github.com/chazlarson/plex-test-libraries"],
+            cwd=parent_dir,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return {"success": True, "output": result.stdout or "Cloned successfully."}
+    except subprocess.CalledProcessError as e:
+        return {"success": False, "output": e.stderr or "Cloning failed."}
+
+
+def get_app_root():
+    # Go up one directory to reach the Quickstart root
+    return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
