@@ -85,6 +85,7 @@ kometa_path = os.path.abspath(os.path.join(base_dir, "..", "kometa"))
 
 app.config["KOMETA_ROOT"] = kometa_path
 
+
 def start_update_thread():
     """Ensure update_checker_loop runs inside the Flask app context."""
     with app.app_context():
@@ -1381,10 +1382,7 @@ def check_test_libraries():
     found = os.path.isdir(target_path)
     is_git_repo = os.path.isdir(os.path.join(target_path, ".git"))
 
-    return jsonify({
-        "found": found,
-        "is_git_repo": is_git_repo
-    })
+    return jsonify({"found": found, "is_git_repo": is_git_repo})
 
 
 @app.route("/clone-test-libraries", methods=["POST"])
@@ -1404,46 +1402,41 @@ def clone_test_libraries():
         if os.path.exists(target_path):
             if os.path.isdir(os.path.join(target_path, ".git")):
                 # Valid Git repo, try pulling
-                result = subprocess.run(
-                    ["git", "-C", target_path, "pull"],
-                    capture_output=True,
-                    text=True,
-                    timeout=300
-                )
+                result = subprocess.run(["git", "-C", target_path, "pull"], capture_output=True, text=True, timeout=300)
                 output = result.stdout + result.stderr
 
                 if result.returncode != 0:
                     if "Filename too long" in output or "unable to checkout working tree" in output:
-                        return jsonify(success=False, message=(
-                            "One or more filenames are too long for Windows to handle by default. "
-                            "To fix this, run the following in an elevated Command Prompt, then reboot:\n\n"
-                            "reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f"
-                        ))
+                        return jsonify(
+                            success=False,
+                            message=(
+                                "One or more filenames are too long for Windows to handle by default. "
+                                "To fix this, run the following in an elevated Command Prompt, then reboot:\n\n"
+                                "reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f"
+                            ),
+                        )
                     return jsonify(success=False, message=f"Git pull failed:\n{output.strip()}")
 
                 return jsonify(success=True, message="Test libraries updated successfully.")
             else:
-                return jsonify(success=False, message=(
-                    "The 'plex_test_libraries' folder exists but is not a valid Git repository.\n"
-                    "Please delete or rename the folder and try again."
-                ))
+                return jsonify(
+                    success=False, message=("The 'plex_test_libraries' folder exists but is not a valid Git repository.\n" "Please delete or rename the folder and try again.")
+                )
 
         # Fresh clone if folder doesn't exist
-        result = subprocess.run(
-            ["git", "clone", "https://github.com/chazlarson/plex-test-libraries.git", target_path],
-            capture_output=True,
-            text=True,
-            timeout=300
-        )
+        result = subprocess.run(["git", "clone", "https://github.com/chazlarson/plex-test-libraries.git", target_path], capture_output=True, text=True, timeout=300)
         output = result.stdout + result.stderr
 
         if result.returncode != 0:
             if "Filename too long" in output or "unable to checkout working tree" in output:
-                return jsonify(success=False, message=(
-                    "One or more filenames are too long for Windows to handle by default. "
-                    "To fix this, run the following in an elevated Command Prompt, then reboot:\n\n"
-                    "reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f"
-                ))
+                return jsonify(
+                    success=False,
+                    message=(
+                        "One or more filenames are too long for Windows to handle by default. "
+                        "To fix this, run the following in an elevated Command Prompt, then reboot:\n\n"
+                        "reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f"
+                    ),
+                )
             return jsonify(success=False, message=f"Clone failed:\n{output.strip()}")
 
         return jsonify(success=True, message="Test libraries cloned successfully.")
