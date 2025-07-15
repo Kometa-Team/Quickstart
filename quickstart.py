@@ -1445,6 +1445,18 @@ def clone_test_libraries():
         return jsonify(success=False, message=f"Unexpected error: {str(e)}")
 
 
+@app.route("/restart", methods=["POST"])
+def restart_quickstart():
+    def restart():
+        # Give time for the response to complete before restarting
+        time.sleep(1)
+        python = sys.executable
+        os.execv(python, [python] + sys.argv)
+
+    threading.Thread(target=restart).start()
+    return jsonify(success=True, message="Quickstart is restarting...")
+
+
 server_thread = None
 update_thread = None
 if __name__ == "__main__":

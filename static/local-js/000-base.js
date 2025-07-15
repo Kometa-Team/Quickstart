@@ -1,4 +1,4 @@
-/* global bootstrap, $ */
+/* global bootstrap, $, location */
 
 if (typeof window.QS_DEBUG !== 'undefined' && !window.QS_DEBUG) {
   console.debug = function () { }
@@ -161,6 +161,29 @@ function trackModifiedSelects () {
   })
 }
 
+function restartQuickstart () {
+  fetch('/restart', { method: 'POST' })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        // Disable the restart button immediately
+        const restartBtn = document.querySelector('#updateResult button')
+        if (restartBtn) restartBtn.disabled = true
+
+        document.getElementById('updateResult').innerHTML = `
+          <strong>🚀 ${data.message}</strong><br>
+          Please wait while Quickstart restarts... this page will auto-reload shortly.
+        `
+        setTimeout(() => location.reload(), 6000)
+      } else {
+        showToast('error', data.message || 'Restart failed.')
+      }
+    })
+    .catch(err => {
+      showToast('error', `Restart error: ${err.message}`)
+    })
+}
+
 /* eslint-enable no-unused-vars */
 document.addEventListener('DOMContentLoaded', () => {
   const updateBtn = document.getElementById('updateQuickstartBtn')
@@ -178,13 +201,18 @@ document.addEventListener('DOMContentLoaded', () => {
         resultBox.classList.remove('d-none')
         resultBox.classList.add('border', 'rounded', 'bg-body-tertiary', 'p-3', 'text-light')
 
-        resultBox.innerHTML = data.success
-          ? `<strong>Update Successful!</strong><br><pre>${data.git_output}${data.pip_output}</pre>
-              <button class="btn btn-sm btn-success mt-2" onclick="location.reload()">Reload Quickstart</button>`
-          : `<strong>Error:</strong> ${data.error}`
+        if (data.success) {
+          resultBox.innerHTML = `
+          <strong>✅ Update Successful!</strong><br>
+          <pre>${data.git_output}${data.pip_output}</pre>
+          <button class="btn btn-sm btn-success mt-2" onclick="restartQuickstart()">Restart Quickstart</button>
+        `
+        } else {
+          resultBox.innerHTML = `<strong>❌ Error:</strong> ${data.error}`
+        }
       } catch (err) {
         resultBox.classList.remove('d-none')
-        resultBox.innerHTML = `<strong>Request Failed:</strong> ${err}`
+        resultBox.innerHTML = `<strong>❌ Request Failed:</strong> ${err}`
       }
 
       updateBtn.disabled = false
