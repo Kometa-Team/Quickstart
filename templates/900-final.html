@@ -50,7 +50,7 @@
   Config</a>
 
 <!-- Run Command Builder -->
-{% if page_info.saved_filename %}
+{% if page_info.saved_filename and version_info.running_on.startswith("Local") %}
 <div id="run-controls-container" class="d-none">
   <hr>
   <h5 class="mt-3">
@@ -291,10 +291,15 @@
 
     <div class="mt-3">
       <p class="form-label mb-1">Kometa Validation Log</p>
-      <pre id="kometa-validation-log" class="form-control bg-dark text-light"
-        style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">
-          Waiting for validation...
-      </pre>
+      {% if version_info.running_on.startswith("Local") %}
+      <div class="mt-3">
+        <p class="form-label mb-1">Kometa Validation Log</p>
+        <pre id="kometa-validation-log" class="form-control bg-dark text-light"
+          style="height: 300px; overflow-y: scroll; white-space: pre-wrap;">
+            Waiting for validation...
+        </pre>
+      </div>
+      {% endif %}
     </div>
 
     <!-- Kometa Update Notification -->

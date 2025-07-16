@@ -384,8 +384,10 @@ $(document).ready(function () {
     })
   }
 
-  // Run immediately on page load
-  validateKometaRoot()
+  // Only run Kometa validation if the log box exists (i.e., non-Docker / Local-* installs)
+  if (document.getElementById('kometa-validation-log')) {
+    validateKometaRoot()
+  }
 
   // Run when clicking "Validate" button
   $('#validateButton').on('click', validateKometaRoot)
@@ -497,8 +499,10 @@ $(document).ready(function () {
 
         $btn.prop('disabled', false).html('🔄 Update Kometa Now')
 
-        // Optional: revalidate to refresh version UI
-        validateKometaRoot()
+        // Run Kometa validation ONLY if validation log is visible (i.e., we're on a Local install)
+        if (document.getElementById('kometa-validation-log')) {
+          validateKometaRoot()
+        }
       })
       .catch(err => {
         console.error(err)
