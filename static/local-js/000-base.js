@@ -203,10 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           resultBox.innerHTML = `
-          <strong>✅ Update Successful!</strong><br>
-          <pre>${data.git_output}${data.pip_output}</pre>
-          <button class="btn btn-sm btn-success mt-2" onclick="restartQuickstart()">Restart Quickstart</button>
-        `
+            <strong>✅ Update Successful!</strong><br>
+            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: scroll; white-space: pre-wrap;">
+              ${data.git_output}${data.pip_output}
+            </pre>
+            <button class="btn btn-sm btn-success mt-2" onclick="restartQuickstart()">Restart Quickstart</button>
+          `
         } else {
           resultBox.innerHTML = `<strong>❌ Error:</strong> ${data.error}`
         }
