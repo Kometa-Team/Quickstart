@@ -674,58 +674,36 @@ def get_plex_summary():
 
 def get_library_summaries(configured_library_names):
     try:
-        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
-        plex = PlexServer(plex_url, plex_token)
+        metadata = get_plex_metadata()
+        lib_metadata = metadata.get("libraries", {})
 
         output_lines = []
         for lib_name in configured_library_names:
-            matching_section = next((s for s in plex.library.sections() if s.title == lib_name), None)
-            if not matching_section:
+            info = lib_metadata.get(lib_name)
+            if not info:
                 output_lines.append(f"Library '{lib_name}' not found on Plex server.")
                 continue
 
-            try:
-                agent = matching_section.agent or "Unknown"
-                scanner = matching_section.scanner or "Unknown"
-                lib_type = matching_section.type.capitalize()
+            output_lines.append(f"Information on library: {lib_name}")
+            output_lines.append(f"Type: {info.get('type', 'Unknown').capitalize()}")
+            output_lines.append(f"Agent: {info.get('agent', 'Unknown')}")
+            output_lines.append(f"Scanner: {info.get('scanner', 'Unknown')}")
+            output_lines.append(f"Ratings Source: {info.get('ratings_source', 'N/A')}")
 
-                # Ratings source
-                ratings_setting = next(
-                    (s for s in matching_section.settings() if s.id == "ratingsSource"),
-                    None,
-                )
-                ratings_source = ratings_setting.enumValues[ratings_setting.value] if ratings_setting else "N/A"
+            if info.get("type") == "movie":
+                count = info.get("movie_count", 0)
+                output_lines.append(f"Content Count: {count} movies")
 
-                # Start summary output
-                output_lines.append(f"Information on library: {lib_name}")
-                output_lines.append(f"Type: {lib_type}")
-                output_lines.append(f"Agent: {agent}")
-                output_lines.append(f"Scanner: {scanner}")
-                output_lines.append(f"Ratings Source: {ratings_source}")
+            elif info.get("type") == "show":
+                show_count = info.get("show_count", 0)
+                episode_count = info.get("episode_count", 0)
+                output_lines.append(f"Content Count: {show_count} shows / {episode_count} episodes")
 
-                # Content counts
-                if matching_section.type == "movie":
-                    movie_count = len(matching_section.search())
-                    output_lines.append(f"Content Count: {movie_count} movies")
+            else:
+                item_count = info.get("item_count", 0)
+                output_lines.append(f"Content Count: {item_count} items")
 
-                elif matching_section.type == "show":
-                    shows = matching_section.search()
-                    show_count = len(shows)
-                    try:
-                        episode_count = sum(len(show.episodes()) for show in shows)
-                    except Exception as e:
-                        episode_count = 0
-                        output_lines.append(f"⚠️ Error getting episode counts: {e}")
-                    output_lines.append(f"Content Count: {show_count} shows / {episode_count} episodes")
-
-                else:
-                    item_count = len(matching_section.search())
-                    output_lines.append(f"Content Count: {item_count} items")
-
-                output_lines.append("")  # Blank line between libraries
-
-            except Exception as lib_err:
-                output_lines.append(f"Error retrieving details for {lib_name}: {lib_err}")
+            output_lines.append("")  # Blank line between libraries
 
         return "\n".join(output_lines).strip()
 
@@ -806,7 +784,6 @@ def get_library_metadata():
         library_data = {}
         for section in plex.library.sections():
             try:
-                # Default metadata
                 lib_info = {
                     "agent": section.agent,
                     "scanner": section.scanner,
@@ -814,7 +791,7 @@ def get_library_metadata():
                     "ratings_source": "N/A",
                 }
 
-                # Try to extract ratings source
+                # Ratings source
                 try:
                     settings = section.settings()
                     ratings_setting = next((s for s in settings if s.id == "ratingsSource"), None)
@@ -823,20 +800,20 @@ def get_library_metadata():
                 except Exception:
                     pass  # Keep "N/A" if ratingsSource isn't available
 
-                # Count items per library type
+                # Optimized content counts
                 try:
                     if section.type == "movie":
-                        lib_info["movie_count"] = len(section.search())
+                        lib_info["movie_count"] = section.totalSize
                     elif section.type == "show":
-                        shows = section.search()
-                        lib_info["show_count"] = len(shows)
+                        lib_info["show_count"] = section.totalSize
                         try:
-                            lib_info["episode_count"] = sum(len(show.episodes()) for show in shows)
-                        except Exception as count_err:
+                            shows = section.search(libtype="show")
+                            lib_info["episode_count"] = sum(show.episodes(totalSize=True).totalSize for show in shows)
+                        except Exception as e:
                             lib_info["episode_count"] = 0
-                            lib_info["episode_error"] = str(count_err)
+                            lib_info["episode_error"] = str(e)
                     else:
-                        lib_info["item_count"] = len(section.search())
+                        lib_info["item_count"] = section.totalSize
                 except Exception as e:
                     lib_info["error"] = str(e)
 

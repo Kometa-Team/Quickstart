@@ -10,6 +10,20 @@ document.addEventListener('DOMContentLoaded', function () {
     '/static/local-js/eventHandler.js'
   ]
 
+  function reinitializeTooltipsAndPopovers () {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(el => {
+      bootstrap.Tooltip.getOrCreateInstance(el)
+    })
+
+    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    popoverTriggerList.forEach(el => {
+      bootstrap.Popover.getOrCreateInstance(el)
+    })
+
+    console.log('[DEBUG] Reinitialized tooltips and popovers')
+  }
+
   function loadScriptsSequentially (scripts, callback) {
     let index = 0
 
@@ -176,6 +190,9 @@ document.addEventListener('DOMContentLoaded', function () {
           if (template) {
             container.innerHTML = template.innerHTML
             container.dataset.loaded = 'true'
+
+            reinitializeTooltipsAndPopovers()
+            setupParentChildToggleVisibility()
 
             if (typeof EventHandler?.attachLibraryListeners === 'function') {
               EventHandler.attachLibraryListeners()

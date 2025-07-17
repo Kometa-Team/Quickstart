@@ -794,8 +794,12 @@ def step(name):
 
     # Ensure correct rendering for the final validation page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
+    if app.config["QS_DEBUG"]:
+        print(f"[DEBUG] Start render_template for {name}")
+
+    start_time = time.perf_counter()
+
     if name == "900-final":
-        start_time = time.perf_counter()
         validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
         saved_filename = helpers.save_to_named_config(yaml_content, config_name)
         page_info["saved_filename"] = saved_filename
@@ -826,14 +830,14 @@ def step(name):
         )
 
         end_time = time.perf_counter()
-        print(f"[PROFILE] Rendered 900-final.html in {end_time - start_time:.2f} seconds")
+        if app.config["QS_DEBUG"]:
+            print(f"[PROFILE] Rendered 900-final.html in {end_time - start_time:.2f} seconds")
         return html
 
     else:
         attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
         collection_config = helpers.load_quickstart_config("quickstart_collections.json")
         overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
-        start_time = time.perf_counter()
         page_info["quickstart_root"] = helpers.get_app_root()
 
         html = render_template(
@@ -858,7 +862,8 @@ def step(name):
         )
 
         end_time = time.perf_counter()
-        print(f"[PROFILE] Rendered {name}.html in {end_time - start_time:.2f} seconds")
+        if app.config["QS_DEBUG"]:
+            print(f"[PROFILE] Rendered {name}.html in {end_time - start_time:.2f} seconds")
         return html
 
 
