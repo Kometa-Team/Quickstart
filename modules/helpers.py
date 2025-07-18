@@ -1014,5 +1014,5 @@ def get_app_root():
 
 
 def ts_log(*args):
-    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
     print(f"[{now}]", *args)
