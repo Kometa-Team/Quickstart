@@ -1,11 +1,34 @@
 /* global bootstrap, $, location */
 
-if (typeof window.QS_DEBUG !== 'undefined' && !window.QS_DEBUG) {
-  console.debug = function () { }
-  console.log = function () { }
-  console.warn = function () { }
-  // console.error = function () {};
-}
+(function () {
+  const isDebug = typeof window.QS_DEBUG !== 'undefined' && window.QS_DEBUG === true
+
+  function getLocalTimestamp () {
+    const now = new Date()
+    const yyyy = now.getFullYear()
+    const MM = String(now.getMonth() + 1).padStart(2, '0')
+    const dd = String(now.getDate()).padStart(2, '0')
+    const hh = String(now.getHours()).padStart(2, '0')
+    const mm = String(now.getMinutes()).padStart(2, '0')
+    const ss = String(now.getSeconds()).padStart(2, '0')
+    const ms = String(now.getMilliseconds()).padStart(3, '0')
+    return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss},${ms}`
+  }
+
+  if (isDebug) {
+    ['log', 'debug', 'warn', 'error'].forEach((method) => {
+      const original = console[method]
+      console[method] = function (...args) {
+        original.call(console, `[${getLocalTimestamp()}]`, ...args)
+      }
+    })
+  } else {
+    console.debug = () => { }
+    console.log = () => { }
+    console.warn = () => { }
+    // console.error = () => {} // optionally disable this too
+  }
+})()
 
 document.addEventListener('DOMContentLoaded', function () {
   // Prevent form submission on "Enter" key press, except for textarea

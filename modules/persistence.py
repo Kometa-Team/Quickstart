@@ -77,7 +77,7 @@ def save_settings(raw_source, form_data):
     if "config_name" not in session:
         session["config_name"] = namesgenerator.get_random_name()
         if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Initialized missing session config_name: {session['config_name']}")
+            helpers.ts_log(f"[DEBUG] Initialized missing session config_name: {session['config_name']}")
 
     is_form = hasattr(form_data, "getlist")
 
@@ -89,34 +89,34 @@ def save_settings(raw_source, form_data):
         debug_path = os.path.join(debug_dir, f"{source}_form_data.json")
         with open(debug_path, "w", encoding="utf-8") as f:
             json.dump(clean_dict, f, indent=2, ensure_ascii=False)
-        print(f"[DEBUG] Form data saved to: {debug_path}")
+        helpers.ts_log(f"[DEBUG] Form data saved to: {debug_path}")
 
     # Respect config_name from form
     if "config_name" in form_data:
         session["config_name"] = form_data["config_name"]
         if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Received config name in form: {session['config_name']}")
+            helpers.ts_log(f"[DEBUG] Received config name in form: {session['config_name']}")
 
     if is_form and "asset_directory" in form_data:
         asset_directories = form_data.getlist("asset_directory")
         if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] All asset_directory values from form: {asset_directories}")
+            helpers.ts_log(f"[DEBUG] All asset_directory values from form: {asset_directories}")
 
     clean_data = clean_form_data(form_data if is_form else MultiDict(form_data))
 
     for field in ["plex_url", "plex_token"]:
         if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Cleaned value for {field}: {clean_data.get(field)}")
+            helpers.ts_log(f"[DEBUG] Cleaned value for {field}: {clean_data.get(field)}")
 
     if "asset_directory" in clean_data and app.config["QS_DEBUG"]:
-        print(f"[DEBUG] Cleaned asset_directory: {clean_data['asset_directory']}")
+        helpers.ts_log(f"[DEBUG] Cleaned asset_directory: {clean_data['asset_directory']}")
 
     data = helpers.build_config_dict(source_name, clean_data)
 
     if app.config["QS_DEBUG"]:
-        print(f"[DEBUG] Final data structure to save: {data}")
+        helpers.ts_log(f"[DEBUG] Final data structure to save: {data}")
         if source_name == "settings" and "asset_directory" in data.get("settings", {}):
-            print(f"[DEBUG] Final asset_directory structure to save: {data['settings']['asset_directory']}")
+            helpers.ts_log(f"[DEBUG] Final asset_directory structure to save: {data['settings']['asset_directory']}")
 
     # Validation
     base_data = get_dummy_data(source_name)
@@ -133,7 +133,7 @@ def save_settings(raw_source, form_data):
     )
 
     if app.config["QS_DEBUG"]:
-        print(f"[DEBUG] Data saved successfully.")
+        helpers.ts_log(f"[DEBUG] Data saved successfully.")
 
 
 def get_stored_plex_credentials(name):
@@ -147,10 +147,10 @@ def get_stored_plex_credentials(name):
         if plex_url and plex_token:
             return plex_url, plex_token
         if app.config["QS_DEBUG"]:
-            print("[ERROR] Plex URL or Token is missing in stored settings")
+            helpers.ts_log("[ERROR] Plex URL or Token is missing in stored settings")
     except Exception as e:
         if app.config["QS_DEBUG"]:
-            print(f"[ERROR] Failed to retrieve Plex credentials: {e}")
+            helpers.ts_log(f"[ERROR] Failed to retrieve Plex credentials: {e}")
     return None, None
 
 
@@ -160,7 +160,7 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
         # Fetch existing settings from DB before updating
         settings_before = retrieve_settings(name)
         if app.config["QS_DEBUG"]:
-            print("[DEBUG] Settings before update:", settings_before)
+            helpers.ts_log("[DEBUG] Settings before update:", settings_before)
 
         if "plex" not in settings_before:
             settings_before["plex"] = {}
@@ -180,7 +180,7 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
         settings_formatted["validated"] = validated_before  # Prevents losing validation state
 
         if app.config["QS_DEBUG"]:
-            print(f"[DEBUG] Sending updated Plex settings to save_settings(): {settings_formatted}")
+            helpers.ts_log(f"[DEBUG] Sending updated Plex settings to save_settings(): {settings_formatted}")
 
         # Corrected function call (use "010-plex" as the raw_source)
         save_settings("010-plex", settings_formatted)  # Pass only `plex` settings, not full config
@@ -188,10 +188,10 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
         # Fetch updated settings from DB after updating
         settings_after = retrieve_settings(name)
         if app.config["QS_DEBUG"]:
-            print("[DEBUG] Settings after update:", settings_after)
+            helpers.ts_log("[DEBUG] Settings after update:", settings_after)
 
     except Exception as e:
-        print(f"[ERROR] Failed to update Plex libraries in DB: {e}")
+        helpers.ts_log(f"[ERROR] Failed to update Plex libraries in DB: {e}")
 
 
 def retrieve_settings(target):
@@ -269,7 +269,7 @@ def get_dummy_data(target):
         with open(os.path.join(helpers.JSON_SCHEMA_DIR, "config.yml.template"), "r") as file:
             base_config = yaml.load(file)
     except DuplicateKeyError as e:
-        print(f"[WARNING] Duplicate key detected in config.yml.template: {e}")
+        helpers.ts_log(f"[WARNING] Duplicate key detected in config.yml.template: {e}")
         return {}  # Return empty data instead of crashing
 
     # Safely retrieve target data

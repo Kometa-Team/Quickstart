@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import platform
 import json
@@ -170,7 +171,7 @@ def ensure_json_schema():
             new_hashes[filename] = new_hash
 
         except requests.RequestException as e:
-            print(f"[ERROR] Failed to download {filename} from {url}: {e}")
+            ts_log(f"[ERROR] Failed to download {filename} from {url}: {e}")
             continue  # Skip to the next file
 
     # Save updated hashes
@@ -406,7 +407,7 @@ def booler(thing):
             return False
         else:
             if app.config["QS_DEBUG"]:
-                print(f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False.")
+                ts_log(f"[DEBUG] Warning: Invalid boolean string encountered: {thing}. Defaulting to False.")
             return False
     return bool(thing)
 
@@ -532,16 +533,16 @@ def load_quickstart_config(filename: str):
 
 
 def get_top_imdb_items(library_id, media_type, placeholder_id=None):
-    print(f"[DEBUG] Fetching Plex credentials for '010-plex'")
+    ts_log(f"[DEBUG] Fetching Plex credentials for '010-plex'")
     plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
 
-    print(f"[DEBUG] Connecting to Plex with URL: {plex_url}")
+    ts_log(f"[DEBUG] Connecting to Plex with URL: {plex_url}")
     plex = PlexServer(plex_url, plex_token)
 
     for section in plex.library.sections():
-        print(f"[DEBUG] Section: key={section.key}, title={section.title}")
+        ts_log(f"[DEBUG] Section: key={section.key}, title={section.title}")
 
-    print(f"[DEBUG] Searching for section with ID or title: {library_id}")
+    ts_log(f"[DEBUG] Searching for section with ID or title: {library_id}")
     section = next(
         (s for s in plex.library.sections() if str(s.key) == str(library_id) or s.title.lower() == str(library_id).lower()),
         None,
@@ -550,7 +551,7 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
     if not section:
         raise ValueError(f"Library ID {library_id} not found.")
 
-    print(f"[DEBUG] Fetching items from '{section.title}' sorted by audienceRating")
+    ts_log(f"[DEBUG] Fetching items from '{section.title}' sorted by audienceRating")
     items = section.search(sort="audienceRating:desc", maxresults=25)
 
     imdb_items = []
@@ -567,9 +568,9 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
     if placeholder_id and not any(x["id"] == placeholder_id for x in imdb_items):
         saved_item = find_item_by_imdb_id(library_id, placeholder_id, media_type)
         if saved_item:
-            print(f"[DEBUG] Saved placeholder found separately: {saved_item['title']}")
+            ts_log(f"[DEBUG] Saved placeholder found separately: {saved_item['title']}")
 
-    print(f"[DEBUG] Returning {len(imdb_items)} IMDb items")
+    ts_log(f"[DEBUG] Returning {len(imdb_items)} IMDb items")
     return imdb_items, saved_item
 
 
@@ -854,7 +855,7 @@ def save_to_named_config(yaml_text, config_name):
             archive_path = config_dir / f"{name}_config_{counter}.yml"
             if not archive_path.exists():
                 latest_path.rename(archive_path)
-                app.logger.info(f"Archived old config to: {archive_path}")
+                ts_log(f"Archived old config to: {archive_path}")
                 break
             counter += 1
 
@@ -867,8 +868,8 @@ def save_to_named_config(yaml_text, config_name):
     with open(kometa_path, "w", encoding="utf-8") as f:
         f.write(yaml_text)
 
-    app.logger.info(f"Saved new config to: {latest_path}")
-    app.logger.info(f"Also copied config to: {kometa_path}")
+    ts_log(f"Saved new config to: {latest_path}")
+    ts_log(f"Also copied config to: {kometa_path}")
 
     # Return POSIX-style filename (used for CLI path like --config config/name_config.yml)
     return latest_path.name
@@ -1010,3 +1011,8 @@ def clone_test_libraries(quickstart_root):
 def get_app_root():
     # Go up one directory to reach the Quickstart root
     return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def ts_log(*args):
+    now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')[:-3]
+    print(f"[{now}]", *args)
