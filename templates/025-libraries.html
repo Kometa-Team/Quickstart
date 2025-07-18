@@ -1,6 +1,15 @@
 {% extends "000-base.html" %}
 {% block content %}
 {% include "001-navigation.html" %}
+
+<script type="text/template" id="savedLibrariesJSON">
+  {{ data.libraries.keys() | list | tojson }}
+</script>
+
+<script>
+  window.QS_SAVED_LIBRARIES = JSON.parse(document.getElementById("savedLibrariesJSON").textContent);
+</script>
+
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
 
 {# Determine highlight class explicitly #}

@@ -3,6 +3,35 @@
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
 
+  // Rehydrate previously saved libraries (auto-expand and load their templates)
+  const savedLibraryKeys = window.QS_SAVED_LIBRARIES || []
+  savedLibraryKeys.forEach(libId => {
+    const collapseEl = document.getElementById(`${libId}-wrapper`)
+    const container = document.getElementById(`${libId}-container`)
+    const template = document.getElementById(`${libId}-template`)
+
+    if (collapseEl && container && template) {
+      const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseEl)
+      bsCollapse.show()
+
+      if (!container.dataset.loaded) {
+        container.innerHTML = template.innerHTML
+        container.dataset.loaded = 'true'
+        reinitializeTooltipsAndPopovers()
+        setupParentChildToggleVisibility()
+
+        if (typeof EventHandler?.attachLibraryListeners === 'function') {
+          EventHandler.attachLibraryListeners()
+        }
+        if (typeof ValidationHandler?.updateValidationState === 'function') {
+          ValidationHandler.updateValidationState()
+        }
+
+        console.log(`[DEBUG] Rehydrated library: ${libId}`)
+      }
+    }
+  })
+
   const scriptsToLoad = [
     '/static/local-js/imageHandler.js',
     '/static/local-js/overlayHandler.js',

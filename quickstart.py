@@ -547,8 +547,18 @@ def step(name):
     header_style = "standard"  # Default to 'standard' font
 
     if request.method == "POST":
-        persistence.save_settings(request.referrer, request.form)
-        header_style = request.form.get("header_style", "standard")
+        if name == "025-libraries":
+            raw_data = request.form.to_dict(flat=False)
+            form_data = helpers.parse_nested_form_data(raw_data)
+            if app.config["QS_DEBUG"]:
+                helpers.ts_log("[DEBUG] Deep merging settings for 025-libraries")
+            previous_settings = persistence.retrieve_settings(name) or {}
+            merged_settings = helpers.deep_merge_dicts(previous_settings, form_data)
+            persistence.save_settings(name, merged_settings)
+            header_style = form_data.get("header_style", "standard")
+        else:
+            persistence.save_settings(request.referrer, request.form)
+            header_style = request.form.get("header_style", "standard")
 
     # --- Detect config change ---
     previous_config = session.get("config_name")

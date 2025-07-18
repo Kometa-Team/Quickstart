@@ -1,7 +1,7 @@
 /* global bootstrap, $, location */
 
 (function () {
-  const isDebug = typeof window.QS_DEBUG !== 'undefined' && window.QS_DEBUG === true
+  const isDebug = typeof window.QS_DEBUG !== 'undefined' && String(window.QS_DEBUG).toLowerCase() === 'true'
 
   function getLocalTimestamp () {
     const now = new Date()
