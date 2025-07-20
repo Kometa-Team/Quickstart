@@ -42,7 +42,7 @@ def validate_plex_server(data):
         db_cache = db_cache_setting.value
 
         # Log db_cache value
-        helpers.ts_log(f"db_cache returned from Plex: {db_cache}")
+        helpers.ts_log(f"db_cache returned from Plex: {db_cache}", level="INFO")
 
         # If db_cache is None, treat it as invalid
         if db_cache is None:
@@ -52,20 +52,20 @@ def validate_plex_server(data):
         user_list = [user.title for user in plex.myPlexAccount().users()]
         has_plex_pass = plex.myPlexAccount().subscriptionActive
 
-        helpers.ts_log(f"User list retrieved from Plex: {user_list}")
-        helpers.ts_log(f"User has Plex Pass: {has_plex_pass}")
+        helpers.ts_log(f"User list retrieved from Plex: {user_list}", level="INFO")
+        helpers.ts_log(f"User has Plex Pass: {has_plex_pass}", level="INFO")
 
         # Retrieve library sections
         music_libraries = [section.title for section in plex.library.sections() if section.type == "artist"]
         movie_libraries = [section.title for section in plex.library.sections() if section.type == "movie"]
         show_libraries = [section.title for section in plex.library.sections() if section.type == "show"]
 
-        helpers.ts_log(f"Music libraries: {music_libraries}")
-        helpers.ts_log(f"Movie libraries: {movie_libraries}")
-        helpers.ts_log(f"Show libraries: {show_libraries}")
+        helpers.ts_log(f"Music libraries: {music_libraries}", level="INFO")
+        helpers.ts_log(f"Movie libraries: {movie_libraries}", level="INFO")
+        helpers.ts_log(f"Show libraries: {show_libraries}", level="INFO")
 
     except Exception as e:
-        helpers.ts_log(f"Error validating Plex server: {str(e)}")
+        helpers.ts_log(f"Error validating Plex server: {str(e)}", level="ERROR")
         flash(f"Invalid Plex URL or Token: {str(e)}", "error")
         return jsonify({"valid": False, "error": f"Invalid Plex URL or Token: {str(e)}"})
 
@@ -106,7 +106,7 @@ def validate_tautulli_server(data):
             helpers.ts_log(f"Tautulli connection failed.")
 
     except requests.exceptions.RequestException as e:
-        helpers.ts_log(f"[DEBUG] Error validating Tautulli connection: {e}")
+        helpers.ts_log(f"Error validating Tautulli connection: {e}", level="ERROR")
         flash(f"Invalid Tautulli URL or API Key: {str(e)}", "error")
         return jsonify({"valid": False, "error": f"Invalid Tautulli URL or Apikey: {str(e)}"})
 
@@ -165,7 +165,7 @@ def validate_trakt_server(data):
         )
 
     except requests.exceptions.RequestException as e:
-        helpers.ts_log(f"[DEBUG] Error validating Trakt connection: {e}")
+        helpers.ts_log(f"Error validating Trakt connection: {e}", level="ERROR")
         flash(f"Invalid Trakt ID, Secret, or PIN: {e}", "error")
         return jsonify({"valid": False, "error": f"Invalid Trakt ID, Secret, or PIN: {e}"})
 
@@ -348,7 +348,7 @@ def validate_radarr_server(data):
         status_data = response.json()
 
         if "version" not in status_data:
-            helpers.ts_log("Radarr connection failed. Invalid response data.")
+            helpers.ts_log(f"Radarr connection failed. Invalid response data.")
             return jsonify({"valid": False, "error": "Invalid Radarr URL or Apikey"})
 
         # Fetch root folders
@@ -361,7 +361,7 @@ def validate_radarr_server(data):
         response.raise_for_status()
         quality_profiles = response.json()
 
-        helpers.ts_log("Radarr connection successful.")
+        helpers.ts_log(f"Radarr connection successful.")
 
         return jsonify(
             {
@@ -372,7 +372,7 @@ def validate_radarr_server(data):
         )
 
     except requests.exceptions.RequestException as e:
-        helpers.ts_log(f"[DEBUG] Error validating Radarr connection: {e}")
+        helpers.ts_log(f"Error validating Radarr connection: {e}", level="ERROR")
         flash(f"Invalid Radarr URL or API Key: {str(e)}", "error")
         return jsonify({"valid": False, "error": f"Invalid Radarr URL or Apikey: {str(e)}"})
 
@@ -393,7 +393,7 @@ def validate_sonarr_server(data):
         status_data = response.json()
 
         if "version" not in status_data:
-            helpers.ts_log("Sonarr connection failed. Invalid response data.")
+            helpers.ts_log(f"Sonarr connection failed. Invalid response data.")
             return jsonify({"valid": False, "error": "Invalid Sonarr URL or Apikey"})
 
         # Fetch root folders
@@ -411,7 +411,7 @@ def validate_sonarr_server(data):
         response.raise_for_status()
         language_profiles = response.json()
 
-        helpers.ts_log("Sonarr connection successful.")
+        helpers.ts_log(f"Sonarr connection successful.")
 
         return jsonify(
             {
@@ -423,7 +423,7 @@ def validate_sonarr_server(data):
         )
 
     except requests.exceptions.RequestException as e:
-        helpers.ts_log(f"[DEBUG] Error validating Sonarr connection: {e}")
+        helpers.ts_log(f"Error validating Sonarr connection: {e}", level="ERROR")
         flash(f"Invalid Sonarr URL or API Key: {str(e)}", "error")
         return jsonify({"valid": False, "error": f"Invalid Sonarr URL or Apikey: {str(e)}"})
 
@@ -440,7 +440,7 @@ def validate_omdb_server(data):
         else:
             return jsonify({"valid": False, "message": data.get("Error", "Invalid API key")})
     except Exception as e:
-        helpers.ts_log(f"[DEBUG] Error validating OMDb connection: {e}")
+        helpers.ts_log(f"Error validating OMDb connection: {e}", level="ERROR")
         flash(f"Invalid OMDb API Key: {str(e)}", "error")
         return jsonify({"valid": False, "message": str(e)})
 

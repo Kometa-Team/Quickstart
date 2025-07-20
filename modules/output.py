@@ -86,7 +86,7 @@ def build_libraries_section(
         lib_id = helpers.extract_library_name(library_key)
 
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] Processing Library: {library_key} -> {library_name}")
+            helpers.ts_log(f"Processing Library: {library_key} -> {library_name}", level="DEBUG")
 
         # Process Operations Attributes
         operations_fields = [
@@ -139,7 +139,7 @@ def build_libraries_section(
                         elif isinstance(item, list):  # rare case
                             mass_genre_update.extend(item)
             except Exception as e:
-                helpers.ts_log(f"[DEBUG] Skipping invalid JSON in custom genre: {order_value} — {e}")
+                helpers.ts_log(f"Skipping invalid JSON in custom genre: {order_value} — {e}", level="ERROR")
 
         # Also include custom genre strings (if any) from the other hidden input
         custom_strings_key = f"{library_type}-library_{lib_id}-attribute_mass_genre_update_custom"
@@ -154,7 +154,7 @@ def build_libraries_section(
                     custom_flow_list.fa.set_flow_style()  # Force [ "Thriller", "Action" ] formatting
                     mass_genre_update.append(custom_flow_list)
             except Exception as e:
-                helpers.ts_log(f"[DEBUG] Skipping invalid JSON in custom genre strings: {custom_strings_value} — {e}")
+                helpers.ts_log(f"Skipping invalid JSON in custom genre strings: {custom_strings_value} — {e}", level="ERROR")
 
         if mass_genre_update:
             operations["mass_genre_update"] = mass_genre_update
@@ -172,7 +172,7 @@ def build_libraries_section(
                 if isinstance(parsed, list):
                     mass_content_rating_update.extend(parsed)
             except Exception as e:
-                helpers.ts_log(f"[DEBUG] Skipping invalid JSON in content rating sources: {rating_custom_order_value} — {e}")
+                helpers.ts_log(f"Skipping invalid JSON in content rating sources: {rating_custom_order_value} — {e}", level="ERROR")
 
         # Get the optional custom string (e.g., "NR")
         rating_custom_string_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_custom_string"
@@ -208,7 +208,7 @@ def build_libraries_section(
                         elif isinstance(item, list):  # nested list — flatten it
                             mass_original_title_update.extend(item)
             except Exception as e:
-                helpers.ts_log(f"[DEBUG] Skipping invalid JSON in original title order: {original_title_order_value} — {e}")
+                helpers.ts_log(f"Skipping invalid JSON in original title order: {original_title_order_value} — {e}", level="DEBUG")
 
         # Handle the optional custom string (e.g., "Unknown")
         original_title_custom_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_custom_string"
@@ -220,7 +220,7 @@ def build_libraries_section(
                 if stripped:
                     mass_original_title_update.append(stripped)
             except Exception as e:
-                helpers.ts_log(f"[DEBUG] Skipping invalid original title custom string: {original_title_custom_value} — {e}")
+                helpers.ts_log(f"Skipping invalid original title custom string: {original_title_custom_value} — {e}", level="ERROR")
 
         if mass_original_title_update:
             motu_list = CommentedSeq(mass_original_title_update)
@@ -257,8 +257,8 @@ def build_libraries_section(
         # Process Collections
         collection_key = helpers.extract_library_name(library_key)
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] collections keys for {collection_key}: {list(collections.get(collection_key, {}).keys())}")
-            helpers.ts_log(f"[DEBUG] templates keys for {collection_key}: {list(templates.get(collection_key, {}).keys())}")
+            helpers.ts_log(f"collections keys for {collection_key}: {list(collections.get(collection_key, {}).keys())}", level="DEBUG")
+            helpers.ts_log(f"templates keys for {collection_key}: {list(templates.get(collection_key, {}).keys())}", level="DEBUG")
 
         if collection_key and collection_key in collections:
             collection_files = []
@@ -266,7 +266,7 @@ def build_libraries_section(
             for key, selected in collections[collection_key].items():
                 if "template_collection_" in key:
                     if app.config["QS_DEBUG"]:
-                        helpers.ts_log(f"[DEBUG] Skipping invalid collection key (template child): {key}")
+                        helpers.ts_log(f"Skipping invalid collection key (template child): {key}", level="DEBUG")
                     continue
 
                 if selected is not True:
@@ -289,10 +289,10 @@ def build_libraries_section(
                 all_children = {k[len(child_prefix) :]: v for k, v in collections[collection_key].items() if k.startswith(child_prefix)}
 
                 if app.config["QS_DEBUG"]:
-                    helpers.ts_log(f"[DEBUG] Collection: {raw_id}")
-                    helpers.ts_log(f"[DEBUG] Prefix:       {prefix}")
-                    helpers.ts_log(f"[DEBUG] Child Prefix: {child_prefix}")
-                    helpers.ts_log(f"[DEBUG] Found {len(all_children)} child template_variables: {all_children}")
+                    helpers.ts_log(f"Collection: {raw_id}", level="DEBUG")
+                    helpers.ts_log(f"Prefix:       {prefix}", level="DEBUG")
+                    helpers.ts_log(f"Child Prefix: {child_prefix}", level="DEBUG")
+                    helpers.ts_log(f"Found {len(all_children)} child template_variables: {all_children}", level="DEBUG")
 
                 if all_children:
                     file_entry["template_variables"] = {
@@ -502,7 +502,7 @@ def build_libraries_section(
                                 # Preserve valid date strings (e.g. "2023-01-01")
                                 op_values.append(item.strip())
                 except Exception as e:
-                    helpers.ts_log(f"[DEBUG] Skipping invalid JSON in {op}_order: {order_value} — {e}")
+                    helpers.ts_log(f"Skipping invalid JSON in {op}_order: {order_value} — {e}", level="ERROR")
 
             # 2. Custom list (JSON array from UI)
             custom_list_value = attr_group.get(custom_list_key)
@@ -516,7 +516,7 @@ def build_libraries_section(
                             elif isinstance(item, str) and item.strip():
                                 op_values.append(item.strip())
                 except Exception as e:
-                    helpers.ts_log(f"[DEBUG] Skipping invalid JSON in {op}_custom: {custom_list_value} — {e}")
+                    helpers.ts_log(f"Skipping invalid JSON in {op}_custom: {custom_list_value} — {e}", level="ERROR")
 
             # 3. Fallback to single custom string (if defined)
             elif custom_string_key in attr_group:
@@ -558,7 +558,7 @@ def build_libraries_section(
                     if isinstance(parsed_mapping, dict) and parsed_mapping:
                         operations[mapper_key] = parsed_mapping
                 except Exception as e:
-                    helpers.ts_log(f"[DEBUG] Skipping invalid JSON for {mapper_key}: {mapping_value} — {e}")
+                    helpers.ts_log(f"Skipping invalid JSON for {mapper_key}: {mapping_value} — {e}", level="ERROR")
 
         # metadata_backup
         backup = {}
@@ -578,7 +578,7 @@ def build_libraries_section(
                 if isinstance(parsed, list) and parsed:  # non-empty list only
                     backup["exclude"] = parsed
             except Exception as e:
-                helpers.ts_log(f"[DEBUG] Skipping invalid exclude value: {val} — {e}")
+                helpers.ts_log(f"Skipping invalid exclude value: {val} — {e}", level="ERROR")
 
         if attr_group.get(sync_key) is True:
             backup["sync_tags"] = True
@@ -634,16 +634,16 @@ def build_libraries_section(
             entry["reset_overlays"] = reset_overlays
 
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] Top Level for {lib_id}: {top_group}")
-            helpers.ts_log(f"[DEBUG] {report_path_key} = {report_path}")
-            helpers.ts_log(f"[DEBUG] {remove_key} = {remove_overlays}")
-            helpers.ts_log(f"[DEBUG] {reset_key} = {reset_overlays}")
+            helpers.ts_log(f"Top Level for {lib_id}: {top_group}", level="DEBUG")
+            helpers.ts_log(f"{report_path_key} = {report_path}", level="DEBUG")
+            helpers.ts_log(f"{remove_key} = {remove_overlays}", level="DEBUG")
+            helpers.ts_log(f"{reset_key} = {reset_overlays}", level="DEBUG")
 
         if operations:
             entry["operations"] = operations
 
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] Entry for {library_name}: {entry}")
+            helpers.ts_log(f"Entry for {library_name}: {entry}", level="DEBUG")
 
         libraries_section[library_name] = reorder_library_section(entry)
 
@@ -676,7 +676,7 @@ def build_libraries_section(
         )
 
     if app.config["QS_DEBUG"]:
-        helpers.ts_log("[DEBUG] Generated YAML Output:\n")
+        helpers.ts_log(f"Generated YAML Output:\n", level="DEBUG")
         buf = io.BytesIO()
         YAML().dump({"libraries": libraries_section}, buf)
         helpers.ts_log(buf.getvalue().decode("utf-8"))
@@ -802,22 +802,22 @@ def build_config(header_style="standard", config_name=None):
 
         # Debug raw data
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] Raw config_data['playlist_files'] content (Level 1): {playlist_data}")
+            helpers.ts_log(f"Raw config_data['playlist_files'] content (Level 1): {playlist_data}", level="DEBUG")
 
         # Adjust for possible extra nesting
         if "playlist_files" in playlist_data and isinstance(playlist_data["playlist_files"], dict):
             playlist_data = playlist_data["playlist_files"]
             if app.config["QS_DEBUG"]:
-                helpers.ts_log(f"[DEBUG] Adjusted playlist_data after extra nesting: {playlist_data}")
+                helpers.ts_log(f" playlist_data after extra nesting: {playlist_data}", level="DEBUG")
 
         # Extract and process libraries
         libraries_value = playlist_data.get("libraries", "")
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] Extracted libraries value: {libraries_value}")
+            helpers.ts_log(f"Extracted libraries value: {libraries_value}", level="DEBUG")
 
         libraries_list = [lib.strip() for lib in libraries_value.split(",") if lib.strip()]
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] Processed libraries list: {libraries_value}")
+            helpers.ts_log(f"Processed libraries list: {libraries_value}", level="DEBUG")
 
         # Format playlist_files data
         formatted_playlist_files = {
@@ -829,7 +829,7 @@ def build_config(header_style="standard", config_name=None):
             ]
         }
         if app.config["QS_DEBUG"]:
-            helpers.ts_log("[DEBUG] Formatted playlist_files data:", formatted_playlist_files)
+            helpers.ts_log(f"Formatted playlist_files data:", formatted_playlist_files, level="DEBUG")
 
         # Replace in config_data
         config_data["playlist_files"] = formatted_playlist_files
@@ -852,9 +852,9 @@ def build_config(header_style="standard", config_name=None):
 
         # Debugging: Ensure webhooks are correctly cleaned
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] Cleaned Webhooks Data AFTER Removing Empty Values: {cleaned_webhooks}")
+            helpers.ts_log(f"Cleaned Webhooks Data AFTER Removing Empty Values: {cleaned_webhooks}", level="DEBUG")
             if "webhooks" not in config_data:
-                helpers.ts_log("[DEBUG] Webhooks section completely removed.")
+                helpers.ts_log(f"Webhooks section completely removed.", level="DEBUG")
 
     # Initialize movie and show libraries
     movie_libraries = {}
@@ -866,7 +866,7 @@ def build_config(header_style="standard", config_name=None):
 
         # Debugging
         if app.config["QS_DEBUG"]:
-            helpers.ts_log("[DEBUG] Raw nested libraries data:", nested_libraries_data)
+            helpers.ts_log(f"Raw nested libraries data:", nested_libraries_data, level="DEBUG")
 
         # Extract selected libraries
         movie_libraries = {key: value for key, value in nested_libraries_data.items() if key.startswith("mov-library_") and key.endswith("-library")}
@@ -878,8 +878,8 @@ def build_config(header_style="standard", config_name=None):
 
         # Debugging
         if app.config["QS_DEBUG"]:
-            helpers.ts_log("[DEBUG] Movie Library Names:", movie_library_names)
-            helpers.ts_log("[DEBUG] Show Library Names:", show_library_names)
+            helpers.ts_log(f"Movie Library Names:", movie_library_names, level="DEBUG")
+            helpers.ts_log(f"Show Library Names:", show_library_names, level="DEBUG")
 
         def group_by_library(prefix, names, normalize_overlays=False):
             """
@@ -923,18 +923,18 @@ def build_config(header_style="standard", config_name=None):
 
         # Debugging
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] Extracted Movie Libraries: {movie_libraries}")
-            helpers.ts_log(f"[DEBUG] Extracted Show Libraries: {show_libraries}")
-            helpers.ts_log(f"[DEBUG] Extracted Movie Collections: {movie_collections}")
-            helpers.ts_log(f"[DEBUG] Extracted Show Collections: {show_collections}")
-            helpers.ts_log(f"[DEBUG] Extracted Movie Overlays: {movie_overlays}")
-            helpers.ts_log(f"[DEBUG] Extracted Show Overlays: {show_overlays}")
-            helpers.ts_log(f"[DEBUG] Extracted Movie Attributes: {movie_attributes}")
-            helpers.ts_log(f"[DEBUG] Extracted Show Attributes: {show_attributes}")
-            helpers.ts_log(f"[DEBUG] Extracted Movie Templates: {movie_templates}")
-            helpers.ts_log(f"[DEBUG] Extracted Show Templates: {show_templates}")
-            helpers.ts_log(f"[DEBUG] Extracted Movie Top Level: {movie_top_level}")
-            helpers.ts_log(f"[DEBUG] Extracted Show Top Level: {show_top_level}")
+            helpers.ts_log(f"Extracted Movie Libraries: {movie_libraries}", level="DEBUG")
+            helpers.ts_log(f"Extracted Show Libraries: {show_libraries}", level="DEBUG")
+            helpers.ts_log(f"Extracted Movie Collections: {movie_collections}", level="DEBUG")
+            helpers.ts_log(f"Extracted Show Collections: {show_collections}", level="DEBUG")
+            helpers.ts_log(f"Extracted Movie Overlays: {movie_overlays}", level="DEBUG")
+            helpers.ts_log(f"Extracted Show Overlays: {show_overlays}", level="DEBUG")
+            helpers.ts_log(f"Extracted Movie Attributes: {movie_attributes}", level="DEBUG")
+            helpers.ts_log(f"Extracted Show Attributes: {show_attributes}", level="DEBUG")
+            helpers.ts_log(f"Extracted Movie Templates: {movie_templates}", level="DEBUG")
+            helpers.ts_log(f"Extracted Show Templates: {show_templates}", level="DEBUG")
+            helpers.ts_log(f"Extracted Movie Top Level: {movie_top_level}", level="DEBUG")
+            helpers.ts_log(f"Extracted Show Top Level: {show_top_level}", level="DEBUG")
 
         # Build nested libraries structure
         libraries_section = build_libraries_section(
@@ -953,7 +953,7 @@ def build_config(header_style="standard", config_name=None):
         )
         config_data["libraries"] = libraries_section
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[DEBUG] Final Libraries Section: {libraries_section}")
+            helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
 
     # Header comment for YAML file
     header_comment = (

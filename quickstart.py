@@ -68,6 +68,9 @@ DEFAULT_IMAGE_MAP = {
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
+# Initialize logging
+helpers.initialize_logging()
+
 GITHUB_MASTER_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
 GITHUB_DEVELOP_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/develop/VERSION"
 
@@ -124,15 +127,15 @@ app.config["MAX_FORM_MEMORY_SIZE"] = 16 * 1024 * 1024  # 16 MB
 @app.before_request
 def check_request_size():
     if request.content_length:
-        helpers.ts_log(f"[DEBUG] Incoming request size: {request.content_length / 1024:.2f} KB")
+        helpers.ts_log(f"Incoming request size: {request.content_length / 1024:.2f} KB", level="DEBUG")
 
     # Only applies to form-encoded POSTs
     if request.method == "POST" and (request.content_type or "").startswith("application/x-www-form-urlencoded"):
         try:
             form_data = request.form  # triggers parsing
-            helpers.ts_log(f"[DEBUG] Form field count: {len(form_data)}")
+            helpers.ts_log(f"Form field count: {len(form_data)}", level="DEBUG")
         except Exception as e:
-            helpers.ts_log(f"[DEBUG] Failed to parse form: {e}")
+            helpers.ts_log(f"Failed to parse form: {e}", level="ERROR")
 
 
 @app.route("/update-quickstart", methods=["POST"])
@@ -162,7 +165,7 @@ port = args.port if args.port else int(os.getenv("QS_PORT", "7171"))
 running_port = port
 debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
-helpers.ts_log(f"[INFO] Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}")
+helpers.ts_log(f"Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}", level="INFO")
 
 
 @app.route("/upload_library_image", methods=["POST"])
@@ -474,10 +477,10 @@ def serve_preview_image(filename):
     return send_file(os.path.join(IMAGES_FOLDER, "default.png"), mimetype="image/png")
     try:
         data = request.get_json()
-        helpers.ts_log("Received data: %s", data)  # Log the received data
+        helpers.ts_log(f"Received data: %s", data, level="INFO")  # Log the received data
         return jsonify({"status": "success"})
     except Exception as e:
-        helpers.ts_log("Error updating libraries: %s", str(e))
+        helpers.ts_log(f"Error updating libraries: %s", str(e), level="ERROR")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -650,7 +653,7 @@ def step(name):
 
     except Exception as e:
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[ERROR] Failed to get page names: {e}")
+            helpers.ts_log(f"Failed to get page names: {e}", level="ERROR")
         page_info["next_page_name"] = "Next"
         page_info["prev_page_name"] = "Previous"
 
@@ -665,7 +668,7 @@ def step(name):
         with open(debug_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-        helpers.ts_log(f"[DEBUG] Raw data written to {debug_path}")
+        helpers.ts_log(f"Raw data written to {debug_path}", level="DEBUG")
 
     # Check for kometa_root
     if "kometa_root" not in session:
@@ -701,10 +704,10 @@ def step(name):
                 "update_channel": "Unavailable",
                 "libraries": {},
             }
-            helpers.ts_log(f"[WARN] Telemetry fallback triggered due to missing or invalid telemetry for config: {selected_config}")
+            helpers.ts_log(f"Telemetry fallback triggered due to missing or invalid telemetry for config: {selected_config}", level="WARNING")
     else:
         if app.config["QS_DEBUG"]:
-            helpers.ts_log("[DEBUG] Using telemetry from fresh plex_data")
+            helpers.ts_log(f"Using telemetry from fresh plex_data", level="DEBUG")
 
     page_info["telemetry"] = telemetry_data
 
@@ -714,19 +717,19 @@ def step(name):
 
     # Debugging extracted values
     if app.config["QS_DEBUG"]:
-        helpers.ts_log("[DEBUG] Extracted movie libraries:", movie_libraries_raw)
-        helpers.ts_log("[DEBUG] Extracted show libraries:", show_libraries_raw)
+        helpers.ts_log(f"Extracted movie libraries:", movie_libraries_raw, level="DEBUG")
+        helpers.ts_log(f"Extracted show libraries:", show_libraries_raw, level="DEBUG")
 
     # Ensure it's a string before splitting
     if not isinstance(movie_libraries_raw, str):
         if app.config["QS_DEBUG"]:
-            helpers.ts_log("[ERROR] tmp_movie_libraries is not a string!")
+            helpers.ts_log(f"tmp_movie_libraries is not a string!", level="ERROR")
 
         movie_libraries_raw = ""
 
     if not isinstance(show_libraries_raw, str):
         if app.config["QS_DEBUG"]:
-            helpers.ts_log("[ERROR] tmp_show_libraries is not a string!")
+            helpers.ts_log(f"tmp_show_libraries is not a string!", level="ERROR")
 
         show_libraries_raw = ""
 
@@ -764,8 +767,8 @@ def step(name):
         data["libraries"]["sho-template_variables"] = {}
 
     if app.config["QS_DEBUG"]:
-        helpers.ts_log(f"[DEBUG] ************************************************************************")
-        helpers.ts_log(f"[DEBUG] Data retrieved for {name}")
+        helpers.ts_log(f"************************************************************************", level="DEBUG")
+        helpers.ts_log(f"Data retrieved for {name}", level="DEBUG")
 
     (
         page_info["plex_valid"],
@@ -795,15 +798,15 @@ def step(name):
     # Ensure correct rendering for the final validation page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if app.config["QS_DEBUG"]:
-        helpers.ts_log(f"[DEBUG] Start render_template for {name}")
+        helpers.ts_log(f"Start render_template for {name}", level="DEBUG")
 
     start_time = time.perf_counter()
 
-    helpers.ts_log("[TIMING] Loading attribute_config...")
+    helpers.ts_log(f"Loading attribute_config...", level="TIMING")
     attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
-    helpers.ts_log("[TIMING] Loading collection_config...")
+    helpers.ts_log(f"Loading collection_config...", level="TIMING")
     collection_config = helpers.load_quickstart_config("quickstart_collections.json")
-    helpers.ts_log("[TIMING] Loading overlay_config...")
+    helpers.ts_log(f"Loading overlay_config...", level="TIMING")
     overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
 
     if name == "900-final":
@@ -838,13 +841,13 @@ def step(name):
 
         end_time = time.perf_counter()
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[PROFILE] Rendered 900-final.html in {end_time - start_time:.2f} seconds")
+            helpers.ts_log(f"Rendered 900-final.html in {end_time - start_time:.2f} seconds", level="PROFILE")
         return html
 
     else:
-        helpers.ts_log("[TIMING] Loading quickstart_root...")
+        helpers.ts_log(f"Loading quickstart_root...", level="TIMING")
         page_info["quickstart_root"] = helpers.get_app_root()
-        helpers.ts_log("[TIMING] Start render_template...")
+        helpers.ts_log(f"Start render_template...", level="TIMING")
 
         html = render_template(
             name + ".html",
@@ -869,7 +872,7 @@ def step(name):
 
         end_time = time.perf_counter()
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"[PROFILE] Rendered {name}.html in {end_time - start_time:.2f} seconds")
+            helpers.ts_log(f"Rendered {name}.html in {end_time - start_time:.2f} seconds", level="PROFILE")
         return html
 
 
@@ -884,8 +887,8 @@ def get_top_imdb_items_route(library_name):
     raw_libraries = plex_settings.get(tmp_key, "")
     library_names = [lib.strip() for lib in raw_libraries.split(",") if lib.strip()]
 
-    helpers.ts_log(f"[DEBUG] Searching for library name: {library_name}")
-    helpers.ts_log(f"[DEBUG] Available libraries of type '{media_type}': {library_names}")
+    helpers.ts_log(f"Searching for library name: {library_name}", level="DEBUG")
+    helpers.ts_log(f"Available libraries of type '{media_type}': {library_names}", level="DEBUG")
 
     if library_name not in library_names:
         return jsonify(
@@ -1479,7 +1482,7 @@ if __name__ == "__main__":
         with app_in.app_context():
             while True:
                 app_in.config["VERSION_CHECK"] = helpers.check_for_update()
-                helpers.ts_log("[INFO] Checked for updates.")
+                helpers.ts_log(f"Checked for updates.", level="INFO")
                 time.sleep(86400)
 
     update_thread = threading.Thread(target=start_update_thread, args=(app,), daemon=True)
@@ -1522,17 +1525,17 @@ if __name__ == "__main__":
 
     if not has_tray:
         # Headless mode: skip system tray
-        helpers.ts_log("[INFO] Running in headless mode — no system tray will be shown.")
+        helpers.ts_log(f"Running in headless mode — no system tray will be shown.", level="INFO")
         if app.config["QUICKSTART_DOCKER"]:
-            helpers.ts_log("Quickstart is Running inside Docker.")
-            helpers.ts_log(f"Access it at http://<your-server-ip>:{running_port}")
-            helpers.ts_log("Note: This IP is the HOST machine IP, not the container IP.")
+            helpers.ts_log(f"Quickstart is Running inside Docker.", level="INFO")
+            helpers.ts_log(f"Access it at http://<your-server-ip>:{running_port}", level="INFO")
+            helpers.ts_log(f"Note: This IP is the HOST machine IP, not the container IP.", level="INFO")
         else:
             ip_address = get_lan_ip()
-            helpers.ts_log("Quickstart is Running")
-            helpers.ts_log(f"Access it at http://{ip_address}:{running_port}")
+            helpers.ts_log(f"Quickstart is Running", level="INFO")
+            helpers.ts_log(f"Access it at http://{ip_address}:{running_port}", level="INFO")
 
-        helpers.ts_log(f"Port and Debug Settings can be amended by editing your {DOTENV} file")
+        helpers.ts_log(f"Port and Debug Settings can be amended by editing your {DOTENV} file", level="INFO")
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
@@ -1541,7 +1544,7 @@ if __name__ == "__main__":
             while True:
                 time.sleep(1)  # Keep main thread alive
         except KeyboardInterrupt:
-            helpers.ts_log("\n[INFO] Shutting down Quickstart...")
+            helpers.ts_log(f"\nShutting down Quickstart...", level="INFO")
             sys.exit(0)
 
     else:
@@ -1604,10 +1607,10 @@ if __name__ == "__main__":
                     8000,
                 )
 
-                helpers.ts_log("Quickstart is Running")
-                helpers.ts_log(f"Access it locally at: http://localhost:{running_port}")
-                helpers.ts_log(f"Access it from other devices at: http://{ip_address}:{running_port}")
-                helpers.ts_log(f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file")  # Open the browser automatically
+                helpers.ts_log(f"Quickstart is Running", level="INFO")
+                helpers.ts_log(f"Access it locally at: http://localhost:{running_port}", level="INFO")
+                helpers.ts_log(f"Access it from other devices at: http://{ip_address}:{running_port}", level="INFO")
+                helpers.ts_log(f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file", level="INFO")  # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 
                 # Keep the invisible parent alive
@@ -1644,7 +1647,7 @@ if __name__ == "__main__":
             def change_port(self):
                 global port
                 try:
-                    helpers.ts_log("[DEBUG] Launching custom port input dialog...")
+                    helpers.ts_log(f"Launching custom port input dialog...", level="DEBUG")
 
                     dialog = QInputDialog(self.dialog_parent)
                     dialog.setWindowTitle("Change Port")
@@ -1660,11 +1663,11 @@ if __name__ == "__main__":
 
                     # Execute dialog
                     if dialog.exec() != QInputDialog.Accepted:
-                        helpers.ts_log("[INFO] Port change canceled by user.")
+                        helpers.ts_log(f"Port change canceled by user.", level="INFO")
                         return
 
                     new_port = dialog.intValue()
-                    helpers.ts_log(f"[INFO] User entered new port: {new_port}")
+                    helpers.ts_log(f"User entered new port: {new_port}", level="INFO")
 
                     if new_port == port:
                         self.show_messagebox(
@@ -1690,12 +1693,12 @@ if __name__ == "__main__":
                                 self.restart_quickstart()
 
                 except Exception as e:
-                    helpers.ts_log(f"[ERROR] Port change error: {e}")
+                    helpers.ts_log(f"Port change error: {e}", level="ERROR")
 
             def quit_app(self):
                 global server_thread, update_thread
 
-                helpers.ts_log("[INFO] Shutting down Quickstart...")
+                helpers.ts_log(f"Shutting down Quickstart...", level="INFO")
 
                 # Stop tray icon
                 self.tray.hide()
@@ -1703,11 +1706,11 @@ if __name__ == "__main__":
                 # Optionally stop Flask server (if you have added a stop hook)
                 # For now, just wait for background threads to finish
                 if server_thread and server_thread.is_alive():
-                    helpers.ts_log("[DEBUG] Waiting for server thread to exit...")
+                    helpers.ts_log(f"Waiting for server thread to exit...", level="DEBUG")
                     server_thread.join(timeout=2)
 
                 if update_thread and update_thread.is_alive():
-                    helpers.ts_log("[DEBUG] Waiting for update thread to exit...")
+                    helpers.ts_log(f"Waiting for update thread to exit...", level="DEBUG")
                     update_thread.join(timeout=2)
 
                 # Exit the Qt app loop
@@ -1715,7 +1718,7 @@ if __name__ == "__main__":
 
             def restart_quickstart(self):
                 """Cleanly restart the Quickstart application."""
-                helpers.ts_log("[INFO] Restarting Quickstart...")
+                helpers.ts_log(f"Restarting Quickstart...", level="INFO")
                 self.tray.hide()
 
                 python = sys.executable
