@@ -3,55 +3,12 @@
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
 
-  // Rehydrate previously saved libraries (auto-expand and load their templates)
-  const savedLibraryKeys = window.QS_SAVED_LIBRARIES || []
-  savedLibraryKeys.forEach(libId => {
-    const collapseEl = document.getElementById(`${libId}-wrapper`)
-    const container = document.getElementById(`${libId}-container`)
-    const template = document.getElementById(`${libId}-template`)
-
-    if (collapseEl && container && template) {
-      const bsCollapse = bootstrap.Collapse.getOrCreateInstance(collapseEl)
-      bsCollapse.show()
-
-      if (!container.dataset.loaded) {
-        container.innerHTML = template.innerHTML
-        container.dataset.loaded = 'true'
-        reinitializeTooltipsAndPopovers()
-        setupParentChildToggleVisibility()
-
-        if (typeof EventHandler?.attachLibraryListeners === 'function') {
-          EventHandler.attachLibraryListeners()
-        }
-        if (typeof ValidationHandler?.updateValidationState === 'function') {
-          ValidationHandler.updateValidationState()
-        }
-
-        console.log(`[DEBUG] Rehydrated library: ${libId}`)
-      }
-    }
-  })
-
   const scriptsToLoad = [
     '/static/local-js/imageHandler.js',
     '/static/local-js/overlayHandler.js',
     '/static/local-js/validationHandler.js',
     '/static/local-js/eventHandler.js'
   ]
-
-  function reinitializeTooltipsAndPopovers () {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    tooltipTriggerList.forEach(el => {
-      bootstrap.Tooltip.getOrCreateInstance(el)
-    })
-
-    const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
-    popoverTriggerList.forEach(el => {
-      bootstrap.Popover.getOrCreateInstance(el)
-    })
-
-    console.log('[DEBUG] Reinitialized tooltips and popovers')
-  }
 
   function loadScriptsSequentially (scripts, callback) {
     let index = 0
@@ -207,57 +164,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       })
     })
-
-    // Lazy load each library section on accordion expand
-    document.querySelectorAll('.lazy-library-body').forEach(container => {
-      const wrapper = container.closest('.collapse')
-      if (!wrapper) return
-
-      wrapper.addEventListener('show.bs.collapse', () => {
-        if (!container.dataset.loaded) {
-          const template = document.getElementById(`${container.dataset.libraryId}-template`)
-          if (template) {
-            container.innerHTML = template.innerHTML
-            container.dataset.loaded = 'true'
-
-            reinitializeTooltipsAndPopovers()
-            setupParentChildToggleVisibility()
-
-            if (typeof EventHandler?.attachLibraryListeners === 'function') {
-              EventHandler.attachLibraryListeners()
-            }
-
-            if (typeof ValidationHandler?.updateValidationState === 'function') {
-              ValidationHandler.updateValidationState()
-            }
-
-            console.log(`[DEBUG] Loaded: ${container.dataset.libraryId}`)
-          }
-        }
-      })
-    })
-
-    // Rotate chevron icon on collapse/expand
-    document.querySelectorAll('.card-header[data-bs-toggle="collapse"]').forEach(header => {
-      const targetSelector = header.getAttribute('data-bs-target')
-      const target = document.querySelector(targetSelector)
-      const chevron = header.querySelector('.rotate-icon')
-
-      if (!target || !chevron) return
-
-      target.addEventListener('show.bs.collapse', () => {
-        chevron.classList.add('rotate')
-      })
-
-      target.addEventListener('hide.bs.collapse', () => {
-        chevron.classList.remove('rotate')
-      })
-    })
   })
 })
 
 function toggleOverlayTemplateSection (checkbox) {
-  const groupContainer = checkbox.closest('.template-toggle-group')
+  const groupContainer = checkbox.closest('.template-toggle-group') // <== FIXED
   const templateSection = groupContainer?.querySelector('.overlay-template-section')
 
   if (templateSection) {
@@ -290,7 +201,7 @@ function setupCustomStringListHandlers (prefix) {
         li.querySelector('button').addEventListener('click', function () {
           const updated = values.filter(item => item !== value)
           hidden.value = JSON.stringify(updated)
-          renderCustomList(updated)
+          renderCustomList(updated) // 🔁 Rerender the new list and update the array
         })
       })
     }
