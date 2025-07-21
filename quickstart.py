@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 import webbrowser
 from io import BytesIO
 from threading import Thread
@@ -123,9 +124,13 @@ app.config["SESSION_USE_SIGNER"] = False
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB, adjust as needed
 app.config["MAX_FORM_MEMORY_SIZE"] = 16 * 1024 * 1024  # 16 MB
 
-
 @app.before_request
-def check_request_size():
+def before_request():
+    # Assign user UUID if not already present
+    if 'qs_session_id' not in session:
+        session['qs_session_id'] = str(uuid.uuid4())[:8]  # Shorter for readability
+
+    # Log request size if applicable
     if request.content_length:
         helpers.ts_log(f"Incoming request size: {request.content_length / 1024:.2f} KB", level="DEBUG")
 

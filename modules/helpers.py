@@ -13,6 +13,7 @@ from modules import persistence
 
 import requests
 from flask import current_app as app
+from flask import has_request_context, session
 
 try:
     from git import Repo
@@ -1099,15 +1100,21 @@ def ts_log(*args, level="INFO"):
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S,%f")[:-3]
     level_str = f"[{level}]"
     padding = " " * (10 - len(level_str))  # Pad to align
+
+    # Grab session ID if in request context
+    user_tag = ""
+    if has_request_context() and "qs_session_id" in session:
+        user_tag = f"[{session['qs_session_id']}] "
+
     message = " ".join(str(arg) for arg in args)
 
     # Console (NOT redacted)
-    line_console = f"[{now}] {level_str}{padding}| {message}"
+    line_console = f"[{now}] {level_str}{padding}| {user_tag}{message}"
     print(line_console)
 
     # File (redacted)
     redacted_msg = redact_string(message)
-    line_file = f"[{now}] {level_str}{padding}| {redacted_msg}"
+    line_file = f"[{now}] {level_str}{padding}| {user_tag}{redacted_msg}"
 
     try:
         os.makedirs(LOG_DIR, exist_ok=True)
