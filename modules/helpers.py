@@ -25,9 +25,7 @@ GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-WORKING_DIR = (
-    os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
-)
+WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
 MEIPASS_DIR = sys._MEIPASS if getattr(sys, "frozen", False) else BASE_DIR  # noqa
 
 JSON_SETTINGS = os.path.join(MEIPASS_DIR, "static", "json")
@@ -101,9 +99,7 @@ def get_pyfiglet_fonts():
 
     # Append all .flf files, removing extension
     if os.path.exists(fonts_dir):
-        fonts.update(
-            f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf")
-        )
+        fonts.update(f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf"))
 
     # Sort remaining fonts (excluding predefined ones)
     sorted_fonts = sorted(fonts - set(predefined_fonts))
@@ -159,9 +155,7 @@ def ensure_json_schema():
             f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template",
         ),
     ]:
-        file_path = os.path.join(
-            JSON_SCHEMA_DIR, filename
-        )  # Store everything in json-schema
+        file_path = os.path.join(JSON_SCHEMA_DIR, filename)  # Store everything in json-schema
 
         try:
             response = requests.get(url, timeout=10)
@@ -320,9 +314,7 @@ def build_oauth_dict(source, form_data):
             data[final_key] = value
         else:
             if final_key != "url":
-                data[source]["authorization"][
-                    final_key
-                ] = value  # Everything else goes into authorization
+                data[source]["authorization"][final_key] = value  # Everything else goes into authorization
 
     return data
 
@@ -330,9 +322,7 @@ def build_oauth_dict(source, form_data):
 def build_simple_dict(source, form_data):
     data = {source: {}}
     for key in form_data:
-        final_key = key.replace(
-            source + "_", "", 1
-        )  # Retain the original key transformation logic
+        final_key = key.replace(source + "_", "", 1)  # Retain the original key transformation logic
         value = form_data[key]
 
         # Handle lists explicitly (e.g., asset_directory)
@@ -460,11 +450,7 @@ def template_record(file, prev_record, next_record):
 
 def get_menu_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(
-        item
-        for item in os.listdir(templates_dir)
-        if os.path.isfile(os.path.join(templates_dir, item))
-    )
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
     final_list = []
 
     for file in file_list:
@@ -477,11 +463,7 @@ def get_menu_list():
 
 def get_template_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(
-        item
-        for item in os.listdir(templates_dir)
-        if os.path.isfile(os.path.join(templates_dir, item))
-    )
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
 
     templates = {}
     type_counter = {"012": 0, "013": 0}  # Counters for movie, show types
@@ -489,9 +471,7 @@ def get_template_list():
 
     for file in file_list:
         if belongs_in_template_list(file):
-            match = re.match(
-                r"^(\d+)-", file
-            )  # Match any length of digits followed by '-'
+            match = re.match(r"^(\d+)-", file)  # Match any length of digits followed by '-'
             if match:
                 file_prefix = match.group(1)
             else:
@@ -571,21 +551,14 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
 
     ts_log(f"Searching for section with ID or title: {library_id}", level="DEBUG")
     section = next(
-        (
-            s
-            for s in plex.library.sections()
-            if str(s.key) == str(library_id)
-            or s.title.lower() == str(library_id).lower()
-        ),
+        (s for s in plex.library.sections() if str(s.key) == str(library_id) or s.title.lower() == str(library_id).lower()),
         None,
     )
 
     if not section:
         raise ValueError(f"Library ID {library_id} not found.")
 
-    ts_log(
-        f"Fetching items from '{section.title}' sorted by audienceRating", level="DEBUG"
-    )
+    ts_log(f"Fetching items from '{section.title}' sorted by audienceRating", level="DEBUG")
     items = section.search(sort="audienceRating:desc", maxresults=25)
 
     imdb_items = []
@@ -735,9 +708,7 @@ def get_library_summaries(configured_library_names):
             elif info.get("type") == "show":
                 show_count = info.get("show_count", 0)
                 episode_count = info.get("episode_count", 0)
-                output_lines.append(
-                    f"Content Count: {show_count} shows / {episode_count} episodes"
-                )
+                output_lines.append(f"Content Count: {show_count} shows / {episode_count} episodes")
 
             else:
                 item_count = info.get("item_count", 0)
@@ -834,13 +805,9 @@ def get_library_metadata():
                 # Ratings source
                 try:
                     settings = section.settings()
-                    ratings_setting = next(
-                        (s for s in settings if s.id == "ratingsSource"), None
-                    )
+                    ratings_setting = next((s for s in settings if s.id == "ratingsSource"), None)
                     if ratings_setting:
-                        lib_info["ratings_source"] = ratings_setting.enumValues.get(
-                            ratings_setting.value, "Unknown"
-                        )
+                        lib_info["ratings_source"] = ratings_setting.enumValues.get(ratings_setting.value, "Unknown")
                 except Exception:
                     pass  # Keep "N/A" if ratingsSource isn't available
 
@@ -852,10 +819,7 @@ def get_library_metadata():
                         lib_info["show_count"] = section.totalSize
                         try:
                             shows = section.search(libtype="show")
-                            lib_info["episode_count"] = sum(
-                                show.episodes(totalSize=True).totalSize
-                                for show in shows
-                            )
+                            lib_info["episode_count"] = sum(show.episodes(totalSize=True).totalSize for show in shows)
                         except Exception as e:
                             lib_info["episode_count"] = 0
                             lib_info["episode_error"] = str(e)
@@ -966,11 +930,7 @@ def perform_kometa_update(kometa_root):
         is_windows = sys.platform.startswith("win")
 
         venv_path = kometa_root / "kometa-venv"
-        pip_bin = (
-            venv_path
-            / ("Scripts" if is_windows else "bin")
-            / ("pip.exe" if is_windows else "pip")
-        )
+        pip_bin = venv_path / ("Scripts" if is_windows else "bin") / ("pip.exe" if is_windows else "pip")
 
         # 1. Git pull
         logs.append("🔄 Running: git pull")
@@ -1098,9 +1058,20 @@ def initialize_logging():
 def redact_string(text):
     redacted = text
     sensitive_keys = [
-        "token", "access_token", "refresh_token", "authorization",
-        "api_key", "apikey", "auth", "secret", "client_id", "client_secret",
-        "plex_token", "password", "pin", "username"
+        "token",
+        "access_token",
+        "refresh_token",
+        "authorization",
+        "api_key",
+        "apikey",
+        "auth",
+        "secret",
+        "client_id",
+        "client_secret",
+        "plex_token",
+        "password",
+        "pin",
+        "username",
     ]
 
     for key in sensitive_keys:
@@ -1108,15 +1079,12 @@ def redact_string(text):
 
         patterns = [
             # JSON-style quoted
-            (rf'("{key_escaped}"\s*:\s*")[^"]*(")', r'\1(redacted)\2'),
-            (rf"('{key_escaped}'\s*:\s*')[^']*(')", r'\1(redacted)\2'),
-
+            (rf'("{key_escaped}"\s*:\s*")[^"]*(")', r"\1(redacted)\2"),
+            (rf"('{key_escaped}'\s*:\s*')[^']*(')", r"\1(redacted)\2"),
             # Dict-style key = value
             (rf"({key_escaped}\s*=\s*)[^\s,}}]+", r"\1(redacted)"),
-
             # YAML/Python-style key: value
             (rf"({key_escaped}\s*:\s*)[^\s,}}]+", r"\1(redacted)"),
-
             # JSON bare/null values
             (rf"({key_escaped}['\"]?\s*:\s*)(None|null)", r"\1(redacted)"),
         ]

@@ -1610,7 +1610,9 @@ if __name__ == "__main__":
                 helpers.ts_log(f"Quickstart is Running", level="INFO")
                 helpers.ts_log(f"Access it locally at: http://localhost:{running_port}", level="INFO")
                 helpers.ts_log(f"Access it from other devices at: http://{ip_address}:{running_port}", level="INFO")
-                helpers.ts_log(f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file", level="INFO")  # Open the browser automatically
+                helpers.ts_log(
+                    f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file", level="INFO"
+                )  # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 
                 # Keep the invisible parent alive
