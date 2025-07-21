@@ -940,6 +940,22 @@ prefix) %}
                                 {% endfor %}
                             </select>
                         </div>
+                        {% elif item.type == 'text_input' %}
+                        <div class="input-group mb-2">
+                            <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
+                                {{ item.label }}
+                                {% if item.tooltip %}
+                                <span class="text-{{ item.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"
+                                    data-bs-html="true" title="{{ item.tooltip }}">
+                                    <i
+                                        class="bi {% if item.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                </span>
+                                {% endif %}
+                            </span>
+                            <input type="text" class="form-control" id="{{ input_name }}" name="{{ input_name }}"
+                                value="{{ data['libraries'][input_name] or item.default or '' }}" {% if disable_toggle
+                                %}disabled{% endif %}>
+                        </div>
                         {% endif %}
                         {% endfor %}
                     </div>

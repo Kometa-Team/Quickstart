@@ -10315,6 +10315,13 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers are placed earlier. Refer to the Kometa docs for default values: https://kometa.wiki/en/latest/defaults/collections/#collection-section-order For more information on sorting collections, see this: https://kometa.wiki/en/latest/kometa/guides/order/#kometa-default-collection-sorting"
+          },
+          {
             "key": "use_1001_movies",
             "label": "1,001 To See Before You Die",
             "tooltip": "Collection of 1,001 Movies You Must See Before You Die.",
