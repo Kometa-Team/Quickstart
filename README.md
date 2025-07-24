@@ -13,7 +13,7 @@
 
 Welcome to Kometa Quickstart! This Web UI tool will guide you through creating a Configuration File to use with Kometa.
 
-Special Thanks to [bullmoose20](https://github.com/bullmoose20), [chazlarson](https://github.com/chazlarson) and [Yozora](https://github.com/yozoraXCII) for the time spent developing this tool.
+Special Thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](https://github.com/bullmoose20), [chazlarson](https://github.com/chazlarson) and [Yozora](https://github.com/yozoraXCII) for the time spent developing this tool.
 
 ## Prerequisites
 
