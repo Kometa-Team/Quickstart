@@ -25,6 +25,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_best_picture",
             "label": "Oscars Best Picture Winners",
             "tooltip": "Collection of Oscars Best Picture Award Winners.",
@@ -460,6 +468,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_golden",
             "label": "Berlinale Golden Bears",
             "tooltip": "Collection of Berlin International Film Festival Golden Bear Award Winners.",
@@ -878,6 +894,14 @@
           "movie"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_best",
             "label": "BAFTA Best Films",
@@ -1298,6 +1322,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_palm",
             "label": "Cannes Golden Palm Winners",
             "tooltip": "Collection of Cannes Golden Palm Award Winners.",
@@ -1716,6 +1748,14 @@
           "movie"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_best",
             "label": "César Best Film Winners",
@@ -2136,6 +2176,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_best",
             "label": "Critics Choice Best Picture Winners",
@@ -2558,6 +2606,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_best",
             "label": "Emmys Best in Category Winners",
             "tooltip": "Collection of Emmys Best in Category Award Winners.",
@@ -2978,6 +3034,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_best_picture",
             "label": "Golden Globes Best Picture Winners",
@@ -3425,6 +3489,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_best",
             "label": "Independent Spirit Best Feature Winners",
             "tooltip": "Collection of Independent Spirit Best Feature Award Winners.",
@@ -3843,6 +3915,14 @@
           "movie"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_all_time",
             "label": "National Film Registry All Time",
@@ -4264,6 +4344,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_pca",
             "label": "People's Choice Award Winners",
             "tooltip": "Collection of People's Choice Award Winners.",
@@ -4684,6 +4772,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_golden",
             "label": "Golden Raspberry Award Winners",
             "tooltip": "Collection of Razzie Golden Raspberry Award Winners.",
@@ -5102,6 +5198,14 @@
           "movie"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_golden",
             "label": "Screen Actors Guild Award Winners",
@@ -5522,6 +5626,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_grand",
             "label": "Grand Jury Winners",
             "tooltip": "Collection of Sundance Film Festival Grand Jury Award Winners.",
@@ -5941,6 +6053,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_best",
             "label": "Toronto People's Choice Award Winners",
             "tooltip": "Collection of Toronto International Film Festival People's Choice Award Winners.",
@@ -6359,6 +6479,14 @@
           "movie"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "130",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_golden",
             "label": "Golden Lion Winners",
@@ -6797,6 +6925,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "010",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_episodes",
             "label": "New Episodes",
@@ -7260,6 +7396,14 @@
         "tooltip_variant": "danger",
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_popular",
             "label": "Plex Popular",
             "tooltip": "Enable the most Popular Movies/Shows on Plex",
@@ -7719,6 +7863,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_top",
             "label": "IMDb Top 250",
@@ -8206,6 +8358,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_airing",
             "label": "TMDb Airing Today",
@@ -8745,6 +8905,14 @@
         "tooltip_variant": "danger",
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_collected",
             "label": "Trakt Collected",
             "tooltip": "Collection of the Most Collected Movies/Shows on Trakt.",
@@ -9281,6 +9449,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_popular",
             "label": "AniList Popular",
             "tooltip": "Collection of the most Popular Anime on AniList.",
@@ -9790,6 +9966,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_favorited",
             "label": "MyAnimeList Favorited",
@@ -10317,9 +10501,10 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
-            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers are placed earlier. Refer to the Kometa docs for default values: https://kometa.wiki/en/latest/defaults/collections/#collection-section-order For more information on sorting collections, see this: https://kometa.wiki/en/latest/kometa/guides/order/#kometa-default-collection-sorting"
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
             "key": "use_1001_movies",
@@ -10993,6 +11178,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_anidb",
             "label": "AniDB Popular",
             "tooltip": "Collection of the most Popular Anime on AniDB.",
@@ -11534,6 +11727,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "060",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -12722,6 +12923,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "040",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_avp",
             "label": "Alien / Predator",
             "tooltip": "Collection of Movies in the Alien / Predator Universe",
@@ -13506,6 +13715,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "085",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_books",
             "label": "Based on a Book",
@@ -14387,6 +14604,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "110",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -14780,6 +15005,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "110",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -15176,6 +15409,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "110",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -15570,6 +15811,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "110",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -15966,6 +16215,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "110",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -16360,6 +16617,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "110",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -16756,6 +17021,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "110",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -17150,6 +17423,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "110",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -17551,6 +17832,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "080",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -17944,6 +18233,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "110",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -18339,6 +18636,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "081",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_Northern Africa",
             "label": "Northern Africa",
@@ -19359,6 +19664,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "082",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "use_Africa",
             "label": "Africa",
             "tooltip": "Collection of Movies filmed in Africa.",
@@ -19941,6 +20254,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "125",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_1.33",
             "label": "1.33 - Academy Aperture",
@@ -20545,6 +20866,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "120",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -20940,6 +21269,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "090",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -21334,6 +21671,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "095",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -21738,6 +22083,14 @@
         "tooltip_variant": "danger",
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "140",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -22133,6 +22486,14 @@
         "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
         "tooltip_variant": "danger",
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "150",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -22539,6 +22900,14 @@
         "tooltip_variant": "danger",
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "160",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -22943,6 +23312,14 @@
         "tooltip": "This may be a resource-intensive file as Kometa has to calculate how often each person appears in your library.",
         "tooltip_variant": "danger",
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "170",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -23355,6 +23732,14 @@
         "tooltip": "This will show content currently streaming on a particular service, not content that is exclusive to said service. Read the wiki for using originals</b>only</code> to change this",
         "tooltip_variant": "danger",
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "030",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_appletv",
             "label": "Apple TV+ Movies/Shows",
@@ -24230,6 +24615,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "070",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -24625,6 +25018,14 @@
         "tooltip": "Requires the <b>Plex TV Series</b> scanner and <b>Plex Series</b> agent. Without this, Plex will return an error: <code>plex search attribute: network not supported.</code>",
         "tooltip_variant": "danger",
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "050",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "style",
             "label": "Style",
@@ -25036,6 +25437,14 @@
           "movie"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "000",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "use_aapi",
             "label": "Asian American Pacific Islander Movies",
@@ -25745,6 +26154,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "105",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -26139,6 +26556,14 @@
         ],
         "template_variables": [
           {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "100",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -26532,6 +26957,14 @@
           "show"
         ],
         "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "100",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
           {
             "key": "collection_mode",
             "label": "Collection Mode",

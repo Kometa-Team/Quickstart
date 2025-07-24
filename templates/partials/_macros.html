@@ -943,7 +943,13 @@ prefix) %}
                         {% elif item.type == 'text_input' %}
                         <div class="input-group mb-2">
                             <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
+                                {% if item.url %}
+                                <a href="{{ item.url }}" target="_blank">
+                                    {{ item.label }}
+                                </a>
+                                {% else %}
                                 {{ item.label }}
+                                {% endif %}
                                 {% if item.tooltip %}
                                 <span class="text-{{ item.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"
                                     data-bs-html="true" title="{{ item.tooltip }}">
@@ -953,7 +959,9 @@ prefix) %}
                                 {% endif %}
                             </span>
                             <input type="text" class="form-control" id="{{ input_name }}" name="{{ input_name }}"
-                                value="{{ data['libraries'][input_name] or item.default or '' }}" {% if disable_toggle
+                                value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}"
+                                minlength="1" pattern="[\x20-\x7E]+"
+                                title="Only ASCII characters allowed (no accents or emojis)" {% if disable_toggle
                                 %}disabled{% endif %}>
                         </div>
                         {% endif %}

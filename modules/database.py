@@ -1,6 +1,7 @@
 import os
 import pickle
 import sqlite3
+from flask import current_app as app
 from contextlib import closing
 
 from modules import helpers
@@ -54,10 +55,13 @@ def retrieve_section_data(name, section):
             )
             row = cursor.fetchone()
             if row:
+                unpickled = pickle.loads(row["data"])
+                if app.config["QS_DEBUG"]:
+                    helpers.ts_log(f"Retrieved data for name={name}, section={section}: {unpickled}", level="DEBUG2")  # 👈 Add this
                 return (
                     helpers.booler(row["validated"]),
                     helpers.booler(row["user_entered"]),
-                    pickle.loads(row["data"]),
+                    unpickled,
                 )
     return False, False, None
 

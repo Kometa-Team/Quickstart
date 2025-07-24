@@ -335,10 +335,14 @@ def build_simple_dict(source, form_data):
         else:
             # Handle individual scalar values
             if value is not None and not isinstance(value, bool):
-                try:
-                    value = int(value)
-                except (ValueError, TypeError):
+                if final_key.endswith("_section"):
+                    # Preserve as string to avoid stripping leading zeros
                     value = value.strip() if isinstance(value, str) else value
+                else:
+                    try:
+                        value = int(value)
+                    except (ValueError, TypeError):
+                        value = value.strip() if isinstance(value, str) else value
 
             # Assign the value to the appropriate key
             if final_key == "validated":
