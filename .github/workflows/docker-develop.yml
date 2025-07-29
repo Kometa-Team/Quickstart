@@ -65,6 +65,8 @@ jobs:
           platforms: ${{ matrix.platform }}
           tags: ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop-${{ matrix.tag }}
           push: true
+          provenance: false
+          sbom: false
 
   create-manifest:
     runs-on: ubuntu-latest
