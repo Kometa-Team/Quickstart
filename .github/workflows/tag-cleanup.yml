@@ -29,4 +29,4 @@ jobs:
           curl -i -X DELETE \
           -H "Accept: application/json" \
           -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ steps.get-tag-name.outputs.tag_name }}/
+          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ steps.get-tag-name.outputs.tag-name }}/

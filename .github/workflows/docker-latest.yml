@@ -57,7 +57,7 @@ jobs:
           context: ./
           file: ./${{ matrix.dockerfile }}
           platforms: ${{ matrix.platform }}
-          tags: ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:-${{ matrix.tag }}
+          tags: ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:latest-${{ matrix.tag }}
 
   create-manifest:
     runs-on: ubuntu-latest
