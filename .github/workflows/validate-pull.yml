@@ -275,21 +275,21 @@ jobs:
         run: |
           PR_BODY="${{ github.event.pull_request.body }}"
           
-          if [[ ! "PR_BODY" =~ "<!--artifact_urls-->" ]]; then
+          if [[ ! "$PR_BODY" =~ "<!--artifact_urls-->" ]]; then
               PR_BODY+=$'\n<!--artifact_urls-->\n---'
               PR_BODY+=$'\n<!--windows_url--><!--windows_url-->'
               PR_BODY+=$'\n<!--macos_url--><!--macos_url-->'
               PR_BODY+=$'\n<!--ubuntu_url--><!--ubuntu_url-->'
           fi
-          echo "PR_BODY"
+          echo "$PR_BODY"
           filename="Quickstart-${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}"
           echo "$filename"
           replacement_text="[${filename}](${{ steps.artifact-upload-step.outputs.artifact-url }})"
-          echo "replacement_text"
+          echo "$replacement_text"
           tag_pattern="<!--${{ runner.os }}_url-->"
-          echo "tag_pattern"
+          echo "$tag_pattern"
           mod_str=$(echo "PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${replacement_text}${tag_pattern}#")
-          echo "mod_str"
+          echo "$mod_str"
           gh pr edit "${{ github.event.number }}" --body "${mod_str}"
           
 
