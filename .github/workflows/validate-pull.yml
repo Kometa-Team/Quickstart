@@ -291,6 +291,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 0
 
       - name: Print Links
@@ -299,9 +300,8 @@ jobs:
           echo "${{ needs.build-executable.outputs.ubuntu }}"
           echo "${{ needs.build-executable.outputs.macos }}"
 
-      - name: Add Link to PR
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+      - name: Generate Body
+        id: generate-body
         run: |
           PR_BODY=$(cat <<EOF
           ${{ github.event.pull_request.body }}
@@ -324,9 +324,14 @@ jobs:
           tag_pattern="<!--ubuntu_url-->"
           mod_str3=$(echo "$mod_str2" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.macos }}${tag_pattern}#")
           
-          echo "$mod_str3"
-          
-          gh pr edit "${{ github.event.number }}" --body "$mod_str3"
+          echo "$pr_body=${mod_str3}" >> $GITHUB_OUTPUT
+
+      - name: Add Link to PR
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          echo "${{ steps.generate-body.outputs.pr_body }}"
+          gh pr edit "${{ github.event.number }}" --body "${{ steps.generate-body.outputs.pr_body }}"
 
   docker-build-pull:
     runs-on: ubuntu-latest
