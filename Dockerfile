@@ -1,4 +1,4 @@
-FROM python:3.11-slim-bullseye
+FROM python:3-slim
 ARG BRANCH_NAME=master
 ENV BRANCH_NAME=${BRANCH_NAME}
 ENV TINI_VERSION=v0.19.0
@@ -10,8 +10,10 @@ RUN echo "**** install system packages ****" \
  && apt-get install -y tzdata --no-install-recommends \
  && apt-get install -y gcc g++ libxml2-dev libxslt-dev libz-dev libjpeg62-turbo-dev zlib1g-dev wget curl ffmpeg libsm6 libxext6 \
  && wget -O /tini https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-"$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
- && chmod +x /tini \
- && pip3 install --no-cache-dir --upgrade --requirement /requirements.txt \
+ && chmod +x /tini
+RUN echo "**** install python packages ****" \
+ && pip3 install --no-cache-dir --upgrade --requirement /requirements.txt
+RUN echo "**** cleanup system packages ****" \
  && apt-get --purge autoremove gcc g++ libxml2-dev libxslt-dev libz-dev -y \
  && apt-get clean \
  && apt-get update \
