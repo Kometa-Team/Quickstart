@@ -295,7 +295,6 @@ jobs:
           echo "$tag_pattern"
           mod_str=$(echo "$PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${replacement_text}${tag_pattern}#")
           echo "$mod_str"
-          gh pr edit "${{ github.event.number }}" --body "$mod_str"
           
 
   docker-build-pull:
