@@ -96,7 +96,7 @@ jobs:
         with:
           platforms: all
 
-      - name: Create develop manifest and push
+      - name: Create manifest and push
         run: |
           docker manifest create \
             ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop \

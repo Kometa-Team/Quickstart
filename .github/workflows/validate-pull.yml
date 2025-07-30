@@ -238,6 +238,13 @@ jobs:
             ext: ''
     steps:
 
+      - name: Create App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
+
       - name: Check Out Repo
         uses: actions/checkout@v4
         with:
@@ -262,6 +269,24 @@ jobs:
           name: Quickstart-${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}
           path: dist/Quickstart${{ matrix.ext }}
 
+      - name: Add Link to PR
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          PR_BODY="${{ github.event.pull_request.body }}"
+          
+          if [[ ! "$value" =~ "<!--artifact_urls-->" ]]; then
+              value+=$'\n<!--artifact_urls-->\n---'
+              value+=$'\n<!--windows_url--><!--windows_url-->'
+              value+=$'\n<!--macos_url--><!--macos_url-->'
+              value+=$'\n<!--ubuntu_url--><!--ubuntu_url-->'
+          fi
+          filename="Quickstart-${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}"
+          replacement_text="[${filename}](${{ steps.artifact-upload-step.outputs.artifact-url }})"
+          tag_pattern="<!--${{ runner.os }}_url-->"
+          mod_str=$(echo "$my_string" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${replacement_text}${tag_pattern}#")
+          gh pr edit "${{ github.event.number }}" --body "${mod_str}"
+          
 
   docker-build-pull:
     runs-on: ubuntu-latest
@@ -355,7 +380,7 @@ jobs:
         with:
           platforms: all
 
-      - name: Create develop manifest and push
+      - name: Create manifest and push
         run: |
           docker manifest create \
             ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }} \
