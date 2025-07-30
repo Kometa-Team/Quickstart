@@ -165,10 +165,6 @@ jobs:
       - name: Build and Push
         id: docker_build
         uses: docker/build-push-action@v6
-
-      - name: Build and Push
-        id: docker_build
-        uses: docker/build-push-action@v6
         with:
           context: ./
           file: ./${{ matrix.dockerfile }}
