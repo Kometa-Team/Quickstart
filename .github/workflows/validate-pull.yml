@@ -288,6 +288,11 @@ jobs:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Print Links
         run: |
           echo "${{ needs.build-executable.outputs.windows }}"
