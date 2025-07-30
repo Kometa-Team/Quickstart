@@ -265,6 +265,7 @@ jobs:
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
+        id: artifact-upload-step
         with:
           name: Quickstart-${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}
           path: dist/Quickstart${{ matrix.ext }}
@@ -274,7 +275,7 @@ jobs:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           PR_BODY="${{ github.event.pull_request.body }}"
-          
+          echo "$PR_BODY"
           if [[ ! "$PR_BODY" =~ "<!--artifact_urls-->" ]]; then
               PR_BODY+=$'\n<!--artifact_urls-->\n---'
               PR_BODY+=$'\n<!--windows_url--><!--windows_url-->'
@@ -286,7 +287,7 @@ jobs:
           echo "$filename"
           replacement_text="[${filename}](${{ steps.artifact-upload-step.outputs.artifact-url }})"
           echo "$replacement_text"
-          tag_pattern="<!--${{ runner.os }}_url-->"
+          tag_pattern="<!--${{ matrix.os }}_url-->"
           echo "$tag_pattern"
           mod_str=$(echo "PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${replacement_text}${tag_pattern}#")
           echo "$mod_str"
