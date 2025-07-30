@@ -274,7 +274,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          PR_BODY="${{ github.event.pull_request.body }}"
+          PR_BODY=$(cat <<EOF
+          ${{ github.event.pull_request.body }}
+          EOF
+          )
           echo "$PR_BODY"
           if [[ ! "$PR_BODY" =~ "<!--artifact_urls-->" ]]; then
               PR_BODY+=$'\n<!--artifact_urls-->\n---'
@@ -289,9 +292,9 @@ jobs:
           echo "$replacement_text"
           tag_pattern="<!--${{ matrix.os }}_url-->"
           echo "$tag_pattern"
-          mod_str=$(echo "PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${replacement_text}${tag_pattern}#")
+          mod_str=$(echo "$PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${replacement_text}${tag_pattern}#")
           echo "$mod_str"
-          gh pr edit "${{ github.event.number }}" --body "${mod_str}"
+          gh pr edit "${{ github.event.number }}" --body "$mod_str"
           
 
   docker-build-pull:
