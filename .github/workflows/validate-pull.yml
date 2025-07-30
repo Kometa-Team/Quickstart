@@ -358,7 +358,7 @@ jobs:
       - name: Create develop manifest and push
         run: |
           docker manifest create \
-            ${{ vars.DOCKER_TEAM }}/${{ ${{ needs.get-version.outputs.tag-name }}.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }} \
+            ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }} \
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-amd64 \
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-arm64 \
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-armv7
