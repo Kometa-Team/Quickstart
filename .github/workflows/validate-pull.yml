@@ -324,7 +324,9 @@ jobs:
           tag_pattern="<!--ubuntu_url-->"
           mod_str3=$(echo "$mod_str2" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.macos }}${tag_pattern}#")
           
-          echo "$pr_body=${mod_str3}" >> $GITHUB_OUTPUT
+          echo 'pr_body<<EOF' >> $GITHUB_OUTPUT
+          echo mod_str3 >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
 
       - name: Add Link to PR
         env:
