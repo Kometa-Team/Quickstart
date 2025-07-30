@@ -2,8 +2,8 @@ name: Increment Build
 
 on:
   pull_request_target:
-    branches: [develop]
-    types: [closed]
+    branches: [ develop ]
+    types: [ closed ]
 
 jobs:
 
@@ -42,6 +42,7 @@ jobs:
                     echo "$file will not trigger docker build"
                 fi
             done
+
 
   increment-build:
     runs-on: ubuntu-latest
@@ -179,10 +180,10 @@ jobs:
           provenance: false
           sbom: false
 
+
   create-manifest:
     runs-on: ubuntu-latest
     needs: [ docker-build-develop ]
-
     steps:
 
       - name: Create App Token
@@ -218,10 +219,18 @@ jobs:
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop-armv7
           docker manifest push ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop
 
+
   make-prerelease:
     runs-on: ubuntu-latest
     needs: [ increment-build, create-manifest ]
     steps:
+
+      - name: Create App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Check Out Repo
         uses: actions/checkout@v4
@@ -248,7 +257,7 @@ jobs:
       - name: Delete Old Prelease and Tag
         run: gh release delete latest --cleanup-tag
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: Create Prerelease
         uses: ncipollo/release-action@v1
@@ -258,10 +267,10 @@ jobs:
           body: ${{ steps.build-changelog.outputs.changelog }}
           prerelease: true
           tag: latest
-          token: ${{ secrets.PAT }}
+          token: ${{ steps.app-token.outputs.token }}
+
 
   build-notification:
-
     runs-on: ubuntu-latest
     needs: [ make-prerelease ]
     steps:

@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
+
   update-copyright:
     runs-on: ubuntu-latest
     steps:

@@ -45,7 +45,6 @@ jobs:
             os_upper: 'MacOS'
             os_version: '13'
             ext: ''
-
     steps:
 
       - name: Check Out Repo
@@ -77,8 +76,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
 
-  release-notification:
 
+  release-notification:
     runs-on: ubuntu-latest
     needs: [ get-data, build-releases ]
     steps:

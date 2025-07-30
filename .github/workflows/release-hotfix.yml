@@ -1,0 +1,54 @@
+name: Increment Build
+
+on:
+  pull_request_target:
+    branches: [ hotfix ]
+    types: [ closed ]
+
+jobs:
+
+  release-hoxfix:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Create App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
+
+      - name: Check Out Repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          ref: hotfix
+          fetch-depth: 0
+
+      - name: Create Hotfix Release Commit and Push Branches
+        run: |
+          value=$(cat VERSION)
+          version="${value%-build*}"
+          echo "CURRENT_VERSION: '${version}'"
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$version"
+          
+          NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH+1))"
+          
+          echo "NEW_VERSION='${NEW_VERSION}'"
+          echo "new_ver=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "$NEW_VERSION" > "VERSION"
+          
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add VERSION
+          git commit -m "${{ vars.NAME }} Hotfix Release ${NEW_VERSION}"
+          git push origin hotfix
+          git push origin refs/heads/hotfix:refs/heads/master
+          git checkout develop
+          git checkout -b hotfix-rebase
+          git rebase master
+          git push -u origin hotfix-rebase
+          gh pr create --base develop --head hotfix-rebase --title "Hotfix Rebase" \
+                       --body "This PR was created automatically by a GitHub Action to Rebase Develop with the Hotfix."
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}

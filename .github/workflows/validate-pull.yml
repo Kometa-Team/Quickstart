@@ -2,7 +2,7 @@ name: Validate Pull Request
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened, labeled]
+    types: [ opened, synchronize, reopened, labeled ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -80,6 +80,7 @@ jobs:
           task_name: Markdown
           source_files: ${{ steps.changed_files.outputs.all_changed_files }}
 
+
   format-code:
     name: Format Code and add Part
     if: needs.validate-pull.outputs.build != 'true' && needs.validate-pull.outputs.part == 'true'
@@ -87,10 +88,17 @@ jobs:
     needs: [ validate-pull ]
     steps:
 
+      - name: Create App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
+
       - name: Check Out Repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
 
@@ -162,6 +170,7 @@ jobs:
             git commit -m "Code Format"
             git push
 
+
   get-version:
     name: Get Version
     runs-on: ubuntu-latest
@@ -173,10 +182,17 @@ jobs:
     needs: [ validate-pull ]
     steps:
 
+      - name: Create App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
+
       - name: Check Out Repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
 
@@ -246,6 +262,7 @@ jobs:
           name: Quickstart-${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}
           path: dist/Quickstart${{ matrix.ext }}
 
+
   docker-build-pull:
     runs-on: ubuntu-latest
     needs: [ validate-pull, get-version ]
@@ -308,10 +325,10 @@ jobs:
           provenance: false
           sbom: false
 
+
   create-manifest:
     runs-on: ubuntu-latest
     needs: [ get-version, docker-build-pull ]
-
     steps:
 
       - name: Create App Token
@@ -341,7 +358,7 @@ jobs:
       - name: Create develop manifest and push
         run: |
           docker manifest create \
-            ${{ vars.DOCKER_TEAM }}/${{ ${{ needs.get-version.outputs.tag-name }}.DOCKER_REPO }}:develop \
+            ${{ vars.DOCKER_TEAM }}/${{ ${{ needs.get-version.outputs.tag-name }}.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }} \
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-amd64 \
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-arm64 \
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-armv7
@@ -349,7 +366,6 @@ jobs:
 
 
   build-notification:
-
     runs-on: ubuntu-latest
     needs: [ get-version, create-manifest ]
     steps:

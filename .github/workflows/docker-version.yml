@@ -2,8 +2,7 @@ name: Docker Version Build
 
 on:
   create:
-    tags:
-      - v*
+    tags: [ v* ]
 
 jobs:
 
@@ -17,6 +16,7 @@ jobs:
       - name: Get the version
         id: get_version
         run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+
 
   docker-build-version:
     needs: [ get-version ]
@@ -76,10 +76,10 @@ jobs:
           provenance: false
           sbom: false
 
+
   create-manifest:
     runs-on: ubuntu-latest
     needs: [ get-version, docker-build-develop ]
-
     steps:
 
       - name: Create App Token
@@ -115,10 +115,18 @@ jobs:
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.version }}-armv7
           docker manifest push ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.version }}
 
+
   make-releases:
     runs-on: ubuntu-latest
     needs: [ get-version, create-manifest ]
     steps:
+
+      - name: Create App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
 
       - name: Check Out Repo
         uses: actions/checkout@v4
@@ -141,7 +149,7 @@ jobs:
       - name: Delete Old Prelease and Tag
         run: gh release delete latest --cleanup-tag
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
       - name: Create Prerelease
         uses: ncipollo/release-action@v1
@@ -150,7 +158,7 @@ jobs:
           body: No Current Changes from the Master Branch.
           prerelease: true
           tag: latest
-          token: ${{ secrets.PAT }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Create Release
         uses: ncipollo/release-action@v1
@@ -159,10 +167,10 @@ jobs:
           body: ${{ steps.build-changelog.outputs.changelog }}
           prerelease: false
           tag: ${{ github.event.ref }}
-          token: ${{ secrets.PAT }}
+          token: ${{ steps.app-token.outputs.token }}
+
 
   build-notification:
-
     runs-on: ubuntu-latest
     needs: [ get-version, make-releases ]
     steps:

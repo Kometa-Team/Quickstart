@@ -6,13 +6,11 @@ on:
       release_type:
         type: choice
         description: Choose which type of release to perform.
-        options:
-          - major
-          - minor
-          - patch
+        options: [ major, minor, patch ]
         default: patch
 
 jobs:
+
   release-master:
     runs-on: ubuntu-latest
     steps:
