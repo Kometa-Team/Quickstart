@@ -7,6 +7,7 @@ on:
 jobs:
 
   tag:
+    name: Tag New Version
     runs-on: ubuntu-latest
     steps:
 
@@ -17,12 +18,14 @@ jobs:
           app-id: ${{ vars.APP_ID }}
           private-key: ${{ secrets.APP_TOKEN }}
 
-      - uses: actions/checkout@v4
+      - name: Check Out Repo
+        uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
           fetch-depth: 2
 
-      - uses: Kometa-Team/tag-new-version@master
+      - name: Create Tag From VERSION File
+        uses: Kometa-Team/tag-new-version@master
         with:
           version-command: |
             cat VERSION

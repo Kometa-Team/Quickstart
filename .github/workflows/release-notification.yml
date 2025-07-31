@@ -6,8 +6,8 @@ on:
 
 jobs:
 
-  get-data:
-    name: Get Data
+  get-version:
+    name: Get Version and Title
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.load-data.outputs.version }}
@@ -28,7 +28,7 @@ jobs:
   build-releases:
     name: Build ${{ matrix.os_upper }} Installer
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
-    needs: [ get-data ]
+    needs: [ get-version ]
     strategy:
       fail-fast: false
       matrix:
@@ -66,7 +66,7 @@ jobs:
           tag_name=${{github.event.release.tag_name}}
           if [[ "${tag_name}" =~ ^(latest)$ ]]; then
             pyinstaller -y ./quickstart.spec -- --branch develop --build ${{ runner.os }}
-            version_value=${{ needs.get-data.outputs.version }}
+            version_value=${{ needs.get-version.outputs.version }}
           else
             pyinstaller -y ./quickstart.spec -- --build ${{ runner.os }}
             version_value=${tag_name}
@@ -78,8 +78,9 @@ jobs:
 
 
   release-notification:
+    name: Build Notification
     runs-on: ubuntu-latest
-    needs: [ get-data, build-releases ]
+    needs: [ get-version, build-releases ]
     steps:
 
       - name: Send Discord Commit Notification
@@ -89,7 +90,7 @@ jobs:
           webhook_id_token: ${{ secrets.DEVELOP_WEBHOOK }}
           title: ${{ github.event.release.name }}
           url: https://github.com/Kometa-Team/Quickstart/releases/tag/latest
-          description: ${{ needs.get-data.outputs.commit-msg }}
+          description: ${{ needs.get-version.outputs.commit-msg }}
           message: ${{ vars.DEVELOP_ROLE }} - An update to ${{ vars.NAME }} has been published and is available to users of the **develop** branch.
           color: ${{ vars.COLOR_SUCCESS }}
           username: ${{ vars.BOT_NAME }}

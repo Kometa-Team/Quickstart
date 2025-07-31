@@ -7,6 +7,7 @@ on:
 jobs:
 
   tag-cleanup:
+    name: Cleanup Docker Tags
     runs-on: ubuntu-latest
     if: github.event.action == 'closed' || contains(github.event.pull_request.labels.*.name, 'docker') == false
     steps:
@@ -23,7 +24,7 @@ jobs:
           fi
           echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
 
-      - name: remove tag
+      - name: Remove Docker Tag
         run: |
           HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
           curl -i -X DELETE \

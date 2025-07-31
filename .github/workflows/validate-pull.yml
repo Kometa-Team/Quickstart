@@ -49,7 +49,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
 
-      - name: Get changes
+      - name: Get Changes
         id: get-changes
         run: | 
             git remote add -f upstream https://github.com/Kometa-Team/${{ vars.REPO_NAME }}.git
@@ -60,7 +60,7 @@ jobs:
                 echo "files=$(git diff --name-only HEAD^ | xargs)" >> $GITHUB_OUTPUT
             fi
 
-      - name: List changed files
+      - name: List Changed Files
         id: list-changes
         run: |
             for file in ${{ steps.get-changes.outputs.files }}; do
@@ -74,7 +74,7 @@ jobs:
                 fi
             done
 
-      - name: Run Spellcheck on changed files
+      - name: Run Spellcheck on Changed Files
         id: spellcheck
         uses: rojopolis/spellcheck-github-actions@0.51.0
         with:
@@ -83,7 +83,7 @@ jobs:
 
 
   format-code:
-    name: Format Code and Add Part
+    name: Format Code and Add Part File
     if: needs.validate-changes.outputs.build != 'true' && needs.validate-changes.outputs.part == 'true'
     runs-on: ubuntu-latest
     needs: [ validate-changes ]
@@ -115,7 +115,7 @@ jobs:
             pip install black
             black . -l 180
 
-      - name: Update VERSION File
+      - name: Update VERSION File and Commit
         id: update-version
         if: contains(github.event.pull_request.labels.*.name, 'build')
         run: |
@@ -157,12 +157,12 @@ jobs:
             git commit -m "${tag_name} Part: ${new_value}"
             git push
 
-      - name: Check if there are any changes
+      - name: Check Diff
         id: verify_diff
         run: |
             git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
 
-      - name: Commit
+      - name: Commit Code Format Changes
         if: steps.verify_diff.outputs.changed == 'true' && !contains(github.event.pull_request.labels.*.name, 'build')
         run: |
             git config --local user.email "action@github.com"
@@ -320,15 +320,15 @@ jobs:
           fi
           
           tag_pattern="<!--windows_url-->"
-          mod_str=$(echo "$PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.windows }}${tag_pattern}#")
+          PR_BODY=$(echo "$PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.windows }}${tag_pattern}#")
           
           tag_pattern="<!--macos_url-->"
-          mod_str2=$(echo "$mod_str" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.ubuntu }}${tag_pattern}#")
+          PR_BODY=$(echo "$PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.ubuntu }}${tag_pattern}#")
           
           tag_pattern="<!--ubuntu_url-->"
-          mod_str3=$(echo "$mod_str2" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.macos }}${tag_pattern}#")
+          PR_BODY=$(echo "$PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.macos }}${tag_pattern}#")
           
-          gh pr edit "${{ github.event.number }}" --body "$mod_str3"
+          gh pr edit "${{ github.event.number }}" --body "$PR_BODY"
 
   docker-build-pull:
     name: Docker Build ${{ matrix.tag }}
@@ -395,7 +395,7 @@ jobs:
 
 
   create-manifest:
-    name: Create and Push Docker Manifest
+    name: Create Docker Manifest
     runs-on: ubuntu-latest
     needs: [ get-version, docker-build-pull ]
     steps:

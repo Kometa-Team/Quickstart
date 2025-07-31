@@ -1,4 +1,4 @@
-name: Increment Build
+name: Hotfix Release
 
 on:
   pull_request_target:
@@ -8,6 +8,7 @@ on:
 jobs:
 
   release-hoxfix:
+    name: Create Hotfix Release
     runs-on: ubuntu-latest
     steps:
 
@@ -25,7 +26,7 @@ jobs:
           ref: hotfix
           fetch-depth: 0
 
-      - name: Create Hotfix Release Commit and Push Branches
+      - name: Create Hotfix Release Commit and Synchronize Branches
         run: |
           value=$(cat VERSION)
           version="${value%-build*}"
@@ -44,11 +45,15 @@ jobs:
           git commit -m "${{ vars.NAME }} Hotfix Release ${NEW_VERSION}"
           git push origin hotfix
           git push origin refs/heads/hotfix:refs/heads/master
+
+      - name: Create Hotfix Rebase Pull Request
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
           git checkout develop
           git checkout -b hotfix-rebase
           git rebase master
           git push -u origin hotfix-rebase
           gh pr create --base develop --head hotfix-rebase --title "Hotfix Rebase" \
                        --body "This PR was created automatically by a GitHub Action to Rebase Develop with the Hotfix."
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+

@@ -8,6 +8,7 @@ on:
 jobs:
 
   docker-build-develop:
+    name: Docker ${{ matrix.tag }} Build
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -68,6 +69,7 @@ jobs:
 
 
   create-manifest:
+    name: Create Docker Manifest
     runs-on: ubuntu-latest
     needs: [ docker-build-develop ]
     steps:
@@ -96,7 +98,7 @@ jobs:
         with:
           platforms: all
 
-      - name: Create manifest and push
+      - name: Create and Push Manifest
         run: |
           docker manifest create \
             ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop \
@@ -105,7 +107,7 @@ jobs:
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop-armv7
           docker manifest push ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop
 
-      - name: Delete Extra Images
+      - name: Remove Extra Images
         run: |
           HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
           curl -i -X DELETE \
@@ -123,6 +125,7 @@ jobs:
 
 
   build-notification:
+    name: Build Notification
     runs-on: ubuntu-latest
     needs: [ create-manifest ]
     steps:
