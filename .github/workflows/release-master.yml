@@ -12,6 +12,7 @@ on:
 jobs:
 
   release-master:
+    name: Create Master Release
     runs-on: ubuntu-latest
     steps:
 
@@ -54,6 +55,13 @@ jobs:
             git commit -m "${{ vars.NAME }} Release ${NEW_VERSION}"
             git push origin develop
             git push origin refs/heads/develop:refs/heads/master
+
+
+  build-notification:
+    name: Build Notification
+    runs-on: ubuntu-latest
+    needs: [ release-master ]
+    steps:
 
       - name: Discord Success Notification
         uses: Kometa-Team/discord-notifications@master
