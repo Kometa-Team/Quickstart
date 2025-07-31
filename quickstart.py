@@ -157,7 +157,7 @@ def update_quickstart():
             "success": True,
             "git_output": result.stdout + result.stderr,
             "pip_upgrade_output": pip_upgrade.stdout + pip_upgrade.stderr,
-            "pip_output": pip_result.stdout + pip_result.stderr
+            "pip_output": pip_result.stdout + pip_result.stderr,
         }
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
