@@ -100,6 +100,22 @@ jobs:
             --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:latest-armv7
           docker manifest push ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:latest
 
+      - name: Delete Extra Images
+        run: |
+          HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
+          curl -i -X DELETE \
+          -H "Accept: application/json" \
+          -H "Authorization: JWT $HUB_TOKEN" \
+          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/latest-amd64/
+          curl -i -X DELETE \
+          -H "Accept: application/json" \
+          -H "Authorization: JWT $HUB_TOKEN" \
+          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/latest-arm64/
+          curl -i -X DELETE \
+          -H "Accept: application/json" \
+          -H "Authorization: JWT $HUB_TOKEN" \
+          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/latest-armv7/
+
 
   build-notification:
     runs-on: ubuntu-latest
