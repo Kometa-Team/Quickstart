@@ -1689,7 +1689,7 @@ if __name__ == "__main__":
                                 self.show_messagebox(
                                     QMessageBox.Warning,
                                     "Port Conflict",
-                                    f"Port {new_port} is already in use.\nClose any conflicting applications or choose another port.",
+                                    f"Port {new_port} is already in use.\nClose any conflicting applications or choose another port..",
                                 )
                             else:
                                 helpers.update_env_variable("QS_PORT", new_port)
