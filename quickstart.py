@@ -1681,7 +1681,7 @@ if __name__ == "__main__":
                         self.show_messagebox(
                             QMessageBox.Information,
                             "Port Already Selected",
-                            f"Port {new_port} is already selected.",
+                            f"Port {new_port} is already selected..",
                         )
                     else:
                         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
