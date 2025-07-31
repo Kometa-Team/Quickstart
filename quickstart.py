@@ -149,9 +149,16 @@ def update_quickstart():
     try:
         result = subprocess.run(["git", "pull"], cwd=app.root_path, capture_output=True, text=True)
 
+        pip_upgrade = subprocess.run(["pip", "install", "--upgrade", "pip"], cwd=app.root_path, capture_output=True, text=True)
+
         pip_result = subprocess.run(["pip", "install", "-r", "requirements.txt"], cwd=app.root_path, capture_output=True, text=True)
 
-        return {"success": True, "git_output": result.stdout + result.stderr, "pip_output": pip_result.stdout + pip_result.stderr}
+        return {
+            "success": True,
+            "git_output": result.stdout + result.stderr,
+            "pip_upgrade_output": pip_upgrade.stdout + pip_upgrade.stderr,
+            "pip_output": pip_result.stdout + pip_result.stderr,
+        }
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
 
