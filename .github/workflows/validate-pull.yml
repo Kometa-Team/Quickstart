@@ -276,7 +276,7 @@ jobs:
         id: save-links
         shell: bash
         run: |
-          link_text=$"\n**[${{ steps.build-executable.outputs.filename }}](${{ steps.artifact-upload-step.outputs.artifact-url }})**\n"
+          link_text=$"[${{ steps.build-executable.outputs.filename }}](${{ steps.artifact-upload-step.outputs.artifact-url }})"
           echo "${{ matrix.os }}=${link_text}" >> $GITHUB_OUTPUT
           
 
@@ -312,21 +312,11 @@ jobs:
           EOF
           )
           
-          if [[ ! "$PR_BODY" =~ "<!--artifact_urls-->" ]]; then
-              PR_BODY+=$'\n<!--artifact_urls-->\n---'
-              PR_BODY+=$'\n<!--windows_url--><!--windows_url-->'
-              PR_BODY+=$'\n<!--macos_url--><!--macos_url-->'
-              PR_BODY+=$'\n<!--ubuntu_url--><!--ubuntu_url-->'
-          fi
-          
-          tag_pattern="<!--windows_url-->"
-          PR_BODY=$(echo "$PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.windows }}${tag_pattern}#")
-          
-          tag_pattern="<!--macos_url-->"
-          PR_BODY=$(echo "$PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.ubuntu }}${tag_pattern}#")
-          
-          tag_pattern="<!--ubuntu_url-->"
-          PR_BODY=$(echo "$PR_BODY" | sed -E "s#${tag_pattern}.*?${tag_pattern}#${tag_pattern}${{ needs.build-executable.outputs.macos }}${tag_pattern}#")
+          PR_BODY=$(echo "$PR_BODY" | sed -z 's/\n## Executables.*//')
+          PR_BODY+=$'\n\n## Executables'
+          PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.windows }}**'
+          PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.ubuntu }}**'
+          PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.macos }}**'
           
           gh pr edit "${{ github.event.number }}" --body "$PR_BODY"
 
