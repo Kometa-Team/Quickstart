@@ -11,6 +11,7 @@ concurrency:
 jobs:
 
   validate-pull:
+    name: Validate Pull Request
     runs-on: ubuntu-latest
     outputs:
       part: ${{ steps.list-changes.outputs.part }}
@@ -258,6 +259,7 @@ jobs:
 
       - name: Build Executable
         id: build-executable
+        shell: bash
         run: |
           filename="Quickstart-${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}"
           echo "filename=${filename}" >> $GITHUB_OUTPUT
@@ -279,6 +281,7 @@ jobs:
           
 
   add-links:
+    name: Add Links to PR
     runs-on: ubuntu-latest
     needs: [ build-executable ]
     steps:
@@ -325,6 +328,7 @@ jobs:
           gh pr edit "${{ github.event.number }}" --body "$mod_str3"
 
   docker-build-pull:
+    name: Docker Build ${{ matrix.tag }}
     runs-on: ubuntu-latest
     needs: [ validate-pull, get-version ]
     if: needs.validate-pull.outputs.build == 'true'
@@ -388,6 +392,7 @@ jobs:
 
 
   create-manifest:
+    name: Create and Push Docker Manifest
     runs-on: ubuntu-latest
     needs: [ get-version, docker-build-pull ]
     steps:
@@ -427,6 +432,7 @@ jobs:
 
 
   build-notification:
+    name: Build Notification
     runs-on: ubuntu-latest
     needs: [ get-version, add-links, create-manifest ]
     steps:
