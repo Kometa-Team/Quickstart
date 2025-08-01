@@ -74,7 +74,11 @@
         </button>
         <div id="updateResult" class="mt-3 text-start small d-none"></div>
         {% else %}
-        <a href="https://github.com/Kometa-Team/Quickstart/releases/download/v{{ version_info.remote_version }}/Quickstart-v{{ version_info.remote_version }}-{{ version_info.running_on | replace('Local-', '') }}{{ version_info.file_ext }}"
+        <!-- New Version LOGIC -->
+        {% set release_tag = "prerelease" if version_info.branch == "develop" else "v" ~ version_info.remote_version %}
+        {% set build_suffix = "-build" ~ version_info.buildnum if version_info.branch == "develop" and
+        version_info.buildnum else "" %}
+        <a href="https://github.com/Kometa-Team/Quickstart/releases/download/{{ release_tag }}/Quickstart-v{{ version_info.remote_version }}{{ build_suffix }}-{{ version_info.running_on | replace('Local-', '') }}{{ version_info.file_ext }}"
           target="_blank" class="alert-link">
           Click here to update.
         </a>
