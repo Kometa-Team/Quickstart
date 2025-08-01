@@ -32,6 +32,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('VERSION', '.'),
+        ('BUILDNUM', '.'),
         ('static/fonts', 'pyfiglet/fonts'),
         ('static/json', 'static/json'),
         ('static', 'static'),

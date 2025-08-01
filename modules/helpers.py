@@ -39,6 +39,7 @@ os.makedirs(JSON_SCHEMA_DIR, exist_ok=True)
 
 HASH_FILE = os.path.join(JSON_SCHEMA_DIR, "file_hashes.txt")
 VERSION_FILE = os.path.join(MEIPASS_DIR, "VERSION")
+BUILDNUM_FILE = os.path.join(MEIPASS_DIR, "BUILDNUM")
 
 LOG_DIR = os.path.join("config", "logs")
 LOG_FILE = os.path.join(LOG_DIR, "quickstart.log")
@@ -185,13 +186,19 @@ def ensure_json_schema():
 
 def get_remote_version(branch):
     """Fetch the latest VERSION file from the correct GitHub branch."""
-    url = f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/VERSION"
     try:
-        response = requests.get(url, timeout=5)
+        response = requests.get(f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/VERSION", timeout=5)
         response.raise_for_status()
-        return response.text.strip()
+        version = response.text.strip()
     except requests.RequestException:
         return None  # If request fails, return None
+    try:
+        response = requests.get(f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/BUILDNUM", timeout=5)
+        response.raise_for_status()
+        build_num = response.text.strip()
+    except requests.RequestException:
+        build_num = ""
+    return f"{version}-build{build_num}"
 
 
 def get_branch():
@@ -221,7 +228,11 @@ def get_version():
     """Read the local VERSION file"""
     if os.path.exists(VERSION_FILE):
         with open(VERSION_FILE, "r", encoding="utf-8") as f:
-            return f.read().strip()
+            version = f.read().strip()
+            if os.path.exists(BUILDNUM_FILE):
+                with open(BUILDNUM_FILE, "r", encoding="utf-8") as g:
+                    return f"{version}-build{g.read().strip()}"
+            return version
     return "unknown"
 
 
