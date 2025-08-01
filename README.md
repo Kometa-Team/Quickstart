@@ -123,8 +123,8 @@ pip install -r requirements.txt --ignore-installed
 
 At the end of this you will end up with side by side installs of Kometa and Quickstart:
 ```
-c:/this/dir/has/Kometa
-c:/this/dir/has/Quickstart
+c:\this\dir\has\Kometa
+c:\this\dir\has\Quickstart
 ```
 1. Ensure git and python are installed
 
@@ -138,7 +138,7 @@ Python Install: https://www.python.org/downloads/windows/
 Open up a command prompt and run this (pick your directory and checkout nightly, develop, or master)
 
 ```shell
-cd c:/this/dir/has
+cd c:\this\dir\has
 git clone https://github.com/Kometa-Team/Kometa
 cd Kometa
 git checkout nightly
@@ -158,7 +158,7 @@ git stash
 git stash clear
 git pull
 python -m venv venv
-venv/Scripts/activate
+.\venv\Scripts\activate
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 
