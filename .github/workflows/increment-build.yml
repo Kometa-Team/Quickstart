@@ -272,7 +272,7 @@ jobs:
       - name: Create Pre-Release
         uses: ncipollo/release-action@v1
         with:
-          name: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}
+          name: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Develop Build ${{ needs.increment-build.outputs.build-value }}
           commit: ${{ needs.increment-build.outputs.commit-hash }}
           body: ${{ steps.build-changelog.outputs.changelog }}
           prerelease: true

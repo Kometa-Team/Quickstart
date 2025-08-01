@@ -47,7 +47,7 @@ jobs:
           echo "NEW_VERSION='${NEW_VERSION}'"
           echo "new_ver=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "$NEW_VERSION" > "VERSION"
-          echo "" > "BUILDNUM"
+          echo "0" > "BUILDNUM"
         
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"

@@ -170,6 +170,15 @@ jobs:
             gh release delete prerelease --cleanup-tag
           fi
 
+      - name: Create Prerelease
+        uses: ncipollo/release-action@v1
+        with:
+          name: ${{ vars.NAME }} ${{ github.event.ref }} Develop Build 0
+          body: No Current Changes from the Master Branch using this version will trigger updates using the develop branch.
+          prerelease: true
+          tag: prerelease
+          token: ${{ steps.app-token.outputs.token }}
+
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:

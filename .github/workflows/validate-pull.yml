@@ -207,17 +207,7 @@ jobs:
               tag_name="${branch_name}"
           fi
           echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
-          
-          version=$(cat VERSION)
-          build=$(cat BUILDNUM)
-          if [ -n "$build" ]; then
-              final_ver="${version}-build${build}"
-          else
-              final_ver="${version}"
-          fi
-          
-          echo "version=${final_ver}" >> $GITHUB_OUTPUT
-          
+          echo "version=$(cat VERSION)-build$(cat BUILDNUM)" >> $GITHUB_OUTPUT
           part=$(cat PART)
           echo "part=${part}" >> $GITHUB_OUTPUT
           

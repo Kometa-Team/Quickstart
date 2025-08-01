@@ -197,8 +197,8 @@ def get_remote_version(branch):
         response.raise_for_status()
         build_num = response.text.strip()
     except requests.RequestException:
-        build_num = ""
-    return f"{version}-build{build_num}" if build_num else version
+        build_num = "0"
+    return version if branch == "master" else f"{version}-build{build_num}"
 
 
 def get_branch():
@@ -224,24 +224,25 @@ def get_kometa_branch():
     return version_info.get("kometa_branch", "nightly")  # Default to nightly branch
 
 
-def get_version():
+def get_version(branch):
     """Read the local VERSION file"""
     if os.path.exists(VERSION_FILE):
         with open(VERSION_FILE, "r", encoding="utf-8") as f:
             version = f.read().strip()
+            if branch == "master":
+                return version
+            build_num = "0"
             if os.path.exists(BUILDNUM_FILE):
                 with open(BUILDNUM_FILE, "r", encoding="utf-8") as g:
                     build_num = g.read().strip()
-                    if build_num:
-                        return f"{version}-build{build_num}"
-            return version
+            return f"{version}-build{build_num}"
     return "unknown"
 
 
 def check_for_update():
     """Compare the local version with the remote version and determine Kometa branch."""
-    local_version = get_version()
     branch = get_branch()
+    local_version = get_version(branch)
     remote_version = get_remote_version(branch)
 
     update_available = remote_version and remote_version != local_version

@@ -22,14 +22,7 @@ jobs:
       - name: Get Data
         id: load-data
         run: |
-          version=$(cat VERSION)
-          build=$(cat BUILDNUM)
-          if [ -n "$build" ]; then
-              final_ver="${version}-build${build}"
-          else
-              final_ver="${version}"
-          fi
-          echo "version=${final_ver}" >> $GITHUB_OUTPUT
+          echo "version=$(cat VERSION)-build$(cat BUILDNUM)" >> $GITHUB_OUTPUT
           echo "commit-msg=$(git log -1 HEAD --pretty=format:%s)" >> $GITHUB_OUTPUT
 
   build-releases:
