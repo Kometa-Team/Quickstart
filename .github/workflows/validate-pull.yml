@@ -52,27 +52,27 @@ jobs:
       - name: Get Changes
         id: get-changes
         run: | 
-            git remote add -f upstream https://github.com/Kometa-Team/${{ vars.REPO_NAME }}.git
-            git remote update
-            if [[ ${{ github.event.action }} == "labeled" ]]; then
-                echo "files=$(git diff --name-only upstream/develop HEAD | xargs)" >> $GITHUB_OUTPUT
-            else
-                echo "files=$(git diff --name-only HEAD^ | xargs)" >> $GITHUB_OUTPUT
-            fi
+          git remote add -f upstream https://github.com/Kometa-Team/${{ vars.REPO_NAME }}.git
+          git remote update
+          if [[ ${{ github.event.action }} == "labeled" ]]; then
+              echo "files=$(git diff --name-only upstream/develop HEAD | xargs)" >> $GITHUB_OUTPUT
+          else
+              echo "files=$(git diff --name-only HEAD^ | xargs)" >> $GITHUB_OUTPUT
+          fi
 
       - name: List Changed Files
         id: list-changes
         run: |
-            for file in ${{ steps.get-changes.outputs.files }}; do
-                if [[ $file =~ ^(PART).*$ ]] ; then
-                    echo "build=true" >> $GITHUB_OUTPUT
-                elif [[ $file =~ ^(modules|static|templates|quickstart.py|requirements.txt|.dockerignore|Dockerfile).*$ ]] ; then
-                    echo "$file will trigger builds"
-                    echo "part=true" >> $GITHUB_OUTPUT
-                else
-                    echo "$file will not trigger builds"
-                fi
-            done
+          for file in ${{ steps.get-changes.outputs.files }}; do
+              if [[ $file =~ ^(PART).*$ ]] ; then
+                  echo "build=true" >> $GITHUB_OUTPUT
+              elif [[ $file =~ ^(modules|static|templates|quickstart.py|requirements.txt|.dockerignore|Dockerfile).*$ ]] ; then
+                  echo "$file will trigger builds"
+                  echo "part=true" >> $GITHUB_OUTPUT
+              else
+                  echo "$file will not trigger builds"
+              fi
+          done
 
       - name: Run Spellcheck on Changed Files
         id: spellcheck
@@ -115,47 +115,46 @@ jobs:
             pip install black
             black . -l 180
 
-      - name: Update VERSION File and Commit
+      - name: Update PART File and Commit
         id: update-version
         if: contains(github.event.pull_request.labels.*.name, 'build')
         run: |
-            branch_name=${{ github.event.pull_request.head.ref }}
-            repo_name=${{ github.event.pull_request.head.repo.full_name }}
-            base_name="${repo_name%/*}"
-            if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then 
-                tag_name="${base_name}"
-            else
-                tag_name="${branch_name}"
-            fi
-            echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
+          branch_name=${{ github.event.pull_request.head.ref }}
+          repo_name=${{ github.event.pull_request.head.repo.full_name }}
+          base_name="${repo_name%/*}"
+          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then 
+              tag_name="${base_name}"
+          else
+              tag_name="${branch_name}"
+          fi
+          echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
+        
+          if [[ "${base_name}" == "Kometa-Team" ]]; then
+              extra=""
+          else
+              extra=" from the ${{ github.event.pull_request.head.repo.full_name }} repo"
+          fi
+          echo "extra-text=${extra}" >> $GITHUB_OUTPUT
           
-            if [[ "${base_name}" == "Kometa-Team" ]]; then
-                extra=""
-            else
-                extra=" from the ${{ github.event.pull_request.head.repo.full_name }} repo"
-            fi
-            echo "extra-text=${extra}" >> $GITHUB_OUTPUT
-            
-            value=$(cat VERSION)
-            old_msg=$(git log -1 HEAD --pretty=format:%s)
-            echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
-          
-            part=$(cat PART)
-            if [ -n "$part" ]; then
-                new_value="$((${part} + 1))"
-            else
-                new_value="1"
-            fi
-      
-            echo "part_value=${new_value}" >> $GITHUB_OUTPUT
-      
-            echo "$new_value" > "PART"
-          
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git add .
-            git commit -m "${tag_name} Part: ${new_value}"
-            git push
+          old_msg=$(git log -1 HEAD --pretty=format:%s)
+          echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
+        
+          part=$(cat PART)
+          if [ -n "$part" ]; then
+              new_value="$((${part} + 1))"
+          else
+              new_value="1"
+          fi
+    
+          echo "part_value=${new_value}" >> $GITHUB_OUTPUT
+    
+          echo "$new_value" > "PART"
+        
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "${tag_name} Part: ${new_value}"
+          git push
 
       - name: Check Diff
         id: verify_diff
@@ -165,11 +164,11 @@ jobs:
       - name: Commit Code Format Changes
         if: steps.verify_diff.outputs.changed == 'true' && !contains(github.event.pull_request.labels.*.name, 'build')
         run: |
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git add .
-            git commit -m "Code Format"
-            git push
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "Code Format"
+          git push
 
 
   get-version:
@@ -210,7 +209,14 @@ jobs:
           echo "tag-name=${tag_name}" >> $GITHUB_OUTPUT
           
           version=$(cat VERSION)
-          echo "version=${version}" >> $GITHUB_OUTPUT
+          build=$(cat BUILDNUM)
+          if [ -n "$build" ]; then
+              final_ver="${version}-build${build}"
+          else
+              final_ver="${version}"
+          fi
+          
+          echo "version=${final_ver}" >> $GITHUB_OUTPUT
           
           part=$(cat PART)
           echo "part=${part}" >> $GITHUB_OUTPUT
@@ -426,17 +432,14 @@ jobs:
       - name: Delete Extra Images
         run: |
           HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ needs.get-version.outputs.tag-name }}-amd64/
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ needs.get-version.outputs.tag-name }}-arm64/
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ needs.get-version.outputs.tag-name }}-armv7/
 
 

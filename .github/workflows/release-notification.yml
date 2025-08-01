@@ -22,8 +22,15 @@ jobs:
       - name: Get Data
         id: load-data
         run: |
-            echo "version=$(cat VERSION)" >> $GITHUB_OUTPUT
-            echo "commit-msg=$(git log -1 HEAD --pretty=format:%s)" >> $GITHUB_OUTPUT
+          version=$(cat VERSION)
+          build=$(cat BUILDNUM)
+          if [ -n "$build" ]; then
+              final_ver="${version}-build${build}"
+          else
+              final_ver="${version}"
+          fi
+          echo "version=${final_ver}" >> $GITHUB_OUTPUT
+          echo "commit-msg=$(git log -1 HEAD --pretty=format:%s)" >> $GITHUB_OUTPUT
 
   build-releases:
     name: Build ${{ matrix.os_upper }} Installer
@@ -62,6 +69,8 @@ jobs:
 
       - name: Build Executable
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
         run: |
           tag_name=${{github.event.release.tag_name}}
           if [[ "${tag_name}" =~ ^(latest)$ ]]; then
@@ -73,8 +82,6 @@ jobs:
           fi
           mv dist/Quickstart${{ matrix.ext }} dist/Quickstart-${version_value}-${{ runner.os }}${{ matrix.ext }}
           gh release upload ${tag_name} dist/Quickstart-${version_value}-${{ runner.os }}${{ matrix.ext }}
-        env:
-          GITHUB_TOKEN: ${{ github.TOKEN }}
 
 
   release-notification:

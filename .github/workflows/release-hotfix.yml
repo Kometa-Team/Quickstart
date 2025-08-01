@@ -28,8 +28,7 @@ jobs:
 
       - name: Create Hotfix Release Commit and Synchronize Branches
         run: |
-          value=$(cat VERSION)
-          version="${value%-build*}"
+          version=$(cat VERSION)
           echo "CURRENT_VERSION: '${version}'"
           IFS='.' read -r MAJOR MINOR PATCH <<< "$version"
           
@@ -52,7 +51,7 @@ jobs:
         run: |
           git checkout develop
           git checkout -b hotfix-rebase
-          git rebase master
+          git rebase origin/master
           git push -u origin hotfix-rebase
           gh pr create --base develop --head hotfix-rebase --title "Hotfix Rebase" \
                        --body "This PR was created automatically by a GitHub Action to Rebase Develop with the Hotfix."

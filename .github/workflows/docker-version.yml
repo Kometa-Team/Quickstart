@@ -120,17 +120,14 @@ jobs:
       - name: Remove Extra Images
         run: |
           HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ needs.get-version.outputs.version }}-amd64/
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ needs.get-version.outputs.version }}-arm64/
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ needs.get-version.outputs.version }}-armv7/
 
 
@@ -165,19 +162,10 @@ jobs:
           echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/$(git describe --tags --abbrev=0 latest^)...${{ needs.get-version.outputs.version }})" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
 
-      - name: Delete Old Prelease and Tag
+      - name: Remove Old Pre-Release
         run: gh release delete latest --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-
-      - name: Create Prerelease
-        uses: ncipollo/release-action@v1
-        with:
-          name: ${{ vars.NAME }} ${{ github.event.ref }} Build 0
-          body: No Current Changes from the Master Branch.
-          prerelease: true
-          tag: latest
-          token: ${{ steps.app-token.outputs.token }}
 
       - name: Create Release
         uses: ncipollo/release-action@v1

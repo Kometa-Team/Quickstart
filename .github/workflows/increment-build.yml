@@ -35,14 +35,14 @@ jobs:
       - name: List changed files
         id: list-changes
         run: |
-            for file in ${{ steps.get-changes.outputs.files }}; do
-                if [[ $file =~ ^(modules|static|templates|quickstart.py|requirements.txt|.dockerignore|Dockerfile).*$ ]] ; then
-                    echo "$file will trigger docker build"
-                    echo "build=true" >> $GITHUB_OUTPUT
-                else
-                    echo "$file will not trigger docker build"
-                fi
-            done
+          for file in ${{ steps.get-changes.outputs.files }}; do
+              if [[ $file =~ ^(modules|static|templates|quickstart.py|requirements.txt|.dockerignore|Dockerfile).*$ ]] ; then
+                  echo "$file will trigger docker build"
+                  echo "build=true" >> $GITHUB_OUTPUT
+              else
+                  echo "$file will not trigger docker build"
+              fi
+          done
 
 
   increment-build:
@@ -76,46 +76,39 @@ jobs:
       - name: Update VERSION File
         id: update-version
         run: |
-            branch_name=${{ github.event.pull_request.head.ref }}
-            repo_name=${{ github.event.pull_request.head.repo.full_name }}
-            base_name="${repo_name%/*}"
-            if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
-                pr_tag="${base_name}"
-            else
-                pr_tag="${branch_name}"
-            fi
-            echo "pr-tag=${pr_tag}" >> $GITHUB_OUTPUT
+          branch_name=${{ github.event.pull_request.head.ref }}
+          repo_name=${{ github.event.pull_request.head.repo.full_name }}
+          base_name="${repo_name%/*}"
+          if [[ "${branch_name}" =~ ^(master|develop)$ ]]; then
+              pr_tag="${base_name}"
+          else
+              pr_tag="${branch_name}"
+          fi
+          echo "pr-tag=${pr_tag}" >> $GITHUB_OUTPUT
 
-            value=$(cat VERSION)
-            old_msg=$(git log -1 HEAD --pretty=format:%s)
-            version="${value%-build*}"
+          version=$(cat VERSION)
+          build_value=$(cat BUILDNUM)
+          next_build_value="$((${build_value} + 1))"
+          part_value=$(cat PART)
+        
+          old_msg=$(git log -1 HEAD --pretty=format:%s)
+          new_msg="[${next_build_value}] ${old_msg}"
 
-            part_value=$(cat PART)
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "build-value=${next_build_value}" >> $GITHUB_OUTPUT
+          echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
+          echo "commit-short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
-            if [[ "$value" == *"-"* ]]; then
-                build_value="$((${value#*-build} + 1))"
-            else
-                build_value="1"
-            fi
+          echo "$next_build_value" > "BUILDNUM"
+          echo "" > "PART"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add BUILDNUM
+          git add PART
+          git commit -m "${new_msg}" --amend
+          git push origin develop --force-with-lease
 
-            new_value="${version}-build${build_value}"
-            new_msg="[${build_value}] ${old_msg}"
-
-            echo "version=${version}" >> $GITHUB_OUTPUT
-            echo "build-value=${build_value}" >> $GITHUB_OUTPUT
-            echo "commit-msg=${old_msg}" >> $GITHUB_OUTPUT
-            echo "commit-short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
-
-            echo "$new_value" > "VERSION"
-            echo "" > "PART"
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git add VERSION
-            git add PART
-            git commit -m "${new_msg}" --amend
-            git push origin develop --force-with-lease
-
-            echo "commit-hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "commit-hash=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
 
   docker-build-develop:
@@ -222,22 +215,19 @@ jobs:
       - name: Remove Extra Images
         run: |
           HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/develop-amd64/
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/develop-arm64/
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/develop-armv7/
 
 
-  create-prerelease:
-    name: Create Prerelease
+  create-pre-release:
+    name: Create Pre-Release
     runs-on: ubuntu-latest
     needs: [ increment-build, create-manifest ]
     steps:
@@ -271,12 +261,12 @@ jobs:
         id: show-changelog
         run: echo "${{ steps.build-changelog.outputs.changelog }}"
 
-      - name: Remove Old Prelease
+      - name: Remove Old Pre-Release
         run: gh release delete latest --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
 
-      - name: Create Prerelease
+      - name: Create Pre-Release
         uses: ncipollo/release-action@v1
         with:
           name: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Build ${{ needs.increment-build.outputs.build-value }}

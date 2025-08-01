@@ -1,6 +1,7 @@
 name: Docker Develop Build
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: [ "Master Release" ]
     types: [ completed ]
@@ -110,17 +111,14 @@ jobs:
       - name: Remove Extra Images
         run: |
           HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/develop-amd64/
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/develop-arm64/
-          curl -i -X DELETE \
-          -H "Accept: application/json" \
-          -H "Authorization: JWT $HUB_TOKEN" \
+          
+          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/develop-armv7/
 
 
