@@ -165,7 +165,10 @@ jobs:
       - name: Remove Old Pre-Release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: gh release delete prerelease --cleanup-tag
+        run: |
+          if gh release view prerelease > /dev/null 2>&1; then
+            gh release delete prerelease --cleanup-tag
+          fi
 
       - name: Create Release
         uses: ncipollo/release-action@v1
