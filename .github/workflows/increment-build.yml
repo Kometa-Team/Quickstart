@@ -280,7 +280,7 @@ jobs:
   build-notification:
     name: Build Notification
     runs-on: ubuntu-latest
-    needs: [ create-prerelease ]
+    needs: [ create-pre-release ]
     steps:
 
       - name: Discord Success Notification
