@@ -47,10 +47,12 @@ jobs:
           echo "NEW_VERSION='${NEW_VERSION}'"
           echo "new_ver=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "$NEW_VERSION" > "VERSION"
+          echo "" > "BUILDNUM"
         
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add VERSION
+          git add BUILDNUM
           git commit -m "${{ vars.NAME }} Release ${NEW_VERSION}"
           git push origin develop
           git push origin refs/heads/develop:refs/heads/master

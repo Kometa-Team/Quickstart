@@ -262,9 +262,9 @@ jobs:
         run: echo "${{ steps.build-changelog.outputs.changelog }}"
 
       - name: Remove Old Pre-Release
-        run: gh release delete latest --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: gh release delete prerelease --cleanup-tag
 
       - name: Create Pre-Release
         uses: ncipollo/release-action@v1
@@ -273,7 +273,7 @@ jobs:
           commit: ${{ needs.increment-build.outputs.commit-hash }}
           body: ${{ steps.build-changelog.outputs.changelog }}
           prerelease: true
-          tag: latest
+          tag: prerelease
           token: ${{ steps.app-token.outputs.token }}
 
 

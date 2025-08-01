@@ -198,7 +198,7 @@ def get_remote_version(branch):
         build_num = response.text.strip()
     except requests.RequestException:
         build_num = ""
-    return f"{version}-build{build_num}"
+    return f"{version}-build{build_num}" if build_num else version
 
 
 def get_branch():
@@ -231,7 +231,9 @@ def get_version():
             version = f.read().strip()
             if os.path.exists(BUILDNUM_FILE):
                 with open(BUILDNUM_FILE, "r", encoding="utf-8") as g:
-                    return f"{version}-build{g.read().strip()}"
+                    build_num = g.read().strip()
+                    if build_num:
+                        return f"{version}-build{build_num}"
             return version
     return "unknown"
 

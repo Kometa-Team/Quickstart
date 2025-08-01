@@ -163,9 +163,9 @@ jobs:
           echo "$EOF" >> $GITHUB_OUTPUT
 
       - name: Remove Old Pre-Release
-        run: gh release delete latest --cleanup-tag
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: gh release delete prerelease --cleanup-tag
 
       - name: Create Release
         uses: ncipollo/release-action@v1
