@@ -45,14 +45,11 @@ jobs:
           git push origin hotfix
           git push origin refs/heads/hotfix:refs/heads/master
 
-      - name: Create Hotfix Rebase Pull Request
+      - name: Rebase Develop
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           git checkout develop
-          git checkout -b hotfix-rebase
           git rebase origin/master
-          git push -u origin hotfix-rebase
-          gh pr create --base develop --head hotfix-rebase --title "Hotfix Rebase" \
-                       --body "This PR was created automatically by a GitHub Action to Rebase Develop with the Hotfix."
+          git push -u origin develop
 
