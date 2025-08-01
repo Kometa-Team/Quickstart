@@ -73,7 +73,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         run: |
           tag_name=${{github.event.release.tag_name}}
-          if [[ "${tag_name}" =~ ^(latest)$ ]]; then
+          if [[ "${tag_name}" =~ ^(prerelease)$ ]]; then
             pyinstaller -y ./quickstart.spec -- --branch develop --build ${{ runner.os }}
             version_value="v${{ needs.get-version.outputs.version }}"
           else
