@@ -172,9 +172,13 @@ jobs:
             gh release delete prerelease --cleanup-tag
           fi
           
+          while git fetch --tags --prune-tags; git tag -l | grep prerelease; do
+            sleep 10;
+          done
+          
           gh release create prerelease --prerelease \
             --title "${{ vars.NAME }} ${{ github.event.ref }} Develop Build 0" \
-            --notes "$No Current Changes from the Master Branch using this version will trigger updates using the develop branch." \
+            --notes "No current changes from the Master branch. Using this version will trigger updates based on the Develop branch." \
             --target "${{ needs.increment-build.outputs.commit-hash }}"
           
           gh release create ${{ github.event.ref }} \

@@ -231,7 +231,7 @@ jobs:
   create-pre-release:
     name: Create Pre-Release
     runs-on: ubuntu-latest
-    needs: [ increment-build, create-manifest ]
+    needs: [ increment-build ]
     steps:
 
       - name: Create App Token
@@ -257,7 +257,7 @@ jobs:
           echo "changelog<<$EOF" >> $GITHUB_OUTPUT
           echo "## Commits" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "$(git log ${latest_tag}..HEAD --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
+          echo "$(git log ${latest_tag}..HEAD --pretty='* [<code>%h</code>](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...prerelease)" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
@@ -272,6 +272,10 @@ jobs:
             gh release delete prerelease --cleanup-tag
           fi
           
+          while git fetch --tags --prune-tags; git tag -l | grep prerelease; do
+            sleep 10;
+          done
+          
           gh release create prerelease --prerelease \
             --title "${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Develop Build ${{ needs.increment-build.outputs.build-value }}" \
             --notes "${{ steps.build-changelog.outputs.changelog }}" \
@@ -281,7 +285,7 @@ jobs:
   build-notification:
     name: Build Notification
     runs-on: ubuntu-latest
-    needs: [ create-pre-release ]
+    needs: [ create-manifest, create-pre-release ]
     steps:
 
       - name: Discord Success Notification
