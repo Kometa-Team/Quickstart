@@ -74,6 +74,7 @@ jobs:
             version_value=${tag_name}
           fi
           mv dist/Quickstart${{ matrix.ext }} dist/Quickstart-${version_value}-${{ runner.os }}${{ matrix.ext }}
+          echo "$tag_name dist/Quickstart-$version_value-${{ runner.os }}${{ matrix.ext }}"
           gh release upload ${tag_name} dist/Quickstart-${version_value}-${{ runner.os }}${{ matrix.ext }}
 
 
@@ -89,7 +90,7 @@ jobs:
         with:
           webhook_id_token: ${{ secrets.DEVELOP_WEBHOOK }}
           title: ${{ github.event.release.name }}
-          url: https://github.com/Kometa-Team/Quickstart/releases/tag/latest
+          url: https://github.com/Kometa-Team/Quickstart/releases/tag/prerelease
           description: ${{ needs.get-version.outputs.commit-msg }}
           message: ${{ vars.DEVELOP_ROLE }} - An update to ${{ vars.NAME }} has been published and is available to users of the **develop** branch.
           color: ${{ vars.COLOR_SUCCESS }}
