@@ -124,12 +124,6 @@ jobs:
           - platform: 'linux/amd64'
             dockerfile: 'Dockerfile'
             tag: 'amd64'
-          - platform: 'linux/arm64'
-            dockerfile: 'Dockerfile'
-            tag: 'arm64'
-          - platform: 'linux/arm/v7'
-            dockerfile: 'Dockerfile.arm7'
-            tag: 'armv7'
     steps:
 
       - name: Create App Token
@@ -209,9 +203,7 @@ jobs:
         run: |
           docker manifest create \
             ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop-amd64 \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop-arm64 \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop-armv7
+            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop-amd64 
           docker manifest push ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:develop
 
       - name: Remove Extra Images
@@ -220,12 +212,6 @@ jobs:
           
           curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
           https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/develop-amd64/
-          
-          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/develop-arm64/
-          
-          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/develop-armv7/
 
 
   create-pre-release:
@@ -250,13 +236,17 @@ jobs:
       - name: Build Changelog
         id: build-changelog
         run: |
+          latest_tag="$(git describe --tags --abbrev=0 prerelease^)"
+          echo "$(git describe --tags --abbrev=0 prerelease^)"
+          echo "${latest_tag}"
+          
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "changelog<<$EOF" >> $GITHUB_OUTPUT
           echo "## Commits" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "$(git log $(git describe --tags --abbrev=0 prerelease^)..HEAD --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
+          echo "$(git log ${latest_tag}..HEAD --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/$(git describe --tags --abbrev=0 prerelease^)...prerelease)" >> $GITHUB_OUTPUT
+          echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...prerelease)" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
 
       - name: Show Changelog
