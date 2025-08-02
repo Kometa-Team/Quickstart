@@ -279,7 +279,7 @@ def get_running_os():
         if system == "Windows":
             return "Frozen-Windows", ".exe"
         elif system == "Darwin":
-            return "Frozen-macOS", ".app"
+            return "Frozen-macOS", ""
         elif system == "Linux":
             return "Frozen-Linux", ""
         else:
@@ -290,7 +290,7 @@ def get_running_os():
     if system == "Windows":
         return "Local-Windows", ".exe"
     elif system == "Darwin":
-        return "Local-macOS", ".app"
+        return "Local-macOS", ""
     elif system == "Linux":
         return "Local-Linux", ""
     else:
