@@ -262,28 +262,20 @@ jobs:
           echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...prerelease)" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
 
-      - name: Show Changelog
-        id: show-changelog
-        run: |
-          echo "${{ steps.build-changelog.outputs.changelog }}"
-
-      - name: Remove Old Pre-Release
+      - name: Create Pre-Release
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          echo "${{ steps.build-changelog.outputs.changelog }}"
+          
           if gh release view prerelease > /dev/null 2>&1; then
             gh release delete prerelease --cleanup-tag
           fi
-
-      - name: Create Pre-Release
-        uses: ncipollo/release-action@v1
-        with:
-          name: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Develop Build ${{ needs.increment-build.outputs.build-value }}
-          commit: ${{ needs.increment-build.outputs.commit-hash }}
-          body: ${{ steps.build-changelog.outputs.changelog }}
-          prerelease: true
-          tag: prerelease
-          token: ${{ steps.app-token.outputs.token }}
+          
+          gh release create prerelease --prerelease \
+            --title "${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Develop Build ${{ needs.increment-build.outputs.build-value }}" \
+            --notes "${{ steps.build-changelog.outputs.changelog }}" \
+            --target "${{ needs.increment-build.outputs.commit-hash }}"
 
 
   build-notification:

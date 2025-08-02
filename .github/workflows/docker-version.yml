@@ -162,31 +162,25 @@ jobs:
           echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/$(git describe --tags --abbrev=0 prerelease^)...${{ needs.get-version.outputs.version }})" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
 
-      - name: Remove Old Pre-Release
+      - name: Create Releases
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
+          echo "${{ steps.build-changelog.outputs.changelog }}"
+          
           if gh release view prerelease > /dev/null 2>&1; then
             gh release delete prerelease --cleanup-tag
           fi
-
-      - name: Create Prerelease
-        uses: ncipollo/release-action@v1
-        with:
-          name: ${{ vars.NAME }} ${{ github.event.ref }} Develop Build 0
-          body: No Current Changes from the Master Branch using this version will trigger updates using the develop branch.
-          prerelease: true
-          tag: prerelease
-          token: ${{ steps.app-token.outputs.token }}
-
-      - name: Create Release
-        uses: ncipollo/release-action@v1
-        with:
-          name: ${{ vars.NAME }} ${{ github.event.ref }}
-          body: ${{ steps.build-changelog.outputs.changelog }}
-          prerelease: false
-          tag: ${{ github.event.ref }}
-          token: ${{ steps.app-token.outputs.token }}
+          
+          gh release create prerelease --prerelease \
+            --title "${{ vars.NAME }} ${{ github.event.ref }} Develop Build 0" \
+            --notes "$No Current Changes from the Master Branch using this version will trigger updates using the develop branch." \
+            --target "${{ needs.increment-build.outputs.commit-hash }}"
+          
+          gh release create ${{ github.event.ref }} \
+            --title "${{ vars.NAME }} ${{ github.event.ref }}" \
+            --notes "${{ steps.build-changelog.outputs.changelog }}" \
+            --target "${{ needs.increment-build.outputs.commit-hash }}"
 
 
   build-notification:
