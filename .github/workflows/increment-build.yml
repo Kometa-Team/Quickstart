@@ -109,9 +109,7 @@ jobs:
           git push origin develop --force-with-lease
           
           hash=$(git rev-parse HEAD)
-          
           echo "$hash"
-
           echo "commit-hash=${hash}" >> $GITHUB_OUTPUT
 
 
@@ -265,12 +263,6 @@ jobs:
         id: show-changelog
         run: |
           echo "${{ steps.build-changelog.outputs.changelog }}"
-          
-          hash=$(git rev-parse HEAD)
-          
-          echo "$hash"
-          echo "$(git rev-parse HEAD)"
-          echo "${{ needs.increment-build.outputs.commit-hash }}"
 
       - name: Remove Old Pre-Release
         env:
@@ -284,6 +276,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           name: ${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Develop Build ${{ needs.increment-build.outputs.build-value }}
+          commit: ${{ needs.increment-build.outputs.commit-hash }}
           body: ${{ steps.build-changelog.outputs.changelog }}
           prerelease: true
           tag: prerelease
