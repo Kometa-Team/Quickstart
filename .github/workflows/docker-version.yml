@@ -153,7 +153,7 @@ jobs:
       - name: Build Changelog
         id: build-changelog
         run: |
-          latest_tag="$(git describe --tags --abbrev=0 prerelease^)"
+          latest_tag="$(git describe --tags --abbrev=0 ${{ needs.get-version.outputs.version }}^)"
           echo "${latest_tag}"
           
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
