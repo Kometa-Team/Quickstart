@@ -9,10 +9,12 @@ import signal
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import uuid
 import webbrowser
+import zipfile
 from io import BytesIO
 from threading import Thread
 from pathlib import Path
@@ -1410,7 +1412,7 @@ def check_test_libraries():
     if not quickstart_root:
         return jsonify(success=False, message="Quickstart root path not provided.")
 
-    # Determine target location based on install type
+    # Target path depends on install type
     if use_config_dir:
         target_path = os.path.join(quickstart_root, "config", "plex_test_libraries")
     else:
@@ -1418,16 +1420,31 @@ def check_test_libraries():
         target_path = os.path.join(parent_dir, "plex_test_libraries")
 
     found = os.path.isdir(target_path)
-    is_git_repo = False
+    has_expected_folders = all(
+        os.path.isdir(os.path.join(target_path, subfolder))
+        for subfolder in ["test_tv_lib", "test_movie_lib"]
+    )
 
+    # For Docker/Frozen, only check folder structure
+    if use_config_dir:
+        return jsonify({
+            "found": found and has_expected_folders,
+            "is_git_repo": False
+        })
+
+    # For Local installs, check Git repo as well
+    is_git_repo = False
     if found:
         try:
-            _ = Repo(target_path).git_dir  # Accessing git_dir confirms it's a valid repo
+            _ = Repo(target_path).git_dir
             is_git_repo = True
-        except InvalidGitRepositoryError:
+        except (InvalidGitRepositoryError, GitCommandError, ImportError, OSError):
             is_git_repo = False
 
-    return jsonify({"found": found, "is_git_repo": is_git_repo})
+    return jsonify({
+        "found": found and (has_expected_folders or is_git_repo),
+        "is_git_repo": is_git_repo
+    })
 
 
 @app.route("/clone-test-libraries", methods=["POST"])
@@ -1439,7 +1456,6 @@ def clone_test_libraries():
     if not quickstart_root:
         return jsonify(success=False, message="Quickstart root path not provided.")
 
-    # Determine target location based on install type
     if use_config_dir:
         target_path = os.path.join(quickstart_root, "config", "plex_test_libraries")
     else:
@@ -1448,24 +1464,47 @@ def clone_test_libraries():
 
     try:
         if os.path.exists(target_path):
-            try:
-                repo = Repo(target_path)
-                origin = repo.remotes.origin
-                origin.pull()
-                return jsonify(success=True, message="Test libraries updated successfully.")
-            except InvalidGitRepositoryError:
+            if os.path.isdir(os.path.join(target_path, ".git")):
+                try:
+                    repo = Repo(target_path)
+                    repo.remote().pull()
+                    return jsonify(success=True, message="Test libraries updated successfully.")
+                except GitCommandError as e:
+                    return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
+            else:
                 return jsonify(
-                    success=False, message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
+                    success=False,
+                    message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
                 )
-            except GitCommandError as e:
-                return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
 
-        # Clone fresh
-        Repo.clone_from("https://github.com/chazlarson/plex-test-libraries.git", target_path)
-        return jsonify(success=True, message="Test libraries cloned successfully.")
+        # Git available?
+        git_path = shutil.which("git")
+        if git_path:
+            Repo.clone_from("https://github.com/chazlarson/plex-test-libraries.git", target_path)
+            return jsonify(success=True, message="Test libraries cloned via Git.")
+        else:
+            # Fallback: Download ZIP from GitHub
+            zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
+            with tempfile.TemporaryDirectory() as tmpdir:
+                zip_path = os.path.join(tmpdir, "main.zip")
 
-    except GitCommandError as e:
-        return jsonify(success=False, message=f"Git clone failed:\n{str(e)}")
+                # Download ZIP
+                r = requests.get(zip_url)
+                if r.status_code != 200:
+                    return jsonify(success=False, message="Failed to download ZIP fallback from GitHub.")
+                with open(zip_path, "wb") as f:
+                    f.write(r.content)
+
+                # Extract it
+                with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                    zip_ref.extractall(tmpdir)
+
+                # Move extracted folder to target path
+                extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
+                shutil.move(extracted_dir, target_path)
+
+            return jsonify(success=True, message="Test libraries downloaded and extracted from ZIP.")
+
     except Exception as e:
         return jsonify(success=False, message=f"Unexpected error: {str(e)}")
 
