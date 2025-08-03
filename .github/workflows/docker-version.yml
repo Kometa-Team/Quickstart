@@ -157,7 +157,7 @@ jobs:
           echo "changelog<<$EOF" >> $GITHUB_OUTPUT
           echo "## Commits" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "$(git log $(git describe --tags --abbrev=0 prerelease^)..${{ needs.get-version.outputs.version }} --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)' --reverse)" >> $GITHUB_OUTPUT
+          echo "$(git log $(git describe --tags --abbrev=0 prerelease^)..${{ needs.get-version.outputs.version }} --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/$(git describe --tags --abbrev=0 prerelease^)...${{ needs.get-version.outputs.version }})" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
