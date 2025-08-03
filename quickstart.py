@@ -1420,17 +1420,11 @@ def check_test_libraries():
         target_path = os.path.join(parent_dir, "plex_test_libraries")
 
     found = os.path.isdir(target_path)
-    has_expected_folders = all(
-        os.path.isdir(os.path.join(target_path, subfolder))
-        for subfolder in ["test_tv_lib", "test_movie_lib"]
-    )
+    has_expected_folders = all(os.path.isdir(os.path.join(target_path, subfolder)) for subfolder in ["test_tv_lib", "test_movie_lib"])
 
     # For Docker/Frozen, only check folder structure
     if use_config_dir:
-        return jsonify({
-            "found": found and has_expected_folders,
-            "is_git_repo": False
-        })
+        return jsonify({"found": found and has_expected_folders, "is_git_repo": False})
 
     # For Local installs, check Git repo as well
     is_git_repo = False
@@ -1441,10 +1435,7 @@ def check_test_libraries():
         except (InvalidGitRepositoryError, GitCommandError, ImportError, OSError):
             is_git_repo = False
 
-    return jsonify({
-        "found": found and (has_expected_folders or is_git_repo),
-        "is_git_repo": is_git_repo
-    })
+    return jsonify({"found": found and (has_expected_folders or is_git_repo), "is_git_repo": is_git_repo})
 
 
 @app.route("/clone-test-libraries", methods=["POST"])
@@ -1473,8 +1464,7 @@ def clone_test_libraries():
                     return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
             else:
                 return jsonify(
-                    success=False,
-                    message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
+                    success=False, message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
                 )
 
         # Git available?
