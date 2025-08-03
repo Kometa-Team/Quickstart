@@ -44,7 +44,7 @@ def validate_plex_server(data):
         # Log db_cache value
         helpers.ts_log(f"db_cache returned from Plex: {db_cache}", level="INFO")
 
-        # If db_cache is None, treat it as invalid
+        # If db_cache is None, treat it as invalid.
         if db_cache is None:
             raise Exception("Unable to retrieve db_cache from Plex settings.")
 

@@ -270,11 +270,8 @@ jobs:
           
           if gh release view prerelease > /dev/null 2>&1; then
             gh release delete prerelease --cleanup-tag
+            sleep 60
           fi
-          
-          while git fetch --tags --prune-tags; git tag -l | grep prerelease; do
-            sleep 10;
-          done
           
           gh release create prerelease --prerelease \
             --title "${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Develop Build ${{ needs.increment-build.outputs.build-value }}" \
