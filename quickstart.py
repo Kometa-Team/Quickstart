@@ -19,7 +19,6 @@ from io import BytesIO
 from threading import Thread
 from pathlib import Path
 from collections import deque
-from git import Repo, GitCommandError, InvalidGitRepositoryError
 
 import namesgenerator
 import requests
@@ -1420,22 +1419,32 @@ def check_test_libraries():
         target_path = os.path.join(parent_dir, "plex_test_libraries")
 
     found = os.path.isdir(target_path)
-    has_expected_folders = all(os.path.isdir(os.path.join(target_path, subfolder)) for subfolder in ["test_tv_lib", "test_movie_lib"])
+    has_expected_folders = all(
+        os.path.isdir(os.path.join(target_path, subfolder))
+        for subfolder in ["test_tv_lib", "test_movie_lib"]
+    )
 
-    # For Docker/Frozen, only check folder structure
+    # For Docker/Frozen, skip git checks
     if use_config_dir:
-        return jsonify({"found": found and has_expected_folders, "is_git_repo": False})
+        return jsonify({
+            "found": found and has_expected_folders,
+            "is_git_repo": False
+        })
 
-    # For Local installs, check Git repo as well
+    # For Local installs: defer git import
     is_git_repo = False
     if found:
         try:
+            from git import Repo, InvalidGitRepositoryError, GitCommandError
             _ = Repo(target_path).git_dir
             is_git_repo = True
-        except (InvalidGitRepositoryError, GitCommandError, ImportError, OSError):
+        except (ImportError, InvalidGitRepositoryError, GitCommandError, OSError):
             is_git_repo = False
 
-    return jsonify({"found": found and (has_expected_folders or is_git_repo), "is_git_repo": is_git_repo})
+    return jsonify({
+        "found": found and (has_expected_folders or is_git_repo),
+        "is_git_repo": is_git_repo
+    })
 
 
 @app.route("/clone-test-libraries", methods=["POST"])
@@ -1470,6 +1479,7 @@ def clone_test_libraries():
         # Git available?
         git_path = shutil.which("git")
         if git_path:
+            from git import Repo, GitCommandError, InvalidGitRepositoryError
             Repo.clone_from("https://github.com/chazlarson/plex-test-libraries.git", target_path)
             return jsonify(success=True, message="Test libraries cloned via Git.")
         else:
