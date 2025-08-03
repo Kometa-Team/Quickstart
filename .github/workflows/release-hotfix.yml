@@ -51,5 +51,5 @@ jobs:
         run: |
           git checkout develop
           git rebase origin/master
-          git push -u origin develop
+          git push origin develop --force-with-lease
 

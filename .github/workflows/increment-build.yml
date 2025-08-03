@@ -250,16 +250,13 @@ jobs:
       - name: Build Changelog
         id: build-changelog
         run: |
-          latest_tag="$(git describe --tags --abbrev=0 prerelease^)"
-          echo "${latest_tag}"
-          
           EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
           echo "changelog<<$EOF" >> $GITHUB_OUTPUT
           echo "## Commits" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "$(git log ${latest_tag}..HEAD --pretty='* [<code>%h</code>](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')" >> $GITHUB_OUTPUT
+          echo "$(git log ${{ needs.increment-build.outputs.version }}..HEAD --pretty='* [<code>%h</code>](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...prerelease)" >> $GITHUB_OUTPUT
+          echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${{ needs.increment-build.outputs.version }}...prerelease)" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
 
       - name: Create Pre-Release
