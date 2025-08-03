@@ -1411,7 +1411,6 @@ def check_test_libraries():
     if not quickstart_root:
         return jsonify(success=False, message="Quickstart root path not provided.")
 
-    # Target path depends on install type
     if use_config_dir:
         target_path = os.path.join(quickstart_root, "config", "plex_test_libraries")
     else:
@@ -1420,18 +1419,15 @@ def check_test_libraries():
 
     found = os.path.isdir(target_path)
     has_expected_folders = all(
-        os.path.isdir(os.path.join(target_path, subfolder))
-        for subfolder in ["test_tv_lib", "test_movie_lib"]
+        os.path.isdir(os.path.join(target_path, name)) for name in ["test_tv_lib", "test_movie_lib"]
     )
 
-    # For Docker/Frozen, skip git checks
     if use_config_dir:
         return jsonify({
             "found": found and has_expected_folders,
             "is_git_repo": False
         })
 
-    # For Local installs: defer git import
     is_git_repo = False
     if found:
         try:
@@ -1466,44 +1462,47 @@ def clone_test_libraries():
         if os.path.exists(target_path):
             if os.path.isdir(os.path.join(target_path, ".git")):
                 try:
+                    from git import Repo, GitCommandError
                     repo = Repo(target_path)
                     repo.remote().pull()
                     return jsonify(success=True, message="Test libraries updated successfully.")
                 except GitCommandError as e:
                     return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
             else:
-                return jsonify(
-                    success=False, message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
-                )
+                expected_subfolders = ["test_tv_lib", "test_movie_lib"]
+                if all(os.path.isdir(os.path.join(target_path, f)) for f in expected_subfolders):
+                    return jsonify(success=True, message="Test libraries already extracted via ZIP.")
+                return jsonify(success=False, message="The 'plex_test_libraries' folder exists but is not a Git repo or valid ZIP extraction.\nPlease delete or rename it and try again.")
 
-        # Git available?
+        # Try Git clone if Git is available
         git_path = shutil.which("git")
         if git_path:
             from git import Repo, GitCommandError, InvalidGitRepositoryError
             Repo.clone_from("https://github.com/chazlarson/plex-test-libraries.git", target_path)
             return jsonify(success=True, message="Test libraries cloned via Git.")
-        else:
-            # Fallback: Download ZIP from GitHub
-            zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
-            with tempfile.TemporaryDirectory() as tmpdir:
-                zip_path = os.path.join(tmpdir, "main.zip")
 
-                # Download ZIP
-                r = requests.get(zip_url)
-                if r.status_code != 200:
-                    return jsonify(success=False, message="Failed to download ZIP fallback from GitHub.")
-                with open(zip_path, "wb") as f:
-                    f.write(r.content)
+        # Otherwise fallback to ZIP
+        zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            zip_path = os.path.join(tmpdir, "main.zip")
 
-                # Extract it
-                with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                    zip_ref.extractall(tmpdir)
+            r = requests.get(zip_url)
+            if r.status_code != 200:
+                return jsonify(success=False, message="Failed to download ZIP fallback from GitHub.")
 
-                # Move extracted folder to target path
-                extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
-                shutil.move(extracted_dir, target_path)
+            with open(zip_path, "wb") as f:
+                f.write(r.content)
 
-            return jsonify(success=True, message="Test libraries downloaded and extracted from ZIP.")
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(tmpdir)
+
+            extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
+            if not os.path.isdir(extracted_dir):
+                return jsonify(success=False, message="ZIP extracted but main folder not found.")
+
+            shutil.move(extracted_dir, target_path)
+
+        return jsonify(success=True, message="Test libraries downloaded and extracted from ZIP.")
 
     except Exception as e:
         return jsonify(success=False, message=f"Unexpected error: {str(e)}")
