@@ -1455,8 +1455,7 @@ def clone_test_libraries():
                 return jsonify(success=True, message="Test libraries updated successfully.")
             except InvalidGitRepositoryError:
                 return jsonify(
-                    success=False,
-                    message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
+                    success=False, message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
                 )
             except GitCommandError as e:
                 return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
