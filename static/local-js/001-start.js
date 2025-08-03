@@ -176,12 +176,24 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Show test libraries banner or silently pull if valid
-  if (window.pageInfo?.install_type?.startsWith('Local-')) {
+  const installType = window.pageInfo?.install_type || ''
+  const isDocker = installType === 'Docker'
+  const isFrozen = installType.startsWith('Frozen-')
+  const isLocal = installType.startsWith('Local-')
+
+  if (isDocker || isFrozen || isLocal) {
     const testLibStatus = document.getElementById('test-lib-status')
     const cloneBtn = document.getElementById('clone-test-lib-btn')
 
     if (testLibStatus && cloneBtn) {
-      fetch('/check-test-libraries')
+      fetch('/check-test-libraries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quickstart_root: window.pageInfo.quickstart_root,
+          use_config_dir: isDocker || isFrozen
+        })
+      })
         .then(res => res.json())
         .then(data => {
           if (!data.found) {
@@ -192,11 +204,15 @@ document.addEventListener('DOMContentLoaded', function () {
             testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
             testLibStatus.classList.add('alert-success')
             testLibStatus.innerHTML = '<strong>✅ Test libraries already set up.</strong>'
+
             // Folder exists and is a git repo → silently pull
             fetch('/clone-test-libraries', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ quickstart_root: window.pageInfo.quickstart_root })
+              body: JSON.stringify({
+                quickstart_root: window.pageInfo.quickstart_root,
+                use_config_dir: isDocker || isFrozen
+              })
             })
               .then(res => res.json())
               .then(result => {
@@ -227,7 +243,10 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch('/clone-test-libraries', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ quickstart_root: window.pageInfo.quickstart_root })
+          body: JSON.stringify({
+            quickstart_root: window.pageInfo.quickstart_root,
+            use_config_dir: isDocker || isFrozen
+          })
         })
           .then(res => res.json())
           .then(result => {

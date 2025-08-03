@@ -17,6 +17,7 @@ from io import BytesIO
 from threading import Thread
 from pathlib import Path
 from collections import deque
+from git import Repo, GitCommandError, InvalidGitRepositoryError
 
 import namesgenerator
 import requests
@@ -1400,14 +1401,31 @@ def kometa_status():
         return jsonify(status="done", return_code=retcode)
 
 
-@app.route("/check-test-libraries")
+@app.route("/check-test-libraries", methods=["POST"])
 def check_test_libraries():
-    quickstart_root = helpers.get_app_root()
-    parent_dir = os.path.dirname(quickstart_root)
-    target_path = os.path.join(parent_dir, "plex_test_libraries")
+    data = request.get_json(silent=True) or {}
+    quickstart_root = data.get("quickstart_root", "")
+    use_config_dir = data.get("use_config_dir", False)
+
+    if not quickstart_root:
+        return jsonify(success=False, message="Quickstart root path not provided.")
+
+    # Determine target location based on install type
+    if use_config_dir:
+        target_path = os.path.join(quickstart_root, "config", "plex_test_libraries")
+    else:
+        parent_dir = os.path.dirname(quickstart_root)
+        target_path = os.path.join(parent_dir, "plex_test_libraries")
 
     found = os.path.isdir(target_path)
-    is_git_repo = os.path.isdir(os.path.join(target_path, ".git"))
+    is_git_repo = False
+
+    if found:
+        try:
+            _ = Repo(target_path).git_dir  # Accessing git_dir confirms it's a valid repo
+            is_git_repo = True
+        except InvalidGitRepositoryError:
+            is_git_repo = False
 
     return jsonify({"found": found, "is_git_repo": is_git_repo})
 
@@ -1416,58 +1434,39 @@ def check_test_libraries():
 def clone_test_libraries():
     data = request.get_json(silent=True) or {}
     quickstart_root = data.get("quickstart_root", "")
+    use_config_dir = data.get("use_config_dir", False)
+
     if not quickstart_root:
         return jsonify(success=False, message="Quickstart root path not provided.")
 
-    parent_dir = os.path.dirname(quickstart_root)
-    target_path = os.path.join(parent_dir, "plex_test_libraries")
+    # Determine target location based on install type
+    if use_config_dir:
+        target_path = os.path.join(quickstart_root, "config", "plex_test_libraries")
+    else:
+        parent_dir = os.path.dirname(quickstart_root)
+        target_path = os.path.join(parent_dir, "plex_test_libraries")
 
     try:
-        # Always try to enable long paths (harmless on Mac/Linux)
-        subprocess.run(["git", "config", "--global", "core.longpaths", "true"], check=False)
-
         if os.path.exists(target_path):
-            if os.path.isdir(os.path.join(target_path, ".git")):
-                # Valid Git repo, try pulling
-                result = subprocess.run(["git", "-C", target_path, "pull"], capture_output=True, text=True, timeout=300)
-                output = result.stdout + result.stderr
-
-                if result.returncode != 0:
-                    if "Filename too long" in output or "unable to checkout working tree" in output:
-                        return jsonify(
-                            success=False,
-                            message=(
-                                "One or more filenames are too long for Windows to handle by default. "
-                                "To fix this, run the following in an elevated Command Prompt, then reboot:\n\n"
-                                "reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f"
-                            ),
-                        )
-                    return jsonify(success=False, message=f"Git pull failed:\n{output.strip()}")
-
+            try:
+                repo = Repo(target_path)
+                origin = repo.remotes.origin
+                origin.pull()
                 return jsonify(success=True, message="Test libraries updated successfully.")
-            else:
-                return jsonify(
-                    success=False, message=("The 'plex_test_libraries' folder exists but is not a valid Git repository.\n" "Please delete or rename the folder and try again.")
-                )
-
-        # Fresh clone if folder doesn't exist
-        result = subprocess.run(["git", "clone", "https://github.com/chazlarson/plex-test-libraries.git", target_path], capture_output=True, text=True, timeout=300)
-        output = result.stdout + result.stderr
-
-        if result.returncode != 0:
-            if "Filename too long" in output or "unable to checkout working tree" in output:
+            except InvalidGitRepositoryError:
                 return jsonify(
                     success=False,
-                    message=(
-                        "One or more filenames are too long for Windows to handle by default. "
-                        "To fix this, run the following in an elevated Command Prompt, then reboot:\n\n"
-                        "reg add HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f"
-                    ),
+                    message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
                 )
-            return jsonify(success=False, message=f"Clone failed:\n{output.strip()}")
+            except GitCommandError as e:
+                return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
 
+        # Clone fresh
+        Repo.clone_from("https://github.com/chazlarson/plex-test-libraries.git", target_path)
         return jsonify(success=True, message="Test libraries cloned successfully.")
 
+    except GitCommandError as e:
+        return jsonify(success=False, message=f"Git clone failed:\n{str(e)}")
     except Exception as e:
         return jsonify(success=False, message=f"Unexpected error: {str(e)}")
 
