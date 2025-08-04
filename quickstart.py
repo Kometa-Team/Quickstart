@@ -1418,6 +1418,7 @@ def check_test_libraries():
         parent_dir = os.path.dirname(quickstart_root)
         target_path = os.path.join(parent_dir, "plex_test_libraries")
 
+    resolved_path = os.path.abspath(target_path)
     found = os.path.isdir(target_path)
     has_expected_folders = all(
         os.path.isdir(os.path.join(target_path, name)) for name in ["test_tv_lib", "test_movie_lib"]
@@ -1426,7 +1427,8 @@ def check_test_libraries():
     if use_config_dir:
         return jsonify({
             "found": found and has_expected_folders,
-            "is_git_repo": False
+            "is_git_repo": False,
+            "target_path": resolved_path
         })
 
     is_git_repo = False
@@ -1440,7 +1442,8 @@ def check_test_libraries():
 
     return jsonify({
         "found": found and (has_expected_folders or is_git_repo),
-        "is_git_repo": is_git_repo
+        "is_git_repo": is_git_repo,
+        "target_path": resolved_path
     })
 
 
@@ -1459,6 +1462,8 @@ def clone_test_libraries():
         parent_dir = os.path.dirname(quickstart_root)
         target_path = os.path.join(parent_dir, "plex_test_libraries")
 
+    resolved_path = os.path.abspath(target_path)
+
     try:
         if os.path.exists(target_path):
             # Check for valid Git repo
@@ -1467,13 +1472,13 @@ def clone_test_libraries():
                     from git import Repo
                     repo = Repo(target_path)
                     repo.remote().pull()
-                    return jsonify(success=True, message="Test libraries updated successfully.")
+                    return jsonify(success=True, message="Test libraries updated successfully.", target_path=resolved_path)
                 except Exception as e:
                     return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
 
             # If Docker/Frozen, .git folder isn't required — allow it
             if use_config_dir:
-                return jsonify(success=True, message="Test libraries already present and valid (ZIP install).")
+                return jsonify(success=True, message="Test libraries already present and valid (ZIP install).", target_path=resolved_path)
 
             # Otherwise, warn for invalid Git repo
             return jsonify(
@@ -1510,7 +1515,7 @@ def clone_test_libraries():
         if use_config_dir and platform.system() in ["Linux", "Darwin"]:
             subprocess.run(["chmod", "-R", "777", target_path], check=False)
 
-        return jsonify(success=True, message="Test libraries installed successfully.")
+        return jsonify(success=True, message="Test libraries installed successfully.", target_path=resolved_path)
 
     except Exception as e:
         return jsonify(success=False, message=f"Unexpected error: {str(e)}")

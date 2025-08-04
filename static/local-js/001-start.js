@@ -196,13 +196,15 @@ document.addEventListener('DOMContentLoaded', function () {
       })
         .then(res => res.json())
         .then(data => {
+          const pathHtml = data.target_path ? `<br><code>${data.target_path}</code>` : ''
           if (!data.found) {
             testLibStatus.classList.remove('d-none')
           } else if (data.found && data.is_git_repo) {
             testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
             testLibStatus.classList.add('alert-success')
-            testLibStatus.innerHTML = '<strong>✅ Test libraries already set up.</strong>'
+            testLibStatus.innerHTML = `<strong>✅ Test libraries already set up.</strong>${pathHtml}`
 
+            // silently pull
             fetch('/clone-test-libraries', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -223,14 +225,15 @@ document.addEventListener('DOMContentLoaded', function () {
           } else if ((isDocker || isFrozen) && data.found && !data.is_git_repo) {
             testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
             testLibStatus.classList.add('alert-success')
-            testLibStatus.innerHTML = '<strong>✅ Test libraries already set up (ZIP install).</strong>'
+            testLibStatus.innerHTML = `<strong>✅ Test libraries already set up (ZIP install).</strong>${pathHtml}`
           } else {
             testLibStatus.classList.remove('d-none')
-            testLibStatus.classList.remove('alert-warning')
+            testLibStatus.classList.remove('alert-warning', 'alert-success')
             testLibStatus.classList.add('alert-danger')
             testLibStatus.innerHTML = `
-        <strong>⚠️ Existing folder is not a git repo.</strong>
-        <br>Please delete the <code>plex_test_libraries</code> folder manually and try again.`
+            <strong>⚠️ Existing folder is not a git repo.</strong>
+            <br>Please delete the <code>plex_test_libraries</code> folder manually and try again.
+          `
           }
         })
 
@@ -256,19 +259,26 @@ document.addEventListener('DOMContentLoaded', function () {
           .then(res => res.json())
           .then(result => {
             clearInterval(toastInterval)
+            cloneBtn.innerHTML = 'Clone Again'
+            cloneBtn.disabled = false
+
+            const pathHtml = result.target_path ? `<br><code>${result.target_path}</code>` : ''
             if (result.success) {
-              testLibStatus.classList.remove('alert-warning')
+              testLibStatus.classList.remove('alert-warning', 'alert-danger')
               testLibStatus.classList.add('alert-success')
-              testLibStatus.innerHTML = `<strong>✅ ${result.message}</strong>`
+              testLibStatus.innerHTML = `<strong>✅ ${result.message}</strong>${pathHtml}`
             } else {
-              testLibStatus.classList.remove('alert-warning')
+              testLibStatus.classList.remove('alert-warning', 'alert-success')
               testLibStatus.classList.add('alert-danger')
               testLibStatus.innerHTML = `<strong>❌ ${result.message}</strong>`
             }
           })
           .catch(err => {
             clearInterval(toastInterval)
-            testLibStatus.classList.remove('alert-warning')
+            cloneBtn.innerHTML = 'Clone Again'
+            cloneBtn.disabled = false
+
+            testLibStatus.classList.remove('alert-warning', 'alert-success')
             testLibStatus.classList.add('alert-danger')
             testLibStatus.innerHTML = `<strong>❌ Clone failed:</strong> ${err.message}`
           })
