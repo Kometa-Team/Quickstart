@@ -117,7 +117,7 @@ jobs:
 
       - name: Update PART File and Commit
         id: update-version
-        if: contains(github.event.pull_request.labels.*.name, 'build')
+        if: contains(github.event.pull_request.labels.*.name, 'build') || contains(github.event.pull_request.labels.*.name, 'build-full')
         run: |
           branch_name=${{ github.event.pull_request.head.ref }}
           repo_name=${{ github.event.pull_request.head.repo.full_name }}
@@ -162,7 +162,7 @@ jobs:
             git diff --quiet . || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit Code Format Changes
-        if: steps.verify_diff.outputs.changed == 'true' && !contains(github.event.pull_request.labels.*.name, 'build')
+        if: steps.verify_diff.outputs.changed == 'true' && !contains(github.event.pull_request.labels.*.name, 'build') && !contains(github.event.pull_request.labels.*.name, 'build-full')
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
@@ -313,124 +313,22 @@ jobs:
           PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.windows }}**'
           PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.ubuntu }}**'
           PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.macos }}**'
+          PR_BODY+=$'\n\n## Docker Image'
+          PR_BODY+=$'\n\n**<code>${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}</code>**'
           
           gh pr edit "${{ github.event.number }}" --body "$PR_BODY"
+          
 
   docker-build-pull:
-    name: Docker Build ${{ matrix.tag }}
-    runs-on: ubuntu-latest
+    uses: ./.github/workflows/docker-build.yml
     needs: [ validate-changes, get-version ]
     if: needs.validate-changes.outputs.build == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'linux/amd64'
-            dockerfile: 'Dockerfile'
-            tag: 'amd64'
-          - platform: 'linux/arm64'
-            dockerfile: 'Dockerfile'
-            tag: 'arm64'
-          - platform: 'linux/arm/v7'
-            dockerfile: 'Dockerfile.arm7'
-            tag: 'armv7'
-    steps:
-
-      - name: Create App Token
-        uses: actions/create-github-app-token@v2
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_TOKEN }}
-
-      - name: Check Out Repo
-        uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@master
-        with:
-          platforms: all
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and Push
-        id: docker_build
-        uses: docker/build-push-action@v6
-        with:
-          context: ./
-          file: ./${{ matrix.dockerfile }}
-          build-args: |
-            "BRANCH_NAME=${{ needs.get-version.outputs.tag-name }}"
-          platforms: ${{ matrix.platform }}
-          tags: ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-${{ matrix.tag }}
-          push: true
-          provenance: false
-          sbom: false
-
-
-  create-manifest:
-    name: Create Docker Manifest
-    runs-on: ubuntu-latest
-    needs: [ get-version, docker-build-pull ]
-    steps:
-
-      - name: Create App Token
-        uses: actions/create-github-app-token@v2
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_TOKEN }}
-
-      - name: Check Out Repo
-        uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          ref: develop
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@master
-        with:
-          platforms: all
-
-      - name: Create manifest and push
-        run: |
-          docker manifest create \
-            ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }} \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-amd64 \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-arm64 \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}-armv7
-          docker manifest push ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}
-
-      - name: Delete Extra Images
-        run: |
-          HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
-          
-          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ needs.get-version.outputs.tag-name }}-amd64/
-          
-          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ needs.get-version.outputs.tag-name }}-arm64/
-          
-          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ needs.get-version.outputs.tag-name }}-armv7/
+    with:
+      branch: ${{ github.event.pull_request.head.ref }}
+      repository: ${{ github.event.pull_request.head.repo.full_name }}
+      branch_name: ${{ needs.get-version.outputs.tag-name }}
+      tag_name: ${{ needs.get-version.outputs.tag-name }}
+      full_build: contains(github.event.pull_request.labels.*.name, 'build-full')
 
 
   build-notification:
