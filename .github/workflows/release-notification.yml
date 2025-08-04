@@ -26,7 +26,7 @@ jobs:
           echo "commit-msg=$(git log -1 HEAD --pretty=format:%s)" >> $GITHUB_OUTPUT
 
   build-releases:
-    name: Build ${{ matrix.os_upper }} Installer
+    name: Build ${{ matrix.os_upper }} Executable
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
     needs: [ get-version ]
     strategy:

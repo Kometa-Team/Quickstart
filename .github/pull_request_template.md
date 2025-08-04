@@ -5,11 +5,11 @@
     - [X] Bug Fix (non-breaking change which fixes an issue)
 -->
 
-- [] Bug Fix (non-breaking change which fixes an issue)
-- [] Feature/Tweak (non-breaking change which adds new functionality or enhances existing functionality)
-- [] Breaking Change (fix or feature that would break any existing functionality for users)
-- [] Documentation Update
-- [] Other
+- [ ] Bug Fix (non-breaking change which fixes an issue)
+- [ ] Feature/Tweak (non-breaking change which adds new functionality or enhances existing functionality)
+- [ ] Breaking Change (fix or feature that would break any existing functionality for users)
+- [ ] Documentation Update
+- [ ] Other
 
 ## Description
 
@@ -32,9 +32,9 @@ _Please replace this line with a meaningful description of your PR. What does it
     - [X] Windows Executable
 -->
 
-- [] Local Install (Windows/Linux/Mac via `python quickstart.py`)
-- [] Windows Executable
-- [] Linux Executable
-- [] macOS Executable
-- [] Docker
-- [] Other
+- [ ] Local Install (Windows/Linux/Mac via `python quickstart.py`)
+- [ ] Windows Executable
+- [ ] Linux Executable
+- [ ] macOS Executable
+- [ ] Docker
+- [ ] Other

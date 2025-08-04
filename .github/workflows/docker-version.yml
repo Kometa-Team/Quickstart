@@ -18,7 +18,7 @@ jobs:
         run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
 
-  docker-build-pull2:
+  docker-build-version:
     name: Docker
     uses: ./.github/workflows/docker-build.yml
     secrets: inherit
