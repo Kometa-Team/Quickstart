@@ -1461,6 +1461,7 @@ def clone_test_libraries():
 
     try:
         if os.path.exists(target_path):
+            # Check for valid Git repo
             if os.path.isdir(os.path.join(target_path, ".git")):
                 try:
                     from git import Repo
@@ -1469,11 +1470,16 @@ def clone_test_libraries():
                     return jsonify(success=True, message="Test libraries updated successfully.")
                 except Exception as e:
                     return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
-            else:
-                return jsonify(
-                    success=False,
-                    message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
-                )
+
+            # If Docker/Frozen, .git folder isn't required — allow it
+            if use_config_dir:
+                return jsonify(success=True, message="Test libraries already present and valid (ZIP install).")
+
+            # Otherwise, warn for invalid Git repo
+            return jsonify(
+                success=False,
+                message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
+            )
 
         # Try Git clone first
         git_path = shutil.which("git")
@@ -1508,6 +1514,7 @@ def clone_test_libraries():
 
     except Exception as e:
         return jsonify(success=False, message=f"Unexpected error: {str(e)}")
+
 
 @app.route("/restart", methods=["POST"])
 def restart_quickstart():

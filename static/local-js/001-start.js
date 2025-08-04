@@ -197,15 +197,12 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => res.json())
         .then(data => {
           if (!data.found) {
-            // Folder doesn't exist → show clone banner
             testLibStatus.classList.remove('d-none')
           } else if (data.found && data.is_git_repo) {
-            // Folder exists and is a git repo → show permanent success message and silently pull
             testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
             testLibStatus.classList.add('alert-success')
             testLibStatus.innerHTML = '<strong>✅ Test libraries already set up.</strong>'
 
-            // Folder exists and is a git repo → silently pull
             fetch('/clone-test-libraries', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -223,15 +220,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
               })
               .catch(err => showToast('error', `Update failed: ${err.message}`))
+          } else if ((isDocker || isFrozen) && data.found && !data.is_git_repo) {
+            testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
+            testLibStatus.classList.add('alert-success')
+            testLibStatus.innerHTML = '<strong>✅ Test libraries already set up (ZIP install).</strong>'
           } else {
-            // Folder exists but not a git repo → show error banner
             testLibStatus.classList.remove('d-none')
             testLibStatus.classList.remove('alert-warning')
             testLibStatus.classList.add('alert-danger')
             testLibStatus.innerHTML = `
-            <strong>⚠️ Existing folder is not a git repo.</strong>
-            <br>Please delete the <code>plex_test_libraries</code> folder manually and try again.
-          `
+        <strong>⚠️ Existing folder is not a git repo.</strong>
+        <br>Please delete the <code>plex_test_libraries</code> folder manually and try again.
+      `
           }
         })
 
