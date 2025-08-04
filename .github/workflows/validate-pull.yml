@@ -328,7 +328,7 @@ jobs:
       repository: ${{ github.event.pull_request.head.repo.full_name }}
       branch_name: ${{ needs.get-version.outputs.tag-name }}
       tag_name: ${{ needs.get-version.outputs.tag-name }}
-      full_build: contains(github.event.pull_request.labels.*.name, 'build-full')
+      full_build: ${{ contains(github.event.pull_request.labels.*.name, 'build-full') }}
 
 
   build-notification:
