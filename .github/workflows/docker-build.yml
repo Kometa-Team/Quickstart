@@ -22,6 +22,7 @@ on:
         type: boolean
 jobs:
   create-matrix:
+    name: Create Matrix
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
@@ -43,11 +44,12 @@ jobs:
 
 
   docker-build:
-    name: Docker ${{ matrix.tag }} Build
+    name: ${{ matrix.tag }} Build
     runs-on: ubuntu-latest
+    needs: [ create-matrix ]
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.setup.outputs.full_matrix) }}
+      matrix: ${{ fromJson(needs.create-matrix.outputs.matrix) }}
     steps:
 
       - name: Create App Token
@@ -96,7 +98,7 @@ jobs:
 
 
   create-manifest:
-    name: Create Docker Manifest
+    name: Create Manifest
     runs-on: ubuntu-latest
     needs: [ docker-build ]
     steps:

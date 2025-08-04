@@ -320,6 +320,7 @@ jobs:
           
 
   docker-build-pull:
+    name: Docker
     uses: ./.github/workflows/docker-build.yml
     needs: [ validate-changes, get-version ]
     if: needs.validate-changes.outputs.build == 'true'
