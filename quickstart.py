@@ -1413,7 +1413,10 @@ def check_test_libraries():
         return jsonify(success=False, message="Quickstart root path not provided.")
 
     if use_config_dir:
-        target_path = os.path.join(quickstart_root, "config", "plex_test_libraries")
+        # Use actual working directory instead of frozen temp dir
+        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else quickstart_root
+        target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
+
     else:
         parent_dir = os.path.dirname(quickstart_root)
         target_path = os.path.join(parent_dir, "plex_test_libraries")
@@ -1448,7 +1451,10 @@ def clone_test_libraries():
         return jsonify(success=False, message="Quickstart root path not provided.")
 
     if use_config_dir:
-        target_path = os.path.join(quickstart_root, "config", "plex_test_libraries")
+        # Use actual working directory instead of frozen temp dir
+        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else quickstart_root
+        target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
+
     else:
         parent_dir = os.path.dirname(quickstart_root)
         target_path = os.path.join(parent_dir, "plex_test_libraries")
