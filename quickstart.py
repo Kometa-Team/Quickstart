@@ -2,6 +2,7 @@ import argparse
 import io
 import json
 import os
+import platform
 import psutil
 import shutil
 import shlex
@@ -1462,51 +1463,51 @@ def clone_test_libraries():
         if os.path.exists(target_path):
             if os.path.isdir(os.path.join(target_path, ".git")):
                 try:
-                    from git import Repo, GitCommandError
+                    from git import Repo
                     repo = Repo(target_path)
                     repo.remote().pull()
                     return jsonify(success=True, message="Test libraries updated successfully.")
-                except GitCommandError as e:
+                except Exception as e:
                     return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
             else:
-                expected_subfolders = ["test_tv_lib", "test_movie_lib"]
-                if all(os.path.isdir(os.path.join(target_path, f)) for f in expected_subfolders):
-                    return jsonify(success=True, message="Test libraries already extracted via ZIP.")
-                return jsonify(success=False, message="The 'plex_test_libraries' folder exists but is not a Git repo or valid ZIP extraction.\nPlease delete or rename it and try again.")
+                return jsonify(
+                    success=False,
+                    message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again."
+                )
 
-        # Try Git clone if Git is available
+        # Try Git clone first
         git_path = shutil.which("git")
         if git_path:
-            from git import Repo, GitCommandError, InvalidGitRepositoryError
+            from git import Repo
             Repo.clone_from("https://github.com/chazlarson/plex-test-libraries.git", target_path)
-            return jsonify(success=True, message="Test libraries cloned via Git.")
+        else:
+            # Fallback: Download and extract ZIP
+            zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
+            with tempfile.TemporaryDirectory() as tmpdir:
+                zip_path = os.path.join(tmpdir, "main.zip")
 
-        # Otherwise fallback to ZIP
-        zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
-        with tempfile.TemporaryDirectory() as tmpdir:
-            zip_path = os.path.join(tmpdir, "main.zip")
+                # Download ZIP
+                r = requests.get(zip_url)
+                if r.status_code != 200:
+                    return jsonify(success=False, message="Failed to download ZIP fallback from GitHub.")
+                with open(zip_path, "wb") as f:
+                    f.write(r.content)
 
-            r = requests.get(zip_url)
-            if r.status_code != 200:
-                return jsonify(success=False, message="Failed to download ZIP fallback from GitHub.")
+                # Extract
+                with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                    zip_ref.extractall(tmpdir)
 
-            with open(zip_path, "wb") as f:
-                f.write(r.content)
+                extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
+                shutil.move(extracted_dir, target_path)
 
-            with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                zip_ref.extractall(tmpdir)
+        # 🛡️ If Docker or Frozen, apply chmod only on Linux/macOS
+        if use_config_dir and platform.system() in ["Linux", "Darwin"]:
+            subprocess.run(["chmod", "-R", "777", target_path], check=False)
 
-            extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
-            if not os.path.isdir(extracted_dir):
-                return jsonify(success=False, message="ZIP extracted but main folder not found.")
-
-            shutil.move(extracted_dir, target_path)
-
-        return jsonify(success=True, message="Test libraries downloaded and extracted from ZIP.")
+        return jsonify(success=True, message="Test libraries installed successfully.")
 
     except Exception as e:
         return jsonify(success=False, message=f"Unexpected error: {str(e)}")
-
 
 @app.route("/restart", methods=["POST"])
 def restart_quickstart():
