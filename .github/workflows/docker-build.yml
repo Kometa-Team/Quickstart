@@ -30,17 +30,14 @@ jobs:
       - name: Set Matrix
         id: set-matrix
         run: |
-          
-          base_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" } ] }'
-          matrix_to_add='{"platform": "linux/arm/v7", "dockerfile": "Dockerfile.arm7", "tag": "armv7"}'
+          build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" } ] }'
+          full_build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" }, {"platform": "linux/arm/v7", "dockerfile": "Dockerfile.arm7", "tag": "armv7"} ] }'
 
-          # Check the boolean input and conditionally add to the matrix
           if ${{ inputs.full_build }}; then
-            full_matrix=$(echo "$base_matrix" | jq --argjson new_entry "$matrix_to_add" '.include += [$new_entry]')
+            echo "matrix=$full_build_matrix" >> "$GITHUB_OUTPUT"
           else
-            full_matrix="$base_matrix"
+            echo "matrix=$base_matrix" >> "$GITHUB_OUTPUT"
           fi
-          echo "matrix=$full_matrix" >> "$GITHUB_OUTPUT"
 
 
   Builds:

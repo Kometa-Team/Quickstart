@@ -242,8 +242,9 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
           fetch-depth: 0
-          ref: develop
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -260,13 +261,14 @@ jobs:
           filename="Quickstart-v${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}"
           echo "filename=${filename}" >> $GITHUB_OUTPUT
           pyinstaller -y ./quickstart.spec -- --branch pull --build ${{ runner.os }}
+          mv dist/Quickstart${{ matrix.ext }} dist/${filename}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         id: artifact-upload-step
         with:
           name: ${{ steps.build-executable.outputs.filename }}
-          path: dist/Quickstart${{ matrix.ext }}
+          path: dist/${{ steps.build-executable.outputs.filename }}
 
       - name: Save Links to Env Vars
         id: save-links
