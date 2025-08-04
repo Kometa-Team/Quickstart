@@ -230,15 +230,20 @@ document.addEventListener('DOMContentLoaded', function () {
             testLibStatus.classList.add('alert-danger')
             testLibStatus.innerHTML = `
         <strong>⚠️ Existing folder is not a git repo.</strong>
-        <br>Please delete the <code>plex_test_libraries</code> folder manually and try again.
-      `
+        <br>Please delete the <code>plex_test_libraries</code> folder manually and try again.`
           }
         })
 
       // Manual clone button
       cloneBtn.addEventListener('click', () => {
         cloneBtn.disabled = true
-        cloneBtn.innerHTML = 'Cloning...'
+        cloneBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Downloading test media (~7GB)...'
+
+        let toastCounter = 0
+        const toastInterval = setInterval(() => {
+          toastCounter += 1
+          showToast('info', `Still downloading test libraries... (${toastCounter * 30} seconds elapsed)`)
+        }, 30000)
 
         fetch('/clone-test-libraries', {
           method: 'POST',
@@ -250,6 +255,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
           .then(res => res.json())
           .then(result => {
+            clearInterval(toastInterval)
             if (result.success) {
               testLibStatus.classList.remove('alert-warning')
               testLibStatus.classList.add('alert-success')
@@ -261,6 +267,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           })
           .catch(err => {
+            clearInterval(toastInterval)
             testLibStatus.classList.remove('alert-warning')
             testLibStatus.classList.add('alert-danger')
             testLibStatus.innerHTML = `<strong>❌ Clone failed:</strong> ${err.message}`
