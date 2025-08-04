@@ -150,6 +150,7 @@ def before_request():
 @app.route("/update-quickstart", methods=["POST"])
 def update_quickstart():
     try:
+
         def run(cmd):
             result = subprocess.run(cmd, cwd=app.root_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             return result.stdout
