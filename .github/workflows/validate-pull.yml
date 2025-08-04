@@ -334,7 +334,7 @@ jobs:
   build-notification:
     name: Build Notification
     runs-on: ubuntu-latest
-    needs: [ get-version, add-links, create-manifest ]
+    needs: [ get-version, add-links, docker-build-pull ]
     steps:
 
       - name: Discord Success Notification
