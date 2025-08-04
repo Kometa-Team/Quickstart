@@ -258,7 +258,7 @@ jobs:
         id: build-executable
         shell: bash
         run: |
-          filename="Quickstart-v${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}"
+          filename="Quickstart-v${{ needs.get-version.outputs.version }}.${{ needs.get-version.outputs.tag-name }}${{ needs.get-version.outputs.part }}-${{ runner.os }}${{ matrix.ext }}"
           echo "filename=${filename}" >> $GITHUB_OUTPUT
           pyinstaller -y ./quickstart.spec -- --branch pull --build ${{ runner.os }}
           mv dist/Quickstart${{ matrix.ext }} dist/${filename}

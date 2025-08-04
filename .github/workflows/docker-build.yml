@@ -36,7 +36,7 @@ jobs:
           if ${{ inputs.full_build }}; then
             echo "matrix=$full_build_matrix" >> "$GITHUB_OUTPUT"
           else
-            echo "matrix=$base_matrix" >> "$GITHUB_OUTPUT"
+            echo "matrix=$build_matrix" >> "$GITHUB_OUTPUT"
           fi
 
 
