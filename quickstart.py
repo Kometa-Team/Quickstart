@@ -1506,7 +1506,7 @@ def clone_test_libraries():
                 extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
                 shutil.move(extracted_dir, target_path)
 
-        # 🛡️ If Docker or Frozen, apply chmod only on Linux/macOS
+        # If Docker or Frozen, apply chmod only on Linux/macOS
         if use_config_dir and platform.system() in ["Linux", "Darwin"]:
             subprocess.run(["chmod", "-R", "777", target_path], check=False)
 
