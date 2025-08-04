@@ -1414,7 +1414,7 @@ def check_test_libraries():
 
     if use_config_dir:
         # Use actual working directory instead of frozen temp dir
-        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else quickstart_root
+        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
         target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
 
     else:
@@ -1452,7 +1452,7 @@ def clone_test_libraries():
 
     if use_config_dir:
         # Use actual working directory instead of frozen temp dir
-        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, 'frozen', False) else quickstart_root
+        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
         target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
 
     else:
