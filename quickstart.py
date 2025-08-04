@@ -150,18 +150,21 @@ def before_request():
 @app.route("/update-quickstart", methods=["POST"])
 def update_quickstart():
     try:
-        result = subprocess.run(["git", "pull"], cwd=app.root_path, capture_output=True, text=True)
+        def run(cmd):
+            result = subprocess.run(cmd, cwd=app.root_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            return result.stdout
 
-        pip_upgrade = subprocess.run(["pip", "install", "--upgrade", "pip"], cwd=app.root_path, capture_output=True, text=True)
-
-        pip_result = subprocess.run(["pip", "install", "-r", "requirements.txt"], cwd=app.root_path, capture_output=True, text=True)
+        git_output = run(["git", "pull"])
+        pip_upgrade_output = run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
+        pip_output = run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
         return {
             "success": True,
-            "git_output": result.stdout + result.stderr,
-            "pip_upgrade_output": pip_upgrade.stdout + pip_upgrade.stderr,
-            "pip_output": pip_result.stdout + pip_result.stderr,
+            "git_output": git_output,
+            "pip_upgrade_output": pip_upgrade_output,
+            "pip_output": pip_output,
         }
+
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
 
