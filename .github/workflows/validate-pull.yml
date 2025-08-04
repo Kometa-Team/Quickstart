@@ -279,7 +279,7 @@ jobs:
   add-links:
     name: Add Links to PR
     runs-on: ubuntu-latest
-    needs: [ build-executable ]
+    needs: [ get-version, build-executable ]
     steps:
 
       - name: Create App Token

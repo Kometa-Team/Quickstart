@@ -8,119 +8,18 @@ on:
 jobs:
 
   docker-build-latest:
-    name: Docker ${{ matrix.tag }} Build
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'linux/amd64'
-            dockerfile: 'Dockerfile'
-            tag: 'amd64'
-          - platform: 'linux/arm64'
-            dockerfile: 'Dockerfile'
-            tag: 'arm64'
-          - platform: 'linux/arm/v7'
-            dockerfile: 'Dockerfile.arm7'
-            tag: 'armv7'
-    steps:
-
-      - name: Create App Token
-        uses: actions/create-github-app-token@v2
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_TOKEN }}
-
-      - name: Check Out Repo
-        uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@master
-        with:
-          platforms: all
-
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and Push
-        id: docker_build
-        uses: docker/build-push-action@v6
-        with:
-          context: ./
-          file: ./${{ matrix.dockerfile }}
-          platforms: ${{ matrix.platform }}
-          tags: ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:latest-${{ matrix.tag }}
-          push: true
-          provenance: false
-          sbom: false
-
-
-  create-manifest:
-    name: Create Docker Manifest
-    runs-on: ubuntu-latest
-    needs: [ docker-build-latest ]
-    steps:
-
-      - name: Create App Token
-        uses: actions/create-github-app-token@v2
-        id: app-token
-        with:
-          app-id: ${{ vars.APP_ID }}
-          private-key: ${{ secrets.APP_TOKEN }}
-
-      - name: Check Out Repo
-        uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@master
-        with:
-          platforms: all
-
-      - name: Create and Push Manifest
-        run: |
-          docker manifest create \
-            ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:latest \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:latest-amd64 \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:latest-arm64 \
-            --amend ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:latest-armv7
-          docker manifest push ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:latest
-
-      - name: Remove Extra Images
-        run: |
-          HUB_TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\": \"${{ secrets.DOCKER_HUB_USERNAME }}\", \"password\": \"${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}\"}" https://hub.docker.com/v2/users/login/ | jq -r .token)
-          
-          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/latest-amd64/
-          
-          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/latest-arm64/
-          
-          curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
-          https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/latest-armv7/
+    name: Docker
+    uses: ./.github/workflows/docker-build.yml
+    secrets: inherit
+    needs: [ validate-changes, get-version ]
+    with:
+      tag_name: latest
 
 
   build-notification:
     name: Build Notification
     runs-on: ubuntu-latest
-    needs: [ create-manifest ]
+    needs: [ docker-build-latest ]
     steps:
 
       - name: Discord Success Notification
