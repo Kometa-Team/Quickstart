@@ -1579,7 +1579,7 @@ if __name__ == "__main__":
         # Headless mode: skip system tray
         helpers.ts_log(f"Running in headless mode — no system tray will be shown.", level="INFO")
         if app.config["QUICKSTART_DOCKER"]:
-            helpers.ts_log(f"Quickstart is Running inside Docker...", level="INFO")
+            helpers.ts_log(f"Quickstart is Running inside Docker.", level="INFO")
             helpers.ts_log(f"Access it at http://<your-server-ip>:{running_port}", level="INFO")
             helpers.ts_log(f"Note: This IP is the HOST machine IP, not the container IP.", level="INFO")
         else:
