@@ -141,7 +141,7 @@ def before_request():
     # Only applies to form-encoded POSTs
     if request.method == "POST" and (request.content_type or "").startswith("application/x-www-form-urlencoded"):
         try:
-            form_data = request.form  # triggers parsing
+            form_data = request.form
             helpers.ts_log(f"Form field count: {len(form_data)}", level="DEBUG")
         except Exception as e:
             helpers.ts_log(f"Failed to parse form: {e}", level="ERROR")
