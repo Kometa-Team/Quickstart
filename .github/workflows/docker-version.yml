@@ -56,7 +56,7 @@ jobs:
           echo "changelog<<$EOF" >> $GITHUB_OUTPUT
           echo "## Commits" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          GIT_LOG_OUTPUT=$(git log ${latest_tag}..${{ needs.get-version.outputs.version }} --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')
+          GIT_LOG_OUTPUT=$(git log ${latest_tag}..${{ needs.get-version.outputs.version }} --pretty='* [\`%h\`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')
           echo "$GIT_LOG_OUTPUT" | base64 -w 0 >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...${{ needs.get-version.outputs.version }})" >> $GITHUB_OUTPUT
@@ -66,8 +66,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          CHANGELOG_DECODED=$(echo "${{ steps.build-changelog.outputs.changelog }}" | base64 -d)
-          echo "$CHANGELOG_DECODED"
+          echo "${{ steps.build-changelog.outputs.changelog }}"
           
           if gh release view prerelease > /dev/null 2>&1; then
             gh release delete prerelease --cleanup-tag
@@ -81,6 +80,20 @@ jobs:
           
           gh release create ${{ github.event.ref }} \
             --title "${{ vars.NAME }} ${{ github.event.ref }}" \
-            --notes "$CHANGELOG_DECODED" \
+            --notes "${{ steps.build-changelog.outputs.changelog }}" \
             --target "${{ needs.increment-build.outputs.commit-hash }}"
+
+      - name: Discord Failure Notification
+        uses: Kometa-Team/discord-notifications@master
+        if: failure()
+        with:
+          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
+          message: ${{ vars.BUILD_FAILURE_ROLE }}
+          title: "${{ vars.NAME }} ${{ needs.get-version.outputs.version }}: **Release Failed**"
+          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
+          color: ${{ vars.COLOR_FAILURE }}
+          username: ${{ vars.BOT_NAME }}
+          avatar_url: ${{ vars.BOT_IMAGE }}
+          author: ${{ vars.DOCKER_NAME }}
+          author_icon_url: ${{ vars.DOCKER_IMAGE }}
 

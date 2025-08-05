@@ -78,6 +78,27 @@ jobs:
           gh release upload ${tag_name} dist/Quickstart-${version_value}-${{ runner.os }}${{ matrix.ext }}
 
 
+  failure-notification:
+    name: Failure Notification
+    runs-on: ubuntu-latest
+    needs: [ get-version, build-releases ]
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    steps:
+
+      - name: Discord Failure Notification
+        uses: Kometa-Team/discord-notifications@master
+        with:
+          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
+          message: ${{ vars.BUILD_FAILURE_ROLE }}
+          title: "${{ vars.NAME }} ${{ github.event.release.name }}: ${{ vars.TEXT_FAILURE }}"
+          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
+          color: ${{ vars.COLOR_FAILURE }}
+          username: ${{ vars.BOT_NAME }}
+          avatar_url: ${{ vars.BOT_IMAGE }}
+          author: ${{ vars.DOCKER_NAME }}
+          author_icon_url: ${{ vars.DOCKER_IMAGE }}
+
+
   release-notification:
     name: Release Notification
     runs-on: ubuntu-latest
