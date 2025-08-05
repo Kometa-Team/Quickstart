@@ -30,7 +30,7 @@ jobs:
       - name: Set Matrix
         id: set-matrix
         run: |
-          build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" } ] }'
+          build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" } ] }'
           full_build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" }, { "platform": "linux/arm/v7", "dockerfile": "Dockerfile.arm7", "tag": "armv7"} ] }'
 
           if ${{ inputs.full_build }}; then
