@@ -72,7 +72,7 @@ DEFAULT_IMAGE_MAP = {
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
-# Initialize logging
+# Initialize logging please
 helpers.initialize_logging()
 
 GITHUB_MASTER_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
