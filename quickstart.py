@@ -132,7 +132,7 @@ app.config["MAX_FORM_MEMORY_SIZE"] = 16 * 1024 * 1024  # 16 MB
 def before_request():
     # Assign user UUID if not already present
     if "qs_session_id" not in session:
-        session["qs_session_id"] = str(uuid.uuid4())[:8]  # Shorter for readability
+        session["qs_session_id"] = str(uuid.uuid4())[:8]
 
     # Log request size if applicable
     if request.content_length:
