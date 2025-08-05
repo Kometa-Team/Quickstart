@@ -56,7 +56,7 @@ jobs:
           echo "changelog<<$EOF" >> $GITHUB_OUTPUT
           echo "## Commits" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          GIT_LOG_OUTPUT=$(git log v${{ needs.increment-build.outputs.version }}..HEAD --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')
+          GIT_LOG_OUTPUT=$(git log ${latest_tag}..${{ needs.get-version.outputs.version }} --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')
           echo "$GIT_LOG_OUTPUT" | base64 -w 0 >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/${latest_tag}...${{ needs.get-version.outputs.version }})" >> $GITHUB_OUTPUT

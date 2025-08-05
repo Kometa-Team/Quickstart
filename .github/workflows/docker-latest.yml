@@ -1,7 +1,6 @@
 name: Docker Latest Build
 
 on:
-  workflow_dispatch:
   push:
     branches: [ master ]
 
