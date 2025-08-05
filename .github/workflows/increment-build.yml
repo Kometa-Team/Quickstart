@@ -111,17 +111,7 @@ jobs:
           hash=$(git rev-parse HEAD)
           echo "$hash"
           echo "commit-hash=${hash}" >> $GITHUB_OUTPUT
-
-
-  docker-build-develop:
-    name: Docker
-    uses: ./.github/workflows/docker-build.yml
-    secrets: inherit
-    needs: [ increment-build ]
-    with:
-      branch: develop
-      branch_name: develop
-      tag_name: develop
+          
 
   create-pre-release:
     name: Create Pre-Release
@@ -149,7 +139,8 @@ jobs:
           echo "changelog<<$EOF" >> $GITHUB_OUTPUT
           echo "## Commits" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
-          echo "$(git log v${{ needs.increment-build.outputs.version }}..HEAD --pretty='* [<code>%h</code>](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')" >> $GITHUB_OUTPUT
+          GIT_LOG_OUTPUT=$(git log v${{ needs.increment-build.outputs.version }}..HEAD --pretty='* [`%h`](https://github.com/Kometa-Team/Quickstart/commit/%H): %s (@%an)')
+          echo "$GIT_LOG_OUTPUT" | base64 -w 0 >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "[**Full Code Changelog**](https://github.com/Kometa-Team/Quickstart/compare/v${{ needs.increment-build.outputs.version }}...prerelease)" >> $GITHUB_OUTPUT
           echo "$EOF" >> $GITHUB_OUTPUT
@@ -158,8 +149,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          echo "${{ steps.build-changelog.outputs.changelog }}"
-          
+          CHANGELOG_DECODED=$(echo "${{ steps.build-changelog.outputs.changelog }}" | base64 -d)
+          echo "$CHANGELOG_DECODED"
+                    
           if gh release view prerelease > /dev/null 2>&1; then
             gh release delete prerelease --cleanup-tag
             sleep 60
@@ -167,39 +159,17 @@ jobs:
           
           gh release create prerelease --prerelease \
             --title "${{ vars.NAME }} ${{ needs.increment-build.outputs.version }} Develop Build ${{ needs.increment-build.outputs.build-value }}" \
-            --notes "${{ steps.build-changelog.outputs.changelog }}" \
+            --notes "$CHANGELOG_DECODED" \
             --target "${{ needs.increment-build.outputs.commit-hash }}"
 
 
-  build-notification:
-    name: Build Notification
-    runs-on: ubuntu-latest
-    needs: [ docker-build-develop, create-pre-release ]
-    steps:
+  docker-build-develop:
+    name: Docker
+    uses: ./.github/workflows/docker-build.yml
+    secrets: inherit
+    needs: [ increment-build ]
+    with:
+      branch: develop
+      branch_name: develop
+      tag_name: develop
 
-      - name: Discord Success Notification
-        uses: Kometa-Team/discord-notifications@master
-        if: success()
-        with:
-          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          title: "${{ vars.NAME }} develop: ${{ vars.TEXT_SUCCESS }}"
-          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
-          color: ${{ vars.COLOR_SUCCESS }}
-          username: ${{ vars.BOT_NAME }}
-          avatar_url: ${{ vars.BOT_IMAGE }}
-          author: ${{ vars.DOCKER_NAME }}
-          author_icon_url: ${{ vars.DOCKER_IMAGE }}
-
-      - name: Discord Failure Notification
-        uses: Kometa-Team/discord-notifications@master
-        if: failure()
-        with:
-          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          message: ${{ vars.BUILD_FAILURE_ROLE }}
-          title: "${{ vars.NAME }} develop: ${{ vars.TEXT_FAILURE }}"
-          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
-          color: ${{ vars.COLOR_FAILURE }}
-          username: ${{ vars.BOT_NAME }}
-          avatar_url: ${{ vars.BOT_IMAGE }}
-          author: ${{ vars.DOCKER_NAME }}
-          author_icon_url: ${{ vars.DOCKER_IMAGE }}

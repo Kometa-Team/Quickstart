@@ -17,36 +17,3 @@ jobs:
       branch_name: develop
       tag_name: develop
 
-
-  build-notification:
-    name: Build Notification
-    runs-on: ubuntu-latest
-    needs: [ docker-build-develop ]
-    steps:
-
-      - name: Discord Success Notification
-        uses: Kometa-Team/discord-notifications@master
-        if: success()
-        with:
-          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          title: "${{ vars.NAME }} develop: ${{ vars.TEXT_SUCCESS }}"
-          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
-          color: ${{ vars.COLOR_SUCCESS }}
-          username: ${{ vars.BOT_NAME }}
-          avatar_url: ${{ vars.BOT_IMAGE }}
-          author: ${{ vars.DOCKER_NAME }}
-          author_icon_url: ${{ vars.DOCKER_IMAGE }}
-
-      - name: Discord Failure Notification
-        uses: Kometa-Team/discord-notifications@master
-        if: failure()
-        with:
-          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          message: ${{ vars.BUILD_FAILURE_ROLE }}
-          title: "${{ vars.NAME }} develop: ${{ vars.TEXT_FAILURE }}"
-          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
-          color: ${{ vars.COLOR_FAILURE }}
-          username: ${{ vars.BOT_NAME }}
-          avatar_url: ${{ vars.BOT_IMAGE }}
-          author: ${{ vars.DOCKER_NAME }}
-          author_icon_url: ${{ vars.DOCKER_IMAGE }}

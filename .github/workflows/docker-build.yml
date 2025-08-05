@@ -7,7 +7,7 @@ on:
         type: string
       repository:
         required: false
-        default: ${{ vars.REPO_NAME }}
+        default: Kometa-Team/${{ vars.REPO_NAME }}
         type: string
       branch_name:
         required: false
@@ -30,8 +30,14 @@ jobs:
       - name: Set Matrix
         id: set-matrix
         run: |
-          build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" } ] }'
-          full_build_matrix='{ "include": [ { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" }, {"platform": "linux/arm/v7", "dockerfile": "Dockerfile.arm7", "tag": "armv7"} ] }'
+          build_matrix='{ "include": [ \
+          { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, \
+          { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" } ] }'
+          
+          full_build_matrix='{ "include": [ \
+          { "platform": "linux/amd64", "dockerfile": "Dockerfile", "tag": "amd64" }, \
+          { "platform": "linux/arm64", "dockerfile": "Dockerfile", "tag": "arm64" }, \
+          { "platform": "linux/arm/v7", "dockerfile": "Dockerfile.arm7", "tag": "armv7"} ] }'
 
           if ${{ inputs.full_build }}; then
             echo "matrix=$full_build_matrix" >> "$GITHUB_OUTPUT"
@@ -111,7 +117,7 @@ jobs:
         with:
           platforms: all
 
-      - name: Create manifest and push
+      - name: Create and Push Manifest
         run: |
           manifest_command="docker manifest create \
             ${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ inputs.tag_name }} \
@@ -141,4 +147,44 @@ jobs:
             curl -i -X DELETE -H "Accept: application/json" -H "Authorization: JWT $HUB_TOKEN" \
             https://hub.docker.com/v2/repositories/${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}/tags/${{ inputs.tag_name }}-armv7/
           fi
+
+
+  success-notification:
+    name: Build Notification
+    runs-on: ubuntu-latest
+    needs: [ create-matrix ]
+    steps:
+
+      - name: Discord Success Notification
+        uses: Kometa-Team/discord-notifications@master
+        with:
+          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
+          title: "${{ vars.NAME }} ${{ inputs.tag_name }}: ${{ vars.TEXT_SUCCESS }}"
+          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
+          color: ${{ vars.COLOR_SUCCESS }}
+          username: ${{ vars.BOT_NAME }}
+          avatar_url: ${{ vars.BOT_IMAGE }}
+          author: ${{ vars.DOCKER_NAME }}
+          author_icon_url: ${{ vars.DOCKER_IMAGE }}
+
+
+  failure-notification:
+    name: Build Notification
+    runs-on: ubuntu-latest
+    needs: [ create-matrix, Builds ]
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    steps:
+
+      - name: Discord Failure Notification
+        uses: Kometa-Team/discord-notifications@master
+        with:
+          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
+          message: ${{ vars.BUILD_FAILURE_ROLE }}
+          title: "${{ vars.NAME }} ${{ inputs.tag_name }}: ${{ vars.TEXT_FAILURE }}"
+          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
+          color: ${{ vars.COLOR_FAILURE }}
+          username: ${{ vars.BOT_NAME }}
+          avatar_url: ${{ vars.BOT_IMAGE }}
+          author: ${{ vars.DOCKER_NAME }}
+          author_icon_url: ${{ vars.DOCKER_IMAGE }}
 

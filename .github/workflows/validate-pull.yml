@@ -212,6 +212,20 @@ jobs:
           echo "part=${part}" >> $GITHUB_OUTPUT
           
 
+  docker-build-pull:
+    name: Docker
+    uses: ./.github/workflows/docker-build.yml
+    secrets: inherit
+    needs: [ validate-changes, get-version ]
+    if: needs.validate-changes.outputs.build == 'true'
+    with:
+      branch: ${{ github.event.pull_request.head.ref }}
+      repository: ${{ github.event.pull_request.head.repo.full_name }}
+      branch_name: ${{ needs.get-version.outputs.tag-name }}
+      tag_name: ${{ needs.get-version.outputs.tag-name }}
+      full_build: ${{ contains(github.event.pull_request.labels.*.name, 'build-full') }}
+          
+
   build-executable:
     name: Build ${{ matrix.os_upper }} Executable
     runs-on: ${{ matrix.os }}-${{ matrix.os_version }}
@@ -316,54 +330,7 @@ jobs:
           PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.ubuntu }}**'
           PR_BODY+=$'\n\n**${{ needs.build-executable.outputs.macos }}**'
           PR_BODY+=$'\n\n## Docker Image'
-          PR_BODY+=$'\n\n**<code>${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}</code>**'
+          PR_BODY+=$'\n\n**`${{ vars.DOCKER_TEAM }}/${{ vars.DOCKER_REPO }}:${{ needs.get-version.outputs.tag-name }}`**'
           
           gh pr edit "${{ github.event.number }}" --body "$PR_BODY"
-          
 
-  docker-build-pull:
-    name: Docker
-    uses: ./.github/workflows/docker-build.yml
-    secrets: inherit
-    needs: [ validate-changes, get-version ]
-    if: needs.validate-changes.outputs.build == 'true'
-    with:
-      branch: ${{ github.event.pull_request.head.ref }}
-      repository: ${{ github.event.pull_request.head.repo.full_name }}
-      branch_name: ${{ needs.get-version.outputs.tag-name }}
-      tag_name: ${{ needs.get-version.outputs.tag-name }}
-      full_build: ${{ contains(github.event.pull_request.labels.*.name, 'build-full') }}
-
-
-  build-notification:
-    name: Build Notification
-    runs-on: ubuntu-latest
-    needs: [ get-version, add-links, docker-build-pull ]
-    steps:
-
-      - name: Discord Success Notification
-        uses: Kometa-Team/discord-notifications@master
-        if: success()
-        with:
-          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          title: "${{ vars.REPO_NAME }} ${{ needs.get-version.outputs.tag-name }}: ${{ vars.TEXT_SUCCESS }}"
-          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
-          color: ${{ vars.COLOR_SUCCESS }}
-          username: ${{ vars.BOT_NAME }}
-          avatar_url: ${{ vars.BOT_IMAGE }}
-          author: ${{ vars.DOCKER_NAME }}
-          author_icon_url: ${{ vars.DOCKER_IMAGE }}
-
-      - name: Discord Failure Notification
-        uses: Kometa-Team/discord-notifications@master
-        if: failure()
-        with:
-          webhook_id_token: ${{ secrets.BUILD_WEBHOOK }}
-          message: ${{ vars.BUILD_FAILURE_ROLE }}
-          title: "${{ vars.REPO_NAME }} ${{ needs.get-version.outputs.tag-name }}: ${{ vars.TEXT_FAILURE }}"
-          url: https://github.com/Kometa-Team/${{ vars.REPO_NAME }}/actions/runs/${{ github.run_id }}
-          color: ${{ vars.COLOR_FAILURE }}
-          username: ${{ vars.BOT_NAME }}
-          avatar_url: ${{ vars.BOT_IMAGE }}
-          author: ${{ vars.DOCKER_NAME }}
-          author_icon_url: ${{ vars.DOCKER_IMAGE }}

@@ -79,7 +79,7 @@ jobs:
 
 
   release-notification:
-    name: Build Notification
+    name: Release Notification
     runs-on: ubuntu-latest
     needs: [ get-version, build-releases ]
     steps:
