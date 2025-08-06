@@ -17,10 +17,16 @@
   <p class="fs-5">We <b>strongly</b> suggest you set up test libraries if this is your first time running
     Quickstart/Kometa, <a href="#" data-bs-toggle="modal" data-bs-target="#Modal2">click here</a> to learn more</p>
   <div id="test-lib-status" class="alert alert-warning d-none mt-3">
-    <strong>Test media libraries not found.</strong>
-    <span class="ms-1">We recommend setting them up for testing with Kometa. Be patient as the repository is about 7GB.</span>
+    <span id="test-lib-status-message">
+      <strong>Test media libraries not found.</strong>
+      <span class="ms-1">We recommend setting them up for testing with Kometa. Be patient as the repository is about
+        7GB.</span>
+    </span>
     <br>
     <button class="btn btn-sm btn-primary mt-2" id="clone-test-lib-btn">Clone Test Libraries</button>
+    <button type="button" class="btn btn-sm btn-danger ms-2 mt-2 d-none" id="purge-test-lib-btn">
+      <i class="bi bi-trash3 me-1"></i> Delete Test Libraries
+    </button>
   </div>
   <p class="fs-5">Review the Config Data section below and press the arrow button above when you are ready to begin.</p>
 </div><br>
@@ -87,6 +93,29 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-danger" id="confirmConfigAction">Proceed</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Confirm Delete Test Libraries Modal -->
+<div class="modal fade" id="confirm-delete-test-libraries" tabindex="-1"
+  aria-labelledby="confirmDeleteTestLibrariesLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="confirmDeleteTestLibrariesLabel">
+          <i class="bi bi-trash3 me-2"></i>Confirm Delete
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to permanently delete the test libraries? This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm" id="confirm-delete-test-libraries-btn">
+          <i class="bi bi-trash3 me-1"></i> Yes, Delete
+        </button>
       </div>
     </div>
   </div>

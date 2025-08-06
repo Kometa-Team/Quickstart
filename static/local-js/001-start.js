@@ -180,12 +180,15 @@ document.addEventListener('DOMContentLoaded', function () {
   const isDocker = installType === 'Docker'
   const isFrozen = installType.startsWith('Frozen-')
   const isLocal = installType.startsWith('Local-')
+  const isManagedInstall = isDocker || isFrozen || isLocal
 
-  if (isDocker || isFrozen || isLocal) {
+  if (isManagedInstall) {
     const testLibStatus = document.getElementById('test-lib-status')
+    const statusMsg = document.getElementById('test-lib-status-message')
     const cloneBtn = document.getElementById('clone-test-lib-btn')
+    const purgeBtn = document.getElementById('purge-test-lib-btn')
 
-    if (testLibStatus && cloneBtn) {
+    if (testLibStatus && statusMsg && cloneBtn && purgeBtn) {
       fetch('/check-test-libraries', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -197,14 +200,31 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(res => res.json())
         .then(data => {
           const pathHtml = data.target_path ? `<br><code>${data.target_path}</code>` : ''
-          if (!data.found) {
-            testLibStatus.classList.remove('d-none')
-          } else if (data.found && data.is_git_repo) {
-            testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
-            testLibStatus.classList.add('alert-success')
-            testLibStatus.innerHTML = `<strong>✅ Test libraries already set up.</strong>${pathHtml}`
 
-            // silently pull
+          // Not found: show clone only
+          if (!data.found) {
+            testLibStatus.classList.remove('d-none', 'alert-success', 'alert-danger')
+            testLibStatus.classList.add('alert-warning')
+            statusMsg.innerHTML = `
+            <strong>Test media libraries not found.</strong>
+            <span class="ms-1">We recommend setting them up for testing with Kometa. Be patient as the repository is about 7GB.</span>
+            ${pathHtml}
+          `
+            cloneBtn.classList.remove('d-none')
+            purgeBtn.classList.add('d-none')
+            return
+          }
+
+          // Found: show purge only
+          testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
+          testLibStatus.classList.add('alert-success')
+          cloneBtn.classList.add('d-none')
+          purgeBtn.classList.remove('d-none')
+
+          if (data.is_git_repo) {
+            statusMsg.innerHTML = `<strong>✅ Test libraries already set up.</strong>${pathHtml}`
+
+            // 🔄 Silently pull updates
             fetch('/clone-test-libraries', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -222,22 +242,75 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
               })
               .catch(err => showToast('error', `Update failed: ${err.message}`))
-          } else if ((isDocker || isFrozen) && data.found && !data.is_git_repo) {
-            testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
-            testLibStatus.classList.add('alert-success')
-            testLibStatus.innerHTML = `<strong>✅ Test libraries already set up (ZIP install).</strong>${pathHtml}`
           } else {
-            testLibStatus.classList.remove('d-none')
-            testLibStatus.classList.remove('alert-warning', 'alert-success')
-            testLibStatus.classList.add('alert-danger')
-            testLibStatus.innerHTML = `
-            <strong>⚠️ Existing folder is not a git repo.</strong>
-            <br>Please delete the <code>plex_test_libraries</code> folder manually and try again.
-          `
+            // ZIP install
+            let shaNotice = ''
+            if (data.local_sha && data.remote_sha) {
+              shaNotice = `<br><small>Installed version: <code>${data.local_sha}</code> • Latest: <code>${data.remote_sha}</code></small>`
+            }
+
+            statusMsg.innerHTML = `<strong>✅ Test libraries already set up (ZIP install).</strong>${pathHtml}${shaNotice}`
+
+            if (data.is_outdated) {
+              showToast(
+                'warning',
+                `⚠️ A new version of the test libraries is available. Installed: ${data.local_sha}, Latest: ${data.remote_sha}`
+              )
+            }
           }
         })
 
-      // Manual clone button
+      // PURGE BUTTON
+      // Bind Bootstrap modal to purge button
+      purgeBtn.addEventListener('click', () => {
+        const deleteModal = new bootstrap.Modal(document.getElementById('confirm-delete-test-libraries'))
+        deleteModal.show()
+      })
+
+      // When user confirms in modal
+      document.getElementById('confirm-delete-test-libraries-btn').addEventListener('click', () => {
+        const deleteModalEl = document.getElementById('confirm-delete-test-libraries')
+        const deleteModal = bootstrap.Modal.getInstance(deleteModalEl)
+        deleteModal.hide()
+
+        purgeBtn.disabled = true
+        purgeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Purging...'
+
+        fetch('/purge-test-libraries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            quickstart_root: window.pageInfo.quickstart_root,
+            use_config_dir: isDocker || isFrozen
+          })
+        })
+          .then(res => res.json())
+          .then(result => {
+            purgeBtn.disabled = false
+            purgeBtn.innerHTML = '<i class="bi bi-trash3 me-1"></i> Delete Test Libraries'
+
+            if (result.success) {
+              showToast('success', result.message)
+              testLibStatus.classList.remove('alert-danger', 'alert-success')
+              testLibStatus.classList.add('alert-warning')
+              statusMsg.innerHTML = `
+          <strong>🗑️ ${result.message}</strong>
+          <span class="ms-1">You can re-download the test libraries if needed.</span>
+        `
+              purgeBtn.classList.add('d-none')
+              cloneBtn.classList.remove('d-none')
+            } else {
+              showToast('error', result.message)
+            }
+          })
+          .catch(err => {
+            purgeBtn.disabled = false
+            purgeBtn.innerHTML = '<i class="bi bi-trash3 me-1"></i> Delete Test Libraries'
+            showToast('error', `Failed to purge: ${err.message}`)
+          })
+      })
+
+      // CLONE BUTTON
       cloneBtn.addEventListener('click', () => {
         cloneBtn.disabled = true
         cloneBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Downloading test media (~7GB)...'
@@ -266,21 +339,22 @@ document.addEventListener('DOMContentLoaded', function () {
             if (result.success) {
               testLibStatus.classList.remove('alert-warning', 'alert-danger')
               testLibStatus.classList.add('alert-success')
-              testLibStatus.innerHTML = `<strong>✅ ${result.message}</strong>${pathHtml}`
+              statusMsg.innerHTML = `<strong>✅ ${result.message}</strong>${pathHtml}`
+              cloneBtn.classList.add('d-none')
+              purgeBtn.classList.remove('d-none')
             } else {
               testLibStatus.classList.remove('alert-warning', 'alert-success')
               testLibStatus.classList.add('alert-danger')
-              testLibStatus.innerHTML = `<strong>❌ ${result.message}</strong>`
+              statusMsg.innerHTML = `<strong>❌ ${result.message}</strong>`
             }
           })
           .catch(err => {
             clearInterval(toastInterval)
             cloneBtn.innerHTML = 'Clone Again'
             cloneBtn.disabled = false
-
             testLibStatus.classList.remove('alert-warning', 'alert-success')
             testLibStatus.classList.add('alert-danger')
-            testLibStatus.innerHTML = `<strong>❌ Clone failed:</strong> ${err.message}`
+            statusMsg.innerHTML = `<strong>❌ Clone failed:</strong> ${err.message}`
           })
       })
     }
