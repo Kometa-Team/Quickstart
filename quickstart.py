@@ -1425,10 +1425,7 @@ def check_test_libraries():
 
     resolved_path = os.path.abspath(target_path)
     found = os.path.isdir(target_path)
-    has_expected_folders = all(
-        os.path.isdir(os.path.join(target_path, name))
-        for name in ["test_tv_lib", "test_movie_lib"]
-    )
+    has_expected_folders = all(os.path.isdir(os.path.join(target_path, name)) for name in ["test_tv_lib", "test_movie_lib"])
 
     is_git_repo = False
     local_sha = ""
@@ -1440,6 +1437,7 @@ def check_test_libraries():
         try:
             os.environ["GIT_PYTHON_REFRESH"] = "quiet"
             from git import Repo, InvalidGitRepositoryError, GitCommandError
+
             try:
                 _ = Repo(target_path).git_dir
                 is_git_repo = True
@@ -1459,10 +1457,7 @@ def check_test_libraries():
                     local_sha = ""
 
                 try:
-                    commit_info = requests.get(
-                        "https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main",
-                        timeout=5
-                    ).json()
+                    commit_info = requests.get("https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main", timeout=5).json()
                     remote_sha = commit_info.get("sha", "")[:7]
                 except Exception:
                     remote_sha = ""
@@ -1470,14 +1465,16 @@ def check_test_libraries():
                 if local_sha and remote_sha and local_sha != remote_sha:
                     is_outdated = True
 
-    return jsonify({
-        "found": found and (has_expected_folders or is_git_repo),
-        "is_git_repo": is_git_repo,
-        "target_path": resolved_path,
-        "is_outdated": is_outdated,
-        "local_sha": local_sha,
-        "remote_sha": remote_sha
-    })
+    return jsonify(
+        {
+            "found": found and (has_expected_folders or is_git_repo),
+            "is_git_repo": is_git_repo,
+            "target_path": resolved_path,
+            "is_outdated": is_outdated,
+            "local_sha": local_sha,
+            "remote_sha": remote_sha,
+        }
+    )
 
 
 @app.route("/clone-test-libraries", methods=["POST"])
@@ -1505,6 +1502,7 @@ def clone_test_libraries():
                 try:
                     os.environ["GIT_PYTHON_REFRESH"] = "quiet"
                     from git import Repo
+
                     repo = Repo(target_path)
                     repo.remote().pull()
                     return jsonify(success=True, message="Test libraries updated successfully.", target_path=resolved_path)
@@ -1522,6 +1520,7 @@ def clone_test_libraries():
             try:
                 os.environ["GIT_PYTHON_REFRESH"] = "quiet"
                 from git import Repo
+
                 Repo.clone_from("https://github.com/chazlarson/plex-test-libraries.git", target_path)
             except Exception as e:
                 helpers.ts_log(f"Git clone failed, falling back to ZIP: {e}", level="WARNING")
