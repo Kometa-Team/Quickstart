@@ -1438,7 +1438,6 @@ def check_test_libraries():
     if found:
         # Try to import GitPython safely
         try:
-            import os
             os.environ["GIT_PYTHON_REFRESH"] = "quiet"
             from git import Repo, InvalidGitRepositoryError, GitCommandError
             try:
@@ -1504,7 +1503,6 @@ def clone_test_libraries():
         if os.path.exists(target_path):
             if os.path.isdir(os.path.join(target_path, ".git")):
                 try:
-                    import os
                     os.environ["GIT_PYTHON_REFRESH"] = "quiet"
                     from git import Repo
                     repo = Repo(target_path)
@@ -1522,7 +1520,6 @@ def clone_test_libraries():
         git_path = shutil.which("git")
         if git_path:
             try:
-                import os
                 os.environ["GIT_PYTHON_REFRESH"] = "quiet"
                 from git import Repo
                 Repo.clone_from("https://github.com/chazlarson/plex-test-libraries.git", target_path)
