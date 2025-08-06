@@ -150,12 +150,18 @@ def before_request():
 @app.route("/update-quickstart", methods=["POST"])
 def update_quickstart():
     try:
+        data = request.get_json(silent=True) or {}
+        branch = data.get("branch", "master")
 
         def run(cmd):
             result = subprocess.run(cmd, cwd=app.root_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             return result.stdout
 
-        git_output = run(["git", "pull"])
+        if branch == "develop":
+            git_output = run(["git", "fetch"]) + run(["git", "reset", "--hard", "origin/develop"])
+        else:
+            git_output = run(["git", "pull"])
+
         pip_upgrade_output = run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
         pip_output = run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
@@ -164,6 +170,7 @@ def update_quickstart():
             "git_output": git_output,
             "pip_upgrade_output": pip_upgrade_output,
             "pip_output": pip_output,
+            "current_branch": branch
         }
 
     except Exception as e:

@@ -217,8 +217,14 @@ document.addEventListener('DOMContentLoaded', () => {
       updateBtn.disabled = true
       updateBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Updating...'
 
+      const branch = updateBtn.dataset.branch || 'master'
+
       try {
-        const res = await fetch('/update-quickstart', { method: 'POST' })
+        const res = await fetch('/update-quickstart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ branch })
+        })
         const data = await res.json()
 
         resultBox.classList.remove('d-none')
@@ -227,8 +233,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.success) {
           resultBox.innerHTML = `
             <strong>✅ Update Successful!</strong><br>
+            <span class="text-info">Branch: <code>${data.current_branch}</code></span>
             <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">
-              ${data.git_output}${data.pip_output}
+${data.git_output}${data.pip_upgrade_output}${data.pip_output}
             </pre>
             <button class="btn btn-sm btn-success mt-2" onclick="restartQuickstart()">Restart Quickstart</button>
           `
