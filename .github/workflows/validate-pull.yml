@@ -25,12 +25,6 @@ jobs:
           echo "Head Repo: ${{ github.event.pull_request.head.repo.full_name }}"
           echo "Head Ref: ${{ github.event.pull_request.head.ref }}"
 
-      - name: Check Base Branch
-        if: github.base_ref == 'master'
-        run: |
-          echo "ERROR: Pull Requests cannot be submitted to master. Please submit the Pull Request to the develop branch"
-          exit 1
-
       - name: Check for Remote Branch
         if: "!contains(github.event.pull_request.labels.*.name, 'approved')"
         run: |
@@ -41,6 +35,22 @@ jobs:
               echo "ERROR: Pull Requests must be approved before they can run workflows"
               exit 1
           fi
+
+      - name: Create App Token
+        uses: actions/create-github-app-token@v2
+        id: app-token
+        with:
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_TOKEN }}
+
+      - name: Check Base Branch
+        if: github.base_ref == 'master'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "Pull Requests cannot be submitted to master. Please submit the Pull Request to the develop branch."
+          echo "ERROR: Pull Requests cannot be submitted to master. Please submit the Pull Request to the develop branch"
+          exit 1
 
       - name: Checkout Repo
         uses: actions/checkout@v4
