@@ -72,7 +72,7 @@ DEFAULT_IMAGE_MAP = {
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 
-# Initialize logging please
+# Initialize logging
 helpers.initialize_logging()
 
 GITHUB_MASTER_VERSION_URL = "https://raw.githubusercontent.com/Kometa-Team/Quickstart/master/VERSION"
@@ -1425,7 +1425,10 @@ def check_test_libraries():
 
     resolved_path = os.path.abspath(target_path)
     found = os.path.isdir(target_path)
-    has_expected_folders = all(os.path.isdir(os.path.join(target_path, name)) for name in ["test_tv_lib", "test_movie_lib"])
+    has_expected_folders = all(
+        os.path.isdir(os.path.join(target_path, name))
+        for name in ["test_tv_lib", "test_movie_lib"]
+    )
 
     is_git_repo = False
     local_sha = ""
@@ -1436,7 +1439,6 @@ def check_test_libraries():
         # Check if it's a Git repo
         try:
             from git import Repo, InvalidGitRepositoryError, GitCommandError
-
             _ = Repo(target_path).git_dir
             is_git_repo = True
         except (ImportError, InvalidGitRepositoryError, GitCommandError, OSError):
@@ -1453,7 +1455,10 @@ def check_test_libraries():
                     local_sha = ""
 
                 try:
-                    commit_info = requests.get("https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main", timeout=5).json()
+                    commit_info = requests.get(
+                        "https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main",
+                        timeout=5
+                    ).json()
                     remote_sha = commit_info.get("sha", "")[:7]
                 except Exception:
                     remote_sha = ""
@@ -1461,16 +1466,14 @@ def check_test_libraries():
                 if local_sha and remote_sha and local_sha != remote_sha:
                     is_outdated = True
 
-    return jsonify(
-        {
-            "found": found and (has_expected_folders or is_git_repo),
-            "is_git_repo": is_git_repo,
-            "target_path": resolved_path,
-            "is_outdated": is_outdated,
-            "local_sha": local_sha,
-            "remote_sha": remote_sha,
-        }
-    )
+    return jsonify({
+        "found": found and (has_expected_folders or is_git_repo),
+        "is_git_repo": is_git_repo,
+        "target_path": resolved_path,
+        "is_outdated": is_outdated,
+        "local_sha": local_sha,
+        "remote_sha": remote_sha
+    })
 
 
 @app.route("/clone-test-libraries", methods=["POST"])
@@ -1580,7 +1583,9 @@ def purge_test_libraries():
         return jsonify(success=False, message="Quickstart root path not provided.")
 
     if use_config_dir:
-        target_path = os.path.join(quickstart_root, "config", "plex_test_libraries")
+        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
+        target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
+
     else:
         parent_dir = os.path.dirname(quickstart_root)
         target_path = os.path.join(parent_dir, "plex_test_libraries")
@@ -1664,7 +1669,7 @@ if __name__ == "__main__":
 
     if not has_tray:
         # Headless mode: skip system tray
-        helpers.ts_log(f"Running in headless mode — no system tray will be shown.", level="INFO")
+        helpers.ts_log(f"Running in headless mode — no system tray will be shown...", level="INFO")
         if app.config["QUICKSTART_DOCKER"]:
             helpers.ts_log(f"Quickstart is Running inside Docker.", level="INFO")
             helpers.ts_log(f"Access it at http://<your-server-ip>:{running_port}", level="INFO")
