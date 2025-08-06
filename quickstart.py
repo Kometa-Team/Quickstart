@@ -165,13 +165,7 @@ def update_quickstart():
         pip_upgrade_output = run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
         pip_output = run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
-        return {
-            "success": True,
-            "git_output": git_output,
-            "pip_upgrade_output": pip_upgrade_output,
-            "pip_output": pip_output,
-            "current_branch": branch
-        }
+        return {"success": True, "git_output": git_output, "pip_upgrade_output": pip_upgrade_output, "pip_output": pip_output, "current_branch": branch}
 
     except Exception as e:
         return {"success": False, "error": str(e)}, 500
