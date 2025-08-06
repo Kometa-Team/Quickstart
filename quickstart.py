@@ -1417,10 +1417,8 @@ def check_test_libraries():
         return jsonify(success=False, message="Quickstart root path not provided.")
 
     if use_config_dir:
-        # Use actual working directory instead of frozen temp dir
         base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
         target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
-
     else:
         parent_dir = os.path.dirname(quickstart_root)
         target_path = os.path.join(parent_dir, "plex_test_libraries")
@@ -1429,11 +1427,13 @@ def check_test_libraries():
     found = os.path.isdir(target_path)
     has_expected_folders = all(os.path.isdir(os.path.join(target_path, name)) for name in ["test_tv_lib", "test_movie_lib"])
 
-    if use_config_dir:
-        return jsonify({"found": found and has_expected_folders, "is_git_repo": False, "target_path": resolved_path})
-
     is_git_repo = False
+    local_sha = ""
+    remote_sha = ""
+    is_outdated = False
+
     if found:
+        # Check if it's a Git repo
         try:
             from git import Repo, InvalidGitRepositoryError, GitCommandError
 
@@ -1442,7 +1442,35 @@ def check_test_libraries():
         except (ImportError, InvalidGitRepositoryError, GitCommandError, OSError):
             is_git_repo = False
 
-    return jsonify({"found": found and (has_expected_folders or is_git_repo), "is_git_repo": is_git_repo, "target_path": resolved_path})
+        # Check ZIP SHA version if not a git repo
+        if not is_git_repo:
+            sha_path = os.path.join(target_path, ".test_libraries_version")
+            if os.path.exists(sha_path):
+                try:
+                    with open(sha_path, "r") as f:
+                        local_sha = f.read().strip()
+                except Exception:
+                    local_sha = ""
+
+                try:
+                    commit_info = requests.get("https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main", timeout=5).json()
+                    remote_sha = commit_info.get("sha", "")[:7]
+                except Exception:
+                    remote_sha = ""
+
+                if local_sha and remote_sha and local_sha != remote_sha:
+                    is_outdated = True
+
+    return jsonify(
+        {
+            "found": found and (has_expected_folders or is_git_repo),
+            "is_git_repo": is_git_repo,
+            "target_path": resolved_path,
+            "is_outdated": is_outdated,
+            "local_sha": local_sha,
+            "remote_sha": remote_sha,
+        }
+    )
 
 
 @app.route("/clone-test-libraries", methods=["POST"])
@@ -1494,6 +1522,13 @@ def clone_test_libraries():
         else:
             # Fallback: Download and extract ZIP
             zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
+            # Fetch latest commit SHA from GitHub API
+            commit_sha = None
+            try:
+                commit_info = requests.get("https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main", timeout=5).json()
+                commit_sha = commit_info.get("sha", "")[:7]
+            except Exception:
+                commit_sha = None
             with tempfile.TemporaryDirectory() as tmpdir:
                 zip_path = os.path.join(tmpdir, "main.zip")
 
@@ -1509,7 +1544,21 @@ def clone_test_libraries():
                     zip_ref.extractall(tmpdir)
 
                 extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
+
+                # Remove existing target if present
+                if os.path.exists(target_path):
+                    shutil.rmtree(target_path, onerror=helpers.handle_remove_readonly)
+
+                # Move new files into place
                 shutil.move(extracted_dir, target_path)
+
+                # Save SHA if available
+                if commit_sha:
+                    try:
+                        with open(os.path.join(target_path, ".test_libraries_version"), "w") as f:
+                            f.write(commit_sha)
+                    except Exception as e:
+                        helpers.ts_log(f"Warning: Failed to write SHA version file: {e}", level="WARNING")
 
         # If Docker or Frozen, apply chmod only on Linux/macOS
         if use_config_dir and platform.system() in ["Linux", "Darwin"]:
@@ -1519,6 +1568,34 @@ def clone_test_libraries():
 
     except Exception as e:
         return jsonify(success=False, message=f"Unexpected error: {str(e)}")
+
+
+@app.route("/purge-test-libraries", methods=["POST"])
+def purge_test_libraries():
+    data = request.get_json(silent=True) or {}
+    quickstart_root = data.get("quickstart_root", "")
+    use_config_dir = data.get("use_config_dir", False)
+
+    if not quickstart_root:
+        return jsonify(success=False, message="Quickstart root path not provided.")
+
+    if use_config_dir:
+        target_path = os.path.join(quickstart_root, "config", "plex_test_libraries")
+    else:
+        parent_dir = os.path.dirname(quickstart_root)
+        target_path = os.path.join(parent_dir, "plex_test_libraries")
+
+    resolved_path = os.path.abspath(target_path)
+
+    try:
+        if not os.path.exists(resolved_path):
+            return jsonify(success=False, message="Test libraries folder does not exist.")
+
+        shutil.rmtree(resolved_path, onerror=helpers.handle_remove_readonly)
+        return jsonify(success=True, message=f"Test libraries deleted at: {resolved_path}")
+
+    except Exception as e:
+        return jsonify(success=False, message=f"Failed to delete folder:\n{str(e)}")
 
 
 @app.route("/restart", methods=["POST"])

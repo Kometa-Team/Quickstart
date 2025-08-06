@@ -4,6 +4,7 @@ import platform
 import json
 import os
 import re
+import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -1099,3 +1100,8 @@ def ts_log(*args, level="INFO"):
             f.write(line_file + "\n")
     except Exception:
         pass
+
+
+def handle_remove_readonly(func, path, exc_info):
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
