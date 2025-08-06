@@ -52,6 +52,13 @@ jobs:
           echo "ERROR: Pull Requests cannot be submitted to master. Please submit the Pull Request to the develop branch"
           exit 1
 
+      - name: Test Comment
+        if: github.base_ref == 'develop'
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} --body "Pull Requests cannot be submitted to master. Please submit the Pull Request to the develop branch."
+
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
