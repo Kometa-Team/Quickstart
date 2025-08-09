@@ -1159,18 +1159,9 @@ def start_kometa():
             proc = psutil.Process(pid)
             start_time = proc.create_time()
             start_iso = datetime.fromtimestamp(start_time).isoformat()
-            return jsonify({
-                "error": f"Kometa is already running (PID: {pid}) since {start_iso}.",
-                "status": "running",
-                "pid": pid,
-                "started_at": start_iso
-            }), 400
+            return jsonify({"error": f"Kometa is already running (PID: {pid}) since {start_iso}.", "status": "running", "pid": pid, "started_at": start_iso}), 400
         except Exception:
-            return jsonify({
-                "error": f"Kometa is already running (PID: {pid}).",
-                "status": "running",
-                "pid": pid
-            }), 400
+            return jsonify({"error": f"Kometa is already running (PID: {pid}).", "status": "running", "pid": pid}), 400
 
     if sys.platform.startswith("win"):
         venv_python = os.path.join(kometa_root, "kometa-venv", "Scripts", "python.exe")
@@ -1183,13 +1174,7 @@ def start_kometa():
             command_parts.pop(0)
         command_parts.insert(0, venv_python)
 
-        proc = subprocess.Popen(
-            command_parts,
-            cwd=kometa_root,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True
-        )
+        proc = subprocess.Popen(command_parts, cwd=kometa_root, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
         with open(helpers.get_kometa_pid_file(), "w") as f:
             f.write(str(proc.pid))
