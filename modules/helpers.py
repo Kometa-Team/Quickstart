@@ -3,6 +3,7 @@ import hashlib
 import platform
 import json
 import os
+import psutil
 import re
 import stat
 import subprocess
@@ -1105,3 +1106,34 @@ def ts_log(*args, level="INFO"):
 def handle_remove_readonly(func, path, exc_info):
     os.chmod(path, stat.S_IWRITE)
     func(path)
+
+
+def get_kometa_pid_file():
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    return os.path.join(CONFIG_DIR, "kometa.pid")
+
+
+def get_kometa_pid():
+    pid_file = get_kometa_pid_file()
+    if os.path.exists(pid_file):
+        try:
+            with open(pid_file, "r") as f:
+                return int(f.read().strip())
+        except Exception:
+            return None
+    return None
+
+
+def is_kometa_running():
+    pid = get_kometa_pid()
+    if not pid:
+        return False
+    try:
+        proc = psutil.Process(pid)
+        return proc.is_running() and "kometa.py" in " ".join(proc.cmdline())
+    except psutil.NoSuchProcess:
+        try:
+            os.remove(get_kometa_pid_file())
+        except Exception:
+            pass
+        return False

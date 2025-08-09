@@ -25,6 +25,7 @@ import namesgenerator
 import requests
 from PIL import Image
 from cachelib.file import FileSystemCache
+from datetime import datetime
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -1145,16 +1146,32 @@ def shutdown():
 
 @app.route("/start-kometa", methods=["POST"])
 def start_kometa():
-    global kometa_process
     data = request.get_json()
     command = data.get("command")
+    kometa_root = app.config["KOMETA_ROOT"]
 
     if not command:
         return jsonify({"error": "No command provided"}), 400
 
-    kometa_root = app.config["KOMETA_ROOT"]
+    if helpers.is_kometa_running():
+        pid = helpers.get_kometa_pid()
+        try:
+            proc = psutil.Process(pid)
+            start_time = proc.create_time()
+            start_iso = datetime.fromtimestamp(start_time).isoformat()
+            return jsonify({
+                "error": f"Kometa is already running (PID: {pid}) since {start_iso}.",
+                "status": "running",
+                "pid": pid,
+                "started_at": start_iso
+            }), 400
+        except Exception:
+            return jsonify({
+                "error": f"Kometa is already running (PID: {pid}).",
+                "status": "running",
+                "pid": pid
+            }), 400
 
-    # Get venv Python path
     if sys.platform.startswith("win"):
         venv_python = os.path.join(kometa_root, "kometa-venv", "Scripts", "python.exe")
     else:
@@ -1162,44 +1179,73 @@ def start_kometa():
 
     try:
         command_parts = shlex.split(command)
-
-        # Remove any Python interpreter already in the command
         if os.path.basename(command_parts[0]).lower() in ["python", "python3", "python.exe"]:
             command_parts.pop(0)
-
-        # Prepend your trusted path
         command_parts.insert(0, venv_python)
 
-        kometa_process = subprocess.Popen(command_parts, cwd=kometa_root)
-        app.config["kometa_process"] = kometa_process
+        proc = subprocess.Popen(
+            command_parts,
+            cwd=kometa_root,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
+        )
 
-        return jsonify({"status": "Kometa started"})
+        with open(helpers.get_kometa_pid_file(), "w") as f:
+            f.write(str(proc.pid))
+
+        return jsonify({"status": "Kometa started", "pid": proc.pid})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 @app.route("/stop-kometa", methods=["POST"])
 def stop_kometa():
-    global kometa_process
+    pid = helpers.get_kometa_pid()
 
-    if kometa_process and kometa_process.poll() is None:
-        try:
-            parent = psutil.Process(kometa_process.pid)
-            for child in parent.children(recursive=True):
-                try:
-                    child.kill()
-                except psutil.NoSuchProcess:
-                    pass  # Child already exited
-            parent.kill()
-            kometa_process = None
-            return jsonify({"success": True}), 200
-        except psutil.NoSuchProcess:
-            kometa_process = None
-            return jsonify({"warning": "Process already terminated"}), 200
-        except Exception as e:
-            return jsonify({"error": f"Failed to terminate Kometa: {str(e)}"}), 500
-    else:
-        return jsonify({"warning": "No active Kometa process"}), 200
+    if not pid:
+        return jsonify({"warning": "No active Kometa PID"}), 200
+
+    try:
+        proc = psutil.Process(pid)
+        for child in proc.children(recursive=True):
+            try:
+                child.kill()
+            except psutil.NoSuchProcess:
+                continue
+        proc.kill()
+
+        pid_file = helpers.get_kometa_pid_file()
+        if os.path.exists(pid_file):
+            os.remove(pid_file)
+
+        return jsonify({"success": True, "message": "Kometa stopped"}), 200
+    except psutil.NoSuchProcess:
+        pid_file = helpers.get_kometa_pid_file()
+        if os.path.exists(pid_file):
+            os.remove(pid_file)
+        return jsonify({"warning": "Process not found. Cleaned up PID file."}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to stop Kometa: {str(e)}"}), 500
+
+
+@app.route("/kometa-status", methods=["GET"])
+def kometa_status():
+    pid = helpers.get_kometa_pid()
+    if not pid:
+        return jsonify(status="not started")
+
+    try:
+        proc = psutil.Process(pid)
+        if proc.is_running() and "kometa.py" in " ".join(proc.cmdline()):
+            return jsonify(status="running", pid=pid)
+        else:
+            return jsonify(status="done", return_code=proc.wait(timeout=1))
+    except psutil.NoSuchProcess:
+        pid_file = helpers.get_kometa_pid_file()
+        if os.path.exists(pid_file):
+            os.remove(pid_file)
+        return jsonify(status="not started")
 
 
 @app.route("/tail-log")
@@ -1393,19 +1439,6 @@ def update_kometa():
     except Exception as e:
         logs.append(f"Exception during Kometa update: {str(e)}")
         return jsonify(success=False, log=logs), 500
-
-
-@app.route("/kometa-status", methods=["GET"])
-def kometa_status():
-    process = app.config.get("kometa_process")
-    if process is None:
-        return jsonify(status="not started")
-
-    retcode = process.poll()
-    if retcode is None:
-        return jsonify(status="running")
-    else:
-        return jsonify(status="done", return_code=retcode)
 
 
 @app.route("/check-test-libraries", methods=["POST"])
