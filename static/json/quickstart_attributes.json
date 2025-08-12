@@ -254,6 +254,20 @@
       "yml_location": "attribute"
     },
     {
+      "prefix": "assets_for_all_collections",
+      "type": "boolean_toggle",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Assets for All Collections",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#assets-for-all-collections",
+      "description": "Used to search the asset directories for images for all unmanaged and/or unconfigured collections in the library.",
+      "tooltip_variant": "info",
+      "yml_location": "attribute"
+    },
+    {
       "prefix": "delete_collections",
       "type": "toggle_with_number",
       "accordion": "library",

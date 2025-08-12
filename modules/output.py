@@ -91,6 +91,7 @@ def build_libraries_section(
         # Process Operations Attributes
         operations_fields = [
             "assets_for_all",
+            "assets_for_all_collections",
             "mass_imdb_parental_labels",
             "mass_collection_mode",
             "update_blank_track_titles",
@@ -712,6 +713,7 @@ def reorder_library_section(library_data):
     # 4. Reorder operations
     operations_order = [
         "assets_for_all",
+        "assets_for_all_collections",
         "delete_collections",
         "mass_genre_update",
         "mass_content_rating_update",
