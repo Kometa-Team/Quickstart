@@ -230,25 +230,28 @@ document.addEventListener('DOMContentLoaded', () => {
         resultBox.classList.remove('d-none')
         resultBox.classList.add('border', 'rounded', 'bg-body-tertiary', 'p-3', 'text-light')
 
+        const lines = Array.isArray(data.log) ? data.log.filter(Boolean).map(String) : []
+
         if (data.success) {
           resultBox.innerHTML = `
             <strong>✅ Update Successful!</strong><br>
-            <span class="text-info">Branch: <code>${data.current_branch}</code></span>
-            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">
-${data.git_output}${data.pip_upgrade_output}${data.pip_output}
-            </pre>
+            <span class="text-info">Branch: <code>${data.branch || branch}</code></span>
+            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${lines.join('\n')}</pre>
             <button class="btn btn-sm btn-success mt-2" onclick="restartQuickstart()">Restart Quickstart</button>
           `
         } else {
-          resultBox.innerHTML = `<strong>❌ Error:</strong> ${data.error}`
+          resultBox.innerHTML = `
+            <strong>❌ Error:</strong> ${data.error || 'Update failed'}<br>
+            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${lines.join('\n')}</pre>
+          `
         }
       } catch (err) {
         resultBox.classList.remove('d-none')
-        resultBox.innerHTML = `<strong>❌ Request Failed:</strong> ${err}`
+        resultBox.innerHTML = `<strong>❌ Request Failed:</strong> ${String(err)}`
+      } finally {
+        updateBtn.disabled = false
+        updateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Run Update Now'
       }
-
-      updateBtn.disabled = false
-      updateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Run Update Now'
     })
   }
 })
