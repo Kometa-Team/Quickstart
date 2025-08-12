@@ -160,11 +160,16 @@ def update_quickstart():
         logs.extend(result.get("log", []))
         status = 200 if result.get("success") else 500
 
-        return jsonify({
-            "success": result.get("success", False),
-            "log": logs,
-            "branch": branch,
-        }), status
+        return (
+            jsonify(
+                {
+                    "success": result.get("success", False),
+                    "log": logs,
+                    "branch": branch,
+                }
+            ),
+            status,
+        )
 
     except Exception as e:
         logs.append(f"Exception during Quickstart update: {e}")
@@ -1442,12 +1447,7 @@ def update_kometa():
         logs.extend(result.get("log", []))
         status = 200 if result.get("success") else 500
 
-        return jsonify({
-            "success": result.get("success", False),
-            "log": logs,
-            "qs_branch": qs_branch,
-            "kometa_branch_effective": kometa_branch
-        }), status
+        return jsonify({"success": result.get("success", False), "log": logs, "qs_branch": qs_branch, "kometa_branch_effective": kometa_branch}), status
 
     except Exception as e:
         logs.append(f"Exception during Kometa update: {e}")

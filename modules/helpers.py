@@ -969,21 +969,24 @@ def perform_kometa_update(kometa_root, branch="master"):
         p = subprocess.run(["git", "fetch", upstream, "--prune"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
         logs.append((p.stdout or "").strip() or "(no output)")
         if p.returncode != 0:
-            logs.append((p.stderr or "").strip()); success = False
+            logs.append((p.stderr or "").strip())
+            success = False
 
         # 2) switch (fallback to checkout)
         if success:
             cmd = ["git", "switch", "-C", kometa_branch, "--track", f"{upstream}/{kometa_branch}"]
             logs.append(f"🔀 {' '.join(cmd)}")
             p = subprocess.run(cmd, cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
-            if p.stdout: logs.append(p.stdout.strip())
+            if p.stdout:
+                logs.append(p.stdout.strip())
             if p.returncode != 0:
                 fallback = ["git", "checkout", "-B", kometa_branch, f"{upstream}/{kometa_branch}"]
                 logs.append(f"🔁 fallback: {' '.join(fallback)}")
                 p = subprocess.run(fallback, cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
                 logs.append((p.stdout or "").strip() or "(no output)")
                 if p.returncode != 0:
-                    logs.append((p.stderr or "").strip()); success = False
+                    logs.append((p.stderr or "").strip())
+                    success = False
 
         # 3) reset
         if success:
@@ -991,7 +994,8 @@ def perform_kometa_update(kometa_root, branch="master"):
             p = subprocess.run(["git", "reset", "--hard", f"{upstream}/{kometa_branch}"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
             logs.append((p.stdout or "").strip() or "(no output)")
             if p.returncode != 0:
-                logs.append((p.stderr or "").strip()); success = False
+                logs.append((p.stderr or "").strip())
+                success = False
 
         # 4) venv pip upgrade
         if success:
@@ -1001,15 +1005,19 @@ def perform_kometa_update(kometa_root, branch="master"):
             p = subprocess.run([str(pip_bin), "install", "--upgrade", "pip"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
             logs.append((p.stdout or "").strip() or "(no output)")
             if p.returncode != 0:
-                logs.append((p.stderr or "").strip()); success = False
+                logs.append((p.stderr or "").strip())
+                success = False
 
         # 5) install requirements
         if success:
             logs.append("\n📦 Installing requirements...")
-            p = subprocess.run([str(pip_bin), "install", "--no-cache-dir", "--upgrade", "-r", "requirements.txt"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
+            p = subprocess.run(
+                [str(pip_bin), "install", "--no-cache-dir", "--upgrade", "-r", "requirements.txt"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows
+            )
             logs.append((p.stdout or "").strip() or "(no output)")
             if p.returncode != 0:
-                logs.append((p.stderr or "").strip()); success = False
+                logs.append((p.stderr or "").strip())
+                success = False
 
         logs.append("\n✅ Kometa update completed." if success else "\n❌ Kometa update failed.")
         return {"success": success, "log": logs}
@@ -1176,9 +1184,7 @@ def perform_quickstart_update(qs_root, branch="master"):
         is_windows = sys.platform.startswith("win")
 
         # pick upstream remote (prefer official)
-        remotes_out = subprocess.run(
-            ["git", "remote"], cwd=qs_root, capture_output=True, text=True, shell=is_windows
-        )
+        remotes_out = subprocess.run(["git", "remote"], cwd=qs_root, capture_output=True, text=True, shell=is_windows)
         remotes = (remotes_out.stdout or "").split()
         upstream = "kometa-team" if "kometa-team" in remotes else "origin"
         logs.append(f"🔗 Using Quickstart remote: {upstream}")
@@ -1198,7 +1204,7 @@ def perform_quickstart_update(qs_root, branch="master"):
 
         # 1) fetch (ensure upstream/<branch> exists)
         p = run(["git", "fetch", upstream, "--prune"], f"📥 git fetch {upstream} --prune")
-        success &= (p.returncode == 0)
+        success &= p.returncode == 0
 
         # 2) switch to branch (fallback to checkout)
         if success:
@@ -1211,7 +1217,7 @@ def perform_quickstart_update(qs_root, branch="master"):
                     ["git", "checkout", "-B", branch, f"{upstream}/{branch}"],
                     f"🔁 fallback: git checkout -B {branch} {upstream}/{branch}",
                 )
-                success &= (p.returncode == 0)
+                success &= p.returncode == 0
 
         # 3) hard reset to upstream tip
         if success:
@@ -1219,14 +1225,17 @@ def perform_quickstart_update(qs_root, branch="master"):
                 ["git", "reset", "--hard", f"{upstream}/{branch}"],
                 f"↩️ git reset --hard {upstream}/{branch}",
             )
-            success &= (p.returncode == 0)
+            success &= p.returncode == 0
 
         # 4) upgrade pip for this interpreter (QS uses its own Python)
         if success:
             logs.append("\n⬆️ Upgrading pip...")
             p = subprocess.run(
                 [str(Path(sys.executable)), "-m", "pip", "install", "--upgrade", "pip"],
-                cwd=qs_root, capture_output=True, text=True, shell=is_windows,
+                cwd=qs_root,
+                capture_output=True,
+                text=True,
+                shell=is_windows,
             )
             logs.append((p.stdout or "").strip() or "(no output)")
             if p.returncode != 0:
@@ -1238,7 +1247,10 @@ def perform_quickstart_update(qs_root, branch="master"):
             logs.append("\n📦 Installing requirements...")
             p = subprocess.run(
                 [str(Path(sys.executable)), "-m", "pip", "install", "--no-cache-dir", "--upgrade", "-r", "requirements.txt"],
-                cwd=qs_root, capture_output=True, text=True, shell=is_windows,
+                cwd=qs_root,
+                capture_output=True,
+                text=True,
+                shell=is_windows,
             )
             logs.append((p.stdout or "").strip() or "(no output)")
             if p.returncode != 0:
