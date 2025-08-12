@@ -150,28 +150,28 @@ def before_request():
 
 @app.route("/update-quickstart", methods=["POST"])
 def update_quickstart():
+    logs = []
+
     try:
         data = request.get_json(silent=True) or {}
         branch = data.get("branch", "master")
 
-        def run(cmd):
-            result = subprocess.run(cmd, cwd=app.root_path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-            return result.stdout
+        result = helpers.perform_quickstart_update(app.root_path, branch=branch)
+        logs.extend(result.get("log", []))
+        status = 200 if result.get("success") else 500
 
-        if branch == "develop":
-            git_output = run(["git", "fetch"]) + run(["git", "reset", "--hard", "origin/develop"])
-        else:
-            git_output = run(["git", "pull"])
-
-        pip_upgrade_output = run([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
-        pip_output = run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-
-        return {"success": True, "git_output": git_output, "pip_upgrade_output": pip_upgrade_output, "pip_output": pip_output, "current_branch": branch}
+        return jsonify({
+            "success": result.get("success", False),
+            "log": logs,
+            "branch": branch,
+        }), status
 
     except Exception as e:
-        return {"success": False, "error": str(e)}, 500
+        logs.append(f"Exception during Quickstart update: {e}")
+        return jsonify({"success": False, "log": logs}), 500
 
 
+# Initialize Flask-Session
 server_session = Session(app)
 server_thread = None
 
@@ -1411,19 +1411,47 @@ def validate_kometa_root():
 @app.route("/update-kometa", methods=["POST"])
 def update_kometa():
     logs = []
-
     try:
-        kometa_root = session.get("kometa_root")
+        kometa_root = session.get("kometa_root") or app.config.get("KOMETA_ROOT")
         if not kometa_root:
-            return jsonify(success=False, log=["Kometa root path is not set."]), 400
+            logs.append("Kometa root path is not set.")
+            return jsonify({"success": False, "log": logs}), 400
 
-        result = helpers.perform_kometa_update(kometa_root)
-        logs.extend(result["log"])
-        return jsonify(success=result["success"], log=logs)
+        # Read request JSON first
+        data = request.get_json(silent=True) or {}
+
+        # Get QS branch from request (default master). If you prefer auto-detect, swap this line
+        qs_branch = data.get("branch", "master")
+        logs.append(f"🔎 Quickstart branch: {qs_branch}")
+
+        # Policy: QS develop → Kometa nightly; otherwise Kometa master (unless overridden below)
+        if qs_branch == "master":
+            kometa_branch = "master"
+            logs.append("ℹ️ Policy: QS is 'master' → using Kometa 'master'.")
+        else:
+            kometa_branch = "nightly"
+            logs.append("ℹ️ Policy: QS is not 'master' → using Kometa 'nightly'.")
+
+        # Optional override from request (but never override the 'develop'→'nightly' rule)
+        override = data.get("kometa_branch")
+        if override and qs_branch != "develop":
+            kometa_branch = override
+            logs.append(f"🛠 Override: using Kometa branch '{kometa_branch}' from request.")
+
+        result = helpers.perform_kometa_update(kometa_root, branch=kometa_branch)
+        logs.extend(result.get("log", []))
+        status = 200 if result.get("success") else 500
+
+        return jsonify({
+            "success": result.get("success", False),
+            "log": logs,
+            "qs_branch": qs_branch,
+            "kometa_branch_effective": kometa_branch
+        }), status
 
     except Exception as e:
-        logs.append(f"Exception during Kometa update: {str(e)}")
-        return jsonify(success=False, log=logs), 500
+        logs.append(f"Exception during Kometa update: {e}")
+        return jsonify({"success": False, "log": logs}), 500
 
 
 @app.route("/check-test-libraries", methods=["POST"])

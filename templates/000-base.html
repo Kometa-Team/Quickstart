@@ -71,7 +71,7 @@
         {% if version_info.branch == "master" %}
         <code>git pull && pip install -r requirements.txt</code>
         {% elif version_info.branch == "develop" %}
-        <code>git fetch && git reset --hard origin/develop && pip install -r requirements.txt</code>
+        <code>git fetch && git reset --hard kometa-team/develop && pip install -r requirements.txt</code>
         {% else %}
         <code>git fetch && git checkout {{ version_info.branch }} && pip install -r requirements.txt</code>
         {% endif %}

@@ -290,7 +290,6 @@
     </div>
 
     <div class="mt-3">
-      <p class="form-label mb-1">Kometa Validation Log</p>
       {% if version_info.running_on.startswith("Local") %}
       <div class="mt-3">
         <p class="form-label mb-1">Kometa Validation Log</p>
@@ -308,7 +307,7 @@
       A new version of Kometa is available:
       <strong><span id="kometa-local-version"></span> → <span id="kometa-remote-version"></span></strong>.
       <br>
-      <button id="update-kometa-btn" type="button" class="btn btn-sm btn-primary mt-2">
+      <button id="update-kometa-btn" class="btn btn-sm btn-primary mt-2" data-branch="{{ version_info.branch }}">
         <i class="bi bi-arrow-clockwise"></i> Update Kometa Now
       </button>
     </div>

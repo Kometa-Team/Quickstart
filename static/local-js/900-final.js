@@ -480,12 +480,16 @@ $(document).ready(function () {
     $btn.prop('disabled', true).html('<i class="bi bi-arrow-repeat me-1"></i> Updating...')
     $logBox.append('\n🔧 Starting Kometa update...\n')
 
+    const branch = $btn.data('branch') || 'master'
+
     fetch('/update-kometa', {
-      method: 'POST'
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ branch })
     })
       .then(res => res.json())
       .then(data => {
-        if (data.log && Array.isArray(data.log)) {
+        if (Array.isArray(data.log)) {
           data.log.forEach(line => $logBox.append(`${line}\n`))
         }
 
@@ -499,7 +503,6 @@ $(document).ready(function () {
 
         $btn.prop('disabled', false).html('🔄 Update Kometa Now')
 
-        // Run Kometa validation ONLY if validation log is visible (i.e., we're on a Local install)
         if (document.getElementById('kometa-validation-log')) {
           validateKometaRoot()
         }
@@ -511,6 +514,7 @@ $(document).ready(function () {
         $btn.prop('disabled', false).html('🔄 Update Kometa Now')
       })
   })
+
   // Sync visibility for timeout and divider on page load
   $('#opt-timeout-container').toggleClass('d-none', !$('#opt-timeout').is(':checked'))
   $('#opt-divider-container').toggleClass('d-none', !$('#opt-divider').is(':checked'))
