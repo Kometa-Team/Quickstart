@@ -38,7 +38,7 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
 
   - [5 - Installing locally](#5---installing-locally)
 
-- [Low-Level Installation Instructions](#low---level-installation-instructions)
+- [Low-Level Installation Instructions](#low-level-installation-instructions)
 
 - [Debugging & Changing Ports](#debugging--changing-ports)
 
