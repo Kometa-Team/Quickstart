@@ -14,78 +14,98 @@
 [![Sponsor or Donate](https://img.shields.io/badge/-Sponsor%2FDonate-blueviolet?style=plastic)](https://github.com/sponsors/meisnate12)
 <!--shields-end-->
 <!--body1-start-->
-Welcome to Kometa Quickstart! This Web UI tool will guide you through creating a Configuration File to use with Kometa.
+## Welcome to Kometa Quickstart
 
-Special Thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](https://github.com/bullmoose20), [chazlarson](https://github.com/chazlarson) and [Yozora](https://github.com/yozoraXCII) for the time spent developing this tool.
+Kometa Quickstart is a guided Web UI that helps you create a Configuration File for use with Kometa.
+
+Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](https://github.com/bullmoose20), [chazlarson](https://github.com/chazlarson), and [Yozora](https://github.com/yozoraXCII) for their contributions to this tool.
+
+## Table of Contents
+
+- [Introduction](#welcome-to-kometa-quickstart)
+
+- [Prerequisites](#prerequisites)
+
+- [Installing Quickstart](#installing-quickstart)
+
+  - [1 - Installing on Windows](#1---installing-on-windows)
+
+  - [2 - Installing on Mac](#2---installing-on-mac)
+
+  - [3 - Installing on Ubuntu (Linux)](#3---installing-on-ubuntu-linux)
+
+  - [4 - Running in Docker](#4---running-in-docker)
+
+  - [5 - Installing locally](#5---installing-locally)
+
+- [Low-Level Installation Instructions](#low---level-installation-instructions)
+
+- [Debugging & Changing Ports](#debugging--changing-ports)
 
 ## Prerequisites
 
-It's ideal that you go through the Kometa install walkthrough prior to running Quickstart, as that will get Kometa set up to accept the config file that Quickstart will produce.  Running Quickstart and *then* the walkthrough could end up running into problems that will not be addressed in the walkthroughs; at best nothing in the walkthrough will match expectations so you will be left to figure out any differences yourself.
+We recommend completing the Kometa installation walkthrough before running Quickstart. This prepares Kometa to accept the configuration file Quickstart generates. Running Quickstart first may lead to mismatches with the walkthrough and issues that the walkthrough does not address.
 
-This will also familiarize you with setting up a virtual environment for running this as a Python script.
+Completing the walkthrough will also familiarize you with creating a Python virtual environment, which is recommended when running this as a Python script.
 
 ## Installing Quickstart
 
-There are essentially 5 ways to install and run Quickstart. The order presented here is likely the simplest to the most advanced way of installing Quickstart.
+There are five primary ways to install and run Quickstart, listed from simplest to more advanced.
 <!--body1-end-->
 > [!CAUTION]
 > **We strongly recommend running this yourself rather than relying on someone else to host Quickstart.**
 >
 > This ensures that connection attempts are made exclusively to services and machines accessible only to you. Additionally, all credentials are stored locally, safeguarding your sensitive information from being stored on someone else's machine.
->
+
 <!--body2-start-->
 ## 1 - Installing on Windows
 
-- Go to the releases page to grab a single `exe` that you can run.
+- Go to the [Releases page](https://github.com/Kometa-Team/Quickstart/releases) and download the standalone `.exe`.
 
-- https://github.com/Kometa-Team/Quickstart/releases
+- Choose the build you want (`master` or `develop`) and download the appropriate asset.
 
-- Pick the build (`master` or `develop`) you are interested in and then go to the Assets section and pick the right `exe`
+- Place the file in its own folder and double-click to run it.
 
-- Store it in its own folder and dbl-click to run
-
-- Manage Quickstart from the system tray icon
+- Manage Quickstart from the system tray icon.
 
 ![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher.png)
 
 ## 2 - Installing on Mac
 
-- Go to the releases page to grab a single file that you can run.
+- Go to the [Releases page](https://github.com/Kometa-Team/Quickstart/releases) and download the standalone file.
 
-- https://github.com/Kometa-Team/Quickstart/releases
+- Choose the build you want (`master` or `develop`) and download the appropriate asset.
 
-- Pick the build (`master` or `develop`) you are interested in and then go to the Assets section and pick the right file
+- Place the file in its own folder.
 
-- Store it in its own folder.
+- Open Terminal, navigate to the folder, and make the file executable: `chmod 755 <name of file>`.
 
-- Open up a terminal and navigate to the folder with the file you just downloaded. then type `chmod 755 <name of file>`to make the file executable
+- Run it: `./<name of file>`.
 
-- In the terminal run the file: `./<name of file>`
-
-- You may need to allow for unsigned applications to run within the MacOS System Settings under Privacy & Security
+- You may need to allow unsigned applications in macOS System Settings under Privacy & Security.
 
 ![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/macos-settings-privacy-and-security.png)
- - Manage Quickstart from the system tray icon
+
+-  Manage Quickstart from the system tray icon.
 
 ![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher-mac.png)
 
 ## 3 - Installing on Ubuntu (Linux)
 
-- Go to the releases page to grab a single file that you can run.
+- Go to the [Releases page](https://github.com/Kometa-Team/Quickstart/releases) and download the standalone file.
 
-- https://github.com/Kometa-Team/Quickstart/releases
+- Choose the build you want (`master` or `develop`) and download the appropriate asset.
 
-- Pick the build (`master` or `develop`) you are interested in and then go to the Assets section and pick the right file
+- Place the file in its own folder.
 
-- Store it in its own folder.
+- Open a terminal, navigate to the folder, and make the file executable: `chmod 755 <name of file>`.
 
-- Open up a terminal and navigate to the folder with the file you just downloaded. then type `chmod 755 <name of file>`to make the file executable
+- Run it: `./<name of file>`.
 
-- In the terminal run the file: `./<name of file>`
-
-- Manage Quickstart from the system tray icon
+- Manage Quickstart from the system tray icon.
 
 ![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher-ubuntu.png)
+
 <!--body2-end-->
 > [!WARNING]
 > You will likely need to perform these steps first to have a system tray icon show up:
@@ -98,7 +118,7 @@ sudo apt install -y libxcb-xinerama0 libxcb-xinerama0-dev libxcb-icccm4 libxcb-i
 <!--body3-start-->
 ## 4 - Running in Docker
 
-NOTE: the `/config` directory in these examples is NOT the Kometa config directory.  Create a Quickstart-specific directory to map to `/config`.
+NOTE: The `/config` directory in these examples is NOT the Kometa config directory. Create a Quickstart-specific directory and map it to `/config`.
 
 Here are some minimal examples:
 
@@ -124,7 +144,7 @@ services:
     restart: unless-stopped
 ```
 
-## 5 - Installing on local:
+## 5 - Installing locally
 
 These are high-level steps which assume the user has knowledge of python and pip, and the general ability to troubleshoot issues.
 
@@ -156,26 +176,26 @@ pip install -r requirements.txt
 pip install -r requirements.txt --ignore-installed
 ```
 
-## Detailed Steps if the high-level instructions are not clear enough
+## Low-Level Installation Instructions
 
-### Installation Steps for Windows :
+### Windows:
 
-At the end of this you will end up with side by side installs of Kometa and Quickstart:
+After following this guide, you will have side-by-side installations of Kometa and Quickstart:
 
 ```
 c:\this\dir\has\Kometa
 c:\this\dir\has\Quickstart
 ```
 
-1.  Ensure git and python are installed.  
+1.  Ensure Git and Python are installed.  
 
 Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 Python: https://www.python.org/downloads/windows/
 
-2.  `git clone` Kometa and switch to preferred branch (nightly, develop, master) (no need to do more at this point as Quickstart will perform the other steps automatically).  
+2.  `git clone` Kometa and switch to your preferred branch (nightly, develop, master). You do not need to do more at this point; Quickstart will perform the other steps automatically.  
 
-Open up a command prompt and run this (pick your directory and checkout nightly, develop, or master)
+Open a Command Prompt window and run the following (choose your directory and branch):
 
 ```
 cd c:\this\dir\has
@@ -187,7 +207,9 @@ git stash clear
 git pull
 ```
 
-3.  `git clone` Quickstart, switch to develop branch, create venv, activate it, upgrade pip, install requirements.  
+3.  `git clone` Quickstart, switch to the `develop` branch, create and activate a virtual environment, upgrade pip, and install the requirements.  
+
+Run the following commands within your Command Prompt window:
 
 ```
 cd ..
@@ -203,22 +225,22 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-4.  Run Quickstart and on final page, it will automatically create the kometa-venv, install requirements and then allow you to run kometa.py with your validated config created with Quickstart.  
+4.  Run Quickstart. After completing the guided pages, the final page will automatically create the Kometa virtual environment, install the requirements, and allow you to run `kometa.py` using the validated config generated by Quickstart.  
 
 ```
 python quickstart.py
 ```
 
-### Installation Steps for Linux/Mac:
+### Linux/Mac:
 
-At the end of this you will end up with side by side installs of Kometa and Quickstart:
+After following this guide, you will have side-by-side installations of Kometa and Quickstart:
 
 ```
 /this/dir/has/Kometa
 /this/dir/has/Quickstart
 ```
 
-1.  Ensure git and python are installed.  
+1.  Ensure Git and Python are installed.  
 
 Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
@@ -230,9 +252,9 @@ Ubuntu/Debian: ```sudo apt-get install python3```
 
 Fedora: ```sudo dnf install python3```
 
-2.  `git clone` Kometa and switch to preferred branch (nightly, develop, master) (no need to do more at this point as Quickstart will perform the other steps automatically).  
+2.  `git clone` Kometa and switch to your preferred branch (nightly, develop, master). You do not need to do more at this point; Quickstart will perform the other steps automatically.  
 
-Open up a command prompt and run this (pick your directory and checkout nightly, develop, or master)
+Open a terminal and run the following (choose your directory and branch):
 
 ```
 cd /this/dir/has
@@ -244,7 +266,7 @@ git stash clear
 git pull
 ```
 
-3.  `git clone` Quickstart, switch to develop branch, create venv, activate it, upgrade pip, install requirements.  
+3.  `git clone` Quickstart, switch to the `develop` branch, create and activate a virtual environment, upgrade pip, and install the requirements.  
 
 ```
 cd ..
@@ -260,17 +282,17 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 ```
 
-4.  Run quickstart and on final page, it will automatically create the kometa-venv, install requirements and then allow you to run kometa.py with your validated config created with Quickstart.  
+4.  Run Quickstart. After completing the guided pages, the final page will automatically create the Kometa virtual environment, install the requirements, and allow you to run `kometa.py` using the validated config generated by Quickstart.
 
 ```
 python3 quickstart.py
 ```
 
-At this point Quickstart has been installed and you should see something similar to this:
+At this point, Quickstart has been installed and you should see something similar to this:
 
 ![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/running-in-pwsh.png)
 
-Quickstart should launch a browser automatically. If you are on a headless machine (docker or linux without GUI) open a browser and navigate to the ip address of the machine Quickstart is running on and you should be taken to the Quickstart Welcome Page.
+Quickstart should launch a browser automatically. If you are on a headless machine (Docker or Linux without a GUI), open a browser and navigate to the IP address of the machine running Quickstart; you should be taken to the Quickstart Welcome Page.
 
 - Manage Quickstart from the system tray icon
 
@@ -278,7 +300,7 @@ Quickstart should launch a browser automatically. If you are on a headless machi
 
 ### Debugging & Changing Ports
 
-Users can choose to enable debugging mode which will add verbose logging to the console window.
+You can enable debug mode to add verbose logging to the console window.
 
 There are three ways to enable debugging:
 
@@ -288,7 +310,7 @@ There are three ways to enable debugging:
 
 - Use the Quickstart system tray icon to toggle it on or off (no restart required).
 
-Quickstart will run on port 7171 by default, this can be amended in one of three ways:
+Quickstart runs on port 7171 by default. You can change it in one of three ways:
 
 - Add `--port=XXXX` to your Run Command, for example: `python quickstart.py --port=1234`
 
