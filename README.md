@@ -1,5 +1,7 @@
-![Quickstart Logo](static/images/logo.webp)
-
+<!--logo-start-->
+![Quickstart Logo](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/logo.webp)
+<!--logo-end-->
+<!--shields-start-->
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/Kometa-Team/Quickstart?style=plastic)](https://github.com/Kometa-Team/Quickstart/releases)
 [![Docker Image Version (latest semver)](https://img.shields.io/docker/v/kometateam/quickstart?label=docker&sort=semver&style=plastic)](https://hub.docker.com/r/kometateam/quickstart)
 [![Docker Pulls](https://img.shields.io/docker/pulls/kometateam/quickstart?style=plastic)](https://hub.docker.com/r/kometateam/quickstart)
@@ -10,7 +12,8 @@
 [![Wiki](https://img.shields.io/readthedocs/kometa?color=%2300bc8c&style=plastic)](https://kometa.wiki/en/latest/home/scripts/quickstart.html)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/meisnate12?color=%238a2be2&style=plastic)](https://github.com/sponsors/meisnate12)
 [![Sponsor or Donate](https://img.shields.io/badge/-Sponsor%2FDonate-blueviolet?style=plastic)](https://github.com/sponsors/meisnate12)
-
+<!--shields-end-->
+<!--body-start-->
 Welcome to Kometa Quickstart! This Web UI tool will guide you through creating a Configuration File to use with Kometa.
 
 Special Thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](https://github.com/bullmoose20), [chazlarson](https://github.com/chazlarson) and [Yozora](https://github.com/yozoraXCII) for the time spent developing this tool.
@@ -38,7 +41,7 @@ There are essentially 5 ways to install and run Quickstart. The order presented 
 - Pick the build (`master` or `develop`) you are interested in and then go to the Assets section and pick the right `exe`
 - Store it in its own folder and dbl-click to run
 - Manage Quickstart from the system tray icon
-![image](static/images/system-tray-launcher.png)
+![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher.png)
 
 ## 2 - Installing on Mac
 
@@ -49,9 +52,9 @@ There are essentially 5 ways to install and run Quickstart. The order presented 
 - Open up a terminal and navigate to the folder with the file you just downloaded. then type `chmod 755 <name of file>`to make the file executable
 - In the terminal run the file: `./<name of file>`
 - You may need to allow for unsigned applications to run within the MacOS System Settings under Privacy & Security
-![image](static/images/macos-settings-privacy-and-security.png)
+![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/macos-settings-privacy-and-security.png)
 - Manage Quickstart from the system tray icon
-![image](static/images/system-tray-launcher-mac.png)
+![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher-mac.png)
 
 ## 3 - Installing on Ubuntu (Linux)
 
@@ -62,7 +65,7 @@ There are essentially 5 ways to install and run Quickstart. The order presented 
 - Open up a terminal and navigate to the folder with the file you just downloaded. then type `chmod 755 <name of file>`to make the file executable
 - In the terminal run the file: `./<name of file>`
 - Manage Quickstart from the system tray icon
-![image](static/images/system-tray-launcher-ubuntu.png)
+![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher-ubuntu.png)
 
 > [!WARNING]
 > You will likely need to perform these steps first to have a system tray icon show up:
@@ -232,7 +235,7 @@ python3 quickstart.py
 
 At this point Quickstart has been installed and you should see something similar to this:
 
-![image](static/images/running-in-pwsh.png)
+![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/running-in-pwsh.png)
 
 Quickstart should launch a browser automatically. If you are on a headless machine (docker or linux without GUI) open a browser and navigate to the ip address of the machine Quickstart is running on and you should be taken to the Quickstart Welcome Page.
 
@@ -253,3 +256,4 @@ Quickstart will run on port 7171 by default, this can be amended in one of three
 - Add `--port=XXXX` to your Run Command, for example: `python quickstart.py --port=1234`
 - Open the `.env` file at the root of the Quickstart directory, and set `QS_PORT=XXXX` where XXXX is the port you want to run on. (restart required)
 - Use the Quickstart system tray icon to choose a new port (restarts automatically).
+<!--body-end-->
