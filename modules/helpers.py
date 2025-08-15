@@ -1,13 +1,18 @@
 import datetime
 import hashlib
+import io
 import platform
 import json
 import os
 import psutil
 import re
+import shutil
 import stat
 import subprocess
 import sys
+import tempfile
+import zipfile
+
 from pathlib import Path
 from plexapi.server import PlexServer
 from plexapi.exceptions import BadRequest, NotFound, Unauthorized
@@ -25,10 +30,17 @@ except ImportError:
 
 STRING_FIELDS = {"apikey", "token", "username", "password"}
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
+GITHUB_API_BRANCH = "https://api.github.com/repos/kometa-team/Kometa/branches/{branch}"
+GITHUB_ZIP_URL = (
+    "https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/{branch}"
+)
+
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
+WORKING_DIR = (
+    os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
+)
 MEIPASS_DIR = sys._MEIPASS if getattr(sys, "frozen", False) else BASE_DIR  # noqa
 
 JSON_SETTINGS = os.path.join(MEIPASS_DIR, "static", "json")
@@ -103,7 +115,9 @@ def get_pyfiglet_fonts():
 
     # Append all .flf files, removing extension
     if os.path.exists(fonts_dir):
-        fonts.update(f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf"))
+        fonts.update(
+            f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf")
+        )
 
     # Sort remaining fonts (excluding predefined ones)
     sorted_fonts = sorted(fonts - set(predefined_fonts))
@@ -159,7 +173,9 @@ def ensure_json_schema():
             f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template",
         ),
     ]:
-        file_path = os.path.join(JSON_SCHEMA_DIR, filename)  # Store everything in json-schema
+        file_path = os.path.join(
+            JSON_SCHEMA_DIR, filename
+        )  # Store everything in json-schema
 
         try:
             response = requests.get(url, timeout=10)
@@ -189,13 +205,19 @@ def ensure_json_schema():
 def get_remote_version(branch):
     """Fetch the latest VERSION file from the correct GitHub branch."""
     try:
-        response = requests.get(f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/VERSION", timeout=5)
+        response = requests.get(
+            f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/VERSION",
+            timeout=5,
+        )
         response.raise_for_status()
         version = response.text.strip()
     except requests.RequestException:
         return None  # If request fails, return None
     try:
-        response = requests.get(f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/BUILDNUM", timeout=5)
+        response = requests.get(
+            f"https://raw.githubusercontent.com/Kometa-Team/Quickstart/{branch}/BUILDNUM",
+            timeout=5,
+        )
         response.raise_for_status()
         build_num = response.text.strip()
     except requests.RequestException:
@@ -331,7 +353,9 @@ def build_oauth_dict(source, form_data):
             data[final_key] = value
         else:
             if final_key != "url":
-                data[source]["authorization"][final_key] = value  # Everything else goes into authorization
+                data[source]["authorization"][
+                    final_key
+                ] = value  # Everything else goes into authorization
 
     return data
 
@@ -339,7 +363,9 @@ def build_oauth_dict(source, form_data):
 def build_simple_dict(source, form_data):
     data = {source: {}}
     for key in form_data:
-        final_key = key.replace(source + "_", "", 1)  # Retain the original key transformation logic
+        final_key = key.replace(
+            source + "_", "", 1
+        )  # Retain the original key transformation logic
         value = form_data[key]
 
         # Handle lists explicitly (e.g., asset_directory)
@@ -471,7 +497,11 @@ def template_record(file, prev_record, next_record):
 
 def get_menu_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
+    file_list = sorted(
+        item
+        for item in os.listdir(templates_dir)
+        if os.path.isfile(os.path.join(templates_dir, item))
+    )
     final_list = []
 
     for file in file_list:
@@ -484,7 +514,11 @@ def get_menu_list():
 
 def get_template_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
+    file_list = sorted(
+        item
+        for item in os.listdir(templates_dir)
+        if os.path.isfile(os.path.join(templates_dir, item))
+    )
 
     templates = {}
     type_counter = {"012": 0, "013": 0}  # Counters for movie, show types
@@ -492,7 +526,9 @@ def get_template_list():
 
     for file in file_list:
         if belongs_in_template_list(file):
-            match = re.match(r"^(\d+)-", file)  # Match any length of digits followed by '-'
+            match = re.match(
+                r"^(\d+)-", file
+            )  # Match any length of digits followed by '-'
             if match:
                 file_prefix = match.group(1)
             else:
@@ -572,14 +608,21 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
 
     ts_log(f"Searching for section with ID or title: {library_id}", level="DEBUG")
     section = next(
-        (s for s in plex.library.sections() if str(s.key) == str(library_id) or s.title.lower() == str(library_id).lower()),
+        (
+            s
+            for s in plex.library.sections()
+            if str(s.key) == str(library_id)
+            or s.title.lower() == str(library_id).lower()
+        ),
         None,
     )
 
     if not section:
         raise ValueError(f"Library ID {library_id} not found.")
 
-    ts_log(f"Fetching items from '{section.title}' sorted by audienceRating", level="DEBUG")
+    ts_log(
+        f"Fetching items from '{section.title}' sorted by audienceRating", level="DEBUG"
+    )
     items = section.search(sort="audienceRating:desc", maxresults=25)
 
     imdb_items = []
@@ -729,7 +772,9 @@ def get_library_summaries(configured_library_names):
             elif info.get("type") == "show":
                 show_count = info.get("show_count", 0)
                 episode_count = info.get("episode_count", 0)
-                output_lines.append(f"Content Count: {show_count} shows / {episode_count} episodes")
+                output_lines.append(
+                    f"Content Count: {show_count} shows / {episode_count} episodes"
+                )
 
             else:
                 item_count = info.get("item_count", 0)
@@ -826,9 +871,13 @@ def get_library_metadata():
                 # Ratings source
                 try:
                     settings = section.settings()
-                    ratings_setting = next((s for s in settings if s.id == "ratingsSource"), None)
+                    ratings_setting = next(
+                        (s for s in settings if s.id == "ratingsSource"), None
+                    )
                     if ratings_setting:
-                        lib_info["ratings_source"] = ratings_setting.enumValues.get(ratings_setting.value, "Unknown")
+                        lib_info["ratings_source"] = ratings_setting.enumValues.get(
+                            ratings_setting.value, "Unknown"
+                        )
                 except Exception:
                     pass  # Keep "N/A" if ratingsSource isn't available
 
@@ -840,7 +889,10 @@ def get_library_metadata():
                         lib_info["show_count"] = section.totalSize
                         try:
                             shows = section.search(libtype="show")
-                            lib_info["episode_count"] = sum(show.episodes(totalSize=True).totalSize for show in shows)
+                            lib_info["episode_count"] = sum(
+                                show.episodes(totalSize=True).totalSize
+                                for show in shows
+                            )
                         except Exception as e:
                             lib_info["episode_count"] = 0
                             lib_info["episode_error"] = str(e)
@@ -953,20 +1005,34 @@ def perform_kometa_update(kometa_root, branch="master"):
         kometa_root = Path(kometa_root).resolve()
         is_windows = sys.platform.startswith("win")
         kometa_branch = "master" if branch == "master" else "nightly"
-        logs.append(f"⚙️ Quickstart branch '{branch}' → using Kometa branch '{kometa_branch}'.")
+        logs.append(
+            f"⚙️ Quickstart branch '{branch}' → using Kometa branch '{kometa_branch}'."
+        )
 
         if not (kometa_root / ".git").exists():
             logs.append("❌ Kometa path is not a Git repository (missing .git).")
             return {"success": False, "log": logs}
 
         # pick upstream remote if present
-        remotes = subprocess.run(["git", "remote"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows).stdout.split()
+        remotes = subprocess.run(
+            ["git", "remote"],
+            cwd=kometa_root,
+            capture_output=True,
+            text=True,
+            shell=is_windows,
+        ).stdout.split()
         upstream = "kometa-team" if "kometa-team" in remotes else "origin"
         logs.append(f"🔗 Using remote: {upstream}")
 
         # 1) fetch
         logs.append(f"📥 git fetch {upstream} --prune")
-        p = subprocess.run(["git", "fetch", upstream, "--prune"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
+        p = subprocess.run(
+            ["git", "fetch", upstream, "--prune"],
+            cwd=kometa_root,
+            capture_output=True,
+            text=True,
+            shell=is_windows,
+        )
         logs.append((p.stdout or "").strip() or "(no output)")
         if p.returncode != 0:
             logs.append((p.stderr or "").strip())
@@ -974,15 +1040,36 @@ def perform_kometa_update(kometa_root, branch="master"):
 
         # 2) switch (fallback to checkout)
         if success:
-            cmd = ["git", "switch", "-C", kometa_branch, "--track", f"{upstream}/{kometa_branch}"]
+            cmd = [
+                "git",
+                "switch",
+                "-C",
+                kometa_branch,
+                "--track",
+                f"{upstream}/{kometa_branch}",
+            ]
             logs.append(f"🔀 {' '.join(cmd)}")
-            p = subprocess.run(cmd, cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
+            p = subprocess.run(
+                cmd, cwd=kometa_root, capture_output=True, text=True, shell=is_windows
+            )
             if p.stdout:
                 logs.append(p.stdout.strip())
             if p.returncode != 0:
-                fallback = ["git", "checkout", "-B", kometa_branch, f"{upstream}/{kometa_branch}"]
+                fallback = [
+                    "git",
+                    "checkout",
+                    "-B",
+                    kometa_branch,
+                    f"{upstream}/{kometa_branch}",
+                ]
                 logs.append(f"🔁 fallback: {' '.join(fallback)}")
-                p = subprocess.run(fallback, cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
+                p = subprocess.run(
+                    fallback,
+                    cwd=kometa_root,
+                    capture_output=True,
+                    text=True,
+                    shell=is_windows,
+                )
                 logs.append((p.stdout or "").strip() or "(no output)")
                 if p.returncode != 0:
                     logs.append((p.stderr or "").strip())
@@ -991,7 +1078,13 @@ def perform_kometa_update(kometa_root, branch="master"):
         # 3) reset
         if success:
             logs.append(f"↩️ git reset --hard {upstream}/{kometa_branch}")
-            p = subprocess.run(["git", "reset", "--hard", f"{upstream}/{kometa_branch}"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
+            p = subprocess.run(
+                ["git", "reset", "--hard", f"{upstream}/{kometa_branch}"],
+                cwd=kometa_root,
+                capture_output=True,
+                text=True,
+                shell=is_windows,
+            )
             logs.append((p.stdout or "").strip() or "(no output)")
             if p.returncode != 0:
                 logs.append((p.stderr or "").strip())
@@ -1000,9 +1093,19 @@ def perform_kometa_update(kometa_root, branch="master"):
         # 4) venv pip upgrade
         if success:
             venv_path = kometa_root / "kometa-venv"
-            pip_bin = venv_path / ("Scripts" if is_windows else "bin") / ("pip.exe" if is_windows else "pip")
+            pip_bin = (
+                venv_path
+                / ("Scripts" if is_windows else "bin")
+                / ("pip.exe" if is_windows else "pip")
+            )
             logs.append("\n⬆️ Upgrading pip in Kometa venv...")
-            p = subprocess.run([str(pip_bin), "install", "--upgrade", "pip"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
+            p = subprocess.run(
+                [str(pip_bin), "install", "--upgrade", "pip"],
+                cwd=kometa_root,
+                capture_output=True,
+                text=True,
+                shell=is_windows,
+            )
             logs.append((p.stdout or "").strip() or "(no output)")
             if p.returncode != 0:
                 logs.append((p.stderr or "").strip())
@@ -1012,14 +1115,27 @@ def perform_kometa_update(kometa_root, branch="master"):
         if success:
             logs.append("\n📦 Installing requirements...")
             p = subprocess.run(
-                [str(pip_bin), "install", "--no-cache-dir", "--upgrade", "-r", "requirements.txt"], cwd=kometa_root, capture_output=True, text=True, shell=is_windows
+                [
+                    str(pip_bin),
+                    "install",
+                    "--no-cache-dir",
+                    "--upgrade",
+                    "-r",
+                    "requirements.txt",
+                ],
+                cwd=kometa_root,
+                capture_output=True,
+                text=True,
+                shell=is_windows,
             )
             logs.append((p.stdout or "").strip() or "(no output)")
             if p.returncode != 0:
                 logs.append((p.stderr or "").strip())
                 success = False
 
-        logs.append("\n✅ Kometa update completed." if success else "\n❌ Kometa update failed.")
+        logs.append(
+            "\n✅ Kometa update completed." if success else "\n❌ Kometa update failed."
+        )
         return {"success": success, "log": logs}
     except Exception as e:
         logs.append(f"❌ Exception: {str(e)}")
@@ -1184,7 +1300,13 @@ def perform_quickstart_update(qs_root, branch="master"):
         is_windows = sys.platform.startswith("win")
 
         # pick upstream remote (prefer official)
-        remotes_out = subprocess.run(["git", "remote"], cwd=qs_root, capture_output=True, text=True, shell=is_windows)
+        remotes_out = subprocess.run(
+            ["git", "remote"],
+            cwd=qs_root,
+            capture_output=True,
+            text=True,
+            shell=is_windows,
+        )
         remotes = (remotes_out.stdout or "").split()
         upstream = "kometa-team" if "kometa-team" in remotes else "origin"
         logs.append(f"🔗 Using Quickstart remote: {upstream}")
@@ -1193,7 +1315,9 @@ def perform_quickstart_update(qs_root, branch="master"):
         def run(cmd, label=None):
             if label:
                 logs.append(label)
-            p = subprocess.run(cmd, cwd=qs_root, capture_output=True, text=True, shell=is_windows)
+            p = subprocess.run(
+                cmd, cwd=qs_root, capture_output=True, text=True, shell=is_windows
+            )
             out = (p.stdout or "").strip()
             err = (p.stderr or "").strip()
             if out:
@@ -1203,7 +1327,9 @@ def perform_quickstart_update(qs_root, branch="master"):
             return p
 
         # 1) fetch (ensure upstream/<branch> exists)
-        p = run(["git", "fetch", upstream, "--prune"], f"📥 git fetch {upstream} --prune")
+        p = run(
+            ["git", "fetch", upstream, "--prune"], f"📥 git fetch {upstream} --prune"
+        )
         success &= p.returncode == 0
 
         # 2) switch to branch (fallback to checkout)
@@ -1246,7 +1372,16 @@ def perform_quickstart_update(qs_root, branch="master"):
         if success:
             logs.append("\n📦 Installing requirements...")
             p = subprocess.run(
-                [str(Path(sys.executable)), "-m", "pip", "install", "--no-cache-dir", "--upgrade", "-r", "requirements.txt"],
+                [
+                    str(Path(sys.executable)),
+                    "-m",
+                    "pip",
+                    "install",
+                    "--no-cache-dir",
+                    "--upgrade",
+                    "-r",
+                    "requirements.txt",
+                ],
                 cwd=qs_root,
                 capture_output=True,
                 text=True,
@@ -1263,3 +1398,207 @@ def perform_quickstart_update(qs_root, branch="master"):
     except Exception as e:
         logs.append(f"❌ Exception: {e}")
         return {"success": False, "log": logs}
+
+
+def _ensure_dir(p: Path):
+    p.mkdir(parents=True, exist_ok=True)
+
+
+def _read_text(p: Path):
+    try:
+        return p.read_text(encoding="utf-8").strip()
+    except Exception:
+        return None
+
+
+def _write_text(p: Path, s: str):
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(s, encoding="utf-8")
+
+
+def _get_upstream_sha(branch: str, logs: list[str]) -> str | None:
+    try:
+        url = GITHUB_API_BRANCH.format(branch=branch)
+        r = requests.get(url, timeout=20)
+        if r.status_code != 200:
+            logs.append(f"❌ GitHub API {r.status_code} for {url}")
+            return None
+        sha = (r.json().get("commit") or {}).get("sha")
+        if sha:
+            logs.append(f"🔎 Upstream {branch} SHA: {sha[:12]}")
+        else:
+            logs.append("❌ Unable to parse upstream SHA.")
+        return sha
+    except Exception as e:
+        logs.append(f"❌ Exception fetching SHA: {e}")
+        return None
+
+
+def _download_zip(branch: str, logs: list[str]) -> bytes | None:
+    try:
+        url = GITHUB_ZIP_URL.format(branch=branch)
+        logs.append(f"📥 Downloading {branch}.zip…")
+        r = requests.get(url, timeout=60)
+        if r.status_code != 200:
+            logs.append(f"❌ ZIP download failed ({r.status_code})")
+            return None
+        return r.content
+    except Exception as e:
+        logs.append(f"❌ Exception during ZIP download: {e}")
+        return None
+
+
+def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> bool:
+    try:
+        _ensure_dir(dest_dir)
+        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
+            root_name = zf.namelist()[0].split("/")[0]  # e.g., Kometa-nightly
+            with tempfile.TemporaryDirectory() as td:
+                tmp_root = Path(td) / root_name
+                zf.extractall(Path(td))
+                # Wipe current contents (keep dest_dir itself)
+                for child in dest_dir.iterdir():
+                    if child.is_file() or child.is_symlink():
+                        child.unlink(missing_ok=True)
+                    else:
+                        shutil.rmtree(child, ignore_errors=True)
+                # Copy over
+                for item in tmp_root.iterdir():
+                    target = dest_dir / item.name
+                    if item.is_dir():
+                        shutil.copytree(item, target, dirs_exist_ok=True)
+                    else:
+                        shutil.copy2(item, target)
+        logs.append(f"📦 Extracted to: {dest_dir}")
+        return True
+    except Exception as e:
+        logs.append(f"❌ Extraction failed: {e}")
+        return False
+
+
+def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
+    is_windows = sys.platform.startswith("win")
+    venv_dir = kometa_dir / "kometa-venv"
+    if not venv_dir.exists():
+        logs.append("🐍 Creating virtual environment…")
+        p = subprocess.run(
+            [sys.executable, "-m", "venv", str(venv_dir)],
+            capture_output=True,
+            text=True,
+            cwd=str(kometa_dir),
+            shell=is_windows,
+        )
+        if p.returncode != 0:
+            logs.append((p.stderr or "").strip() or "venv creation failed")
+            return None
+    bin_dir = venv_dir / ("Scripts" if is_windows else "bin")
+    python_bin = bin_dir / ("python.exe" if is_windows else "python3")
+    pip_bin = bin_dir / (
+        "pip.exe" if is_windows else "pip"
+    )  # optional, no longer used for installs
+    return python_bin, pip_bin
+
+
+def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str]) -> bool:
+    is_windows = sys.platform.startswith("win")
+
+    logs.append("⬆️ Upgrading pip…")
+    p = subprocess.run(
+        [str(python_bin), "-m", "pip", "install", "--upgrade", "pip"],
+        capture_output=True,
+        text=True,
+        cwd=str(kometa_dir),
+        shell=is_windows,
+    )
+    logs.append((p.stdout or "").strip() or "(no output)")
+    if p.returncode != 0:
+        logs.append((p.stderr or "").strip())
+        return False
+
+    logs.append("📦 Installing requirements…")
+    p = subprocess.run(
+        [
+            str(python_bin),
+            "-m",
+            "pip",
+            "install",
+            "--no-cache-dir",
+            "--upgrade",
+            "-r",
+            "requirements.txt",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(kometa_dir),
+        shell=is_windows,
+    )
+    logs.append((p.stdout or "").strip() or "(no output)")
+    if p.returncode != 0:
+        logs.append((p.stderr or "").strip())
+        return False
+
+    return True
+
+
+def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "nightly"):
+    """
+    Update Kometa by downloading/extracting the branch ZIP into:
+        {config_root}/kometa
+    Uses upstream commit SHA to skip when up-to-date.
+    Works identically for local, PyInstaller, and Docker installs.
+    """
+    logs = []
+    try:
+        config_root = Path(config_root).resolve()
+        kometa_dir = config_root / "kometa"
+        sha_file = kometa_dir / ".kometa_sha"
+
+        logs.append(f"⚙️ ZIP updater → branch '{branch}'")
+        _ensure_dir(kometa_dir)
+
+        upstream_sha = _get_upstream_sha(branch, logs)
+        if not upstream_sha:
+            return {"success": False, "log": logs}
+
+        local_sha = _read_text(sha_file)
+        if local_sha == upstream_sha:
+            logs.append("✅ Up to date (SHA matches). Skipping download.")
+            return {"success": True, "log": logs}
+
+        zip_bytes = _download_zip(branch, logs)
+        if not zip_bytes:
+            return {"success": False, "log": logs}
+
+        if not _extract_zip_bytes(zip_bytes, kometa_dir, logs):
+            return {"success": False, "log": logs}
+
+        res = _ensure_venv(kometa_dir, logs)
+        if not res:
+            return {"success": False, "log": logs}
+        python_bin, _pip_bin_unused = res
+        if not _pip_install(python_bin, kometa_dir, logs):
+            return {"success": False, "log": logs}
+
+        _write_text(sha_file, upstream_sha)
+        logs.append("✅ Kometa updated via ZIP.")
+        return {"success": True, "log": logs}
+
+    except Exception as e:
+        logs.append(f"❌ Exception: {e}")
+        return {"success": False, "log": logs}
+
+
+def get_kometa_root_path() -> Path:
+    """
+    Resolve the Kometa root folder consistently.
+    Priority:
+        1) app.config["KOMETA_ROOT"] (set during validation)
+        2) session["kometa_root"] (legacy)
+        3) <CONFIG_DIR>/kometa  (works with ZIP-only updater)
+    """
+    base = (
+        app.config.get("KOMETA_ROOT")
+        or session.get("kometa_root")
+        or os.path.join(CONFIG_DIR, "kometa")
+    )
+    return Path(os.path.normpath(base)).resolve()

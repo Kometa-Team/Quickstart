@@ -1,5 +1,18 @@
 /* global $, bootstrap, showToast */
 
+// Global flag so other handlers know an update is in progress
+let KOMETA_UPDATING = false
+// Polling handles (hoist to top so all handlers see them safely)
+let kometaInterval = null
+let kometaStatusInterval = null
+
+function formatElapsed (ms) {
+  const sec = Math.floor(ms / 1000)
+  const mm = String(Math.floor(sec / 60)).padStart(2, '0')
+  const ss = String(sec % 60).padStart(2, '0')
+  return `${mm}:${ss}`
+}
+
 function quoteIfNeeded (str) {
   return /\s/.test(str) ? `"${str}"` : str
 }
@@ -180,31 +193,37 @@ $(document).ready(function () {
   })
 
   function buildCommand () {
-    const baseDocker = 'docker run --rm -v /your/config/dir:/config kometa:nightly'
-    const configFilename = $('#run-command-output').data('config-filename')
     const runCmdOutput = $('#run-command-output')
-    const pythonBinary = quoteIfNeeded(runCmdOutput.data('venv-python') || 'python3')
-    const kometaRoot = runCmdOutput.data('kometa-root') || ''
-    const fullKometaPy = `${kometaRoot}/kometa.py`
-    const fullConfigPath = `${kometaRoot}/config/${configFilename}`
-    const basePython = `${quoteIfNeeded(pythonBinary)} ${quoteIfNeeded(fullKometaPy)}`
-    const runMode = $('input[name="run-mode"]:checked').val()
-    const mainOption = $('input[name="run-option"]:checked').val()
-    const selectedLibs = $('#library-multiselect').length ? $('#library-multiselect').val() || [] : []
+    const configFilename = runCmdOutput.data('config-filename') || ''
 
-    let cli = runMode === 'docker' ? baseDocker : basePython
+    // Always use normalized forward slashes internally
+    const pythonBinNorm = (runCmdOutput.data('venv-python') || 'python3').replace(/\\/g, '/')
+    const kometaRootNorm = (runCmdOutput.data('kometa-root') || '').replace(/\\/g, '/')
 
-    cli += ` ${mainOption}`
+    const fullKometaPy = `${kometaRootNorm}/kometa.py`
+    const fullConfigPath = `${kometaRootNorm}/config/${configFilename}`
+
+    // Adjust to user platform for display
+    const isWindows = navigator.platform.startsWith('Win')
+    const finalPythonBin = isWindows ? pythonBinNorm.replace(/\//g, '\\') : pythonBinNorm
+    const finalKometaPy = isWindows ? fullKometaPy.replace(/\//g, '\\') : fullKometaPy
+    const finalConfigPath = isWindows ? fullConfigPath.replace(/\//g, '\\') : fullConfigPath
+
+    // Quote paths that may contain spaces
+    let cli = `${quoteIfNeeded(finalPythonBin)} ${quoteIfNeeded(finalKometaPy)}`
+
+    const mainOption = $('input[name="run-option"]:checked').val() || ''
+    const selectedLibs = $('#library-multiselect').length ? ($('#library-multiselect').val() || []) : []
+
+    if (mainOption) cli += ` ${mainOption}`
 
     if (mainOption === '--times') {
       const timesInput = $('#times-input').val().trim()
       const isValid = isValidTimesFormat(timesInput)
-
       toggleTimesInputVisibility('--times')
-
       if (!isValid) {
         $('#times-error').removeClass('d-none')
-        $('#run-command-output').text('⚠️ Invalid time format. Please enter comma-separated 24h times like 06:00,15:00.')
+        runCmdOutput.text('⚠️ Invalid time format. Please enter comma-separated 24h times like 06:00,15:00.')
         return
       } else {
         $('#times-error').addClass('d-none')
@@ -217,7 +236,7 @@ $(document).ready(function () {
 
     if (mainOption === '--run-libraries') {
       if (!selectedLibs.length) {
-        $('#run-command-output').text('⚠️ Please select at least one library when using --run-libraries.')
+        runCmdOutput.text('⚠️ Please select at least one library when using --run-libraries.')
         return
       }
       cli += ` "${selectedLibs.join(', ')}"`
@@ -234,28 +253,25 @@ $(document).ready(function () {
       'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
       'ignore-schedules', 'no-verify-ssl', 'tests'
     ]
-
     checkboxFlags.forEach(opt => {
       const checkbox = $(`#opt-${opt}`)
-      if (checkbox.length && checkbox.is(':checked')) {
-        cli += ` --${opt}`
-      }
+      if (checkbox.length && checkbox.is(':checked')) cli += ` --${opt}`
     })
 
-    cli += runMode === 'docker'
-      ? ` --config /config/${configFilename}`
-      : ` --config ${quoteIfNeeded(fullConfigPath)}`
+    // Always append --config with platform-adjusted path
+    cli += ` --config ${quoteIfNeeded(finalConfigPath)}`
 
     const timeoutChecked = $('#opt-timeout').is(':checked')
     const timeoutValue = $('#opt-timeout-val').val().trim()
     if (timeoutChecked) {
-      if (!/^\d+$/.test(timeoutValue) || parseInt(timeoutValue, 10) <= 0) {
+      const timeoutNum = parseInt(timeoutValue, 10)
+      if (!/^\d+$/.test(timeoutValue) || timeoutNum <= 0) {
         $('#timeout-error').removeClass('d-none')
-        $('#run-command-output').text('⚠️ Invalid timeout. Please enter a positive whole number.')
+        runCmdOutput.text('⚠️ Invalid timeout. Please enter a positive whole number.')
         return
       } else {
         $('#timeout-error').addClass('d-none')
-        cli += ` --timeout ${parseInt(timeoutValue, 10)}`
+        cli += ` --timeout ${timeoutNum}`
       }
     }
 
@@ -265,7 +281,7 @@ $(document).ready(function () {
       const widthNum = parseInt(widthValue, 10)
       if (!/^\d+$/.test(widthValue) || widthNum < 90 || widthNum > 300) {
         $('#width-error').removeClass('d-none')
-        $('#run-command-output').text('⚠️ Width must be a number between 90 and 300.')
+        runCmdOutput.text('⚠️ Width must be a number between 90 and 300.')
         return
       } else {
         $('#width-error').addClass('d-none')
@@ -275,10 +291,9 @@ $(document).ready(function () {
 
     if ($('#opt-divider').is(':checked')) {
       const dividerValue = $('#opt-divider-val').val().trim()
-
       if (!dividerValue || dividerValue.length !== 1) {
         $('#divider-error').removeClass('d-none')
-        $('#run-command-output').text('⚠️ Divider must be a single character.')
+        runCmdOutput.text('⚠️ Divider must be a single character.')
         return
       } else {
         $('#divider-error').addClass('d-none')
@@ -286,10 +301,9 @@ $(document).ready(function () {
       }
     }
 
-    $('#run-command-output').text(cli)
+    runCmdOutput.text(cli)
   }
 
-  $('input[name="run-mode"]').on('change', buildCommand)
   $('input[name="run-option"]').on('change', function () {
     const value = $(this).val()
     updateLibraryVisibility(value)
@@ -315,31 +329,35 @@ $(document).ready(function () {
   })
 
   function validateKometaRoot () {
-    const rootPath = $('#kometa-root-path').val().trim()
     const $logBox = $('#kometa-validation-log')
     const $spinner = $('#spinner_validate')
     const $runNow = $('#run-now')
-    const configName = $('#run-command-output').data('config-filename')
+    const $out = $('#run-command-output')
 
-    $logBox.text('🔄 Please wait while we validate your Kometa installation...\nThis may take a few seconds as we verify the folder structure, Python environment, and Kometa information.\n\n')
-    $spinner.show()
+    const configName = $out.data('config-filename')
+    const defaultRootPosix = ($out.data('kometa-root-default') || '').toString().trim()
+    const defaultRootDisplay = ($out.data('kometa-root-default-display') || defaultRootPosix)
+
+    $logBox.text(
+      '🔄 Please wait while we validate your Kometa installation...\n' +
+      'This may take a few seconds as we verify the folder structure, Python environment, and Kometa information.\n\n'
+    )
+    if ($spinner.length) $spinner.show()
     $runNow.prop('disabled', true)
 
     $.ajax({
       type: 'POST',
       url: '/validate-kometa-root',
       contentType: 'application/json',
-      data: JSON.stringify({ path: rootPath, config_name: configName }),
+      // ✅ send the *normalized* path to the backend
+      data: JSON.stringify({ path: defaultRootPosix, config_name: configName }),
       success: (res) => {
-        if (res.log && Array.isArray(res.log)) {
-          res.log.forEach(line => $logBox.append(`${line}\n`))
-        }
+        if (Array.isArray(res.log)) res.log.forEach(line => $logBox.append(`${line}\n`))
 
         if (res.success) {
           $logBox.append('✅ Kometa root validated successfully.\n')
-          if (res.kometa_version) {
-            $logBox.append(`📦 Local Kometa version: ${res.kometa_version}\n`)
-          }
+          if (res.kometa_version) $logBox.append(`📦 Local Kometa version: ${res.kometa_version}\n`)
+
           if (res.remote_version && res.local_version) {
             if (res.kometa_update_available) {
               $logBox.append(`⬆️ Update available: ${res.local_version} → ${res.remote_version}\n`)
@@ -352,13 +370,24 @@ $(document).ready(function () {
             }
           }
 
-          // ✅ Inject the Python path based on validated Kometa root
-          const pythonPath = `${rootPath.replace(/\\/g, '/')}/kometa-venv/${navigator.platform.startsWith('Win') ? 'Scripts/python.exe' : 'bin/python3'}`
-          $('#run-command-output').data('venv-python', pythonPath)
-          $('#run-command-output').data('kometa-root', rootPath.replace(/\\/g, '/'))
-          buildCommand()
+          // ✅ Prefer display paths for UI; keep posix for internal if needed
+          const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || defaultRootDisplay)
+          const venvPythonDisplay = (res.venv_python_display || res.venv_python || 'python3')
+          const kometaRootPosix = (res.kometa_root || defaultRootPosix)
+          const venvPythonPosix = (res.venv_python || venvPythonDisplay)
 
-          // Recheck ALL other validations
+          // For command builder (UI shows native separators)
+          $out.data('kometa-root', kometaRootDisplay)
+          $out.data('venv-python', venvPythonDisplay)
+
+          // Also keep normalized just in case you need it later
+          $out.data('kometa-root-posix', kometaRootPosix)
+          $out.data('venv-python-posix', venvPythonPosix)
+
+          // Update the “installed/updated in” line if present
+          $('#kometa-install-path').text(kometaRootDisplay)
+
+          // Rebuild command and reveal run section only when all validations pass
           const allValid =
             $('#plex_valid').data('plex-valid') === 'True' &&
             $('#tmdb_valid').data('tmdb-valid') === 'True' &&
@@ -366,31 +395,28 @@ $(document).ready(function () {
             $('#sett_valid').data('sett-valid') === 'True' &&
             $('#yaml_valid').data('yaml-valid') === 'True'
 
+          $('#run-command-output').text('')
+          try { buildCommand() } catch (_) { }
+
           if (allValid) {
             showRunCommandSectionAfterValidated()
           } else {
             $runNow.prop('disabled', true)
           }
+        } else {
+          $runNow.prop('disabled', true)
         }
 
-        $spinner.hide()
+        if ($spinner.length) $spinner.hide()
       },
       error: (xhr) => {
-        const msg = xhr?.responseJSON?.error || 'The Kometa root path is invalid or inaccessible. Please check the folder and try again.'
+        const msg = xhr?.responseJSON?.error || 'The Kometa root path is invalid or inaccessible. Please try again.'
         $logBox.append(`❌ ${msg}\n`)
         $runNow.prop('disabled', true)
-        $spinner.hide()
+        if ($spinner.length) $spinner.hide()
       }
     })
   }
-
-  // Only run Kometa validation if the log box exists (i.e., non-Docker / Local-* installs)
-  if (document.getElementById('kometa-validation-log')) {
-    validateKometaRoot()
-  }
-
-  // Run when clicking "Validate" button
-  $('#validateButton').on('click', validateKometaRoot)
 
   if ($('#run-command-output').length > 0) {
     const mainOption = $('input[name="run-option"]:checked').val()
@@ -472,48 +498,89 @@ $(document).ready(function () {
     $('#run-now').prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Run Now')
   }
 
-  // Kometa Update Button Click
-  $('#update-kometa-btn').on('click', function () {
-    const $btn = $(this)
+  function callUpdateKometa () {
+    const $btn = $('#update-kometa-btn')
     const $logBox = $('#kometa-validation-log')
+    const $runNow = $('#run-now')
+    const $stopNow = $('#stop-now')
+    const $runBox = $('#run-command-box')
+    const branch = $btn.data('branch') || 'master'
+
+    KOMETA_UPDATING = true
+    const prevRunNowHtml = $runNow.html()
+    const prevRunNowDisabled = $runNow.prop('disabled')
+
+    $runBox.addClass('opacity-50 position-relative')
+    $runNow.prop('disabled', true).html('<i class="bi bi-hourglass me-1"></i> Updating...')
+    $stopNow.prop('disabled', true)
 
     $btn.prop('disabled', true).html('<i class="bi bi-arrow-repeat me-1"></i> Updating...')
-    $logBox.append('\n🔧 Starting Kometa update...\n')
+    $logBox.append('\n🔧 Initializing/Updating Kometa...\n')
+    if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
 
-    const branch = $btn.data('branch') || 'master'
+    // progress heartbeat
+    const startTs = Date.now()
+    function showHeartbeat () {
+      const elapsed = formatElapsed(Date.now() - startTs)
+      showToast('info', `📦 Working on Kometa update… (${elapsed})`, 10000)
+    }
+    showToast('info', '⬇️ Downloading/Unzipping Kometa… (00:00)', 10000)
+    const toastInterval = setInterval(showHeartbeat, 30000)
+
+    // define AFTER toastInterval so it's in scope
+    const cleanupUI = () => {
+      clearInterval(toastInterval)
+      KOMETA_UPDATING = false
+      $runBox.removeClass('opacity-50 position-relative')
+      $runNow.prop('disabled', prevRunNowDisabled).html(prevRunNowHtml)
+      $stopNow.prop('disabled', false)
+      $btn.prop('disabled', false).html('🔄 Update Kometa Now')
+    }
 
     fetch('/update-kometa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ branch })
     })
-      .then(res => res.json())
+      .then(async res => {
+        const data = await res.json()
+        if (res.status === 409) {
+          showToast('warning', data.error || 'Kometa is running; stop it before updating.')
+          $logBox.append(`❌ ${data.error || 'Update blocked: Kometa running.'}\n`)
+          if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
+          return { success: false, log: data.log || [], blocked: true }
+        }
+        return data
+      })
       .then(data => {
+        if (!data) return
         if (Array.isArray(data.log)) {
           data.log.forEach(line => $logBox.append(`${line}\n`))
+          if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
         }
-
         if (data.success) {
-          showToast('success', 'Kometa updated successfully.')
+          const elapsed = formatElapsed(Date.now() - startTs)
+          showToast('success', `Kometa update completed in ${elapsed}.`)
           $logBox.append('✅ Kometa update completed successfully.\n')
-        } else {
-          showToast('error', 'Kometa update failed.')
-          $logBox.append('❌ Kometa update failed.\n')
-        }
-
-        $btn.prop('disabled', false).html('🔄 Update Kometa Now')
-
-        if (document.getElementById('kometa-validation-log')) {
+          if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
           validateKometaRoot()
+        } else if (!data.blocked) {
+          showToast('error', data.error || 'Kometa update failed.')
+          $logBox.append('❌ Kometa update failed.\n')
+          if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
         }
       })
       .catch(err => {
         console.error(err)
-        $logBox.append('❌ Error occurred during Kometa update.\n')
         showToast('error', 'Error during Kometa update.')
-        $btn.prop('disabled', false).html('🔄 Update Kometa Now')
+        $logBox.append('❌ Error occurred during Kometa update.\n')
+        if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
       })
-  })
+      .finally(cleanupUI)
+  }
+
+  // Kometa Update Button Click
+  $('#update-kometa-btn').on('click', callUpdateKometa)
 
   // Sync visibility for timeout and divider on page load
   $('#opt-timeout-container').toggleClass('d-none', !$('#opt-timeout').is(':checked'))
@@ -571,100 +638,140 @@ $(document).ready(function () {
     buildCommand()
   })
   // Ensure we check Kometa status once on page load to catch unclean exits
+  // Keep the run area hidden until validated, then check status immediately
   hideRunCommandSectionUntilValidated()
   checkKometaStatus()
-})
 
-if (document.getElementById('header-style')) {
-  document.getElementById('header-style').addEventListener('change', function () {
-    document.getElementById('configForm').submit()
-  })
-}
-
-let kometaInterval = null
-let kometaStatusInterval = null
-
-$('#run-now').on('click', function () {
-  const command = $('#run-command-output').text().trim()
-
-  if (!command || command.startsWith('⚠️')) {
-    showToast('error', 'Cannot run invalid command.')
-    return
+  // First-run: ensure Kometa exists/updated, then validate in its success path
+  if (document.getElementById('kometa-validation-log')) {
+    callUpdateKometa()
   }
 
-  $('#run-now').prop('disabled', true)
-  $('#run-now-label').text('Running...')
-  $('#stop-now').removeClass('d-none') // SHOW stop button here
-  $('#run-output').removeClass('d-none')
-  $('#run-output-log').text('Starting Kometa...\n')
+  if (document.getElementById('header-style')) {
+    document.getElementById('header-style').addEventListener('change', function () {
+      document.getElementById('configForm').submit()
+    })
+  }
 
-  fetch('/start-kometa', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ command })
+  $('#run-now').on('click', function () {
+    if (KOMETA_UPDATING) {
+      showToast('warning', 'Kometa is updating. Please wait for it to finish before running.')
+      return
+    }
+
+    const command = $('#run-command-output').text().trim()
+    if (!command || command.startsWith('⚠️')) {
+      showToast('error', 'Cannot run invalid command.')
+      return
+    }
+
+    $('#run-now').prop('disabled', true)
+    $('#run-now-label').text('Running...')
+    $('#stop-now').removeClass('d-none') // SHOW stop button here
+    $('#run-output').removeClass('d-none')
+    $('#run-output-log').text('Starting Kometa...\n')
+
+    fetch('/start-kometa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          $('#run-output-log').text(`❌ ${data.error}`)
+          $('#run-now').prop('disabled', false)
+          $('#run-now-label').text('Run Now')
+          $('#stop-now').addClass('d-none')
+          return
+        }
+
+        // ✅ Delay polling slightly to allow Kometa to start
+        setTimeout(() => {
+          kometaInterval = setInterval(fetchKometaLog, 3000)
+          kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+        }, 5500) // <-- 1.5 second delay
+      })
   })
-    .then(res => res.json())
-    .then(data => {
-      if (data.error) {
-        $('#run-output-log').text(`❌ ${data.error}`)
-        $('#run-now').prop('disabled', false)
-        $('#run-now-label').text('Run Now')
-        $('#stop-now').addClass('d-none')
-        return
-      }
 
-      // ✅ Delay polling slightly to allow Kometa to start
-      setTimeout(() => {
-        kometaInterval = setInterval(fetchKometaLog, 3000)
-        kometaStatusInterval = setInterval(checkKometaStatus, 5000)
-      }, 5500) // <-- 1.5 second delay
-    })
-})
-
-// Stop button click handler
-$('#stop-now').on('click', function () {
-  fetch('/stop-kometa', { method: 'POST' })
-    .then(res => res.json())
-    .then(data => {
-      if (data.error) {
-        $('#run-output-log').append(`\n⚠️ ${data.error}`)
-      } else {
-        $('#run-output-log').append('\n🟥 Kometa process stopped.')
-      }
-      clearInterval(kometaInterval)
-      clearInterval(kometaStatusInterval)
-      $('#run-now').prop('disabled', false)
-      $('#run-now-label').text('Run Now')
-      $('#stop-now').addClass('d-none') // hide stop again
-    })
-    .catch(err => {
-      console.error('Error stopping Kometa process:', err) // Optional for debugging
-      $('#run-output-log').append('\n⚠️ Error stopping process.')
-    })
-})
-
-function fetchKometaLog () {
-  fetch('/tail-log')
-    .then(res => res.json())
-    .then(data => {
-      if (data.error) {
-        $('#run-output-log').text(`❌ ${data.error}`)
-        return
-      }
-      $('#run-output-log').text(data.log)
-    })
-}
-
-function checkKometaStatus () {
-  fetch('/kometa-status')
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'done' || data.status === 'not started') {
+  // Stop button click handler
+  $('#stop-now').on('click', function () {
+    fetch('/stop-kometa', { method: 'POST' })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          $('#run-output-log').append(`\n⚠️ ${data.error}`)
+        } else {
+          $('#run-output-log').append('\n🟥 Kometa process stopped.')
+        }
         clearInterval(kometaInterval)
         clearInterval(kometaStatusInterval)
         $('#run-now').prop('disabled', false)
         $('#run-now-label').text('Run Now')
-        $('#stop-now').addClass('d-none')
+        $('#stop-now').addClass('d-none') // hide stop again
+      })
+      .catch(err => {
+        console.error('Error stopping Kometa process:', err) // Optional for debugging
+        $('#run-output-log').append('\n⚠️ Error stopping process.')
+      })
+  })
+
+  function fetchKometaLog () {
+    fetch('/tail-log')
+      .then(res => res.json())
+      .then(data => {
+        const $box = $('#run-output-log')
+        if (data.error) {
+          $box.text(`❌ ${data.error}`)
+          return
+        }
+        $box.text(data.log)
+        if ($box[0]) $box[0].scrollTop = $box[0].scrollHeight
+      })
+  }
+
+  function checkKometaStatus () {
+    fetch('/kometa-status')
+      .then(res => res.json())
+      .then(data => {
+        const $updateBtn = $('#update-kometa-btn')
+        const $runNow = $('#run-now')
+        const $stopNow = $('#stop-now')
+
+        // Disable update if Kometa is running or an update is in progress
+        const shouldDisableUpdate = (data.status === 'running') || KOMETA_UPDATING
+        if (shouldDisableUpdate) {
+          const why = KOMETA_UPDATING ? 'Kometa is updating; wait for it to finish.' : 'Kometa is running; stop it before updating.'
+          $updateBtn.prop('disabled', true)
+            .attr('title', why)
+            .tooltip({ placement: 'top' })
+        } else {
+          $updateBtn.prop('disabled', false)
+            .removeAttr('title')
+            .tooltip('dispose')
+        }
+
+        // Lock the Run UI while updating
+        if (KOMETA_UPDATING) {
+          $runNow.prop('disabled', true).html('<i class="bi bi-hourglass me-1"></i> Updating...')
+          $stopNow.prop('disabled', true)
+          return // don’t do the rest while we’re mid-update
+        }
+
+        // Handle Kometa process states
+        if (data.status === 'running') {
+          // Kometa is actively running → keep Run disabled, allow Stop
+          $runNow.prop('disabled', true).html('<i class="bi bi-play-fill me-1"></i> Run Now')
+          $stopNow.removeClass('d-none').prop('disabled', false)
+          return
+        }
+
+        // If we reach here, it's either "done" or "not started"
+        if (typeof kometaInterval !== 'undefined' && kometaInterval) clearInterval(kometaInterval)
+        if (typeof kometaStatusInterval !== 'undefined' && kometaStatusInterval) clearInterval(kometaStatusInterval)
+
+        $runNow.prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Run Now')
+        $stopNow.addClass('d-none').prop('disabled', false)
 
         if (data.status === 'done') {
           if (data.return_code === 0) {
@@ -672,73 +779,73 @@ function checkKometaStatus () {
           } else {
             $('#run-output-log').append(`\n⚠️ Kometa exited with code ${data.return_code}. Check logs for details.`)
           }
-        } else {
+        } else if (data.status === 'not started') {
           $('#run-output-log').append('\n🟥 Kometa is not running.')
         }
-      }
-    })
-    .catch(err => {
-      console.error('Error checking Kometa status:', err)
-      $('#run-output-log').append('\n⚠️ Failed to check Kometa status.')
-    })
-}
-
-function isValidTimesFormat (timesStr) {
-  if (!timesStr.trim()) return false
-  const times = timesStr.split(',')
-  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
-  return times.every(t => timeRegex.test(t.trim()))
-}
-
-function toggleTimesInputVisibility (mainOption) {
-  const timesContainer = $('#times-input-container')
-  if (mainOption === '--times') {
-    timesContainer.removeClass('d-none')
-  } else {
-    timesContainer.addClass('d-none')
-    $('#times-error').addClass('d-none')
+      })
+      .catch(err => {
+        console.error('Error checking Kometa status:', err)
+        $('#run-output-log').append('\n⚠️ Failed to check Kometa status.')
+      })
   }
-}
 
-function getMaintenanceWindow () {
-  const windowStr = $('#plex-maintenance-window').data('window') // e.g., "03:00–05:00"
-  if (!windowStr || !windowStr.includes('–')) return null
-
-  const [start, end] = windowStr.split('–').map(t => t.trim())
-  return { start, end } // Strings in "HH:MM" format
-}
-
-function isTimeWithinRange (time, rangeStart, rangeEnd) {
-  const toMinutes = t => {
-    const [h, m] = t.split(':').map(Number)
-    return h * 60 + m
+  function isValidTimesFormat (timesStr) {
+    if (!timesStr.trim()) return false
+    const times = timesStr.split(',')
+    const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
+    return times.every(t => timeRegex.test(t.trim()))
   }
-  const timeMin = toMinutes(time)
-  return timeMin >= toMinutes(rangeStart) && timeMin < toMinutes(rangeEnd)
-}
 
-function checkMaintenanceWarning (mainOption) {
-  const warningBox = $('#times-warning')
-  const maintenance = getMaintenanceWindow()
-  warningBox.addClass('d-none')
-
-  if (!maintenance) return
-
-  if (mainOption === '') {
-    const defaultTime = '05:00'
-    if (isTimeWithinRange(defaultTime, maintenance.start, maintenance.end)) {
-      warningBox.removeClass('d-none')
+  function toggleTimesInputVisibility (mainOption) {
+    const timesContainer = $('#times-input-container')
+    if (mainOption === '--times') {
+      timesContainer.removeClass('d-none')
+    } else {
+      timesContainer.addClass('d-none')
+      $('#times-error').addClass('d-none')
     }
   }
 
-  if (mainOption === '--times') {
-    const timesInput = $('#times-input').val().trim()
-    if (isValidTimesFormat(timesInput)) {
-      const times = timesInput.split(',').map(t => t.trim())
-      const overlaps = times.some(t => isTimeWithinRange(t, maintenance.start, maintenance.end))
-      if (overlaps) {
+  function getMaintenanceWindow () {
+    const windowStr = $('#plex-maintenance-window').data('window') // e.g., "03:00–05:00"
+    if (!windowStr || !windowStr.includes('–')) return null
+
+    const [start, end] = windowStr.split('–').map(t => t.trim())
+    return { start, end } // Strings in "HH:MM" format
+  }
+
+  function isTimeWithinRange (time, rangeStart, rangeEnd) {
+    const toMinutes = t => {
+      const [h, m] = t.split(':').map(Number)
+      return h * 60 + m
+    }
+    const timeMin = toMinutes(time)
+    return timeMin >= toMinutes(rangeStart) && timeMin < toMinutes(rangeEnd)
+  }
+
+  function checkMaintenanceWarning (mainOption) {
+    const warningBox = $('#times-warning')
+    const maintenance = getMaintenanceWindow()
+    warningBox.addClass('d-none')
+
+    if (!maintenance) return
+
+    if (mainOption === '') {
+      const defaultTime = '05:00'
+      if (isTimeWithinRange(defaultTime, maintenance.start, maintenance.end)) {
         warningBox.removeClass('d-none')
       }
     }
+
+    if (mainOption === '--times') {
+      const timesInput = $('#times-input').val().trim()
+      if (isValidTimesFormat(timesInput)) {
+        const times = timesInput.split(',').map(t => t.trim())
+        const overlaps = times.some(t => isTimeWithinRange(t, maintenance.start, maintenance.end))
+        if (overlaps) {
+          warningBox.removeClass('d-none')
+        }
+      }
+    }
   }
-}
+})

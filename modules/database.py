@@ -57,7 +57,7 @@ def retrieve_section_data(name, section):
             if row:
                 unpickled = pickle.loads(row["data"])
                 if app.config["QS_DEBUG"]:
-                    helpers.ts_log(f"Retrieved data for name={name}, section={section}: {unpickled}", level="DEBUG2")  # 👈 Add this
+                    helpers.ts_log(f"Retrieved data for name={name}, section={section}: {unpickled}", level="DEBUG")
                 return (
                     helpers.booler(row["validated"]),
                     helpers.booler(row["user_entered"]),
