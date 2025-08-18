@@ -9,7 +9,7 @@ pillow==11.3.0
 PlexAPI==4.17.0
 pre-commit==4.1.0
 psutil==7.0.0
-pyfiglet==1.0.3
+pyfiglet==1.0.4
 PyQt5==5.15.11; platform_system != "Linux" or platform_machine != "aarch64"
 python-dotenv==1.1.1
 requests==2.32.4
