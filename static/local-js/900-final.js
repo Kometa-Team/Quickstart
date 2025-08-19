@@ -6,15 +6,21 @@ let KOMETA_UPDATING = false
 let kometaInterval = null
 let kometaStatusInterval = null
 
+const _qsEnvEl = document.getElementById('qs-env')
+const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
+const isWindows = typeof runningOn === 'string' && runningOn.includes('Windows')
+// const isFrozen = typeof runningOn === 'string' && runningOn.startsWith('Frozen')
+// const isDocker = runningOn === 'Docker'
+
+// function toDisplayPath (p) { return isWindows ? String(p).replace(/\//g, '\\') : String(p) }
+// function toPosix (p) { return String(p).replace(/\\/g, '/') }
+function quoteIfNeeded (s) { return /\s/.test(s) ? `"${s}"` : s }
+
 function formatElapsed (ms) {
   const sec = Math.floor(ms / 1000)
   const mm = String(Math.floor(sec / 60)).padStart(2, '0')
   const ss = String(sec % 60).padStart(2, '0')
   return `${mm}:${ss}`
-}
-
-function quoteIfNeeded (str) {
-  return /\s/.test(str) ? `"${str}"` : str
 }
 
 $(document).ready(function () {
@@ -203,8 +209,7 @@ $(document).ready(function () {
     const fullKometaPy = `${kometaRootNorm}/kometa.py`
     const fullConfigPath = `${kometaRootNorm}/config/${configFilename}`
 
-    // Adjust to user platform for display
-    const isWindows = navigator.platform.startsWith('Win')
+    // use the global isWindows we computed from backend values
     const finalPythonBin = isWindows ? pythonBinNorm.replace(/\//g, '\\') : pythonBinNorm
     const finalKometaPy = isWindows ? fullKometaPy.replace(/\//g, '\\') : fullKometaPy
     const finalConfigPath = isWindows ? fullConfigPath.replace(/\//g, '\\') : fullConfigPath

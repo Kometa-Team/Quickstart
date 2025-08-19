@@ -4,6 +4,7 @@
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
 
 <div id="plex-maintenance-window" data-window="{{ page_info.telemetry.maintenance_window }}"></div>
+<div id="qs-env" data-running-on="{{ version_info.running_on | default('') }}"></div>
 
 <!-- Header Style Dropdown -->
 <div class="form-floating mb-2">
