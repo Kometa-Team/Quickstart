@@ -23,10 +23,38 @@
         7GB.</span>
     </span>
     <br>
-    <button class="btn btn-sm btn-primary mt-2" id="clone-test-lib-btn">Clone Test Libraries</button>
+    <button class="btn btn-sm btn-primary mt-2" id="clone-test-lib-btn" type="button">
+      <span id="ctlb-spin" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+      <span id="ctlb-label">Download Test Libraries</span>
+      <span id="ctlb-sub" class="ms-2 small text-muted d-none"></span>
+    </button>
+
     <button type="button" class="btn btn-sm btn-danger ms-2 mt-2 d-none" id="purge-test-lib-btn">
       <i class="bi bi-trash3 me-1"></i> Delete Test Libraries
     </button>
+    <!-- Progress UI (hidden by default; shown by JS while running) -->
+    <div id="test-lib-progress" class="d-none mt-2">
+      <div class="progress" style="height: 18px;">
+        <div id="test-lib-progress-bar" class="progress-bar" role="progressbar" style="width:0%">0%</div>
+      </div>
+      <small id="test-lib-progress-text" class="text-muted" aria-live="polite"></small>
+    </div>
+    <!-- Persistent update banner (hidden by default; toggled by JS) -->
+    <div id="test-lib-update-row" class="d-none mt-2">
+      <div class="alert alert-warning py-2 px-3 d-flex align-items-center justify-content-between mb-0">
+        <div class="small">
+          <strong>Update available.</strong>
+          <span class="ms-2">
+            Installed: <code id="test-lib-local-sha"></code> • Latest: <code id="test-lib-remote-sha"></code>
+          </span>
+        </div>
+        <div>
+          <button id="update-test-lib-btn" class="btn btn-sm btn-primary" type="button">
+            <i class="bi bi-arrow-repeat me-1"></i> Update Now
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
   <p class="fs-5">Review the Config Data section below and press the arrow button above when you are ready to begin.</p>
 </div><br>
@@ -53,12 +81,12 @@
   <label for="configSelector">Select or Add Config</label>
 </div>
 
-<div id="newConfigInput" class="form-floating mb-2"
-  style="display: {% if page_info['config_name'] not in available_configs %}block{% else %}none{% endif %};">
+{% set show_new_config = page_info['config_name'] not in available_configs %}
+
+<div id="newConfigInput" class="form-floating mb-2 {{ '' if show_new_config else 'd-none' }}">
   <input type="text" id="newConfigName" name="newConfigName" class="form-control" placeholder="Enter a new config name"
     value="{% if page_info['config_name'] not in available_configs %}{{ page_info['config_name'] }}{% else %}{{ page_info['new_config_name'] }}{% endif %}">
   <label for="newConfigName">New Config Name</label>
-</div>
 </div>
 <form>
   <div class="form-floating mb-2">
@@ -74,7 +102,6 @@
       <i class="bi bi-trash"></i> Delete
     </button>
   </div>
-</form>
 </form>
 
 <!-- Reset and Delete Confirmation Modal -->

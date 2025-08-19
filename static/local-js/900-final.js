@@ -520,16 +520,14 @@ $(document).ready(function () {
 
     // progress heartbeat
     const startTs = Date.now()
-    function showHeartbeat () {
-      const elapsed = formatElapsed(Date.now() - startTs)
-      showToast('info', `📦 Working on Kometa update… (${elapsed})`, 10000)
-    }
-    showToast('info', '⬇️ Downloading/Unzipping Kometa… (00:00)', 10000)
-    const toastInterval = setInterval(showHeartbeat, 30000)
+    showToast('info', 'Still working on Kometa... (0 seconds elapsed)', 10000)
+    const heartbeatId = setInterval(() => {
+      const secs = Math.floor((Date.now() - startTs) / 1000)
+      showToast('info', `Still working on Kometa... (${secs} seconds elapsed)`, 10000)
+    }, 30000) // every 30s
 
-    // define AFTER toastInterval so it's in scope
     const cleanupUI = () => {
-      clearInterval(toastInterval)
+      clearInterval(heartbeatId)
       KOMETA_UPDATING = false
       $runBox.removeClass('opacity-50 position-relative')
       $runNow.prop('disabled', prevRunNowDisabled).html(prevRunNowHtml)
@@ -576,7 +574,9 @@ $(document).ready(function () {
         $logBox.append('❌ Error occurred during Kometa update.\n')
         if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
       })
-      .finally(cleanupUI)
+      .finally(() => {
+        cleanupUI()
+      })
   }
 
   // Kometa Update Button Click

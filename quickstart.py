@@ -48,6 +48,10 @@ Request.max_form_parts = 100000  # Allow more form fields if needed
 
 from flask_session import Session
 from modules import validations, output, persistence, helpers, database
+from typing import Dict, Any
+
+# A very simple in-memory progress store
+CLONE_PROGRESS: Dict[str, Dict[str, Any]] = {}
 
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
 load_dotenv(DOTENV, override=True)
@@ -1540,70 +1544,234 @@ def update_kometa():
 def check_test_libraries():
     data = request.get_json(silent=True) or {}
     quickstart_root = data.get("quickstart_root", "")
-    use_config_dir = data.get("use_config_dir", False)
-
+    # legacy flag ignored; we always use the config dir now
     if not quickstart_root:
         return jsonify(success=False, message="Quickstart root path not provided.")
 
-    if use_config_dir:
-        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
-        target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
-    else:
-        parent_dir = os.path.dirname(quickstart_root)
-        target_path = os.path.join(parent_dir, "plex_test_libraries")
-
+    # Always use config/<plex_test_libraries>
+    base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
+    target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
     resolved_path = os.path.abspath(target_path)
-    found = os.path.isdir(target_path)
-    has_expected_folders = all(os.path.isdir(os.path.join(target_path, name)) for name in ["test_tv_lib", "test_movie_lib"])
 
-    is_git_repo = False
+    found = os.path.isdir(target_path)
+    has_expected = all(
+        os.path.isdir(os.path.join(target_path, name))
+        for name in ["test_tv_lib", "test_movie_lib"]
+    )
+
     local_sha = ""
     remote_sha = ""
     is_outdated = False
 
-    if found:
-        # Try to import GitPython safely
-        try:
-            os.environ["GIT_PYTHON_REFRESH"] = "quiet"
-            from git import Repo, InvalidGitRepositoryError, GitCommandError
-
+    if found and has_expected:
+        sha_path = os.path.join(target_path, ".test_libraries_version")
+        if os.path.exists(sha_path):
             try:
-                _ = Repo(target_path).git_dir
-                is_git_repo = True
-            except (InvalidGitRepositoryError, GitCommandError, OSError):
-                is_git_repo = False
-        except ImportError:
-            is_git_repo = False
+                with open(sha_path, "r") as f:
+                    local_sha = f.read().strip()
+            except Exception:
+                local_sha = ""
+            try:
+                commit_info = requests.get(
+                    "https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main",
+                    timeout=5,
+                ).json()
+                remote_sha = commit_info.get("sha", "")[:7]
+            except Exception:
+                remote_sha = ""
+            if local_sha and remote_sha and local_sha != remote_sha:
+                is_outdated = True
 
-        # Check ZIP SHA version if not a git repo
-        if not is_git_repo:
-            sha_path = os.path.join(target_path, ".test_libraries_version")
-            if os.path.exists(sha_path):
-                try:
-                    with open(sha_path, "r") as f:
-                        local_sha = f.read().strip()
-                except Exception:
-                    local_sha = ""
+    return jsonify({
+        "found": bool(found and has_expected),
+        "target_path": resolved_path,
+        "is_outdated": is_outdated,
+        "local_sha": local_sha,
+        "remote_sha": remote_sha,
+    })
 
-                try:
-                    commit_info = requests.get("https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main", timeout=5).json()
-                    remote_sha = commit_info.get("sha", "")[:7]
-                except Exception:
-                    remote_sha = ""
 
-                if local_sha and remote_sha and local_sha != remote_sha:
-                    is_outdated = True
+@app.route("/clone-test-libraries-start", methods=["POST"])
+def clone_test_libraries_start():
+    """
+    Starts a background job to download and install plex_test_libraries,
+    reporting rich progress via CLONE_PROGRESS[job_id].
 
-    return jsonify(
-        {
-            "found": found and (has_expected_folders or is_git_repo),
-            "is_git_repo": is_git_repo,
-            "target_path": resolved_path,
-            "is_outdated": is_outdated,
-            "local_sha": local_sha,
-            "remote_sha": remote_sha,
-        }
-    )
+    Progress payload shapes by phase:
+      download: {"phase":"download","pct":<int|None>,"text":str,"downloaded":int,"total":int}
+      extract : {"phase":"extract","pct":int,"text":str,"files_done":int,"files_total":int}
+      finalize: {"phase":"finalize","pct":int,"text":str}
+      done    : {"phase":"done","pct":100,"text":str,"target_path":str}
+      error   : {"phase":"error","pct":0,"text":str}
+    """
+    data = request.get_json(silent=True) or {}
+    quickstart_root = data.get("quickstart_root", "")
+    use_config_dir = True  # always managed
+
+    if not quickstart_root:
+        return jsonify(success=False, message="Quickstart root path not provided.")
+
+    # Resolve target path (managed/config dir)
+    base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
+    target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
+    resolved_path = os.path.abspath(target_path)
+
+    # Ensure CLONE_PROGRESS dict exists
+    try:
+        _ = CLONE_PROGRESS
+    except NameError:
+        # Create if missing (keeps function drop-in friendly)
+        globals()["CLONE_PROGRESS"] = {}
+    job_id = str(uuid.uuid4())
+    CLONE_PROGRESS[job_id] = {"phase": "queued", "pct": 0, "text": "Queued..."}
+
+    def worker():
+        zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
+        commit_sha = ""
+
+        try:
+            # Best-effort SHA for UI banner
+            try:
+                commit_info = requests.get(
+                    "https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main",
+                    timeout=5,
+                ).json()
+                commit_sha = commit_info.get("sha", "")[:7]
+            except Exception:
+                commit_sha = ""
+
+            # Try to get total size first (lets UI show determination early)
+            total_size = 0
+            try:
+                head = requests.head(zip_url, allow_redirects=True, timeout=10)
+                total_size = int(head.headers.get("Content-Length", "0") or 0)
+            except Exception:
+                total_size = 0
+
+            CLONE_PROGRESS[job_id] = {
+                "phase": "download",
+                "pct": None,                   # None => indeterminate until we know size
+                "text": "Downloading zip…",
+                "downloaded": 0,
+                "total": total_size,
+            }
+
+            with tempfile.TemporaryDirectory() as tmpdir:
+                zip_path = os.path.join(tmpdir, "main.zip")
+
+                # Stream download with throttled progress updates
+                downloaded = 0
+                last_push = 0.0
+                with requests.get(zip_url, stream=True, timeout=30) as r:
+                    r.raise_for_status()
+
+                    # If HEAD failed, try to get size from GET
+                    if not total_size:
+                        try:
+                            total_size = int(r.headers.get("Content-Length", "0") or 0)
+                            CLONE_PROGRESS[job_id]["total"] = total_size
+                        except Exception:
+                            total_size = 0
+
+                    chunk = 1024 * 1024  # 1 MiB
+                    with open(zip_path, "wb") as f:
+                        for part in r.iter_content(chunk_size=chunk):
+                            if not part:
+                                continue
+                            f.write(part)
+                            downloaded += len(part)
+
+                            now = time.time()
+                            if (now - last_push) > 0.5 or (total_size and downloaded >= total_size):
+                                pct = None
+                                if total_size:
+                                    pct = int(downloaded * 100 / total_size)
+                                CLONE_PROGRESS[job_id] = {
+                                    "phase": "download",
+                                    "pct": pct,
+                                    "text": "Downloading zip…",
+                                    "downloaded": downloaded,
+                                    "total": total_size,
+                                }
+                                last_push = now
+
+                # Extract with per-file progress
+                CLONE_PROGRESS[job_id] = {
+                    "phase": "extract", "pct": 0, "text": "Extracting…",
+                    "files_done": 0, "files_total": 0
+                }
+                with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                    members = zip_ref.infolist()
+                    total_files = len(members) or 1
+                    files_done = 0
+                    last_push = 0.0
+
+                    for info in members:
+                        zip_ref.extract(info, tmpdir)
+                        files_done += 1
+
+                        now = time.time()
+                        if (now - last_push) > 0.2 or files_done == total_files:
+                            pct = int(files_done * 100 / total_files)
+                            CLONE_PROGRESS[job_id] = {
+                                "phase": "extract",
+                                "pct": pct,
+                                "text": f"Extracting… {files_done}/{total_files} files",
+                                "files_done": files_done,
+                                "files_total": total_files,
+                            }
+                            last_push = now
+
+                extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
+
+                # Finalize (replace folder)
+                CLONE_PROGRESS[job_id] = {"phase": "finalize", "pct": 95, "text": "Finalizing…"}
+                if os.path.exists(target_path):
+                    shutil.rmtree(target_path, onerror=helpers.handle_remove_readonly)
+                shutil.move(extracted_dir, target_path)
+
+                # Write version marker (best effort)
+                if commit_sha:
+                    try:
+                        with open(os.path.join(target_path, ".test_libraries_version"), "w") as f:
+                            f.write(commit_sha)
+                    except Exception as e:
+                        helpers.ts_log(f"Warning: Failed to write SHA version file: {e}", level="WARNING")
+
+                # Permissions for non-Windows
+                if platform.system() in ["Linux", "Darwin"]:
+                    subprocess.run(["chmod", "-R", "777", target_path], check=False)
+
+                CLONE_PROGRESS[job_id] = {
+                    "phase": "done",
+                    "pct": 100,
+                    "text": "Installed/updated successfully.",
+                    "target_path": resolved_path,
+                }
+
+        except Exception as e:
+            CLONE_PROGRESS[job_id] = {
+                "phase": "error",
+                "pct": 0,
+                "text": f"Error: {str(e)}",
+            }
+
+    threading.Thread(target=worker, daemon=True).start()
+    return jsonify(success=True, job_id=job_id)
+
+
+@app.route("/clone-test-libraries-progress", methods=["GET"])
+def clone_test_libraries_progress():
+    job_id = request.args.get("job_id", "")
+    info = CLONE_PROGRESS.get(job_id)
+    if not info:
+        return jsonify(success=False, message="Unknown job_id"), 404
+
+    # avoid duplicate kwarg: remove job's 'success' if present
+    info_no_flag = dict(info)
+    info_no_flag.pop("success", None)
+
+    return jsonify(success=True, **info_no_flag)
 
 
 @app.route("/clone-test-libraries", methods=["POST"])
@@ -1627,67 +1795,41 @@ def clone_test_libraries():
     try:
         # If already exists
         if os.path.exists(target_path):
-            if os.path.isdir(os.path.join(target_path, ".git")):
-                try:
-                    os.environ["GIT_PYTHON_REFRESH"] = "quiet"
-                    from git import Repo
-
-                    repo = Repo(target_path)
-                    repo.remote().pull()
-                    return jsonify(success=True, message="Test libraries updated successfully.", target_path=resolved_path)
-                except Exception as e:
-                    return jsonify(success=False, message=f"Git pull failed:\n{str(e)}")
-
             if use_config_dir:
-                return jsonify(success=True, message="Test libraries already present and valid (ZIP install).", target_path=resolved_path)
+                return jsonify(success=True, message="Test libraries already present (ZIP install).", target_path=resolved_path)
 
-            return jsonify(success=False, message="The 'plex_test_libraries' folder exists but is not a valid Git repository.\nPlease delete or rename the folder and try again.")
-
-        # Try Git clone
-        git_path = shutil.which("git")
-        if git_path:
-            try:
-                os.environ["GIT_PYTHON_REFRESH"] = "quiet"
-                from git import Repo
-
-                Repo.clone_from("https://github.com/chazlarson/plex-test-libraries.git", target_path)
-            except Exception as e:
-                helpers.ts_log(f"Git clone failed, falling back to ZIP: {e}", level="WARNING")
-                git_path = None  # force fallback below
-
-        # ZIP fallback if git not found or clone failed
-        if not git_path:
-            zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
+        # ZIP fallback if git not found or Download failed
+        zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
+        commit_sha = None
+        try:
+            commit_info = requests.get("https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main", timeout=5).json()
+            commit_sha = commit_info.get("sha", "")[:7]
+        except Exception:
             commit_sha = None
-            try:
-                commit_info = requests.get("https://api.github.com/repos/chazlarson/plex-test-libraries/commits/main", timeout=5).json()
-                commit_sha = commit_info.get("sha", "")[:7]
-            except Exception:
-                commit_sha = None
 
-            with tempfile.TemporaryDirectory() as tmpdir:
-                zip_path = os.path.join(tmpdir, "main.zip")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            zip_path = os.path.join(tmpdir, "main.zip")
 
-                r = requests.get(zip_url)
-                if r.status_code != 200:
-                    return jsonify(success=False, message="Failed to download ZIP fallback from GitHub.")
-                with open(zip_path, "wb") as f:
-                    f.write(r.content)
+            r = requests.get(zip_url)
+            if r.status_code != 200:
+                return jsonify(success=False, message="Failed to download ZIP fallback from GitHub.")
+            with open(zip_path, "wb") as f:
+                f.write(r.content)
 
-                with zipfile.ZipFile(zip_path, "r") as zip_ref:
-                    zip_ref.extractall(tmpdir)
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(tmpdir)
 
-                extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
-                if os.path.exists(target_path):
-                    shutil.rmtree(target_path, onerror=helpers.handle_remove_readonly)
-                shutil.move(extracted_dir, target_path)
+            extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
+            if os.path.exists(target_path):
+                shutil.rmtree(target_path, onerror=helpers.handle_remove_readonly)
+            shutil.move(extracted_dir, target_path)
 
-                if commit_sha:
-                    try:
-                        with open(os.path.join(target_path, ".test_libraries_version"), "w") as f:
-                            f.write(commit_sha)
-                    except Exception as e:
-                        helpers.ts_log(f"Warning: Failed to write SHA version file: {e}", level="WARNING")
+            if commit_sha:
+                try:
+                    with open(os.path.join(target_path, ".test_libraries_version"), "w") as f:
+                        f.write(commit_sha)
+                except Exception as e:
+                    helpers.ts_log(f"Warning: Failed to write SHA version file: {e}", level="WARNING")
 
         if use_config_dir and platform.system() in ["Linux", "Darwin"]:
             subprocess.run(["chmod", "-R", "777", target_path], check=False)
