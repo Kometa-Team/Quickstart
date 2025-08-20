@@ -244,7 +244,7 @@ $(document).ready(function () {
         runCmdOutput.text('⚠️ Please select at least one library when using --run-libraries.')
         return
       }
-      cli += ` "${selectedLibs.join(', ')}"`
+      cli += ` "${selectedLibs.join(',')}"`
     }
 
     const modeFlag = $('input[name="mode-flag"]:checked').val()

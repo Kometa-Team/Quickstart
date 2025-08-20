@@ -1680,3 +1680,43 @@ def get_kometa_root_path() -> Path:
         or os.path.join(CONFIG_DIR, "kometa")
     )
     return Path(os.path.normpath(base)).resolve()
+
+
+def _unwrap_doublewrap(s: str) -> str:
+    """Turn ""Foo Bar"" -> "Foo Bar" (leave normal "Foo Bar" alone)."""
+    if len(s) >= 2 and s[0] == s[-1] == '"':
+        inner = s[1:-1]
+        if len(inner) >= 2 and inner[0] == inner[-1] == '"':
+            return inner
+    return s
+
+
+def normalize_cli_args_inplace(argv: list[str]) -> None:
+    """
+    Fix double-wrapped quoted values produced on Frozen-Windows.
+    Works generically, and also ensures flags that take a single value
+    (like --run-libraries and --times) have their next arg cleaned.
+    """
+    if not argv:
+        return
+
+    # 1) generic pass: unwrap any fully-double-wrapped token
+    for i, tok in enumerate(argv):
+        argv[i] = _unwrap_doublewrap(tok)
+
+    # 2) flags with exactly one following value we care about
+    single_value_flags = {
+        "--run-libraries",
+        "--times",
+        "--divider",
+        "--config",
+        "--timeout",
+        "--width",
+    }
+    i = 0
+    while i < len(argv):
+        if argv[i] in single_value_flags and i + 1 < len(argv):
+            argv[i+1] = _unwrap_doublewrap(argv[i+1])
+            i += 2
+        else:
+            i += 1

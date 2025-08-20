@@ -1194,6 +1194,9 @@ def start_kometa():
         # Use posix=False so Windows backslashes/quotes are preserved
         command_parts = shlex.split(command, posix=not is_win)
 
+        # Clean up double-wrapped args (affects --run-libraries, --times, etc.)
+        helpers.normalize_cli_args_inplace(command_parts)
+
         # If the UI-built command already starts with python, replace it with our venv python
         if command_parts and os.path.basename(command_parts[0]).lower() in {"python", "python3", "python.exe"}:
             command_parts[0] = str(venv_python)
