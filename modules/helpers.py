@@ -1482,25 +1482,53 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> boo
 
 
 def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
-    is_windows = sys.platform.startswith("win")
+    is_windows = os.name == "nt"
     venv_dir = kometa_dir / "kometa-venv"
+
+    # Build the command that will create the venv
+    cmd: list[str] | None = None
+    if getattr(sys, "frozen", False):
+        # We're running as a frozen exe → we must use a *real* python
+        if is_windows and shutil.which("py"):
+            # Prefer the Python launcher
+            cmd = ["py", "-3", "-m", "venv", str(venv_dir)]
+        else:
+            # Fall back to a python on PATH
+            for cand in ("python3.13", "python3.12", "python3.11", "python3.10", "python3", "python"):
+                if shutil.which(cand):
+                    cmd = [cand, "-m", "venv", str(venv_dir)]
+                    break
+        if cmd is None:
+            logs.append(
+                "❌ Could not find a system Python 3 (3.10+) to create a virtualenv. "
+                "Please install Python and ensure it is on PATH."
+            )
+            return None
+    else:
+        # Non-frozen: using the current interpreter is fine
+        cmd = [sys.executable, "-m", "venv", str(venv_dir)]
+
     if not venv_dir.exists():
         logs.append("🐍 Creating virtual environment…")
         p = subprocess.run(
-            [sys.executable, "-m", "venv", str(venv_dir)],
+            cmd,
             capture_output=True,
             text=True,
             cwd=str(kometa_dir),
-            shell=is_windows,
+            shell=False,  # no shell needed; avoids argument quirks on Windows
         )
         if p.returncode != 0:
-            logs.append((p.stderr or "").strip() or "venv creation failed")
+            logs.append((p.stderr or p.stdout or "").strip() or "venv creation failed")
             return None
+
     bin_dir = venv_dir / ("Scripts" if is_windows else "bin")
+    # Prefer python3, but fall back to python if needed
     python_bin = bin_dir / ("python.exe" if is_windows else "python3")
-    pip_bin = bin_dir / (
-        "pip.exe" if is_windows else "pip"
-    )  # optional, no longer used for installs
+    if not python_bin.exists():
+        alt = bin_dir / ("python.exe" if is_windows else "python")
+        if alt.exists():
+            python_bin = alt
+    pip_bin = bin_dir / ("pip.exe" if is_windows else "pip")
     return python_bin, pip_bin
 
 
