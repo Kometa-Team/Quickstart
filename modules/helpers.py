@@ -107,7 +107,12 @@ def extract_library_name(key):
 
 def get_pyfiglet_fonts():
     """Retrieve available PyFiglet fonts from static/fonts, sorted with custom order."""
-    fonts_dir = "static/fonts"
+    if getattr(sys, "frozen", False):  # running in frozen/packaged mode
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath(".")
+
+    fonts_dir = os.path.join(base_path, "static", "fonts")
 
     # Ensure predefined fonts are at the top
     predefined_fonts = ["none", "single line", "standard"]
