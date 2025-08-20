@@ -4,17 +4,21 @@
 /* Helpers for the config UI      */
 /* ============================== */
 
-/* eslint-disable no-unused-vars */
 function toggleConfigInput (selectElement) {
-  const newConfigInputContainer = document.getElementById('newConfigInput')
-  if (selectElement.value === 'add_config') {
-    newConfigInputContainer.style.display = 'block'
-  } else {
-    newConfigInputContainer.style.display = 'none'
-    const newConfigInput = document.getElementById('newConfigName')
-    removeValidationMessages(newConfigInput)
+  const box = document.getElementById('newConfigInput')
+  if (!box) return
+
+  const adding = selectElement.value === 'add_config'
+  box.classList.toggle('d-none', !adding)
+
+  if (!adding) {
+    const input = document.getElementById('newConfigName')
+    if (input) removeValidationMessages(input)
   }
 }
+
+// expose for inline HTML usage: onchange="toggleConfigInput(this)"
+window.toggleConfigInput = toggleConfigInput
 
 function applyValidationStyles (inputElement, type) {
   removeValidationMessages(inputElement)
@@ -37,7 +41,6 @@ function removeValidationMessages (inputElement) {
   const feedback = inputElement.parentElement.querySelector('.invalid-feedback, .valid-feedback')
   if (feedback) feedback.remove()
 }
-/* eslint-enable no-unused-vars */
 
 /* ============================== */
 /* Main page logic                */
@@ -59,13 +62,12 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateButtonState () {
     const isAddConfig = configSelector.value === 'add_config'
     const onlyAddConfigAvailable = configSelector.options.length === 1 && isAddConfig
+
     resetConfigButton.disabled = isAddConfig
     deleteConfigButton.disabled = isAddConfig
-    if (onlyAddConfigAvailable) {
-      document.getElementById('newConfigInput').style.display = 'block'
-    } else {
-      toggleConfigInput(configSelector)
-    }
+
+    const box = document.getElementById('newConfigInput')
+    if (box) box.classList.toggle('d-none', !(isAddConfig || onlyAddConfigAvailable))
   }
 
   updateButtonState()
