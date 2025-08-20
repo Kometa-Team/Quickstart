@@ -1482,18 +1482,32 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> boo
 
 
 def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
+    """
+    Create (if missing) and validate a venv at <kometa_dir>/kometa-venv.
+    Returns (python_bin, pip_bin) or None on failure.
+    """
+    import shutil, time
+
     is_windows = os.name == "nt"
     venv_dir = kometa_dir / "kometa-venv"
 
-    # Build the command that will create the venv
+    def _venv_ok() -> bool:
+        # A valid venv should have pyvenv.cfg and a python binary
+        cfg_ok = (venv_dir / "pyvenv.cfg").exists()
+        bin_dir = venv_dir / ("Scripts" if is_windows else "bin")
+        py = bin_dir / ("python.exe" if is_windows else "python3")
+        if not py.exists():
+            # allow 'python' as a fallback name on some platforms
+            py = bin_dir / ("python.exe" if is_windows else "python")
+        return cfg_ok and py.exists()
+
+    # Build command to create venv
     cmd: list[str] | None = None
     if getattr(sys, "frozen", False):
-        # We're running as a frozen exe → we must use a *real* python
+        # Prefer a *real* system Python when running frozen
         if is_windows and shutil.which("py"):
-            # Prefer the Python launcher
             cmd = ["py", "-3", "-m", "venv", str(venv_dir)]
         else:
-            # Fall back to a python on PATH
             for cand in ("python3.13", "python3.12", "python3.11", "python3.10", "python3", "python"):
                 if shutil.which(cand):
                     cmd = [cand, "-m", "venv", str(venv_dir)]
@@ -1505,69 +1519,100 @@ def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
             )
             return None
     else:
-        # Non-frozen: using the current interpreter is fine
+        # Non-frozen: current interpreter is fine
         cmd = [sys.executable, "-m", "venv", str(venv_dir)]
 
-    if not venv_dir.exists():
-        logs.append("🐍 Creating virtual environment…")
+    # Create venv if needed
+    if not venv_dir.exists() or not _venv_ok():
+        if venv_dir.exists() and not _venv_ok():
+            logs.append("⚠️ Existing kometa-venv looks invalid; recreating…")
+            try:
+                shutil.rmtree(venv_dir, ignore_errors=True)
+            except Exception as e:
+                logs.append(f"❌ Failed to remove invalid venv: {e}")
+                return None
+
+        logs.append(f"🐍 Creating virtual environment with: {' '.join(cmd)}")
         p = subprocess.run(
             cmd,
             capture_output=True,
             text=True,
             cwd=str(kometa_dir),
-            shell=False,  # no shell needed; avoids argument quirks on Windows
+            shell=False,
         )
+        if p.stdout.strip():
+            logs.append(p.stdout.strip())
         if p.returncode != 0:
-            logs.append((p.stderr or p.stdout or "").strip() or "venv creation failed")
+            logs.append((p.stderr or "").strip() or "venv creation failed")
             return None
 
+        # Some AV tools on Windows can delay file appearance; give it a moment
+        for _ in range(10):
+            if _venv_ok():
+                break
+            time.sleep(0.2)
+
+    # Validate venv structure
+    if not _venv_ok():
+        cfg_present = (venv_dir / "pyvenv.cfg").exists()
+        logs.append(
+            f"❌ Invalid venv: pyvenv.cfg present? {cfg_present}; "
+            f"bin/Scripts present? {(venv_dir / ('Scripts' if is_windows else 'bin')).exists()}"
+        )
+        return None
+
     bin_dir = venv_dir / ("Scripts" if is_windows else "bin")
-    # Prefer python3, but fall back to python if needed
     python_bin = bin_dir / ("python.exe" if is_windows else "python3")
     if not python_bin.exists():
         alt = bin_dir / ("python.exe" if is_windows else "python")
         if alt.exists():
             python_bin = alt
+
     pip_bin = bin_dir / ("pip.exe" if is_windows else "pip")
+
+    # Extra sanity: print interpreter identity
+    try:
+        p = subprocess.run(
+            [str(python_bin), "-c", "import sys; print(sys.executable); import sysconfig; print(sysconfig.get_platform())"],
+            capture_output=True, text=True, shell=False
+        )
+        diag = (p.stdout or "").strip().replace("\n", " | ")
+        if diag:
+            logs.append(f"🔎 venv python: {diag}")
+    except Exception:
+        pass
+
+    # Final guard: ensure pyvenv.cfg really exists, else pip will emit “No pyvenv.cfg file”
+    if not (venv_dir / "pyvenv.cfg").exists():
+        logs.append("❌ No pyvenv.cfg file after venv creation; aborting.")
+        return None
+
     return python_bin, pip_bin
 
 
 def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str]) -> bool:
-    is_windows = sys.platform.startswith("win")
+    is_windows = os.name == "nt"
 
     logs.append("⬆️ Upgrading pip…")
     p = subprocess.run(
         [str(python_bin), "-m", "pip", "install", "--upgrade", "pip"],
-        capture_output=True,
-        text=True,
-        cwd=str(kometa_dir),
-        shell=is_windows,
+        capture_output=True, text=True, cwd=str(kometa_dir), shell=is_windows,
     )
-    logs.append((p.stdout or "").strip() or "(no output)")
+    if p.stdout.strip():
+        logs.append(p.stdout.strip())
     if p.returncode != 0:
-        logs.append((p.stderr or "").strip())
+        logs.append((p.stderr or p.stdout or "").strip() or "pip upgrade failed")
         return False
 
     logs.append("📦 Installing requirements…")
     p = subprocess.run(
-        [
-            str(python_bin),
-            "-m",
-            "pip",
-            "install",
-            "--no-cache-dir",
-            "--upgrade",
-            "-r",
-            "requirements.txt",
-        ],
-        capture_output=True,
-        text=True,
-        cwd=str(kometa_dir),
-        shell=is_windows,
+        [str(python_bin), "-m", "pip", "install", "--no-cache-dir", "--upgrade", "-r", "requirements.txt"],
+        capture_output=True, text=True, cwd=str(kometa_dir), shell=is_windows,
     )
-    logs.append((p.stdout or "").strip() or "(no output)")
+    if p.stdout.strip():
+        logs.append(p.stdout.strip())
     if p.returncode != 0:
-        logs.append((p.stderr or "").strip())
+        logs.append((p.stderr or p.stdout or "").strip() or "requirements install failed")
         return False
 
     return True
