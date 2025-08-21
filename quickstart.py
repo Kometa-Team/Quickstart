@@ -1167,18 +1167,9 @@ def start_kometa():
         try:
             proc = psutil.Process(pid)
             started_at = datetime.fromtimestamp(proc.create_time()).isoformat()
-            return jsonify({
-                "error": f"Kometa is already running (PID: {pid}) since {started_at}.",
-                "status": "running",
-                "pid": pid,
-                "started_at": started_at
-            }), 400
+            return jsonify({"error": f"Kometa is already running (PID: {pid}) since {started_at}.", "status": "running", "pid": pid, "started_at": started_at}), 400
         except Exception:
-            return jsonify({
-                "error": f"Kometa is already running (PID: {pid}).",
-                "status": "running",
-                "pid": pid
-            }), 400
+            return jsonify({"error": f"Kometa is already running (PID: {pid}).", "status": "running", "pid": pid}), 400
 
     kometa_root = helpers.get_kometa_root_path()  # ✅ unified source of truth
     is_win = sys.platform.startswith("win")
@@ -1211,13 +1202,7 @@ def start_kometa():
 
         helpers.ts_log(f"argv={command_parts!r}", level="DEBUG")
 
-        proc = subprocess.Popen(
-            command_parts,
-            cwd=str(kometa_root),
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            start_new_session=True
-        )
+        proc = subprocess.Popen(command_parts, cwd=str(kometa_root), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
 
         with open(helpers.get_kometa_pid_file(), "w", encoding="utf-8") as f:
             f.write(str(proc.pid))
@@ -1329,6 +1314,7 @@ def tail_log():
 
     try:
         from collections import deque
+
         with log_path.open("r", encoding="utf-8", errors="replace") as f:
             last_2000 = deque(f, maxlen=2000)
         return jsonify({"log": "".join(last_2000)})
@@ -1445,8 +1431,7 @@ def validate_kometa_root():
 
     log("⬆️ Checking pip version and attempting upgrade...")
     try:
-        result = subprocess.run([str(python_bin), "-m", "pip", "install", "--upgrade", "pip"],
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True)
+        result = subprocess.run([str(python_bin), "-m", "pip", "install", "--upgrade", "pip"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True)
         output = result.stdout.strip()
         log("ℹ️ pip is already up to date." if "Requirement already satisfied" in output else "✅ pip upgraded.")
         for line in output.splitlines():
@@ -1457,12 +1442,15 @@ def validate_kometa_root():
 
     log("📦 Installing requirements.txt...")
     try:
-        result = subprocess.run([str(python_bin), "-m", "pip", "install", "-r", str(p / "requirements.txt")],
-                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True)
+        result = subprocess.run(
+            [str(python_bin), "-m", "pip", "install", "-r", str(p / "requirements.txt")], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=True
+        )
         output = result.stdout.strip()
-        log("ℹ️ All requirements are already satisfied."
+        log(
+            "ℹ️ All requirements are already satisfied."
             if "Requirement already satisfied" in output and "Successfully installed" not in output
-            else "✅ requirements.txt installed or updated.")
+            else "✅ requirements.txt installed or updated."
+        )
         for line in output.splitlines():
             log(f"    {line}")
     except subprocess.CalledProcessError as e:
@@ -1515,10 +1503,7 @@ def update_kometa():
     # hard-stop if Kometa is running
     if helpers.is_kometa_running():
         pid = helpers.get_kometa_pid()
-        return jsonify({
-            "success": False,
-            "error": f"Kometa is currently running (PID {pid}). Stop it before updating."
-        }), 409
+        return jsonify({"success": False, "error": f"Kometa is currently running (PID {pid}). Stop it before updating."}), 409
     logs = []
     try:
         cfg_dir = helpers.CONFIG_DIR
@@ -1535,12 +1520,7 @@ def update_kometa():
         logs.extend(result.get("log", []))
         status = 200 if result.get("success") else 500
 
-        return jsonify({
-            "success": result.get("success", False),
-            "log": logs,
-            "qs_branch": qs_branch,
-            "kometa_branch": kometa_branch
-        }), status
+        return jsonify({"success": result.get("success", False), "log": logs, "qs_branch": qs_branch, "kometa_branch": kometa_branch}), status
 
     except Exception as e:
         logs.append(f"Exception during Kometa update: {e}")
@@ -1561,10 +1541,7 @@ def check_test_libraries():
     resolved_path = os.path.abspath(target_path)
 
     found = os.path.isdir(target_path)
-    has_expected = all(
-        os.path.isdir(os.path.join(target_path, name))
-        for name in ["test_tv_lib", "test_movie_lib"]
-    )
+    has_expected = all(os.path.isdir(os.path.join(target_path, name)) for name in ["test_tv_lib", "test_movie_lib"])
 
     local_sha = ""
     remote_sha = ""
@@ -1589,13 +1566,15 @@ def check_test_libraries():
             if local_sha and remote_sha and local_sha != remote_sha:
                 is_outdated = True
 
-    return jsonify({
-        "found": bool(found and has_expected),
-        "target_path": resolved_path,
-        "is_outdated": is_outdated,
-        "local_sha": local_sha,
-        "remote_sha": remote_sha,
-    })
+    return jsonify(
+        {
+            "found": bool(found and has_expected),
+            "target_path": resolved_path,
+            "is_outdated": is_outdated,
+            "local_sha": local_sha,
+            "remote_sha": remote_sha,
+        }
+    )
 
 
 @app.route("/clone-test-libraries-start", methods=["POST"])
@@ -1657,7 +1636,7 @@ def clone_test_libraries_start():
 
             CLONE_PROGRESS[job_id] = {
                 "phase": "download",
-                "pct": None,                   # None => indeterminate until we know size
+                "pct": None,  # None => indeterminate until we know size
                 "text": "Downloading zip…",
                 "downloaded": 0,
                 "total": total_size,
@@ -1703,10 +1682,7 @@ def clone_test_libraries_start():
                                 last_push = now
 
                 # Extract with per-file progress
-                CLONE_PROGRESS[job_id] = {
-                    "phase": "extract", "pct": 0, "text": "Extracting…",
-                    "files_done": 0, "files_total": 0
-                }
+                CLONE_PROGRESS[job_id] = {"phase": "extract", "pct": 0, "text": "Extracting…", "files_done": 0, "files_total": 0}
                 with zipfile.ZipFile(zip_path, "r") as zip_ref:
                     members = zip_ref.infolist()
                     total_files = len(members) or 1

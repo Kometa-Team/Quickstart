@@ -31,16 +31,12 @@ except ImportError:
 STRING_FIELDS = {"apikey", "token", "username", "password"}
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 GITHUB_API_BRANCH = "https://api.github.com/repos/kometa-team/Kometa/branches/{branch}"
-GITHUB_ZIP_URL = (
-    "https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/{branch}"
-)
+GITHUB_ZIP_URL = "https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/{branch}"
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-WORKING_DIR = (
-    os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
-)
+WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
 MEIPASS_DIR = sys._MEIPASS if getattr(sys, "frozen", False) else BASE_DIR  # noqa
 
 JSON_SETTINGS = os.path.join(MEIPASS_DIR, "static", "json")
@@ -120,9 +116,7 @@ def get_pyfiglet_fonts():
 
     # Append all .flf files, removing extension
     if os.path.exists(fonts_dir):
-        fonts.update(
-            f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf")
-        )
+        fonts.update(f.replace(".flf", "") for f in os.listdir(fonts_dir) if f.endswith(".flf"))
 
     # Sort remaining fonts (excluding predefined ones)
     sorted_fonts = sorted(fonts - set(predefined_fonts))
@@ -178,9 +172,7 @@ def ensure_json_schema():
             f"{GITHUB_BASE_URL}/{branch}/config/config.yml.template",
         ),
     ]:
-        file_path = os.path.join(
-            JSON_SCHEMA_DIR, filename
-        )  # Store everything in json-schema
+        file_path = os.path.join(JSON_SCHEMA_DIR, filename)  # Store everything in json-schema
 
         try:
             response = requests.get(url, timeout=10)
@@ -358,9 +350,7 @@ def build_oauth_dict(source, form_data):
             data[final_key] = value
         else:
             if final_key != "url":
-                data[source]["authorization"][
-                    final_key
-                ] = value  # Everything else goes into authorization
+                data[source]["authorization"][final_key] = value  # Everything else goes into authorization
 
     return data
 
@@ -368,9 +358,7 @@ def build_oauth_dict(source, form_data):
 def build_simple_dict(source, form_data):
     data = {source: {}}
     for key in form_data:
-        final_key = key.replace(
-            source + "_", "", 1
-        )  # Retain the original key transformation logic
+        final_key = key.replace(source + "_", "", 1)  # Retain the original key transformation logic
         value = form_data[key]
 
         # Handle lists explicitly (e.g., asset_directory)
@@ -502,11 +490,7 @@ def template_record(file, prev_record, next_record):
 
 def get_menu_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(
-        item
-        for item in os.listdir(templates_dir)
-        if os.path.isfile(os.path.join(templates_dir, item))
-    )
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
     final_list = []
 
     for file in file_list:
@@ -519,11 +503,7 @@ def get_menu_list():
 
 def get_template_list():
     templates_dir = os.path.join(app.root_path, "templates")
-    file_list = sorted(
-        item
-        for item in os.listdir(templates_dir)
-        if os.path.isfile(os.path.join(templates_dir, item))
-    )
+    file_list = sorted(item for item in os.listdir(templates_dir) if os.path.isfile(os.path.join(templates_dir, item)))
 
     templates = {}
     type_counter = {"012": 0, "013": 0}  # Counters for movie, show types
@@ -531,9 +511,7 @@ def get_template_list():
 
     for file in file_list:
         if belongs_in_template_list(file):
-            match = re.match(
-                r"^(\d+)-", file
-            )  # Match any length of digits followed by '-'
+            match = re.match(r"^(\d+)-", file)  # Match any length of digits followed by '-'
             if match:
                 file_prefix = match.group(1)
             else:
@@ -613,21 +591,14 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
 
     ts_log(f"Searching for section with ID or title: {library_id}", level="DEBUG")
     section = next(
-        (
-            s
-            for s in plex.library.sections()
-            if str(s.key) == str(library_id)
-            or s.title.lower() == str(library_id).lower()
-        ),
+        (s for s in plex.library.sections() if str(s.key) == str(library_id) or s.title.lower() == str(library_id).lower()),
         None,
     )
 
     if not section:
         raise ValueError(f"Library ID {library_id} not found.")
 
-    ts_log(
-        f"Fetching items from '{section.title}' sorted by audienceRating", level="DEBUG"
-    )
+    ts_log(f"Fetching items from '{section.title}' sorted by audienceRating", level="DEBUG")
     items = section.search(sort="audienceRating:desc", maxresults=25)
 
     imdb_items = []
@@ -777,9 +748,7 @@ def get_library_summaries(configured_library_names):
             elif info.get("type") == "show":
                 show_count = info.get("show_count", 0)
                 episode_count = info.get("episode_count", 0)
-                output_lines.append(
-                    f"Content Count: {show_count} shows / {episode_count} episodes"
-                )
+                output_lines.append(f"Content Count: {show_count} shows / {episode_count} episodes")
 
             else:
                 item_count = info.get("item_count", 0)
@@ -876,13 +845,9 @@ def get_library_metadata():
                 # Ratings source
                 try:
                     settings = section.settings()
-                    ratings_setting = next(
-                        (s for s in settings if s.id == "ratingsSource"), None
-                    )
+                    ratings_setting = next((s for s in settings if s.id == "ratingsSource"), None)
                     if ratings_setting:
-                        lib_info["ratings_source"] = ratings_setting.enumValues.get(
-                            ratings_setting.value, "Unknown"
-                        )
+                        lib_info["ratings_source"] = ratings_setting.enumValues.get(ratings_setting.value, "Unknown")
                 except Exception:
                     pass  # Keep "N/A" if ratingsSource isn't available
 
@@ -894,10 +859,7 @@ def get_library_metadata():
                         lib_info["show_count"] = section.totalSize
                         try:
                             shows = section.search(libtype="show")
-                            lib_info["episode_count"] = sum(
-                                show.episodes(totalSize=True).totalSize
-                                for show in shows
-                            )
+                            lib_info["episode_count"] = sum(show.episodes(totalSize=True).totalSize for show in shows)
                         except Exception as e:
                             lib_info["episode_count"] = 0
                             lib_info["episode_error"] = str(e)
@@ -1010,9 +972,7 @@ def perform_kometa_update(kometa_root, branch="master"):
         kometa_root = Path(kometa_root).resolve()
         is_windows = sys.platform.startswith("win")
         kometa_branch = "master" if branch == "master" else "nightly"
-        logs.append(
-            f"⚙️ Quickstart branch '{branch}' → using Kometa branch '{kometa_branch}'."
-        )
+        logs.append(f"⚙️ Quickstart branch '{branch}' → using Kometa branch '{kometa_branch}'.")
 
         if not (kometa_root / ".git").exists():
             logs.append("❌ Kometa path is not a Git repository (missing .git).")
@@ -1054,9 +1014,7 @@ def perform_kometa_update(kometa_root, branch="master"):
                 f"{upstream}/{kometa_branch}",
             ]
             logs.append(f"🔀 {' '.join(cmd)}")
-            p = subprocess.run(
-                cmd, cwd=kometa_root, capture_output=True, text=True, shell=is_windows
-            )
+            p = subprocess.run(cmd, cwd=kometa_root, capture_output=True, text=True, shell=is_windows)
             if p.stdout:
                 logs.append(p.stdout.strip())
             if p.returncode != 0:
@@ -1098,11 +1056,7 @@ def perform_kometa_update(kometa_root, branch="master"):
         # 4) venv pip upgrade
         if success:
             venv_path = kometa_root / "kometa-venv"
-            pip_bin = (
-                venv_path
-                / ("Scripts" if is_windows else "bin")
-                / ("pip.exe" if is_windows else "pip")
-            )
+            pip_bin = venv_path / ("Scripts" if is_windows else "bin") / ("pip.exe" if is_windows else "pip")
             logs.append("\n⬆️ Upgrading pip in Kometa venv...")
             p = subprocess.run(
                 [str(pip_bin), "install", "--upgrade", "pip"],
@@ -1138,9 +1092,7 @@ def perform_kometa_update(kometa_root, branch="master"):
                 logs.append((p.stderr or "").strip())
                 success = False
 
-        logs.append(
-            "\n✅ Kometa update completed." if success else "\n❌ Kometa update failed."
-        )
+        logs.append("\n✅ Kometa update completed." if success else "\n❌ Kometa update failed.")
         return {"success": success, "log": logs}
     except Exception as e:
         logs.append(f"❌ Exception: {str(e)}")
@@ -1320,9 +1272,7 @@ def perform_quickstart_update(qs_root, branch="master"):
         def run(cmd, label=None):
             if label:
                 logs.append(label)
-            p = subprocess.run(
-                cmd, cwd=qs_root, capture_output=True, text=True, shell=is_windows
-            )
+            p = subprocess.run(cmd, cwd=qs_root, capture_output=True, text=True, shell=is_windows)
             out = (p.stdout or "").strip()
             err = (p.stderr or "").strip()
             if out:
@@ -1332,9 +1282,7 @@ def perform_quickstart_update(qs_root, branch="master"):
             return p
 
         # 1) fetch (ensure upstream/<branch> exists)
-        p = run(
-            ["git", "fetch", upstream, "--prune"], f"📥 git fetch {upstream} --prune"
-        )
+        p = run(["git", "fetch", upstream, "--prune"], f"📥 git fetch {upstream} --prune")
         success &= p.returncode == 0
 
         # 2) switch to branch (fallback to checkout)
@@ -1513,10 +1461,7 @@ def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
                     cmd = [cand, "-m", "venv", str(venv_dir)]
                     break
         if cmd is None:
-            logs.append(
-                "❌ Could not find a system Python 3 (3.10+) to create a virtualenv. "
-                "Please install Python and ensure it is on PATH."
-            )
+            logs.append("❌ Could not find a system Python 3 (3.10+) to create a virtualenv. " "Please install Python and ensure it is on PATH.")
             return None
     else:
         # Non-frozen: current interpreter is fine
@@ -1555,10 +1500,7 @@ def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
     # Validate venv structure
     if not _venv_ok():
         cfg_present = (venv_dir / "pyvenv.cfg").exists()
-        logs.append(
-            f"❌ Invalid venv: pyvenv.cfg present? {cfg_present}; "
-            f"bin/Scripts present? {(venv_dir / ('Scripts' if is_windows else 'bin')).exists()}"
-        )
+        logs.append(f"❌ Invalid venv: pyvenv.cfg present? {cfg_present}; " f"bin/Scripts present? {(venv_dir / ('Scripts' if is_windows else 'bin')).exists()}")
         return None
 
     bin_dir = venv_dir / ("Scripts" if is_windows else "bin")
@@ -1573,8 +1515,7 @@ def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
     # Extra sanity: print interpreter identity
     try:
         p = subprocess.run(
-            [str(python_bin), "-c", "import sys; print(sys.executable); import sysconfig; print(sysconfig.get_platform())"],
-            capture_output=True, text=True, shell=False
+            [str(python_bin), "-c", "import sys; print(sys.executable); import sysconfig; print(sysconfig.get_platform())"], capture_output=True, text=True, shell=False
         )
         diag = (p.stdout or "").strip().replace("\n", " | ")
         if diag:
@@ -1596,7 +1537,10 @@ def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str]) -> bool:
     logs.append("⬆️ Upgrading pip…")
     p = subprocess.run(
         [str(python_bin), "-m", "pip", "install", "--upgrade", "pip"],
-        capture_output=True, text=True, cwd=str(kometa_dir), shell=is_windows,
+        capture_output=True,
+        text=True,
+        cwd=str(kometa_dir),
+        shell=is_windows,
     )
     if p.stdout.strip():
         logs.append(p.stdout.strip())
@@ -1607,7 +1551,10 @@ def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str]) -> bool:
     logs.append("📦 Installing requirements…")
     p = subprocess.run(
         [str(python_bin), "-m", "pip", "install", "--no-cache-dir", "--upgrade", "-r", "requirements.txt"],
-        capture_output=True, text=True, cwd=str(kometa_dir), shell=is_windows,
+        capture_output=True,
+        text=True,
+        cwd=str(kometa_dir),
+        shell=is_windows,
     )
     if p.stdout.strip():
         logs.append(p.stdout.strip())
@@ -1674,11 +1621,7 @@ def get_kometa_root_path() -> Path:
         2) session["kometa_root"] (legacy)
         3) <CONFIG_DIR>/kometa  (works with ZIP-only updater)
     """
-    base = (
-        app.config.get("KOMETA_ROOT")
-        or session.get("kometa_root")
-        or os.path.join(CONFIG_DIR, "kometa")
-    )
+    base = app.config.get("KOMETA_ROOT") or session.get("kometa_root") or os.path.join(CONFIG_DIR, "kometa")
     return Path(os.path.normpath(base)).resolve()
 
 
@@ -1716,7 +1659,7 @@ def normalize_cli_args_inplace(argv: list[str]) -> None:
     i = 0
     while i < len(argv):
         if argv[i] in single_value_flags and i + 1 < len(argv):
-            argv[i+1] = _unwrap_doublewrap(argv[i+1])
+            argv[i + 1] = _unwrap_doublewrap(argv[i + 1])
             i += 2
         else:
             i += 1
@@ -1726,6 +1669,7 @@ def strip_outer_quotes(s: str) -> str:
     if len(s) >= 2 and s[0] == s[-1] and s[0] in ('"', "'"):
         return s[1:-1]
     return s
+
 
 def normalize_flag_values(argv: list[str]) -> None:
     """
@@ -1740,7 +1684,7 @@ def normalize_flag_values(argv: list[str]) -> None:
             # flags that take exactly one value next
             if a in {"--run-libraries", "--times", "--divider", "--config", "--width", "--timeout"}:
                 if i + 1 < len(argv):
-                    argv[i+1] = strip_outer_quotes(argv[i+1])
+                    argv[i + 1] = strip_outer_quotes(argv[i + 1])
                     i += 2
                     continue
         # also do a generic dequote of any standalone arg that is fully quoted
