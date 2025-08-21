@@ -228,7 +228,7 @@ $(document).ready(function () {
       toggleTimesInputVisibility('--times')
       if (!isValid) {
         $('#times-error').removeClass('d-none')
-        runCmdOutput.text('⚠️ Invalid time format. Please enter comma-separated 24h times like 06:00,15:00.')
+        runCmdOutput.text('⚠️ Invalid time format. Use pipe-separated 24h times like 06:00|15:00.')
         return
       } else {
         $('#times-error').addClass('d-none')
@@ -244,7 +244,7 @@ $(document).ready(function () {
         runCmdOutput.text('⚠️ Please select at least one library when using --run-libraries.')
         return
       }
-      cli += ` "${selectedLibs.join(',')}"`
+      cli += ` "${selectedLibs.join('|')}"`
     }
 
     const modeFlag = $('input[name="mode-flag"]:checked').val()
@@ -796,7 +796,7 @@ $(document).ready(function () {
 
   function isValidTimesFormat (timesStr) {
     if (!timesStr.trim()) return false
-    const times = timesStr.split(',')
+    const times = timesStr.split('|')
     const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
     return times.every(t => timeRegex.test(t.trim()))
   }
@@ -845,7 +845,7 @@ $(document).ready(function () {
     if (mainOption === '--times') {
       const timesInput = $('#times-input').val().trim()
       if (isValidTimesFormat(timesInput)) {
-        const times = timesInput.split(',').map(t => t.trim())
+        const times = timesInput.split('|').map(t => t.trim())
         const overlaps = times.some(t => isTimeWithinRange(t, maintenance.start, maintenance.end))
         if (overlaps) {
           warningBox.removeClass('d-none')

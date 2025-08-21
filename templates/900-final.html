@@ -122,11 +122,13 @@
                 <label class="form-check-label" for="opt-times">--times</label>
               </div>
               <div id="times-input-container" class="mt-2 d-none">
-                <label for="times-input" class="form-label">Enter times (24h, comma-separated, e.g.,
-                  <code>06:00,15:00</code>)</label>
-                <input type="text" id="times-input" class="form-control" placeholder="06:00,15:00">
-                <div id="times-error" class="form-text text-danger d-none">Invalid format. Use HH:MM in 24-hour format,
-                  comma-separated.</div>
+                <label for="times-input" class="form-label">
+                  Enter times (24h, pipe-separated, e.g., <code>06:00|15:00</code>)
+                </label>
+                <input type="text" id="times-input" class="form-control" placeholder="06:00|15:00">
+                <div id="times-error" class="form-text text-danger d-none">
+                  Invalid format. Use HH:MM in 24-hour format, pipe-separated.
+                </div>
               </div>
               <div id="times-warning" class="form-text text-warning d-none">
                 ⚠️ One or more times may overlap with Plex scheduled maintenance ({{
