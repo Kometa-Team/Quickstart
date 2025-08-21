@@ -1207,6 +1207,8 @@ def start_kometa():
         if not any(p.endswith("kometa.py") for p in command_parts):
             command_parts.insert(1, str(kometa_py))
 
+        helpers.ts_log(f"argv={command_parts!r}", level="DEBUG")
+
         proc = subprocess.Popen(
             command_parts,
             cwd=str(kometa_root),
