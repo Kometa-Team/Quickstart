@@ -3,16 +3,16 @@ Flask==3.1.1
 Flask-Session==0.8.0
 GitPython==3.1.45
 gunicorn==23.0.0
-jsonschema==4.25.0
+jsonschema==4.25.1
 namesgenerator==0.3
 pillow==11.3.0
 PlexAPI==4.17.0
 pre-commit==4.1.0
 psutil==7.0.0
-pyfiglet==1.0.3
+pyfiglet==1.0.4
 PyQt5==5.15.11; platform_system != "Linux" or platform_machine != "aarch64"
 python-dotenv==1.1.1
-requests==2.32.4
-ruamel.yaml==0.18.14
+requests==2.32.5
+ruamel.yaml==0.18.15
 waitress==3.0.2
 Werkzeug==3.1.3
