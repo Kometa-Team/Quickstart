@@ -1,9 +1,12 @@
 <form method="post" id="configForm" name="configForm">
   <div id="{{ page_info['title'] }}Section">
 
-    <!-- Page Title Centered -->
-    <div class="container text-center mt-3">
-      <h2 class="fw-bold text-white">{{ page_info['title'] }}</h2>
+    <!-- Page Title + top-right badge -->
+    <div class="container text-center mt-3 page-title">
+      <h2 class="fw-bold text-white mb-0">{{ page_info['title'] }}</h2>
+      <span class="badge bg-secondary config-badge">
+        Config: {{ page_info.config_name }}
+      </span>
     </div>
 
     <!-- Navigation Bar -->

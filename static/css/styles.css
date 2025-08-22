@@ -689,3 +689,30 @@ div#loading {
 .rotate-icon.rotate {
     transform: rotate(180deg);
 }
+
+/* Desktop/tablet: keep badge top-right of the title block */
+.page-title {
+  position: relative;
+}
+.config-badge {
+  position: absolute;
+  top: .25rem;
+  right: .75rem;
+  font-size: .85rem;
+  padding: .35rem .6rem;
+}
+
+/* Phones: let it stack under the title and center it */
+@media (max-width: 576px) {
+  .config-badge {
+    position: static;          /* no absolute positioning */
+    display: inline-block;
+    margin-top: .5rem;         /* space below the title */
+  }
+  .page-title {
+    display: flex;
+    flex-direction: column;    /* title then badge */
+    align-items: center;
+    gap: .25rem;
+  }
+}
