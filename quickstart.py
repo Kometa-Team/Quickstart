@@ -95,8 +95,7 @@ app.config["VERSION_CHECK"] = helpers.check_for_update()
 base_dir = os.path.dirname(os.path.abspath(__file__))
 kometa_path = os.path.abspath(os.path.join(base_dir, "..", "kometa"))
 
-app.config["KOMETA_ROOT"] = kometa_path
-
+app.config["KOMETA_ROOT"] = os.environ.get("QS_KOMETA_PATH", kometa_path)
 
 def start_update_thread():
     """Ensure update_checker_loop runs inside the Flask app context."""
@@ -125,7 +124,8 @@ app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
-app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir="flask_session", threshold=500)
+flask_cache_dir = os.environ.get("QS_FLASK_SESSION_DIR", "/config/flask_session")
+app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir=flask_cache_dir, threshold=500)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
