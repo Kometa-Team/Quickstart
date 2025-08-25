@@ -97,6 +97,7 @@ kometa_path = os.path.abspath(os.path.join(base_dir, "..", "kometa"))
 
 app.config["KOMETA_ROOT"] = os.environ.get("QS_KOMETA_PATH", kometa_path)
 
+
 def start_update_thread():
     """Ensure update_checker_loop runs inside the Flask app context."""
     with app.app_context():
