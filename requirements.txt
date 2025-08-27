@@ -1,12 +1,12 @@
 cachelib==0.13.0
-Flask==3.1.1
+Flask==3.1.2
 Flask-Session==0.8.0
 GitPython==3.1.45
 gunicorn==23.0.0
 jsonschema==4.25.1
 namesgenerator==0.3
 pillow==11.3.0
-PlexAPI==4.17.0
+PlexAPI==4.17.1
 pre-commit==4.1.0
 psutil==7.0.0
 pyfiglet==1.0.4
