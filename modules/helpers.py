@@ -858,8 +858,7 @@ def get_library_metadata():
                     elif section.type == "show":
                         lib_info["show_count"] = section.totalSize
                         try:
-                            shows = section.search(libtype="show")
-                            lib_info["episode_count"] = sum(show.episodes(totalSize=True).totalSize for show in shows)
+                            lib_info["episode_count"] = section.totalViewSize(libtype='episode')
                         except Exception as e:
                             lib_info["episode_count"] = 0
                             lib_info["episode_error"] = str(e)
