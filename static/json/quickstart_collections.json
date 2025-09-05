@@ -24017,7 +24017,7 @@
             ]
           },
           {
-            "key": "sonarr_add_missing_max",
+            "key": "sonarr_add_missing_hbomax",
             "label": "Add missing items to Sonarr",
             "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
             "tooltip_variant": "danger",
