@@ -24003,7 +24003,7 @@
           {
             "key": "use_hbomax",
             "label": "HBO Max Movies/Shows",
-            "tooltip": "Collection of Movies/Shows Streaming on Max.",
+            "tooltip": "Collection of Movies/Shows Streaming on HBO Max.",
             "type": "toggle"
           },
           {
