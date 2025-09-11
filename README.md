@@ -16,6 +16,44 @@
 <!--body1-start-->
 ## Welcome to Kometa Quickstart
 
+## ✨ Features
+
+Kometa Quickstart is more than just a YAML generator — it’s a full interactive environment for configuring, validating, and running Kometa. Key features include:
+
+### Multiple Ways to Run Quickstart
+- **Local Python:** Works on Windows, macOS, and Linux
+- **Frozen Builds:** Precompiled executables for Windows, macOS, and Linux (no Python required)
+- **Docker Image:** Official image on Docker Hub with persistent `/config` volume support
+- **Branch Support:** Choose between `master` (stable) and `develop` (bleeding-edge) branches for every runtime option
+
+### Safe Playground Mode
+- **Plex Test Libraries:** Downloadable from the start page so you can experiment without touching production libraries
+- **No Risk to Production:** All Quickstart data, credentials, and configs are stored locally
+
+### Config Management & History
+- **SQLite-Backed Storage:** All configs and page data are stored in a database, so you can switch between configs at any time
+- **Automatic Backups:** Every config is saved as a versioned `.yml` file for historical reference
+- **Download & Run Anywhere:** Final configs can be downloaded and run outside Quickstart if preferred
+
+### Guided, Validated Workflow
+- **Step-by-Step Pages:** Each section validates its own data, giving you instant feedback before proceeding
+- **Library Telemetry:** Pulls real Plex server data (Plex Pass status, library types, agent/scanner compatibility)
+- **Dynamic Toggles & Templates:** Rich UI for enabling collections, overlays, and builder template variables
+
+### Built-in Kometa Runner
+- **One-Click Execution:** The final page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
+- **Run Command Builder:** Dynamically builds and previews CLI commands with flags like `--run`, `--operations-only`, `--times`, etc.
+- **Process Management:** Start, stop, and monitor Kometa runs directly from the web interface
+
+### Live Previews & Assets
+- **Overlay Preview Generator:** Combines overlays and template variables into real-time preview images
+- **Custom Artwork Uploads:** Drag-and-drop or fetch library images from a URL so you can see what the overlays look like on yiur favorite poster.
+
+### Automatic Updates
+- **Quickstart Self-Updater:** One-click update to latest master or develop branch
+- **Kometa Sync:** Option to pull and update Kometa itself (nightly/master) before running
+
+
 Kometa Quickstart is a guided Web UI that helps you create a Configuration File for use with Kometa.
 
 Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](https://github.com/bullmoose20), [chazlarson](https://github.com/chazlarson), and [Yozora](https://github.com/yozoraXCII) for their contributions to this tool.
@@ -23,6 +61,8 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
 ## Table of Contents
 
 - [Introduction](#welcome-to-kometa-quickstart)
+
+- [Features](#features)
 
 - [Prerequisites](#prerequisites)
 
@@ -148,7 +188,7 @@ services:
 
 These are high-level steps which assume the user has knowledge of python and pip, and the general ability to troubleshoot issues.
 
-1.  Clone or download and unzip the repo.  
+1.  Clone or download and unzip the repo.
 
 ```
 git clone https://github.com/Kometa-Team/Kometa
@@ -158,19 +198,19 @@ git clone https://github.com/Kometa-Team/Kometa
 git clone https://github.com/Kometa-Team/Quickstart
 ```
 
-2.  Move into the Quickstart directory.  
+2.  Move into the Quickstart directory.
 
 ```
 cd Quickstart
 ```
 
-3.  Install dependencies (it is recommended to do this in a Python virtual environment `venv`).  
+3.  Install dependencies (it is recommended to do this in a Python virtual environment `venv`).
 
 ```
 pip install -r requirements.txt
 ```
 
-4.  If the above command fails, run the following command.  
+4.  If the above command fails, run the following command.
 
 ```
 pip install -r requirements.txt --ignore-installed
@@ -187,13 +227,13 @@ c:\this\dir\has\Kometa
 c:\this\dir\has\Quickstart
 ```
 
-1.  Ensure Git and Python are installed.  
+1.  Ensure Git and Python are installed.
 
 Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 Python: https://www.python.org/downloads/windows/
 
-2.  `git clone` Kometa and switch to your preferred branch (nightly, develop, master). You do not need to do more at this point; Quickstart will perform the other steps automatically.  
+2.  `git clone` Kometa and switch to your preferred branch (nightly, develop, master). You do not need to do more at this point; Quickstart will perform the other steps automatically.
 
 Open a Command Prompt window and run the following (choose your directory and branch):
 
@@ -207,7 +247,7 @@ git stash clear
 git pull
 ```
 
-3.  `git clone` Quickstart, switch to the `develop` branch, create and activate a virtual environment, upgrade pip, and install the requirements.  
+3.  `git clone` Quickstart, switch to the `develop` branch, create and activate a virtual environment, upgrade pip, and install the requirements.
 
 Run the following commands within your Command Prompt window:
 
@@ -225,7 +265,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-4.  Run Quickstart. After completing the guided pages, the final page will automatically create the Kometa virtual environment, install the requirements, and allow you to run `kometa.py` using the validated config generated by Quickstart.  
+4.  Run Quickstart. After completing the guided pages, the final page will automatically create the Kometa virtual environment, install the requirements, and allow you to run `kometa.py` using the validated config generated by Quickstart.
 
 ```
 python quickstart.py
@@ -240,7 +280,7 @@ After following this guide, you will have side-by-side installations of Kometa a
 /this/dir/has/Quickstart
 ```
 
-1.  Ensure Git and Python are installed.  
+1.  Ensure Git and Python are installed.
 
 Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
@@ -252,7 +292,7 @@ Ubuntu/Debian: ```sudo apt-get install python3```
 
 Fedora: ```sudo dnf install python3```
 
-2.  `git clone` Kometa and switch to your preferred branch (nightly, develop, master). You do not need to do more at this point; Quickstart will perform the other steps automatically.  
+2.  `git clone` Kometa and switch to your preferred branch (nightly, develop, master). You do not need to do more at this point; Quickstart will perform the other steps automatically.
 
 Open a terminal and run the following (choose your directory and branch):
 
@@ -266,7 +306,7 @@ git stash clear
 git pull
 ```
 
-3.  `git clone` Quickstart, switch to the `develop` branch, create and activate a virtual environment, upgrade pip, and install the requirements.  
+3.  `git clone` Quickstart, switch to the `develop` branch, create and activate a virtual environment, upgrade pip, and install the requirements.
 
 ```
 cd ..
