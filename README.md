@@ -47,7 +47,7 @@ Kometa Quickstart is more than just a YAML generator — it’s a full interacti
 
 ### Live Previews & Assets
 - **Overlay Preview Generator:** Combines overlays and template variables into real-time preview images
-- **Custom Artwork Uploads:** Drag-and-drop or fetch library images from a URL so you can see what the overlays look like on yiur favorite poster.
+- **Custom Artwork Uploads:** Drag-and-drop or fetch library images from a URL so you can see what the overlays look like on your favorite poster.
 
 ### Automatic Updates
 - **Quickstart Self-Updater:** One-click update to latest master or develop branch
