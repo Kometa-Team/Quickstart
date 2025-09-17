@@ -1580,7 +1580,54 @@
       "type": "toggle_with_select",
       "accordion": "library",
       "media_types": [
-        "movie",
+        "movie"
+      ],
+      "title": "Mass Background Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-background-update",
+      "description": "Updates the background of each item in the library based on the selected source and optional toggles.",
+      "tooltip_variant": "info",
+      "container_class": "accordion",
+      "toggles": [
+        {
+          "key": "mass_background_ignore_locked",
+          "label": "Ignore Locked Backgrounds",
+          "tooltip": "Skip updating image if the background field is locked."
+        }
+      ],
+      "select_input": {
+        "key": "mass_background_source",
+        "label": "Background Source",
+        "tooltip": "Choose the source to update the background image from.",
+        "options": [
+          [
+            "",
+            "None"
+          ],
+          [
+            "tmdb",
+            "TMDb"
+          ],
+          [
+            "plex",
+            "Plex"
+          ],
+          [
+            "lock",
+            "Lock Background Field"
+          ],
+          [
+            "unlock",
+            "Unlock Background Field"
+          ]
+        ]
+      },
+      "yml_location": "attribute"
+    },
+    {
+      "prefix": "mass_background_update",
+      "type": "toggle_with_select",
+      "accordion": "library",
+      "media_types": [
         "show"
       ],
       "title": "Mass Background Update",
