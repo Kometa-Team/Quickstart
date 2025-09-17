@@ -1464,7 +1464,59 @@
       "type": "toggle_with_select",
       "accordion": "library",
       "media_types": [
-        "movie",
+        "movie"
+      ],
+      "title": "Mass Poster Update",
+      "wiki": "https://kometa.wiki/en/nightly/config/operations/#mass-poster-update",
+      "description": "Updates the poster of each item in the library based on the selected source and optional toggles.",
+      "tooltip_variant": "info",
+      "container_class": "accordion",
+      "toggles": [
+        {
+          "key": "mass_poster_ignore_locked",
+          "label": "Ignore Locked Posters",
+          "tooltip": "Skip updating image if the poster field is locked."
+        },
+        {
+          "key": "mass_poster_ignore_overlays",
+          "label": "Ignore Overlaid Posters",
+          "tooltip": "Skip updating image if the current image has an Overlay."
+        }
+      ],
+      "select_input": {
+        "key": "mass_poster_source",
+        "label": "Poster Source",
+        "tooltip": "Choose the source to update the poster from.",
+        "options": [
+          [
+            "",
+            "None"
+          ],
+          [
+            "tmdb",
+            "TMDb"
+          ],
+          [
+            "plex",
+            "Plex"
+          ],
+          [
+            "lock",
+            "Lock Poster Field"
+          ],
+          [
+            "unlock",
+            "Unlock Poster Field"
+          ]
+        ]
+      },
+      "yml_location": "attribute"
+    },
+        {
+      "prefix": "mass_poster_update",
+      "type": "toggle_with_select",
+      "accordion": "library",
+      "media_types": [
         "show"
       ],
       "title": "Mass Poster Update",
