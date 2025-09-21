@@ -120,12 +120,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -547,12 +565,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -974,12 +1010,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -1401,12 +1455,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -1828,12 +1900,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -2257,12 +2347,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -2686,12 +2794,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -3141,12 +3267,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -3568,12 +3712,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -3995,12 +4157,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -4424,12 +4604,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -4851,12 +5049,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -5278,12 +5494,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -5705,12 +5939,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -6132,12 +6384,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -6559,12 +6829,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -7515,12 +7803,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -8010,12 +8316,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -8554,12 +8878,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -9100,12 +9442,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -9618,12 +9978,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -10151,12 +10529,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -10829,12 +11225,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -11373,12 +11787,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -12178,12 +12610,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -12574,12 +13024,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -13367,12 +13835,30 @@
             "default": "default"
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
@@ -14250,12 +14736,30 @@
             ]
           },
           {
-            "key": "sort_by",
-            "label": "Sort By",
+            "key": "collection_order",
+            "label": "Collection Order",
             "type": "select",
-            "tooltip": "Changes the Smart Filter Sort for all collections in a Defaults File.<br><br> Default is <b>Release Date (Originally Available) Descending</b> ",
-            "default": "release.desc",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
             "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
               {
                 "value": "title.asc",
                 "label": "Title Ascending",
