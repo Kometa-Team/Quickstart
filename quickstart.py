@@ -1501,7 +1501,7 @@ def validate_kometa_root():
 
 @app.route("/update-kometa", methods=["POST"])
 def update_kometa():
-    # hard-stop if Kometa is running
+    # hard-stop if Kometa is currently running
     if helpers.is_kometa_running():
         pid = helpers.get_kometa_pid()
         return jsonify({"success": False, "error": f"Kometa is currently running (PID {pid}). Stop it before updating."}), 409
