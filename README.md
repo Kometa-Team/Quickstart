@@ -60,27 +60,28 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
 
 ## Table of Contents
 
-- [Introduction](#welcome-to-kometa-quickstart)
-
-- [Features](#features)
-
+- [Welcome to Kometa Quickstart](#welcome-to-kometa-quickstart)
+- [✨ Features](#-features)
+  - [Multiple Ways to Run Quickstart](#multiple-ways-to-run-quickstart)
+  - [Safe Playground Mode](#safe-playground-mode)
+  - [Config Management \& History](#config-management--history)
+  - [Guided, Validated Workflow](#guided-validated-workflow)
+  - [Built-in Kometa Runner](#built-in-kometa-runner)
+  - [Live Previews \& Assets](#live-previews--assets)
+  - [Automatic Updates](#automatic-updates)
+- [Table of Contents](#table-of-contents)
 - [Prerequisites](#prerequisites)
-
 - [Installing Quickstart](#installing-quickstart)
-
-  - [1 - Installing on Windows](#1---installing-on-windows)
-
-  - [2 - Installing on Mac](#2---installing-on-mac)
-
-  - [3 - Installing on Ubuntu (Linux)](#3---installing-on-ubuntu-linux)
-
-  - [4 - Running in Docker](#4---running-in-docker)
-
-  - [5 - Installing locally](#5---installing-locally)
-
-- [Low-Level Installation Instructions](#low-level-installation-instructions)
-
-- [Debugging & Changing Ports](#debugging--changing-ports)
+- [1 - Installing on Windows](#1---installing-on-windows)
+- [2 - Installing on Mac](#2---installing-on-mac)
+- [3 - Installing on Ubuntu (Linux)](#3---installing-on-ubuntu-linux)
+- [4 - Running in Docker](#4---running-in-docker)
+  - [`docker run`](#docker-run)
+  - [`docker compose`](#docker-compose)
+- [5 - Installing locally](#5---installing-locally)
+  - [Windows:](#windows)
+  - [Linux/Mac:](#linuxmac)
+  - [Debugging \& Changing Ports](#debugging--changing-ports)
 
 ## Prerequisites
 
@@ -186,46 +187,8 @@ services:
 
 ## 5 - Installing locally
 
-These are high-level steps which assume the user has knowledge of python and pip, and the general ability to troubleshoot issues.
-
-1.  Clone or download and unzip the repo.
-
-```
-git clone https://github.com/Kometa-Team/Kometa
-```
-
-```
-git clone https://github.com/Kometa-Team/Quickstart
-```
-
-2.  Move into the Quickstart directory.
-
-```
-cd Quickstart
-```
-
-3.  Install dependencies (it is recommended to do this in a Python virtual environment `venv`).
-
-```
-pip install -r requirements.txt
-```
-
-4.  If the above command fails, run the following command.
-
-```
-pip install -r requirements.txt --ignore-installed
-```
-
-## Low-Level Installation Instructions
-
 ### Windows:
 
-After following this guide, you will have side-by-side installations of Kometa and Quickstart:
-
-```
-c:\this\dir\has\Kometa
-c:\this\dir\has\Quickstart
-```
 
 1.  Ensure Git and Python are installed.
 
@@ -233,26 +196,12 @@ Git: https://git-scm.com/book/en/v2/Getting-Started-Installing-Git
 
 Python: https://www.python.org/downloads/windows/
 
-2.  `git clone` Kometa and switch to your preferred branch (nightly, develop, master). You do not need to do more at this point; Quickstart will perform the other steps automatically.
-
-Open a Command Prompt window and run the following (choose your directory and branch):
-
-```
-cd c:\this\dir\has
-git clone https://github.com/Kometa-Team/Kometa
-cd Kometa
-git checkout nightly
-git stash
-git stash clear
-git pull
-```
-
-3.  `git clone` Quickstart, switch to the `develop` branch, create and activate a virtual environment, upgrade pip, and install the requirements.
+2.  `git clone` Quickstart, switch to your preferred branch (`develop`, `master`), create and activate a virtual environment, upgrade pip, and install the requirements.
 
 Run the following commands within your Command Prompt window:
 
 ```
-cd ..
+cd c:\this\dir\has
 git clone https://github.com/Kometa-Team/Quickstart
 cd Quickstart
 git checkout develop
@@ -273,12 +222,6 @@ python quickstart.py
 
 ### Linux/Mac:
 
-After following this guide, you will have side-by-side installations of Kometa and Quickstart:
-
-```
-/this/dir/has/Kometa
-/this/dir/has/Quickstart
-```
 
 1.  Ensure Git and Python are installed.
 
@@ -292,24 +235,10 @@ Ubuntu/Debian: ```sudo apt-get install python3```
 
 Fedora: ```sudo dnf install python3```
 
-2.  `git clone` Kometa and switch to your preferred branch (nightly, develop, master). You do not need to do more at this point; Quickstart will perform the other steps automatically.
-
-Open a terminal and run the following (choose your directory and branch):
+2.  `git clone` Quickstart, switch to your preferred branch (`develop`, `master`), create and activate a virtual environment, upgrade pip, and install the requirements.
 
 ```
 cd /this/dir/has
-git clone https://github.com/Kometa-Team/Kometa
-cd Kometa
-git checkout nightly
-git stash
-git stash clear
-git pull
-```
-
-3.  `git clone` Quickstart, switch to the `develop` branch, create and activate a virtual environment, upgrade pip, and install the requirements.
-
-```
-cd ..
 git clone https://github.com/Kometa-Team/Quickstart
 cd Quickstart
 git checkout develop
