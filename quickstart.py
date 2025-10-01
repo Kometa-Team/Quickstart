@@ -127,10 +127,7 @@ app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", 
 app.config["SESSION_TYPE"] = "cachelib"
 
 # Flask session cache dir (portable default)
-flask_cache_dir = os.environ.get(
-    "QS_FLASK_SESSION_DIR",
-    os.path.join(helpers.CONFIG_DIR, "flask_session")
-)
+flask_cache_dir = os.environ.get("QS_FLASK_SESSION_DIR", os.path.join(helpers.CONFIG_DIR, "flask_session"))
 os.makedirs(flask_cache_dir, exist_ok=True)
 
 app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir=flask_cache_dir, threshold=500)
