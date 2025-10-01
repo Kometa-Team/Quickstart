@@ -125,7 +125,14 @@ app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
-flask_cache_dir = os.environ.get("QS_FLASK_SESSION_DIR", "/config/flask_session")
+
+# Flask session cache dir (portable default)
+flask_cache_dir = os.environ.get(
+    "QS_FLASK_SESSION_DIR",
+    os.path.join(helpers.CONFIG_DIR, "flask_session")
+)
+os.makedirs(flask_cache_dir, exist_ok=True)
+
 app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir=flask_cache_dir, threshold=500)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
