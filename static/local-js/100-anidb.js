@@ -9,6 +9,44 @@ $(document).ready(function () {
 
   console.log('Validated:', isValidated)
 
+  // After DOM ready (you can put this inside your existing $(document).ready)
+  const anidbClientInput = document.getElementById('anidb_client')
+
+  if (anidbClientInput) {
+  // Force lowercase as the user types
+    anidbClientInput.addEventListener('input', (e) => {
+      const el = e.target
+      const start = el.selectionStart
+      const end = el.selectionEnd
+      const lower = el.value.toLowerCase()
+      if (el.value !== lower) {
+        el.value = lower
+        // restore caret/selection
+        el.setSelectionRange(start, end)
+      }
+    })
+
+    // Ensure pasted text is lowercased too
+    anidbClientInput.addEventListener('paste', (e) => {
+      e.preventDefault()
+      const el = e.target
+      const pasted = (e.clipboardData || window.clipboardData).getData('text') || ''
+      const start = el.selectionStart
+      const end = el.selectionEnd
+      const before = el.value.slice(0, start)
+      const after = el.value.slice(end)
+      const insert = pasted.toLowerCase()
+      el.value = before + insert + after
+      const caret = before.length + insert.length
+      el.setSelectionRange(caret, caret)
+      // fire input so your existing listeners (validation reset) still run
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    // Optional: visual cue in the UI (purely cosmetic)
+    anidbClientInput.style.textTransform = 'lowercase'
+  }
+
   // Set initial visibility based on password value
   if (passwordInput.value.trim() === '') {
     passwordInput.setAttribute('type', 'text') // Show placeholder text
