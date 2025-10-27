@@ -11,7 +11,7 @@ pre-commit==4.3.0
 psutil==7.1.0
 pyfiglet==1.0.4
 PyQt5==5.15.11; platform_system != "Linux" or platform_machine != "aarch64"
-python-dotenv==1.1.1
+python-dotenv==1.2.1
 requests==2.32.5
 ruamel.yaml==0.18.15
 waitress==3.0.2
