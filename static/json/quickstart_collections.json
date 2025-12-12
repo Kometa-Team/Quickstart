@@ -265,7 +265,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -274,7 +274,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -710,7 +710,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -719,7 +719,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -1155,7 +1155,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -1164,7 +1164,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -1600,7 +1600,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -1609,7 +1609,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -2045,7 +2045,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -2054,7 +2054,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -2492,7 +2492,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -2501,7 +2501,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -2939,7 +2939,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -2948,7 +2948,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -3412,7 +3412,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -3421,7 +3421,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -3857,7 +3857,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -3866,7 +3866,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -4302,7 +4302,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -4311,7 +4311,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -4749,7 +4749,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -4758,7 +4758,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -5194,7 +5194,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -5203,7 +5203,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -5639,7 +5639,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -5648,7 +5648,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -6084,7 +6084,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -6093,7 +6093,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -6529,7 +6529,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -6538,7 +6538,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -6974,7 +6974,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -6983,7 +6983,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -7460,7 +7460,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -7469,7 +7469,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -7948,7 +7948,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -7957,7 +7957,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -8461,7 +8461,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -8470,7 +8470,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -9023,7 +9023,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -9032,7 +9032,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -9587,7 +9587,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -9596,7 +9596,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -10123,7 +10123,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -10132,7 +10132,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -10674,7 +10674,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -10683,7 +10683,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -11370,7 +11370,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -11379,7 +11379,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -11932,7 +11932,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -11941,7 +11941,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -12341,7 +12341,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -12350,7 +12350,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -12755,7 +12755,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -12764,7 +12764,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -13169,7 +13169,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -13178,7 +13178,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -13980,7 +13980,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -13989,7 +13989,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -14487,7 +14487,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -14496,7 +14496,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -14881,7 +14881,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -14890,7 +14890,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -15289,7 +15289,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -15298,7 +15298,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -15691,7 +15691,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -15700,7 +15700,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -16094,7 +16094,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -16103,7 +16103,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -16497,7 +16497,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -16506,7 +16506,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -16900,7 +16900,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -16909,7 +16909,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -17303,7 +17303,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -17312,7 +17312,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -17706,7 +17706,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -17715,7 +17715,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -18109,7 +18109,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -18118,7 +18118,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -18517,7 +18517,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -18526,7 +18526,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -18919,7 +18919,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -18928,7 +18928,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -19946,7 +19946,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -19955,7 +19955,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -20531,7 +20531,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -20540,7 +20540,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -21148,7 +21148,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -21157,7 +21157,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -21551,7 +21551,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -21560,7 +21560,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -21954,7 +21954,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -21963,7 +21963,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -22357,7 +22357,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -22366,7 +22366,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -22768,7 +22768,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -22777,7 +22777,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -23181,7 +23181,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -23190,7 +23190,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -23594,7 +23594,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -23603,7 +23603,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -24007,7 +24007,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -24016,7 +24016,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -24897,7 +24897,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -24906,7 +24906,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -25300,7 +25300,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -25309,7 +25309,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -25715,7 +25715,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -25724,7 +25724,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -26436,7 +26436,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -26445,7 +26445,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -26839,7 +26839,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -26848,7 +26848,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -27241,7 +27241,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -27250,7 +27250,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
@@ -27643,7 +27643,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.asc",
                 "label": "Audience Rating Ascending",
                 "media_types": [
                   "movie",
@@ -27652,7 +27652,7 @@
                 ]
               },
               {
-                "value": "audience.asc",
+                "value": "audience_rating.desc",
                 "label": "Audience Rating Descending",
                 "media_types": [
                   "movie",
