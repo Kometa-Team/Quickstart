@@ -24246,8 +24246,8 @@
           },
           {
             "key": "use_appletv",
-            "label": "Apple TV+ Movies/Shows",
-            "tooltip": "Collection of Movies/Shows Streaming on Apple TV+.",
+            "label": "Apple TV Movies/Shows",
+            "tooltip": "Collection of Movies/Shows Streaming on Apple TV.",
             "type": "toggle"
           },
           {
