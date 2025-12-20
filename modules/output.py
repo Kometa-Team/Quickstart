@@ -996,7 +996,7 @@ def build_config(header_style="standard", config_name=None):
         f"#==================== {config_name} ====================#\n"
         f"# {config_name} config created by Quickstart on {timestamp}\n"
         f"{'# ' + plex_summary.replace(chr(10), chr(10) + '# ')}\n"
-        f"# Quickstart version: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}\n"
+        f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}\n"
         f"###\n"
         f"# Libraries configured with Quickstart: {len(movie_libraries)} movie, {len(show_libraries)} show\n"
         f"{'# ' + library_details.replace(chr(10), chr(10) + '# ')}\n"
