@@ -874,20 +874,12 @@ def build_config(header_style="standard", config_name=None):
         movie_libraries = {
             key: value
             for key, value in nested_libraries_data.items()
-            if key
-            and isinstance(key, str)
-            and key.startswith("mov-library_")
-            and key.endswith("-library")
-            and value not in [None, "", False]
+            if key and isinstance(key, str) and key.startswith("mov-library_") and key.endswith("-library") and value not in [None, "", False]
         }
         show_libraries = {
             key: value
             for key, value in nested_libraries_data.items()
-            if key
-            and isinstance(key, str)
-            and key.startswith("sho-library_")
-            and key.endswith("-library")
-            and value not in [None, "", False]
+            if key and isinstance(key, str) and key.startswith("sho-library_") and key.endswith("-library") and value not in [None, "", False]
         }
 
         # Extract **correct** movie and show library names

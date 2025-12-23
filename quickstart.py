@@ -954,11 +954,7 @@ def _configured_library_ids(library_data):
     """Return set of library IDs that have an active '-library' value saved."""
     if not isinstance(library_data, dict):
         return set()
-    return {
-        key.rsplit("-library", 1)[0]
-        for key, value in library_data.items()
-        if key.endswith("-library") and value not in [None, "", False]
-    }
+    return {key.rsplit("-library", 1)[0] for key, value in library_data.items() if key.endswith("-library") and value not in [None, "", False]}
 
 
 def _build_library_lists():
