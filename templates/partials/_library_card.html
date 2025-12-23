@@ -1,0 +1,50 @@
+{% set telemetry = page_info.telemetry %}
+{% if library.type == 'movie' %}
+<div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container" data-library-id="{{ library.id }}">
+  <div class="card-header bg-dark d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
+    data-bs-target="#{{ library.id }}-wrapper" aria-expanded="false" aria-controls="{{ library.id }}-wrapper"
+    role="button">
+
+    <h4 class="mb-0 text-white">
+      <i class="bi bi-film text-muted me-2" title="Movie"></i>{{ library.name }}
+    </h4>
+    {% set include_checked = data.get('libraries', {}).get(library.id ~ '-library') %}
+    <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+      <input type="hidden" id="{{ library.id }}-library-value" name="{{ library.id }}-library"
+        value="{{ include_checked or '' }}">
+      <input class="form-check-input include-library-toggle" type="checkbox" id="{{ library.id }}-include"
+        data-target-input="{{ library.id }}-library-value" value="{{ library.name }}"
+        {% if include_checked %}checked{% endif %}>
+      <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include">Include</label>
+    </div>
+    <i class="bi bi-chevron-down text-white rotate-icon"></i>
+  </div>
+  <div class="card-body">
+    {% include "partials/_movie_library_settings.html" %}
+  </div>
+</div>
+{% else %}
+<div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container" data-library-id="{{ library.id }}">
+  <div class="card-header bg-dark d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
+    data-bs-target="#{{ library.id }}-wrapper" aria-expanded="false" aria-controls="{{ library.id }}-wrapper"
+    role="button">
+
+    <h4 class="mb-0 text-white">
+      <i class="bi bi-tv text-muted me-2" title="TV Show"></i>{{ library.name }}
+    </h4>
+    {% set include_checked = data.get('libraries', {}).get(library.id ~ '-library') %}
+    <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+      <input type="hidden" id="{{ library.id }}-library-value" name="{{ library.id }}-library"
+        value="{{ include_checked or '' }}">
+      <input class="form-check-input include-library-toggle" type="checkbox" id="{{ library.id }}-include"
+        data-target-input="{{ library.id }}-library-value" value="{{ library.name }}"
+        {% if include_checked %}checked{% endif %}>
+      <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include">Include</label>
+    </div>
+    <i class="bi bi-chevron-down text-white rotate-icon"></i>
+  </div>
+  <div class="card-body">
+    {% include "partials/_show_library_settings.html" %}
+  </div>
+</div>
+{% endif %}

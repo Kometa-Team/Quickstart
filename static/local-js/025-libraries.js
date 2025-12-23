@@ -41,6 +41,117 @@ document.addEventListener('DOMContentLoaded', function () {
   loadScriptsSequentially(scriptsToLoad, function () {
     console.log('[DEBUG] All dependencies loaded. Running Library Initialization...')
 
+    const libraryPicker = document.getElementById('libraryPicker')
+    const libraryContainer = document.getElementById('library-form-container')
+    const libraryCache = document.getElementById('library-cache')
+    let activeLibraryId = null
+
+    function refreshPickerLabels () {
+      if (!libraryPicker) return
+      libraryPicker.querySelectorAll('option[value]').forEach(opt => {
+        const base = opt.dataset.label || opt.textContent.replace(/\s+\(configured\)$/, '')
+        const configured = opt.dataset.configured === 'true'
+        opt.textContent = configured ? `${base} (configured)` : base
+      })
+    }
+
+    function wireIncludeToggle (card, libraryId) {
+      if (!libraryPicker || !card) return
+      const toggle = card.querySelector('.include-library-toggle')
+      const option = libraryPicker.querySelector(`option[value="${libraryId}"]`)
+      const targetInputId = toggle?.dataset.targetInput
+      const targetInput = targetInputId ? document.getElementById(targetInputId) : null
+      if (!toggle || !option || toggle.dataset.listenerAdded || !targetInput) return
+
+      toggle.addEventListener('change', () => {
+        option.dataset.configured = toggle.checked ? 'true' : 'false'
+        targetInput.value = toggle.checked ? toggle.value : ''
+        refreshPickerLabels()
+        if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
+          ValidationHandler.updateValidationState()
+        }
+      })
+      toggle.dataset.listenerAdded = 'true'
+    }
+
+    function moveCurrentToCache () {
+      const current = libraryContainer.firstElementChild
+      if (current) {
+        current.style.display = 'none'
+        libraryCache.appendChild(current)
+      }
+    }
+
+    function mountCard (card, libraryId) {
+      libraryContainer.innerHTML = ''
+      card.style.display = ''
+      libraryContainer.appendChild(card)
+      activeLibraryId = libraryId
+      wireIncludeToggle(card, libraryId)
+      refreshPickerLabels()
+      if (typeof EventHandler !== 'undefined') {
+        EventHandler.attachLibraryListeners()
+      }
+      if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
+        ValidationHandler.updateValidationState()
+      }
+    }
+
+    function loadLibrary (libraryId) {
+      if (libraryId === activeLibraryId) return
+
+      if (!libraryId) {
+        libraryContainer.innerHTML = ''
+        activeLibraryId = null
+        return
+      }
+
+      // Move currently active card to cache (to preserve state/inputs)
+      moveCurrentToCache()
+
+      const cached = libraryCache.querySelector(`[data-library-id="${libraryId}"]`)
+      if (cached) {
+        mountCard(cached, libraryId)
+        return
+      }
+
+      fetch(`/library_fragment/${encodeURIComponent(libraryId)}`)
+        .then(res => {
+          if (!res.ok) throw new Error(`Failed to load library ${libraryId}`)
+          return res.text()
+        })
+        .then(html => {
+          const wrapper = document.createElement('div')
+          wrapper.innerHTML = html
+          const card = wrapper.firstElementChild
+          if (!card) throw new Error('Empty fragment response')
+          mountCard(card, libraryId)
+        })
+        .catch(err => {
+          console.error(err)
+        })
+    }
+
+    if (libraryPicker) {
+      libraryPicker.addEventListener('change', (e) => {
+        loadLibrary(e.target.value)
+      })
+
+      refreshPickerLabels()
+      const configuredFirst = libraryPicker.querySelector('option[data-configured="true"]')
+      const firstLibrary = libraryPicker.value ||
+        configuredFirst?.value ||
+        libraryPicker.querySelector('option[value]:not([value=""])')?.value
+      if (configuredFirst) {
+        libraryPicker.value = configuredFirst.value
+        loadLibrary(configuredFirst.value)
+      } else if (firstLibrary) {
+        loadLibrary(firstLibrary)
+      } else {
+        libraryPicker.value = ''
+      }
+    }
+
     if (typeof setupParentChildToggleSync === 'function') {
       setupParentChildToggleSync()
     }

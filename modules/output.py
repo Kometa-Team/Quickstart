@@ -871,8 +871,24 @@ def build_config(header_style="standard", config_name=None):
             helpers.ts_log(f"Raw nested libraries data:", nested_libraries_data, level="DEBUG")
 
         # Extract selected libraries
-        movie_libraries = {key: value for key, value in nested_libraries_data.items() if key.startswith("mov-library_") and key.endswith("-library")}
-        show_libraries = {key: value for key, value in nested_libraries_data.items() if key.startswith("sho-library_") and key.endswith("-library")}
+        movie_libraries = {
+            key: value
+            for key, value in nested_libraries_data.items()
+            if key
+            and isinstance(key, str)
+            and key.startswith("mov-library_")
+            and key.endswith("-library")
+            and value not in [None, "", False]
+        }
+        show_libraries = {
+            key: value
+            for key, value in nested_libraries_data.items()
+            if key
+            and isinstance(key, str)
+            and key.startswith("sho-library_")
+            and key.endswith("-library")
+            and value not in [None, "", False]
+        }
 
         # Extract **correct** movie and show library names
         movie_library_names = {helpers.extract_library_name(k) for k in movie_libraries}

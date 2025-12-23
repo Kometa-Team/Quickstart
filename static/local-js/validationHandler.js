@@ -9,15 +9,20 @@ const ValidationHandler = {
       return
     }
 
-    const selectedMovieLibraries = ValidationHandler.getSelectedLibraries('mov')
-    const selectedShowLibraries = ValidationHandler.getSelectedLibraries('sho')
+    const selectedMovieLibraries = ValidationHandler.getSelectedLibraryIds('mov')
+    const selectedShowLibraries = ValidationHandler.getSelectedLibraryIds('sho')
     const isValid = ValidationHandler.validateForm()
 
     console.log(`[DEBUG] Selected Movie Libraries: ${selectedMovieLibraries}`)
     console.log(`[DEBUG] Selected Show Libraries: ${selectedShowLibraries}`)
     console.log(`[DEBUG] Form is valid: ${isValid}`)
 
-    document.getElementById('libraries').value = [...selectedMovieLibraries, ...selectedShowLibraries].join(',')
+    const selectedNames = [
+      ...ValidationHandler.getSelectedLibraryNames('mov'),
+      ...ValidationHandler.getSelectedLibraryNames('sho')
+    ]
+
+    document.getElementById('libraries').value = selectedNames.join(',')
     document.getElementById('libraries_validated').value = isValid ? 'true' : 'false'
 
     if (isValid) {
@@ -39,28 +44,23 @@ const ValidationHandler = {
     console.log('[DEBUG] Plex Valid:', plexValid)
 
     if (!plexValid) {
-      console.log('[DEBUG] Plex validation failed! Hiding all accordions & disabling navigation.')
-      document.getElementById('selected-libraries-container').style.display = 'none'
-      $('#all-accordions-container').hide()
+      console.log('[DEBUG] Plex validation failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
         'Plex settings have not been validated successfully. Please <a href="javascript:void(0);" onclick="jumpTo(\'010-plex\');">return to the Plex page</a> and hit the validate button and ensure success before returning here.<br>',
         'danger'
       )
       ValidationHandler.disableNavigation()
       return false
-    } else {
-      console.log('[DEBUG] Plex validation passed! Showing all accordions.')
-      document.getElementById('selected-libraries-container').style.display = 'block'
-      $('#all-accordions-container').show()
-      return true
     }
+
+    return true
   },
 
   validateForm: function () {
     console.log('[DEBUG] Running validateForm...')
 
-    const selectedMovieLibraries = ValidationHandler.getSelectedLibraries('mov')
-    const selectedShowLibraries = ValidationHandler.getSelectedLibraries('sho')
+    const selectedMovieLibraries = ValidationHandler.getSelectedLibraryIds('mov')
+    const selectedShowLibraries = ValidationHandler.getSelectedLibraryIds('sho')
     const libraryList = [...selectedMovieLibraries, ...selectedShowLibraries]
 
     console.log(`[DEBUG] Selected Movie Libraries: ${selectedMovieLibraries}`)
@@ -80,8 +80,10 @@ const ValidationHandler = {
 
     // Validate that all selected libraries have at least one highlight
     const validateLibraries = () => {
-      const selectedLibraries = Array.from(document.querySelectorAll('.library-checkbox:checked'))
-        .map(checkbox => checkbox.id.replace(/-library$/, '')) // Normalize ID
+      const selectedLibraries = [
+        ...ValidationHandler.getSelectedLibraryIds('mov'),
+        ...ValidationHandler.getSelectedLibraryIds('sho')
+      ]
 
       const invalidLibraries = []
 
@@ -201,12 +203,27 @@ const ValidationHandler = {
     }
   },
 
-  getSelectedLibraries: function (type) {
-    const selectedLibraries = [...document.querySelectorAll(`.library-checkbox[id^="${type}-library"]:checked`)]
-      .map(input => input.value.trim()) // Ensure we get the actual library name
+  getSelectedLibraryIds: function (type) {
+    const selected = [...document.querySelectorAll(`input[id$='-library-value'][id^='${type}-library_']`)]
+      .filter(input => input.value && input.value.trim() !== '')
+      .map(input => input.id.replace('-library-value', ''))
 
-    console.log(`[DEBUG] Selected ${type} Libraries:`, selectedLibraries)
-    return selectedLibraries
+    console.log(`[DEBUG] Selected ${type} Library IDs:`, selected)
+    return selected
+  },
+
+  getSelectedLibraryNames: function (type) {
+    const names = [...document.querySelectorAll(`input[id$='-library-value'][id^='${type}-library_']`)]
+      .filter(input => input.value && input.value.trim() !== '')
+      .map(input => input.value.trim())
+
+    console.log(`[DEBUG] Selected ${type} Library Names:`, names)
+    return names
+  },
+
+  // Backward compatibility alias
+  getSelectedLibraries: function (type) {
+    return ValidationHandler.getSelectedLibraryNames(type)
   },
 
   restoreSelectedLibraries: function () {
@@ -272,7 +289,7 @@ ValidationHandler.restoreSelectedLibraries()
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] Adding change event listeners to library checkboxes & accordions.')
 
-  document.querySelectorAll('.library-checkbox, .accordion input').forEach((input) => {
+  document.querySelectorAll('.include-library-toggle, .accordion input').forEach((input) => {
     input.addEventListener('change', () => {
       console.log(`[DEBUG] Change detected on: ${input.id || '(unknown input)'}`)
       ValidationHandler.updateValidationState()

@@ -886,32 +886,40 @@ def step(name):
         page_info["quickstart_root"] = helpers.get_app_root()
         helpers.ts_log(f"Start render_template...", level="TIMING")
 
-        html = render_template(
-            name + ".html",
-            page_info=page_info,
-            data=data,
-            telemetry=telemetry,
-            plex_data=plex_data,
-            movie_libraries=movie_libraries,
-            show_libraries=show_libraries,
-            attribute_config=attribute_config,
-            collection_config=collection_config,
-            overlay_config=overlay_config,
-            template_list=file_list,
-            available_configs=available_configs,
-            image_data={
-                "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
-                "show": os.listdir(UPLOAD_FOLDERS["show"]),
-                "season": os.listdir(UPLOAD_FOLDERS["season"]),
-                "episode": os.listdir(UPLOAD_FOLDERS["episode"]),
-            },
-            config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
-        )
+    configured_ids = _configured_library_ids(data.get("libraries", {}))
+    configured_counts = {
+        "movie": sum(1 for lib in movie_libraries if lib["id"] in configured_ids),
+        "show": sum(1 for lib in show_libraries if lib["id"] in configured_ids),
+    }
 
-        end_time = time.perf_counter()
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Rendered {name}.html in {end_time - start_time:.2f} seconds", level="PROFILE")
-        return html
+    html = render_template(
+        name + ".html",
+        page_info=page_info,
+        data=data,
+        telemetry=telemetry,
+        plex_data=plex_data,
+        movie_libraries=movie_libraries,
+        show_libraries=show_libraries,
+        attribute_config=attribute_config,
+        collection_config=collection_config,
+        overlay_config=overlay_config,
+        template_list=file_list,
+        available_configs=available_configs,
+        image_data={
+            "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
+            "show": os.listdir(UPLOAD_FOLDERS["show"]),
+            "season": os.listdir(UPLOAD_FOLDERS["season"]),
+            "episode": os.listdir(UPLOAD_FOLDERS["episode"]),
+        },
+        config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
+        configured_ids=configured_ids,
+        configured_counts=configured_counts,
+    )
+
+    end_time = time.perf_counter()
+    if app.config["QS_DEBUG"]:
+        helpers.ts_log(f"Rendered {name}.html in {end_time - start_time:.2f} seconds", level="PROFILE")
+    return html
 
 
 @app.route("/get_top_imdb_items/<library_name>")
@@ -940,6 +948,97 @@ def get_top_imdb_items_route(library_name):
     items, saved_item = helpers.get_top_imdb_items(library_name, media_type, placeholder_id)
 
     return jsonify({"status": "success", "items": items, "saved_item": saved_item})
+
+
+def _configured_library_ids(library_data):
+    """Return set of library IDs that have an active '-library' value saved."""
+    if not isinstance(library_data, dict):
+        return set()
+    return {
+        key.rsplit("-library", 1)[0]
+        for key, value in library_data.items()
+        if key.endswith("-library") and value not in [None, "", False]
+    }
+
+
+def _build_library_lists():
+    """Shared helper to return movie/show library descriptors and telemetry data."""
+    all_libraries = persistence.retrieve_settings("010-plex")
+    plex_data = all_libraries.get("plex", {})
+    telemetry = persistence.retrieve_settings("plex_telemetry")
+
+    telemetry_data = plex_data.get("telemetry")
+    if not isinstance(telemetry_data, dict) or "plex_pass" not in telemetry_data:
+        telemetry_data = telemetry.get("plex_telemetry", {})
+
+    movie_raw = plex_data.get("tmp_movie_libraries", "") if isinstance(plex_data.get("tmp_movie_libraries"), str) else ""
+    show_raw = plex_data.get("tmp_show_libraries", "") if isinstance(plex_data.get("tmp_show_libraries"), str) else ""
+
+    existing_ids = set()
+
+    movie_libraries = [
+        {
+            "id": f"mov-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
+            "name": lib.strip(),
+            "type": "movie",
+        }
+        for lib in movie_raw.split(",")
+        if lib.strip()
+    ]
+
+    show_libraries = [
+        {
+            "id": f"sho-library_{helpers.normalize_id(lib.strip(), existing_ids)}",
+            "name": lib.strip(),
+            "type": "show",
+        }
+        for lib in show_raw.split(",")
+        if lib.strip()
+    ]
+
+    return movie_libraries, show_libraries, telemetry_data
+
+
+@app.route("/library_fragment/<library_id>")
+def library_fragment(library_id):
+    """Return a single library form fragment so we can lazy-load library settings on the page."""
+    movie_libraries, show_libraries, telemetry_data = _build_library_lists()
+    all_libraries = {lib["id"]: lib for lib in movie_libraries + show_libraries}
+    library = all_libraries.get(library_id)
+
+    if not library:
+        return jsonify({"error": "Library not found"}), 404
+
+    attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
+    collection_config = helpers.load_quickstart_config("quickstart_collections.json")
+    overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
+
+    data = persistence.retrieve_settings("025-libraries")
+    configured_ids = _configured_library_ids(data.get("libraries", {}))
+
+    image_data = {
+        "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
+        "show": os.listdir(UPLOAD_FOLDERS["show"]),
+        "season": os.listdir(UPLOAD_FOLDERS["season"]),
+        "episode": os.listdir(UPLOAD_FOLDERS["episode"]),
+    }
+
+    page_info = {"telemetry": telemetry_data}
+
+    html = render_template(
+        "partials/_library_card.html",
+        library=library,
+        data=data,
+        page_info=page_info,
+        attribute_config=attribute_config,
+        collection_config=collection_config,
+        overlay_config=overlay_config,
+        image_data=image_data,
+        movie_images=image_data["movie"],
+        configured_ids=configured_ids,
+    )
+
+    return html
 
 
 @app.route("/download")

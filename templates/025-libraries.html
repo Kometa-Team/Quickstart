@@ -150,78 +150,47 @@
   </div>
 </div>
 
-<!-- Hidden Container for Selected Libraries -->
-<div id="selected-libraries-container" style="display: none;">
-  <!-- Selected Movie Libraries -->
-  <h2>Selected Movie Libraries</h2>
-  <div class="form-group">
-    {% for library in movie_libraries %}
-    <div class="mb-3">
-      <div class="form-check form-switch">
-        <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
-          id="{{ library.id }}-library" name="{{ library.id }}-library">
-        <label class="form-check-label" for="{{ library.id }}-library">
-          {{ library.name }}
-        </label>
+<!-- Library Picker -->
+<div class="card mb-4 shadow-sm border border-secondary">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <label class="form-label mb-0" for="libraryPicker">Select a library to configure</label>
+      <div class="small text-muted">
+        Configured: {{ configured_counts.movie }} movie / {{ configured_counts.show }} show
       </div>
     </div>
-    {% endfor %}
-  </div>
-
-  <!-- Selected Show Libraries -->
-  <h2>Selected Show Libraries</h2>
-  <div class="form-group">
-    {% for library in show_libraries %}
-    <div class="mb-3">
-      <div class="form-check form-switch">
-        <input class="form-check-input library-checkbox" type="checkbox" value="{{ library.name }}"
-          id="{{ library.id }}-library" name="{{ library.id }}-library">
-        <label class="form-check-label" for="{{ library.id }}-library">
-          {{ library.name }}
-        </label>
-      </div>
+    <select id="libraryPicker" class="form-select">
+      <option value="">-- Choose a library --</option>
+      {% if movie_libraries %}
+      <optgroup label="Movies">
+        {% for library in movie_libraries %}
+        <option value="{{ library.id }}" data-library-type="{{ library.type }}"
+          data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}">
+          {{ library.name }}{% if library.id in configured_ids %} (configured){% endif %}
+        </option>
+        {% endfor %}
+      </optgroup>
+      {% endif %}
+      {% if show_libraries %}
+      <optgroup label="Shows">
+        {% for library in show_libraries %}
+        <option value="{{ library.id }}" data-library-type="{{ library.type }}"
+          data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}">
+          {{ library.name }}{% if library.id in configured_ids %} (configured){% endif %}
+        </option>
+        {% endfor %}
+      </optgroup>
+      {% endif %}
+    </select>
+    <div class="form-text text-muted mt-2">
+      Only the selected library’s settings are loaded. Switch libraries to configure the next one.
     </div>
-    {% endfor %}
   </div>
 </div>
 
-<!-- Movie Library Settings -->
-{% for library in movie_libraries %}
-<div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
-  <div class="card-header bg-dark d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
-    data-bs-target="#{{ library.id }}-wrapper" aria-expanded="false" aria-controls="{{ library.id }}-wrapper"
-    role="button">
-
-    <h4 class="mb-0 text-white">
-      <i class="bi bi-film text-muted me-2" title="Movie"></i>{{ library.name }}
-    </h4>
-    <i class="bi bi-chevron-down text-white rotate-icon"></i>
-  </div>
-  <div class="card-body">
-    {% set telemetry = page_info.telemetry %}
-    {% include "partials/_movie_library_settings.html" %}
-  </div>
-</div>
-{% endfor %}
-
-<!-- Show Library Settings -->
-{% for library in show_libraries %}
-<div class="card mb-4 shadow-sm border border-secondary library-settings-card" id="{{ library.id }}-card-container">
-  <div class="card-header bg-dark d-flex justify-content-between align-items-center" data-bs-toggle="collapse"
-    data-bs-target="#{{ library.id }}-wrapper" aria-expanded="false" aria-controls="{{ library.id }}-wrapper"
-    role="button">
-
-    <h4 class="mb-0 text-white">
-      <i class="bi bi-tv text-muted me-2" title="TV Show"></i>{{ library.name }}
-    </h4>
-    <i class="bi bi-chevron-down text-white rotate-icon"></i>
-  </div>
-  <div class="card-body">
-    {% set telemetry = page_info.telemetry %}
-    {% include "partials/_show_library_settings.html" %}
-  </div>
-</div>
-{% endfor %}
+<!-- Active Library Form Container -->
+<div id="library-form-container"></div>
+<div id="library-cache" style="display:none;"></div>
 
 <!-- Hidden Inputs for Tracking -->
 <div class="form-floating" style="display:none;">
