@@ -46,6 +46,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const libraryCache = document.getElementById('library-cache')
     let activeLibraryId = null
 
+    function initTooltips (scope) {
+      const root = scope || document
+      if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return
+      const tooltipTriggerList = root.querySelectorAll('[data-bs-toggle="tooltip"]')
+      tooltipTriggerList.forEach(el => {
+        const existing = bootstrap.Tooltip.getInstance(el)
+        if (existing) existing.dispose()
+        bootstrap.Tooltip.getOrCreateInstance(el, { html: true, sanitize: false })
+      })
+    }
+
     function refreshPickerLabels () {
       if (!libraryPicker) return
       libraryPicker.querySelectorAll('option[value]').forEach(opt => {
@@ -89,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
       activeLibraryId = libraryId
       wireIncludeToggle(card, libraryId)
       refreshPickerLabels()
+      initTooltips(card)
       if (typeof EventHandler !== 'undefined') {
         EventHandler.attachLibraryListeners()
       }

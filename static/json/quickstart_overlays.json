@@ -74,6 +74,176 @@
         "media_types": [
           "show"
         ]
+      },
+      {
+        "id": "overlay_ratings",
+        "label": "Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/ratings/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ratings.png",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": {
+          "rating1": {
+            "input_type": "select",
+            "default": "user",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "critic", "label": "Critic" },
+              { "value": "audience", "label": "Audience" },
+              { "value": "user", "label": "User" }
+            ]
+          },
+          "rating1_image": {
+            "input_type": "select",
+            "default": "rt_tomato",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "anidb", "label": "AniDB" },
+              { "value": "imdb", "label": "IMDb" },
+              { "value": "letterboxd", "label": "Letterboxd" },
+              { "value": "tmdb", "label": "TMDb" },
+              { "value": "metacritic", "label": "Metacritic" },
+              { "value": "rt_popcorn", "label": "RT Popcorn" },
+              { "value": "rt_tomato", "label": "RT Tomato" },
+              { "value": "trakt", "label": "Trakt" },
+              { "value": "mal", "label": "MyAnimeList" },
+              { "value": "mdb", "label": "MDB" },
+              { "value": "star", "label": "Star" }
+            ]
+          },
+          "rating2": {
+            "input_type": "select",
+            "default": "critic",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "critic", "label": "Critic" },
+              { "value": "audience", "label": "Audience" },
+              { "value": "user", "label": "User" }
+            ]
+          },
+          "rating2_image": {
+            "input_type": "select",
+            "default": "imdb",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "anidb", "label": "AniDB" },
+              { "value": "imdb", "label": "IMDb" },
+              { "value": "letterboxd", "label": "Letterboxd" },
+              { "value": "tmdb", "label": "TMDb" },
+              { "value": "metacritic", "label": "Metacritic" },
+              { "value": "rt_popcorn", "label": "RT Popcorn" },
+              { "value": "rt_tomato", "label": "RT Tomato" },
+              { "value": "trakt", "label": "Trakt" },
+              { "value": "mal", "label": "MyAnimeList" },
+              { "value": "mdb", "label": "MDB" },
+              { "value": "star", "label": "Star" }
+            ]
+          },
+          "rating3": {
+            "input_type": "select",
+            "default": "audience",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "critic", "label": "Critic" },
+              { "value": "audience", "label": "Audience" },
+              { "value": "user", "label": "User" }
+            ]
+          },
+          "rating3_image": {
+            "input_type": "select",
+            "default": "tmdb",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "anidb", "label": "AniDB" },
+              { "value": "imdb", "label": "IMDb" },
+              { "value": "letterboxd", "label": "Letterboxd" },
+              { "value": "tmdb", "label": "TMDb" },
+              { "value": "metacritic", "label": "Metacritic" },
+              { "value": "rt_popcorn", "label": "RT Popcorn" },
+              { "value": "rt_tomato", "label": "RT Tomato" },
+              { "value": "trakt", "label": "Trakt" },
+              { "value": "mal", "label": "MyAnimeList" },
+              { "value": "mdb", "label": "MDB" },
+              { "value": "star", "label": "Star" }
+            ]
+          }
+        }
+      },
+      {
+        "id": "overlay_ratings",
+        "label": "Ratings",
+        "url": "https://kometa.wiki/en/nightly/defaults/overlays/ratings/",
+        "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ratings.png",
+        "media_types": [
+          "episode"
+        ],
+        "template_variables": {
+          "rating1": {
+            "input_type": "select",
+            "default": "critic",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "critic", "label": "Critic" },
+              { "value": "audience", "label": "Audience" },
+              { "value": "user", "label": "User" }
+            ]
+          },
+          "rating1_image": {
+            "input_type": "select",
+            "default": "imdb",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "anidb", "label": "AniDB" },
+              { "value": "imdb", "label": "IMDb" },
+              { "value": "letterboxd", "label": "Letterboxd" },
+              { "value": "tmdb", "label": "TMDb" },
+              { "value": "metacritic", "label": "Metacritic" },
+              { "value": "rt_popcorn", "label": "RT Popcorn" },
+              { "value": "rt_tomato", "label": "RT Tomato" },
+              { "value": "trakt", "label": "Trakt" },
+              { "value": "mal", "label": "MyAnimeList" },
+              { "value": "mdb", "label": "MDB" },
+              { "value": "star", "label": "Star" }
+            ]
+          },
+          "rating2": {
+            "input_type": "select",
+            "default": "audience",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "critic", "label": "Critic" },
+              { "value": "audience", "label": "Audience" },
+              { "value": "user", "label": "User" }
+            ]
+          },
+          "rating2_image": {
+            "input_type": "select",
+            "default": "tmdb",
+            "options": [
+              { "value": "", "label": "None" },
+              { "value": "anidb", "label": "AniDB" },
+              { "value": "imdb", "label": "IMDb" },
+              { "value": "letterboxd", "label": "Letterboxd" },
+              { "value": "tmdb", "label": "TMDb" },
+              { "value": "metacritic", "label": "Metacritic" },
+              { "value": "rt_popcorn", "label": "RT Popcorn" },
+              { "value": "rt_tomato", "label": "RT Tomato" },
+              { "value": "trakt", "label": "Trakt" },
+              { "value": "mal", "label": "MyAnimeList" },
+              { "value": "mdb", "label": "MDB" },
+              { "value": "star", "label": "Star" }
+            ]
+          },
+          "builder_level": {
+            "input_type": "select",
+            "default": "episode",
+            "options": [
+              "episode"
+            ]
+          }
+        }
       }
     ]
   },

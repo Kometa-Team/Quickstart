@@ -310,6 +310,68 @@ def build_libraries_section(
             overlay_key = helpers.extract_library_name(library_key)
             overlay_entries = []
 
+            def prune_rating_template_vars(overlay_entry):
+                """
+                Drop rating template variables explicitly set to "none" so they don't emit in YAML.
+                Applies to overlay_ratings and overlay_ratings_episode.
+                """
+                if not isinstance(overlay_entry, dict):
+                    return
+                default_name = overlay_entry.get("default", "")
+                # Handle both default strings and overlay IDs (e.g., "overlay_ratings" or "overlay_ratings_episode")
+                if isinstance(default_name, str):
+                    is_ratings = default_name.startswith("overlay_ratings") or default_name == "ratings" or default_name == "overlay_ratings_episode"
+                else:
+                    is_ratings = False
+                if not is_ratings:
+                    return
+                tv = overlay_entry.get("template_variables")
+                if not isinstance(tv, dict):
+                    return
+                cleaned = {}
+                for k, v in tv.items():
+                    if v is None or v is False:
+                        continue
+                    # Handle dict values from select options like {"value": "", "label": "None"}
+                    if isinstance(v, dict):
+                        raw_val = v.get("value", "")
+                        if not raw_val or (isinstance(raw_val, str) and raw_val.strip().lower() == "none"):
+                            continue
+                        cleaned[k] = raw_val
+                        continue
+                    if isinstance(v, str):
+                        stripped = v.strip()
+                        if stripped == "" or stripped.lower() == "none":
+                            continue
+                    cleaned[k] = v
+
+                # Enforce ratingN <-> ratingN_image dependency; if either side is empty, drop both
+                for idx in ["1", "2", "3"]:
+                    r_key = f"rating{idx}"
+                    i_key = f"{r_key}_image"
+                    r_val = cleaned.get(r_key)
+                    i_val = cleaned.get(i_key)
+                    if r_key in cleaned or i_key in cleaned:
+                        def _is_empty(val):
+                            if val is None or val is False:
+                                return True
+                            if isinstance(val, str):
+                                return val.strip() == "" or val.strip().lower() == "none"
+                            return False
+
+                        if _is_empty(r_val):
+                            cleaned.pop(r_key, None)
+                            cleaned.pop(i_key, None)
+                            continue
+                        if _is_empty(i_val):
+                            cleaned.pop(r_key, None)
+                            cleaned.pop(i_key, None)
+
+                if cleaned:
+                    overlay_entry["template_variables"] = cleaned
+                else:
+                    overlay_entry.pop("template_variables", None)
+
             if overlay_key and overlay_key in overlays:
                 raw_overlay_entries = overlays[overlay_key]
 
@@ -358,6 +420,8 @@ def build_libraries_section(
                             if isinstance(raw_value, str):
                                 raw_value = True if raw_value.lower() == "true" else False if raw_value.lower() == "false" else raw_value
                             overlay_entry.setdefault("template_variables", {})[var_name] = raw_value
+
+                        prune_rating_template_vars(overlay_entry)
 
                     # Strip _subtitles for final YAML output consistency
                     for overlay_entry in overlay_entries:
@@ -422,12 +486,47 @@ def build_libraries_section(
                                 raw_value = True if raw_value.lower() == "true" else False if raw_value.lower() == "false" else raw_value
                             overlay_entry.setdefault("template_variables", {})[var_name] = raw_value
 
+                        prune_rating_template_vars(overlay_entry)
+
                     # Strip _subtitles at the end (just for YAML output cleanliness)
                     for overlay_entry in overlay_entries:
                         if overlay_entry["default"] == "languages_subtitles":
                             overlay_entry["default"] = "languages"
 
                 if overlay_entries:
+                    # Final cleanup: drop rating pairs if either side is empty
+                    for ov in overlay_entries:
+                        default_name = ov.get("default", "")
+                        if not (isinstance(default_name, str) and (default_name == "ratings" or default_name.startswith("overlay_ratings"))):
+                            continue
+                        tv = ov.get("template_variables")
+                        if not isinstance(tv, dict):
+                            continue
+                        for idx in ["1", "2", "3"]:
+                            r_key = f"rating{idx}"
+                            i_key = f"{r_key}_image"
+                            r_val = tv.get(r_key)
+                            i_val = tv.get(i_key)
+                            def _is_empty(val):
+                                if val is None or val is False:
+                                    return True
+                                if isinstance(val, dict):
+                                    raw_val = val.get("value", "")
+                                    return raw_val is None or (isinstance(raw_val, str) and (raw_val.strip() == "" or raw_val.strip().lower() == "none"))
+                                if isinstance(val, str):
+                                    return val.strip() == "" or val.strip().lower() == "none"
+                                return False
+
+                            if _is_empty(r_val):
+                                tv.pop(r_key, None)
+                                tv.pop(i_key, None)
+                                continue
+                            if _is_empty(i_val):
+                                tv.pop(r_key, None)
+                                tv.pop(i_key, None)
+                        if not tv:
+                            ov.pop("template_variables", None)
+
                     entry["overlay_files"] = overlay_entries
 
         # Template Variables

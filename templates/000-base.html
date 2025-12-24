@@ -30,10 +30,10 @@
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
   <script>
-    // Initialize Bootstrap tooltips safely
+    // Initialize Bootstrap tooltips with HTML images allowed (global)
     document.addEventListener("DOMContentLoaded", function () {
       const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-      tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el))
+      tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el, { html: true, sanitize: false }))
     });
   </script>
 

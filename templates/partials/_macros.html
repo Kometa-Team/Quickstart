@@ -1083,48 +1083,62 @@ prefix) %}
                                                 </div>
                                             </div>
 
-                                            {% if overlay.template_variables is mapping %}
-                                            <div class="overlay-template-section mt-2">
-                                                {% for var_name, var_details in overlay.template_variables.items() %}
-                                                {% if var_details.input_type == "select" %}
-                                                {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~
-                                                overlay.id %}
-                                                {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
-                                                {% set selected_value = data.libraries.get(flat_key,
-                                                var_details.default) %}
+                                                {% if overlay.template_variables is mapping %}
+                                                <div class="overlay-template-section mt-2">
+                                                    {% for var_name, var_details in overlay.template_variables.items() %}
+                                                    {% if var_details.input_type == "select" %}
+                                                    {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~
+                                                    overlay.id %}
+                                                    {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
+                                                    {% set selected_value = data.libraries.get(flat_key,
+                                                    var_details.default) %}
 
-                                                <div class="input-group mb-2">
-                                                    <span class="input-group-text"
-                                                        id="{{ template_name }}-{{ var_name }}_text"
-                                                        style="width: 170px;">
-                                                        {{ var_name|capitalize }}
-                                                        {% if var_details.tooltip %}
-                                                        <span
-                                                            class="text-{{ var_details.tooltip_variant or 'info' }} ms-2"
-                                                            data-bs-toggle="tooltip" data-bs-html="true"
-                                                            title="{{ var_details.tooltip }}">
-                                                            <i
-                                                                class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                                    {% set display_label = var_name.replace('_', ' ') %}
+                                                    {% if var_name == 'rating1' %}{% set display_label = 'Rating 1' %}{% endif %}
+                                                    {% if var_name == 'rating2' %}{% set display_label = 'Rating 2' %}{% endif %}
+                                                    {% if var_name == 'rating3' %}{% set display_label = 'Rating 3' %}{% endif %}
+                                                    {% if var_name == 'rating1_image' %}{% set display_label = 'Rating 1 Image' %}{% endif %}
+                                                    {% if var_name == 'rating2_image' %}{% set display_label = 'Rating 2 Image' %}{% endif %}
+                                                    {% if var_name == 'rating3_image' %}{% set display_label = 'Rating 3 Image' %}{% endif %}
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text"
+                                                            id="{{ template_name }}-{{ var_name }}_text"
+                                                            style="width: 170px;">
+                                                            {{ display_label }}
+                                                            {% if var_details.tooltip %}
+                                                            <span
+                                                                class="text-{{ var_details.tooltip_variant or 'info' }} ms-2"
+                                                                data-bs-toggle="tooltip" data-bs-html="true"
+                                                                title="{{ var_details.tooltip }}">
+                                                                <i
+                                                                    class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                                            </span>
+                                                            {% endif %}
                                                         </span>
-                                                        {% endif %}
-                                                    </span>
-                                                    <select class="form-select template-variable-select"
-                                                        id="{{ template_name }}-{{ var_name }}"
-                                                        name="{{ template_name }}[{{ var_name }}]"
-                                                        aria-describedby="{{ template_name }}-{{ var_name }}_text"
-                                                        data-selected="{{ selected_value|string|lower }}" {% if
-                                                        selected_value !=var_details.default %}data-user-modified="true"
-                                                        {% endif %}>
-                                                        {% for option in var_details.options %}
-                                                        <option value="{{ option }}" {% if selected_value==option
-                                                            %}selected{% endif %}>
-                                                            {{ option|capitalize }}
-                                                        </option>
-                                                        {% endfor %}
-                                                    </select>
-                                                </div>
-                                                {% endif %}
-                                                {% endfor %}
+                                                        <select class="form-select template-variable-select"
+                                                            id="{{ template_name }}-{{ var_name }}"
+                                                            name="{{ template_name }}[{{ var_name }}]"
+                                                            aria-describedby="{{ template_name }}-{{ var_name }}_text"
+                                                            data-selected="{{ selected_value|string|lower }}" {% if
+                                                            selected_value !=var_details.default %}data-user-modified="true"
+                                                            {% endif %}>
+                                                            {% for option in var_details.options %}
+                                                            {% if option is string %}
+                                                            {% set opt_value = option %}
+                                                            {% set opt_label = option|capitalize %}
+                                                            {% else %}
+                                                            {% set opt_value = option.value %}
+                                                            {% set opt_label = option.label %}
+                                                            {% endif %}
+                                                            <option value="{{ opt_value }}" {% if selected_value==opt_value
+                                                                %}selected{% endif %}>
+                                                                {{ opt_label }}
+                                                            </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                    {% endif %}
+                                                    {% endfor %}
                                             </div>
                                             {% endif %}
                                         </div>
