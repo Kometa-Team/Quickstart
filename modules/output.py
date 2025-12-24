@@ -352,6 +352,7 @@ def build_libraries_section(
                     r_val = cleaned.get(r_key)
                     i_val = cleaned.get(i_key)
                     if r_key in cleaned or i_key in cleaned:
+
                         def _is_empty(val):
                             if val is None or val is False:
                                 return True
@@ -507,6 +508,7 @@ def build_libraries_section(
                             i_key = f"{r_key}_image"
                             r_val = tv.get(r_key)
                             i_val = tv.get(i_key)
+
                             def _is_empty(val):
                                 if val is None or val is False:
                                     return True
