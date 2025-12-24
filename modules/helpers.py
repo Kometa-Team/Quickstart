@@ -1405,7 +1405,13 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> boo
         _ensure_dir(dest_dir)
         with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
             root_name = zf.namelist()[0].split("/")[0]  # e.g., Kometa-nightly
-            with tempfile.TemporaryDirectory() as td:
+            # Use a stable tmp under CONFIG_DIR to avoid /tmp RAM constraints
+            tmp_base = Path(CONFIG_DIR) / "tmp"
+            if tmp_base.is_dir():
+                for entry in tmp_base.iterdir():
+                    shutil.rmtree(entry, ignore_errors=True)
+            tmp_base.mkdir(parents=True, exist_ok=True)
+            with tempfile.TemporaryDirectory(dir=tmp_base) as td:
                 tmp_root = Path(td) / root_name
                 zf.extractall(Path(td))
                 # Wipe current contents (keep dest_dir itself)

@@ -1742,7 +1742,18 @@ def clone_test_libraries_start():
                 "total": total_size,
             }
 
-            with tempfile.TemporaryDirectory() as tmpdir:
+            # Use a stable tmp folder under the config dir to avoid /tmp RAM mounts
+            tmp_root = os.path.join(base_config_dir, "config", "tmp")
+            # Proactively clean stale tmp folders from previous runs
+            if os.path.isdir(tmp_root):
+                for entry in os.listdir(tmp_root):
+                    try:
+                        shutil.rmtree(os.path.join(tmp_root, entry), ignore_errors=True)
+                    except Exception:
+                        pass
+            os.makedirs(tmp_root, exist_ok=True)
+
+            with tempfile.TemporaryDirectory(dir=tmp_root) as tmpdir:
                 zip_path = os.path.join(tmpdir, "main.zip")
 
                 # Stream download with throttled progress updates
@@ -1890,7 +1901,17 @@ def clone_test_libraries():
         except Exception:
             commit_sha = None
 
-        with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_root = os.path.join(base_config_dir if use_config_dir else parent_dir, "config", "tmp") if use_config_dir else os.path.join(parent_dir, "tmp")
+        # Clean stale tmp folders if they exist
+        if os.path.isdir(tmp_root):
+            for entry in os.listdir(tmp_root):
+                try:
+                    shutil.rmtree(os.path.join(tmp_root, entry), ignore_errors=True)
+                except Exception:
+                    pass
+        os.makedirs(tmp_root, exist_ok=True)
+
+        with tempfile.TemporaryDirectory(dir=tmp_root) as tmpdir:
             zip_path = os.path.join(tmpdir, "main.zip")
 
             r = requests.get(zip_url)
