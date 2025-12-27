@@ -245,9 +245,16 @@ def build_libraries_section(
         for df in delete_fields:
             attr_key = f"{library_type}-library_{lib_id}-attribute_{df}"
             value = attr_group.get(attr_key, None)
-            if value not in [None, "", False]:
-                yaml_key = df.replace("delete_collections_", "")
-                delete_collections[yaml_key] = value
+            if value in [None, "", False, "None", "none"]:
+                continue
+            yaml_key = df.replace("delete_collections_", "")
+            if yaml_key == "less":
+                try:
+                    value = int(value)
+                except Exception:
+                    helpers.ts_log(f"Skipping invalid delete_collections_less value: {value}", level="DEBUG")
+                    continue
+            delete_collections[yaml_key] = value
 
         if delete_collections:
             operations["delete_collections"] = delete_collections

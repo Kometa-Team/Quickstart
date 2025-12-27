@@ -845,6 +845,48 @@ def step(name):
     helpers.ts_log(f"Loading overlay_config...", level="TIMING")
     overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
 
+    def add_offset_vars(config):
+        """
+        Ensure each overlay exposes positional offsets with sensible defaults.
+        """
+        for group in config or []:
+            overlays = group.get("overlays", [])
+            for ov in overlays:
+                tv = ov.get("template_variables")
+                if tv is None:
+                    tv = {}
+                    ov["template_variables"] = tv
+                elif not isinstance(tv, dict):
+                    # leave lists (legacy) untouched
+                    continue
+                offsets = ov.get("default_offsets", {}) if isinstance(ov.get("default_offsets"), dict) else {}
+                # Respect initial_* overrides (used for YAML naming) but surface as horizontal/vertical inputs
+                if "initial_horizontal_offset" in tv and isinstance(tv["initial_horizontal_offset"], dict):
+                    offsets["horizontal"] = tv["initial_horizontal_offset"].get("default", offsets.get("horizontal", 0))
+                if "initial_vertical_offset" in tv and isinstance(tv["initial_vertical_offset"], dict):
+                    offsets["vertical"] = tv["initial_vertical_offset"].get("default", offsets.get("vertical", 0))
+                h_def = offsets.get("horizontal", 0)
+                v_def = offsets.get("vertical", 0)
+                # Only add if not already present
+                tv.setdefault(
+                    "horizontal_offset",
+                    {
+                        "input_type": "number",
+                        "default": h_def,
+                        "label": "Horizontal Offset",
+                    },
+                )
+                tv.setdefault(
+                    "vertical_offset",
+                    {
+                        "input_type": "number",
+                        "default": v_def,
+                        "label": "Vertical Offset",
+                    },
+                )
+
+    add_offset_vars(overlay_config)
+
     if name == "900-final":
         validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
         saved_filename = helpers.save_to_named_config(yaml_content, config_name)

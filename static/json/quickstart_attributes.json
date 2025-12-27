@@ -1754,8 +1754,7 @@
       "type": "boolean_toggle",
       "accordion": "library",
       "media_types": [
-        "movie",
-        "show"
+        "music"
       ],
       "title": "Update Blank Track Titles",
       "wiki": "https://kometa.wiki/en/nightly/config/operations/#update-blank-track-titles",
@@ -1866,6 +1865,7 @@
       "description": "Maps input genres to desired output genres or removes them.",
       "tooltip_variant": "info",
       "container_class": "accordion",
+      "custom_string_placeholder": "e.g. Romantic Comedy -> Comedy",
       "yml_location": "attribute"
     },
     {
@@ -1881,6 +1881,7 @@
       "description": "Maps input content ratings to desired output content ratings or removes them.",
       "tooltip_variant": "info",
       "container_class": "accordion",
+      "custom_string_placeholder": "e.g. PG -> Y-10",
       "yml_location": "attribute"
     },
     {

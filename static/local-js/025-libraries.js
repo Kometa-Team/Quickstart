@@ -101,6 +101,16 @@ document.addEventListener('DOMContentLoaded', function () {
       wireIncludeToggle(card, libraryId)
       refreshPickerLabels()
       initTooltips(card)
+      wireOffsetReset(card)
+      initSortablesInScope(card)
+      setupCustomStringListHandlers('mass_genre_update', card)
+      setupCustomStringListHandlers('radarr_remove_by_tag', card)
+      setupCustomStringListHandlers('sonarr_remove_by_tag', card)
+      setupCustomStringListHandlers('metadata_backup', card)
+      setupCustomStringListHandlers('mass_content_rating_update', card)
+      setupCustomStringListHandlers('mass_genre_mapper', card)
+      setupMappingListHandlers('genre_mapper', card)
+      setupMappingListHandlers('content_rating_mapper', card)
       if (typeof EventHandler !== 'undefined') {
         EventHandler.attachLibraryListeners()
       }
@@ -181,6 +191,10 @@ document.addEventListener('DOMContentLoaded', function () {
     setupCustomStringListHandlers('radarr_remove_by_tag')
     setupCustomStringListHandlers('sonarr_remove_by_tag')
     setupCustomStringListHandlers('metadata_backup')
+    setupCustomStringListHandlers('mass_content_rating_update')
+    setupCustomStringListHandlers('mass_genre_mapper')
+    setupMappingListHandlers('genre_mapper')
+    setupMappingListHandlers('content_rating_mapper')
 
     document.querySelectorAll('.overlay-template-section').forEach((el) => {
       el.style.display = 'none'
@@ -209,7 +223,45 @@ document.addEventListener('DOMContentLoaded', function () {
       } catch (e) {
         console.warn(`[WARN] Could not parse JSON from hidden input #${hiddenInput.id}:`, hiddenInput.value)
       }
+
+      // If no order is saved yet, default to currently checked toggles (in DOM order)
+      if (!values.length) {
+        const toggles = Array.from(document.querySelectorAll(`input[type=checkbox][id^='${libraryId}-attribute_${prefix}_']`))
+        values = toggles.filter(t => t.checked).map(t => t.id.replace(`${libraryId}-attribute_${prefix}_`, ''))
+        hiddenInput.value = JSON.stringify(values)
+      }
       renderSortableList(libraryId, prefix, list, hiddenInput, values)
+    }
+
+    function initSortablesInScope (scope) {
+      const root = scope || document
+      root.querySelectorAll('.sortable-list').forEach(list => {
+        if (list.dataset.sortableInit === 'true') return
+
+        const match = list.id.match(/^(.*?)-attribute_(.+?)_sortable$/)
+        if (!match) return
+
+        const libraryId = match[1]
+        const prefix = match[2]
+
+        console.log(`[DEBUG] Initializing sortable for ${libraryId} with prefix ${prefix} (scoped)`)
+
+        initializeSortableList(libraryId, prefix)
+        bindToggleToList(libraryId, prefix)
+
+        Sortable.create(list, {
+          handle: '.drag-handle',
+          animation: 150,
+          onSort: function () {
+            const hiddenInput = document.getElementById(`${libraryId}-attribute_${prefix}_order`)
+            const selected = [...list.querySelectorAll('li')].map(li => li.dataset.value)
+            hiddenInput.value = JSON.stringify(selected)
+            console.log(`[DEBUG] Updated order for #${hiddenInput.id}:`, selected)
+          }
+        })
+
+        list.dataset.sortableInit = 'true'
+      })
     }
 
     function renderSortableList (libraryId, prefix, list, hiddenInput, values) {
@@ -299,8 +351,10 @@ function toggleOverlayTemplateSection (checkbox) {
   }
 }
 
-function setupCustomStringListHandlers (prefix) {
-  document.querySelectorAll(`input[id$="attribute_${prefix}_custom_hidden"]`).forEach(hidden => {
+function setupCustomStringListHandlers (prefix, scope) {
+  const root = scope || document
+  root.querySelectorAll(`input[id$="attribute_${prefix}_custom_hidden"]`).forEach(hidden => {
+    if (hidden.dataset.listenerAdded) return
     const libraryId = hidden.id.split('-attribute_')[0]
     const input = document.getElementById(`${libraryId}-attribute_${prefix}_custom_input`)
     const list = document.getElementById(`${libraryId}-attribute_${prefix}_custom_list`)
@@ -355,6 +409,93 @@ function setupCustomStringListHandlers (prefix) {
       renderCustomList(current)
       input.value = ''
     })
+
+    hidden.dataset.listenerAdded = 'true'
+  })
+}
+
+function setupMappingListHandlers (prefix, scope) {
+  const root = scope || document
+  root.querySelectorAll(`input[id$="attribute_${prefix}_hidden"]`).forEach(hidden => {
+    if (hidden.dataset.listenerAdded) return
+
+    const libraryId = hidden.id.split('-attribute_')[0]
+    const inputField = document.getElementById(`${libraryId}-attribute_${prefix}_input`)
+    const outputField = document.getElementById(`${libraryId}-attribute_${prefix}_output`)
+    const list = document.getElementById(`${libraryId}-attribute_${prefix}_list`)
+    const addBtn = document.getElementById(`${libraryId}-attribute_${prefix}_add`)
+
+    if (!inputField || !outputField || !list || !addBtn) return
+
+    function renderList (data) {
+      list.innerHTML = ''
+      Object.entries(data).forEach(([key, value]) => {
+        const li = document.createElement('li')
+        li.className = 'list-group-item d-flex justify-content-between align-items-center'
+        const display = value ? `${key} -> ${value}` : `${key} (remove)`
+        li.innerHTML = `
+          <span>${display}</span>
+          <button type="button" class="btn btn-sm btn-danger" aria-label="Remove">
+            <i class="bi bi-x-lg"></i>
+          </button>`
+        list.appendChild(li)
+        li.querySelector('button').addEventListener('click', () => {
+          delete data[key]
+          hidden.value = JSON.stringify(data)
+          renderList(data)
+        })
+      })
+    }
+
+    let current = {}
+    try {
+      current = JSON.parse(hidden.value || '{}') || {}
+    } catch (e) {
+      console.warn(`[WARN] Could not parse hidden input for ${prefix}:`, hidden.value)
+      current = {}
+    }
+    renderList(current)
+
+    addBtn.addEventListener('click', () => {
+      const key = inputField.value.trim()
+      const val = outputField.value.trim()
+      if (!key) return
+      current[key] = val
+      hidden.value = JSON.stringify(current)
+      renderList(current)
+      inputField.value = ''
+      outputField.value = ''
+    })
+
+    hidden.dataset.listenerAdded = 'true'
+  })
+}
+
+function wireOffsetReset (scope) {
+  const root = scope || document
+  root.querySelectorAll('.reset-offset-btn').forEach(btn => {
+    if (btn.dataset.listenerAdded) return
+    btn.addEventListener('click', () => {
+      const hId = btn.dataset.horizontalId
+      const vId = btn.dataset.verticalId
+      const pId = btn.dataset.positionId
+      const hInput = hId ? document.getElementById(hId) : null
+      const vInput = vId ? document.getElementById(vId) : null
+      const pInput = pId ? document.getElementById(pId) : null
+      if (hInput && hInput.dataset.default !== undefined) {
+        hInput.value = hInput.dataset.default
+        hInput.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+      if (vInput && vInput.dataset.default !== undefined) {
+        vInput.value = vInput.dataset.default
+        vInput.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+      if (pInput && pInput.dataset.default !== undefined) {
+        pInput.value = pInput.dataset.default
+        pInput.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+    })
+    btn.dataset.listenerAdded = 'true'
   })
 }
 

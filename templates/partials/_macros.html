@@ -12,6 +12,17 @@ container_class="border rounded p-3 mb-2", number_input=None
                 data-bs-target="#{{ library.id }}-{{ prefix }}-body" aria-expanded="false"
                 aria-controls="{{ library.id }}-{{ prefix }}-body">
                 {{ title }}
+                {% if wiki_url %}
+                <a href="{{ wiki_url }}" target="_blank" rel="noopener noreferrer" class="ms-3 text-decoration-none">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                {% endif %}
+                {% if description %}
+                <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="{{ description }}">
+                    <i class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                </span>
+                {% endif %}
             </button>
         </h2>
         <div id="{{ library.id }}-{{ prefix }}-body" class="accordion-collapse collapse"
@@ -120,9 +131,6 @@ container_class="border rounded p-3 mb-2", number_input=None
                                         class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
                                 </span>
                             </label>
-                            <input type="text" class="form-control" id="{{ input_id }}" name="{{ input_id }}"
-                                value="{{ data['libraries'][input_id] | default('') }}"
-                                placeholder="{{ custom_string_placeholder | default('Enter custom value') }}">
                             {% set raw_val = data['libraries'].get(library.id ~ '-attribute_' ~ prefix ~
                             '_custom_string') %}
                             {% set safe_val = '' if raw_val in [None, 'None'] else raw_val %}
@@ -134,11 +142,15 @@ container_class="border rounded p-3 mb-2", number_input=None
                                 name="{{ library.id }}-attribute_{{ prefix }}_custom_string" value="{{ safe_val }}"
                                 placeholder="{{ custom_string_placeholder | default('YYYY-MM-DD') }}">
                             {% elif val_type == "rating" %}
-                            <input type="number" class="form-control"
+                            <input type="number" class="form-control rating-range"
+                                data-validate="rating"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
                                 name="{{ library.id }}-attribute_{{ prefix }}_custom_string" min="0" max="10" step="0.1"
                                 value="{{ safe_val }}"
                                 placeholder="{{ custom_string_placeholder | default('Enter rating between 0.0 and 10.0') }}">
+                            <div class="invalid-feedback">
+                                Enter a rating between 0.0 and 10.0.
+                            </div>
                             {% elif val_type == "number_gt_0" %}
                             <input type="number" class="form-control"
                                 id="{{ library.id }}-attribute_{{ prefix }}_custom_input"
@@ -419,11 +431,29 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                 data-bs-target="#{{ library.id }}-{{ prefix }}-body" aria-expanded="false"
                 aria-controls="{{ library.id }}-{{ prefix }}-body">
                 {{ title }}
+                {% if wiki %}
+                <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer" class="ms-3 text-decoration-none">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                {% endif %}
+                {% if description %}
+                <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="{{ description }}">
+                    <i class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                </span>
+                {% endif %}
             </button>
         </h2>
         <div id="{{ library.id }}-{{ prefix }}-body" class="accordion-collapse collapse"
             aria-labelledby="{{ library.id }}-{{ prefix }}-header">
             <div class="accordion-body">
+                {% if wiki %}
+                <div class="mb-2">
+                    <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                    </a>
+                </div>
+                {% endif %}
                 {% else %}
                 <div class="{{ container_class }}">
                     <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
@@ -464,8 +494,7 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
                             <div class="input-group">
                                 <span class="input-group-text"
                                     id="{{ library.id }}-attribute_{{ number_input.key }}_text">
-                                    <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ number_input.label
-                                        }}</a>
+                                    {{ number_input.label }}
                                     <span class="text-{{ tooltip_variant }} ms-3" data-bs-toggle="tooltip"
                                         data-bs-html="true" title="{{ number_input.tooltip }}">
                                         <i
@@ -539,6 +568,17 @@ select_input.key if yml_location == "top_level" else
                 data-bs-target="#{{ library.id }}-{{ prefix }}-body" aria-expanded="false"
                 aria-controls="{{ library.id }}-{{ prefix }}-body">
                 {{ title }}
+                {% if wiki %}
+                <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer" class="ms-3 text-decoration-none">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                {% endif %}
+                {% if description %}
+                <span class="text-{{ tooltip_variant }} ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+                    title="{{ description }}">
+                    <i class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                </span>
+                {% endif %}
             </button>
         </h2>
         <div id="{{ library.id }}-{{ prefix }}-body" class="accordion-collapse collapse"
@@ -629,6 +669,19 @@ select_input.key if yml_location == "top_level" else
                 data-bs-target="#{{ library.id }}-{{ section.prefix }}-body" aria-expanded="false"
                 aria-controls="{{ library.id }}-{{ section.prefix }}-body">
                 {{ section.title }}
+                {% if section.wiki %}
+                <a href="{{ section.wiki }}" target="_blank" rel="noopener noreferrer"
+                    class="ms-3 text-decoration-none">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                {% endif %}
+                {% if section.description %}
+                <span class="text-{{ section.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"
+                    data-bs-html="true" title="{{ section.description }}">
+                    <i
+                        class="bi {% if section.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                </span>
+                {% endif %}
             </button>
         </h2>
         <div id="{{ library.id }}-{{ section.prefix }}-body" class="accordion-collapse collapse"
@@ -725,6 +778,19 @@ select_input.key if yml_location == "top_level" else
                 data-bs-target="#{{ library.id }}-{{ section.prefix }}-body" aria-expanded="false"
                 aria-controls="{{ library.id }}-{{ section.prefix }}-body">
                 {{ section.title }}
+                {% if section.wiki %}
+                <a href="{{ section.wiki }}" target="_blank" rel="noopener noreferrer"
+                    class="ms-3 text-decoration-none">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                {% endif %}
+                {% if section.description %}
+                <span class="text-{{ section.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"
+                    data-bs-html="true" title="{{ section.description }}">
+                    <i
+                        class="bi {% if section.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                </span>
+                {% endif %}
             </button>
         </h2>
         <div id="{{ library.id }}-{{ section.prefix }}-body" class="accordion-collapse collapse"
@@ -734,25 +800,16 @@ select_input.key if yml_location == "top_level" else
                 <div class="{{ section.container_class }}">
                     {% endif %}
 
-                    <div class="form-label">
-                        <a href="{{ section.wiki }}" target="_blank" rel="noopener noreferrer">{{ section.title }}</a>
-                        <span class="text-{{ section.tooltip_variant or 'info' }} ms-3" data-bs-toggle="tooltip"
-                            data-bs-html="true" title="{{ section.description }}">
-                            <i
-                                class="bi {% if section.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
-                        </span>
-                    </div>
-
                     <div class="row">
                         <div class="col-md-5 mb-2">
                             <input type="text" class="form-control"
                                 id="{{ library.id }}-attribute_{{ section.prefix }}_input"
-                                placeholder="Original Genre (e.g. Action)">
+                                placeholder="{{ section.custom_string_placeholder or 'Original value' }}">
                         </div>
                         <div class="col-md-5 mb-2">
                             <input type="text" class="form-control"
                                 id="{{ library.id }}-attribute_{{ section.prefix }}_output"
-                                placeholder="Mapped Genre (or leave blank to remove)">
+                                placeholder="{{ section.custom_string_placeholder or 'Mapped value (leave blank to remove)' }}">
                         </div>
                         <div class="col-md-2 mb-2">
                             <button class="btn nav-button w-100" type="button"
@@ -1083,17 +1140,17 @@ prefix) %}
                                                 </div>
                                             </div>
 
+                                                {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
                                                 {% if overlay.template_variables is mapping %}
+                                                {% set ns = namespace(has_offsets=false, position_id=None, h_id=None, v_id=None) %}
                                                 <div class="overlay-template-section mt-2">
                                                     {% for var_name, var_details in overlay.template_variables.items() %}
-                                                    {% if var_details.input_type == "select" %}
-                                                    {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~
-                                                    overlay.id %}
                                                     {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
-                                                    {% set selected_value = data.libraries.get(flat_key,
-                                                    var_details.default) %}
+                                                    {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
 
-                                                    {% set display_label = var_name.replace('_', ' ') %}
+                                                    {% if var_details.input_type == "select" %}
+                                                    {% if var_name == 'horizontal_position' %}{% set ns.position_id = template_name ~ '-' ~ var_name %}{% endif %}
+                                                    {% set display_label = var_details.label or var_name.replace('_', ' ') %}
                                                     {% if var_name == 'rating1' %}{% set display_label = 'Rating 1' %}{% endif %}
                                                     {% if var_name == 'rating2' %}{% set display_label = 'Rating 2' %}{% endif %}
                                                     {% if var_name == 'rating3' %}{% set display_label = 'Rating 3' %}{% endif %}
@@ -1119,7 +1176,9 @@ prefix) %}
                                                             id="{{ template_name }}-{{ var_name }}"
                                                             name="{{ template_name }}[{{ var_name }}]"
                                                             aria-describedby="{{ template_name }}-{{ var_name }}_text"
-                                                            data-selected="{{ selected_value|string|lower }}" {% if
+                                                            data-selected="{{ selected_value|string|lower }}"
+                                                            data-default="{{ var_details.default }}"
+                                                            {% if
                                                             selected_value !=var_details.default %}data-user-modified="true"
                                                             {% endif %}>
                                                             {% for option in var_details.options %}
@@ -1137,10 +1196,83 @@ prefix) %}
                                                             {% endfor %}
                                                         </select>
                                                     </div>
+                                                    {% elif var_details.input_type == "number" %}
+                                                    {% if var_name in ['horizontal_offset', 'initial_horizontal_offset'] %}{% set ns.has_offsets = true %}{% set ns.h_id = template_name ~ '-' ~ var_name %}{% endif %}
+                                                    {% if var_name in ['vertical_offset', 'initial_vertical_offset'] %}{% set ns.has_offsets = true %}{% set ns.v_id = template_name ~ '-' ~ var_name %}{% endif %}
+                                                    {% if var_name == 'horizontal_position' %}{% set ns.position_id = template_name ~ '-' ~ var_name %}{% endif %}
+                                                    {% set display_label = var_details.label or var_name.replace('_', ' ') %}
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text"
+                                                            id="{{ template_name }}-{{ var_name }}_text"
+                                                            style="width: 170px;">
+                                                            {{ display_label }}
+                                                        </span>
+                                                        <input type="number" class="form-control template-variable-number"
+                                                            id="{{ template_name }}-{{ var_name }}"
+                                                            name="{{ template_name }}[{{ var_name }}]"
+                                                            aria-describedby="{{ template_name }}-{{ var_name }}_text"
+                                                            value="{{ selected_value }}"
+                                                            data-default="{{ var_details.default }}">
+                                                    </div>
                                                     {% endif %}
                                                     {% endfor %}
-                                            </div>
-                                            {% endif %}
+
+                                                    {% if ns.has_offsets %}
+                                                    <div class="mb-2">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-secondary reset-offset-btn"
+                                                            data-horizontal-id="{{ ns.h_id or template_name ~ '-horizontal_offset' }}"
+                                                            data-vertical-id="{{ ns.v_id or template_name ~ '-vertical_offset' }}"
+                                                            {% if ns.position_id %}data-position-id="{{ ns.position_id }}"{% endif %}>
+                                                            Reset offsets
+                                                        </button>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                {% elif overlay.default_offsets is mapping %}
+                                                {% set h_default = overlay.default_offsets.get('horizontal', 0) %}
+                                                {% set v_default = overlay.default_offsets.get('vertical', 0) %}
+                                                {% set h_flat_key = template_name ~ '[horizontal_offset]' %}
+                                                {% set v_flat_key = template_name ~ '[vertical_offset]' %}
+                                                {% set h_value = data.libraries.get(h_flat_key, h_default) %}
+                                                {% set v_value = data.libraries.get(v_flat_key, v_default) %}
+                                                <div class="overlay-template-section mt-2">
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text"
+                                                            id="{{ template_name }}-horizontal_offset_text"
+                                                            style="width: 170px;">
+                                                            Horizontal Offset
+                                                        </span>
+                                                        <input type="number" class="form-control template-variable-number"
+                                                            id="{{ template_name }}-horizontal_offset"
+                                                            name="{{ template_name }}[horizontal_offset]"
+                                                            aria-describedby="{{ template_name }}-horizontal_offset_text"
+                                                            value="{{ h_value }}"
+                                                            data-default="{{ h_default }}">
+                                                    </div>
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text"
+                                                            id="{{ template_name }}-vertical_offset_text"
+                                                            style="width: 170px;">
+                                                            Vertical Offset
+                                                        </span>
+                                                        <input type="number" class="form-control template-variable-number"
+                                                            id="{{ template_name }}-vertical_offset"
+                                                            name="{{ template_name }}[vertical_offset]"
+                                                            aria-describedby="{{ template_name }}-vertical_offset_text"
+                                                            value="{{ v_value }}"
+                                                            data-default="{{ v_default }}">
+                                                    </div>
+                                                    <div class="mb-2">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-secondary reset-offset-btn"
+                                                            data-horizontal-id="{{ template_name }}-horizontal_offset"
+                                                            data-vertical-id="{{ template_name }}-vertical_offset">
+                                                            Reset offsets
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
                                         </div>
                                         {% endif %}
                                         {% endfor %}

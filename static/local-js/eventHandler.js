@@ -234,28 +234,29 @@ const EventHandler = {
 
           if (hiddenCustomInput && customList) {
             try {
-              const savedItems = JSON.parse(hiddenCustomInput.value || '[]')
-              if (Array.isArray(savedItems)) {
-                savedItems.forEach(value => {
-                  const li = document.createElement('li')
-                  li.className = 'list-group-item d-flex justify-content-between align-items-center'
-                  li.textContent = value
+              const parsed = JSON.parse(hiddenCustomInput.value || '[]')
+              const savedItems = Array.isArray(parsed) ? parsed.filter(Boolean) : []
+              savedItems.forEach(value => {
+                const li = document.createElement('li')
+                li.className = 'list-group-item d-flex justify-content-between align-items-center'
+                li.textContent = value
 
-                  const removeBtn = document.createElement('button')
-                  removeBtn.type = 'button'
-                  removeBtn.className = 'btn btn-sm btn-danger'
-                  removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>'
-                  removeBtn.addEventListener('click', function () {
-                    li.remove()
-                    updateHiddenInput(customList, hiddenCustomInput)
-                  })
-
-                  li.appendChild(removeBtn)
-                  customList.appendChild(li)
+                const removeBtn = document.createElement('button')
+                removeBtn.type = 'button'
+                removeBtn.className = 'btn btn-sm btn-danger'
+                removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>'
+                removeBtn.addEventListener('click', function () {
+                  li.remove()
+                  updateHiddenInput(customList, hiddenCustomInput)
                 })
-              }
+
+                li.appendChild(removeBtn)
+                customList.appendChild(li)
+              })
+              hiddenCustomInput.value = JSON.stringify(savedItems)
             } catch (e) {
               console.warn(`[WARN] Could not parse saved custom list for ${prefix} in ${libraryId}:`, e)
+              hiddenCustomInput.value = '[]'
             }
           }
 
@@ -297,6 +298,69 @@ const EventHandler = {
           customAddButton.dataset.listenerAdded = 'true'
         }
       })
+
+      // Rating range validation (0-10)
+      library.querySelectorAll('input[data-validate="rating"]').forEach(input => {
+        if (input.dataset.listenerAdded) return
+        // Restore native bounds so the control enforces numeric range
+        const minSaved = input.dataset.minSaved || input.getAttribute('min') || '0'
+        const maxSaved = input.dataset.maxSaved || input.getAttribute('max') || '10'
+        input.setAttribute('min', minSaved)
+        input.setAttribute('max', maxSaved)
+        input.dataset.minSaved = minSaved
+        input.dataset.maxSaved = maxSaved
+        const validateRating = () => {
+          // If hidden (collapsed), skip validation to avoid unfocusable errors on navigation
+          const isHidden = !input.offsetParent
+          const min = parseFloat(input.dataset.minSaved || '0')
+          const max = parseFloat(input.dataset.maxSaved || '10')
+          const val = parseFloat(input.value)
+          if (isHidden) {
+            const feedback = input.parentElement?.querySelector('.invalid-feedback')
+            input.setCustomValidity('')
+            input.classList.remove('is-invalid')
+            if (feedback) feedback.classList.remove('d-block')
+            return
+          }
+          const feedback = input.parentElement?.querySelector('.invalid-feedback')
+          const invalid = Number.isNaN(val) || val < min || val > max
+          if (invalid) {
+            input.setCustomValidity(`Enter a value between ${min} and ${max}`)
+            input.classList.add('is-invalid')
+            if (feedback) feedback.classList.add('d-block')
+          } else {
+            input.setCustomValidity('')
+            input.classList.remove('is-invalid')
+            if (feedback) feedback.classList.remove('d-block')
+          }
+        }
+        input.addEventListener('input', validateRating)
+        input.addEventListener('blur', validateRating)
+        validateRating()
+        input.dataset.listenerAdded = 'true'
+      })
+
+      // Any change/input inside this library should update highlights/validation (not just toggles)
+      const bubbleHandler = () => {
+        if (typeof EventHandler.updateAccordionHighlights === 'function') {
+          EventHandler.updateAccordionHighlights()
+        }
+        if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
+          ValidationHandler.updateValidationState()
+        }
+      }
+      library.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach(el => {
+        el.addEventListener('change', bubbleHandler, true)
+        el.addEventListener('input', bubbleHandler, true)
+        el.dataset.highlightListener = 'true'
+      })
+
+      // Delegated catch-all for dynamically added inputs/selects (including date)
+      if (!library.dataset.highlightDelegate) {
+        library.addEventListener('change', bubbleHandler, true)
+        library.addEventListener('input', bubbleHandler, true)
+        library.dataset.highlightDelegate = 'true'
+      }
     })
     // === Expand child toggle sections if any are checked ===
     expandCheckedChildToggleSections()
@@ -338,6 +402,7 @@ const EventHandler = {
       }
 
       let isCheckedOrSelected = false
+      let hasValue = false
 
       if (accordionBody) {
         // 1. Check for directly selected inputs (checkboxes, radios, list selections)
@@ -346,6 +411,27 @@ const EventHandler = {
           "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
           '.list-group li'
         ) !== null
+
+        // 1b. Any non-empty inputs/selects also count as activity
+        // Suppress value-based highlighting for true Collection/Overlay sections,
+        // but allow it for "Delete Collections" (so its numeric field bubbles up).
+        const headerLower = headerText.toLowerCase()
+        const suppressValueCheck =
+          headerLower.includes('overlay') ||
+          (headerLower.includes('collection') && !headerLower.includes('delete collections'))
+        if (!suppressValueCheck) {
+          const textInputs = Array.from(
+            accordionBody.querySelectorAll("input[type='text'], input[type='number'], input[type='date']")
+          )
+          const selects = Array.from(accordionBody.querySelectorAll('select'))
+          hasValue = textInputs.some((input) => {
+            const v = (input.value || '').trim().toLowerCase()
+            return v && v !== 'none'
+          }) || selects.some((sel) => {
+            const v = (sel.value || '').trim().toLowerCase()
+            return v && v !== 'none'
+          })
+        }
 
         // 2. Check for modified template selects, but only if toggle is still ON
         if (!isCheckedOrSelected) {
@@ -359,7 +445,7 @@ const EventHandler = {
         }
       }
 
-      if (isCheckedOrSelected) {
+      if (isCheckedOrSelected || hasValue) {
         accordionHeader.classList.add('selected')
         EventHandler.highlightParentAccordions(accordionHeader)
       } else {
@@ -513,6 +599,8 @@ document.addEventListener('DOMContentLoaded', () => {
   EventHandler.attachLibraryListeners()
   ValidationHandler.restoreSelectedLibraries()
   ValidationHandler.updateValidationState()
+
+  installRatingSubmitGuard()
 })
 
 document.querySelectorAll('select.template-variable-select').forEach(select => {
@@ -600,4 +688,50 @@ function expandCheckedChildToggleSections () {
       wrapper.style.display = 'block'
     }
   })
+}
+
+// Prevent submit if any visible rating field is out of range; show inline error and scroll to it
+function installRatingSubmitGuard () {
+  const form = document.getElementById('configForm')
+  if (!form || form.dataset.ratingGuarded) return
+
+  const checkRatings = (evt) => {
+    const ratings = Array.from(document.querySelectorAll('input[data-validate="rating"]'))
+    const invalid = ratings.filter(input => {
+      if (!input.offsetParent) return false
+      const min = parseFloat(input.dataset.minSaved || input.getAttribute('min') || '0')
+      const max = parseFloat(input.dataset.maxSaved || input.getAttribute('max') || '10')
+      const val = parseFloat(input.value)
+      return Number.isNaN(val) || val < min || val > max
+    })
+    if (invalid.length) {
+      evt.preventDefault()
+      evt.stopPropagation()
+      invalid.forEach(input => {
+        input.classList.add('is-invalid')
+        const feedback = input.parentElement?.querySelector('.invalid-feedback')
+        if (feedback) feedback.classList.add('d-block')
+        const min = parseFloat(input.dataset.minSaved || input.getAttribute('min') || '0')
+        const max = parseFloat(input.dataset.maxSaved || input.getAttribute('max') || '10')
+        input.setCustomValidity(`Enter a value between ${min} and ${max}`)
+      })
+      const first = invalid[0]
+      first.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      first.focus({ preventScroll: true })
+      // Force native reporting to show tooltip if supported
+      if (typeof form.reportValidity === 'function') {
+        form.reportValidity()
+      }
+    }
+  }
+
+  form.addEventListener('submit', checkRatings, true)
+  // Also guard nav buttons that submit via JS-triggered submit
+  const navButtons = form.querySelectorAll('button[type="submit"]')
+  navButtons.forEach(btn => {
+    if (btn.dataset.ratingGuard) return
+    btn.addEventListener('click', checkRatings, true)
+    btn.dataset.ratingGuard = 'true'
+  })
+  form.dataset.ratingGuarded = 'true'
 }

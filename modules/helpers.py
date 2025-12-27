@@ -611,14 +611,8 @@ def get_top_imdb_items(library_id, media_type, placeholder_id=None):
         if imdb_id:
             imdb_items.append({"id": imdb_id, "title": item.title})
 
+    # Best-effort placeholder recovery; disabled fallback to avoid missing module issues
     saved_item = None
-    if placeholder_id and not any(x["id"] == placeholder_id for x in imdb_items):
-        saved_item = find_item_by_imdb_id(library_id, placeholder_id, media_type)
-        if saved_item:
-            ts_log(
-                f"Saved placeholder found separately: {saved_item['title']}",
-                level="DEBUG",
-            )
 
     ts_log(f"Returning {len(imdb_items)} IMDb items", level="DEBUG")
     return imdb_items, saved_item
