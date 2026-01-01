@@ -118,6 +118,53 @@ def save_settings(raw_source, form_data):
         if source_name == "settings" and "asset_directory" in data.get("settings", {}):
             helpers.ts_log(f"Final asset_directory structure to save: {data['settings']['asset_directory']}", level="DEBUG")
 
+    # Merge library data so switching cards doesn't wipe other libraries
+    if source_name == "libraries":
+        try:
+            existing_settings = retrieve_settings("025-libraries")
+            existing_validated = existing_settings.get("validated")
+            existing_libraries = existing_settings.get("libraries", {})
+            incoming_libraries = data.get("libraries", {})
+
+            merged_libraries = existing_libraries.copy() if isinstance(existing_libraries, dict) else {}
+            incoming_libraries = incoming_libraries if isinstance(incoming_libraries, dict) else {}
+
+            # Identify library prefixes present in this payload (e.g., mov-library_xxx, sho-library_yyy)
+            prefixes = set()
+            for key in incoming_libraries:
+                if key.startswith(("mov-library_", "sho-library_")):
+                    parts = key.split("-", 2)
+                    if len(parts) >= 2:
+                        prefixes.add("-".join(parts[:2]))
+
+            # Remove existing entries for the affected prefixes so we can replace them cleanly
+            for prefix in prefixes:
+                for k in list(merged_libraries.keys()):
+                    if k.startswith(prefix + "-") or k == f"{prefix}-library":
+                        merged_libraries.pop(k, None)
+
+            # Apply incoming values for the affected libraries
+            for k, v in incoming_libraries.items():
+                # Treat empty include toggle as removal
+                if k.endswith("-library") and (v in [None, False, ""]):
+                    continue
+                merged_libraries[k] = v
+
+            # Preserve shared template variables if they weren't part of the payload
+            for shared in ("mov-template_variables", "sho-template_variables"):
+                if shared in incoming_libraries:
+                    merged_libraries[shared] = incoming_libraries[shared]
+                elif shared in existing_libraries and shared not in merged_libraries:
+                    merged_libraries[shared] = existing_libraries[shared]
+
+            data["libraries"] = merged_libraries
+
+            # Keep previous validated flag if caller didn't provide one
+            if "validated" not in data and existing_validated is not None:
+                data["validated"] = existing_validated
+        except Exception as e:
+            helpers.ts_log(f"Failed to merge libraries during save: {e}", level="ERROR")
+
     # Validation
     base_data = get_dummy_data(source_name)
     user_entered = data != base_data

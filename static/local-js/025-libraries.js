@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, Sortable, setupParentChildToggleSync, bootstrap */
+/* global EventHandler, ValidationHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -44,7 +44,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const libraryPicker = document.getElementById('libraryPicker')
     const libraryContainer = document.getElementById('library-form-container')
     const libraryCache = document.getElementById('library-cache')
+    const configuredCountsDisplay = document.getElementById('configuredCountsDisplay')
+    const copyModalEl = document.getElementById('copyLibraryModal')
+    const copyTargetsContainer = document.getElementById('copyLibraryTargets')
+    const copySubtitle = document.getElementById('copyLibrarySubtitle')
+    const copyWarning = document.getElementById('copyLibraryWarning')
+    const copyConfirmBtn = document.getElementById('copyLibraryConfirm')
+    const copyModal = copyModalEl ? new bootstrap.Modal(copyModalEl) : null
     let activeLibraryId = null
+    let loadRequestId = 0
 
     function initTooltips (scope) {
       const root = scope || document
@@ -57,6 +65,22 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function updateConfiguredCounts () {
+      if (!libraryPicker || !configuredCountsDisplay) return
+      const counts = { movie: 0, show: 0 }
+      libraryPicker.querySelectorAll('option[value]').forEach(opt => {
+        if (opt.dataset.configured === 'true') {
+          const type = opt.dataset.libraryType
+          if (type && counts[type] !== undefined) {
+            counts[type]++
+          }
+        }
+      })
+      const movieLabel = counts.movie === 1 ? 'movie' : 'movies'
+      const showLabel = counts.show === 1 ? 'show' : 'shows'
+      configuredCountsDisplay.textContent = `Configured: ${counts.movie} ${movieLabel} / ${counts.show} ${showLabel}`
+    }
+
     function refreshPickerLabels () {
       if (!libraryPicker) return
       libraryPicker.querySelectorAll('option[value]').forEach(opt => {
@@ -64,6 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const configured = opt.dataset.configured === 'true'
         opt.textContent = configured ? `${base} (configured)` : base
       })
+      updateConfiguredCounts()
     }
 
     function wireIncludeToggle (card, libraryId) {
@@ -111,6 +136,12 @@ document.addEventListener('DOMContentLoaded', function () {
       setupCustomStringListHandlers('mass_genre_mapper', card)
       setupMappingListHandlers('genre_mapper', card)
       setupMappingListHandlers('content_rating_mapper', card)
+      wireOverlayDetailToggles(card)
+      setupParentChildToggleVisibility(card)
+      if (typeof setupParentChildToggleSync === 'function') {
+        setupParentChildToggleSync()
+      }
+      wireOverlayTemplateSections(card)
       if (typeof EventHandler !== 'undefined') {
         EventHandler.attachLibraryListeners()
       }
@@ -119,38 +150,205 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    function loadLibrary (libraryId) {
-      if (libraryId === activeLibraryId) return
+    function buildPayloadFromCard (card) {
+      const payload = {}
+      card.querySelectorAll('input, select, textarea').forEach(el => {
+        if (!el.name || el.disabled) return
+        if (el.type === 'file') return
 
-      if (!libraryId) {
-        libraryContainer.innerHTML = ''
-        activeLibraryId = null
-        return
-      }
+        if (el.tagName === 'SELECT' && el.multiple) {
+          payload[el.name] = Array.from(el.selectedOptions).map(opt => opt.value)
+          return
+        }
 
-      // Move currently active card to cache (to preserve state/inputs)
-      moveCurrentToCache()
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          payload[el.name] = el.checked ? (el.value || 'on') : ''
+          return
+        }
 
-      const cached = libraryCache.querySelector(`[data-library-id="${libraryId}"]`)
-      if (cached) {
-        mountCard(cached, libraryId)
-        return
-      }
+        payload[el.name] = el.value ?? ''
+      })
+      return payload
+    }
 
-      fetch(`/library_fragment/${encodeURIComponent(libraryId)}`)
+    function autosaveActiveLibrary () {
+      const card = libraryContainer.firstElementChild
+      if (!activeLibraryId || !card) return Promise.resolve()
+
+      const payload = buildPayloadFromCard(card)
+      const option = libraryPicker?.querySelector(`option[value="${activeLibraryId}"]`)
+      const friendlyName = option?.dataset.label || option?.textContent?.trim() || activeLibraryId
+
+      return fetch(`/autosave_library/${encodeURIComponent(activeLibraryId)}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
         .then(res => {
-          if (!res.ok) throw new Error(`Failed to load library ${libraryId}`)
-          return res.text()
+          if (!res.ok) throw new Error(`Autosave failed: ${res.status}`)
+          return res.json().catch(() => ({}))
         })
-        .then(html => {
-          const wrapper = document.createElement('div')
-          wrapper.innerHTML = html
-          const card = wrapper.firstElementChild
-          if (!card) throw new Error('Empty fragment response')
-          mountCard(card, libraryId)
+        .then(data => {
+          if (data && data.success && typeof showToast === 'function') {
+            showToast('success', `Autosaved ${friendlyName}.`)
+          }
+          return data
         })
         .catch(err => {
-          console.error(err)
+          console.error('[Autosave] Failed to save library', activeLibraryId, err)
+          if (typeof showToast === 'function') {
+            showToast('error', `Autosave failed for ${friendlyName}.`)
+          }
+          throw err
+        })
+    }
+
+    function openCopyModal (sourceId, sourceName, sourceType) {
+      if (!copyModal) return
+      copyWarning.style.display = 'none'
+      copySubtitle.textContent = `Copy settings from "${sourceName}" to other ${sourceType === 'movie' ? 'movie' : 'show'} libraries`
+      copyTargetsContainer.innerHTML = ''
+
+      const options = Array.from(libraryPicker.querySelectorAll('option[value]')).filter(opt =>
+        opt.dataset.libraryType === sourceType && opt.value !== sourceId
+      )
+
+      if (!options.length) {
+        copyTargetsContainer.innerHTML = '<div class="text-muted">No other libraries of this type available.</div>'
+      } else {
+        options.forEach(opt => {
+          const id = opt.value
+          const label = opt.dataset.label || opt.textContent
+          const item = document.createElement('label')
+          item.className = 'list-group-item d-flex align-items-center gap-2'
+          item.innerHTML = `
+            <input class="form-check-input me-2 copy-target-checkbox" type="checkbox" value="${id}">
+            <span>${label}</span>
+          `
+          copyTargetsContainer.appendChild(item)
+        })
+      }
+
+      copyModal.show()
+
+      const onConfirm = () => {
+        const selected = Array.from(copyTargetsContainer.querySelectorAll('.copy-target-checkbox:checked')).map(cb => cb.value)
+        if (!selected.length) {
+          copyWarning.style.display = 'block'
+          return
+        }
+        copyWarning.style.display = 'none'
+
+        const currentCard = libraryContainer?.firstElementChild
+        const sourcePayload = currentCard ? buildPayloadFromCard(currentCard) : {}
+
+        autosaveActiveLibrary()
+          .then(resp => {
+            if (!resp || resp.success !== true) {
+              throw new Error('Autosave did not complete')
+            }
+          })
+          .then(() => fetch('/copy_library_settings', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              source_library_id: sourceId,
+              target_library_ids: selected,
+              source_payload: sourcePayload
+            })
+          }))
+          .then(res => {
+            if (!res) return
+            if (!res.ok) throw new Error(`Copy failed: ${res.status}`)
+            return res.json()
+          })
+          .then(() => {
+            // Clear all cached cards to avoid stale data
+            libraryCache.innerHTML = ''
+
+            selected.forEach(id => {
+              const opt = libraryPicker.querySelector(`option[value="${id}"]`)
+              if (opt) {
+                opt.dataset.configured = 'true'
+              }
+              const cached = libraryCache.querySelector(`[data-library-id="${id}"]`)
+              if (cached && cached.parentElement === libraryCache) {
+                cached.remove()
+              }
+              if (activeLibraryId === id) {
+                activeLibraryId = null
+              }
+            })
+            refreshPickerLabels()
+            // Reload current selection to pick up fresh data if it was among the targets
+            if (libraryPicker && libraryPicker.value) {
+              loadLibrary(libraryPicker.value)
+            }
+            if (typeof showToast === 'function') {
+              const label = selected.length === 1 ? 'library' : 'libraries'
+              showToast('success', `Copied settings to ${selected.length} ${label}.`)
+            }
+          })
+          .catch(err => {
+            console.error('[Copy] Failed to copy library settings', err)
+            if (typeof showToast === 'function') {
+              showToast('error', 'Copy failed. See console for details.')
+            }
+          })
+          .finally(() => {
+            if (copyConfirmBtn && typeof copyConfirmBtn.blur === 'function') {
+              copyConfirmBtn.blur()
+            }
+            copyModal.hide()
+            copyConfirmBtn.removeEventListener('click', onConfirm)
+          })
+      }
+
+      copyConfirmBtn.addEventListener('click', onConfirm, { once: true })
+    }
+
+    function loadLibrary (libraryId) {
+      if (libraryId === activeLibraryId) return
+      const requestId = ++loadRequestId
+
+      autosaveActiveLibrary()
+        .finally(() => {
+          if (requestId !== loadRequestId) return
+
+          if (!libraryId) {
+            libraryContainer.innerHTML = ''
+            activeLibraryId = null
+            return
+          }
+
+          // Move currently active card to cache (to preserve state/inputs)
+          moveCurrentToCache()
+
+          const cached = libraryCache.querySelector(`[data-library-id="${libraryId}"]`)
+          if (cached) {
+            if (requestId !== loadRequestId) return
+            mountCard(cached, libraryId)
+            return
+          }
+
+          fetch(`/library_fragment/${encodeURIComponent(libraryId)}`)
+            .then(res => {
+              if (!res.ok) throw new Error(`Failed to load library ${libraryId}`)
+              return res.text()
+            })
+            .then(html => {
+              if (requestId !== loadRequestId) return
+              const wrapper = document.createElement('div')
+              wrapper.innerHTML = html
+              const card = wrapper.firstElementChild
+              if (!card) throw new Error('Empty fragment response')
+              mountCard(card, libraryId)
+            })
+            .catch(err => {
+              console.error(err)
+            })
         })
     }
 
@@ -200,11 +398,16 @@ document.addEventListener('DOMContentLoaded', function () {
       el.style.display = 'none'
     })
 
-    document.querySelectorAll('.overlay-toggle').forEach((checkbox) => {
-      checkbox.addEventListener('change', function () {
-        toggleOverlayTemplateSection(this)
-      })
-      toggleOverlayTemplateSection(checkbox) // immediate init
+    wireOverlayDetailToggles()
+    wireOverlayTemplateSections()
+
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.copy-library-btn')
+      if (!btn) return
+      const sourceId = btn.dataset.libraryId
+      const sourceName = btn.dataset.libraryName
+      const sourceType = btn.dataset.libraryType
+      openCopyModal(sourceId, sourceName, sourceType)
     })
 
     function initializeSortableList (libraryId, prefix) {
@@ -345,9 +548,22 @@ document.addEventListener('DOMContentLoaded', function () {
 function toggleOverlayTemplateSection (checkbox) {
   const groupContainer = checkbox.closest('.template-toggle-group') // <== FIXED
   const templateSection = groupContainer?.querySelector('.overlay-template-section')
+  const detailsToggle = groupContainer?.querySelector('.overlay-details-toggle')
 
   if (templateSection) {
-    templateSection.style.display = checkbox.checked ? '' : 'none'
+    if (checkbox.checked) {
+      templateSection.style.display = 'block'
+      if (detailsToggle) {
+        detailsToggle.classList.remove('d-none')
+        detailsToggle.textContent = 'Hide Details'
+      }
+    } else {
+      templateSection.style.display = 'none'
+      if (detailsToggle) {
+        detailsToggle.classList.add('d-none')
+        detailsToggle.textContent = 'Details'
+      }
+    }
   }
 }
 
@@ -499,11 +715,19 @@ function wireOffsetReset (scope) {
   })
 }
 
-function setupParentChildToggleVisibility () {
-  document.querySelectorAll('[data-template-group]').forEach(parentToggle => {
+function setupParentChildToggleVisibility (scope) {
+  const root = scope || document
+
+  root.querySelectorAll('[data-template-group]').forEach(parentToggle => {
+    if (parentToggle.dataset.childVisibilityBound === 'true') return
+
     const groupId = parentToggle.getAttribute('data-template-group')
     const wrapper = parentToggle.closest('.template-toggle-group')
-    const childrenGroup = document.querySelector(`[data-toggle-parent="${groupId}"]`)
+    // Prefer lookup within the provided scope; fall back to document if needed.
+    let childrenGroup = root.querySelector(`[data-toggle-parent="${groupId}"]`)
+    if (!childrenGroup) {
+      childrenGroup = document.querySelector(`[data-toggle-parent="${groupId}"]`)
+    }
 
     if (!childrenGroup || !wrapper) return
 
@@ -538,7 +762,45 @@ function setupParentChildToggleVisibility () {
     )
 
     updateVisibilityAndBorder() // Initial check
+    parentToggle.dataset.childVisibilityBound = 'true'
   })
+}
+
+function wireOverlayDetailToggles (scope) {
+  const root = scope || document
+  root.querySelectorAll('.overlay-details-toggle').forEach(btn => {
+    if (btn.dataset.listenerAdded === 'true') return
+    const targetId = btn.dataset.sectionId
+    const section = targetId ? document.getElementById(targetId) : null
+    if (!section) return
+
+    btn.addEventListener('click', () => {
+      const isHidden = section.style.display === 'none'
+      section.style.display = isHidden ? 'block' : 'none'
+      btn.textContent = isHidden ? 'Hide Details' : 'Details'
+      if (typeof EventHandler !== 'undefined') {
+        EventHandler.updateAccordionHighlights()
+      }
+    })
+
+    btn.dataset.listenerAdded = 'true'
+  })
+}
+
+function wireOverlayTemplateSections (scope) {
+  const root = scope || document
+  root.querySelectorAll('.overlay-toggle').forEach((checkbox) => {
+    if (checkbox.dataset.overlayTemplateBound === 'true') return
+    checkbox.addEventListener('change', function () {
+      toggleOverlayTemplateSection(this)
+    })
+    toggleOverlayTemplateSection(checkbox) // immediate init
+    checkbox.dataset.overlayTemplateBound = 'true'
+  })
+
+  if (typeof setupParentChildToggleSync === 'function') {
+    setupParentChildToggleSync()
+  }
 }
 
 function showZoomPreviewModal (imageSrc) {

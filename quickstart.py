@@ -40,6 +40,7 @@ from flask import (
     send_from_directory,
 )
 from waitress import serve
+from werkzeug.datastructures import MultiDict
 from werkzeug.utils import secure_filename
 
 from werkzeug.wrappers import Request
@@ -1077,6 +1078,128 @@ def library_fragment(library_id):
     )
 
     return html
+
+
+@app.route("/autosave_library/<library_id>", methods=["POST"])
+def autosave_library(library_id):
+    """Merge-save a single library when switching cards without requiring full navigation submit."""
+    try:
+        incoming = request.get_json(silent=True) or request.form
+        persistence.save_settings("025-libraries", incoming)
+        return jsonify({"success": True})
+    except Exception as e:
+        helpers.ts_log(f"Autosave failed for library {library_id}: {e}", level="ERROR")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/copy_library_settings", methods=["POST"])
+def copy_library_settings():
+    """Copy saved settings from one library to multiple targets of the same type."""
+    try:
+        payload = request.get_json(force=True, silent=True) or {}
+        source_id = payload.get("source_library_id")
+        target_ids = payload.get("target_library_ids") or []
+        source_payload = payload.get("source_payload") or {}
+
+        if not source_id or not target_ids:
+            return jsonify({"success": False, "error": "Missing source or targets"}), 400
+
+        source_prefix = source_id.split("-card-container")[0] if source_id.endswith("-card-container") else source_id
+        source_type = source_prefix[:3]  # mov or sho
+
+        if any(not str(t).startswith(source_type) for t in target_ids):
+            return jsonify({"success": False, "error": "Targets must match source type"}), 400
+
+        settings = persistence.retrieve_settings("025-libraries")
+        libraries_data = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+
+        # If the client sent a fresh payload for the source card, merge it in before copying
+        if isinstance(source_payload, dict) and source_payload:
+            try:
+                clean_payload = persistence.clean_form_data(MultiDict(source_payload))
+                incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+
+                merged = libraries_data.copy()
+                prefixes = set()
+                for key in incoming_dict:
+                    if key.startswith(("mov-library_", "sho-library_")):
+                        parts = key.split("-", 2)
+                        if len(parts) >= 2:
+                            prefixes.add("-".join(parts[:2]))
+
+                for prefix in prefixes:
+                    for existing_key in list(merged.keys()):
+                        if existing_key.startswith(prefix + "-") or existing_key == f"{prefix}-library":
+                            merged.pop(existing_key, None)
+
+                for k, v in incoming_dict.items():
+                    if k.endswith("-library") and (v in [None, False, ""]):
+                        continue
+                    merged[k] = v
+
+                libraries_data = merged
+                helpers.ts_log(
+                    f"Copy request merged live source payload for {source_prefix}: {len(incoming_dict)} fields", level="DEBUG"
+                )
+            except Exception as merge_err:
+                helpers.ts_log(f"Failed to merge live source payload during copy: {merge_err}", level="ERROR")
+
+        source_items = {k: v for k, v in libraries_data.items() if k.startswith(f"{source_prefix}-")}
+        if not source_items:
+            return jsonify({"success": False, "error": "No saved settings found for source library"}), 404
+
+        movie_libraries, show_libraries, _telemetry = _build_library_lists()
+        name_map = {lib["id"]: lib["name"] for lib in (movie_libraries + show_libraries)}
+
+        helpers.ts_log(
+            f"Copy request for config={session.get('config_name')} source={source_prefix} targets={target_ids} "
+            f"source_items={len(source_items)} existing_keys={len(libraries_data)}",
+            level="DEBUG",
+        )
+
+        merged = libraries_data.copy()
+        for target_id in target_ids:
+            target_name = name_map.get(target_id, "")
+            # Wipe any existing settings for this target before copying fresh
+            for existing_key in list(merged.keys()):
+                if existing_key.startswith(f"{target_id}-"):
+                    merged.pop(existing_key, None)
+
+            for key, value in source_items.items():
+                new_key = key.replace(source_prefix, target_id, 1)
+                new_value = value
+                if key.endswith("-library"):
+                    new_value = target_name or value
+                merged[new_key] = new_value
+
+        # Update the aggregated libraries list to include all configured library names
+        configured_names = []
+        for key, val in merged.items():
+            if key.endswith("-library") and val not in [None, "", False]:
+                configured_names.append(str(val))
+        merged["libraries"] = ",".join(sorted(set(configured_names)))
+
+        # Persist directly to the DB to avoid any loss of data during merge
+        config_name = session.get("config_name") or namesgenerator.get_random_name()
+        database.save_section_data(
+            name=config_name,
+            section="libraries",
+            validated=settings.get("validated", False),
+            user_entered=True,
+            data={"libraries": merged, "validated": settings.get("validated", False)},
+        )
+
+        helpers.ts_log(
+            f"Copy complete for config={session.get('config_name')} source={source_prefix} targets={target_ids} "
+            f"merged_keys={len(merged)}",
+            level="DEBUG",
+        )
+
+        return jsonify({"success": True, "updated": target_ids})
+
+    except Exception as e:
+        helpers.ts_log(f"Failed to copy library settings: {e}", level="ERROR")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route("/download")

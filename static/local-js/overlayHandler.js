@@ -1,4 +1,4 @@
-/* global EventHandler */
+/* global EventHandler, toggleOverlayTemplateSection */
 
 const OverlayHandler = {
   initializeOverlays: function (libraryId, isMovie) {
@@ -249,9 +249,18 @@ document.addEventListener('DOMContentLoaded', function () {
 function setupParentChildToggleSync () {
   let syncing = false
 
+  const syncOverlayDetails = (toggle) => {
+    if (typeof toggleOverlayTemplateSection === 'function' && toggle?.classList?.contains('overlay-toggle')) {
+      toggleOverlayTemplateSection(toggle)
+    }
+  }
+
   const parents = document.querySelectorAll('.template-parent-toggle')
 
   parents.forEach(parent => {
+    if (parent.dataset.parentSyncBound === 'true') return
+    parent.dataset.parentSyncBound = 'true'
+
     const groupId = parent.dataset.templateGroup
     const wrapper = document.querySelector(`[data-toggle-parent="${groupId}"]`)
     const isRadioStyle = parent.type === 'radio' || parent.dataset.radioGroup === 'true'
@@ -272,6 +281,10 @@ function setupParentChildToggleSync () {
           if (other !== parent) {
             other.checked = false
             other.dataset.wasChecked = 'false'
+            syncOverlayDetails(other)
+            if (other.classList.contains('overlay-toggle')) {
+              other.dispatchEvent(new Event('change', { bubbles: true }))
+            }
 
             const otherWrapper = document.querySelector(`[data-toggle-parent="${other.dataset.templateGroup}"]`)
             const otherChildren = otherWrapper?.querySelectorAll('.template-child-toggle') || []
@@ -292,6 +305,10 @@ function setupParentChildToggleSync () {
             child.checked = false
             child.dispatchEvent(new Event('change', { bubbles: true }))
           })
+          syncOverlayDetails(parent)
+          if (parent.classList.contains('overlay-toggle')) {
+            parent.dispatchEvent(new Event('change', { bubbles: true }))
+          }
         } else {
           parent.dataset.wasChecked = 'true'
           if (wrapper) wrapper.style.display = ''
@@ -326,6 +343,13 @@ function setupParentChildToggleSync () {
         const anyChecked = Array.from(childToggles).some(c => c.checked)
         parent.checked = anyChecked
         if (wrapper) wrapper.style.display = anyChecked ? '' : 'none'
+
+        if (!anyChecked) {
+          syncOverlayDetails(parent)
+          if (parent.classList.contains('overlay-toggle')) {
+            parent.dispatchEvent(new Event('change', { bubbles: true }))
+          }
+        }
 
         if (!anyChecked && isRadioStyle) {
           parent.dataset.wasChecked = 'false'

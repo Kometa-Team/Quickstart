@@ -1141,12 +1141,45 @@ prefix) %}
                                             </div>
 
                                                 {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
+                                                {% if overlay.template_variables %}
+                                                {% set has_builder_level = false %}
                                                 {% if overlay.template_variables is mapping %}
+                                                {% set has_builder_level = overlay.template_variables.get('builder_level') is not none %}
+                                                {% else %}
+                                                {% for item in overlay.template_variables %}
+                                                {% if (item.key if item.key is defined else item.get('key')) == 'builder_level' %}
+                                                {% set has_builder_level = true %}
+                                                {% endif %}
+                                                {% endfor %}
+                                                {% endif %}
+                                                {% if has_builder_level and type in ['show', 'season', 'episode'] %}
+                                                <input type="hidden" name="{{ template_name }}[builder_level]" value="{{ type }}">
+                                                {% endif %}
                                                 {% set ns = namespace(has_offsets=false, position_id=None, h_id=None, v_id=None) %}
-                                                <div class="overlay-template-section mt-2">
-                                                    {% for var_name, var_details in overlay.template_variables.items() %}
+                                                {% set details_id = template_name ~ '-details' %}
+                                                <button class="btn btn-outline-secondary btn-sm ms-3 overlay-details-toggle d-none"
+                                                    type="button" data-section-id="{{ details_id }}">
+                                                    Details
+                                                </button>
+                                                <div class="overlay-template-section mt-2" id="{{ details_id }}"
+                                                    style="display: none;">
+                                                    {% set is_mapping = overlay.template_variables is mapping %}
+                                                    {% set tv_items = overlay.template_variables.items() if is_mapping else overlay.template_variables %}
+                                                    {% for item in tv_items %}
+                                                    {% if is_mapping %}
+                                                    {% set var_name = item[0] %}
+                                                    {% set var_details = item[1] %}
+                                                    {% else %}
+                                                    {% set var_details = item %}
+                                                    {% set var_name = var_details.key or ('var' ~ loop.index0) %}
+                                                    {% endif %}
+                                                    {% set skip_var = (var_name == 'builder_level') %}
                                                     {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
                                                     {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
+
+                                                    {% set var_media_types = var_details.media_types if var_details.media_types is defined else [] %}
+                                                    {% set skip_var = skip_var or (var_media_types and (type not in var_media_types)) %}
+                                                    {% if not skip_var %}
 
                                                     {% if var_details.input_type == "select" %}
                                                     {% if var_name == 'horizontal_position' %}{% set ns.position_id = template_name ~ '-' ~ var_name %}{% endif %}
@@ -1214,6 +1247,24 @@ prefix) %}
                                                             value="{{ selected_value }}"
                                                             data-default="{{ var_details.default }}">
                                                     </div>
+                                                    {% elif var_details.type == "toggle" or var_details.input_type == "toggle" %}
+                                                    {% set toggle_id = template_name ~ '-' ~ var_name ~ '-' ~ (var_details.value or 'true') %}
+                                                    {% set display_label = var_details.label or var_name.replace('_', ' ') %}
+                                                    {% set is_checked = (selected_value|string|lower == 'true') or (selected_value|string|lower == (var_details.value|string|lower)) %}
+                                                    <div class="form-check form-switch d-flex align-items-center mb-2">
+                                                        <input class="form-check-input template-child-toggle" type="checkbox"
+                                                            id="{{ toggle_id }}"
+                                                            name="{{ template_name }}[{{ var_name }}]"
+                                                            value="{{ var_details.value or 'true' }}"
+                                                            {% if is_checked %}checked{% endif %}>
+                                                        <label class="form-check-label ms-2 mb-0" for="{{ toggle_id }}">{{ display_label }}</label>
+                                                        {% if var_details.tooltip %}
+                                                        <i class="bi {% if var_details.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ var_details.tooltip_variant or 'info' }} ms-2"
+                                                            data-bs-toggle="tooltip" data-bs-html="true"
+                                                            title="{{ var_details.tooltip }}"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                    {% endif %}
                                                     {% endif %}
                                                     {% endfor %}
 
@@ -1228,8 +1279,53 @@ prefix) %}
                                                         </button>
                                                     </div>
                                                     {% endif %}
+
+                                                    {% if not ns.has_offsets and overlay.default_offsets is mapping %}
+                                                    {% set h_default = overlay.default_offsets.get('horizontal', 0) %}
+                                                    {% set v_default = overlay.default_offsets.get('vertical', 0) %}
+                                                    {% set h_flat_key = template_name ~ '[horizontal_offset]' %}
+                                                    {% set v_flat_key = template_name ~ '[vertical_offset]' %}
+                                                    {% set h_value = data.libraries.get(h_flat_key, h_default) %}
+                                                    {% set v_value = data.libraries.get(v_flat_key, v_default) %}
+                                                    <div class="overlay-template-section mt-2">
+                                                        <div class="input-group mb-2">
+                                                            <span class="input-group-text"
+                                                                id="{{ template_name }}-horizontal_offset_text"
+                                                                style="width: 170px;">
+                                                                Horizontal Offset
+                                                            </span>
+                                                            <input type="number" class="form-control template-variable-number"
+                                                                id="{{ template_name }}-horizontal_offset"
+                                                                name="{{ template_name }}[horizontal_offset]"
+                                                                aria-describedby="{{ template_name }}-horizontal_offset_text"
+                                                                value="{{ h_value }}"
+                                                                data-default="{{ h_default }}">
+                                                        </div>
+                                                        <div class="input-group mb-2">
+                                                            <span class="input-group-text"
+                                                                id="{{ template_name }}-vertical_offset_text"
+                                                                style="width: 170px;">
+                                                                Vertical Offset
+                                                            </span>
+                                                            <input type="number" class="form-control template-variable-number"
+                                                                id="{{ template_name }}-vertical_offset"
+                                                                name="{{ template_name }}[vertical_offset]"
+                                                                aria-describedby="{{ template_name }}-vertical_offset_text"
+                                                                value="{{ v_value }}"
+                                                                data-default="{{ v_default }}">
+                                                        </div>
+                                                        <div class="mb-2">
+                                                            <button type="button"
+                                                                class="btn btn-sm btn-outline-secondary reset-offset-btn"
+                                                                data-horizontal-id="{{ template_name }}-horizontal_offset"
+                                                                data-vertical-id="{{ template_name }}-vertical_offset">
+                                                                Reset offsets
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
                                                 </div>
-                                                {% elif overlay.default_offsets is mapping %}
+                                                    {% elif overlay.default_offsets is mapping %}
                                                 {% set h_default = overlay.default_offsets.get('horizontal', 0) %}
                                                 {% set v_default = overlay.default_offsets.get('vertical', 0) %}
                                                 {% set h_flat_key = template_name ~ '[horizontal_offset]' %}

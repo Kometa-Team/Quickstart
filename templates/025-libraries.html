@@ -155,8 +155,13 @@
   <div class="card-body">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
       <label class="form-label mb-0" for="libraryPicker">Select a library to configure</label>
-      <div class="small text-muted">
-        Configured: {{ configured_counts.movie }} movie / {{ configured_counts.show }} show
+      <div class="small text-muted" id="configuredCountsDisplay">
+        Configured:
+        {{ configured_counts.movie }}
+        {{ 'movie' if configured_counts.movie == 1 else 'movies' }}
+        /
+        {{ configured_counts.show }}
+        {{ 'show' if configured_counts.show == 1 else 'shows' }}
       </div>
     </div>
     <select id="libraryPicker" class="form-select">
@@ -209,6 +214,29 @@
 
 <!-- Rename Modal -->
 {% include "partials/_rename_modal.html" %}
+
+<!-- Copy Library Modal -->
+<div class="modal fade" id="copyLibraryModal" tabindex="-1" aria-labelledby="copyLibraryModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="copyLibraryModalLabel">Copy Settings</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-2" id="copyLibrarySubtitle"></p>
+        <div id="copyLibraryTargets" class="list-group"></div>
+        <div class="alert alert-warning mt-3 mb-0" id="copyLibraryWarning" style="display:none;">
+          Select at least one target library.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="copyLibraryConfirm">Copy</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Zoom Preview Modal -->
 <div class="modal fade" id="zoomPreviewModal" tabindex="-1" aria-labelledby="zoomPreviewModalLabel" aria-hidden="true">
