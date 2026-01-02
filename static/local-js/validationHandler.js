@@ -96,10 +96,10 @@ const ValidationHandler = {
         const libraryContainer = document.querySelector(`#${libraryId}-container`)
         console.log(`[DEBUG] Looking for libraryContainer: #${libraryId}-container`)
 
+        // If the card was never loaded/cached this session, assume valid (avoid blocking navigation)
         if (!libraryContainer) {
-          console.log(`[DEBUG] No container found for selected library: ${libraryId}`)
-          invalidLibraries.push(libraryId)
-          return false
+          console.log(`[DEBUG] No container found for selected library: ${libraryId}; skipping validation for this library`)
+          return true
         }
 
         const hasSelectedHeader = libraryContainer.querySelector('.accordion-header.selected') !== null
