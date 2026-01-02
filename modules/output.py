@@ -8,6 +8,7 @@ import jsonschema
 import pyfiglet
 from flask import current_app as app
 from ruamel.yaml import YAML
+from ruamel.yaml.scalarstring import PlainScalarString
 from ruamel.yaml.comments import CommentedSeq
 
 from modules import helpers, persistence
@@ -1168,6 +1169,7 @@ def build_config(header_style="standard", config_name=None):
         dump_yaml = YAML()
         dump_yaml.default_flow_style = False
         dump_yaml.sort_keys = False  # Preserve original key order
+        dump_yaml.width = 4096  # avoid folding long tokens/secrets
 
         # Custom representation for `None` values
         dump_yaml.representer.add_representer(
@@ -1205,6 +1207,53 @@ def build_config(header_style="standard", config_name=None):
 
         # Clean the data
         cleaned_data = clean_data(data)
+
+        # Force long/scalar strings to emit in plain style (avoid folded multi-line) for sensitive sections
+        plain_scalar_sections = {
+            "plex",
+            "tmdb",
+            "tautulli",
+            "github",
+            "omdb",
+            "mdblist",
+            "notifiarr",
+            "gotify",
+            "ntfy",
+            "anidb",
+            "radarr",
+            "sonarr",
+            "trakt",
+            "mal",
+        }
+
+        def plainify_strings(obj):
+            if isinstance(obj, dict):
+                return {k: plainify_strings(v) for k, v in obj.items()}
+            if isinstance(obj, list):
+                return [plainify_strings(v) for v in obj]
+            if isinstance(obj, str):
+                return PlainScalarString(obj)
+            return obj
+
+        if dump_name in plain_scalar_sections:
+            cleaned_data = plainify_strings(cleaned_data)
+
+        # Normalize MAL/TRAKT numeric fields
+        if dump_name in ("mal", "trakt"):
+            section = cleaned_data.get(dump_name, {})
+            auth = section.get("authorization", {})
+
+            if isinstance(auth, dict) and "expires_in" in auth:
+                try:
+                    auth["expires_in"] = int(auth["expires_in"])
+                except Exception:
+                    pass
+
+            if "cache_expiration" in section:
+                try:
+                    section["cache_expiration"] = int(section["cache_expiration"])
+                except Exception:
+                    pass
 
         # Ensure `asset_directory` is serialized as a proper YAML list
         if dump_name == "settings" and "asset_directory" in cleaned_data.get("settings", {}):
