@@ -63,7 +63,19 @@
         },
         "media_types": [
           "movie"
-        ]
+        ],
+        "template_variables": {
+          "horizontal_offset": {
+            "input_type": "number",
+            "default": 200,
+            "label": "Horizontal Offset"
+          },
+          "vertical_offset": {
+            "input_type": "number",
+            "default": 15,
+            "label": "Vertical Offset"
+          }
+        }
       },
       {
         "id": "overlay_episode_info",
@@ -100,7 +112,19 @@
         },
         "media_types": [
           "show"
-        ]
+        ],
+        "template_variables": {
+          "horizontal_offset": {
+            "input_type": "number",
+            "default": 15,
+            "label": "Horizontal Offset"
+          },
+          "vertical_offset": {
+            "input_type": "number",
+            "default": 330,
+            "label": "Vertical Offset"
+          }
+        }
       },
       {
         "id": "overlay_ratings",

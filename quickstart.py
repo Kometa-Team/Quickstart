@@ -1102,13 +1102,34 @@ def copy_library_settings():
         source_payload = payload.get("source_payload") or {}
 
         if not source_id or not target_ids:
-            return jsonify({"success": False, "error": "Missing source or targets"}), 400
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"Missing source or targets (source={source_id}, targets={target_ids})",
+                    }
+                ),
+                400,
+            )
 
         source_prefix = source_id.split("-card-container")[0] if source_id.endswith("-card-container") else source_id
         source_type = source_prefix[:3]  # mov or sho
 
         if any(not str(t).startswith(source_type) for t in target_ids):
-            return jsonify({"success": False, "error": "Targets must match source type"}), 400
+            helpers.ts_log(
+                f"Copy aborted: targets must match source type '{source_type}', got targets={target_ids}",
+                level="ERROR",
+            )
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"Targets must match source type '{source_type}'",
+                        "targets": target_ids,
+                    }
+                ),
+                400,
+            )
 
         settings = persistence.retrieve_settings("025-libraries")
         libraries_data = settings.get("libraries", {}) if isinstance(settings, dict) else {}
@@ -1146,6 +1167,9 @@ def copy_library_settings():
 
         source_items = {k: v for k, v in libraries_data.items() if k.startswith(f"{source_prefix}-")}
         if not source_items:
+            helpers.ts_log(
+                f"Copy aborted: no saved settings found for source {source_prefix}", level="ERROR"
+            )
             return jsonify({"success": False, "error": "No saved settings found for source library"}), 404
 
         movie_libraries, show_libraries, _telemetry = _build_library_lists()
@@ -1157,8 +1181,27 @@ def copy_library_settings():
             level="DEBUG",
         )
 
+        filtered_targets = [tid for tid in target_ids if str(tid).startswith(source_type)]
+        if len(filtered_targets) != len(target_ids):
+            helpers.ts_log(
+                f"Copy filtering targets for type '{source_type}': accepted={filtered_targets} dropped={set(target_ids) - set(filtered_targets)}",
+                level="WARNING",
+            )
+        if not filtered_targets:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"No valid target libraries of type '{source_type}' were selected.",
+                    }
+                ),
+                400,
+            )
+
         merged = libraries_data.copy()
-        for target_id in target_ids:
+        targets_to_process = [source_prefix] + [tid for tid in filtered_targets if tid != source_prefix]
+
+        for target_id in targets_to_process:
             target_name = name_map.get(target_id, "")
             # Wipe any existing settings for this target before copying fresh
             for existing_key in list(merged.keys()):
@@ -1166,6 +1209,10 @@ def copy_library_settings():
                     merged.pop(existing_key, None)
 
             for key, value in source_items.items():
+                # Do not mirror the include toggle; require explicit include after mirroring
+                if target_id != source_prefix and key.endswith("-library"):
+                    merged[f"{target_id}-library"] = ""
+                    continue
                 new_key = key.replace(source_prefix, target_id, 1)
                 new_value = value
                 if key.endswith("-library"):

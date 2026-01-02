@@ -167,7 +167,7 @@
     <select id="libraryPicker" class="form-select">
       <option value="">-- Choose a library --</option>
       {% if movie_libraries %}
-      <optgroup label="Movies">
+      <optgroup label="Movie Libraries">
         {% for library in movie_libraries %}
         <option value="{{ library.id }}" data-library-type="{{ library.type }}"
           data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}">
@@ -177,7 +177,7 @@
       </optgroup>
       {% endif %}
       {% if show_libraries %}
-      <optgroup label="Shows">
+      <optgroup label="Show Libraries">
         {% for library in show_libraries %}
         <option value="{{ library.id }}" data-library-type="{{ library.type }}"
           data-configured="{{ 'true' if library.id in configured_ids else 'false' }}" data-label="{{ library.name }}">
@@ -189,6 +189,10 @@
     </select>
     <div class="form-text text-muted mt-2">
       Only the selected library’s settings are loaded. Switch libraries to configure the next one.
+    </div>
+    <div id="libraryLoading" class="d-flex align-items-center gap-2 text-info mt-2 d-none">
+      <div class="spinner-border spinner-border-sm text-info" role="status" aria-hidden="true"></div>
+      <span>Loading library settings…</span>
     </div>
   </div>
 </div>
@@ -215,16 +219,20 @@
 <!-- Rename Modal -->
 {% include "partials/_rename_modal.html" %}
 
-<!-- Copy Library Modal -->
+<!-- Mirror Library Modal -->
 <div class="modal fade" id="copyLibraryModal" tabindex="-1" aria-labelledby="copyLibraryModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="copyLibraryModalLabel">Copy Settings</h5>
+        <h5 class="modal-title" id="copyLibraryModalLabel">Mirror Settings</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <p class="text-muted small mb-2" id="copyLibrarySubtitle"></p>
+        <div class="d-flex justify-content-end gap-2 mb-2">
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="copySelectAll">Select all</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="copyDeselectAll">Deselect all</button>
+        </div>
         <div id="copyLibraryTargets" class="list-group"></div>
         <div class="alert alert-warning mt-3 mb-0" id="copyLibraryWarning" style="display:none;">
           Select at least one target library.
@@ -232,7 +240,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="copyLibraryConfirm">Copy</button>
+        <button type="button" class="btn btn-primary" id="copyLibraryConfirm">Mirror</button>
       </div>
     </div>
   </div>

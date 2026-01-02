@@ -1157,8 +1157,9 @@ prefix) %}
                                                 {% endif %}
                                                 {% set ns = namespace(has_offsets=false, position_id=None, h_id=None, v_id=None) %}
                                                 {% set details_id = template_name ~ '-details' %}
-                                                <button class="btn btn-outline-secondary btn-sm ms-3 overlay-details-toggle d-none"
-                                                    type="button" data-section-id="{{ details_id }}">
+                                                <button class="btn btn-outline-secondary btn-sm ms-3 overlay-details-toggle"
+                                                    type="button" data-section-id="{{ details_id }}"
+                                                    style="display: inline-flex; align-items: center;">
                                                     Details
                                                 </button>
                                                 <div class="overlay-template-section mt-2" id="{{ details_id }}"

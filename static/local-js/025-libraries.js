@@ -45,14 +45,32 @@ document.addEventListener('DOMContentLoaded', function () {
     const libraryContainer = document.getElementById('library-form-container')
     const libraryCache = document.getElementById('library-cache')
     const configuredCountsDisplay = document.getElementById('configuredCountsDisplay')
+    const libraryLoading = document.getElementById('libraryLoading')
     const copyModalEl = document.getElementById('copyLibraryModal')
     const copyTargetsContainer = document.getElementById('copyLibraryTargets')
     const copySubtitle = document.getElementById('copyLibrarySubtitle')
     const copyWarning = document.getElementById('copyLibraryWarning')
     const copyConfirmBtn = document.getElementById('copyLibraryConfirm')
+    const copySelectAllBtn = document.getElementById('copySelectAll')
+    const copyDeselectAllBtn = document.getElementById('copyDeselectAll')
     const copyModal = copyModalEl ? new bootstrap.Modal(copyModalEl) : null
     let activeLibraryId = null
     let loadRequestId = 0
+
+    // Ensure hidden "false" inputs don't submit alongside checked checkboxes with the same name
+    function syncHiddenCheckboxPairs (scope) {
+      const root = scope || document
+      root.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+        const hidden = root.querySelector(`input[type="hidden"][name="${cb.name}"]`)
+        if (!hidden || cb.dataset.hiddenSynced === 'true') return
+        const update = () => {
+          hidden.disabled = !!cb.checked
+        }
+        cb.addEventListener('change', update)
+        update()
+        cb.dataset.hiddenSynced = 'true'
+      })
+    }
 
     function initTooltips (scope) {
       const root = scope || document
@@ -123,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function () {
       card.style.display = ''
       libraryContainer.appendChild(card)
       activeLibraryId = libraryId
+      syncHiddenCheckboxPairs(card)
       wireIncludeToggle(card, libraryId)
       refreshPickerLabels()
       initTooltips(card)
@@ -207,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function openCopyModal (sourceId, sourceName, sourceType) {
       if (!copyModal) return
       copyWarning.style.display = 'none'
-      copySubtitle.textContent = `Copy settings from "${sourceName}" to other ${sourceType === 'movie' ? 'movie' : 'show'} libraries`
+      copySubtitle.textContent = `Mirror settings from "${sourceName}" to other ${sourceType === 'movie' ? 'movie' : 'show'} libraries`
       copyTargetsContainer.innerHTML = ''
 
       const options = Array.from(libraryPicker.querySelectorAll('option[value]')).filter(opt =>
@@ -230,11 +249,30 @@ document.addEventListener('DOMContentLoaded', function () {
         })
       }
 
+      const checkboxes = () => Array.from(copyTargetsContainer.querySelectorAll('.copy-target-checkbox'))
+      const clearWarning = () => { copyWarning.style.display = 'none' }
+      checkboxes().forEach(cb => cb.addEventListener('change', clearWarning))
+
+      if (copySelectAllBtn) {
+        copySelectAllBtn.onclick = () => {
+          checkboxes().forEach(cb => { cb.checked = true })
+          clearWarning()
+        }
+      }
+      if (copyDeselectAllBtn) {
+        copyDeselectAllBtn.onclick = () => {
+          checkboxes().forEach(cb => { cb.checked = false })
+          clearWarning()
+        }
+      }
+
       copyModal.show()
 
       const onConfirm = () => {
         const selected = Array.from(copyTargetsContainer.querySelectorAll('.copy-target-checkbox:checked')).map(cb => cb.value)
-        if (!selected.length) {
+        const prefix = sourceType === 'movie' ? 'mov-' : 'sho-'
+        const filtered = selected.filter(id => id.startsWith(prefix))
+        if (!filtered.length) {
           copyWarning.style.display = 'block'
           return
         }
@@ -255,30 +293,35 @@ document.addEventListener('DOMContentLoaded', function () {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               source_library_id: sourceId,
-              target_library_ids: selected,
+              target_library_ids: filtered,
               source_payload: sourcePayload
             })
           }))
           .then(res => {
             if (!res) return
-            if (!res.ok) throw new Error(`Copy failed: ${res.status}`)
+            if (!res.ok) {
+              return res.json().catch(() => ({})).then(body => {
+                const msg = body && body.error ? body.error : `Copy failed: ${res.status}`
+                throw new Error(msg)
+              })
+            }
             return res.json()
           })
-          .then(() => {
+          .then((data) => {
             // Clear all cached cards to avoid stale data
             libraryCache.innerHTML = ''
 
-            selected.forEach(id => {
-              const opt = libraryPicker.querySelector(`option[value="${id}"]`)
-              if (opt) {
-                opt.dataset.configured = 'true'
-              }
+            filtered.forEach(id => {
               const cached = libraryCache.querySelector(`[data-library-id="${id}"]`)
               if (cached && cached.parentElement === libraryCache) {
                 cached.remove()
               }
               if (activeLibraryId === id) {
                 activeLibraryId = null
+              }
+              const opt = libraryPicker.querySelector(`option[value="${id}"]`)
+              if (opt) {
+                opt.dataset.configured = 'false'
               }
             })
             refreshPickerLabels()
@@ -287,14 +330,14 @@ document.addEventListener('DOMContentLoaded', function () {
               loadLibrary(libraryPicker.value)
             }
             if (typeof showToast === 'function') {
-              const label = selected.length === 1 ? 'library' : 'libraries'
-              showToast('success', `Copied settings to ${selected.length} ${label}.`)
+              const label = filtered.length === 1 ? 'library' : 'libraries'
+              showToast('success', `Mirrored settings to ${filtered.length} ${label}.`)
             }
           })
           .catch(err => {
-            console.error('[Copy] Failed to copy library settings', err)
+            console.error('[Copy] Failed to mirror library settings', err)
             if (typeof showToast === 'function') {
-              showToast('error', 'Copy failed. See console for details.')
+              showToast('error', `Mirror failed. ${err.message}`)
             }
           })
           .finally(() => {
@@ -302,17 +345,27 @@ document.addEventListener('DOMContentLoaded', function () {
               copyConfirmBtn.blur()
             }
             copyModal.hide()
-            copyConfirmBtn.removeEventListener('click', onConfirm)
           })
       }
 
-      copyConfirmBtn.addEventListener('click', onConfirm, { once: true })
+      // Ensure we don't accumulate handlers across openings
+      copyConfirmBtn.onclick = null
+      copyConfirmBtn.addEventListener('click', onConfirm)
     }
 
     function loadLibrary (libraryId) {
       if (libraryId === activeLibraryId) return
       const requestId = ++loadRequestId
+      const setLoading = (flag) => {
+        if (libraryLoading) {
+          libraryLoading.classList.toggle('d-none', !flag)
+        }
+        if (libraryPicker) {
+          libraryPicker.disabled = !!flag
+        }
+      }
 
+      setLoading(true)
       autosaveActiveLibrary()
         .finally(() => {
           if (requestId !== loadRequestId) return
@@ -320,6 +373,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (!libraryId) {
             libraryContainer.innerHTML = ''
             activeLibraryId = null
+            setLoading(false)
             return
           }
 
@@ -330,6 +384,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (cached) {
             if (requestId !== loadRequestId) return
             mountCard(cached, libraryId)
+            setLoading(false)
             return
           }
 
@@ -345,9 +400,11 @@ document.addEventListener('DOMContentLoaded', function () {
               const card = wrapper.firstElementChild
               if (!card) throw new Error('Empty fragment response')
               mountCard(card, libraryId)
+              setLoading(false)
             })
             .catch(err => {
               console.error(err)
+              setLoading(false)
             })
         })
     }
