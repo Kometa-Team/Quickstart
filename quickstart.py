@@ -1159,17 +1159,13 @@ def copy_library_settings():
                     merged[k] = v
 
                 libraries_data = merged
-                helpers.ts_log(
-                    f"Copy request merged live source payload for {source_prefix}: {len(incoming_dict)} fields", level="DEBUG"
-                )
+                helpers.ts_log(f"Copy request merged live source payload for {source_prefix}: {len(incoming_dict)} fields", level="DEBUG")
             except Exception as merge_err:
                 helpers.ts_log(f"Failed to merge live source payload during copy: {merge_err}", level="ERROR")
 
         source_items = {k: v for k, v in libraries_data.items() if k.startswith(f"{source_prefix}-")}
         if not source_items:
-            helpers.ts_log(
-                f"Copy aborted: no saved settings found for source {source_prefix}", level="ERROR"
-            )
+            helpers.ts_log(f"Copy aborted: no saved settings found for source {source_prefix}", level="ERROR")
             return jsonify({"success": False, "error": "No saved settings found for source library"}), 404
 
         movie_libraries, show_libraries, _telemetry = _build_library_lists()
@@ -1237,8 +1233,7 @@ def copy_library_settings():
         )
 
         helpers.ts_log(
-            f"Copy complete for config={session.get('config_name')} source={source_prefix} targets={target_ids} "
-            f"merged_keys={len(merged)}",
+            f"Copy complete for config={session.get('config_name')} source={source_prefix} targets={target_ids} " f"merged_keys={len(merged)}",
             level="DEBUG",
         )
 
