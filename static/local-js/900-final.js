@@ -5,6 +5,13 @@ let KOMETA_UPDATING = false
 // Polling handles (hoist to top so all handlers see them safely)
 let kometaInterval = null
 let kometaStatusInterval = null
+let kometaPollingStarted = false
+let autoScrollEnabled = true
+let tailSize = '2000'
+let KOMETA_STATUS = null
+let logPollingPaused = false
+let logFilter = ''
+let lastLogText = ''
 
 const _qsEnvEl = document.getElementById('qs-env')
 const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
@@ -29,6 +36,14 @@ $(document).ready(function () {
   const libsValid = $('#libs_valid').data('libs-valid') === 'True'
   const settValid = $('#sett_valid').data('sett-valid') === 'True'
   const yamlValid = $('#yaml_valid').data('yaml-valid') === 'True'
+  const $runLog = $('#run-output-log')
+  const $tailNotice = $('#run-output-notice')
+  const $tailSelect = $('#run-log-tail')
+  const $autoScrollToggle = $('#run-log-autoscroll')
+  const $downloadLogBtn = $('#download-log-btn')
+  const $pauseLogBtn = $('#pause-log-btn')
+  const $filterInput = $('#run-log-filter')
+  const $levelButtons = $('.log-level-btn')
 
   const showYAML = plexValid && tmdbValid && libsValid && settValid && yamlValid
 
@@ -502,8 +517,22 @@ $(document).ready(function () {
 
     $('#run-now').prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Run Now')
   }
+  function startPollingIfNeeded () {
+    if (kometaPollingStarted) return
+    kometaPollingStarted = true
+    if (kometaInterval) clearInterval(kometaInterval)
+    if (kometaStatusInterval) clearInterval(kometaStatusInterval)
+    fetchKometaLog()
+    kometaInterval = setInterval(fetchKometaLog, 3000)
+    kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+  }
 
   function callUpdateKometa () {
+    if (KOMETA_STATUS === 'running') {
+      showToast('info', 'Kometa is currently running; update skipped.')
+      return
+    }
+
     const $btn = $('#update-kometa-btn')
     const $logBox = $('#kometa-validation-log')
     const $runNow = $('#run-now')
@@ -642,14 +671,99 @@ $(document).ready(function () {
     }
     buildCommand()
   })
+
+  $pauseLogBtn.on('click', function () {
+    logPollingPaused = !logPollingPaused
+    if (logPollingPaused) {
+      $(this).html('<i class="bi bi-play-circle me-1"></i> Resume')
+      showToast('info', 'Log polling paused.')
+    } else {
+      $(this).html('<i class="bi bi-pause-circle me-1"></i> Pause')
+      fetchKometaLog()
+      startPollingIfNeeded()
+    }
+  })
+
+  function applyLogFilter (text, filter) {
+    if (!filter) return text
+
+    // Support literal matching by default; allow regex if user wraps with /
+    const trimmed = filter.trim()
+    let re
+    try {
+      if (trimmed.length > 2 && trimmed.startsWith('/') && trimmed.endsWith('/')) {
+        re = new RegExp(trimmed.slice(1, -1), 'i')
+      } else {
+        const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        re = new RegExp(escaped, 'i')
+      }
+    } catch (e) {
+      return text
+    }
+
+    return text.split('\n').filter(line => re.test(line)).join('\n')
+  }
+
+  $filterInput.on('input', function () {
+    logFilter = $(this).val().trim()
+    const filtered = applyLogFilter(lastLogText, logFilter)
+    $runLog.text(filtered)
+  })
+
+  $levelButtons.on('click', function () {
+    const val = $(this).data('level') || ''
+    logFilter = val
+    $filterInput.val(val)
+    const filtered = applyLogFilter(lastLogText, logFilter)
+    $runLog.text(filtered)
+  })
+
+  $tailSelect.on('change', function () {
+    tailSize = $(this).val() || '2000'
+    const label = tailSize === 'all' ? 'entire log' : `last ${tailSize} lines of the log`
+    $tailNotice.html(`<i class="bi bi-info-circle"></i> Showing ${label}`)
+    fetchKometaLog()
+  })
+
+  $autoScrollToggle.on('change', function () {
+    autoScrollEnabled = $(this).is(':checked')
+    if (autoScrollEnabled && $runLog[0]) {
+      $runLog[0].scrollTop = $runLog[0].scrollHeight
+    }
+  })
+
+  $downloadLogBtn.on('click', function () {
+    const href = `/tail-log?size=${encodeURIComponent(tailSize)}&download=1`
+    fetch(href)
+      .then(res => res.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = 'meta.log'
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+      })
+      .catch(() => showToast('error', 'Failed to download log.'))
+  })
   // Ensure we check Kometa status once on page load to catch unclean exits
   // Keep the run area hidden until validated, then check status immediately
-  hideRunCommandSectionUntilValidated()
+  if (showYAML) {
+    showRunCommandSectionAfterValidated()
+  } else {
+    hideRunCommandSectionUntilValidated()
+  }
   checkKometaStatus()
 
-  // First-run: ensure Kometa exists/updated, then validate in its success path
+  // First-run: ensure Kometa exists/updated if not running
   if (document.getElementById('kometa-validation-log')) {
-    callUpdateKometa()
+    checkKometaStatus().then(() => {
+      if (KOMETA_STATUS !== 'running') {
+        callUpdateKometa()
+      }
+    })
   }
 
   if (document.getElementById('header-style')) {
@@ -693,8 +807,8 @@ $(document).ready(function () {
 
         // ✅ Delay polling slightly to allow Kometa to start
         setTimeout(() => {
-          kometaInterval = setInterval(fetchKometaLog, 3000)
-          kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+          kometaPollingStarted = false
+          startPollingIfNeeded()
         }, 5500) // <-- 1.5 second delay
       })
   })
@@ -722,23 +836,38 @@ $(document).ready(function () {
   })
 
   function fetchKometaLog () {
-    fetch('/tail-log')
+    if (logPollingPaused) return
+
+    const logEl = $runLog[0]
+    const wasAtBottom = logEl ? (logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 5) : true
+
+    fetch(`/tail-log?size=${encodeURIComponent(tailSize)}`)
       .then(res => res.json())
       .then(data => {
-        const $box = $('#run-output-log')
+        if (!$runLog.length) return
         if (data.error) {
-          $box.text(`❌ ${data.error}`)
+          $runLog.text(`❌ ${data.error}`)
           return
         }
-        $box.text(data.log)
-        if ($box[0]) $box[0].scrollTop = $box[0].scrollHeight
+        lastLogText = data.log || ''
+        const filtered = applyLogFilter(lastLogText, logFilter)
+        $runLog.text(filtered)
+        const shouldStick = autoScrollEnabled || wasAtBottom
+        if (shouldStick && logEl) {
+          logEl.scrollTop = logEl.scrollHeight
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching Kometa log:', err)
+        if ($runLog.length) $runLog.append('\n⚠️ Error fetching log.')
       })
   }
 
   function checkKometaStatus () {
-    fetch('/kometa-status')
+    return fetch('/kometa-status')
       .then(res => res.json())
       .then(data => {
+        KOMETA_STATUS = data.status || null
         const $updateBtn = $('#update-kometa-btn')
         const $runNow = $('#run-now')
         const $stopNow = $('#stop-now')
@@ -768,6 +897,9 @@ $(document).ready(function () {
           // Kometa is actively running → keep Run disabled, allow Stop
           $runNow.prop('disabled', true).html('<i class="bi bi-play-fill me-1"></i> Run Now')
           $stopNow.removeClass('d-none').prop('disabled', false)
+          $('#run-output').removeClass('d-none')
+          startPollingIfNeeded()
+          fetchKometaLog()
           return
         }
 

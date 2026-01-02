@@ -314,9 +314,42 @@
         <i class="bi bi-stop-fill me-1"></i> Stop
       </button>
       <div id="run-output" class="mt-3 d-none">
-        <small class="text-muted d-block mt-1">
-          <i class="bi bi-info-circle"></i> Showing last 2000 lines of the log
-        </small>
+        <div class="d-flex align-items-center gap-3 flex-wrap mb-2">
+          <small class="text-muted d-block" id="run-output-notice">
+            <i class="bi bi-info-circle"></i> Showing last 2000 lines of the log
+          </small>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="run-log-autoscroll" checked>
+            <label class="form-check-label" for="run-log-autoscroll">Auto-scroll</label>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <label for="run-log-tail" class="form-label mb-0">Tail size</label>
+            <select id="run-log-tail" class="form-select form-select-sm" style="width: 110px;">
+              <option value="200">200</option>
+              <option value="2000" selected>2000</option>
+              <option value="20000">20000</option>
+              <option value="all">All</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="download-log-btn">
+            <i class="bi bi-download me-1"></i> Download log
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="pause-log-btn">
+            <i class="bi bi-pause-circle me-1"></i> Pause
+          </button>
+          <div class="d-flex align-items-center gap-2">
+            <label for="run-log-filter" class="form-label mb-0">Filter</label>
+            <input id="run-log-filter" class="form-control form-control-sm" style="width: 180px;"
+              placeholder="Regex or text">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Quick filters">
+              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[INFO]">INFO</button>
+              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[DEBUG]">DEBUG</button>
+              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[WARNING]">WARN</button>
+              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[ERROR]">ERROR</button>
+              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[CRITICAL]">CRIT</button>
+            </div>
+          </div>
+        </div>
         <pre class="bg-dark text-light p-2 rounded" id="run-output-log"
           style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">
         </pre>

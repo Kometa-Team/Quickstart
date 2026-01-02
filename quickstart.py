@@ -1622,9 +1622,31 @@ def tail_log():
     try:
         from collections import deque
 
-        with log_path.open("r", encoding="utf-8", errors="replace") as f:
-            last_2000 = deque(f, maxlen=2000)
-        return jsonify({"log": "".join(last_2000)})
+        size_param = request.args.get("size", "2000")
+        download = request.args.get("download")
+        max_lines = None
+        if size_param.lower() not in ("all", "full"):
+            try:
+                max_lines = max(1, min(int(size_param), 20000))
+            except Exception:
+                max_lines = 2000
+
+        if max_lines:
+            with log_path.open("r", encoding="utf-8", errors="replace") as f:
+                lines = deque(f, maxlen=max_lines)
+            log_content = "".join(lines)
+        else:
+            log_content = log_path.read_text(encoding="utf-8", errors="replace")
+
+        if download:
+            return send_file(
+                io.BytesIO(log_content.encode("utf-8")),
+                mimetype="text/plain",
+                as_attachment=True,
+                download_name="meta.log",
+            )
+
+        return jsonify({"log": log_content})
     except Exception as e:
         return jsonify({"error": f"Failed to read log: {str(e)}"}), 500
 
