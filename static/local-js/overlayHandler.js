@@ -364,6 +364,31 @@ const OverlayHandler = {
         const styleSafe = allowed.includes(style) ? style : 'yellow'
         return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/ribbon/${styleSafe}/oscars.png`
       }
+      if (cfg.id === 'overlay_streaming' && cfg.styleInput) {
+        const style = (cfg.styleInput.value || 'color').toLowerCase()
+        const allowed = ['color', 'white']
+        const styleSafe = allowed.includes(style) ? style : 'color'
+        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/streaming/${styleSafe}/Crave.png`
+      }
+      if (cfg.id === 'overlay_studio' && cfg.styleInput) {
+        const style = (cfg.styleInput.value || 'standard').toLowerCase()
+        const allowed = ['standard', 'bigger']
+        const styleSafe = allowed.includes(style) ? style : 'standard'
+        const folder = styleSafe === 'bigger' ? 'bigger' : 'standard'
+        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/studio/${folder}/ufotable.png`
+      }
+      if (cfg.id === 'overlay_network' && cfg.styleInput) {
+        const style = (cfg.styleInput.value || 'color').toLowerCase()
+        const allowed = ['color', 'white']
+        const styleSafe = allowed.includes(style) ? style : 'color'
+        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/network/${styleSafe}/BBC%20One.png`
+      }
+      if (cfg.id === 'overlay_audio_codec' && cfg.styleInput) {
+        const style = (cfg.styleInput.value || 'compact').toLowerCase()
+        const allowed = ['compact', 'standard']
+        const styleSafe = allowed.includes(style) ? style : 'compact'
+        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/audio_codec/${styleSafe}/plus_atmos.png`
+      }
       return cfg.image
     }
 

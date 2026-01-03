@@ -1029,6 +1029,7 @@
         "label": "Audio Codec",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/audio_codec/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/audio_codec.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/audio_codec/compact/plus_atmos.png",
         "default_offsets": {
           "horizontal": 0,
           "vertical": 15
@@ -1089,6 +1090,7 @@
         "label": "Audio/Subtitle Language Count",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/language_count/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/language_count.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/multi_audio.png",
         "default_offsets": {
           "horizontal": 0,
           "vertical": 30
@@ -1272,6 +1274,7 @@
         "label": "Resolutions/Editions",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/resolution/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/resolution.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/resolution/4kdvhdrplus.png",
         "default_offsets": {
           "horizontal": 15,
           "vertical": 15
@@ -1286,6 +1289,17 @@
         "tooltip_variant": "danger",
         "extra_url": "https://trash-guides.info/",
         "template_variables": [
+          {
+            "type": "toggle",
+            "key": "use_edition",
+            "label": "Use Edition",
+            "value": "true",
+            "default": true,
+            "options": [
+              "true",
+              "false"
+            ]
+          },
           {
             "type": "toggle",
             "key": "builder_level",
@@ -1458,6 +1472,7 @@
         "label": "Streaming",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/streaming/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/streaming.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/streaming/color/Crave.png",
         "default_offsets": {
           "horizontal": 15,
           "vertical": 390
@@ -1515,6 +1530,7 @@
         "label": "Studio",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/studio/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/studio.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/studio/standard/ufotable.png",
         "default_offsets": {
           "horizontal": 15,
           "vertical": 150
@@ -1572,6 +1588,7 @@
         "label": "Network",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/network/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/network.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/network/color/BBC%20One.png",
         "default_offsets": {
           "horizontal": 15,
           "vertical": 510
@@ -1637,6 +1654,7 @@
         "label": "Direct Play Only",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/direct_play/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/direct_play.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Direct-Play.png",
         "default_offsets": {
           "horizontal": 0,
           "vertical": 150
