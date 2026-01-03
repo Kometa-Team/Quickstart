@@ -190,16 +190,6 @@ header.fixed-top {
     cursor: grabbing;
 }
 
-.overlay-board-label {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(0, 0, 0, 0.45);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 11px;
-}
-
 #navbarDropdownMenuLink[disabled]::after {
     display: none !important;
 }

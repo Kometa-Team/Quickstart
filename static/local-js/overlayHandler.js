@@ -357,6 +357,16 @@ const OverlayHandler = {
     const root = scope || document
     const defaultDims = OverlayHandler.baseDimensions
 
+    const resolveOverlayImage = (cfg) => {
+      if (cfg.id === 'overlay_ribbon' && cfg.styleInput) {
+        const style = (cfg.styleInput.value || 'yellow').toLowerCase()
+        const allowed = ['yellow', 'red', 'black', 'gray']
+        const styleSafe = allowed.includes(style) ? style : 'yellow'
+        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/ribbon/${styleSafe}/oscars.png`
+      }
+      return cfg.image
+    }
+
     Array.from(root.querySelectorAll('.overlay-board')).forEach(board => {
       if (board.dataset.boardBound === 'true') return
       board.dataset.boardBound = 'true'
@@ -509,7 +519,7 @@ const OverlayHandler = {
         if (layers.has(cfg.id)) return layers.get(cfg.id)
         const layer = document.createElement('img')
         layer.className = 'overlay-board-layer'
-        layer.src = cfg.image
+        layer.src = resolveOverlayImage(cfg)
         layer.alt = cfg.id
         layers.set(cfg.id, layer)
         canvas.appendChild(layer)
@@ -523,6 +533,11 @@ const OverlayHandler = {
         bindDrag(cfg, layer)
         bindToggle(cfg, layer)
         bindInputs(cfg)
+        if (cfg.styleInput) {
+          cfg.styleInput.addEventListener('change', () => {
+            layer.src = resolveOverlayImage(cfg)
+          })
+        }
         applyPosition(cfg)
         return layer
       }
@@ -540,6 +555,7 @@ const OverlayHandler = {
           baseWidth,
           baseHeight,
           toggle: container.querySelector('.overlay-toggle'),
+          styleInput: (container.dataset.styleInputId && document.getElementById(container.dataset.styleInputId)) || null,
           naturalWidth: null,
           naturalHeight: null
         }

@@ -311,7 +311,8 @@ def build_libraries_section(
 
                 collection_files.append(file_entry)
 
-            entry["collection_files"] = collection_files
+            if collection_files:
+                entry["collection_files"] = collection_files
 
             # Process Overlays
             # Process Overlays

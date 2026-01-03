@@ -11,6 +11,7 @@
         "label": "Ribbon",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/ribbon/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ribbon.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/ribbon/yellow/oscars.png",
         "default_offsets": {
           "horizontal": 0,
           "vertical": 0
@@ -1354,6 +1355,7 @@
         "label": "Versions",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/versions/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/versions.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/versions.png",
         "default_offsets": {
           "horizontal": 15,
           "vertical": 335

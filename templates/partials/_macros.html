@@ -1091,15 +1091,13 @@ prefix) %}
 
                                         {% set board_base_width = 1920 if type == 'episode' else 1000 %}
                                         {% set board_base_height = 1080 if type == 'episode' else 1500 %}
-                                        {% set board_bg = '/static/images/overlays/' ~ board_base_width ~ 'x' ~ board_base_height ~ '-white.png' %}
+                                        {% set board_bg = '/static/images/default-' ~ board_base_width ~ 'x' ~ board_base_height ~ '.png' %}
                                         <div class="overlay-board mb-3"
                                             data-base-width="{{ board_base_width }}"
                                             data-base-height="{{ board_base_height }}"
                                             data-overlay-type="{{ type }}"
                                             data-library-id="{{ library.id }}">
-                                            <div class="overlay-board-canvas" style="background-image: url('{{ board_bg }}');">
-                                                <div class="overlay-board-label text-muted">Drag overlays here</div>
-                                            </div>
+                                            <div class="overlay-board-canvas" style="background-image: url('{{ board_bg }}');"></div>
                                             <div class="overlay-coords small text-muted mt-1">Combined overlay preview</div>
                                         </div>
 
@@ -1123,6 +1121,7 @@ prefix) %}
                                             data-overlay-image="{{ overlay_preview_image }}"
                                             data-horizontal-id="{{ template_name }}-horizontal_offset"
                                             data-vertical-id="{{ template_name }}-vertical_offset"
+                                            data-style-input-id="{{ template_name }}-style"
                                             data-overlay-type="{{ type }}"
                                             data-library-id="{{ library.id }}"
                                             data-base-width="{{ base_width }}"
