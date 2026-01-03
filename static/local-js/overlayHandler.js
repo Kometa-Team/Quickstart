@@ -1,6 +1,10 @@
 /* global EventHandler, toggleOverlayTemplateSection */
 
 const OverlayHandler = {
+  baseDimensions: {
+    default: { width: 1000, height: 1500 },
+    episode: { width: 1920, height: 1080 }
+  },
   initializeOverlays: function (libraryId, isMovie) {
     console.log(`[DEBUG] Initializing overlays for ${libraryId} - ${isMovie ? 'Movie' : 'Show'}`)
 
@@ -206,8 +210,354 @@ const OverlayHandler = {
       .catch(err => {
         console.error(`IMDb fetch failed for ${libraryName}:`, err)
       })
-  }
+  },
 
+  /**
+   * Initialize drag-to-position previews for overlays.
+   * Keeps offsets in sync with the form inputs.
+   */
+  initializeOverlayPositioners: function (scope) {
+    const root = scope || document
+    const positioners = root.querySelectorAll('.overlay-positioner')
+
+    positioners.forEach((pos) => {
+      if (pos.dataset.positionerBound === 'true') return
+      pos.dataset.positionerBound = 'true'
+
+      const canvas = pos.querySelector('.overlay-canvas')
+      const overlay = pos.querySelector('.overlay-preview-node')
+      const xLabel = pos.querySelector('[data-overlay-x]')
+      const yLabel = pos.querySelector('[data-overlay-y]')
+
+      const hInputId = pos.dataset.horizontalId
+      const vInputId = pos.dataset.verticalId
+      const hInput = hInputId ? document.getElementById(hInputId) : null
+      const vInput = vInputId ? document.getElementById(vInputId) : null
+
+      const baseWidth = Number(pos.dataset.baseWidth) || OverlayHandler.baseDimensions.default.width
+      const baseHeight = Number(pos.dataset.baseHeight) || OverlayHandler.baseDimensions.default.height
+
+      if (!canvas || !overlay || !hInput || !vInput) {
+        console.warn('[OverlayPositioner] Missing required elements', { canvas, overlay, hInput, vInput })
+        return
+      }
+
+      const updateLabels = (h, v) => {
+        if (xLabel) xLabel.textContent = Math.round(h)
+        if (yLabel) yLabel.textContent = Math.round(v)
+      }
+
+      const clamp = (val, min, max) => Math.min(Math.max(val, min), max)
+
+      const setOverlayPosition = (h, v) => {
+        const canvasRect = canvas.getBoundingClientRect()
+        const scaleX = canvasRect.width / baseWidth
+        const scaleY = canvasRect.height / baseHeight || scaleX
+        overlay.style.left = `${h * scaleX}px`
+        overlay.style.top = `${v * scaleY}px`
+        updateLabels(h, v)
+      }
+
+      const getCurrentOffsets = () => ({
+        h: Number(hInput.value) || 0,
+        v: Number(vInput.value) || 0
+      })
+
+      let syncing = false
+      const syncFromInputs = () => {
+        if (syncing) return
+        const { h, v } = getCurrentOffsets()
+        setOverlayPosition(h, v)
+      }
+
+      const syncToInputs = (h, v) => {
+        syncing = true
+        hInput.value = h
+        vInput.value = v
+        hInput.dispatchEvent(new Event('change', { bubbles: true }))
+        vInput.dispatchEvent(new Event('change', { bubbles: true }))
+        syncing = false
+      }
+
+      const handleDrag = () => {
+        let dragging = false
+        let start = { x: 0, y: 0, h: 0, v: 0 }
+
+        const onPointerDown = (e) => {
+          e.preventDefault()
+          overlay.setPointerCapture(e.pointerId)
+          const { h, v } = getCurrentOffsets()
+          start = { x: e.clientX, y: e.clientY, h, v }
+          dragging = true
+          overlay.classList.add('dragging')
+        }
+
+        const onPointerMove = (e) => {
+          if (!dragging) return
+          const canvasRect = canvas.getBoundingClientRect()
+          const scaleX = canvasRect.width / baseWidth
+          const scaleY = canvasRect.height / baseHeight || scaleX
+          const overlayRect = overlay.getBoundingClientRect()
+
+          const overlayWidthBase = overlayRect.width / scaleX
+          const overlayHeightBase = overlayRect.height / scaleY
+
+          const deltaX = (e.clientX - start.x) / scaleX
+          const deltaY = (e.clientY - start.y) / scaleY
+
+          const maxH = Math.max(0, baseWidth - overlayWidthBase)
+          const maxV = Math.max(0, baseHeight - overlayHeightBase)
+
+          const nextH = clamp(start.h + deltaX, 0, maxH)
+          const nextV = clamp(start.v + deltaY, 0, maxV)
+
+          setOverlayPosition(nextH, nextV)
+          syncToInputs(Math.round(nextH), Math.round(nextV))
+        }
+
+        const onPointerUp = (e) => {
+          if (!dragging) return
+          dragging = false
+          overlay.releasePointerCapture(e.pointerId)
+          overlay.classList.remove('dragging')
+        }
+
+        overlay.addEventListener('pointerdown', onPointerDown)
+        window.addEventListener('pointermove', onPointerMove)
+        window.addEventListener('pointerup', onPointerUp)
+      }
+
+      const overlayImage = overlay.tagName === 'IMG' ? overlay : null
+      const kickOff = () => {
+        const canvasWidth = canvas.clientWidth || canvas.offsetWidth
+        const ratio = baseWidth / baseHeight
+        if (canvasWidth && canvas.style.aspectRatio === '') {
+          canvas.style.setProperty('--overlay-ratio', `${ratio}`)
+        }
+        syncFromInputs()
+      }
+
+      overlayImage?.addEventListener('load', kickOff, { once: true })
+      kickOff()
+
+      hInput.addEventListener('input', syncFromInputs)
+      vInput.addEventListener('input', syncFromInputs)
+      hInput.addEventListener('change', syncFromInputs)
+      vInput.addEventListener('change', syncFromInputs)
+
+      handleDrag()
+    })
+  },
+
+  /**
+   * Render a combined overlay board for all overlays within a group.
+   * Layers stay in sync with toggle state and offset inputs, and support dragging.
+   */
+  initializeOverlayBoards: function (scope) {
+    const root = scope || document
+    const defaultDims = OverlayHandler.baseDimensions
+
+    Array.from(root.querySelectorAll('.overlay-board')).forEach(board => {
+      if (board.dataset.boardBound === 'true') return
+      board.dataset.boardBound = 'true'
+
+      const canvas = board.querySelector('.overlay-board-canvas')
+      if (!canvas) return
+
+      const baseWidth = Number(board.dataset.baseWidth) || defaultDims.default.width
+      const baseHeight = Number(board.dataset.baseHeight) || defaultDims.default.height
+      const ratio = baseWidth / baseHeight
+      canvas.style.setProperty('--overlay-board-ratio', `${ratio}`)
+
+      const layers = new Map()
+      let writing = false
+
+      const clamp = (val, min, max) => Math.min(Math.max(val, min), max)
+      const ensureNumber = (val, fallback = 0) => {
+        const num = Number(val)
+        return Number.isFinite(num) ? num : fallback
+      }
+
+      const getScale = () => {
+        const rect = canvas.getBoundingClientRect()
+        const computed = window.getComputedStyle(canvas)
+        const width = rect.width || canvas.clientWidth || parseFloat(computed.width) || 1
+        const height = rect.height || canvas.clientHeight || parseFloat(computed.height) || (width / ratio)
+        return { scaleX: width / baseWidth, scaleY: height / baseHeight }
+      }
+
+      const getInputs = (cfg) => {
+        const hInput = cfg.hId ? document.getElementById(cfg.hId) : null
+        const vInput = cfg.vId ? document.getElementById(cfg.vId) : null
+        return { hInput, vInput }
+      }
+
+      const applyVisibility = (cfg, layer) => {
+        const toggle = cfg.toggle
+        const visible = !toggle || toggle.checked
+        layer.style.display = visible ? 'block' : 'none'
+      }
+
+      const writeOffsets = (cfg, h, v) => {
+        const { hInput, vInput } = getInputs(cfg)
+        if (!hInput || !vInput) return
+        writing = true
+        hInput.value = Math.round(h)
+        vInput.value = Math.round(v)
+        hInput.dispatchEvent(new Event('change', { bubbles: true }))
+        vInput.dispatchEvent(new Event('change', { bubbles: true }))
+        writing = false
+      }
+
+      const applyPosition = (cfg) => {
+        const layer = layers.get(cfg.id)
+        if (!layer) return
+        const { hInput, vInput } = getInputs(cfg)
+        if (!hInput || !vInput) return
+
+        const { scaleX, scaleY } = getScale()
+        if (!cfg.naturalWidth && layer.naturalWidth) {
+          cfg.naturalWidth = layer.naturalWidth
+          cfg.naturalHeight = layer.naturalHeight
+        }
+        const natW = cfg.naturalWidth || layer.naturalWidth || (baseWidth * 0.25)
+        const natH = cfg.naturalHeight || layer.naturalHeight || (baseHeight * 0.25)
+
+        layer.style.width = `${natW * scaleX}px`
+        layer.style.height = `${natH * scaleY}px`
+
+        const hVal = ensureNumber(hInput.value)
+        const vVal = ensureNumber(vInput.value)
+
+        layer.style.left = `${hVal * scaleX}px`
+        layer.style.top = `${vVal * scaleY}px`
+        applyVisibility(cfg, layer)
+      }
+
+      const bindDrag = (cfg, layer) => {
+        let dragging = false
+        let start = { x: 0, y: 0, h: 0, v: 0 }
+
+        const onPointerDown = (e) => {
+          e.preventDefault()
+          layer.setPointerCapture(e.pointerId)
+          const { hInput, vInput } = getInputs(cfg)
+          start = {
+            x: e.clientX,
+            y: e.clientY,
+            h: ensureNumber(hInput?.value),
+            v: ensureNumber(vInput?.value)
+          }
+          dragging = true
+          layer.classList.add('dragging')
+        }
+
+        const onPointerMove = (e) => {
+          if (!dragging) return
+          const { scaleX, scaleY } = getScale()
+          const natW = cfg.naturalWidth || layer.naturalWidth || (baseWidth * 0.25)
+          const natH = cfg.naturalHeight || layer.naturalHeight || (baseHeight * 0.25)
+          const overlayWidthBase = natW
+          const overlayHeightBase = natH
+
+          const deltaX = (e.clientX - start.x) / scaleX
+          const deltaY = (e.clientY - start.y) / scaleY
+
+          const maxH = Math.max(0, baseWidth - overlayWidthBase)
+          const maxV = Math.max(0, baseHeight - overlayHeightBase)
+
+          const nextH = clamp(start.h + deltaX, 0, maxH)
+          const nextV = clamp(start.v + deltaY, 0, maxV)
+
+          layer.style.left = `${nextH * scaleX}px`
+          layer.style.top = `${nextV * scaleY}px`
+          writeOffsets(cfg, nextH, nextV)
+        }
+
+        const onPointerUp = (e) => {
+          if (!dragging) return
+          dragging = false
+          layer.releasePointerCapture(e.pointerId)
+          layer.classList.remove('dragging')
+        }
+
+        layer.addEventListener('pointerdown', onPointerDown)
+        window.addEventListener('pointermove', onPointerMove)
+        window.addEventListener('pointerup', onPointerUp)
+      }
+
+      const bindInputs = (cfg) => {
+        const { hInput, vInput } = getInputs(cfg)
+        const handler = () => {
+          if (writing) return
+          applyPosition(cfg)
+        }
+        hInput?.addEventListener('input', handler)
+        vInput?.addEventListener('input', handler)
+        hInput?.addEventListener('change', handler)
+        vInput?.addEventListener('change', handler)
+      }
+
+      const bindToggle = (cfg, layer) => {
+        const toggle = cfg.toggle
+        if (!toggle) return
+        const handler = () => applyVisibility(cfg, layer)
+        toggle.addEventListener('change', handler)
+      }
+
+      const addOverlayLayer = (cfg) => {
+        if (layers.has(cfg.id)) return layers.get(cfg.id)
+        const layer = document.createElement('img')
+        layer.className = 'overlay-board-layer'
+        layer.src = cfg.image
+        layer.alt = cfg.id
+        layers.set(cfg.id, layer)
+        canvas.appendChild(layer)
+
+        layer.addEventListener('load', () => {
+          cfg.naturalWidth = layer.naturalWidth || cfg.naturalWidth
+          cfg.naturalHeight = layer.naturalHeight || cfg.naturalHeight
+          applyPosition(cfg)
+        })
+
+        bindDrag(cfg, layer)
+        bindToggle(cfg, layer)
+        bindInputs(cfg)
+        applyPosition(cfg)
+        return layer
+      }
+
+      const libId = board.dataset.libraryId
+      const overlayType = board.dataset.overlayType
+      const overlayContainers = Array.from(document.querySelectorAll(`.template-toggle-group[data-overlay-type="${overlayType}"][data-library-id="${libId}"]`))
+      const configs = []
+      overlayContainers.forEach(container => {
+        const cfg = {
+          id: container.dataset.overlayId,
+          image: container.dataset.overlayImage,
+          hId: container.dataset.horizontalId,
+          vId: container.dataset.verticalId,
+          baseWidth,
+          baseHeight,
+          toggle: container.querySelector('.overlay-toggle'),
+          naturalWidth: null,
+          naturalHeight: null
+        }
+
+        if (!cfg.id || !cfg.image || !cfg.hId || !cfg.vId) return
+        if (!document.getElementById(cfg.hId) || !document.getElementById(cfg.vId)) return
+        configs.push(cfg)
+        addOverlayLayer(cfg)
+      })
+
+      // Recompute positions after images load or container resizes
+      const recalcAll = () => {
+        configs.forEach(cfg => applyPosition(cfg))
+      }
+
+      window.addEventListener('resize', recalcAll)
+    })
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -243,6 +593,10 @@ document.addEventListener('DOMContentLoaded', function () {
       childWrapper.style.display = parent.checked ? '' : 'none'
     })
   })
+
+  // 5. Initialize overlay previews (combined + per-overlay)
+  OverlayHandler.initializeOverlayBoards()
+  OverlayHandler.initializeOverlayPositioners()
 })
 
 // eslint-disable-next-line no-unused-vars

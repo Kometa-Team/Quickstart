@@ -1089,9 +1089,27 @@ prefix) %}
                                     <div class="overlay-group mb-4" data-type="{{ type }}">
                                         {% endif %}
 
+                                        {% set board_base_width = 1920 if type == 'episode' else 1000 %}
+                                        {% set board_base_height = 1080 if type == 'episode' else 1500 %}
+                                        {% set board_bg = '/static/images/overlays/' ~ board_base_width ~ 'x' ~ board_base_height ~ '-white.png' %}
+                                        <div class="overlay-board mb-3"
+                                            data-base-width="{{ board_base_width }}"
+                                            data-base-height="{{ board_base_height }}"
+                                            data-overlay-type="{{ type }}"
+                                            data-library-id="{{ library.id }}">
+                                            <div class="overlay-board-canvas" style="background-image: url('{{ board_bg }}');">
+                                                <div class="overlay-board-label text-muted">Drag overlays here</div>
+                                            </div>
+                                            <div class="overlay-coords small text-muted mt-1">Combined overlay preview</div>
+                                        </div>
+
                                         {% for overlay in group.overlays %}
                                         {% if overlay.media_types and (type in overlay.media_types) %}
                                         {% set base_id = library.id ~ '-' ~ type ~ '-' ~ overlay.id %}
+                                        {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
+                                        {% set base_width = 1920 if type == 'episode' else 1000 %}
+                                        {% set base_height = 1080 if type == 'episode' else 1500 %}
+                                        {% set overlay_preview_image = overlay.overlay_url or overlay.image_url or '/static/images/default_grey.png' %}
                                         {% set input_name = radio_safe_name if input_type == "radio" else base_id %}
                                         {% set input_value = overlay.value if input_type == "radio" else "true" %}
                                         {% set is_checked = (
@@ -1099,7 +1117,16 @@ prefix) %}
                                         else data.libraries[input_name]|string|lower == "true"
                                         ) %}
 
-                                        <div class="template-toggle-group ms-3 mb-2">
+                                        <div class="template-toggle-group ms-3 mb-2"
+                                            data-overlay-id="{{ overlay.id }}"
+                                            data-overlay-template="{{ template_name }}"
+                                            data-overlay-image="{{ overlay_preview_image }}"
+                                            data-horizontal-id="{{ template_name }}-horizontal_offset"
+                                            data-vertical-id="{{ template_name }}-vertical_offset"
+                                            data-overlay-type="{{ type }}"
+                                            data-library-id="{{ library.id }}"
+                                            data-base-width="{{ base_width }}"
+                                            data-base-height="{{ base_height }}">
                                             <div class="form-check form-switch">
                                                 <input
                                                     class="form-check-input overlay-toggle template-parent-toggle{% if overlay.readonly %} readonly-toggle{% endif %}"
@@ -1140,7 +1167,6 @@ prefix) %}
                                                 </div>
                                             </div>
 
-                                                {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
                                                 {% if overlay.template_variables %}
                                                 {% set has_builder_level = false %}
                                                 {% if overlay.template_variables is mapping %}

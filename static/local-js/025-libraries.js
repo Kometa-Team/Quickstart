@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap */
+/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -161,6 +161,12 @@ document.addEventListener('DOMContentLoaded', function () {
         setupParentChildToggleSync()
       }
       wireOverlayTemplateSections(card)
+      if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
+        OverlayHandler.initializeOverlayBoards(card)
+      }
+      if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayPositioners) {
+        OverlayHandler.initializeOverlayPositioners(card)
+      }
       if (typeof EventHandler !== 'undefined') {
         EventHandler.attachLibraryListeners()
       }

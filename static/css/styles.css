@@ -119,6 +119,87 @@ header.fixed-top {
     pointer-events: none;
 }
 
+/* -------------------- */
+/* OVERLAY POSITIONER   */
+/* -------------------- */
+
+.overlay-positioner {
+    max-width: 340px;
+}
+
+.overlay-canvas {
+    position: relative;
+    width: 260px;
+    aspect-ratio: var(--overlay-ratio, 2 / 3);
+    background-color: #0f0f0f;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid #343a40;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.overlay-preview-node {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: grab;
+    max-width: 65%;
+    max-height: 65%;
+    user-select: none;
+}
+
+.overlay-preview-node.dragging {
+    cursor: grabbing;
+}
+
+.overlay-coords {
+    font-variant-numeric: tabular-nums;
+}
+
+/* -------------------- */
+/* OVERLAY BOARD        */
+/* -------------------- */
+
+.overlay-board {
+    max-width: 360px;
+}
+
+.overlay-board-canvas {
+    position: relative;
+    width: 300px;
+    aspect-ratio: var(--overlay-board-ratio, 2 / 3);
+    background-color: #0f0f0f;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid #343a40;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.overlay-board-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: auto;
+    cursor: grab;
+    user-select: none;
+}
+
+.overlay-board-layer.dragging {
+    cursor: grabbing;
+}
+
+.overlay-board-label {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
 #navbarDropdownMenuLink[disabled]::after {
     display: none !important;
 }
