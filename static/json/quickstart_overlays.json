@@ -1275,6 +1275,7 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/resolution/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/resolution.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/resolution/4kdvhdrplus.png",
+        "edition_overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/edition/enhanced.png",
         "default_offsets": {
           "horizontal": 15,
           "vertical": 15
@@ -1344,6 +1345,36 @@
           "episode"
         ],
         "template_variables": [
+          {
+            "input_type": "text",
+            "key": "text",
+            "label": "Prefix Text",
+            "default": "Runtime: "
+          },
+          {
+            "input_type": "text",
+            "key": "format",
+            "label": "Format",
+            "default": "<<runtimeH>>h <<runtimeM>>m"
+          },
+          {
+            "input_type": "text",
+            "key": "font",
+            "label": "Font",
+            "default": "fonts/Inter-Medium.ttf"
+          },
+          {
+            "input_type": "number",
+            "key": "font_size",
+            "label": "Font Size",
+            "default": 55
+          },
+          {
+            "input_type": "text",
+            "key": "font_color",
+            "label": "Font Color",
+            "default": "#FFFFFFFF"
+          },
           {
             "type": "toggle",
             "key": "builder_level",
@@ -1530,7 +1561,7 @@
         "label": "Studio",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/studio/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/studio.png",
-        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/studio/standard/ufotable.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/studio/standard/8bit.png",
         "default_offsets": {
           "horizontal": 15,
           "vertical": 150

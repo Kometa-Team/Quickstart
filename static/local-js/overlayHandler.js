@@ -1,4 +1,4 @@
-/* global EventHandler, toggleOverlayTemplateSection */
+/* global EventHandler, toggleOverlayTemplateSection, FontFace */
 
 const OverlayHandler = {
   baseDimensions: {
@@ -358,38 +358,152 @@ const OverlayHandler = {
     const defaultDims = OverlayHandler.baseDimensions
 
     const resolveOverlayImage = (cfg) => {
+      const replacePathSegment = (baseUrl, marker, newSegment) => {
+        try {
+          const urlObj = new URL(baseUrl)
+          const parts = urlObj.pathname.split('/')
+          const idx = parts.findIndex((p) => p === marker)
+          if (idx !== -1 && idx + 1 < parts.length) {
+            parts[idx + 1] = encodeURIComponent(newSegment)
+            urlObj.pathname = parts.join('/')
+            return urlObj.toString()
+          }
+        } catch (e) {
+          console.warn('[OverlayBoards] Failed to adjust URL', { baseUrl, e })
+        }
+        return baseUrl
+      }
+
       if (cfg.id === 'overlay_ribbon' && cfg.styleInput) {
         const style = (cfg.styleInput.value || 'yellow').toLowerCase()
         const allowed = ['yellow', 'red', 'black', 'gray']
         const styleSafe = allowed.includes(style) ? style : 'yellow'
-        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/ribbon/${styleSafe}/oscars.png`
+        return replacePathSegment(cfg.image, 'ribbon', styleSafe)
       }
       if (cfg.id === 'overlay_streaming' && cfg.styleInput) {
         const style = (cfg.styleInput.value || 'color').toLowerCase()
         const allowed = ['color', 'white']
         const styleSafe = allowed.includes(style) ? style : 'color'
-        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/streaming/${styleSafe}/Crave.png`
+        return replacePathSegment(cfg.image, 'streaming', styleSafe)
       }
       if (cfg.id === 'overlay_studio' && cfg.styleInput) {
         const style = (cfg.styleInput.value || 'standard').toLowerCase()
         const allowed = ['standard', 'bigger']
         const styleSafe = allowed.includes(style) ? style : 'standard'
         const folder = styleSafe === 'bigger' ? 'bigger' : 'standard'
-        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/studio/${folder}/ufotable.png`
+        return replacePathSegment(cfg.image, 'studio', folder)
       }
       if (cfg.id === 'overlay_network' && cfg.styleInput) {
         const style = (cfg.styleInput.value || 'color').toLowerCase()
         const allowed = ['color', 'white']
         const styleSafe = allowed.includes(style) ? style : 'color'
-        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/network/${styleSafe}/BBC%20One.png`
+        return replacePathSegment(cfg.image, 'network', styleSafe)
       }
       if (cfg.id === 'overlay_audio_codec' && cfg.styleInput) {
         const style = (cfg.styleInput.value || 'compact').toLowerCase()
         const allowed = ['compact', 'standard']
         const styleSafe = allowed.includes(style) ? style : 'compact'
-        return `https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/audio_codec/${styleSafe}/plus_atmos.png`
+        return replacePathSegment(cfg.image, 'audio_codec', styleSafe)
       }
       return cfg.image
+    }
+
+    // Runtime overlay specific: ensure selected font is loaded before drawing
+    const runtimeFontCache = new Map()
+    const normalizeFontFile = (fontVal) => {
+      if (!fontVal) return { file: null, family: null }
+      const file = fontVal.split(/[\\/]/).pop()
+      return {
+        file,
+        family: file ? file.replace(/\.[^.]+$/, '') : null
+      }
+    }
+    const ensureRuntimeFontLoaded = (fontVal) => {
+      const { file, family } = normalizeFontFile(fontVal)
+      if (!file || !file.match(/\.(ttf|otf)$/i) || typeof FontFace === 'undefined') {
+        return Promise.resolve(null)
+      }
+      if (runtimeFontCache.has(file)) return runtimeFontCache.get(file)
+      const face = new FontFace(family, `url(/static/fonts/${encodeURIComponent(file)})`)
+      const p = face.load()
+        .then(loaded => {
+          document.fonts.add(loaded)
+          return family
+        })
+        .catch(err => {
+          console.warn('[OverlayBoards] Failed to load font', file, err)
+          return null
+        })
+      runtimeFontCache.set(file, p)
+      return p
+    }
+
+    const getRuntimeVars = (cfg) => {
+      const container = cfg.container
+      const templateName = container?.dataset.overlayTemplate
+      const getVal = (key, defaultVal) => {
+        if (!container || !templateName) return defaultVal
+        const el = container.querySelector(`[name="${templateName}[${key}]"]`)
+        if (!el) return defaultVal
+        if (el.tagName === 'SELECT') return el.value || defaultVal
+        return el.type === 'number' ? Number(el.value) || defaultVal : el.value || defaultVal
+      }
+      return {
+        text: getVal('text', 'Runtime: '),
+        format: getVal('format', '<<runtimeH>>h <<runtimeM>>m'),
+        font: getVal('font', 'Inter-Medium.ttf'),
+        font_size: getVal('font_size', 55),
+        font_color: getVal('font_color', '#FFFFFF')
+      }
+    }
+
+    const buildRuntimeDataUrl = (cfg, loadedFamily = null) => {
+      const { text, format, font, font_size: fontSize, font_color: fontColor } = getRuntimeVars(cfg)
+      const { family: normalizedFamily } = normalizeFontFile(font)
+      const runtimeMinutes = 93
+      const runtimeH = Math.floor(runtimeMinutes / 60)
+      const runtimeM = runtimeMinutes % 60
+      const rendered = format
+        .replace(/<<runtimeH>>/gi, runtimeH)
+        .replace(/<<runtimeM>>/gi, runtimeM)
+        .replace(/<<runtime_total>>/gi, runtimeMinutes)
+        .replace(/<<runtime>>/gi, runtimeMinutes)
+      const fullText = `${text}${rendered}`
+
+      // Measure text first to keep the overlay small (so it doesn't block dragging other overlays)
+      const measureCanvas = document.createElement('canvas')
+      const measureCtx = measureCanvas.getContext('2d')
+      if (!measureCtx) return cfg.image
+      measureCtx.font = `${fontSize || 55}px "${loadedFamily || normalizedFamily || 'Inter'}"`
+      const metrics = measureCtx.measureText(fullText)
+      const textWidth = Math.ceil(metrics.width)
+      const textHeight = Math.ceil(
+        (metrics.actualBoundingBoxAscent || fontSize * 0.8) +
+        (metrics.actualBoundingBoxDescent || fontSize * 0.2)
+      )
+      const padding = 10
+      const canvasWidth = textWidth + padding * 2
+      const canvasHeight = textHeight + padding * 2
+
+      const canvas = document.createElement('canvas')
+      canvas.width = canvasWidth
+      canvas.height = canvasHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return cfg.image
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.fillStyle = fontColor || '#FFFFFF'
+      const family = loadedFamily || normalizedFamily || 'Inter'
+      ctx.font = `${fontSize || 55}px "${family}"`
+      ctx.textAlign = 'right'
+      ctx.textBaseline = 'bottom'
+      ctx.fillText(fullText, canvas.width - padding, canvas.height - padding)
+
+      // Store natural size so dragging/clamping respects the smaller overlay
+      cfg.naturalWidth = canvasWidth
+      cfg.naturalHeight = canvasHeight
+
+      return canvas.toDataURL('image/png')
     }
 
     Array.from(root.querySelectorAll('.overlay-board')).forEach(board => {
@@ -432,6 +546,13 @@ const OverlayHandler = {
         const visible = !toggle || toggle.checked
         layer.style.display = visible ? 'block' : 'none'
       }
+      const applyEditionVisibility = (cfg) => {
+        if (!cfg.edition || !cfg.edition.layer) return
+        const baseVisible = (!cfg.toggle || cfg.toggle.checked)
+        const editionToggle = cfg.edition.toggle
+        const editionVisible = baseVisible && (!editionToggle || editionToggle.checked)
+        cfg.edition.layer.style.display = editionVisible ? 'block' : 'none'
+      }
 
       const writeOffsets = (cfg, h, v) => {
         const { hInput, vInput } = getInputs(cfg)
@@ -442,6 +563,7 @@ const OverlayHandler = {
         hInput.dispatchEvent(new Event('change', { bubbles: true }))
         vInput.dispatchEvent(new Event('change', { bubbles: true }))
         writing = false
+        applyEditionPosition(cfg)
       }
 
       const applyPosition = (cfg) => {
@@ -467,6 +589,36 @@ const OverlayHandler = {
         layer.style.left = `${hVal * scaleX}px`
         layer.style.top = `${vVal * scaleY}px`
         applyVisibility(cfg, layer)
+        applyEditionPosition(cfg)
+      }
+
+      const applyEditionPosition = (cfg) => {
+        if (!cfg.edition || !cfg.edition.layer) return
+        const baseLayer = layers.get(cfg.id)
+        if (!baseLayer) return
+
+        const { hInput, vInput } = getInputs(cfg)
+        if (!hInput || !vInput) return
+
+        const { scaleX, scaleY } = getScale()
+        const resNatW = cfg.naturalWidth || baseLayer.naturalWidth || (cfg.baseWidth * 0.25)
+        const resNatH = cfg.naturalHeight || baseLayer.naturalHeight || (cfg.baseHeight * 0.2)
+
+        const edition = cfg.edition
+        const editionNatW = edition.naturalWidth || edition.layer.naturalWidth || resNatW
+        const editionNatH = edition.naturalHeight || edition.layer.naturalHeight || (resNatH * 0.4)
+
+        edition.layer.style.width = `${editionNatW * scaleX}px`
+        edition.layer.style.height = `${editionNatH * scaleY}px`
+
+        const hVal = ensureNumber(hInput.value)
+        const vVal = ensureNumber(vInput.value)
+        const spacing = Number(edition.spacing) || 15
+        const editionTop = vVal + resNatH + spacing
+
+        edition.layer.style.left = `${hVal * scaleX}px`
+        edition.layer.style.top = `${editionTop * scaleY}px`
+        applyEditionVisibility(cfg)
       }
 
       const bindDrag = (cfg, layer) => {
@@ -507,6 +659,7 @@ const OverlayHandler = {
           layer.style.left = `${nextH * scaleX}px`
           layer.style.top = `${nextV * scaleY}px`
           writeOffsets(cfg, nextH, nextV)
+          applyEditionPosition(cfg)
         }
 
         const onPointerUp = (e) => {
@@ -536,7 +689,10 @@ const OverlayHandler = {
       const bindToggle = (cfg, layer) => {
         const toggle = cfg.toggle
         if (!toggle) return
-        const handler = () => applyVisibility(cfg, layer)
+        const handler = () => {
+          applyVisibility(cfg, layer)
+          applyEditionPosition(cfg)
+        }
         toggle.addEventListener('change', handler)
       }
 
@@ -544,7 +700,8 @@ const OverlayHandler = {
         if (layers.has(cfg.id)) return layers.get(cfg.id)
         const layer = document.createElement('img')
         layer.className = 'overlay-board-layer'
-        layer.src = resolveOverlayImage(cfg)
+        const initialSrc = cfg.id === 'overlay_runtimes' ? buildRuntimeDataUrl(cfg) : resolveOverlayImage(cfg)
+        layer.src = initialSrc
         layer.alt = cfg.id
         layers.set(cfg.id, layer)
         canvas.appendChild(layer)
@@ -563,7 +720,49 @@ const OverlayHandler = {
             layer.src = resolveOverlayImage(cfg)
           })
         }
+
+        if (cfg.id === 'overlay_runtimes' && cfg.container) {
+          const templateName = cfg.container.dataset.overlayTemplate
+          const runtimeInputs = cfg.container.querySelectorAll(
+            `input[name="${templateName}[text]"], input[name="${templateName}[format]"], input[name="${templateName}[font]"], input[name="${templateName}[font_size]"], input[name="${templateName}[font_color]"], select[name="${templateName}[font]"]`
+          )
+          const refreshRuntime = () => {
+            const { font } = getRuntimeVars(cfg)
+            ensureRuntimeFontLoaded(font).then(family => {
+              const { family: norm } = normalizeFontFile(font)
+              layer.src = buildRuntimeDataUrl(cfg, family || norm)
+            })
+          }
+          runtimeInputs.forEach(input => {
+            input.addEventListener('input', refreshRuntime)
+            input.addEventListener('change', refreshRuntime)
+          })
+        }
         applyPosition(cfg)
+
+        // Optional stacked edition layer (for resolution overlays)
+        if (cfg.edition && cfg.edition.image && !cfg.edition.layer) {
+          const editionLayer = document.createElement('img')
+          editionLayer.className = 'overlay-board-layer'
+          editionLayer.src = cfg.edition.image
+          editionLayer.alt = `${cfg.id}-edition`
+          editionLayer.style.pointerEvents = 'none' // let dragging happen on the base resolution layer
+          cfg.edition.layer = editionLayer
+          layers.set(cfg.edition.id, editionLayer)
+          canvas.appendChild(editionLayer)
+
+          editionLayer.addEventListener('load', () => {
+            cfg.edition.naturalWidth = editionLayer.naturalWidth || cfg.edition.naturalWidth
+            cfg.edition.naturalHeight = editionLayer.naturalHeight || cfg.edition.naturalHeight
+            applyEditionPosition(cfg)
+          })
+
+          if (cfg.edition.toggle) {
+            cfg.edition.toggle.addEventListener('change', () => applyEditionPosition(cfg))
+          }
+
+          applyEditionPosition(cfg)
+        }
         return layer
       }
 
@@ -582,18 +781,48 @@ const OverlayHandler = {
           toggle: container.querySelector('.overlay-toggle'),
           styleInput: (container.dataset.styleInputId && document.getElementById(container.dataset.styleInputId)) || null,
           naturalWidth: null,
-          naturalHeight: null
+          naturalHeight: null,
+          edition: null,
+          container
         }
 
         if (!cfg.id || !cfg.image || !cfg.hId || !cfg.vId) return
         if (!document.getElementById(cfg.hId) || !document.getElementById(cfg.vId)) return
+
+        const templateName = container.dataset.overlayTemplate
+        const editionImage = container.dataset.overlayEditionImage
+        if (cfg.id === 'overlay_resolution' && editionImage) {
+          const editionToggle = templateName
+            ? container.querySelector(`input[name="${templateName}[use_edition]"]`)
+            : null
+          cfg.edition = {
+            id: `${cfg.id}__edition`,
+            image: editionImage,
+            toggle: editionToggle,
+            naturalWidth: null,
+            naturalHeight: null,
+            layer: null,
+            spacing: 15
+          }
+        }
         configs.push(cfg)
-        addOverlayLayer(cfg)
+        const layer = addOverlayLayer(cfg)
+
+        if (cfg.id === 'overlay_runtimes' && layer) {
+          const { font } = getRuntimeVars(cfg)
+          ensureRuntimeFontLoaded(font).then(family => {
+            const { family: norm } = normalizeFontFile(font)
+            layer.src = buildRuntimeDataUrl(cfg, family || norm)
+          })
+        }
       })
 
       // Recompute positions after images load or container resizes
       const recalcAll = () => {
-        configs.forEach(cfg => applyPosition(cfg))
+        configs.forEach(cfg => {
+          applyPosition(cfg)
+          applyEditionPosition(cfg)
+        })
       }
 
       window.addEventListener('resize', recalcAll)

@@ -1035,7 +1035,7 @@ prefix) %}
 <!-- End of {{ group.accordion }} Collection Accordion -->
 {% endmacro %}
 
-{% macro overlay_group_section(library, data, version_info, group) %}
+{% macro overlay_group_section(library, data, version_info, group, overlay_fonts=[]) %}
 {% set accordion_safe = group.accordion | replace(' ', '') %}
 <!-- {{ group.accordion }} Overlay Accordion -->
 <div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion">
@@ -1119,6 +1119,7 @@ prefix) %}
                                             data-overlay-id="{{ overlay.id }}"
                                             data-overlay-template="{{ template_name }}"
                                             data-overlay-image="{{ overlay_preview_image }}"
+                                            data-overlay-edition-image="{{ overlay.edition_overlay_url | default('', true) }}"
                                             data-horizontal-id="{{ template_name }}-horizontal_offset"
                                             data-vertical-id="{{ template_name }}-vertical_offset"
                                             data-style-input-id="{{ template_name }}-style"
@@ -1181,6 +1182,22 @@ prefix) %}
                                                 <input type="hidden" name="{{ template_name }}[builder_level]" value="{{ type }}">
                                                 {% endif %}
                                                 {% set ns = namespace(has_offsets=false, position_id=None, h_id=None, v_id=None) %}
+                                                {% set extra_reset_ids = [] %}
+                                                {% if overlay.id == 'overlay_runtimes' %}
+                                                {% set _ = extra_reset_ids.append(template_name ~ '-text') %}
+                                                {% set _ = extra_reset_ids.append(template_name ~ '-format') %}
+                                                {% set _ = extra_reset_ids.append(template_name ~ '-font') %}
+                                                {% set _ = extra_reset_ids.append(template_name ~ '-font_size') %}
+                                                {% set _ = extra_reset_ids.append(template_name ~ '-font_color') %}
+                                                {% endif %}
+                                                    {% set extra_reset_ids = [] %}
+                                                    {% if overlay.id == 'overlay_runtimes' %}
+                                                    {% set _ = extra_reset_ids.append(template_name ~ '-text') %}
+                                                    {% set _ = extra_reset_ids.append(template_name ~ '-format') %}
+                                                    {% set _ = extra_reset_ids.append(template_name ~ '-font') %}
+                                                    {% set _ = extra_reset_ids.append(template_name ~ '-font_size') %}
+                                                    {% set _ = extra_reset_ids.append(template_name ~ '-font_color') %}
+                                                    {% endif %}
                                                 {% set details_id = template_name ~ '-details' %}
                                                 <button class="btn btn-outline-secondary btn-sm ms-3 overlay-details-toggle"
                                                     type="button" data-section-id="{{ details_id }}"
@@ -1270,8 +1287,80 @@ prefix) %}
                                                             id="{{ template_name }}-{{ var_name }}"
                                                             name="{{ template_name }}[{{ var_name }}]"
                                                             aria-describedby="{{ template_name }}-{{ var_name }}_text"
+                                                            {% if var_name == 'font_size' %}min="1"{% endif %}
                                                             value="{{ selected_value }}"
                                                             data-default="{{ var_details.default }}">
+                                                    </div>
+                                                    {% elif var_details.input_type == "text" %}
+                                                    {% set display_label = var_details.label or var_name.replace('_', ' ') %}
+                                                    {% set input_id = template_name ~ '-' ~ var_name %}
+                                                    {% set alpha_id = input_id ~ '_alpha' %}
+                                                    {% set raw_color = (selected_value or var_details.default) | string %}
+                                                    {% set r,g,b,a_pct = 255,255,255,100 %}
+                                                    {% if raw_color and raw_color.startswith('#') and raw_color|length == 9 %}
+                                                        {% set r = ('0x' ~ raw_color[1:3])|int(255, base=16) %}
+                                                        {% set g = ('0x' ~ raw_color[3:5])|int(255, base=16) %}
+                                                        {% set b = ('0x' ~ raw_color[5:7])|int(255, base=16) %}
+                                                        {% set a_pct = (('0x' ~ raw_color[7:9])|int(255, base=16) * 100 // 255) %}
+                                                    {% elif raw_color and raw_color.startswith('#') and raw_color|length == 7 %}
+                                                        {% set r = ('0x' ~ raw_color[1:3])|int(255, base=16) %}
+                                                        {% set g = ('0x' ~ raw_color[3:5])|int(255, base=16) %}
+                                                        {% set b = ('0x' ~ raw_color[5:7])|int(255, base=16) %}
+                                                    {% elif raw_color and raw_color[0:4]|lower == 'rgba' and '(' in raw_color and ')' in raw_color %}
+                                                        {% set parts = raw_color[5:-1].split(',') %}
+                                                        {% if parts|length >= 3 %}
+                                                            {% set r = parts[0]|trim|int(255) %}
+                                                            {% set g = parts[1]|trim|int(255) %}
+                                                            {% set b = parts[2]|trim|int(255) %}
+                                                            {% if parts|length >= 4 %}
+                                                                {% set a_val = parts[3]|trim|float(1.0) %}
+                                                                {% set a_pct = (a_val * 100)|int %}
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    {% endif %}
+                                                    {% set color_hex = "#%02X%02X%02X" % (r, g, b) %}
+                                                    {% set color_hex_alpha = "#%02X%02X%02X%02X" % (r, g, b, (a_pct * 255 // 100)) %}
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text"
+                                                            id="{{ input_id }}_text"
+                                                            style="width: 170px;">
+                                                            {{ display_label }}
+                                                        </span>
+                                                        {% if var_name == 'font_color' %}
+                                                        <input type="text" class="form-control template-variable-text"
+                                                            id="{{ input_id }}"
+                                                            name="{{ template_name }}[{{ var_name }}]"
+                                                            aria-describedby="{{ input_id }}_text"
+                                                            value="{{ color_hex_alpha }}"
+                                                            data-default="{{ var_details.default }}"
+                                                            oninput="(function(field){ const picker = document.getElementById('{{ input_id }}_picker'); const slider = document.getElementById('{{ alpha_id }}'); const val = field.value.trim(); if (val.startsWith('#') && (val.length === 9 || val.length === 7)) { const hex = val.length === 9 ? val : (val + 'FF'); const norm = `#${hex.substr(1).toUpperCase()}`; field.value = norm; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const a=parseInt(hex.substr(7,2),16); const pct = Math.round((a/255)*100); if (picker) picker.value = `#${hex.substr(1,6)}`.toUpperCase(); if (slider) { slider.value = pct; slider.title = `Alpha: ${pct}%`; } } })(this)">
+                                                        <input type="color" class="form-control form-control-color ms-2"
+                                                            id="{{ input_id }}_picker"
+                                                            aria-label="Pick color"
+                                                            value="{{ color_hex }}"
+                                                            oninput="(function(picker){ const target = document.getElementById('{{ input_id }}'); const alpha = document.getElementById('{{ alpha_id }}'); const a = alpha ? (Number(alpha.value)/100) : 1; if (target) { const hex = (picker.value || '#ffffff').toUpperCase(); const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } })(this)">
+                                                        <input type="range" class="form-range ms-2" id="{{ alpha_id }}" min="0" max="100" value="{{ a_pct }}"
+                                                            oninput="(function(slider){ const picker = slider.previousElementSibling; const target = document.getElementById('{{ input_id }}'); const hex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'; const a = Number(slider.value)/100; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; if (target) { target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } slider.title = `Alpha: ${slider.value}%`; })(this)">
+                                                        {% elif var_name == 'font' %}
+                                                        {% set fonts_list = overlay_fonts if overlay_fonts else ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'Roboto-Regular.ttf'] %}
+                                                        <select class="form-select template-variable-text"
+                                                            id="{{ input_id }}"
+                                                            name="{{ template_name }}[{{ var_name }}]"
+                                                            aria-describedby="{{ input_id }}_text"
+                                                            data-default="{{ var_details.default }}">
+                                                            <option value="" {% if selected_value=='' %}selected{% endif %}>Select font</option>
+                                                            {% for fnt in fonts_list %}
+                                                            <option value="{{ fnt }}" {% if selected_value==fnt %}selected{% endif %}>{{ fnt }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        {% else %}
+                                                        <input type="text" class="form-control template-variable-text"
+                                                            id="{{ input_id }}"
+                                                            name="{{ template_name }}[{{ var_name }}]"
+                                                            aria-describedby="{{ input_id }}_text"
+                                                            value="{{ selected_value }}"
+                                                            data-default="{{ var_details.default }}">
+                                                        {% endif %}
                                                     </div>
                                                     {% elif var_details.type == "toggle" or var_details.input_type == "toggle" %}
                                                     {% set toggle_id = template_name ~ '-' ~ var_name ~ '-' ~ (var_details.value or 'true') %}
@@ -1300,56 +1389,58 @@ prefix) %}
                                                             class="btn btn-sm btn-outline-secondary reset-offset-btn"
                                                             data-horizontal-id="{{ ns.h_id or template_name ~ '-horizontal_offset' }}"
                                                             data-vertical-id="{{ ns.v_id or template_name ~ '-vertical_offset' }}"
-                                                            {% if ns.position_id %}data-position-id="{{ ns.position_id }}"{% endif %}>
+                                                            {% if ns.position_id %}data-position-id="{{ ns.position_id }}"{% endif %}
+                                                            {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
                                                             Reset offsets
                                                         </button>
                                                     </div>
                                                     {% endif %}
 
-                                                    {% if not ns.has_offsets and overlay.default_offsets is mapping %}
-                                                    {% set h_default = overlay.default_offsets.get('horizontal', 0) %}
-                                                    {% set v_default = overlay.default_offsets.get('vertical', 0) %}
-                                                    {% set h_flat_key = template_name ~ '[horizontal_offset]' %}
-                                                    {% set v_flat_key = template_name ~ '[vertical_offset]' %}
-                                                    {% set h_value = data.libraries.get(h_flat_key, h_default) %}
-                                                    {% set v_value = data.libraries.get(v_flat_key, v_default) %}
-                                                    <div class="overlay-template-section mt-2">
-                                                        <div class="input-group mb-2">
-                                                            <span class="input-group-text"
-                                                                id="{{ template_name }}-horizontal_offset_text"
-                                                                style="width: 170px;">
+                                                {% if not ns.has_offsets and overlay.default_offsets is mapping %}
+                                                {% set h_default = overlay.default_offsets.get('horizontal', 0) %}
+                                                {% set v_default = overlay.default_offsets.get('vertical', 0) %}
+                                                {% set h_flat_key = template_name ~ '[horizontal_offset]' %}
+                                                {% set v_flat_key = template_name ~ '[vertical_offset]' %}
+                                                {% set h_value = data.libraries.get(h_flat_key, h_default) %}
+                                                {% set v_value = data.libraries.get(v_flat_key, v_default) %}
+                                                <div class="overlay-template-section mt-2">
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text"
+                                                            id="{{ template_name }}-horizontal_offset_text"
+                                                            style="width: 170px;">
                                                                 Horizontal Offset
                                                             </span>
-                                                            <input type="number" class="form-control template-variable-number"
-                                                                id="{{ template_name }}-horizontal_offset"
-                                                                name="{{ template_name }}[horizontal_offset]"
-                                                                aria-describedby="{{ template_name }}-horizontal_offset_text"
-                                                                value="{{ h_value }}"
-                                                                data-default="{{ h_default }}">
-                                                        </div>
-                                                        <div class="input-group mb-2">
-                                                            <span class="input-group-text"
-                                                                id="{{ template_name }}-vertical_offset_text"
-                                                                style="width: 170px;">
+                                                        <input type="number" class="form-control template-variable-number"
+                                                            id="{{ template_name }}-horizontal_offset"
+                                                            name="{{ template_name }}[horizontal_offset]"
+                                                            aria-describedby="{{ template_name }}-horizontal_offset_text"
+                                                            value="{{ h_value }}"
+                                                            data-default="{{ h_default }}">
+                                                    </div>
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text"
+                                                            id="{{ template_name }}-vertical_offset_text"
+                                                            style="width: 170px;">
                                                                 Vertical Offset
                                                             </span>
-                                                            <input type="number" class="form-control template-variable-number"
-                                                                id="{{ template_name }}-vertical_offset"
-                                                                name="{{ template_name }}[vertical_offset]"
-                                                                aria-describedby="{{ template_name }}-vertical_offset_text"
-                                                                value="{{ v_value }}"
-                                                                data-default="{{ v_default }}">
-                                                        </div>
-                                                        <div class="mb-2">
-                                                            <button type="button"
-                                                                class="btn btn-sm btn-outline-secondary reset-offset-btn"
-                                                                data-horizontal-id="{{ template_name }}-horizontal_offset"
-                                                                data-vertical-id="{{ template_name }}-vertical_offset">
-                                                                Reset offsets
-                                                            </button>
-                                                        </div>
+                                                        <input type="number" class="form-control template-variable-number"
+                                                            id="{{ template_name }}-vertical_offset"
+                                                            name="{{ template_name }}[vertical_offset]"
+                                                            aria-describedby="{{ template_name }}-vertical_offset_text"
+                                                            value="{{ v_value }}"
+                                                            data-default="{{ v_default }}">
                                                     </div>
-                                                    {% endif %}
+                                                    <div class="mb-2">
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-outline-secondary reset-offset-btn"
+                                                            data-horizontal-id="{{ template_name }}-horizontal_offset"
+                                                            data-vertical-id="{{ template_name }}-vertical_offset"
+                                                            {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
+                                                            Reset offsets
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
                                                 </div>
                                                     {% elif overlay.default_offsets is mapping %}
                                                 {% set h_default = overlay.default_offsets.get('horizontal', 0) %}
@@ -1389,7 +1480,8 @@ prefix) %}
                                                         <button type="button"
                                                             class="btn btn-sm btn-outline-secondary reset-offset-btn"
                                                             data-horizontal-id="{{ template_name }}-horizontal_offset"
-                                                            data-vertical-id="{{ template_name }}-vertical_offset">
+                                                            data-vertical-id="{{ template_name }}-vertical_offset"
+                                                            {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
                                                             Reset offsets
                                                         </button>
                                                     </div>

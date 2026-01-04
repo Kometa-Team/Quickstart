@@ -23,7 +23,7 @@ from collections import deque
 
 import namesgenerator
 import requests
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 from cachelib.file import FileSystemCache
 from datetime import datetime
 from dotenv import load_dotenv
@@ -69,6 +69,7 @@ for folder in UPLOAD_FOLDERS.values():
     os.makedirs(folder, exist_ok=True)
 IMAGES_FOLDER = os.path.join(helpers.MEIPASS_DIR, "static", "images")
 OVERLAY_FOLDER = os.path.join(IMAGES_FOLDER, "overlays")
+FONTS_FOLDER = os.path.join(helpers.MEIPASS_DIR, "static", "fonts")
 DEFAULT_IMAGE_MAP = {
     "movie": os.path.join(IMAGES_FOLDER, "default.png"),
     "show": os.path.join(IMAGES_FOLDER, "default-sho_preview.png"),
@@ -77,6 +78,29 @@ DEFAULT_IMAGE_MAP = {
 }
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
+_FONT_CACHE: list[str] = []
+
+# Font discovery (TTF/OTF) across common static dirs
+def list_overlay_fonts() -> list[str]:
+    global _FONT_CACHE
+    if _FONT_CACHE:
+        return _FONT_CACHE
+    fonts: list[str] = []
+    font_dirs = [
+        os.path.join(helpers.MEIPASS_DIR, "static", "fonts"),
+        os.path.join(helpers.BASE_DIR, "static", "fonts"),
+        os.path.join(helpers.WORKING_DIR, "static", "fonts"),
+    ]
+    for fdir in font_dirs:
+        try:
+            if os.path.isdir(fdir):
+                for fname in os.listdir(fdir):
+                    if fname.lower().endswith((".ttf", ".otf")) and fname not in fonts:
+                        fonts.append(fname)
+        except Exception:
+            continue
+    _FONT_CACHE = fonts
+    return fonts
 
 # Initialize logging
 helpers.initialize_logging()
@@ -114,7 +138,10 @@ threading.Thread(target=start_update_thread, daemon=True).start()
 @app.context_processor
 def inject_version_info():
     """Ensure latest version info is injected dynamically in templates"""
-    return {"version_info": helpers.check_for_update()}
+    return {
+        "version_info": helpers.check_for_update(),
+        "overlay_fonts": list_overlay_fonts(),
+    }
 
 
 def inject_kometa_root():
@@ -398,6 +425,27 @@ def generate_preview():
     selected_image = data.get("selected_image", "default.png")
     library_id = data.get("library_id", "default-library")
 
+    # Lazy-load overlay metadata so we can honor JSON-defined URLs (e.g., edition overlays)
+    if not hasattr(generate_preview, "_overlay_meta"):
+        overlay_cfg = helpers.load_quickstart_config("quickstart_overlays.json") or []
+        meta = {}
+        for group in overlay_cfg:
+            for ov in group.get("overlays", []):
+                ov_id = ov.get("id")
+                if ov_id:
+                    meta[ov_id] = ov
+        generate_preview._overlay_meta = meta
+    overlay_meta = getattr(generate_preview, "_overlay_meta", {})
+
+    def fetch_image_from_url(url: str) -> Image.Image | None:
+        try:
+            resp = requests.get(url, timeout=10)
+            resp.raise_for_status()
+            return Image.open(BytesIO(resp.content))
+        except Exception as e:
+            helpers.ts_log(f"Failed to fetch overlay image from {url}: {e}", level="WARNING")
+            return None
+
     # Normalize overlays from dict (by type) or flat list
     raw_overlays = data.get("overlays", {})
     if isinstance(raw_overlays, dict):
@@ -446,6 +494,66 @@ def generate_preview():
     else:
         prefix = ""
 
+    def render_runtime_overlay(tv: dict, canvas_size: tuple[int, int]) -> Image.Image | None:
+        try:
+            width, height = canvas_size
+            img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(img)
+
+            prefix = str(tv.get("text", "Runtime: "))
+            fmt = str(tv.get("format", "<<runtimeH>>h <<runtimeM>>m"))
+            runtime_minutes = tv.get("runtime_minutes", 93)
+            try:
+                runtime_minutes = int(runtime_minutes)
+            except Exception:
+                runtime_minutes = 93
+            runtime_h = runtime_minutes // 60
+            runtime_m = runtime_minutes % 60
+
+            rendered_fmt = (
+                fmt.replace("<<runtimeH>>", str(runtime_h))
+                .replace("<<runtimeM>>", str(runtime_m))
+                .replace("<<runtime_total>>", str(runtime_minutes))
+                .replace("<<runtime>>", str(runtime_minutes))
+            )
+            text = f"{prefix}{rendered_fmt}"
+
+            font_size = tv.get("font_size", 55)
+            try:
+                font_size = int(font_size)
+            except Exception:
+                font_size = 55
+            font_path = str(tv.get("font", "") or "").strip()
+
+            # Resolve font path against known font directory if a basename is given
+            font = None
+            font_candidates = []
+            if font_path:
+                font_candidates.append(font_path)
+                font_candidates.append(os.path.join(FONTS_FOLDER, os.path.basename(font_path)))
+            for candidate in font_candidates:
+                if candidate and os.path.exists(candidate):
+                    try:
+                        font = ImageFont.truetype(candidate, font_size)
+                        break
+                    except Exception:
+                        font = None
+            if font is None:
+                font = ImageFont.load_default()
+
+            color_val = tv.get("font_color", "#FFFFFF")
+            try:
+                fill = ImageColor.getcolor(str(color_val), "RGBA")
+            except Exception:
+                fill = (255, 255, 255, 255)
+
+            margin = 20
+            draw.text((width - margin, height - margin), text, fill=fill, font=font, anchor="rb")
+            return img
+        except Exception as e:
+            helpers.ts_log(f"Failed to render runtime overlay: {e}", level="WARNING")
+            return None
+
     # Apply overlays with template_variables support
     for overlay_entry in overlays:
         if isinstance(overlay_entry, str):
@@ -474,8 +582,31 @@ def generate_preview():
                 overlay_path = fallback_path
 
         if os.path.exists(overlay_path):
+            if overlay_id == "overlay_runtimes":
+                runtime_img = render_runtime_overlay(template_vars, base_img.size)
+                if runtime_img:
+                    base_img.paste(runtime_img, (0, 0), runtime_img)
+                    continue  # skip default image paste
+
             overlay_img = Image.open(overlay_path).convert("RGBA")
             base_img.paste(overlay_img, (0, 0), overlay_img)
+
+            # Stack edition overlay below resolution when enabled
+            if overlay_id == "overlay_resolution":
+                use_edition = str(template_vars.get("use_edition", "false")).lower() == "true"
+                if use_edition:
+                    bbox = overlay_img.getbbox()
+                    if bbox:
+                        edition_url = (
+                            overlay_meta.get("overlay_resolution", {}).get("edition_overlay_url")
+                        )
+                        edition_img = fetch_image_from_url(edition_url) if edition_url else None
+                        if edition_img:
+                            edition_img = edition_img.convert("RGBA")
+                            x_offset = bbox[0]
+                            spacing = 15
+                            y_offset = bbox[3] + spacing
+                            base_img.paste(edition_img, (x_offset, y_offset), edition_img)
 
     base_img.save(preview_filepath)
 
@@ -917,6 +1048,7 @@ def step(name):
             movie_libraries=movie_libraries,
             show_libraries=show_libraries,
             config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
+            overlay_fonts=list_overlay_fonts(),
         )
 
         end_time = time.perf_counter()
@@ -948,6 +1080,7 @@ def step(name):
         overlay_config=overlay_config,
         template_list=file_list,
         available_configs=available_configs,
+        overlay_fonts=list_overlay_fonts(),
         image_data={
             "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
             "show": os.listdir(UPLOAD_FOLDERS["show"]),

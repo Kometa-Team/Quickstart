@@ -107,12 +107,32 @@ const ImageHandler = {
         template_variables: {}
       }
 
-      // Find any selects like mov-library_movies-movie-overlay_ribbon[style]
-      document.querySelectorAll(`select[name^="${fullName.replace('-overlay_', '-template_overlay_')}["]`).forEach((select) => {
-        const match = select.name.match(/\[([^\]]+)\]/)
-        if (match) {
-          const varName = match[1]
-          overlayObj.template_variables[varName] = select.value
+      const container = input.closest('.template-toggle-group')
+      const templateName = container?.dataset.overlayTemplate
+      const templatePrefix = templateName || fullName.replace('-overlay_', '-template_overlay_')
+
+      // Collect template variables: selects and toggles (e.g., use_edition)
+      const selectors = container
+        ? container.querySelectorAll(
+            `select[name^="${templatePrefix}["], input[type="checkbox"][name^="${templatePrefix}["], input[type="text"][name^="${templatePrefix}["], input[type="number"][name^="${templatePrefix}["], input[type="color"][name^="${templatePrefix}["]`
+        )
+        : document.querySelectorAll(
+            `select[name^="${templatePrefix}["], input[type="checkbox"][name^="${templatePrefix}["], input[type="text"][name^="${templatePrefix}["], input[type="number"][name^="${templatePrefix}["], input[type="color"][name^="${templatePrefix}["]`
+        )
+
+      selectors.forEach((el) => {
+        const match = el.name.match(/\[([^\]]+)\]/)
+        if (!match) return
+        const varName = match[1]
+        if (el.type === 'checkbox') {
+          overlayObj.template_variables[varName] = el.checked ? (el.value || 'true') : 'false'
+        } else if (el.type === 'number') {
+          const num = Number(el.value)
+          overlayObj.template_variables[varName] = Number.isFinite(num) ? num : el.value
+        } else if (el.type === 'color') {
+          overlayObj.template_variables[varName] = el.value
+        } else {
+          overlayObj.template_variables[varName] = el.value
         }
       })
 

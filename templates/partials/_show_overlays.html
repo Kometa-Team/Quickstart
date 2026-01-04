@@ -81,5 +81,5 @@
 
 {% import 'partials/_macros.html' as macros %}
 {% for group in overlay_config %}
-{{ macros.overlay_group_section(library, data, version_info, group) }}
+{{ macros.overlay_group_section(library, data, version_info, group, overlay_fonts) }}
 {% endfor %}

@@ -761,6 +761,11 @@ function wireOffsetReset (scope) {
       const hInput = hId ? document.getElementById(hId) : null
       const vInput = vId ? document.getElementById(vId) : null
       const pInput = pId ? document.getElementById(pId) : null
+      const extraIds = (btn.dataset.resetIds || '')
+        .split(',')
+        .map(id => id.trim())
+        .filter(Boolean)
+
       if (hInput && hInput.dataset.default !== undefined) {
         hInput.value = hInput.dataset.default
         hInput.dispatchEvent(new Event('change', { bubbles: true }))
@@ -773,6 +778,13 @@ function wireOffsetReset (scope) {
         pInput.value = pInput.dataset.default
         pInput.dispatchEvent(new Event('change', { bubbles: true }))
       }
+      extraIds.forEach(id => {
+        const input = document.getElementById(id)
+        if (input && input.dataset.default !== undefined) {
+          input.value = input.dataset.default
+          input.dispatchEvent(new Event('change', { bubbles: true }))
+        }
+      })
     })
     btn.dataset.listenerAdded = 'true'
   })
