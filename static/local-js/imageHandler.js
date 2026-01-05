@@ -124,6 +124,10 @@ const ImageHandler = {
         const match = el.name.match(/\[([^\]]+)\]/)
         if (!match) return
         const varName = match[1]
+        // Do not emit text variables for overlays that only need text for preview
+        if (varName === 'text' && ['overlay_video_format', 'overlay_aspect'].includes(overlayId)) {
+          return
+        }
         if (el.type === 'checkbox') {
           overlayObj.template_variables[varName] = el.checked ? (el.value || 'true') : 'false'
         } else if (el.type === 'number') {

@@ -996,6 +996,30 @@
         "extra_url": "https://trash-guides.info/",
         "template_variables": [
           {
+            "input_type": "text",
+            "key": "text",
+            "label": "Text",
+            "default": "1.78"
+          },
+          {
+            "input_type": "text",
+            "key": "font",
+            "label": "Font",
+            "default": "Inter-Medium.ttf"
+          },
+          {
+            "input_type": "number",
+            "key": "font_size",
+            "label": "Font Size",
+            "default": 55
+          },
+          {
+            "input_type": "text",
+            "key": "font_color",
+            "label": "Font Color",
+            "default": "#FFFFFFFF"
+          },
+          {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Show",
@@ -1361,7 +1385,7 @@
             "input_type": "text",
             "key": "font",
             "label": "Font",
-            "default": "fonts/Inter-Medium.ttf"
+            "default": "Inter-Medium.ttf"
           },
           {
             "input_type": "number",
@@ -1460,6 +1484,30 @@
         "tooltip_variant": "danger",
         "extra_url": "https://trash-guides.info/",
         "template_variables": [
+          {
+            "input_type": "text",
+            "key": "text",
+            "label": "Text",
+            "default": "HDTV"
+          },
+          {
+            "input_type": "text",
+            "key": "font",
+            "label": "Font",
+            "default": "Inter-Medium.ttf"
+          },
+          {
+            "input_type": "number",
+            "key": "font_size",
+            "label": "Font Size",
+            "default": 55
+          },
+          {
+            "input_type": "text",
+            "key": "font_color",
+            "label": "Font Color",
+            "default": "#FFFFFFFF"
+          },
           {
             "type": "toggle",
             "key": "builder_level",

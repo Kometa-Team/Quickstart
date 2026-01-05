@@ -457,6 +457,29 @@ const OverlayHandler = {
       }
     }
 
+    const getSimpleTextVars = (cfg) => {
+      const container = cfg.container
+      const templateName = container?.dataset.overlayTemplate
+      const getVal = (key, defaultVal) => {
+        if (!container || !templateName) return defaultVal
+        const el = container.querySelector(`[name="${templateName}[${key}]"]`)
+        if (!el) return defaultVal
+        const fallback = el.dataset?.default || defaultVal
+        if (el.tagName === 'SELECT') return el.value || fallback
+        if (el.type === 'number') {
+          const n = Number(el.value)
+          return Number.isFinite(n) ? n : (Number(el.dataset?.default) || fallback)
+        }
+        return el.value || fallback
+      }
+      return {
+        text: getVal('text', ''),
+        font: getVal('font', 'Inter-Medium.ttf'),
+        font_size: getVal('font_size', 55),
+        font_color: getVal('font_color', '#FFFFFFFF')
+      }
+    }
+
     const buildRuntimeDataUrl = (cfg, loadedFamily = null) => {
       const { text, format, font, font_size: fontSize, font_color: fontColor } = getRuntimeVars(cfg)
       const { family: normalizedFamily } = normalizeFontFile(font)
@@ -503,6 +526,44 @@ const OverlayHandler = {
       cfg.naturalWidth = canvasWidth
       cfg.naturalHeight = canvasHeight
 
+      return canvas.toDataURL('image/png')
+    }
+
+    const buildSimpleTextDataUrl = (cfg, vars, loadedFamily = null) => {
+      const { text, font, font_size: fontSize, font_color: fontColor } = vars
+      const { family: normalizedFamily } = normalizeFontFile(font)
+      const content = text || ''
+
+      const measureCanvas = document.createElement('canvas')
+      const measureCtx = measureCanvas.getContext('2d')
+      if (!measureCtx) return cfg.image
+      measureCtx.font = `${fontSize || 55}px "${loadedFamily || normalizedFamily || 'Inter'}"`
+      const metrics = measureCtx.measureText(content)
+      const textWidth = Math.ceil(metrics.width)
+      const textHeight = Math.ceil(
+        (metrics.actualBoundingBoxAscent || fontSize * 0.8) +
+        (metrics.actualBoundingBoxDescent || fontSize * 0.2)
+      )
+      const padding = 10
+      const canvasWidth = textWidth + padding * 2
+      const canvasHeight = textHeight + padding * 2
+
+      const canvas = document.createElement('canvas')
+      canvas.width = canvasWidth
+      canvas.height = canvasHeight
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return cfg.image
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.fillStyle = fontColor || '#FFFFFFFF'
+      const family = loadedFamily || normalizedFamily || 'Inter'
+      ctx.font = `${fontSize || 55}px "${family}"`
+      ctx.textAlign = 'right'
+      ctx.textBaseline = 'bottom'
+      ctx.fillText(content, canvas.width - padding, canvas.height - padding)
+
+      cfg.naturalWidth = canvasWidth
+      cfg.naturalHeight = canvasHeight
       return canvas.toDataURL('image/png')
     }
 
@@ -814,6 +875,26 @@ const OverlayHandler = {
             const { family: norm } = normalizeFontFile(font)
             layer.src = buildRuntimeDataUrl(cfg, family || norm)
           })
+        }
+
+        if ((cfg.id === 'overlay_video_format' || cfg.id === 'overlay_aspect') && layer && cfg.container) {
+          const refreshTextOverlay = () => {
+            const vars = getSimpleTextVars(cfg)
+            ensureRuntimeFontLoaded(vars.font).then(family => {
+              const { family: norm } = normalizeFontFile(vars.font)
+              layer.src = buildSimpleTextDataUrl(cfg, vars, family || norm)
+            })
+          }
+
+          const templateName = cfg.container.dataset.overlayTemplate
+          const inputs = cfg.container.querySelectorAll(
+            `[name="${templateName}[text]"], [name="${templateName}[font]"], [name="${templateName}[font_size]"], [name="${templateName}[font_color]"]`
+          )
+          inputs.forEach(input => {
+            input.addEventListener('input', refreshTextOverlay)
+            input.addEventListener('change', refreshTextOverlay)
+          })
+          refreshTextOverlay()
         }
       })
 
