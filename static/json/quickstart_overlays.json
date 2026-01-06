@@ -14,7 +14,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/ribbon/yellow/oscars.png",
         "default_offsets": {
           "horizontal": 0,
-          "vertical": 0
+          "vertical": 0,
+          "origin": "bottom_right"
         },
         "media_types": [
           "movie",
@@ -61,7 +62,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Mediastinger.png",
         "default_offsets": {
           "horizontal": 200,
-          "vertical": 15
+          "vertical": 15,
+          "origin": "top_right"
         },
         "media_types": [
           "movie"
@@ -983,7 +985,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/aspect.png",
         "default_offsets": {
           "horizontal": 0,
-          "vertical": 150
+          "vertical": 150,
+          "origin": "center_bottom"
         },
         "media_types": [
           "movie",
@@ -1056,7 +1059,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/audio_codec/compact/plus_atmos.png",
         "default_offsets": {
           "horizontal": 0,
-          "vertical": 15
+          "vertical": 15,
+          "origin": "center_top"
         },
         "media_types": [
           "movie",
@@ -1117,7 +1121,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/multi_audio.png",
         "default_offsets": {
           "horizontal": 0,
-          "vertical": 30
+          "vertical": 30,
+          "origin": "center_bottom"
         },
         "media_types": [
           "movie",
@@ -1302,7 +1307,8 @@
         "edition_overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/edition/enhanced.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 15
+          "vertical": 15,
+          "origin": "top_left"
         },
         "media_types": [
           "movie",
@@ -1361,7 +1367,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/runtimes.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 30
+          "vertical": 30,
+          "origin": "bottom_right"
         },
         "media_types": [
           "movie",
@@ -1427,7 +1434,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/versions.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 335
+          "vertical": 335,
+          "origin": "bottom_right"
         },
         "media_types": [
           "movie",
@@ -1472,7 +1480,8 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/video_format.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 30
+          "vertical": 30,
+          "origin": "bottom_left"
         },
         "media_types": [
           "movie",
@@ -1554,7 +1563,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/streaming/color/Crave.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 390
+          "vertical": 390,
+          "origin": "bottom_left"
         },
         "media_types": [
           "movie",
@@ -1612,7 +1622,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/studio/standard/8bit.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 150
+          "vertical": 150,
+          "origin": "bottom_left"
         },
         "media_types": [
           "movie",
@@ -1670,7 +1681,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/network/color/BBC%20One.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 510
+          "vertical": 510,
+          "origin": "bottom_left"
         },
         "media_types": [
           "show",
@@ -1736,7 +1748,8 @@
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Direct-Play.png",
         "default_offsets": {
           "horizontal": 0,
-          "vertical": 150
+          "vertical": 150,
+          "origin": "center_bottom"
         },
         "media_types": [
           "movie",

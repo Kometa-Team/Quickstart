@@ -179,6 +179,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const payload = {}
       card.querySelectorAll('input, select, textarea').forEach(el => {
         if (!el.name || el.disabled) return
+        if (el.dataset && el.dataset.skipYaml === 'true') return
         if (el.type === 'file') return
 
         if (el.tagName === 'SELECT' && el.multiple) {

@@ -100,7 +100,8 @@ const ImageHandler = {
       const overlayIdMatch = fullName.match(/overlay_([a-zA-Z0-9_]+)/)
       if (!overlayIdMatch) return
 
-      const overlayId = `overlay_${overlayIdMatch[1]}`
+      const overlaySuffix = overlayIdMatch[1]
+      const overlayId = `overlay_${overlaySuffix}`
 
       const overlayObj = {
         id: overlayId,
@@ -125,7 +126,7 @@ const ImageHandler = {
         if (!match) return
         const varName = match[1]
         // Do not emit text variables for overlays that only need text for preview
-        if (varName === 'text' && ['overlay_video_format', 'overlay_aspect'].includes(overlayId)) {
+        if (varName === 'text' && (['overlay_video_format', 'overlay_aspect'].includes(overlayId) || ['video_format', 'aspect'].includes(overlaySuffix))) {
           return
         }
         if (el.type === 'checkbox') {
@@ -139,6 +140,11 @@ const ImageHandler = {
           overlayObj.template_variables[varName] = el.value
         }
       })
+
+      // Ensure text is not emitted for overlays that only use it for preview
+      if (['video_format', 'aspect'].includes(overlaySuffix)) {
+        delete overlayObj.template_variables.text
+      }
 
       overlays.push(overlayObj)
     })

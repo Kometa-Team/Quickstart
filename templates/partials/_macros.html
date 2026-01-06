@@ -1126,7 +1126,8 @@ prefix) %}
                                             data-overlay-type="{{ type }}"
                                             data-library-id="{{ library.id }}"
                                             data-base-width="{{ base_width }}"
-                                            data-base-height="{{ base_height }}">
+                                            data-base-height="{{ base_height }}"
+                                            {% if overlay.default_offsets and overlay.default_offsets.origin %}data-overlay-origin="{{ overlay.default_offsets.origin }}"{% endif %}>
                                             <div class="form-check form-switch">
                                                 <input
                                                     class="form-check-input overlay-toggle template-parent-toggle{% if overlay.readonly %} readonly-toggle{% endif %}"
@@ -1183,21 +1184,12 @@ prefix) %}
                                                 {% endif %}
                                                 {% set ns = namespace(has_offsets=false, position_id=None, h_id=None, v_id=None) %}
                                                 {% set extra_reset_ids = [] %}
-                                                {% if overlay.id == 'overlay_runtimes' %}
-                                                {% set _ = extra_reset_ids.append(template_name ~ '-text') %}
-                                                {% set _ = extra_reset_ids.append(template_name ~ '-format') %}
-                                                {% set _ = extra_reset_ids.append(template_name ~ '-font') %}
-                                                {% set _ = extra_reset_ids.append(template_name ~ '-font_size') %}
-                                                {% set _ = extra_reset_ids.append(template_name ~ '-font_color') %}
+                                                {% if overlay.id in ['overlay_runtimes', 'overlay_aspect', 'overlay_video_format'] %}
+                                                    {% set reset_vars = ['text', 'format', 'font', 'font_size', 'font_color'] %}
+                                                    {% for rv in reset_vars %}
+                                                        {% set _ = extra_reset_ids.append(template_name ~ '-' ~ rv) %}
+                                                    {% endfor %}
                                                 {% endif %}
-                                                    {% set extra_reset_ids = [] %}
-                                                    {% if overlay.id == 'overlay_runtimes' %}
-                                                    {% set _ = extra_reset_ids.append(template_name ~ '-text') %}
-                                                    {% set _ = extra_reset_ids.append(template_name ~ '-format') %}
-                                                    {% set _ = extra_reset_ids.append(template_name ~ '-font') %}
-                                                    {% set _ = extra_reset_ids.append(template_name ~ '-font_size') %}
-                                                    {% set _ = extra_reset_ids.append(template_name ~ '-font_color') %}
-                                                    {% endif %}
                                                 {% set details_id = template_name ~ '-details' %}
                                                 <button class="btn btn-outline-secondary btn-sm ms-3 overlay-details-toggle"
                                                     type="button" data-section-id="{{ details_id }}"
@@ -1333,14 +1325,14 @@ prefix) %}
                                                             aria-describedby="{{ input_id }}_text"
                                                             value="{{ color_hex_alpha }}"
                                                             data-default="{{ var_details.default }}"
-                                                            oninput="(function(field){ const picker = document.getElementById('{{ input_id }}_picker'); const slider = document.getElementById('{{ alpha_id }}'); const val = field.value.trim(); if (val.startsWith('#') && (val.length === 9 || val.length === 7)) { const hex = val.length === 9 ? val : (val + 'FF'); const norm = `#${hex.substr(1).toUpperCase()}`; field.value = norm; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const a=parseInt(hex.substr(7,2),16); const pct = Math.round((a/255)*100); if (picker) picker.value = `#${hex.substr(1,6)}`.toUpperCase(); if (slider) { slider.value = pct; slider.title = `Alpha: ${pct}%`; } } })(this)">
+                                                            oninput="(function(field){ const picker = document.getElementById('{{ input_id }}_picker'); const slider = document.getElementById('{{ alpha_id }}'); const val = field.value.trim(); if (val.startsWith('#') && (val.length === 9 || val.length === 7)) { const hex = val.length === 9 ? val : (val + 'FF'); const norm = `#${hex.substr(1).toUpperCase()}`; field.value = norm; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const a=parseInt(hex.substr(7,2),16); const pct = Math.round((a/255)*100); if (picker) picker.value = `#${hex.substr(1,6)}`.toUpperCase(); if (slider) { slider.value = pct; slider.title = `Opacity: ${pct}%`; } } })(this)">
                                                         <input type="color" class="form-control form-control-color ms-2"
                                                             id="{{ input_id }}_picker"
                                                             aria-label="Pick color"
                                                             value="{{ color_hex }}"
                                                             oninput="(function(picker){ const target = document.getElementById('{{ input_id }}'); const alpha = document.getElementById('{{ alpha_id }}'); const a = alpha ? (Number(alpha.value)/100) : 1; if (target) { const hex = (picker.value || '#ffffff').toUpperCase(); const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } })(this)">
                                                         <input type="range" class="form-range ms-2" id="{{ alpha_id }}" min="0" max="100" value="{{ a_pct }}"
-                                                            oninput="(function(slider){ const picker = slider.previousElementSibling; const target = document.getElementById('{{ input_id }}'); const hex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'; const a = Number(slider.value)/100; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; if (target) { target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } slider.title = `Alpha: ${slider.value}%`; })(this)">
+                                                            oninput="(function(slider){ const picker = slider.previousElementSibling; const target = document.getElementById('{{ input_id }}'); const hex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'; const a = Number(slider.value)/100; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; if (target) { target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } slider.title = `Opacity: ${slider.value}%`; })(this)">
                                                         {% elif var_name == 'font' %}
                                                         {% set fonts_list = overlay_fonts if overlay_fonts else ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'Roboto-Regular.ttf'] %}
                                                         <select class="form-select template-variable-text"
@@ -1359,7 +1351,8 @@ prefix) %}
                                                             name="{{ template_name }}[{{ var_name }}]"
                                                             aria-describedby="{{ input_id }}_text"
                                                             value="{{ selected_value }}"
-                                                            data-default="{{ var_details.default }}">
+                                                            data-default="{{ var_details.default }}"
+                                                            {% if var_name == 'text' and overlay.id in ['overlay_aspect', 'overlay_video_format'] %}data-skip-yaml="true"{% endif %}>
                                                         {% endif %}
                                                     </div>
                                                     {% elif var_details.type == "toggle" or var_details.input_type == "toggle" %}

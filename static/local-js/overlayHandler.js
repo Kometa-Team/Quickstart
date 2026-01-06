@@ -607,6 +607,23 @@ const OverlayHandler = {
         const visible = !toggle || toggle.checked
         layer.style.display = visible ? 'block' : 'none'
       }
+
+      const parseOrigin = (origin = '') => {
+        const originStr = (origin || '').toString().toLowerCase()
+        const tokens = originStr.split(/[^a-z]+/).filter(Boolean)
+        let hAlign = 'left'
+        let vAlign = 'top'
+        const hasCenter = tokens.includes('center')
+        if (tokens.includes('right')) hAlign = 'right'
+        else if (tokens.includes('left')) hAlign = 'left'
+        else if (hasCenter) hAlign = 'center'
+
+        if (tokens.includes('bottom')) vAlign = 'bottom'
+        else if (tokens.includes('top')) vAlign = 'top'
+        else if (hasCenter) vAlign = 'center'
+
+        return { hAlign, vAlign }
+      }
       const applyEditionVisibility = (cfg) => {
         if (!cfg.edition || !cfg.edition.layer) return
         const baseVisible = (!cfg.toggle || cfg.toggle.checked)
@@ -618,13 +635,35 @@ const OverlayHandler = {
       const writeOffsets = (cfg, h, v) => {
         const { hInput, vInput } = getInputs(cfg)
         if (!hInput || !vInput) return
+        // h and v passed in are input-space values (distance from origin if applicable)
+        const inputH = h
+        const inputV = v
         writing = true
-        hInput.value = Math.round(h)
-        vInput.value = Math.round(v)
+        hInput.value = Math.round(inputH)
+        vInput.value = Math.round(inputV)
         hInput.dispatchEvent(new Event('change', { bubbles: true }))
         vInput.dispatchEvent(new Event('change', { bubbles: true }))
         writing = false
         applyEditionPosition(cfg)
+      }
+
+      const applyOriginDefault = (cfg, layer) => {
+        if (!cfg.origin || cfg.originApplied) return
+        const { hInput, vInput } = getInputs(cfg)
+        if (!hInput || !vInput) return
+        const natW = cfg.naturalWidth || layer.naturalWidth
+        const natH = cfg.naturalHeight || layer.naturalHeight
+        if (!natW || !natH) return
+        const hDefault = ensureNumber(hInput.dataset?.default, 0)
+        const vDefault = ensureNumber(vInput.dataset?.default, 0)
+        // For origin-based overlays, inputs represent distance from the origin edge (not from top-left)
+        const hVal = hDefault
+        const vVal = vDefault
+        cfg.originApplied = true
+        hInput.value = Math.round(hVal)
+        vInput.value = Math.round(vVal)
+        hInput.dispatchEvent(new Event('change', { bubbles: true }))
+        vInput.dispatchEvent(new Event('change', { bubbles: true }))
       }
 
       const applyPosition = (cfg) => {
@@ -640,15 +679,32 @@ const OverlayHandler = {
         }
         const natW = cfg.naturalWidth || layer.naturalWidth || (baseWidth * 0.25)
         const natH = cfg.naturalHeight || layer.naturalHeight || (baseHeight * 0.25)
+        const baseW = Number(cfg.baseWidth) || baseWidth
+        const baseH = Number(cfg.baseHeight) || baseHeight
+
+        applyOriginDefault(cfg, layer)
 
         layer.style.width = `${natW * scaleX}px`
         layer.style.height = `${natH * scaleY}px`
 
-        const hVal = ensureNumber(hInput.value)
-        const vVal = ensureNumber(vInput.value)
+        const hValInput = ensureNumber(hInput.value)
+        const vValInput = ensureNumber(vInput.value)
+        const { hAlign, vAlign } = parseOrigin(cfg.origin)
+        const centerH = (baseW - natW) / 2
+        const centerV = (baseH - natH) / 2
+        const actualH = hAlign === 'right'
+          ? (baseW - natW - hValInput)
+          : hAlign === 'center'
+            ? (centerH + hValInput)
+            : hValInput
+        const actualV = vAlign === 'bottom'
+          ? (baseH - natH - vValInput)
+          : vAlign === 'center'
+            ? (centerV + vValInput)
+            : vValInput
 
-        layer.style.left = `${hVal * scaleX}px`
-        layer.style.top = `${vVal * scaleY}px`
+        layer.style.left = `${actualH * scaleX}px`
+        layer.style.top = `${actualV * scaleY}px`
         applyVisibility(cfg, layer)
         applyEditionPosition(cfg)
       }
@@ -662,8 +718,11 @@ const OverlayHandler = {
         if (!hInput || !vInput) return
 
         const { scaleX, scaleY } = getScale()
-        const resNatW = cfg.naturalWidth || baseLayer.naturalWidth || (cfg.baseWidth * 0.25)
-        const resNatH = cfg.naturalHeight || baseLayer.naturalHeight || (cfg.baseHeight * 0.2)
+        const baseW = Number(cfg.baseWidth) || baseWidth
+        const baseH = Number(cfg.baseHeight) || baseHeight
+        const { hAlign, vAlign } = parseOrigin(cfg.origin)
+        const resNatW = cfg.naturalWidth || baseLayer.naturalWidth || (baseW * 0.25)
+        const resNatH = cfg.naturalHeight || baseLayer.naturalHeight || (baseH * 0.2)
 
         const edition = cfg.edition
         const editionNatW = edition.naturalWidth || edition.layer.naturalWidth || resNatW
@@ -672,12 +731,24 @@ const OverlayHandler = {
         edition.layer.style.width = `${editionNatW * scaleX}px`
         edition.layer.style.height = `${editionNatH * scaleY}px`
 
-        const hVal = ensureNumber(hInput.value)
-        const vVal = ensureNumber(vInput.value)
+        const hInputVal = ensureNumber(hInput.value)
+        const vInputVal = ensureNumber(vInput.value)
+        const centerH = (baseW - resNatW) / 2
+        const centerV = (baseH - resNatH) / 2
+        const baseActualH = hAlign === 'right'
+          ? (baseW - resNatW - hInputVal)
+          : hAlign === 'center'
+            ? (centerH + hInputVal)
+            : hInputVal
+        const baseActualV = vAlign === 'bottom'
+          ? (baseH - resNatH - vInputVal)
+          : vAlign === 'center'
+            ? (centerV + vInputVal)
+            : vInputVal
         const spacing = Number(edition.spacing) || 15
-        const editionTop = vVal + resNatH + spacing
+        const editionTop = baseActualV + resNatH + spacing
 
-        edition.layer.style.left = `${hVal * scaleX}px`
+        edition.layer.style.left = `${baseActualH * scaleX}px`
         edition.layer.style.top = `${editionTop * scaleY}px`
         applyEditionVisibility(cfg)
       }
@@ -690,11 +761,30 @@ const OverlayHandler = {
           e.preventDefault()
           layer.setPointerCapture(e.pointerId)
           const { hInput, vInput } = getInputs(cfg)
+          const baseW = Number(cfg.baseWidth) || baseWidth
+          const baseH = Number(cfg.baseHeight) || baseHeight
+          const natW = cfg.naturalWidth || layer.naturalWidth || (baseWidth * 0.25)
+          const natH = cfg.naturalHeight || layer.naturalHeight || (baseHeight * 0.25)
+          const { hAlign, vAlign } = parseOrigin(cfg.origin)
+          const inputH = ensureNumber(hInput?.value)
+          const inputV = ensureNumber(vInput?.value)
+          const centerH = (baseW - natW) / 2
+          const centerV = (baseH - natH) / 2
+          const actualH = hAlign === 'right'
+            ? (baseW - natW - inputH)
+            : hAlign === 'center'
+              ? (centerH + inputH)
+              : inputH
+          const actualV = vAlign === 'bottom'
+            ? (baseH - natH - inputV)
+            : vAlign === 'center'
+              ? (centerV + inputV)
+              : inputV
           start = {
             x: e.clientX,
             y: e.clientY,
-            h: ensureNumber(hInput?.value),
-            v: ensureNumber(vInput?.value)
+            h: actualH,
+            v: actualV
           }
           dragging = true
           layer.classList.add('dragging')
@@ -705,6 +795,9 @@ const OverlayHandler = {
           const { scaleX, scaleY } = getScale()
           const natW = cfg.naturalWidth || layer.naturalWidth || (baseWidth * 0.25)
           const natH = cfg.naturalHeight || layer.naturalHeight || (baseHeight * 0.25)
+          const baseW = Number(cfg.baseWidth) || baseWidth
+          const baseH = Number(cfg.baseHeight) || baseHeight
+          const { hAlign, vAlign } = parseOrigin(cfg.origin)
           const overlayWidthBase = natW
           const overlayHeightBase = natH
 
@@ -714,12 +807,25 @@ const OverlayHandler = {
           const maxH = Math.max(0, baseWidth - overlayWidthBase)
           const maxV = Math.max(0, baseHeight - overlayHeightBase)
 
-          const nextH = clamp(start.h + deltaX, 0, maxH)
-          const nextV = clamp(start.v + deltaY, 0, maxV)
+          const nextActualH = clamp(start.h + deltaX, 0, maxH)
+          const nextActualV = clamp(start.v + deltaY, 0, maxV)
 
-          layer.style.left = `${nextH * scaleX}px`
-          layer.style.top = `${nextV * scaleY}px`
-          writeOffsets(cfg, nextH, nextV)
+          const centerH = (baseW - natW) / 2
+          const centerV = (baseH - natH) / 2
+          const nextInputH = hAlign === 'right'
+            ? (baseW - natW - nextActualH)
+            : hAlign === 'center'
+              ? (nextActualH - centerH)
+              : nextActualH
+          const nextInputV = vAlign === 'bottom'
+            ? (baseH - natH - nextActualV)
+            : vAlign === 'center'
+              ? (nextActualV - centerV)
+              : nextActualV
+
+          layer.style.left = `${nextActualH * scaleX}px`
+          layer.style.top = `${nextActualV * scaleY}px`
+          writeOffsets(cfg, nextInputH, nextInputV)
           applyEditionPosition(cfg)
         }
 
@@ -844,7 +950,9 @@ const OverlayHandler = {
           naturalWidth: null,
           naturalHeight: null,
           edition: null,
-          container
+          container,
+          origin: container.dataset.overlayOrigin || null,
+          originApplied: false
         }
 
         if (!cfg.id || !cfg.image || !cfg.hId || !cfg.vId) return
