@@ -503,6 +503,16 @@ def build_libraries_section(
                         if overlay_entry["default"] == "languages_subtitles":
                             overlay_entry["default"] = "languages"
 
+                # Final cleanup for specific overlays (e.g., drop text for aspect/video_format)
+                for ov in overlay_entries:
+                    default_name = ov.get("default", "")
+                    if isinstance(default_name, str) and default_name in {"aspect", "video_format", "overlay_aspect", "overlay_video_format"}:
+                        tv = ov.get("template_variables")
+                        if isinstance(tv, dict):
+                            tv.pop("text", None)
+                            if not tv:
+                                ov.pop("template_variables", None)
+
                 if overlay_entries:
                     # Final cleanup: drop rating pairs if either side is empty
                     for ov in overlay_entries:
