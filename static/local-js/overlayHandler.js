@@ -1,4 +1,4 @@
-/* global EventHandler, toggleOverlayTemplateSection, FontFace, Image, requestAnimationFrame, boardState */
+/* global EventHandler, toggleOverlayTemplateSection, FontFace, Image, requestAnimationFrame, boardState, ResizeObserver */
 
 const OverlayHandler = {
   baseDimensions: {
@@ -1083,17 +1083,21 @@ const OverlayHandler = {
         if (layers.has(cfg.id)) return layers.get(cfg.id)
         const layer = document.createElement('img')
         layer.className = 'overlay-board-layer'
-        const initialSrc = cfg.id === 'overlay_runtimes' ? buildRuntimeDataUrl(cfg) : resolveOverlayImage(cfg)
-        layer.src = initialSrc
         layer.alt = cfg.id
         layers.set(cfg.id, layer)
         canvas.appendChild(layer)
 
-        layer.addEventListener('load', () => {
+        const handleLoad = () => {
           cfg.naturalWidth = layer.naturalWidth || cfg.naturalWidth
           cfg.naturalHeight = layer.naturalHeight || cfg.naturalHeight
           applyPosition(cfg)
-        })
+        }
+
+        layer.addEventListener('load', handleLoad)
+
+        const initialSrc = cfg.id === 'overlay_runtimes' ? buildRuntimeDataUrl(cfg) : resolveOverlayImage(cfg)
+        layer.src = initialSrc
+        if (layer.complete) handleLoad()
 
         bindDrag(cfg, layer)
         bindToggle(cfg, layer)
@@ -1136,18 +1140,21 @@ const OverlayHandler = {
         if (cfg.edition && cfg.edition.image && !cfg.edition.layer) {
           const editionLayer = document.createElement('img')
           editionLayer.className = 'overlay-board-layer'
-          editionLayer.src = cfg.edition.image
           editionLayer.alt = `${cfg.id}-edition`
           editionLayer.style.pointerEvents = 'none' // let dragging happen on the base resolution layer
           cfg.edition.layer = editionLayer
           layers.set(cfg.edition.id, editionLayer)
           canvas.appendChild(editionLayer)
 
-          editionLayer.addEventListener('load', () => {
+          const handleEditionLoad = () => {
             cfg.edition.naturalWidth = editionLayer.naturalWidth || cfg.edition.naturalWidth
             cfg.edition.naturalHeight = editionLayer.naturalHeight || cfg.edition.naturalHeight
             applyEditionPosition(cfg)
-          })
+          }
+
+          editionLayer.addEventListener('load', handleEditionLoad)
+          editionLayer.src = cfg.edition.image
+          if (editionLayer.complete) handleEditionLoad()
 
           if (cfg.edition.toggle) {
             cfg.edition.toggle.addEventListener('change', () => applyEditionPosition(cfg))
@@ -1255,6 +1262,19 @@ const OverlayHandler = {
           applyPosition(cfg)
           applyEditionPosition(cfg)
         })
+      }
+
+      if (typeof ResizeObserver !== 'undefined') {
+        let resizeRaf = false
+        const resizeObserver = new ResizeObserver(() => {
+          if (resizeRaf) return
+          resizeRaf = true
+          requestAnimationFrame(() => {
+            recalcAll()
+            resizeRaf = false
+          })
+        })
+        resizeObserver.observe(canvas)
       }
 
       window.addEventListener('resize', recalcAll)

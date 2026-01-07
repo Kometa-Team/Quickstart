@@ -1177,11 +1177,17 @@ prefix) %}
                                                     {% for rv in reset_vars %}
                                                         {% set _ = extra_reset_ids.append(template_name ~ '-' ~ rv) %}
                                                     {% endfor %}
+                                                {% elif overlay.id == 'overlay_audio_codec' %}
+                                                    {% set _ = extra_reset_ids.append(template_name ~ '-style') %}
+                                                {% elif overlay.id == 'overlay_ribbon' %}
+                                                    {% set _ = extra_reset_ids.append(template_name ~ '-style') %}
                                                 {% elif overlay.id == 'overlay_content_rating_commonsense' %}
                                                     {% set reset_vars = ['text', 'post_text', 'addon_offset', 'font', 'font_size', 'font_color'] %}
                                                     {% for rv in reset_vars %}
                                                         {% set _ = extra_reset_ids.append(template_name ~ '-' ~ rv) %}
                                                     {% endfor %}
+                                                {% elif overlay.id == 'overlay_resolution' %}
+                                                    {% set _ = extra_reset_ids.append(template_name ~ '-use_edition-true') %}
                                                 {% elif overlay.id.startswith('overlay_content_rating_') %}
                                                     {% set _ = extra_reset_ids.append(template_name ~ '-color') %}
                                                 {% endif %}
@@ -1365,6 +1371,7 @@ prefix) %}
                                                             id="{{ toggle_id }}"
                                                             name="{{ template_name }}[{{ var_name }}]"
                                                             value="{{ var_details.value or 'true' }}"
+                                                            {% if var_details.default is defined %}data-default="{{ var_details.default }}"{% endif %}
                                                             {% if is_checked %}checked{% endif %}>
                                                         <label class="form-check-label ms-2 mb-0" for="{{ toggle_id }}">{{ display_label }}</label>
                                                         {% if var_details.tooltip %}

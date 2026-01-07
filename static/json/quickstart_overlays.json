@@ -1544,7 +1544,7 @@
             "input_type": "text",
             "key": "text",
             "label": "Text",
-            "default": "Remux"
+            "default": "HDTV"
           },
           {
             "input_type": "text",

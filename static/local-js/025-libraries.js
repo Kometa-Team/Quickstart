@@ -785,10 +785,37 @@ function wireOffsetReset (scope) {
       extraIds.forEach(id => {
         const input = document.getElementById(id)
         if (input && input.dataset.default !== undefined) {
-          input.value = input.dataset.default
+          const defaultValue = input.dataset.default
+          if (input.type === 'checkbox') {
+            const normalizedDefault = (defaultValue || '').toString().toLowerCase()
+            const normalizedValue = (input.value || '').toString().toLowerCase()
+            input.checked = normalizedDefault === 'true' || normalizedDefault === normalizedValue
+            input.dispatchEvent(new Event('change', { bubbles: true }))
+            return
+          }
+          input.value = defaultValue
           input.dispatchEvent(new Event('change', { bubbles: true }))
         }
       })
+
+      const group = btn.closest('.template-toggle-group')
+      if (group) {
+        group.querySelectorAll('input[data-default], select[data-default], textarea[data-default]').forEach(input => {
+          if (input.disabled) return
+          const defaultValue = input.dataset.default
+          if (defaultValue === undefined) return
+
+          if (input.type === 'checkbox' || input.type === 'radio') {
+            const normalizedDefault = (defaultValue || '').toString().toLowerCase()
+            const normalizedValue = (input.value || '').toString().toLowerCase()
+            input.checked = normalizedDefault === 'true' || normalizedDefault === normalizedValue
+          } else {
+            input.value = defaultValue
+          }
+          input.dispatchEvent(new Event('input', { bubbles: true }))
+          input.dispatchEvent(new Event('change', { bubbles: true }))
+        })
+      }
     })
     btn.dataset.listenerAdded = 'true'
   })
