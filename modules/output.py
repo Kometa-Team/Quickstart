@@ -382,6 +382,13 @@ def build_libraries_section(
                 else:
                     overlay_entry.pop("template_variables", None)
 
+            def overlay_lookup_name(name):
+                if not isinstance(name, str):
+                    return name
+                if name in {"commonsense", "overlay_content_rating_commonsense", "content_rating_commonsense"}:
+                    return "content_rating_commonsense"
+                return name
+
             if overlay_key and overlay_key in overlays:
                 raw_overlay_entries = overlays[overlay_key]
 
@@ -413,7 +420,8 @@ def build_libraries_section(
 
                     for overlay_entry in overlay_entries:
                         overlay_name = overlay_entry["default"]
-                        full_key_prefix = f"{library_type}-library_{overlay_key}-movie-template_overlay_{overlay_name}"
+                        lookup_name = overlay_lookup_name(overlay_name)
+                        full_key_prefix = f"{library_type}-library_{overlay_key}-movie-template_overlay_{lookup_name}"
 
                         if overlay_name.startswith("content_rating_"):
                             variant = overlay_name[len("content_rating_") :]
@@ -478,7 +486,8 @@ def build_libraries_section(
                     for overlay_entry in overlay_entries:
                         overlay_name = overlay_entry["default"]
                         level = overlay_entry.get("template_variables", {}).get("builder_level", "show")
-                        full_key_prefix = f"{library_type}-library_{overlay_key}-{level}-template_overlay_{overlay_name}"
+                        lookup_name = overlay_lookup_name(overlay_name)
+                        full_key_prefix = f"{library_type}-library_{overlay_key}-{level}-template_overlay_{lookup_name}"
 
                         if overlay_name.startswith("content_rating_"):
                             variant = overlay_name[len("content_rating_") :]
@@ -506,12 +515,19 @@ def build_libraries_section(
                 # Final cleanup for specific overlays (e.g., drop text for aspect/video_format)
                 for ov in overlay_entries:
                     default_name = ov.get("default", "")
+                    tv = ov.get("template_variables")
+                    if not isinstance(tv, dict):
+                        continue
+                    if isinstance(default_name, str) and default_name in {"commonsense", "overlay_content_rating_commonsense", "content_rating_commonsense"}:
+                        for key in ["text", "font", "font_size", "font_color"]:
+                            tv.pop(key, None)
+                        if not tv:
+                            ov.pop("template_variables", None)
+                        continue
                     if isinstance(default_name, str) and default_name in {"aspect", "video_format", "overlay_aspect", "overlay_video_format"}:
-                        tv = ov.get("template_variables")
-                        if isinstance(tv, dict):
-                            tv.pop("text", None)
-                            if not tv:
-                                ov.pop("template_variables", None)
+                        tv.pop("text", None)
+                        if not tv:
+                            ov.pop("template_variables", None)
 
                 if overlay_entries:
                     # Final cleanup: drop rating pairs if either side is empty
