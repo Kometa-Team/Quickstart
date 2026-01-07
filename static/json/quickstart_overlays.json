@@ -78,6 +78,53 @@
             "input_type": "number",
             "default": 15,
             "label": "Vertical Offset"
+          },
+          "back_align": {
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
           }
         }
       },

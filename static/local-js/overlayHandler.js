@@ -548,6 +548,76 @@ const OverlayHandler = {
       }
     }
 
+    const getBackdropVars = (cfg) => {
+      const container = cfg.container
+      const templateName = container?.dataset.overlayTemplate
+      const getVal = (key, defaultVal) => {
+        if (!container || !templateName) return defaultVal
+        const el = container.querySelector(`[name="${templateName}[${key}]"]`)
+        if (!el) return defaultVal
+        const fallback = el.dataset?.default ?? defaultVal
+        if (el.tagName === 'SELECT') return (el.value || fallback)
+        if (el.type === 'number') {
+          const n = Number(el.value)
+          return Number.isFinite(n) ? n : (Number(fallback) || defaultVal)
+        }
+        return (el.value || fallback)
+      }
+      return {
+        back_align: String(getVal('back_align', 'center') || 'center').toLowerCase(),
+        back_color: getVal('back_color', '#00000099'),
+        back_height: getVal('back_height', 105),
+        back_width: getVal('back_width', 105),
+        back_line_color: getVal('back_line_color', '#00000000'),
+        back_line_width: getVal('back_line_width', 0),
+        back_padding: getVal('back_padding', 0),
+        back_radius: getVal('back_radius', 30)
+      }
+    }
+
+    const parseHexColor = (value, fallback = { r: 0, g: 0, b: 0, a: 0 }) => {
+      if (!value || typeof value !== 'string') return fallback
+      const hex = value.trim().replace(/^#/, '')
+      if (![3, 4, 6, 8].includes(hex.length)) return fallback
+      const expand = (c) => (c.length === 1 ? `${c}${c}` : c)
+      let r
+      let g
+      let b
+      let a = 'ff'
+      if (hex.length <= 4) {
+        r = expand(hex.slice(0, 1))
+        g = expand(hex.slice(1, 2))
+        b = expand(hex.slice(2, 3))
+        if (hex.length === 4) a = expand(hex.slice(3, 4))
+      } else {
+        r = hex.slice(0, 2)
+        g = hex.slice(2, 4)
+        b = hex.slice(4, 6)
+        if (hex.length === 8) a = hex.slice(6, 8)
+      }
+      const toInt = (str, def) => {
+        const num = parseInt(str, 16)
+        return Number.isFinite(num) ? num : def
+      }
+      return {
+        r: toInt(r, fallback.r),
+        g: toInt(g, fallback.g),
+        b: toInt(b, fallback.b),
+        a: toInt(a, Math.round((fallback.a ?? 0) * 255)) / 255
+      }
+    }
+
+    const drawRoundedRect = (ctx, x, y, width, height, radius) => {
+      const safeRadius = Math.max(0, Math.min(radius || 0, Math.min(width, height) / 2))
+      ctx.beginPath()
+      ctx.moveTo(x + safeRadius, y)
+      ctx.arcTo(x + width, y, x + width, y + height, safeRadius)
+      ctx.arcTo(x + width, y + height, x, y + height, safeRadius)
+      ctx.arcTo(x, y + height, x, y, safeRadius)
+      ctx.arcTo(x, y, x + width, y, safeRadius)
+      ctx.closePath()
+    }
+
     const loadImage = (src) => {
       return new Promise((resolve, reject) => {
         const img = new Image()
@@ -556,6 +626,78 @@ const OverlayHandler = {
         img.onerror = (err) => reject(err)
         img.src = src
       })
+    }
+
+    const buildMediastingerDataUrl = async (cfg) => {
+      const vars = getBackdropVars(cfg)
+      const pad = Math.max(0, Number(vars.back_padding) || 0)
+      const backWidth = Number(vars.back_width) || 0
+      const backHeight = Number(vars.back_height) || 0
+      const radius = Math.max(0, Number(vars.back_radius) || 0)
+      const lineWidth = Math.max(0, Number(vars.back_line_width) || 0)
+
+      const baseImg = resolveOverlayImage(cfg)
+      let img
+      try {
+        img = await loadImage(baseImg)
+      } catch (err) {
+        console.warn('[OverlayBoards] Failed to load mediastinger overlay image', err)
+        return baseImg
+      }
+
+      const contentWidth = img.width + pad * 2
+      const contentHeight = img.height + pad * 2
+      const canvasWidth = backWidth > 0 ? Math.max(backWidth, contentWidth) : contentWidth
+      const canvasHeight = backHeight > 0 ? Math.max(backHeight, contentHeight) : contentHeight
+
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.ceil(canvasWidth)
+      canvas.height = Math.ceil(canvasHeight)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return baseImg
+
+      const fill = parseHexColor(vars.back_color, { r: 0, g: 0, b: 0, a: 0 })
+      const stroke = parseHexColor(vars.back_line_color, { r: 0, g: 0, b: 0, a: 0 })
+
+      drawRoundedRect(ctx, 0, 0, canvasWidth, canvasHeight, radius)
+      if (fill.a > 0) {
+        ctx.fillStyle = `rgba(${fill.r}, ${fill.g}, ${fill.b}, ${fill.a})`
+        ctx.fill()
+      }
+      if (lineWidth > 0 && stroke.a > 0) {
+        const inset = lineWidth / 2
+        const strokeRadius = Math.max(0, radius - inset)
+        drawRoundedRect(ctx, inset, inset, canvasWidth - (inset * 2), canvasHeight - (inset * 2), strokeRadius)
+        ctx.strokeStyle = `rgba(${stroke.r}, ${stroke.g}, ${stroke.b}, ${stroke.a})`
+        ctx.lineWidth = lineWidth
+        ctx.stroke()
+      }
+
+      const align = vars.back_align
+      const centerX = (canvasWidth - img.width) / 2
+      const centerY = (canvasHeight - img.height) / 2
+      let drawX = centerX
+      let drawY = centerY
+      if (align === 'left') {
+        drawX = pad
+        drawY = centerY
+      } else if (align === 'right') {
+        drawX = canvasWidth - img.width - pad
+        drawY = centerY
+      } else if (align === 'top') {
+        drawX = centerX
+        drawY = pad
+      } else if (align === 'bottom') {
+        drawX = centerX
+        drawY = canvasHeight - img.height - pad
+      }
+      drawX = Math.max(pad, Math.min(drawX, canvasWidth - img.width - pad))
+      drawY = Math.max(pad, Math.min(drawY, canvasHeight - img.height - pad))
+      ctx.drawImage(img, drawX, drawY)
+
+      cfg.naturalWidth = canvas.width
+      cfg.naturalHeight = canvas.height
+      return canvas.toDataURL('image/png')
     }
 
     const buildCommonsenseDataUrl = async (cfg) => {
@@ -1124,7 +1266,12 @@ const OverlayHandler = {
         layer.addEventListener('load', handleLoad)
 
         let initialSrc = resolveOverlayImage(cfg)
-        if (cfg.id === 'overlay_runtimes') {
+        if (cfg.id === 'overlay_mediastinger') {
+          buildMediastingerDataUrl(cfg).then(dataUrl => {
+            layer.src = dataUrl
+            applyPosition(cfg)
+          })
+        } else if (cfg.id === 'overlay_runtimes') {
           initialSrc = buildRuntimeDataUrl(cfg)
         } else if (cfg.id === 'overlay_status') {
           initialSrc = buildSimpleTextDataUrl(cfg, getStatusTextVars(cfg))
@@ -1291,6 +1438,24 @@ const OverlayHandler = {
             input.addEventListener('change', refreshStatus)
           })
           refreshStatus()
+        }
+
+        if (cfg.id === 'overlay_mediastinger' && layer && cfg.container) {
+          const refreshBackdrop = () => {
+            buildMediastingerDataUrl(cfg).then(dataUrl => {
+              layer.src = dataUrl
+              applyPosition(cfg)
+            })
+          }
+          const templateName = cfg.container.dataset.overlayTemplate
+          const inputs = cfg.container.querySelectorAll(
+            `[name="${templateName}[back_align]"], [name="${templateName}[back_color]"], [name="${templateName}[back_height]"], [name="${templateName}[back_width]"], [name="${templateName}[back_line_color]"], [name="${templateName}[back_line_width]"], [name="${templateName}[back_padding]"], [name="${templateName}[back_radius]"]`
+          )
+          inputs.forEach(input => {
+            input.addEventListener('input', refreshBackdrop)
+            input.addEventListener('change', refreshBackdrop)
+          })
+          refreshBackdrop()
         }
 
         if (cfg.id === 'overlay_content_rating_commonsense' && layer && cfg.container) {

@@ -1319,7 +1319,7 @@ prefix) %}
                                                     {% endif %}
                                                     {% set color_hex = "#%02X%02X%02X" % (r, g, b) %}
                                                     {% set color_hex_alpha = "#%02X%02X%02X%02X" % (r, g, b, (a_pct * 255 // 100)) %}
-                                                    {% if var_name == 'font_color' %}
+                                                    {% if var_name in ['font_color', 'back_color', 'back_line_color'] %}
                                                     <div class="rgba-group mb-2">
                                                         <div class="rgba-bar-wrap mb-2">
                                                             <input type="color" class="form-control form-control-color rgba-color-picker visually-hidden"
