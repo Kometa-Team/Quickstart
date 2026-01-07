@@ -1263,6 +1263,7 @@ const OverlayHandler = {
           applyEditionPosition(cfg)
         })
       }
+      board._overlayRecalc = recalcAll
 
       if (typeof ResizeObserver !== 'undefined') {
         let resizeRaf = false
@@ -1278,6 +1279,71 @@ const OverlayHandler = {
       }
 
       window.addEventListener('resize', recalcAll)
+
+      const setupModalCanvas = () => {
+        const modalBtn = board.querySelector('[data-overlay-board-open="modal"]')
+        if (!modalBtn) return
+        if (modalBtn.dataset.listenerAdded) return
+
+        const modalId = modalBtn.dataset.overlayModalId
+        const modal = modalId ? document.getElementById(modalId) : null
+        const modalHost = modal?.querySelector('[data-overlay-modal-host]')
+        if (!modal || !modalHost) return
+
+        const resizeModalBoard = () => {
+          if (!board.classList.contains('overlay-board--modal')) return
+          const baseW = Number(board.dataset.baseWidth) || defaultDims.default.width
+          const baseH = Number(board.dataset.baseHeight) || defaultDims.default.height
+          const ratio = baseW / baseH
+          const maxWidthByHeight = (window.innerHeight - 200) * ratio
+          const maxWidth = Math.min(window.innerWidth - 64, maxWidthByHeight)
+          board.style.maxWidth = `${Math.max(280, Math.floor(maxWidth))}px`
+          board.style.width = '100%'
+          if (board._overlayRecalc) board._overlayRecalc()
+        }
+
+        modal.addEventListener('shown.bs.modal', () => {
+          resizeModalBoard()
+        })
+
+        modal.addEventListener('hidden.bs.modal', () => {
+          if (board._overlayOriginParent) {
+            board._overlayOriginParent.insertBefore(board, board._overlayPlaceholder || null)
+          }
+          if (board._overlayPlaceholder && board._overlayPlaceholder.parentNode) {
+            board._overlayPlaceholder.parentNode.removeChild(board._overlayPlaceholder)
+          }
+          board._overlayOriginParent = null
+          board._overlayPlaceholder = null
+          board.classList.remove('overlay-board--modal')
+          board.style.maxWidth = ''
+          board.style.width = ''
+          if (board._overlayRecalc) board._overlayRecalc()
+        })
+
+        modalBtn.addEventListener('click', () => {
+          if (!board.parentNode) return
+          const placeholder = document.createElement('div')
+          placeholder.className = 'overlay-board-placeholder'
+          placeholder.style.height = `${board.offsetHeight}px`
+          board._overlayOriginParent = board.parentNode
+          board._overlayPlaceholder = placeholder
+          board.parentNode.insertBefore(placeholder, board)
+          modalHost.innerHTML = ''
+          modalHost.appendChild(board)
+          board.classList.add('overlay-board--modal')
+          resizeModalBoard()
+          if (window.bootstrap && window.bootstrap.Modal) {
+            const modalInstance = window.bootstrap.Modal.getOrCreateInstance(modal)
+            modalInstance.show()
+          }
+        })
+
+        window.addEventListener('resize', resizeModalBoard)
+        modalBtn.dataset.listenerAdded = 'true'
+      }
+
+      setupModalCanvas()
     })
   },
 

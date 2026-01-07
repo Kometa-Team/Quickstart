@@ -251,6 +251,28 @@ header.fixed-top {
     cursor: grabbing;
 }
 
+.overlay-board-placeholder {
+    width: 100%;
+}
+
+.overlay-board--modal {
+    width: 100%;
+    max-width: 100%;
+}
+
+.overlay-canvas-modal .modal-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.overlay-board-modal-host {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .overlay-jump-container {
     position: relative;
     display: flex;
