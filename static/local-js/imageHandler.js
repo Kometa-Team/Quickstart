@@ -40,6 +40,7 @@ const ImageHandler = {
           ImageHandler.generateSinglePreview(libraryId, type)
         } else {
           console.warn(`[DEBUG] Hidden input image not found in dropdown for ${libraryId} - ${type}.`)
+          ImageHandler.updateOverlayBoardBackground(libraryId, type, 'default')
         }
 
         if (callback) callback()
@@ -57,6 +58,7 @@ const ImageHandler = {
     if (!dropdown) return
 
     const selectedImage = dropdown.value || 'default'
+    ImageHandler.updateOverlayBoardBackground(libraryId, type, selectedImage)
 
     const hiddenInput = document.getElementById(`${libraryId}-${type}-hidden`)
     if (hiddenInput) {
@@ -87,6 +89,22 @@ const ImageHandler = {
         }
       })
       .catch(error => console.error(`[ERROR] Generating preview for ${type}:`, error))
+  },
+
+  updateOverlayBoardBackground: function (libraryId, type, selectedImage) {
+    const board = document.querySelector(
+      `.overlay-board[data-library-id="${libraryId}"][data-overlay-type="${type}"]`
+    )
+    if (!board) return
+    const canvas = board.querySelector('.overlay-board-canvas')
+    if (!canvas) return
+
+    const baseWidth = Number(board.dataset.baseWidth) || (type === 'episode' ? 1920 : 1000)
+    const baseHeight = Number(board.dataset.baseHeight) || (type === 'episode' ? 1080 : 1500)
+    const normalized = selectedImage && selectedImage !== 'default'
+      ? `/config/uploads/${type}s/${encodeURIComponent(selectedImage)}`
+      : `/static/images/default-${baseWidth}x${baseHeight}.png`
+    canvas.style.backgroundImage = `url("${normalized}")`
   },
 
   getLibraryOverlays: function (libraryId, isMovie, type = 'movie') {

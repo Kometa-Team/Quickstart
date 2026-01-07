@@ -162,19 +162,79 @@ header.fixed-top {
 /* -------------------- */
 
 .overlay-board {
-    max-width: 360px;
+    width: 100%;
+    max-width: 420px;
+}
+
+.overlay-board-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.overlay-board-toolbar-group {
+    display: inline-flex;
+    gap: 0.35rem;
+    align-items: center;
+    margin-left: auto;
+}
+
+.overlay-board-toolbar .is-active {
+    background-color: #495057;
+    border-color: #495057;
+    color: #fff;
+}
+
+.overlay-board-zoom-label {
+    min-width: 3.5rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: #adb5bd;
+}
+
+.overlay-board-viewport {
+    position: relative;
+    width: 100%;
+    background-color: #0f0f0f;
+    border: 1px solid #343a40;
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .overlay-board-canvas {
     position: relative;
-    width: 300px;
+    width: 100%;
     aspect-ratio: var(--overlay-board-ratio, 2 / 3);
-    background-color: #0f0f0f;
     background-size: cover;
     background-position: center;
-    border: 1px solid #343a40;
-    border-radius: 6px;
-    overflow: hidden;
+    transform-origin: 0 0;
+    will-change: transform;
+}
+
+.overlay-board-grid {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    pointer-events: none;
+    display: none;
+    background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.2) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+    background-size: var(--overlay-grid-size, 25px) var(--overlay-grid-size, 25px);
+}
+
+.overlay-board--grid .overlay-board-grid {
+    display: block;
+}
+
+.overlay-board--pan .overlay-board-viewport {
+    cursor: grab;
+}
+
+.overlay-board--pan.overlay-board--panning .overlay-board-viewport {
+    cursor: grabbing;
 }
 
 .overlay-board-layer {
@@ -184,10 +244,34 @@ header.fixed-top {
     pointer-events: auto;
     cursor: grab;
     user-select: none;
+    z-index: 5;
 }
 
 .overlay-board-layer.dragging {
     cursor: grabbing;
+}
+
+.overlay-jump-container {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    margin: 0.25rem 0 1rem;
+}
+
+.overlay-jump-button {
+    display: none;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.overlay-jump-button.is-visible {
+    display: inline-flex;
+}
+
+.overlay-jump-button.overlay-jump-button--floating {
+    position: fixed;
+    bottom: 1.25rem;
+    z-index: 1060;
 }
 
 #navbarDropdownMenuLink[disabled]::after {

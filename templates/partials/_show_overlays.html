@@ -12,7 +12,7 @@
       data-bs-parent="#{{ library.id }}-previewOverlaysAccordion">
       <div class="accordion-body overlay-toggle-group">
         <p class="mb-3">
-          Selecting any overlays will automatically update the preview. You can upload different base images for Show,
+          Selecting any overlays will automatically update the preview canvas. You can upload different base images for Show,
           Season, and Episode posters.
         </p>
 
@@ -62,13 +62,39 @@
               </div>
 
               <!-- Preview Column (Right) -->
-              <div class="col-md-6 text-center">
-                <h6 class="fw-bold text-capitalize">{{ level }} Image</h6>
-                <img id="{{ library.id }}-overlayPreviewImage-{{ level }}"
-                  src="/config/previews/{{ library.id }}-{{ level }}_preview.png" class="img-fluid mt-2"
-                  alt="{{ level.title() }} Preview"
-                  style="max-width: 100%; height: auto; border: 1px solid #ccc; cursor: zoom-in;"
-                  onclick="showZoomPreviewModal(this.src)">
+              <div class="col-md-6">
+                <h6 class="fw-bold text-capitalize">{{ level }} Canvas</h6>
+                {% set board_base_width = 1920 if level == 'episode' else 1000 %}
+                {% set board_base_height = 1080 if level == 'episode' else 1500 %}
+                {% set board_bg = '/static/images/default-' ~ board_base_width ~ 'x' ~ board_base_height ~ '.png' %}
+                <div class="overlay-board"
+                  data-base-width="{{ board_base_width }}"
+                  data-base-height="{{ board_base_height }}"
+                  data-overlay-type="{{ level }}"
+                  data-library-id="{{ library.id }}">
+                  <div class="overlay-board-toolbar">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-overlay-board-toggle="pan" aria-pressed="false">
+                      Pan
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-overlay-board-toggle="grid" aria-pressed="false">
+                      Grid
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-overlay-board-toggle="snap" aria-pressed="false">
+                      Snap
+                    </button>
+                    <div class="overlay-board-toolbar-group">
+                      <button type="button" class="btn btn-outline-secondary btn-sm" data-overlay-board-zoom="out">-</button>
+                      <span class="overlay-board-zoom-label" data-overlay-board-zoom-label>100%</span>
+                      <button type="button" class="btn btn-outline-secondary btn-sm" data-overlay-board-zoom="in">+</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm" data-overlay-board-zoom="reset">Reset</button>
+                    </div>
+                  </div>
+                  <div class="overlay-board-viewport">
+                    <div class="overlay-board-canvas" style="background-image: url('{{ board_bg }}');">
+                      <div class="overlay-board-grid"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -77,6 +103,13 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="overlay-jump-container">
+  <button type="button" class="btn btn-success btn-sm overlay-jump-button"
+    data-jump-target="{{ library.id }}-overlayPreviewContainer">
+    <i class="bi bi-arrow-up-square"></i> Jump to canvas
+  </button>
 </div>
 
 {% import 'partials/_macros.html' as macros %}

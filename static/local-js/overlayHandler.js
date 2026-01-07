@@ -1,4 +1,4 @@
-/* global EventHandler, toggleOverlayTemplateSection, FontFace, Image */
+/* global EventHandler, toggleOverlayTemplateSection, FontFace, Image, requestAnimationFrame, boardState */
 
 const OverlayHandler = {
   baseDimensions: {
@@ -302,8 +302,8 @@ const OverlayHandler = {
           const overlayWidthBase = overlayRect.width / scaleX
           const overlayHeightBase = overlayRect.height / scaleY
 
-          const deltaX = (e.clientX - start.x) / scaleX
-          const deltaY = (e.clientY - start.y) / scaleY
+          const deltaX = (e.clientX - start.x) / (scaleX * boardState.zoom)
+          const deltaY = (e.clientY - start.y) / (scaleY * boardState.zoom)
 
           const maxH = Math.max(0, baseWidth - overlayWidthBase)
           const maxV = Math.max(0, baseHeight - overlayHeightBase)
@@ -673,11 +673,136 @@ const OverlayHandler = {
         return Number.isFinite(num) ? num : fallback
       }
 
+      const viewport = board.querySelector('.overlay-board-viewport') || canvas
+      const toolbar = board.querySelector('.overlay-board-toolbar')
+      const zoomLabel = toolbar?.querySelector('[data-overlay-board-zoom-label]')
+      const zoomInBtn = toolbar?.querySelector('[data-overlay-board-zoom="in"]')
+      const zoomOutBtn = toolbar?.querySelector('[data-overlay-board-zoom="out"]')
+      const zoomResetBtn = toolbar?.querySelector('[data-overlay-board-zoom="reset"]')
+      const panToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="pan"]')
+      const gridToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="grid"]')
+      const snapToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="snap"]')
+
+      const gridSize = 25
+      const snapThreshold = 6
+      board.style.setProperty('--overlay-grid-size', `${gridSize}px`)
+
+      const boardState = {
+        zoom: 1,
+        panX: 0,
+        panY: 0,
+        gridEnabled: false,
+        snapEnabled: false,
+        panEnabled: false
+      }
+
+      let recalcAll = () => {}
+
+      const setToggleState = (btn, active) => {
+        if (!btn) return
+        btn.classList.toggle('is-active', active)
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false')
+      }
+
+      const applyBoardTransform = () => {
+        canvas.style.transform = `translate(${boardState.panX}px, ${boardState.panY}px) scale(${boardState.zoom})`
+      }
+
+      const updateZoomLabel = () => {
+        if (zoomLabel) zoomLabel.textContent = `${Math.round(boardState.zoom * 100)}%`
+      }
+
+      const setZoom = (value) => {
+        boardState.zoom = clamp(value, 0.5, 3)
+        applyBoardTransform()
+        updateZoomLabel()
+        recalcAll()
+      }
+
+      const snapToGrid = (value, maxVal) => {
+        if (!boardState.snapEnabled) return value
+        const snapped = Math.round(value / gridSize) * gridSize
+        const within = Math.abs(snapped - value) <= snapThreshold
+        return within ? clamp(snapped, 0, maxVal) : value
+      }
+
+      if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => setZoom(boardState.zoom + 0.1))
+      }
+      if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => setZoom(boardState.zoom - 0.1))
+      }
+      if (zoomResetBtn) {
+        zoomResetBtn.addEventListener('click', () => {
+          boardState.panX = 0
+          boardState.panY = 0
+          setZoom(1)
+          applyBoardTransform()
+        })
+      }
+
+      if (panToggleBtn) {
+        panToggleBtn.addEventListener('click', () => {
+          boardState.panEnabled = !boardState.panEnabled
+          board.classList.toggle('overlay-board--pan', boardState.panEnabled)
+          setToggleState(panToggleBtn, boardState.panEnabled)
+        })
+      }
+
+      if (gridToggleBtn) {
+        gridToggleBtn.addEventListener('click', () => {
+          boardState.gridEnabled = !boardState.gridEnabled
+          board.classList.toggle('overlay-board--grid', boardState.gridEnabled)
+          setToggleState(gridToggleBtn, boardState.gridEnabled)
+        })
+      }
+
+      if (snapToggleBtn) {
+        snapToggleBtn.addEventListener('click', () => {
+          boardState.snapEnabled = !boardState.snapEnabled
+          setToggleState(snapToggleBtn, boardState.snapEnabled)
+        })
+      }
+
+      if (viewport) {
+        let panning = false
+        let startPan = { x: 0, y: 0, panX: 0, panY: 0 }
+        const onPanDown = (e) => {
+          if (!boardState.panEnabled) return
+          if (e.button !== 0) return
+          if (e.target.closest('.overlay-board-layer')) return
+          e.preventDefault()
+          viewport.setPointerCapture(e.pointerId)
+          panning = true
+          startPan = { x: e.clientX, y: e.clientY, panX: boardState.panX, panY: boardState.panY }
+          board.classList.add('overlay-board--panning')
+        }
+        const onPanMove = (e) => {
+          if (!panning) return
+          const dx = e.clientX - startPan.x
+          const dy = e.clientY - startPan.y
+          boardState.panX = startPan.panX + dx
+          boardState.panY = startPan.panY + dy
+          applyBoardTransform()
+        }
+        const onPanUp = (e) => {
+          if (!panning) return
+          panning = false
+          viewport.releasePointerCapture(e.pointerId)
+          board.classList.remove('overlay-board--panning')
+        }
+        viewport.addEventListener('pointerdown', onPanDown)
+        window.addEventListener('pointermove', onPanMove)
+        window.addEventListener('pointerup', onPanUp)
+      }
+
+      applyBoardTransform()
+      updateZoomLabel()
+
       const getScale = () => {
-        const rect = canvas.getBoundingClientRect()
         const computed = window.getComputedStyle(canvas)
-        const width = rect.width || canvas.clientWidth || parseFloat(computed.width) || 1
-        const height = rect.height || canvas.clientHeight || parseFloat(computed.height) || (width / ratio)
+        const width = canvas.clientWidth || parseFloat(computed.width) || 1
+        const height = canvas.clientHeight || parseFloat(computed.height) || (width / ratio)
         return { scaleX: width / baseWidth, scaleY: height / baseHeight }
       }
 
@@ -896,8 +1021,10 @@ const OverlayHandler = {
           const maxH = Math.max(0, baseWidth - overlayWidthBase)
           const maxV = Math.max(0, baseHeight - overlayHeightBase)
 
-          const nextActualH = clamp(start.h + deltaX, 0, maxH)
-          const nextActualV = clamp(start.v + deltaY, 0, maxV)
+          const rawActualH = clamp(start.h + deltaX, 0, maxH)
+          const rawActualV = clamp(start.v + deltaY, 0, maxV)
+          const nextActualH = snapToGrid(rawActualH, maxH)
+          const nextActualV = snapToGrid(rawActualV, maxV)
 
           const centerH = (baseW - natW) / 2
           const centerV = (baseH - natH) / 2
@@ -1123,7 +1250,7 @@ const OverlayHandler = {
       })
 
       // Recompute positions after images load or container resizes
-      const recalcAll = () => {
+      recalcAll = () => {
         configs.forEach(cfg => {
           applyPosition(cfg)
           applyEditionPosition(cfg)
@@ -1131,6 +1258,84 @@ const OverlayHandler = {
       }
 
       window.addEventListener('resize', recalcAll)
+    })
+  },
+
+  initializeJumpButtons: function (scope) {
+    const root = scope || document
+    const buttons = root.querySelectorAll('.overlay-jump-button')
+
+    buttons.forEach(button => {
+      if (button.dataset.jumpBound === 'true') return
+      button.dataset.jumpBound = 'true'
+
+      const targetId = button.dataset.jumpTarget
+      const target = targetId ? document.getElementById(targetId) : null
+      if (!target) return
+
+      const updateVisibility = () => {
+        if (target.classList.contains('collapse') && !target.classList.contains('show')) {
+          button.classList.remove('is-visible')
+          button.classList.remove('overlay-jump-button--floating')
+          button.style.right = ''
+          return
+        }
+
+        const rect = target.getBoundingClientRect()
+        const container = button.closest('.library-settings-card') || button.closest('.card') || button.parentElement
+        const containerRect = container?.getBoundingClientRect()
+        const withinContainer = containerRect
+          ? containerRect.bottom > 0 && containerRect.top < window.innerHeight
+          : true
+        const isPast = rect.top < -80
+        const shouldShow = withinContainer && isPast
+
+        if (shouldShow) {
+          document.querySelectorAll('.overlay-jump-button.is-visible').forEach(other => {
+            if (other !== button) other.classList.remove('is-visible')
+          })
+        }
+
+        button.classList.toggle('is-visible', shouldShow)
+
+        if (shouldShow) {
+          button.classList.add('overlay-jump-button--floating')
+          if (containerRect) {
+            const rightOffset = Math.max(16, window.innerWidth - containerRect.right + 16)
+            button.style.right = `${rightOffset}px`
+          }
+        } else {
+          button.classList.remove('overlay-jump-button--floating')
+          button.style.right = ''
+        }
+      }
+
+      updateVisibility()
+
+      const onScroll = () => {
+        if (button.dataset.jumpRaf === 'true') return
+        button.dataset.jumpRaf = 'true'
+        requestAnimationFrame(() => {
+          updateVisibility()
+          button.dataset.jumpRaf = 'false'
+        })
+      }
+
+      window.addEventListener('scroll', onScroll, { passive: true })
+      window.addEventListener('resize', onScroll)
+
+      button.addEventListener('click', () => {
+        const accordionItem = target.closest('.accordion-item')
+        const toggleButton = accordionItem?.querySelector('.accordion-button')
+
+        if (target.classList.contains('collapse') && !target.classList.contains('show') && toggleButton) {
+          toggleButton.click()
+        }
+
+        setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }, 250)
+      })
     })
   }
 }
@@ -1172,6 +1377,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 5. Initialize overlay previews (combined + per-overlay)
   OverlayHandler.initializeOverlayBoards()
   OverlayHandler.initializeOverlayPositioners()
+  OverlayHandler.initializeJumpButtons()
 })
 
 // eslint-disable-next-line no-unused-vars

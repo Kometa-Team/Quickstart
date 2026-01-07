@@ -167,6 +167,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayPositioners) {
         OverlayHandler.initializeOverlayPositioners(card)
       }
+      if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeJumpButtons) {
+        OverlayHandler.initializeJumpButtons(card)
+      }
       if (typeof EventHandler !== 'undefined') {
         EventHandler.attachLibraryListeners()
       }
