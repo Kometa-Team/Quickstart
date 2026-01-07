@@ -88,12 +88,37 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/episode_info.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 270
+          "vertical": 150,
+          "origin": "bottom_right"
         },
         "media_types": [
           "episode"
         ],
         "template_variables": [
+          {
+            "input_type": "text",
+            "key": "text",
+            "label": "Text",
+            "default": "S03E15"
+          },
+          {
+            "input_type": "text",
+            "key": "font",
+            "label": "Font",
+            "default": "Inter-Medium.ttf"
+          },
+          {
+            "input_type": "number",
+            "key": "font_size",
+            "label": "Font Size",
+            "default": 55
+          },
+          {
+            "input_type": "text",
+            "key": "font_color",
+            "label": "Font Color",
+            "default": "#FFFFFFFF"
+          },
           {
             "type": "toggle",
             "key": "builder_level",
@@ -112,12 +137,53 @@
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/status.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 330
+          "vertical": 330,
+          "origin": "top_left"
         },
         "media_types": [
           "show"
         ],
         "template_variables": {
+          "last": {
+            "input_type": "number",
+            "default": 14,
+            "label": "Last (Days)"
+          },
+          "text_airing": {
+            "input_type": "text",
+            "label": "Airing Text",
+            "default": "AIRING"
+          },
+          "text_returning": {
+            "input_type": "text",
+            "label": "Returning Text",
+            "default": "RETURNING"
+          },
+          "text_canceled": {
+            "input_type": "text",
+            "label": "Canceled Text",
+            "default": "CANCELED"
+          },
+          "text_ended": {
+            "input_type": "text",
+            "label": "Ended Text",
+            "default": "ENDED"
+          },
+          "font": {
+            "input_type": "text",
+            "label": "Font",
+            "default": "Inter-Medium.ttf"
+          },
+          "font_size": {
+            "input_type": "number",
+            "label": "Font Size",
+            "default": 55
+          },
+          "font_color": {
+            "input_type": "text",
+            "label": "Font Color",
+            "default": "#FFFFFFFF"
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 15,

@@ -187,6 +187,26 @@ header.fixed-top {
     color: #fff;
 }
 
+.btn-overlay {
+    background-color: #343a40;
+    border-color: #343a40;
+    color: #ffffff;
+}
+
+.btn-overlay:hover,
+.btn-overlay:focus {
+    background-color: #019c75;
+    border-color: #019c75;
+    color: #ffffff;
+}
+
+.btn-overlay.is-active,
+.btn-overlay:active {
+    background-color: #019c75;
+    border-color: #019c75;
+    color: #ffffff;
+}
+
 .overlay-board-zoom-label {
     min-width: 3.5rem;
     text-align: center;
@@ -356,6 +376,136 @@ label {
 .dropdown-item:hover {
     background-color: #019c75 !important;
     color: white !important;
+}
+
+/* -------------------- */
+/* RGBA CONTROLS        */
+/* -------------------- */
+
+.rgba-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.rgba-bar-wrap {
+    width: 100%;
+}
+
+.rgba-picker-hint {
+    color: #adb5bd;
+    font-size: 0.8rem;
+}
+
+.rgba-group {
+    border: 1px solid #3a3f44;
+    border-radius: 6px;
+    padding: 0.75rem;
+    background-color: #1f2428;
+}
+
+.rgba-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.rgba-color-picker {
+    width: 2.6rem;
+    height: 2.4rem;
+    padding: 0;
+    border-radius: 0.5rem;
+}
+
+.rgba-color-bar {
+    width: 100%;
+    height: 1.8rem;
+    border-radius: 0.5rem;
+    border: 1px solid #343a40;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+    display: block;
+}
+
+.rgba-row-hex .rgba-hex-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    min-width: 0;
+}
+
+.rgba-row-opacity {
+    flex-wrap: wrap;
+}
+
+.rgba-opacity-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.rgba-opacity-row .rgba-opacity-label {
+    flex: 0 0 170px;
+}
+
+.rgba-opacity-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.rgba-alpha-input {
+    flex: 0 0 80px;
+    max-width: 90px;
+    text-align: right;
+}
+
+.rgba-alpha-input input {
+    text-align: right;
+}
+
+.rgba-alpha-slider {
+    flex: 1 1 160px;
+    min-width: 160px;
+    margin-bottom: 0;
+}
+
+.rgba-alpha-label {
+    font-size: 0.75rem;
+    color: #adb5bd;
+}
+
+.rgba-swatch {
+    display: inline-block;
+    width: 2.6rem;
+    height: 2.4rem;
+    border-radius: 0.5rem;
+    border: 1px solid #343a40;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+}
+
+.rgba-slider-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1 1 180px;
+    min-width: 180px;
+}
+
+.rgba-alpha-slider {
+    margin-top: 0;
+}
+
+.rgba-alpha-label {
+    font-size: 0.75rem;
+    color: #adb5bd;
 }
 
 /* Active (selected) item color */

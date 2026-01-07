@@ -506,6 +506,48 @@ const OverlayHandler = {
       }
     }
 
+    const getTextBoxMetrics = (ctx, text, fontSize, padding = 10) => {
+      const metrics = ctx.measureText(text)
+      const left = Math.ceil(metrics.actualBoundingBoxLeft || 0)
+      const right = Math.ceil(metrics.actualBoundingBoxRight || metrics.width || 0)
+      const ascent = Math.ceil(metrics.actualBoundingBoxAscent || fontSize * 0.8)
+      const descent = Math.ceil(metrics.actualBoundingBoxDescent || fontSize * 0.2)
+      const safePad = Math.ceil(fontSize * 0.2)
+      const pad = padding + Math.ceil(safePad / 2)
+      return {
+        width: left + right + pad * 2,
+        height: ascent + descent + pad * 2,
+        left,
+        ascent,
+        pad
+      }
+    }
+
+    const getStatusTextVars = (cfg) => {
+      const container = cfg.container
+      const templateName = container?.dataset.overlayTemplate
+      const getVal = (key, defaultVal) => {
+        if (!container || !templateName) return defaultVal
+        const el = container.querySelector(`[name="${templateName}[${key}]"]`)
+        if (!el) return defaultVal
+        const fallback = el.dataset?.default || defaultVal
+        if (el.tagName === 'SELECT') return el.value || fallback
+        if (el.type === 'number') {
+          const n = Number(el.value)
+          return Number.isFinite(n) ? n : (Number(el.dataset?.default) || fallback)
+        }
+        return el.value || fallback
+      }
+
+      const text = getVal('text_airing', 'AIRING')
+      return {
+        text,
+        font: getVal('font', 'Inter-Medium.ttf'),
+        font_size: getVal('font_size', 55),
+        font_color: getVal('font_color', '#FFFFFFFF')
+      }
+    }
+
     const loadImage = (src) => {
       return new Promise((resolve, reject) => {
         const img = new Image()
@@ -545,22 +587,20 @@ const OverlayHandler = {
       const ctx = canvas.getContext('2d')
       ctx.font = `${fontSize}px "${fontFamily}"`
       const textString = `${textVal}${postText || ''}`
-      const textMetrics = ctx.measureText(textString)
-      const textWidth = Math.ceil(textMetrics.width)
-      const textHeight = Math.ceil(
-        (textMetrics.actualBoundingBoxAscent || fontSize * 0.8) +
-        (textMetrics.actualBoundingBoxDescent || fontSize * 0.2)
-      )
+      const textBox = getTextBoxMetrics(ctx, textString, fontSize, 10)
 
-      canvas.width = img.width + addonOffset + textWidth
-      canvas.height = Math.max(img.height, textHeight)
+      canvas.width = img.width + addonOffset + textBox.width
+      canvas.height = Math.max(img.height, textBox.height)
 
       ctx.drawImage(img, 0, 0)
       ctx.font = `${fontSize}px "${fontFamily}"`
       ctx.fillStyle = fontColor
-      ctx.textBaseline = 'middle'
-      const textY = canvas.height / 2
-      ctx.fillText(textString, img.width + addonOffset, textY)
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'alphabetic'
+      const textTop = Math.max(0, Math.round((canvas.height - textBox.height) / 2))
+      const textX = img.width + addonOffset + textBox.pad + textBox.left
+      const textY = textTop + textBox.pad + textBox.ascent
+      ctx.fillText(textString, textX, textY)
 
       return canvas.toDataURL('image/png')
     }
@@ -583,15 +623,9 @@ const OverlayHandler = {
       const measureCtx = measureCanvas.getContext('2d')
       if (!measureCtx) return cfg.image
       measureCtx.font = `${fontSize || 55}px "${loadedFamily || normalizedFamily || 'Inter'}"`
-      const metrics = measureCtx.measureText(fullText)
-      const textWidth = Math.ceil(metrics.width)
-      const textHeight = Math.ceil(
-        (metrics.actualBoundingBoxAscent || fontSize * 0.8) +
-        (metrics.actualBoundingBoxDescent || fontSize * 0.2)
-      )
-      const padding = 10
-      const canvasWidth = textWidth + padding * 2
-      const canvasHeight = textHeight + padding * 2
+      const textBox = getTextBoxMetrics(measureCtx, fullText, fontSize, 10)
+      const canvasWidth = textBox.width
+      const canvasHeight = textBox.height
 
       const canvas = document.createElement('canvas')
       canvas.width = canvasWidth
@@ -603,9 +637,9 @@ const OverlayHandler = {
       ctx.fillStyle = fontColor || '#FFFFFF'
       const family = loadedFamily || normalizedFamily || 'Inter'
       ctx.font = `${fontSize || 55}px "${family}"`
-      ctx.textAlign = 'right'
-      ctx.textBaseline = 'bottom'
-      ctx.fillText(fullText, canvas.width - padding, canvas.height - padding)
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'alphabetic'
+      ctx.fillText(fullText, textBox.pad + textBox.left, textBox.pad + textBox.ascent)
 
       // Store natural size so dragging/clamping respects the smaller overlay
       cfg.naturalWidth = canvasWidth
@@ -623,15 +657,9 @@ const OverlayHandler = {
       const measureCtx = measureCanvas.getContext('2d')
       if (!measureCtx) return cfg.image
       measureCtx.font = `${fontSize || 55}px "${loadedFamily || normalizedFamily || 'Inter'}"`
-      const metrics = measureCtx.measureText(content)
-      const textWidth = Math.ceil(metrics.width)
-      const textHeight = Math.ceil(
-        (metrics.actualBoundingBoxAscent || fontSize * 0.8) +
-        (metrics.actualBoundingBoxDescent || fontSize * 0.2)
-      )
-      const padding = 10
-      const canvasWidth = textWidth + padding * 2
-      const canvasHeight = textHeight + padding * 2
+      const textBox = getTextBoxMetrics(measureCtx, content, fontSize, 10)
+      const canvasWidth = textBox.width
+      const canvasHeight = textBox.height
 
       const canvas = document.createElement('canvas')
       canvas.width = canvasWidth
@@ -643,9 +671,9 @@ const OverlayHandler = {
       ctx.fillStyle = fontColor || '#FFFFFFFF'
       const family = loadedFamily || normalizedFamily || 'Inter'
       ctx.font = `${fontSize || 55}px "${family}"`
-      ctx.textAlign = 'right'
-      ctx.textBaseline = 'bottom'
-      ctx.fillText(content, canvas.width - padding, canvas.height - padding)
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'alphabetic'
+      ctx.fillText(content, textBox.pad + textBox.left, textBox.pad + textBox.ascent)
 
       cfg.naturalWidth = canvasWidth
       cfg.naturalHeight = canvasHeight
@@ -1095,7 +1123,14 @@ const OverlayHandler = {
 
         layer.addEventListener('load', handleLoad)
 
-        const initialSrc = cfg.id === 'overlay_runtimes' ? buildRuntimeDataUrl(cfg) : resolveOverlayImage(cfg)
+        let initialSrc = resolveOverlayImage(cfg)
+        if (cfg.id === 'overlay_runtimes') {
+          initialSrc = buildRuntimeDataUrl(cfg)
+        } else if (cfg.id === 'overlay_status') {
+          initialSrc = buildSimpleTextDataUrl(cfg, getStatusTextVars(cfg))
+        } else if (cfg.id === 'overlay_episode_info') {
+          initialSrc = buildSimpleTextDataUrl(cfg, getSimpleTextVars(cfg))
+        }
         layer.src = initialSrc
         if (layer.complete) handleLoad()
 
@@ -1217,7 +1252,7 @@ const OverlayHandler = {
           })
         }
 
-        if ((cfg.id === 'overlay_video_format' || cfg.id === 'overlay_aspect') && layer && cfg.container) {
+        if ((cfg.id === 'overlay_video_format' || cfg.id === 'overlay_aspect' || cfg.id === 'overlay_episode_info') && layer && cfg.container) {
           const refreshTextOverlay = () => {
             const vars = getSimpleTextVars(cfg)
             ensureRuntimeFontLoaded(vars.font).then(family => {
@@ -1235,6 +1270,27 @@ const OverlayHandler = {
             input.addEventListener('change', refreshTextOverlay)
           })
           refreshTextOverlay()
+        }
+
+        if (cfg.id === 'overlay_status' && layer && cfg.container) {
+          const refreshStatus = () => {
+            const vars = getStatusTextVars(cfg)
+            ensureRuntimeFontLoaded(vars.font).then(family => {
+              const { family: norm } = normalizeFontFile(vars.font)
+              layer.src = buildSimpleTextDataUrl(cfg, vars, family || norm)
+              applyPosition(cfg)
+            })
+          }
+
+          const templateName = cfg.container.dataset.overlayTemplate
+          const inputs = cfg.container.querySelectorAll(
+            `[name="${templateName}[text_airing]"], [name="${templateName}[text_returning]"], [name="${templateName}[text_canceled]"], [name="${templateName}[text_ended]"], [name="${templateName}[font]"], [name="${templateName}[font_size]"], [name="${templateName}[font_color]"]`
+          )
+          inputs.forEach(input => {
+            input.addEventListener('input', refreshStatus)
+            input.addEventListener('change', refreshStatus)
+          })
+          refreshStatus()
         }
 
         if (cfg.id === 'overlay_content_rating_commonsense' && layer && cfg.container) {
@@ -1306,6 +1362,21 @@ const OverlayHandler = {
           resizeModalBoard()
         })
 
+        modal.addEventListener('hide.bs.modal', () => {
+          const active = document.activeElement
+          if (active && modal.contains(active)) {
+            active.blur()
+            const fallback = board._overlayLastFocus || modalBtn
+            if (fallback && typeof fallback.focus === 'function') {
+              try {
+                fallback.focus({ preventScroll: true })
+              } catch (err) {
+                fallback.focus()
+              }
+            }
+          }
+        })
+
         modal.addEventListener('hidden.bs.modal', () => {
           if (board._overlayOriginParent) {
             board._overlayOriginParent.insertBefore(board, board._overlayPlaceholder || null)
@@ -1323,6 +1394,10 @@ const OverlayHandler = {
 
         modalBtn.addEventListener('click', () => {
           if (!board.parentNode) return
+          const lastFocus = document.activeElement
+          if (lastFocus && typeof lastFocus.focus === 'function') {
+            board._overlayLastFocus = lastFocus
+          }
           const placeholder = document.createElement('div')
           placeholder.className = 'overlay-board-placeholder'
           placeholder.style.height = `${board.offsetHeight}px`

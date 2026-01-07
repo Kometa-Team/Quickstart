@@ -1192,7 +1192,7 @@ prefix) %}
                                                     {% set _ = extra_reset_ids.append(template_name ~ '-color') %}
                                                 {% endif %}
                                                 {% set details_id = template_name ~ '-details' %}
-                                                <button class="btn btn-outline-secondary btn-sm overlay-details-toggle"
+                                                <button class="btn btn-outline-secondary btn-sm btn-overlay overlay-details-toggle"
                                                     type="button" data-section-id="{{ details_id }}"
                                                     style="display: inline-flex; align-items: center;">
                                                     Details
@@ -1319,28 +1319,48 @@ prefix) %}
                                                     {% endif %}
                                                     {% set color_hex = "#%02X%02X%02X" % (r, g, b) %}
                                                     {% set color_hex_alpha = "#%02X%02X%02X%02X" % (r, g, b, (a_pct * 255 // 100)) %}
+                                                    {% if var_name == 'font_color' %}
+                                                    <div class="rgba-group mb-2">
+                                                        <div class="rgba-bar-wrap mb-2">
+                                                            <input type="color" class="form-control form-control-color rgba-color-picker visually-hidden"
+                                                                id="{{ input_id }}_picker"
+                                                                aria-label="Pick color"
+                                                                value="{{ color_hex }}"
+                                                                oninput="(function(picker){ const target = document.getElementById('{{ input_id }}'); const alpha = document.getElementById('{{ alpha_id }}'); const alphaInput = document.getElementById('{{ alpha_id }}_pct'); const bar = document.getElementById('{{ input_id }}_bar'); const a = alpha ? (Number(alpha.value)/100) : 1; if (target) { const hex = (picker.value || '#ffffff').toUpperCase(); const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); if (bar) bar.style.background = `rgba(${r}, ${g}, ${b}, ${a})`; if (alphaInput) alphaInput.value = Math.round(a * 100); } })(this)">
+                                                            <label id="{{ input_id }}_bar" class="rgba-color-bar" for="{{ input_id }}_picker" aria-label="Pick color"
+                                                                style="background: rgba({{ r }}, {{ g }}, {{ b }}, {{ (a_pct / 100) }});"></label>
+                                                        </div>
+                                                        <div class="form-text rgba-picker-hint mb-2">Click the bar to open the color picker.</div>
+                                                        <div class="input-group mb-2">
+                                                            <span class="input-group-text"
+                                                                id="{{ input_id }}_text"
+                                                                style="width: 170px;">
+                                                                {{ display_label }}
+                                                            </span>
+                                                            <input type="text" class="form-control template-variable-text rgba-hex-input"
+                                                                id="{{ input_id }}"
+                                                                name="{{ template_name }}[{{ var_name }}]"
+                                                                aria-describedby="{{ input_id }}_text"
+                                                                value="{{ color_hex_alpha }}"
+                                                                data-default="{{ var_details.default }}"
+                                                                oninput="(function(field){ const picker = document.getElementById('{{ input_id }}_picker'); const slider = document.getElementById('{{ alpha_id }}'); const alphaInput = document.getElementById('{{ alpha_id }}_pct'); const bar = document.getElementById('{{ input_id }}_bar'); const val = field.value.trim(); if (val.startsWith('#') && (val.length === 9 || val.length === 7)) { const hex = val.length === 9 ? val : (val + 'FF'); const norm = `#${hex.substr(1).toUpperCase()}`; field.value = norm; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const a=parseInt(hex.substr(7,2),16); const pct = Math.round((a/255)*100); if (picker) picker.value = `#${hex.substr(1,6)}`.toUpperCase(); if (slider) { slider.value = pct; slider.title = `Opacity: ${pct}%`; } if (alphaInput) alphaInput.value = pct; if (bar) bar.style.background = `rgba(${r}, ${g}, ${b}, ${pct/100})`; } })(this)">
+                                                        </div>
+                                                        <div class="rgba-opacity-row">
+                                                            <span class="input-group-text rgba-opacity-label" style="width: 170px;">Opacity %</span>
+                                                            <input type="number" class="form-control rgba-alpha-input" id="{{ alpha_id }}_pct" min="0" max="100" step="1"
+                                                                value="{{ a_pct }}"
+                                                                oninput="(function(field){ const slider = document.getElementById('{{ alpha_id }}'); const picker = document.getElementById('{{ input_id }}_picker'); const target = document.getElementById('{{ input_id }}'); const bar = document.getElementById('{{ input_id }}_bar'); let val = Number(field.value); if (Number.isNaN(val)) return; if (val < 0) val = 0; if (val > 100) val = 100; field.value = val; if (slider) { slider.value = val; slider.title = `Opacity: ${val}%`; } const hex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'; const a = val / 100; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; if (target) { target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } if (bar) bar.style.background = `rgba(${r}, ${g}, ${b}, ${a})`; })(this)">
+                                                            <input type="range" class="form-range rgba-alpha-slider" id="{{ alpha_id }}" min="0" max="100" value="{{ a_pct }}"
+                                                                oninput="(function(slider){ const picker = document.getElementById('{{ input_id }}_picker'); const target = document.getElementById('{{ input_id }}'); const alphaInput = document.getElementById('{{ alpha_id }}_pct'); const bar = document.getElementById('{{ input_id }}_bar'); const hex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'; const a = Number(slider.value)/100; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; if (target) { target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } if (bar) bar.style.background = `rgba(${r}, ${g}, ${b}, ${a})`; if (alphaInput) alphaInput.value = slider.value; slider.title = `Opacity: ${slider.value}%`; })(this)">
+                                                        </div>
+                                                    </div>
+                                                    {% elif var_name == 'font' %}
                                                     <div class="input-group mb-2">
                                                         <span class="input-group-text"
                                                             id="{{ input_id }}_text"
                                                             style="width: 170px;">
                                                             {{ display_label }}
                                                         </span>
-                                                        {% if var_name == 'font_color' %}
-                                                        <input type="text" class="form-control template-variable-text"
-                                                            id="{{ input_id }}"
-                                                            name="{{ template_name }}[{{ var_name }}]"
-                                                            aria-describedby="{{ input_id }}_text"
-                                                            value="{{ color_hex_alpha }}"
-                                                            data-default="{{ var_details.default }}"
-                                                            oninput="(function(field){ const picker = document.getElementById('{{ input_id }}_picker'); const slider = document.getElementById('{{ alpha_id }}'); const val = field.value.trim(); if (val.startsWith('#') && (val.length === 9 || val.length === 7)) { const hex = val.length === 9 ? val : (val + 'FF'); const norm = `#${hex.substr(1).toUpperCase()}`; field.value = norm; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const a=parseInt(hex.substr(7,2),16); const pct = Math.round((a/255)*100); if (picker) picker.value = `#${hex.substr(1,6)}`.toUpperCase(); if (slider) { slider.value = pct; slider.title = `Opacity: ${pct}%`; } } })(this)">
-                                                        <input type="color" class="form-control form-control-color ms-2"
-                                                            id="{{ input_id }}_picker"
-                                                            aria-label="Pick color"
-                                                            value="{{ color_hex }}"
-                                                            oninput="(function(picker){ const target = document.getElementById('{{ input_id }}'); const alpha = document.getElementById('{{ alpha_id }}'); const a = alpha ? (Number(alpha.value)/100) : 1; if (target) { const hex = (picker.value || '#ffffff').toUpperCase(); const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } })(this)">
-                                                        <input type="range" class="form-range ms-2" id="{{ alpha_id }}" min="0" max="100" value="{{ a_pct }}"
-                                                            oninput="(function(slider){ const picker = slider.previousElementSibling; const target = document.getElementById('{{ input_id }}'); const hex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'; const a = Number(slider.value)/100; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; if (target) { target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } slider.title = `Opacity: ${slider.value}%`; })(this)">
-                                                        {% elif var_name == 'font' %}
                                                         {% set fonts_list = overlay_fonts if overlay_fonts else ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'Roboto-Regular.ttf'] %}
                                                         <select class="form-select template-variable-text"
                                                             id="{{ input_id }}"
@@ -1352,7 +1372,14 @@ prefix) %}
                                                             <option value="{{ fnt }}" {% if selected_value==fnt %}selected{% endif %}>{{ fnt }}</option>
                                                             {% endfor %}
                                                         </select>
+                                                    </div>
                                                         {% else %}
+                                                    <div class="input-group mb-2">
+                                                        <span class="input-group-text"
+                                                            id="{{ input_id }}_text"
+                                                            style="width: 170px;">
+                                                            {{ display_label }}
+                                                        </span>
                                                         <input type="text" class="form-control template-variable-text"
                                                             id="{{ input_id }}"
                                                             name="{{ template_name }}[{{ var_name }}]"
@@ -1360,8 +1387,8 @@ prefix) %}
                                                             value="{{ selected_value }}"
                                                             data-default="{{ var_details.default }}"
                                                             {% if var_name == 'text' and overlay.id in ['overlay_aspect', 'overlay_video_format'] %}data-skip-yaml="true"{% endif %}>
-                                                        {% endif %}
                                                     </div>
+                                                        {% endif %}
                                                     {% elif var_details.type == "toggle" or var_details.input_type == "toggle" %}
                                                     {% set toggle_id = template_name ~ '-' ~ var_name ~ '-' ~ (var_details.value or 'true') %}
                                                     {% set display_label = var_details.label or var_name.replace('_', ' ') %}
@@ -1388,12 +1415,12 @@ prefix) %}
                                                     {% if ns.has_offsets %}
                                                     <div class="mb-2">
                                                         <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary reset-offset-btn"
+                                                            class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
                                                             data-horizontal-id="{{ ns.h_id or template_name ~ '-horizontal_offset' }}"
                                                             data-vertical-id="{{ ns.v_id or template_name ~ '-vertical_offset' }}"
                                                             {% if ns.position_id %}data-position-id="{{ ns.position_id }}"{% endif %}
                                                             {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
-                                                            Reset offsets
+                                                            Reset to Defaults
                                                         </button>
                                                     </div>
                                                     {% endif %}
@@ -1434,11 +1461,11 @@ prefix) %}
                                                     </div>
                                                     <div class="mb-2">
                                                         <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary reset-offset-btn"
+                                                            class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
                                                             data-horizontal-id="{{ template_name }}-horizontal_offset"
                                                             data-vertical-id="{{ template_name }}-vertical_offset"
                                                             {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
-                                                            Reset offsets
+                                                            Reset to Defaults
                                                         </button>
                                                     </div>
                                                 </div>
@@ -1480,11 +1507,11 @@ prefix) %}
                                                     </div>
                                                     <div class="mb-2">
                                                         <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary reset-offset-btn"
+                                                            class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
                                                             data-horizontal-id="{{ template_name }}-horizontal_offset"
                                                             data-vertical-id="{{ template_name }}-vertical_offset"
                                                             {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
-                                                            Reset offsets
+                                                            Reset to Defaults
                                                         </button>
                                                     </div>
                                                 </div>

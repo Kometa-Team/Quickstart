@@ -524,6 +524,11 @@ def build_libraries_section(
                         if not tv:
                             ov.pop("template_variables", None)
                         continue
+                    if isinstance(default_name, str) and default_name in {"episode_info", "overlay_episode_info"}:
+                        tv.pop("text", None)
+                        if not tv:
+                            ov.pop("template_variables", None)
+                        continue
                     if isinstance(default_name, str) and default_name in {"aspect", "video_format", "overlay_aspect", "overlay_video_format"}:
                         tv.pop("text", None)
                         if not tv:
