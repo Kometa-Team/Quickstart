@@ -604,10 +604,12 @@
         "label": "US Content Ratings",
         "value": "us_movie",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_us_movie/",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/usgc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_movie.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 270
+          "vertical": 270,
+          "origin": "bottom_left"
         },
         "media_types": [
           "movie"
@@ -639,10 +641,12 @@
         "label": "US Content Ratings",
         "value": "us_show",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_us_show/",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/ustv-pgc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_us_show.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 270
+          "vertical": 270,
+          "origin": "bottom_left"
         },
         "media_types": [
           "show",
@@ -696,10 +700,12 @@
         "label": "UK Content Ratings",
         "value": "uk",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_uk/",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/uk18c.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_uk.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 270
+          "vertical": 270,
+          "origin": "bottom_left"
         },
         "media_types": [
           "movie",
@@ -754,10 +760,12 @@
         "label": "DE Content Ratings",
         "value": "de",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_de/",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/de16c.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_de.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 270
+          "vertical": 270,
+          "origin": "bottom_left"
         },
         "media_types": [
           "movie",
@@ -812,10 +820,12 @@
         "label": "AU Content Ratings",
         "value": "au",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_au/",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/au_pgc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_au.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 270
+          "vertical": 270,
+          "origin": "bottom_left"
         },
         "media_types": [
           "movie",
@@ -870,10 +880,12 @@
         "label": "NZ Content Ratings",
         "value": "nz",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/content_rating_nz/",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/cr/nz_mc.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/content_rating_nz.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 270
+          "vertical": 270,
+          "origin": "bottom_left"
         },
         "media_types": [
           "movie",
@@ -928,10 +940,12 @@
         "label": "Common Sense Age Rating",
         "value": "commonsense",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/commonsense/",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/Commonsense.png",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/commonsense.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 270
+          "vertical": 270,
+          "origin": "bottom_left"
         },
         "media_types": [
           "movie",
@@ -940,6 +954,39 @@
           "episode"
         ],
         "template_variables": [
+          {
+            "input_type": "number",
+            "key": "text",
+            "label": "Text",
+            "default": 17
+          },
+          {
+            "input_type": "text",
+            "key": "post_text",
+            "label": "Post Text",
+            "default": "+"
+          },
+          {
+            "input_type": "number",
+            "key": "addon_offset",
+            "label": "Addon Offset",
+            "default": 15
+          },
+          {
+            "input_type": "hidden",
+            "key": "font",
+            "default": "Inter-Medium.ttf"
+          },
+          {
+            "input_type": "hidden",
+            "key": "font_size",
+            "default": 55
+          },
+          {
+            "input_type": "hidden",
+            "key": "font_color",
+            "default": "#FFFFFFFF"
+          },
           {
             "type": "toggle",
             "key": "builder_level",
@@ -1497,7 +1544,7 @@
             "input_type": "text",
             "key": "text",
             "label": "Text",
-            "default": "HDTV"
+            "default": "Remux"
           },
           {
             "input_type": "text",

@@ -1,4 +1,4 @@
-/* global EventHandler, toggleOverlayTemplateSection, FontFace */
+/* global EventHandler, toggleOverlayTemplateSection, FontFace, Image */
 
 const OverlayHandler = {
   baseDimensions: {
@@ -405,6 +405,32 @@ const OverlayHandler = {
         const styleSafe = allowed.includes(style) ? style : 'compact'
         return replacePathSegment(cfg.image, 'audio_codec', styleSafe)
       }
+      if (cfg.id && cfg.id.startsWith('overlay_content_rating_')) {
+        let colorVal = 'true'
+        const templateName = cfg.container?.dataset?.overlayTemplate
+        if (templateName) {
+          const colorInput = cfg.container.querySelector(`[name="${templateName}[color]"]`)
+          if (colorInput) colorVal = colorInput.value || 'true'
+        }
+        const isColor = String(colorVal).toLowerCase() !== 'false'
+        if (!isColor) {
+          try {
+            const urlObj = new URL(cfg.image, window.location.origin)
+            const parts = urlObj.pathname.split('/')
+            const last = parts.pop()
+            if (last) {
+              const newLast = last.replace(/c(\.[^.]+)$/i, '$1')
+              parts.push(newLast)
+              urlObj.pathname = parts.join('/')
+              return urlObj.toString()
+            }
+          } catch (e) {
+            // Fallback simple replace
+            return cfg.image.replace(/c(\.[^.]+)$/i, '$1')
+          }
+        }
+        return cfg.image
+      }
       return cfg.image
     }
 
@@ -478,6 +504,65 @@ const OverlayHandler = {
         font_size: getVal('font_size', 55),
         font_color: getVal('font_color', '#FFFFFFFF')
       }
+    }
+
+    const loadImage = (src) => {
+      return new Promise((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => resolve(img)
+        img.onerror = (err) => reject(err)
+        img.src = src
+      })
+    }
+
+    const buildCommonsenseDataUrl = async (cfg) => {
+      const container = cfg.container
+      const templateName = container?.dataset.overlayTemplate
+      const getVal = (key, defaultVal) => {
+        if (!container || !templateName) return defaultVal
+        const el = container.querySelector(`[name="${templateName}[${key}]"]`)
+        if (!el) return defaultVal
+        if (el.type === 'number') {
+          const n = Number(el.value)
+          return Number.isFinite(n) ? n : defaultVal
+        }
+        return el.value || defaultVal
+      }
+
+      const baseImg = cfg.image
+      const textVal = getVal('text', 17)
+      const postText = getVal('post_text', '+')
+      const addonOffset = getVal('addon_offset', 15)
+      const font = getVal('font', 'Inter-Medium.ttf')
+      const fontSize = getVal('font_size', 55)
+      const fontColor = getVal('font_color', '#FFFFFFFF')
+
+      const fontFamily = (await ensureRuntimeFontLoaded(font)) || normalizeFontFile(font).family || 'Inter-Medium'
+
+      const img = await loadImage(baseImg)
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      ctx.font = `${fontSize}px "${fontFamily}"`
+      const textString = `${textVal}${postText || ''}`
+      const textMetrics = ctx.measureText(textString)
+      const textWidth = Math.ceil(textMetrics.width)
+      const textHeight = Math.ceil(
+        (textMetrics.actualBoundingBoxAscent || fontSize * 0.8) +
+        (textMetrics.actualBoundingBoxDescent || fontSize * 0.2)
+      )
+
+      canvas.width = img.width + addonOffset + textWidth
+      canvas.height = Math.max(img.height, textHeight)
+
+      ctx.drawImage(img, 0, 0)
+      ctx.font = `${fontSize}px "${fontFamily}"`
+      ctx.fillStyle = fontColor
+      ctx.textBaseline = 'middle'
+      const textY = canvas.height / 2
+      ctx.fillText(textString, img.width + addonOffset, textY)
+
+      return canvas.toDataURL('image/png')
     }
 
     const buildRuntimeDataUrl = (cfg, loadedFamily = null) => {
@@ -651,6 +736,10 @@ const OverlayHandler = {
         if (!cfg.origin || cfg.originApplied) return
         const { hInput, vInput } = getInputs(cfg)
         if (!hInput || !vInput) return
+        if (hInput.value !== '' || vInput.value !== '') {
+          cfg.originApplied = true
+          return
+        }
         const natW = cfg.naturalWidth || layer.naturalWidth
         const natH = cfg.naturalHeight || layer.naturalHeight
         if (!natW || !natH) return
@@ -905,6 +994,15 @@ const OverlayHandler = {
             input.addEventListener('change', refreshRuntime)
           })
         }
+        if (cfg.id && cfg.id.startsWith('overlay_content_rating_') && cfg.container) {
+          const templateName = cfg.container.dataset.overlayTemplate
+          const colorInput = cfg.container.querySelector(`[name="${templateName}[color]"]`)
+          if (colorInput) {
+            const refreshColor = () => { layer.src = resolveOverlayImage(cfg) }
+            colorInput.addEventListener('change', refreshColor)
+            colorInput.addEventListener('input', refreshColor)
+          }
+        }
         applyPosition(cfg)
 
         // Optional stacked edition layer (for resolution overlays)
@@ -1003,6 +1101,24 @@ const OverlayHandler = {
             input.addEventListener('change', refreshTextOverlay)
           })
           refreshTextOverlay()
+        }
+
+        if (cfg.id === 'overlay_content_rating_commonsense' && layer && cfg.container) {
+          const refreshCommonsense = () => {
+            buildCommonsenseDataUrl(cfg).then(dataUrl => {
+              layer.src = dataUrl
+              applyPosition(cfg)
+            })
+          }
+          const templateName = cfg.container.dataset.overlayTemplate
+          const inputs = cfg.container.querySelectorAll(
+            `[name="${templateName}[text]"], [name="${templateName}[post_text]"], [name="${templateName}[addon_offset]"], [name="${templateName}[font]"], [name="${templateName}[font_size]"], [name="${templateName}[font_color]"]`
+          )
+          inputs.forEach(input => {
+            input.addEventListener('input', refreshCommonsense)
+            input.addEventListener('change', refreshCommonsense)
+          })
+          refreshCommonsense()
         }
       })
 

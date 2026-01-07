@@ -1189,28 +1189,41 @@ prefix) %}
                                                     {% for rv in reset_vars %}
                                                         {% set _ = extra_reset_ids.append(template_name ~ '-' ~ rv) %}
                                                     {% endfor %}
+                                                {% elif overlay.id == 'overlay_content_rating_commonsense' %}
+                                                    {% set reset_vars = ['text', 'post_text', 'addon_offset', 'font', 'font_size', 'font_color'] %}
+                                                    {% for rv in reset_vars %}
+                                                        {% set _ = extra_reset_ids.append(template_name ~ '-' ~ rv) %}
+                                                    {% endfor %}
+                                                {% elif overlay.id.startswith('overlay_content_rating_') %}
+                                                    {% set _ = extra_reset_ids.append(template_name ~ '-color') %}
                                                 {% endif %}
                                                 {% set details_id = template_name ~ '-details' %}
-                                                <button class="btn btn-outline-secondary btn-sm ms-3 overlay-details-toggle"
+                                                <button class="btn btn-outline-secondary btn-sm overlay-details-toggle"
                                                     type="button" data-section-id="{{ details_id }}"
                                                     style="display: inline-flex; align-items: center;">
                                                     Details
                                                 </button>
                                                 <div class="overlay-template-section mt-2" id="{{ details_id }}"
                                                     style="display: none;">
-                                                    {% set is_mapping = overlay.template_variables is mapping %}
-                                                    {% set tv_items = overlay.template_variables.items() if is_mapping else overlay.template_variables %}
-                                                    {% for item in tv_items %}
-                                                    {% if is_mapping %}
-                                                    {% set var_name = item[0] %}
-                                                    {% set var_details = item[1] %}
-                                                    {% else %}
-                                                    {% set var_details = item %}
-                                                    {% set var_name = var_details.key or ('var' ~ loop.index0) %}
-                                                    {% endif %}
-                                                    {% set skip_var = (var_name == 'builder_level') %}
-                                                    {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
-                                                    {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
+                                                {% set is_mapping = overlay.template_variables is mapping %}
+                                                {% set tv_items = overlay.template_variables.items() if is_mapping else overlay.template_variables %}
+                                                {% set seen_vars = [] %}
+                                                {% for item in tv_items %}
+                                                {% if is_mapping %}
+                                                {% set var_name = item[0] %}
+                                                {% set var_details = item[1] %}
+                                                {% else %}
+                                                {% set var_details = item %}
+                                                {% set var_name = var_details.key or ('var' ~ loop.index0) %}
+                                                {% endif %}
+                                                {% if var_name not in seen_vars %}
+                                                {% set _ = seen_vars.append(var_name) %}
+                                                {% set skip_var = (var_name == 'builder_level') %}
+                                                {% set flat_key = template_name ~ '[' ~ var_name ~ ']' %}
+                                                {% set selected_value = data.libraries.get(flat_key, var_details.default) %}
+                                                {% if selected_value is boolean %}
+                                                {% set selected_value = 'true' if selected_value else 'false' %}
+                                                {% endif %}
 
                                                     {% set var_media_types = var_details.media_types if var_details.media_types is defined else [] %}
                                                     {% set skip_var = skip_var or (var_media_types and (type not in var_media_types)) %}
@@ -1372,6 +1385,7 @@ prefix) %}
                                                             title="{{ var_details.tooltip }}"></i>
                                                         {% endif %}
                                                     </div>
+                                                    {% endif %}
                                                     {% endif %}
                                                     {% endif %}
                                                     {% endfor %}

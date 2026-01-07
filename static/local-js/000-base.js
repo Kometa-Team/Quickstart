@@ -15,7 +15,9 @@
     return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss},${ms}`
   }
 
-  if (isDebug) {
+  const isVerbose = typeof window.QS_VERBOSE !== 'undefined' && String(window.QS_VERBOSE).toLowerCase() === 'true'
+
+  if (isDebug && isVerbose) {
     ['log', 'debug', 'warn', 'error'].forEach((method) => {
       const original = console[method]
       console[method] = function (...args) {
@@ -23,6 +25,7 @@
       }
     })
   } else {
+    // In non-verbose mode, keep errors but mute spammy logs
     console.debug = () => { }
     console.log = () => { }
     console.warn = () => { }

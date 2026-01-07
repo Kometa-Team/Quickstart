@@ -144,6 +144,11 @@ const ImageHandler = {
       // Ensure text is not emitted for overlays that only use it for preview
       if (['video_format', 'aspect'].includes(overlaySuffix)) {
         delete overlayObj.template_variables.text
+      } else if (['content_rating_commonsense', 'overlay_content_rating_commonsense'].includes(overlaySuffix)) {
+        delete overlayObj.template_variables.text
+        delete overlayObj.template_variables.font
+        delete overlayObj.template_variables.font_size
+        delete overlayObj.template_variables.font_color
       }
 
       overlays.push(overlayObj)
@@ -167,6 +172,47 @@ const ImageHandler = {
       if (colorInput) {
         // eslint-disable-next-line camelcase
         template_variables.color = colorInput.value.toString()
+      }
+
+      // Capture offsets for all content ratings (including commonsense)
+      const setNum = (key, el) => {
+        if (!el) return
+        const n = Number(el.value)
+        // eslint-disable-next-line camelcase
+        template_variables[key] = Number.isFinite(n) ? n : el.value
+      }
+      const hInput = document.querySelector(
+        `#${libraryId}-ContentRatingOverlays .overlay-group[data-type="${type}"] input[name="${libraryId}-${type}-template_overlay_${overlaySuffix}[horizontal_offset]"]`
+      )
+      const vInput = document.querySelector(
+        `#${libraryId}-ContentRatingOverlays .overlay-group[data-type="${type}"] input[name="${libraryId}-${type}-template_overlay_${overlaySuffix}[vertical_offset]"]`
+      )
+      setNum('horizontal_offset', hInput)
+      setNum('vertical_offset', vInput)
+
+      // If commonsense, also capture text/post_text/addon_offset and offsets from its template container
+      if (value === 'commonsense') {
+        const container = document.querySelector(
+          `.template-toggle-group[data-overlay-id="overlay_${overlaySuffix}"][data-library-id="${libraryId}"][data-overlay-type="${type}"]`
+        )
+        if (container) {
+          const templateName = container.dataset.overlayTemplate
+          const grab = (key) => {
+            const el = container.querySelector(`[name="${templateName}[${key}]"]`)
+            if (!el) return null
+            if (el.type === 'number') {
+              const n = Number(el.value)
+              return Number.isFinite(n) ? n : el.value
+            }
+            return el.value
+          }
+          const maybeSet = (key) => {
+            const val = grab(key)
+            // eslint-disable-next-line camelcase
+            if (val !== null && val !== undefined) template_variables[key] = val
+          }
+          ;['post_text', 'addon_offset', 'horizontal_offset', 'vertical_offset'].forEach(maybeSet)
+        }
       }
 
       // eslint-disable-next-line camelcase
