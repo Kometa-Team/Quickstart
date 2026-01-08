@@ -80,6 +80,7 @@ PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 _FONT_CACHE: list[str] = []
 
+
 # Font discovery (TTF/OTF) across common static dirs
 def list_overlay_fonts() -> list[str]:
     global _FONT_CACHE
@@ -101,6 +102,7 @@ def list_overlay_fonts() -> list[str]:
             continue
     _FONT_CACHE = fonts
     return fonts
+
 
 # Initialize logging
 helpers.initialize_logging()
@@ -597,9 +599,7 @@ def generate_preview():
                 if use_edition:
                     bbox = overlay_img.getbbox()
                     if bbox:
-                        edition_url = (
-                            overlay_meta.get("overlay_resolution", {}).get("edition_overlay_url")
-                        )
+                        edition_url = overlay_meta.get("overlay_resolution", {}).get("edition_overlay_url")
                         edition_img = fetch_image_from_url(edition_url) if edition_url else None
                         if edition_img:
                             edition_img = edition_img.convert("RGBA")
