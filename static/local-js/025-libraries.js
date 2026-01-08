@@ -616,19 +616,24 @@ function toggleOverlayTemplateSection (checkbox) {
   const groupContainer = checkbox.closest('.template-toggle-group') // <== FIXED
   const templateSection = groupContainer?.querySelector('.overlay-template-section')
   const detailsToggle = groupContainer?.querySelector('.overlay-details-toggle')
+  const detailActions = groupContainer?.querySelector('.overlay-detail-actions')
 
   if (templateSection) {
     if (checkbox.checked) {
-      templateSection.style.display = 'block'
+      templateSection.style.display = 'none'
+      if (detailActions) {
+        detailActions.classList.remove('d-none')
+      }
       if (detailsToggle) {
-        detailsToggle.classList.remove('d-none')
-        detailsToggle.textContent = 'Hide Details'
+        detailsToggle.textContent = 'Show Details'
       }
     } else {
       templateSection.style.display = 'none'
+      if (detailActions) {
+        detailActions.classList.add('d-none')
+      }
       if (detailsToggle) {
-        detailsToggle.classList.add('d-none')
-        detailsToggle.textContent = 'Details'
+        detailsToggle.textContent = 'Show Details'
       }
     }
   }
@@ -883,7 +888,7 @@ function wireOverlayDetailToggles (scope) {
     btn.addEventListener('click', () => {
       const isHidden = section.style.display === 'none'
       section.style.display = isHidden ? 'block' : 'none'
-      btn.textContent = isHidden ? 'Hide Details' : 'Details'
+      btn.textContent = isHidden ? 'Hide Details' : 'Show Details'
       if (typeof EventHandler !== 'undefined') {
         EventHandler.updateAccordionHighlights()
       }

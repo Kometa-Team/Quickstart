@@ -434,6 +434,25 @@ const OverlayHandler = {
       return cfg.image
     }
 
+    const BACKDROP_IMAGE_OVERLAYS = new Set([
+      'overlay_mediastinger',
+      'overlay_versions',
+      'overlay_audio_codec',
+      'overlay_streaming',
+      'overlay_studio',
+      'overlay_network',
+      'overlay_language_count',
+      'overlay_direct_play',
+      'overlay_resolution'
+    ])
+    const BACKDROP_TEXT_OVERLAYS = new Set([
+      'overlay_video_format',
+      'overlay_aspect',
+      'overlay_runtimes',
+      'overlay_episode_info',
+      'overlay_status'
+    ])
+
     // Runtime overlay specific: ensure selected font is loaded before drawing
     const runtimeFontCache = new Map()
     const normalizeFontFile = (fontVal) => {
@@ -575,6 +594,42 @@ const OverlayHandler = {
       }
     }
 
+    const getTemplateInput = (cfg, key) => {
+      const container = cfg.container
+      const templateName = container?.dataset.overlayTemplate
+      if (!container || !templateName) return null
+      return container.querySelector(`[name="${templateName}[${key}]"]`)
+    }
+
+    const setBackdropHeight = (cfg, height, emit = true) => {
+      const input = getTemplateInput(cfg, 'back_height')
+      if (!input) return
+      const next = String(height)
+      input.dataset.default = next
+      if (input.value !== next) {
+        input.value = next
+        if (emit) {
+          input.dispatchEvent(new Event('input', { bubbles: true }))
+          input.dispatchEvent(new Event('change', { bubbles: true }))
+        }
+      }
+    }
+
+    const syncAudioCodecBackdropHeight = (cfg, emit = true) => {
+      if (cfg.id !== 'overlay_audio_codec') return
+      const style = (cfg.styleInput?.value || 'compact').toLowerCase()
+      const height = style === 'standard' ? 189 : 105
+      setBackdropHeight(cfg, height, emit)
+    }
+
+    const syncResolutionBackdropHeight = (cfg, emit = true) => {
+      if (cfg.id !== 'overlay_resolution') return
+      const toggle = getTemplateInput(cfg, 'use_edition')
+      const useEdition = toggle ? toggle.checked : true
+      const height = useEdition ? 189 : 105
+      setBackdropHeight(cfg, height, emit)
+    }
+
     const parseHexColor = (value, fallback = { r: 0, g: 0, b: 0, a: 0 }) => {
       if (!value || typeof value !== 'string') return fallback
       const hex = value.trim().replace(/^#/, '')
@@ -628,7 +683,34 @@ const OverlayHandler = {
       })
     }
 
-    const buildMediastingerDataUrl = async (cfg) => {
+    const buildResolutionCompositeDataUrl = async (cfg) => {
+      if (cfg.id !== 'overlay_resolution') return null
+      const toggle = getTemplateInput(cfg, 'use_edition')
+      const useEdition = toggle ? toggle.checked : true
+      const baseSrc = resolveOverlayImage(cfg)
+      if (!useEdition || !cfg.edition?.image) return baseSrc
+
+      try {
+        const [baseImg, editionImg] = await Promise.all([
+          loadImage(baseSrc),
+          loadImage(cfg.edition.image)
+        ])
+        const spacing = Number(cfg.edition?.spacing) || 15
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(baseImg.width, editionImg.width)
+        canvas.height = baseImg.height + spacing + editionImg.height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return baseSrc
+        ctx.drawImage(baseImg, 0, 0)
+        ctx.drawImage(editionImg, 0, baseImg.height + spacing)
+        return canvas.toDataURL('image/png')
+      } catch (err) {
+        console.warn('[OverlayBoards] Failed to build resolution composite', err)
+        return baseSrc
+      }
+    }
+
+    const buildBackdropDataUrl = async (cfg, baseOverride = null) => {
       const vars = getBackdropVars(cfg)
       const pad = Math.max(0, Number(vars.back_padding) || 0)
       const backWidth = Number(vars.back_width) || 0
@@ -636,12 +718,16 @@ const OverlayHandler = {
       const radius = Math.max(0, Number(vars.back_radius) || 0)
       const lineWidth = Math.max(0, Number(vars.back_line_width) || 0)
 
-      const baseImg = resolveOverlayImage(cfg)
+      let baseImg = baseOverride || resolveOverlayImage(cfg)
+      if (!baseOverride && cfg.id === 'overlay_resolution') {
+        const composite = await buildResolutionCompositeDataUrl(cfg)
+        if (composite) baseImg = composite
+      }
       let img
       try {
         img = await loadImage(baseImg)
       } catch (err) {
-        console.warn('[OverlayBoards] Failed to load mediastinger overlay image', err)
+        console.warn('[OverlayBoards] Failed to load overlay image', err)
         return baseImg
       }
 
@@ -883,7 +969,7 @@ const OverlayHandler = {
       }
 
       const setZoom = (value) => {
-        boardState.zoom = clamp(value, 0.5, 3)
+        boardState.zoom = clamp(value, 0.5, 6)
         applyBoardTransform()
         updateZoomLabel()
         recalcAll()
@@ -1006,6 +1092,10 @@ const OverlayHandler = {
       }
       const applyEditionVisibility = (cfg) => {
         if (!cfg.edition || !cfg.edition.layer) return
+        if (cfg.id === 'overlay_resolution' && BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
+          cfg.edition.layer.style.display = 'none'
+          return
+        }
         const baseVisible = (!cfg.toggle || cfg.toggle.checked)
         const editionToggle = cfg.edition.toggle
         const editionVisible = baseVisible && (!editionToggle || editionToggle.checked)
@@ -1266,15 +1356,39 @@ const OverlayHandler = {
         layer.addEventListener('load', handleLoad)
 
         let initialSrc = resolveOverlayImage(cfg)
-        if (cfg.id === 'overlay_mediastinger') {
-          buildMediastingerDataUrl(cfg).then(dataUrl => {
+        if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
+          buildBackdropDataUrl(cfg).then(dataUrl => {
             layer.src = dataUrl
             applyPosition(cfg)
           })
+        } else if (cfg.id && cfg.id.startsWith('overlay_content_rating_') && cfg.id !== 'overlay_content_rating_commonsense') {
+          buildBackdropDataUrl(cfg).then(dataUrl => {
+            layer.src = dataUrl
+            applyPosition(cfg)
+          })
+        } else if (cfg.id === 'overlay_content_rating_commonsense') {
+          buildCommonsenseDataUrl(cfg).then(dataUrl => {
+            buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+              layer.src = backdropUrl
+              applyPosition(cfg)
+            })
+          })
         } else if (cfg.id === 'overlay_runtimes') {
           initialSrc = buildRuntimeDataUrl(cfg)
+          if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            buildBackdropDataUrl(cfg, initialSrc).then(backdropUrl => {
+              layer.src = backdropUrl
+              applyPosition(cfg)
+            })
+          }
         } else if (cfg.id === 'overlay_status') {
           initialSrc = buildSimpleTextDataUrl(cfg, getStatusTextVars(cfg))
+          if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            buildBackdropDataUrl(cfg, initialSrc).then(backdropUrl => {
+              layer.src = backdropUrl
+              applyPosition(cfg)
+            })
+          }
         } else if (cfg.id === 'overlay_episode_info') {
           initialSrc = buildSimpleTextDataUrl(cfg, getSimpleTextVars(cfg))
         }
@@ -1286,20 +1400,55 @@ const OverlayHandler = {
         bindInputs(cfg)
         if (cfg.styleInput) {
           cfg.styleInput.addEventListener('change', () => {
+            if (cfg.id === 'overlay_audio_codec') {
+              syncAudioCodecBackdropHeight(cfg, false)
+            }
+            if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
+              buildBackdropDataUrl(cfg).then(dataUrl => {
+                layer.src = dataUrl
+                applyPosition(cfg)
+              })
+              return
+            }
             layer.src = resolveOverlayImage(cfg)
           })
         }
 
         if (cfg.id === 'overlay_runtimes' && cfg.container) {
           const templateName = cfg.container.dataset.overlayTemplate
-          const runtimeInputs = cfg.container.querySelectorAll(
-            `input[name="${templateName}[text]"], input[name="${templateName}[format]"], input[name="${templateName}[font]"], input[name="${templateName}[font_size]"], input[name="${templateName}[font_color]"], select[name="${templateName}[font]"]`
-          )
+          const runtimeSelectors = [
+            `[name="${templateName}[text]"]`,
+            `[name="${templateName}[format]"]`,
+            `[name="${templateName}[font]"]`,
+            `[name="${templateName}[font_size]"]`,
+            `[name="${templateName}[font_color]"]`
+          ]
+          if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            runtimeSelectors.push(
+              `[name="${templateName}[back_align]"]`,
+              `[name="${templateName}[back_color]"]`,
+              `[name="${templateName}[back_height]"]`,
+              `[name="${templateName}[back_width]"]`,
+              `[name="${templateName}[back_line_color]"]`,
+              `[name="${templateName}[back_line_width]"]`,
+              `[name="${templateName}[back_padding]"]`,
+              `[name="${templateName}[back_radius]"]`
+            )
+          }
+          const runtimeInputs = cfg.container.querySelectorAll(runtimeSelectors.join(', '))
           const refreshRuntime = () => {
             const { font } = getRuntimeVars(cfg)
             ensureRuntimeFontLoaded(font).then(family => {
               const { family: norm } = normalizeFontFile(font)
-              layer.src = buildRuntimeDataUrl(cfg, family || norm)
+              const dataUrl = buildRuntimeDataUrl(cfg, family || norm)
+              if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+                buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+                  layer.src = backdropUrl
+                  applyPosition(cfg)
+                })
+                return
+              }
+              layer.src = dataUrl
             })
           }
           runtimeInputs.forEach(input => {
@@ -1311,9 +1460,30 @@ const OverlayHandler = {
           const templateName = cfg.container.dataset.overlayTemplate
           const colorInput = cfg.container.querySelector(`[name="${templateName}[color]"]`)
           if (colorInput) {
-            const refreshColor = () => { layer.src = resolveOverlayImage(cfg) }
+            const refreshColor = () => {
+              if (cfg.id === 'overlay_content_rating_commonsense') return
+              buildBackdropDataUrl(cfg).then(dataUrl => {
+                layer.src = dataUrl
+                applyPosition(cfg)
+              })
+            }
             colorInput.addEventListener('change', refreshColor)
             colorInput.addEventListener('input', refreshColor)
+          }
+          if (cfg.id !== 'overlay_content_rating_commonsense') {
+            const refreshBackdrop = () => {
+              buildBackdropDataUrl(cfg).then(dataUrl => {
+                layer.src = dataUrl
+                applyPosition(cfg)
+              })
+            }
+            const backInputs = cfg.container.querySelectorAll(
+              `[name="${templateName}[back_align]"], [name="${templateName}[back_color]"], [name="${templateName}[back_height]"], [name="${templateName}[back_width]"], [name="${templateName}[back_line_color]"], [name="${templateName}[back_line_width]"], [name="${templateName}[back_padding]"], [name="${templateName}[back_radius]"]`
+            )
+            backInputs.forEach(input => {
+              input.addEventListener('input', refreshBackdrop)
+              input.addEventListener('change', refreshBackdrop)
+            })
           }
         }
         applyPosition(cfg)
@@ -1339,7 +1509,16 @@ const OverlayHandler = {
           if (editionLayer.complete) handleEditionLoad()
 
           if (cfg.edition.toggle) {
-            cfg.edition.toggle.addEventListener('change', () => applyEditionPosition(cfg))
+            cfg.edition.toggle.addEventListener('change', () => {
+              syncResolutionBackdropHeight(cfg)
+              if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
+                buildBackdropDataUrl(cfg).then(dataUrl => {
+                  layer.src = dataUrl
+                  applyPosition(cfg)
+                })
+              }
+              applyEditionPosition(cfg)
+            })
           }
 
           applyEditionPosition(cfg)
@@ -1388,6 +1567,8 @@ const OverlayHandler = {
             spacing: 15
           }
         }
+        syncAudioCodecBackdropHeight(cfg, false)
+        syncResolutionBackdropHeight(cfg, false)
         configs.push(cfg)
         const layer = addOverlayLayer(cfg)
 
@@ -1395,7 +1576,15 @@ const OverlayHandler = {
           const { font } = getRuntimeVars(cfg)
           ensureRuntimeFontLoaded(font).then(family => {
             const { family: norm } = normalizeFontFile(font)
-            layer.src = buildRuntimeDataUrl(cfg, family || norm)
+            const dataUrl = buildRuntimeDataUrl(cfg, family || norm)
+            if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+              buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+                layer.src = backdropUrl
+                applyPosition(cfg)
+              })
+              return
+            }
+            layer.src = dataUrl
           })
         }
 
@@ -1404,14 +1593,38 @@ const OverlayHandler = {
             const vars = getSimpleTextVars(cfg)
             ensureRuntimeFontLoaded(vars.font).then(family => {
               const { family: norm } = normalizeFontFile(vars.font)
-              layer.src = buildSimpleTextDataUrl(cfg, vars, family || norm)
+              const dataUrl = buildSimpleTextDataUrl(cfg, vars, family || norm)
+              if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+                buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+                  layer.src = backdropUrl
+                  applyPosition(cfg)
+                })
+                return
+              }
+              layer.src = dataUrl
             })
           }
 
           const templateName = cfg.container.dataset.overlayTemplate
-          const inputs = cfg.container.querySelectorAll(
-            `[name="${templateName}[text]"], [name="${templateName}[font]"], [name="${templateName}[font_size]"], [name="${templateName}[font_color]"]`
-          )
+          const textSelectors = [
+            `[name="${templateName}[text]"]`,
+            `[name="${templateName}[font]"]`,
+            `[name="${templateName}[font_size]"]`,
+            `[name="${templateName}[font_color]"]`
+          ]
+          if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            textSelectors.push(
+              `[name="${templateName}[back_align]"]`,
+              `[name="${templateName}[back_color]"]`,
+              `[name="${templateName}[back_height]"]`,
+              `[name="${templateName}[back_width]"]`,
+              `[name="${templateName}[back_line_color]"]`,
+              `[name="${templateName}[back_line_width]"]`,
+              `[name="${templateName}[back_padding]"]`,
+              `[name="${templateName}[back_radius]"]`
+            )
+          }
+          const inputs = cfg.container.querySelectorAll(textSelectors.join(', '))
           inputs.forEach(input => {
             input.addEventListener('input', refreshTextOverlay)
             input.addEventListener('change', refreshTextOverlay)
@@ -1424,15 +1637,42 @@ const OverlayHandler = {
             const vars = getStatusTextVars(cfg)
             ensureRuntimeFontLoaded(vars.font).then(family => {
               const { family: norm } = normalizeFontFile(vars.font)
-              layer.src = buildSimpleTextDataUrl(cfg, vars, family || norm)
+              const dataUrl = buildSimpleTextDataUrl(cfg, vars, family || norm)
+              if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+                buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+                  layer.src = backdropUrl
+                  applyPosition(cfg)
+                })
+                return
+              }
+              layer.src = dataUrl
               applyPosition(cfg)
             })
           }
 
           const templateName = cfg.container.dataset.overlayTemplate
-          const inputs = cfg.container.querySelectorAll(
-            `[name="${templateName}[text_airing]"], [name="${templateName}[text_returning]"], [name="${templateName}[text_canceled]"], [name="${templateName}[text_ended]"], [name="${templateName}[font]"], [name="${templateName}[font_size]"], [name="${templateName}[font_color]"]`
-          )
+          const statusSelectors = [
+            `[name="${templateName}[text_airing]"]`,
+            `[name="${templateName}[text_returning]"]`,
+            `[name="${templateName}[text_canceled]"]`,
+            `[name="${templateName}[text_ended]"]`,
+            `[name="${templateName}[font]"]`,
+            `[name="${templateName}[font_size]"]`,
+            `[name="${templateName}[font_color]"]`
+          ]
+          if (BACKDROP_TEXT_OVERLAYS.has(cfg.id)) {
+            statusSelectors.push(
+              `[name="${templateName}[back_align]"]`,
+              `[name="${templateName}[back_color]"]`,
+              `[name="${templateName}[back_height]"]`,
+              `[name="${templateName}[back_width]"]`,
+              `[name="${templateName}[back_line_color]"]`,
+              `[name="${templateName}[back_line_width]"]`,
+              `[name="${templateName}[back_padding]"]`,
+              `[name="${templateName}[back_radius]"]`
+            )
+          }
+          const inputs = cfg.container.querySelectorAll(statusSelectors.join(', '))
           inputs.forEach(input => {
             input.addEventListener('input', refreshStatus)
             input.addEventListener('change', refreshStatus)
@@ -1440,9 +1680,9 @@ const OverlayHandler = {
           refreshStatus()
         }
 
-        if (cfg.id === 'overlay_mediastinger' && layer && cfg.container) {
+        if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id) && layer && cfg.container) {
           const refreshBackdrop = () => {
-            buildMediastingerDataUrl(cfg).then(dataUrl => {
+            buildBackdropDataUrl(cfg).then(dataUrl => {
               layer.src = dataUrl
               applyPosition(cfg)
             })
@@ -1461,13 +1701,15 @@ const OverlayHandler = {
         if (cfg.id === 'overlay_content_rating_commonsense' && layer && cfg.container) {
           const refreshCommonsense = () => {
             buildCommonsenseDataUrl(cfg).then(dataUrl => {
-              layer.src = dataUrl
-              applyPosition(cfg)
+              buildBackdropDataUrl(cfg, dataUrl).then(backdropUrl => {
+                layer.src = backdropUrl
+                applyPosition(cfg)
+              })
             })
           }
           const templateName = cfg.container.dataset.overlayTemplate
           const inputs = cfg.container.querySelectorAll(
-            `[name="${templateName}[text]"], [name="${templateName}[post_text]"], [name="${templateName}[addon_offset]"], [name="${templateName}[font]"], [name="${templateName}[font_size]"], [name="${templateName}[font_color]"]`
+            `[name="${templateName}[text]"], [name="${templateName}[post_text]"], [name="${templateName}[addon_offset]"], [name="${templateName}[font]"], [name="${templateName}[font_size]"], [name="${templateName}[font_color]"], [name="${templateName}[back_align]"], [name="${templateName}[back_color]"], [name="${templateName}[back_height]"], [name="${templateName}[back_width]"], [name="${templateName}[back_line_color]"], [name="${templateName}[back_line_width]"], [name="${templateName}[back_padding]"], [name="${templateName}[back_radius]"]`
           )
           inputs.forEach(input => {
             input.addEventListener('input', refreshCommonsense)

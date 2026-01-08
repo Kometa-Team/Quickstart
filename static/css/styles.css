@@ -280,6 +280,10 @@ header.fixed-top {
     max-width: 100%;
 }
 
+.overlay-board--modal [data-overlay-board-open="modal"] {
+    display: none;
+}
+
 .overlay-canvas-modal .modal-body {
     display: flex;
     align-items: center;

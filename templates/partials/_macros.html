@@ -1191,12 +1191,37 @@ prefix) %}
                                                 {% elif overlay.id.startswith('overlay_content_rating_') %}
                                                     {% set _ = extra_reset_ids.append(template_name ~ '-color') %}
                                                 {% endif %}
+                                                {% set scan_is_mapping = overlay.template_variables is mapping %}
+                                                {% set scan_items = overlay.template_variables.items() if scan_is_mapping else overlay.template_variables %}
+                                                {% for item in scan_items %}
+                                                {% if scan_is_mapping %}
+                                                {% set var_name = item[0] %}
+                                                {% else %}
+                                                {% set var_details = item %}
+                                                {% set var_name = var_details.key or ('var' ~ loop.index0) %}
+                                                {% endif %}
+                                                {% if var_name in ['horizontal_offset', 'initial_horizontal_offset'] %}{% set ns.has_offsets = true %}{% set ns.h_id = template_name ~ '-' ~ var_name %}{% endif %}
+                                                {% if var_name in ['vertical_offset', 'initial_vertical_offset'] %}{% set ns.has_offsets = true %}{% set ns.v_id = template_name ~ '-' ~ var_name %}{% endif %}
+                                                {% if var_name == 'horizontal_position' %}{% set ns.position_id = template_name ~ '-' ~ var_name %}{% endif %}
+                                                {% endfor %}
                                                 {% set details_id = template_name ~ '-details' %}
-                                                <button class="btn btn-outline-secondary btn-sm btn-overlay overlay-details-toggle"
-                                                    type="button" data-section-id="{{ details_id }}"
-                                                    style="display: inline-flex; align-items: center;">
-                                                    Details
-                                                </button>
+                                                <div class="d-flex align-items-center gap-2 flex-wrap mb-2 overlay-detail-actions d-none">
+                                                    <button class="btn btn-outline-secondary btn-sm btn-overlay overlay-details-toggle"
+                                                        type="button" data-section-id="{{ details_id }}"
+                                                        style="display: inline-flex; align-items: center;">
+                                                        Show Details
+                                                    </button>
+                                                    {% if ns.has_offsets or overlay.default_offsets is mapping %}
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
+                                                        data-horizontal-id="{{ ns.h_id or template_name ~ '-horizontal_offset' }}"
+                                                        data-vertical-id="{{ ns.v_id or template_name ~ '-vertical_offset' }}"
+                                                        {% if ns.position_id %}data-position-id="{{ ns.position_id }}"{% endif %}
+                                                        {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
+                                                        Reset to Defaults
+                                                    </button>
+                                                    {% endif %}
+                                                </div>
                                                 <div class="overlay-template-section mt-2" id="{{ details_id }}"
                                                     style="display: none;">
                                                 {% set is_mapping = overlay.template_variables is mapping %}
@@ -1412,19 +1437,6 @@ prefix) %}
                                                     {% endif %}
                                                     {% endfor %}
 
-                                                    {% if ns.has_offsets %}
-                                                    <div class="mb-2">
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
-                                                            data-horizontal-id="{{ ns.h_id or template_name ~ '-horizontal_offset' }}"
-                                                            data-vertical-id="{{ ns.v_id or template_name ~ '-vertical_offset' }}"
-                                                            {% if ns.position_id %}data-position-id="{{ ns.position_id }}"{% endif %}
-                                                            {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
-                                                            Reset to Defaults
-                                                        </button>
-                                                    </div>
-                                                    {% endif %}
-
                                                 {% if not ns.has_offsets and overlay.default_offsets is mapping %}
                                                 {% set h_default = overlay.default_offsets.get('horizontal', 0) %}
                                                 {% set v_default = overlay.default_offsets.get('vertical', 0) %}
@@ -1458,15 +1470,6 @@ prefix) %}
                                                             aria-describedby="{{ template_name }}-vertical_offset_text"
                                                             value="{{ v_value }}"
                                                             data-default="{{ v_default }}">
-                                                    </div>
-                                                    <div class="mb-2">
-                                                        <button type="button"
-                                                            class="btn btn-sm btn-outline-secondary btn-overlay reset-offset-btn"
-                                                            data-horizontal-id="{{ template_name }}-horizontal_offset"
-                                                            data-vertical-id="{{ template_name }}-vertical_offset"
-                                                            {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
-                                                            Reset to Defaults
-                                                        </button>
                                                     </div>
                                                 </div>
                                                 {% endif %}

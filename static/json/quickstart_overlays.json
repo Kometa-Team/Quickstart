@@ -167,6 +167,61 @@
             "default": "#FFFFFFFF"
           },
           {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 305
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
+          },
+          {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Episode",
@@ -230,6 +285,53 @@
             "input_type": "text",
             "label": "Font Color",
             "default": "#FFFFFFFF"
+          },
+          "back_align": {
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
           },
           "horizontal_offset": {
             "input_type": "number",
@@ -737,6 +839,53 @@
               "false"
             ]
           },
+          "back_align": {
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 15,
@@ -795,6 +944,53 @@
                 "value": "episode"
               }
             ]
+          },
+          "back_align": {
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
           },
           "horizontal_offset": {
             "input_type": "number",
@@ -856,6 +1052,53 @@
               }
             ]
           },
+          "back_align": {
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 15,
@@ -915,6 +1158,53 @@
                 "value": "episode"
               }
             ]
+          },
+          "back_align": {
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
           },
           "horizontal_offset": {
             "input_type": "number",
@@ -976,6 +1266,53 @@
               }
             ]
           },
+          "back_align": {
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 15,
@@ -1035,6 +1372,53 @@
                 "value": "episode"
               }
             ]
+          },
+          "back_align": {
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "input_type": "select",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
           },
           "horizontal_offset": {
             "input_type": "number",
@@ -1099,6 +1483,61 @@
             "input_type": "hidden",
             "key": "font_color",
             "default": "#FFFFFFFF"
+          },
+          {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 305
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
           },
           {
             "type": "toggle",
@@ -1183,6 +1622,61 @@
             "default": "#FFFFFFFF"
           },
           {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 305
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
+          },
+          {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Show",
@@ -1261,6 +1755,53 @@
               }
             ]
           },
+          "back_align": {
+            "input_type": "select",
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 0,
@@ -1291,6 +1832,61 @@
           "episode"
         ],
         "template_variables": [
+          {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 188
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
+          },
           {
             "type": "toggle",
             "key": "builder_level",
@@ -1492,6 +2088,61 @@
             ]
           },
           {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 305
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
+          },
+          {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Show",
@@ -1567,6 +2218,61 @@
             "default": "#FFFFFFFF"
           },
           {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 600
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
+          },
+          {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Show",
@@ -1604,6 +2310,61 @@
           "episode"
         ],
         "template_variables": [
+          {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 105
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
+          },
           {
             "type": "toggle",
             "key": "builder_level",
@@ -1676,6 +2437,61 @@
             "key": "font_color",
             "label": "Font Color",
             "default": "#FFFFFFFF"
+          },
+          {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 105
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 305
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
           },
           {
             "type": "toggle",
@@ -1762,6 +2578,53 @@
               }
             ]
           },
+          "back_align": {
+            "input_type": "select",
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 15,
@@ -1821,6 +2684,53 @@
               }
             ]
           },
+          "back_align": {
+            "input_type": "select",
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 15,
@@ -1879,6 +2789,53 @@
               }
             ]
           },
+          "back_align": {
+            "input_type": "select",
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 105,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 305,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
+          },
           "horizontal_offset": {
             "input_type": "number",
             "default": 15,
@@ -1918,6 +2875,61 @@
           "episode"
         ],
         "template_variables": [
+          {
+            "input_type": "select",
+            "key": "back_align",
+            "label": "Backdrop Alignment",
+            "default": "center",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          {
+            "input_type": "text",
+            "key": "back_color",
+            "label": "Backdrop Color",
+            "default": "#00000099"
+          },
+          {
+            "input_type": "number",
+            "key": "back_height",
+            "label": "Backdrop Height",
+            "default": 170
+          },
+          {
+            "input_type": "number",
+            "key": "back_width",
+            "label": "Backdrop Width",
+            "default": 305
+          },
+          {
+            "input_type": "text",
+            "key": "back_line_color",
+            "label": "Backdrop Line Color",
+            "default": "#00000000"
+          },
+          {
+            "input_type": "number",
+            "key": "back_line_width",
+            "label": "Backdrop Line Width",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_padding",
+            "label": "Backdrop Padding",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "back_radius",
+            "label": "Backdrop Radius",
+            "default": 30
+          },
           {
             "type": "toggle",
             "key": "builder_level",
