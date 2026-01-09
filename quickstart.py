@@ -2,6 +2,7 @@ import argparse
 import io
 import json
 import os
+import hashlib
 import platform
 import psutil
 import shutil
@@ -20,6 +21,7 @@ from io import BytesIO
 from threading import Thread
 from pathlib import Path
 from collections import deque
+from urllib.parse import urlparse
 
 import namesgenerator
 import requests
@@ -78,6 +80,9 @@ DEFAULT_IMAGE_MAP = {
 }
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
+OVERLAY_CACHE_FOLDER = os.path.join(helpers.CONFIG_DIR, "cache", "overlays")
+os.makedirs(OVERLAY_CACHE_FOLDER, exist_ok=True)
+OVERLAY_CACHE_TTL_SECONDS = 60 * 60 * 24 * 30
 _FONT_CACHE: list[str] = []
 
 
@@ -441,9 +446,33 @@ def generate_preview():
 
     def fetch_image_from_url(url: str) -> Image.Image | None:
         try:
+            if not url:
+                return None
+            cache_path = None
+            try:
+                ext = os.path.splitext(urlparse(url).path)[1].lower()
+                if ext not in [".png", ".jpg", ".jpeg", ".webp"]:
+                    ext = ".png"
+                cache_key = hashlib.sha1(url.encode("utf-8")).hexdigest()
+                cache_path = os.path.join(OVERLAY_CACHE_FOLDER, f"{cache_key}{ext}")
+                if os.path.exists(cache_path):
+                    age = time.time() - os.path.getmtime(cache_path)
+                    if age <= OVERLAY_CACHE_TTL_SECONDS:
+                        with Image.open(cache_path) as cached_img:
+                            return cached_img.copy()
+            except Exception:
+                cache_path = None
+
             resp = requests.get(url, timeout=10)
             resp.raise_for_status()
-            return Image.open(BytesIO(resp.content))
+            content = resp.content
+            if cache_path:
+                try:
+                    with open(cache_path, "wb") as handle:
+                        handle.write(content)
+                except Exception as e:
+                    helpers.ts_log(f"Failed to cache overlay image {cache_path}: {e}", level="WARNING")
+            return Image.open(BytesIO(content))
         except Exception as e:
             helpers.ts_log(f"Failed to fetch overlay image from {url}: {e}", level="WARNING")
             return None

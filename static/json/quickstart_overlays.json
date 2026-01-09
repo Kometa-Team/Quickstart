@@ -351,8 +351,9 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/ratings/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ratings.png",
         "default_offsets": {
-          "horizontal": 30,
-          "vertical": 0
+          "horizontal": 15,
+          "vertical": 0,
+          "origin": "center_right"
         },
         "media_types": [
           "movie",
@@ -587,6 +588,53 @@
               }
             ]
           },
+          "back_align": {
+            "input_type": "select",
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 160,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 160,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 15,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
+          },
           "horizontal_position": {
             "input_type": "select",
             "default": "right",
@@ -599,7 +647,7 @@
           },
           "horizontal_offset": {
             "input_type": "number",
-            "default": 30,
+            "default": 15,
             "label": "Horizontal Offset"
           },
           "vertical_offset": {
@@ -615,8 +663,9 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/ratings/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/ratings.png",
         "default_offsets": {
-          "horizontal": 30,
-          "vertical": 0
+          "horizontal": 15,
+          "vertical": 0,
+          "origin": "center_right"
         },
         "media_types": [
           "episode"
@@ -774,6 +823,53 @@
               }
             ]
           },
+          "back_align": {
+            "input_type": "select",
+            "default": "center",
+            "label": "Backdrop Alignment",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 160,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 160,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 15,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 30,
+            "label": "Backdrop Radius"
+          },
           "builder_level": {
             "input_type": "select",
             "default": "episode",
@@ -793,7 +889,7 @@
           },
           "horizontal_offset": {
             "input_type": "number",
-            "default": 30,
+            "default": 15,
             "label": "Horizontal Offset"
           },
           "vertical_offset": {

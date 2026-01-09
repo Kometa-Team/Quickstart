@@ -443,7 +443,8 @@ const OverlayHandler = {
       'overlay_network',
       'overlay_language_count',
       'overlay_direct_play',
-      'overlay_resolution'
+      'overlay_resolution',
+      'overlay_ratings'
     ])
     const BACKDROP_TEXT_OVERLAYS = new Set([
       'overlay_video_format',
@@ -455,6 +456,10 @@ const OverlayHandler = {
 
     // Runtime overlay specific: ensure selected font is loaded before drawing
     const runtimeFontCache = new Map()
+    const imageCache = OverlayHandler._imageCache instanceof Map
+      ? OverlayHandler._imageCache
+      : new Map()
+    OverlayHandler._imageCache = imageCache
     const normalizeFontFile = (fontVal) => {
       if (!fontVal) return { file: null, family: null }
       const file = fontVal.split(/[\\/]/).pop()
@@ -630,6 +635,162 @@ const OverlayHandler = {
       setBackdropHeight(cfg, height, emit)
     }
 
+    const RATINGS_IMAGE_BASE = 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/rating/'
+    const RATING_LABEL_MAP = {
+      anidb: 'AniDB',
+      imdb: 'IMDb',
+      letterboxd: 'Letterboxd',
+      tmdb: 'TMDb',
+      metacritic: 'Metacritic',
+      rt_popcorn: 'RT-Aud-Fresh',
+      rt_tomato: 'RT-Crit-Fresh',
+      trakt: 'Trakt',
+      mal: 'MAL',
+      mdb: 'MDBList',
+      star: 'Star'
+    }
+    const RATING_FILENAME_MAP = {
+      rt_popcorn: 'RT-Aud-Fresh',
+      rt_tomato: 'RT-Crit-Fresh',
+      mdb: 'MDBList',
+      mal: 'MAL',
+      'rt popcorn': 'RT-Aud-Fresh',
+      'rt tomato': 'RT-Crit-Fresh',
+      'rt tomatoes': 'RT-Crit-Fresh',
+      myanimelist: 'MAL'
+    }
+
+    const buildRatingFilenameCandidates = (value, label) => {
+      const valueKey = (value || '').toString().trim().toLowerCase()
+      const labelKey = (label || '').toString().trim().toLowerCase()
+      const mapped = RATING_FILENAME_MAP[valueKey] || RATING_FILENAME_MAP[labelKey]
+      if (mapped) {
+        return [`${RATINGS_IMAGE_BASE}${encodeURIComponent(`${mapped}.png`)}`]
+      }
+      const raw = (label || RATING_LABEL_MAP[value] || value || '').trim()
+      if (!raw) return []
+      const normalized = raw.replace(/\s+/g, ' ').trim()
+      const noSpaces = normalized.replace(/\s+/g, '')
+      const underscored = normalized.replace(/\s+/g, '_')
+      const dashed = normalized.replace(/\s+/g, '-')
+      const names = []
+      ;[normalized, noSpaces, underscored, dashed].forEach(name => {
+        if (!name || names.includes(name)) return
+        names.push(name)
+      })
+      return names.map(name => `${RATINGS_IMAGE_BASE}${encodeURIComponent(`${name}.png`)}`)
+    }
+
+    const loadImageWithFallback = async (urls) => {
+      let lastErr = null
+      for (const url of urls) {
+        try {
+          return await loadImage(url)
+        } catch (err) {
+          lastErr = err
+        }
+      }
+      throw lastErr || new Error('No rating image URL matched')
+    }
+
+    const buildRatingsCompositeDataUrl = async (cfg) => {
+      if (cfg.id !== 'overlay_ratings') return null
+      const ratingTextMap = {
+        critic: '9.0',
+        audience: '85%',
+        user: '85%'
+      }
+      const slots = [
+        { ratingKey: 'rating1', imageKey: 'rating1_image' },
+        { ratingKey: 'rating2', imageKey: 'rating2_image' },
+        { ratingKey: 'rating3', imageKey: 'rating3_image' }
+      ]
+      const isEmpty = (val) => {
+        if (val === null || val === undefined) return true
+        const str = String(val).trim()
+        return str === '' || str.toLowerCase() === 'none'
+      }
+
+      const items = []
+      for (const slot of slots) {
+        const ratingSelect = getTemplateInput(cfg, slot.ratingKey)
+        const imageSelect = getTemplateInput(cfg, slot.imageKey)
+        const ratingVal = ratingSelect?.value ?? ratingSelect?.dataset?.default
+        const imageVal = imageSelect?.value ?? imageSelect?.dataset?.default
+        if (isEmpty(ratingVal) || isEmpty(imageVal)) continue
+        const label = imageSelect?.selectedOptions?.[0]?.textContent?.trim()
+        const urls = buildRatingFilenameCandidates(imageVal, label)
+        if (!urls.length) continue
+        try {
+          const img = await loadImageWithFallback(urls)
+          const text = ratingTextMap[String(ratingVal).toLowerCase()] || 'NR'
+          items.push({ img, text })
+        } catch (err) {
+          console.warn('[OverlayBoards] Failed to load rating image', { value: imageVal, label, err })
+        }
+      }
+
+      if (!items.length) return resolveOverlayImage(cfg)
+
+      const vars = getBackdropVars(cfg)
+      const boxWidth = Math.max(1, Number(vars.back_width) || 160)
+      const boxHeight = Math.max(1, Number(vars.back_height) || 160)
+      const gap = Math.max(6, Math.round(boxHeight * 0.08))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.ceil(boxWidth)
+      canvas.height = Math.ceil((boxHeight * items.length) + (gap * Math.max(0, items.length - 1)))
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return resolveOverlayImage(cfg)
+
+      const fill = parseHexColor(vars.back_color, { r: 0, g: 0, b: 0, a: 0 })
+      const stroke = parseHexColor(vars.back_line_color, { r: 0, g: 0, b: 0, a: 0 })
+      const lineWidth = Math.max(0, Number(vars.back_line_width) || 0)
+      const radius = Math.max(0, Number(vars.back_radius) || 0)
+      const innerPad = Number.isFinite(Number(vars.back_padding))
+        ? Math.max(0, Number(vars.back_padding))
+        : Math.round(boxHeight * 0.08)
+
+      const fontSize = Math.max(10, Math.round(boxHeight * 0.32))
+      const fontFamily = 'Inter, "Arial Black", Arial, sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'alphabetic'
+
+      items.forEach((item, idx) => {
+        const boxTop = (boxHeight + gap) * idx
+        drawRoundedRect(ctx, 0, boxTop, boxWidth, boxHeight, radius)
+        if (fill.a > 0) {
+          ctx.fillStyle = `rgba(${fill.r}, ${fill.g}, ${fill.b}, ${fill.a})`
+          ctx.fill()
+        }
+        if (lineWidth > 0 && stroke.a > 0) {
+          const inset = lineWidth / 2
+          const strokeRadius = Math.max(0, radius - inset)
+          drawRoundedRect(ctx, inset, boxTop + inset, boxWidth - (inset * 2), boxHeight - (inset * 2), strokeRadius)
+          ctx.strokeStyle = `rgba(${stroke.r}, ${stroke.g}, ${stroke.b}, ${stroke.a})`
+          ctx.lineWidth = lineWidth
+          ctx.stroke()
+        }
+
+        const textBottom = boxTop + boxHeight - innerPad
+        ctx.fillStyle = '#FFFFFF'
+        ctx.font = `700 ${fontSize}px ${fontFamily}`
+        ctx.fillText(item.text, boxWidth / 2, textBottom)
+
+        const iconMaxHeight = Math.max(1, boxHeight - fontSize - (innerPad * 2))
+        const iconMaxWidth = Math.max(1, boxWidth - (innerPad * 2))
+        const scale = Math.min(iconMaxWidth / item.img.width, iconMaxHeight / item.img.height, 1)
+        const drawW = item.img.width * scale
+        const drawH = item.img.height * scale
+        const drawX = (boxWidth - drawW) / 2
+        const drawY = boxTop + innerPad + ((iconMaxHeight - drawH) / 2)
+        ctx.drawImage(item.img, drawX, drawY, drawW, drawH)
+      })
+
+      cfg.naturalWidth = canvas.width
+      cfg.naturalHeight = canvas.height
+      return canvas.toDataURL('image/png')
+    }
+
     const parseHexColor = (value, fallback = { r: 0, g: 0, b: 0, a: 0 }) => {
       if (!value || typeof value !== 'string') return fallback
       const hex = value.trim().replace(/^#/, '')
@@ -674,13 +835,20 @@ const OverlayHandler = {
     }
 
     const loadImage = (src) => {
-      return new Promise((resolve, reject) => {
+      if (!src) return Promise.reject(new Error('Missing image src'))
+      const cached = imageCache.get(src)
+      if (cached) return cached
+      const promise = new Promise((resolve, reject) => {
         const img = new Image()
         img.crossOrigin = 'anonymous'
+        img.decoding = 'async'
         img.onload = () => resolve(img)
         img.onerror = (err) => reject(err)
         img.src = src
       })
+      imageCache.set(src, promise)
+      promise.catch(() => imageCache.delete(src))
+      return promise
     }
 
     const buildResolutionCompositeDataUrl = async (cfg) => {
@@ -722,6 +890,13 @@ const OverlayHandler = {
       if (!baseOverride && cfg.id === 'overlay_resolution') {
         const composite = await buildResolutionCompositeDataUrl(cfg)
         if (composite) baseImg = composite
+      }
+      if (!baseOverride && cfg.id === 'overlay_ratings') {
+        const composite = await buildRatingsCompositeDataUrl(cfg)
+        if (composite) baseImg = composite
+      }
+      if (cfg.id === 'overlay_ratings') {
+        return baseImg
       }
       let img
       try {
@@ -921,6 +1096,7 @@ const OverlayHandler = {
       canvas.style.setProperty('--overlay-board-ratio', `${ratio}`)
 
       const layers = new Map()
+      const configsById = new Map()
       let writing = false
 
       const clamp = (val, min, max) => Math.min(Math.max(val, min), max)
@@ -938,10 +1114,13 @@ const OverlayHandler = {
       const panToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="pan"]')
       const gridToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="grid"]')
       const snapToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="snap"]')
+      const snapStepSelect = toolbar?.querySelector('[data-overlay-board-snap-step]')
+      const alignButtons = toolbar?.querySelectorAll('[data-overlay-board-align]') || []
+      const distributeButtons = toolbar?.querySelectorAll('[data-overlay-board-distribute]') || []
+      const exportBtn = toolbar?.querySelector('[data-overlay-board-export]')
 
-      const gridSize = 25
-      const snapThreshold = 6
-      board.style.setProperty('--overlay-grid-size', `${gridSize}px`)
+      const initialGridSize = Number(snapStepSelect?.value) || 25
+      board.style.setProperty('--overlay-grid-size', `${initialGridSize}px`)
 
       const boardState = {
         zoom: 1,
@@ -949,7 +1128,10 @@ const OverlayHandler = {
         panY: 0,
         gridEnabled: false,
         snapEnabled: false,
-        panEnabled: false
+        panEnabled: false,
+        gridSize: initialGridSize,
+        activeLayer: null,
+        selectedLayers: new Set()
       }
 
       let recalcAll = () => {}
@@ -968,6 +1150,111 @@ const OverlayHandler = {
         if (zoomLabel) zoomLabel.textContent = `${Math.round(boardState.zoom * 100)}%`
       }
 
+      const setLayerSelected = (layer, selected) => {
+        if (!layer) return
+        if (selected) {
+          boardState.selectedLayers.add(layer)
+          layer.classList.add('is-selected')
+          return
+        }
+        boardState.selectedLayers.delete(layer)
+        layer.classList.remove('is-selected')
+      }
+
+      const clearSelection = () => {
+        boardState.selectedLayers.forEach(layer => {
+          layer.classList.remove('is-selected')
+        })
+        boardState.selectedLayers.clear()
+        if (boardState.activeLayer) {
+          boardState.activeLayer.classList.remove('is-active')
+        }
+        boardState.activeLayer = null
+      }
+
+      const setActiveLayer = (layer) => {
+        if (boardState.activeLayer === layer) return
+        canvas.querySelectorAll('.overlay-board-layer.is-active').forEach(node => {
+          if (node !== layer) node.classList.remove('is-active')
+        })
+        boardState.activeLayer = layer || null
+        if (layer) {
+          layer.classList.add('is-active')
+          if (!boardState.selectedLayers.has(layer)) {
+            setLayerSelected(layer, true)
+          }
+        }
+      }
+
+      const getBackgroundUrl = () => {
+        const style = window.getComputedStyle(canvas)
+        const bg = style.backgroundImage || ''
+        if (!bg || bg === 'none') return null
+        const match = bg.match(/url\(["']?(.*?)["']?\)/i)
+        return match ? match[1] : null
+      }
+
+      const drawCoverImage = (ctx, img, width, height) => {
+        if (!img || !img.width || !img.height) return
+        const scale = Math.max(width / img.width, height / img.height)
+        const drawW = img.width * scale
+        const drawH = img.height * scale
+        const drawX = (width - drawW) / 2
+        const drawY = (height - drawH) / 2
+        ctx.drawImage(img, drawX, drawY, drawW, drawH)
+      }
+
+      const exportBoardImage = async () => {
+        if (exportBtn) exportBtn.disabled = true
+        try {
+          const exportCanvas = document.createElement('canvas')
+          exportCanvas.width = Math.round(baseWidth)
+          exportCanvas.height = Math.round(baseHeight)
+          const ctx = exportCanvas.getContext('2d')
+          if (!ctx) return
+
+          ctx.fillStyle = '#0f0f0f'
+          ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height)
+
+          const bgUrl = getBackgroundUrl()
+          if (bgUrl) {
+            const bgImg = await loadImage(bgUrl)
+            drawCoverImage(ctx, bgImg, exportCanvas.width, exportCanvas.height)
+          }
+
+          const { scaleX, scaleY } = getScale()
+          const layers = Array.from(canvas.querySelectorAll('.overlay-board-layer'))
+          for (const layer of layers) {
+            const style = window.getComputedStyle(layer)
+            if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') continue
+            const src = layer.currentSrc || layer.src
+            if (!src) continue
+            const img = await loadImage(src)
+            const leftPx = parseFloat(layer.style.left) || 0
+            const topPx = parseFloat(layer.style.top) || 0
+            const widthPx = parseFloat(layer.style.width) || img.width
+            const heightPx = parseFloat(layer.style.height) || img.height
+            const x = leftPx / scaleX
+            const y = topPx / scaleY
+            const w = widthPx / scaleX
+            const h = heightPx / scaleY
+            ctx.drawImage(img, x, y, w, h)
+          }
+
+          const dataUrl = exportCanvas.toDataURL('image/png')
+          const link = document.createElement('a')
+          link.href = dataUrl
+          link.download = `overlay-${libId}-${overlayType}.png`
+          document.body.appendChild(link)
+          link.click()
+          link.remove()
+        } catch (err) {
+          console.warn('[OverlayBoards] Export failed', err)
+        } finally {
+          if (exportBtn) exportBtn.disabled = false
+        }
+      }
+
       const setZoom = (value) => {
         boardState.zoom = clamp(value, 0.5, 6)
         applyBoardTransform()
@@ -977,8 +1264,10 @@ const OverlayHandler = {
 
       const snapToGrid = (value, maxVal) => {
         if (!boardState.snapEnabled) return value
-        const snapped = Math.round(value / gridSize) * gridSize
-        const within = Math.abs(snapped - value) <= snapThreshold
+        const step = boardState.gridSize || 25
+        const snapped = Math.round(value / step) * step
+        const threshold = Math.max(2, Math.round(step * 0.24))
+        const within = Math.abs(snapped - value) <= threshold
         return within ? clamp(snapped, 0, maxVal) : value
       }
 
@@ -1013,11 +1302,47 @@ const OverlayHandler = {
         })
       }
 
+      if (snapStepSelect) {
+        snapStepSelect.addEventListener('change', () => {
+          const nextSize = Math.max(1, Number(snapStepSelect.value) || 25)
+          boardState.gridSize = nextSize
+          board.style.setProperty('--overlay-grid-size', `${nextSize}px`)
+        })
+      }
+
       if (snapToggleBtn) {
         snapToggleBtn.addEventListener('click', () => {
           boardState.snapEnabled = !boardState.snapEnabled
           setToggleState(snapToggleBtn, boardState.snapEnabled)
         })
+      }
+
+      if (alignButtons && alignButtons.length) {
+        alignButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const target = boardState.activeLayer
+            if (!target) return
+            const overlayId = target.dataset.overlayId || target.alt
+            const cfg = configsById.get(overlayId)
+            if (!cfg) return
+            alignLayer(cfg, target, btn.dataset.overlayBoardAlign)
+          })
+        })
+      }
+
+      if (distributeButtons && distributeButtons.length) {
+        distributeButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            distributeLayers(btn.dataset.overlayBoardDistribute)
+          })
+        })
+      }
+
+      if (exportBtn && exportBtn.dataset.exportBound !== 'true') {
+        exportBtn.addEventListener('click', () => {
+          exportBoardImage()
+        })
+        exportBtn.dataset.exportBound = 'true'
       }
 
       if (viewport) {
@@ -1052,6 +1377,11 @@ const OverlayHandler = {
         window.addEventListener('pointerup', onPanUp)
       }
 
+      canvas.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('.overlay-board-layer')) return
+        clearSelection()
+      })
+
       applyBoardTransform()
       updateZoomLabel()
 
@@ -1072,6 +1402,14 @@ const OverlayHandler = {
         const toggle = cfg.toggle
         const visible = !toggle || toggle.checked
         layer.style.display = visible ? 'block' : 'none'
+        if (!visible) {
+          if (boardState.activeLayer === layer) {
+            setActiveLayer(null)
+          }
+          if (boardState.selectedLayers.has(layer)) {
+            setLayerSelected(layer, false)
+          }
+        }
       }
 
       const parseOrigin = (origin = '') => {
@@ -1089,6 +1427,147 @@ const OverlayHandler = {
         else if (hasCenter) vAlign = 'center'
 
         return { hAlign, vAlign }
+      }
+
+      const getLayerMetrics = (cfg, layer) => {
+        const baseW = Number(cfg.baseWidth) || baseWidth
+        const baseH = Number(cfg.baseHeight) || baseHeight
+        const natW = cfg.naturalWidth || layer.naturalWidth || (baseW * 0.25)
+        const natH = cfg.naturalHeight || layer.naturalHeight || (baseH * 0.25)
+        return { baseW, baseH, natW, natH }
+      }
+
+      const getActualFromInputs = (cfg, natW, natH, baseW, baseH) => {
+        const { hInput, vInput } = getInputs(cfg)
+        const hValInput = ensureNumber(hInput?.value)
+        const vValInput = ensureNumber(vInput?.value)
+        const { hAlign, vAlign } = parseOrigin(cfg.origin)
+        const centerH = (baseW - natW) / 2
+        const centerV = (baseH - natH) / 2
+        const actualH = hAlign === 'right'
+          ? (baseW - natW - hValInput)
+          : hAlign === 'center'
+            ? (centerH + hValInput)
+            : hValInput
+        const actualV = vAlign === 'bottom'
+          ? (baseH - natH - vValInput)
+          : vAlign === 'center'
+            ? (centerV + vValInput)
+            : vValInput
+        return { actualH, actualV }
+      }
+
+      const getInputsFromActual = (cfg, actualH, actualV, natW, natH, baseW, baseH) => {
+        const { hAlign, vAlign } = parseOrigin(cfg.origin)
+        const centerH = (baseW - natW) / 2
+        const centerV = (baseH - natH) / 2
+        const inputH = hAlign === 'right'
+          ? (baseW - natW - actualH)
+          : hAlign === 'center'
+            ? (actualH - centerH)
+            : actualH
+        const inputV = vAlign === 'bottom'
+          ? (baseH - natH - actualV)
+          : vAlign === 'center'
+            ? (actualV - centerV)
+            : actualV
+        return { inputH, inputV }
+      }
+
+      const getSelectedLayerEntries = () => {
+        if (!boardState.selectedLayers.size) return []
+        const entries = []
+        boardState.selectedLayers.forEach(layer => {
+          const id = layer.dataset.overlayId || layer.alt
+          if (layer.dataset.overlayEdition === 'true') return
+          const cfg = configsById.get(id)
+          if (!cfg) return
+          const style = window.getComputedStyle(layer)
+          if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return
+          const { baseW, baseH, natW, natH } = getLayerMetrics(cfg, layer)
+          const { actualH, actualV } = getActualFromInputs(cfg, natW, natH, baseW, baseH)
+          entries.push({ cfg, layer, baseW, baseH, natW, natH, actualH, actualV })
+        })
+        return entries
+      }
+
+      const alignLayer = (cfg, layer, direction) => {
+        const { baseW, baseH, natW, natH } = getLayerMetrics(cfg, layer)
+        const { actualH, actualV } = getActualFromInputs(cfg, natW, natH, baseW, baseH)
+        let nextH = actualH
+        let nextV = actualV
+
+        if (direction === 'left') nextH = 0
+        if (direction === 'center') nextH = (baseW - natW) / 2
+        if (direction === 'right') nextH = baseW - natW
+        if (direction === 'top') nextV = 0
+        if (direction === 'middle') nextV = (baseH - natH) / 2
+        if (direction === 'bottom') nextV = baseH - natH
+
+        const maxH = Math.max(0, baseW - natW)
+        const maxV = Math.max(0, baseH - natH)
+        nextH = clamp(nextH, 0, maxH)
+        nextV = clamp(nextV, 0, maxV)
+
+        const { inputH, inputV } = getInputsFromActual(cfg, nextH, nextV, natW, natH, baseW, baseH)
+        writeOffsets(cfg, inputH, inputV)
+        applyPosition(cfg)
+      }
+
+      const distributeLayers = (direction) => {
+        const entries = getSelectedLayerEntries()
+        if (entries.length < 3) return
+
+        if (direction === 'horizontal') {
+          const sorted = entries.slice().sort((a, b) => (a.actualH + a.natW / 2) - (b.actualH + b.natW / 2))
+          const min = sorted[0].actualH + (sorted[0].natW / 2)
+          const max = sorted[sorted.length - 1].actualH + (sorted[sorted.length - 1].natW / 2)
+          const span = max - min
+          if (!Number.isFinite(span) || span === 0) return
+          const step = span / (sorted.length - 1)
+          sorted.forEach((entry, index) => {
+            const targetCenter = min + (step * index)
+            const maxH = Math.max(0, entry.baseW - entry.natW)
+            const nextH = clamp(targetCenter - (entry.natW / 2), 0, maxH)
+            const { inputH, inputV } = getInputsFromActual(
+              entry.cfg,
+              nextH,
+              entry.actualV,
+              entry.natW,
+              entry.natH,
+              entry.baseW,
+              entry.baseH
+            )
+            writeOffsets(entry.cfg, inputH, inputV)
+            applyPosition(entry.cfg)
+          })
+          return
+        }
+
+        if (direction === 'vertical') {
+          const sorted = entries.slice().sort((a, b) => (a.actualV + a.natH / 2) - (b.actualV + b.natH / 2))
+          const min = sorted[0].actualV + (sorted[0].natH / 2)
+          const max = sorted[sorted.length - 1].actualV + (sorted[sorted.length - 1].natH / 2)
+          const span = max - min
+          if (!Number.isFinite(span) || span === 0) return
+          const step = span / (sorted.length - 1)
+          sorted.forEach((entry, index) => {
+            const targetCenter = min + (step * index)
+            const maxV = Math.max(0, entry.baseH - entry.natH)
+            const nextV = clamp(targetCenter - (entry.natH / 2), 0, maxV)
+            const { inputH, inputV } = getInputsFromActual(
+              entry.cfg,
+              entry.actualH,
+              nextV,
+              entry.natW,
+              entry.natH,
+              entry.baseW,
+              entry.baseH
+            )
+            writeOffsets(entry.cfg, inputH, inputV)
+            applyPosition(entry.cfg)
+          })
+        }
       }
       const applyEditionVisibility = (cfg) => {
         if (!cfg.edition || !cfg.edition.layer) return
@@ -1234,6 +1713,23 @@ const OverlayHandler = {
         const onPointerDown = (e) => {
           e.preventDefault()
           layer.setPointerCapture(e.pointerId)
+          const isMultiSelect = e.shiftKey || e.metaKey || e.ctrlKey
+          if (isMultiSelect) {
+            if (boardState.selectedLayers.has(layer)) {
+              setLayerSelected(layer, false)
+              if (boardState.activeLayer === layer) {
+                const next = boardState.selectedLayers.values().next().value || null
+                setActiveLayer(next)
+              }
+            } else {
+              setLayerSelected(layer, true)
+              setActiveLayer(layer)
+            }
+          } else {
+            clearSelection()
+            setLayerSelected(layer, true)
+            setActiveLayer(layer)
+          }
           const { hInput, vInput } = getInputs(cfg)
           const baseW = Number(cfg.baseWidth) || baseWidth
           const baseH = Number(cfg.baseHeight) || baseHeight
@@ -1344,6 +1840,7 @@ const OverlayHandler = {
         const layer = document.createElement('img')
         layer.className = 'overlay-board-layer'
         layer.alt = cfg.id
+        layer.dataset.overlayId = cfg.id
         layers.set(cfg.id, layer)
         canvas.appendChild(layer)
 
@@ -1493,6 +1990,8 @@ const OverlayHandler = {
           const editionLayer = document.createElement('img')
           editionLayer.className = 'overlay-board-layer'
           editionLayer.alt = `${cfg.id}-edition`
+          editionLayer.dataset.overlayId = cfg.edition.id
+          editionLayer.dataset.overlayEdition = 'true'
           editionLayer.style.pointerEvents = 'none' // let dragging happen on the base resolution layer
           cfg.edition.layer = editionLayer
           layers.set(cfg.edition.id, editionLayer)
@@ -1570,6 +2069,7 @@ const OverlayHandler = {
         syncAudioCodecBackdropHeight(cfg, false)
         syncResolutionBackdropHeight(cfg, false)
         configs.push(cfg)
+        configsById.set(cfg.id, cfg)
         const layer = addOverlayLayer(cfg)
 
         if (cfg.id === 'overlay_runtimes' && layer) {
@@ -1678,6 +2178,30 @@ const OverlayHandler = {
             input.addEventListener('change', refreshStatus)
           })
           refreshStatus()
+        }
+
+        if (cfg.id === 'overlay_ratings' && layer && cfg.container) {
+          const refreshRatings = () => {
+            buildBackdropDataUrl(cfg).then(dataUrl => {
+              layer.src = dataUrl
+              applyPosition(cfg)
+            })
+          }
+          const templateName = cfg.container.dataset.overlayTemplate
+          const ratingSelectors = [
+            `[name="${templateName}[rating1]"]`,
+            `[name="${templateName}[rating1_image]"]`,
+            `[name="${templateName}[rating2]"]`,
+            `[name="${templateName}[rating2_image]"]`,
+            `[name="${templateName}[rating3]"]`,
+            `[name="${templateName}[rating3_image]"]`
+          ]
+          const inputs = cfg.container.querySelectorAll(ratingSelectors.join(', '))
+          inputs.forEach(input => {
+            input.addEventListener('input', refreshRatings)
+            input.addEventListener('change', refreshRatings)
+          })
+          refreshRatings()
         }
 
         if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id) && layer && cfg.container) {

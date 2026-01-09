@@ -181,6 +181,17 @@ header.fixed-top {
     margin-left: auto;
 }
 
+.overlay-board-align-group {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.overlay-board-align-group .btn {
+    min-width: 2rem;
+    padding: 0.2rem 0.4rem;
+}
+
 .overlay-board-toolbar .is-active {
     background-color: #495057;
     border-color: #495057;
@@ -212,6 +223,11 @@ header.fixed-top {
     text-align: center;
     font-variant-numeric: tabular-nums;
     color: #adb5bd;
+}
+
+.overlay-board-select {
+    width: auto;
+    min-width: 4rem;
 }
 
 .overlay-board-viewport {
@@ -265,6 +281,20 @@ header.fixed-top {
     cursor: grab;
     user-select: none;
     z-index: 5;
+}
+
+.overlay-board-layer.is-active {
+    outline: 2px solid #019c75;
+    outline-offset: 2px;
+}
+
+.overlay-board-layer.is-selected {
+    outline: 2px dashed #0dcaf0;
+    outline-offset: 2px;
+}
+
+.overlay-board-layer.is-active.is-selected {
+    outline: 2px solid #019c75;
 }
 
 .overlay-board-layer.dragging {
