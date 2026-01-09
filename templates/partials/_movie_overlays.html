@@ -18,9 +18,9 @@
 
         <div class="card mb-4 border shadow-sm">
           <div class="card-body">
-            <div class="row align-items-center">
+            <div class="row align-items-center overlay-board-row">
               <!-- Left Column (Image Selection) -->
-              <div class="col-md-6">
+              <div class="col-md-6 overlay-board-controls">
                 <div class="form-floating mb-2">
                   <select id="{{ library.id }}-movie-image-dropdown" class="form-select">
                     <option value="default">Default Kometa</option>
@@ -55,20 +55,9 @@
                     <i class="fa fa-pencil-alt"></i> Rename
                   </button>
                 </div>
-              </div>
 
-              <!-- Right Column (Movie Canvas) -->
-              <div class="col-md-6">
-                <h6 class="fw-bold">Movie Canvas</h6>
-                {% set board_base_width = 1000 %}
-                {% set board_base_height = 1500 %}
-                {% set board_bg = '/static/images/default-' ~ board_base_width ~ 'x' ~ board_base_height ~ '.png' %}
-                <div class="overlay-board"
-                  data-base-width="{{ board_base_width }}"
-                  data-base-height="{{ board_base_height }}"
-                  data-overlay-type="movie"
-                  data-library-id="{{ library.id }}">
-                  <div class="overlay-board-toolbar">
+                <div class="overlay-board-toolbox">
+                  <div class="overlay-board-toolbar" data-overlay-board-toolbar data-library-id="{{ library.id }}" data-overlay-type="movie">
                     <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="pan" aria-pressed="false">
                       Pan
                     </button>
@@ -78,12 +67,22 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="snap" aria-pressed="false">
                       Snap
                     </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="multi" aria-pressed="false">
+                      Select
+                    </button>
                     <select class="form-select form-select-sm overlay-board-select" data-overlay-board-snap-step aria-label="Snap step">
                       <option value="5">5px</option>
                       <option value="10">10px</option>
                       <option value="15">15px</option>
                       <option value="25" selected>25px</option>
                     </select>
+                    <div class="overlay-board-align-group" role="group" aria-label="History">
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-history="undo" title="Undo" aria-label="Undo">Undo</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-history="redo" title="Redo" aria-label="Redo">Redo</button>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-reset="position" title="Reset Position" aria-label="Reset Position">
+                      Reset Pos
+                    </button>
                     <div class="overlay-board-align-group" role="group" aria-label="Align horizontal">
                       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="left" title="Align Left" aria-label="Align Left">L</button>
                       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="center" title="Align Center" aria-label="Align Center">C</button>
@@ -97,6 +96,16 @@
                     <div class="overlay-board-align-group" role="group" aria-label="Distribute">
                       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-distribute="horizontal" title="Distribute Horizontal" aria-label="Distribute Horizontal">DH</button>
                       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-distribute="vertical" title="Distribute Vertical" aria-label="Distribute Vertical">DV</button>
+                    </div>
+                    <div class="overlay-board-align-group" role="group" aria-label="Nudge">
+                      <select class="form-select form-select-sm overlay-board-select" data-overlay-board-nudge-step aria-label="Nudge step">
+                        <option value="1" selected>1px</option>
+                        <option value="5">5px</option>
+                      </select>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="left" title="Nudge Left" aria-label="Nudge Left">&lt;</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="up" title="Nudge Up" aria-label="Nudge Up">^</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="down" title="Nudge Down" aria-label="Nudge Down">v</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="right" title="Nudge Right" aria-label="Nudge Right">&gt;</button>
                     </div>
                     <div class="overlay-board-toolbar-group">
                       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay"
@@ -113,6 +122,20 @@
                       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-zoom="reset">Reset</button>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <!-- Right Column (Movie Canvas) -->
+              <div class="col-md-6 overlay-board-preview">
+                <h6 class="fw-bold">Movie Canvas</h6>
+                {% set board_base_width = 1000 %}
+                {% set board_base_height = 1500 %}
+                {% set board_bg = '/static/images/default-' ~ board_base_width ~ 'x' ~ board_base_height ~ '.png' %}
+                <div class="overlay-board"
+                  data-base-width="{{ board_base_width }}"
+                  data-base-height="{{ board_base_height }}"
+                  data-overlay-type="movie"
+                  data-library-id="{{ library.id }}">
                   <div class="overlay-board-viewport">
                     <div class="overlay-board-canvas" style="background-image: url('{{ board_bg }}');">
                       <div class="overlay-board-grid"></div>

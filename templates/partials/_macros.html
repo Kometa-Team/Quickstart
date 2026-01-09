@@ -1093,8 +1093,12 @@ prefix) %}
                                         {% if overlay.media_types and (type in overlay.media_types) %}
                                         {% set base_id = library.id ~ '-' ~ type ~ '-' ~ overlay.id %}
                                         {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
-                                        {% set base_width = 1920 if type == 'episode' else 1000 %}
-                                        {% set base_height = 1080 if type == 'episode' else 1500 %}
+                                          {% set base_width = 1920 if type == 'episode' else 1000 %}
+                                          {% set base_height = 1080 if type == 'episode' else 1500 %}
+                                          {% set effective_offsets = overlay.default_offsets %}
+                                          {% if overlay.default_offsets_by_type is defined and overlay.default_offsets_by_type is mapping and overlay.default_offsets_by_type.get(type) is mapping %}
+                                          {% set effective_offsets = overlay.default_offsets_by_type.get(type) %}
+                                          {% endif %}
                                         {% set overlay_preview_image = overlay.overlay_url or overlay.image_url or '/static/images/default_grey.png' %}
                                         {% set input_name = radio_safe_name if input_type == "radio" else base_id %}
                                         {% set input_value = overlay.value if input_type == "radio" else "true" %}
@@ -1115,7 +1119,7 @@ prefix) %}
                                             data-library-id="{{ library.id }}"
                                             data-base-width="{{ base_width }}"
                                             data-base-height="{{ base_height }}"
-                                            {% if overlay.default_offsets and overlay.default_offsets.origin %}data-overlay-origin="{{ overlay.default_offsets.origin }}"{% endif %}>
+                                            {% if effective_offsets and effective_offsets.origin %}data-overlay-origin="{{ effective_offsets.origin }}"{% endif %}>
                                             <div class="form-check form-switch">
                                                 <input
                                                     class="form-check-input overlay-toggle template-parent-toggle{% if overlay.readonly %} readonly-toggle{% endif %}"
@@ -1437,9 +1441,9 @@ prefix) %}
                                                     {% endif %}
                                                     {% endfor %}
 
-                                                {% if not ns.has_offsets and overlay.default_offsets is mapping %}
-                                                {% set h_default = overlay.default_offsets.get('horizontal', 0) %}
-                                                {% set v_default = overlay.default_offsets.get('vertical', 0) %}
+                                                {% if not ns.has_offsets and effective_offsets is mapping %}
+                                                {% set h_default = effective_offsets.get('horizontal', 0) %}
+                                                {% set v_default = effective_offsets.get('vertical', 0) %}
                                                 {% set h_flat_key = template_name ~ '[horizontal_offset]' %}
                                                 {% set v_flat_key = template_name ~ '[vertical_offset]' %}
                                                 {% set h_value = data.libraries.get(h_flat_key, h_default) %}
@@ -1474,9 +1478,9 @@ prefix) %}
                                                 </div>
                                                 {% endif %}
                                                 </div>
-                                                    {% elif overlay.default_offsets is mapping %}
-                                                {% set h_default = overlay.default_offsets.get('horizontal', 0) %}
-                                                {% set v_default = overlay.default_offsets.get('vertical', 0) %}
+                                                    {% elif effective_offsets is mapping %}
+                                                {% set h_default = effective_offsets.get('horizontal', 0) %}
+                                                {% set v_default = effective_offsets.get('vertical', 0) %}
                                                 {% set h_flat_key = template_name ~ '[horizontal_offset]' %}
                                                 {% set v_flat_key = template_name ~ '[vertical_offset]' %}
                                                 {% set h_value = data.libraries.get(h_flat_key, h_default) %}

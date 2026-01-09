@@ -1092,6 +1092,9 @@ const OverlayHandler = {
 
       const baseWidth = Number(board.dataset.baseWidth) || defaultDims.default.width
       const baseHeight = Number(board.dataset.baseHeight) || defaultDims.default.height
+      const libId = board.dataset.libraryId || ''
+      const overlayType = board.dataset.overlayType || ''
+      board.classList.toggle('overlay-board--landscape', baseWidth > baseHeight)
       const ratio = baseWidth / baseHeight
       canvas.style.setProperty('--overlay-board-ratio', `${ratio}`)
 
@@ -1106,7 +1109,8 @@ const OverlayHandler = {
       }
 
       const viewport = board.querySelector('.overlay-board-viewport') || canvas
-      const toolbar = board.querySelector('.overlay-board-toolbar')
+      const toolbar = board.querySelector('.overlay-board-toolbar') ||
+        document.querySelector(`.overlay-board-toolbar[data-overlay-board-toolbar][data-library-id="${libId}"][data-overlay-type="${overlayType}"]`)
       const zoomLabel = toolbar?.querySelector('[data-overlay-board-zoom-label]')
       const zoomInBtn = toolbar?.querySelector('[data-overlay-board-zoom="in"]')
       const zoomOutBtn = toolbar?.querySelector('[data-overlay-board-zoom="out"]')
@@ -1114,7 +1118,13 @@ const OverlayHandler = {
       const panToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="pan"]')
       const gridToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="grid"]')
       const snapToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="snap"]')
+      const multiSelectToggleBtn = toolbar?.querySelector('[data-overlay-board-toggle="multi"]')
       const snapStepSelect = toolbar?.querySelector('[data-overlay-board-snap-step]')
+      const undoBtn = toolbar?.querySelector('[data-overlay-board-history="undo"]')
+      const redoBtn = toolbar?.querySelector('[data-overlay-board-history="redo"]')
+      const resetPosBtn = toolbar?.querySelector('[data-overlay-board-reset="position"]')
+      const nudgeStepSelect = toolbar?.querySelector('[data-overlay-board-nudge-step]')
+      const nudgeButtons = toolbar?.querySelectorAll('[data-overlay-board-nudge]') || []
       const alignButtons = toolbar?.querySelectorAll('[data-overlay-board-align]') || []
       const distributeButtons = toolbar?.querySelectorAll('[data-overlay-board-distribute]') || []
       const exportBtn = toolbar?.querySelector('[data-overlay-board-export]')
@@ -1131,7 +1141,12 @@ const OverlayHandler = {
         panEnabled: false,
         gridSize: initialGridSize,
         activeLayer: null,
-        selectedLayers: new Set()
+        selectedLayers: new Set(),
+        multiSelectEnabled: false,
+        history: [],
+        historyIndex: -1,
+        historyLimit: 100,
+        historyLocked: false
       }
 
       let recalcAll = () => {}
@@ -1184,6 +1199,79 @@ const OverlayHandler = {
             setLayerSelected(layer, true)
           }
         }
+      }
+
+      const getSnapshot = () => {
+        const snapshot = {}
+        configsById.forEach((cfg, id) => {
+          const { hInput, vInput } = getInputs(cfg)
+          if (!hInput || !vInput) return
+          snapshot[id] = {
+            h: ensureNumber(hInput.value, 0),
+            v: ensureNumber(vInput.value, 0)
+          }
+        })
+        return snapshot
+      }
+
+      const snapshotsEqual = (a, b) => {
+        if (!a || !b) return false
+        const aKeys = Object.keys(a)
+        const bKeys = Object.keys(b)
+        if (aKeys.length !== bKeys.length) return false
+        for (const key of aKeys) {
+          const aVal = a[key]
+          const bVal = b[key]
+          if (!bVal || aVal.h !== bVal.h || aVal.v !== bVal.v) return false
+        }
+        return true
+      }
+
+      const updateHistoryButtons = () => {
+        if (undoBtn) undoBtn.disabled = boardState.historyIndex <= 0
+        if (redoBtn) redoBtn.disabled = boardState.historyIndex >= boardState.history.length - 1
+      }
+
+      const recordHistory = () => {
+        if (boardState.historyLocked) return
+        const snapshot = getSnapshot()
+        if (boardState.historyIndex >= 0) {
+          const current = boardState.history[boardState.historyIndex]
+          if (snapshotsEqual(current, snapshot)) {
+            updateHistoryButtons()
+            return
+          }
+        }
+        if (boardState.historyIndex < boardState.history.length - 1) {
+          boardState.history.splice(boardState.historyIndex + 1)
+        }
+        boardState.history.push(snapshot)
+        if (boardState.history.length > boardState.historyLimit) {
+          boardState.history.shift()
+        }
+        boardState.historyIndex = boardState.history.length - 1
+        updateHistoryButtons()
+      }
+
+      const applySnapshot = (snapshot) => {
+        if (!snapshot) return
+        boardState.historyLocked = true
+        writing = true
+        configsById.forEach((cfg, id) => {
+          const entry = snapshot[id]
+          if (!entry) return
+          const { hInput, vInput } = getInputs(cfg)
+          if (!hInput || !vInput) return
+          hInput.value = entry.h
+          vInput.value = entry.v
+        })
+        writing = false
+        boardState.historyLocked = false
+        configsById.forEach(cfg => {
+          applyPosition(cfg)
+          applyEditionPosition(cfg)
+        })
+        updateHistoryButtons()
       }
 
       const getBackgroundUrl = () => {
@@ -1317,15 +1405,105 @@ const OverlayHandler = {
         })
       }
 
+      if (multiSelectToggleBtn) {
+        multiSelectToggleBtn.addEventListener('click', () => {
+          boardState.multiSelectEnabled = !boardState.multiSelectEnabled
+          setToggleState(multiSelectToggleBtn, boardState.multiSelectEnabled)
+          if (!boardState.multiSelectEnabled && boardState.selectedLayers.size > 1) {
+            const active = boardState.activeLayer
+            boardState.selectedLayers.forEach(layer => {
+              if (layer !== active) setLayerSelected(layer, false)
+            })
+          }
+        })
+      }
+
+      if (undoBtn) {
+        undoBtn.addEventListener('click', () => {
+          if (boardState.historyIndex <= 0) return
+          boardState.historyIndex -= 1
+          applySnapshot(boardState.history[boardState.historyIndex])
+        })
+      }
+
+      if (redoBtn) {
+        redoBtn.addEventListener('click', () => {
+          if (boardState.historyIndex >= boardState.history.length - 1) return
+          boardState.historyIndex += 1
+          applySnapshot(boardState.history[boardState.historyIndex])
+        })
+      }
+
+      if (resetPosBtn) {
+        resetPosBtn.addEventListener('click', () => {
+          const entries = getSelectedLayerEntries()
+          if (!entries.length) return
+          boardState.historyLocked = true
+          entries.forEach(entry => {
+            const { hInput, vInput } = getInputs(entry.cfg)
+            if (!hInput || !vInput) return
+            const hDefault = ensureNumber(hInput.dataset?.default, 0)
+            const vDefault = ensureNumber(vInput.dataset?.default, 0)
+            writeOffsets(entry.cfg, hDefault, vDefault)
+            applyPosition(entry.cfg)
+          })
+          boardState.historyLocked = false
+          recordHistory()
+        })
+      }
+
+      if (nudgeButtons && nudgeButtons.length) {
+        nudgeButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const step = Math.max(1, Number(nudgeStepSelect?.value) || 1)
+            const direction = btn.dataset.overlayBoardNudge
+            if (!direction) return
+            const delta = {
+              left: { x: -step, y: 0 },
+              right: { x: step, y: 0 },
+              up: { x: 0, y: -step },
+              down: { x: 0, y: step }
+            }[direction]
+            if (!delta) return
+            const entries = getSelectedLayerEntries()
+            if (!entries.length) return
+            boardState.historyLocked = true
+            entries.forEach(entry => {
+              const maxH = Math.max(0, entry.baseW - entry.natW)
+              const maxV = Math.max(0, entry.baseH - entry.natH)
+              const nextH = clamp(entry.actualH + delta.x, 0, maxH)
+              const nextV = clamp(entry.actualV + delta.y, 0, maxV)
+              const { inputH, inputV } = getInputsFromActual(
+                entry.cfg,
+                nextH,
+                nextV,
+                entry.natW,
+                entry.natH,
+                entry.baseW,
+                entry.baseH
+              )
+              writeOffsets(entry.cfg, inputH, inputV)
+              applyPosition(entry.cfg)
+            })
+            boardState.historyLocked = false
+            recordHistory()
+          })
+        })
+      }
+
       if (alignButtons && alignButtons.length) {
         alignButtons.forEach(btn => {
           btn.addEventListener('click', () => {
+            const direction = btn.dataset.overlayBoardAlign
+            if (!direction) return
+            if (alignSelectedLayers(direction)) return
             const target = boardState.activeLayer
             if (!target) return
             const overlayId = target.dataset.overlayId || target.alt
             const cfg = configsById.get(overlayId)
             if (!cfg) return
-            alignLayer(cfg, target, btn.dataset.overlayBoardAlign)
+            alignLayer(cfg, target, direction)
+            recordHistory()
           })
         })
       }
@@ -1333,7 +1511,10 @@ const OverlayHandler = {
       if (distributeButtons && distributeButtons.length) {
         distributeButtons.forEach(btn => {
           btn.addEventListener('click', () => {
+            boardState.historyLocked = true
             distributeLayers(btn.dataset.overlayBoardDistribute)
+            boardState.historyLocked = false
+            recordHistory()
           })
         })
       }
@@ -1512,6 +1693,55 @@ const OverlayHandler = {
         const { inputH, inputV } = getInputsFromActual(cfg, nextH, nextV, natW, natH, baseW, baseH)
         writeOffsets(cfg, inputH, inputV)
         applyPosition(cfg)
+      }
+
+      const alignSelectedLayers = (direction) => {
+        const entries = getSelectedLayerEntries()
+        if (entries.length <= 1) return false
+        let minH = Infinity
+        let maxRight = -Infinity
+        let minV = Infinity
+        let maxBottom = -Infinity
+        entries.forEach(entry => {
+          minH = Math.min(minH, entry.actualH)
+          maxRight = Math.max(maxRight, entry.actualH + entry.natW)
+          minV = Math.min(minV, entry.actualV)
+          maxBottom = Math.max(maxBottom, entry.actualV + entry.natH)
+        })
+        const centerX = (minH + maxRight) / 2
+        const centerY = (minV + maxBottom) / 2
+
+        boardState.historyLocked = true
+        entries.forEach(entry => {
+          let nextH = entry.actualH
+          let nextV = entry.actualV
+          if (direction === 'left') nextH = minH
+          if (direction === 'right') nextH = maxRight - entry.natW
+          if (direction === 'center') nextH = centerX - (entry.natW / 2)
+          if (direction === 'top') nextV = minV
+          if (direction === 'bottom') nextV = maxBottom - entry.natH
+          if (direction === 'middle') nextV = centerY - (entry.natH / 2)
+
+          const maxH = Math.max(0, entry.baseW - entry.natW)
+          const maxV = Math.max(0, entry.baseH - entry.natH)
+          nextH = clamp(nextH, 0, maxH)
+          nextV = clamp(nextV, 0, maxV)
+
+          const { inputH, inputV } = getInputsFromActual(
+            entry.cfg,
+            nextH,
+            nextV,
+            entry.natW,
+            entry.natH,
+            entry.baseW,
+            entry.baseH
+          )
+          writeOffsets(entry.cfg, inputH, inputV)
+          applyPosition(entry.cfg)
+        })
+        boardState.historyLocked = false
+        recordHistory()
+        return true
       }
 
       const distributeLayers = (direction) => {
@@ -1708,12 +1938,15 @@ const OverlayHandler = {
 
       const bindDrag = (cfg, layer) => {
         let dragging = false
+        let moved = false
         let start = { x: 0, y: 0, h: 0, v: 0 }
+        let dragGroup = null
+        let dragBounds = null
 
         const onPointerDown = (e) => {
           e.preventDefault()
           layer.setPointerCapture(e.pointerId)
-          const isMultiSelect = e.shiftKey || e.metaKey || e.ctrlKey
+          const isMultiSelect = e.shiftKey || e.metaKey || e.ctrlKey || boardState.multiSelectEnabled
           if (isMultiSelect) {
             if (boardState.selectedLayers.has(layer)) {
               setLayerSelected(layer, false)
@@ -1730,6 +1963,9 @@ const OverlayHandler = {
             setLayerSelected(layer, true)
             setActiveLayer(layer)
           }
+          moved = false
+          dragGroup = null
+          dragBounds = null
           const { hInput, vInput } = getInputs(cfg)
           const baseW = Number(cfg.baseWidth) || baseWidth
           const baseH = Number(cfg.baseHeight) || baseHeight
@@ -1756,12 +1992,38 @@ const OverlayHandler = {
             h: actualH,
             v: actualV
           }
+          const selectedEntries = getSelectedLayerEntries()
+          if (selectedEntries.length > 1 && boardState.selectedLayers.has(layer)) {
+            let minDx = -Infinity
+            let maxDx = Infinity
+            let minDy = -Infinity
+            let maxDy = Infinity
+            dragGroup = selectedEntries.map(entry => {
+              const maxH = Math.max(0, entry.baseW - entry.natW)
+              const maxV = Math.max(0, entry.baseH - entry.natH)
+              minDx = Math.max(minDx, -entry.actualH)
+              maxDx = Math.min(maxDx, maxH - entry.actualH)
+              minDy = Math.max(minDy, -entry.actualV)
+              maxDy = Math.min(maxDy, maxV - entry.actualV)
+              return {
+                cfg: entry.cfg,
+                natW: entry.natW,
+                natH: entry.natH,
+                baseW: entry.baseW,
+                baseH: entry.baseH,
+                startH: entry.actualH,
+                startV: entry.actualV
+              }
+            })
+            dragBounds = { minDx, maxDx, minDy, maxDy }
+          }
           dragging = true
           layer.classList.add('dragging')
         }
 
         const onPointerMove = (e) => {
           if (!dragging) return
+          moved = true
           const { scaleX, scaleY } = getScale()
           const natW = cfg.naturalWidth || layer.naturalWidth || (baseWidth * 0.25)
           const natH = cfg.naturalHeight || layer.naturalHeight || (baseHeight * 0.25)
@@ -1771,8 +2033,33 @@ const OverlayHandler = {
           const overlayWidthBase = natW
           const overlayHeightBase = natH
 
-          const deltaX = (e.clientX - start.x) / scaleX
-          const deltaY = (e.clientY - start.y) / scaleY
+          let deltaX = (e.clientX - start.x) / scaleX
+          let deltaY = (e.clientY - start.y) / scaleY
+          if (dragBounds) {
+            deltaX = clamp(deltaX, dragBounds.minDx, dragBounds.maxDx)
+            deltaY = clamp(deltaY, dragBounds.minDy, dragBounds.maxDy)
+          }
+
+          if (dragGroup) {
+            dragGroup.forEach(entry => {
+              const maxH = Math.max(0, entry.baseW - entry.natW)
+              const maxV = Math.max(0, entry.baseH - entry.natH)
+              const nextH = clamp(entry.startH + deltaX, 0, maxH)
+              const nextV = clamp(entry.startV + deltaY, 0, maxV)
+              const { inputH, inputV } = getInputsFromActual(
+                entry.cfg,
+                nextH,
+                nextV,
+                entry.natW,
+                entry.natH,
+                entry.baseW,
+                entry.baseH
+              )
+              writeOffsets(entry.cfg, inputH, inputV)
+              applyPosition(entry.cfg)
+            })
+            return
+          }
 
           const maxH = Math.max(0, baseWidth - overlayWidthBase)
           const maxV = Math.max(0, baseHeight - overlayHeightBase)
@@ -1806,6 +2093,7 @@ const OverlayHandler = {
           dragging = false
           layer.releasePointerCapture(e.pointerId)
           layer.classList.remove('dragging')
+          if (moved) recordHistory()
         }
 
         layer.addEventListener('pointerdown', onPointerDown)
@@ -1815,14 +2103,19 @@ const OverlayHandler = {
 
       const bindInputs = (cfg) => {
         const { hInput, vInput } = getInputs(cfg)
-        const handler = () => {
+        const handleInput = () => {
           if (writing) return
           applyPosition(cfg)
         }
-        hInput?.addEventListener('input', handler)
-        vInput?.addEventListener('input', handler)
-        hInput?.addEventListener('change', handler)
-        vInput?.addEventListener('change', handler)
+        const handleChange = () => {
+          if (writing) return
+          applyPosition(cfg)
+          if (!boardState.historyLocked) recordHistory()
+        }
+        hInput?.addEventListener('input', handleInput)
+        vInput?.addEventListener('input', handleInput)
+        hInput?.addEventListener('change', handleChange)
+        vInput?.addEventListener('change', handleChange)
       }
 
       const bindToggle = (cfg, layer) => {
@@ -2025,8 +2318,6 @@ const OverlayHandler = {
         return layer
       }
 
-      const libId = board.dataset.libraryId
-      const overlayType = board.dataset.overlayType
       const overlayContainers = Array.from(document.querySelectorAll(`.template-toggle-group[data-overlay-type="${overlayType}"][data-library-id="${libId}"]`))
       const configs = []
       overlayContainers.forEach(container => {
@@ -2250,6 +2541,7 @@ const OverlayHandler = {
           applyEditionPosition(cfg)
         })
       }
+      recordHistory()
       board._overlayRecalc = recalcAll
 
       if (typeof ResizeObserver !== 'undefined') {
@@ -2268,7 +2560,8 @@ const OverlayHandler = {
       window.addEventListener('resize', recalcAll)
 
       const setupModalCanvas = () => {
-        const modalBtn = board.querySelector('[data-overlay-board-open="modal"]')
+        const modalBtn = toolbar?.querySelector('[data-overlay-board-open="modal"]') ||
+          board.querySelector('[data-overlay-board-open="modal"]')
         if (!modalBtn) return
         if (modalBtn.dataset.listenerAdded) return
 
@@ -2282,8 +2575,10 @@ const OverlayHandler = {
           const baseW = Number(board.dataset.baseWidth) || defaultDims.default.width
           const baseH = Number(board.dataset.baseHeight) || defaultDims.default.height
           const ratio = baseW / baseH
+          const toolbarWidth = toolbar?.offsetWidth || 0
           const maxWidthByHeight = (window.innerHeight - 200) * ratio
-          const maxWidth = Math.min(window.innerWidth - 64, maxWidthByHeight)
+          const maxWidthByWindow = Math.max(0, window.innerWidth - 64 - toolbarWidth)
+          const maxWidth = Math.min(maxWidthByWindow || maxWidthByHeight, maxWidthByHeight)
           board.style.maxWidth = `${Math.max(280, Math.floor(maxWidth))}px`
           board.style.width = '100%'
           if (board._overlayRecalc) board._overlayRecalc()
@@ -2317,6 +2612,21 @@ const OverlayHandler = {
           }
           board._overlayOriginParent = null
           board._overlayPlaceholder = null
+          if (board._overlayModalLayout && board._overlayModalLayout.parentNode) {
+            board._overlayModalLayout.parentNode.removeChild(board._overlayModalLayout)
+          }
+          board._overlayModalLayout = null
+          if (toolbar) {
+            if (toolbar._overlayOriginParent) {
+              toolbar._overlayOriginParent.insertBefore(toolbar, toolbar._overlayPlaceholder || null)
+            }
+            if (toolbar._overlayPlaceholder && toolbar._overlayPlaceholder.parentNode) {
+              toolbar._overlayPlaceholder.parentNode.removeChild(toolbar._overlayPlaceholder)
+            }
+            toolbar._overlayOriginParent = null
+            toolbar._overlayPlaceholder = null
+            toolbar.classList.remove('overlay-board-toolbar--modal')
+          }
           board.classList.remove('overlay-board--modal')
           board.style.maxWidth = ''
           board.style.width = ''
@@ -2335,8 +2645,21 @@ const OverlayHandler = {
           board._overlayOriginParent = board.parentNode
           board._overlayPlaceholder = placeholder
           board.parentNode.insertBefore(placeholder, board)
+          const modalLayout = document.createElement('div')
+          modalLayout.className = 'overlay-board-modal-layout'
+          if (toolbar && toolbar.parentNode) {
+            const toolbarPlaceholder = document.createElement('div')
+            toolbarPlaceholder.className = 'overlay-board-toolbar-placeholder'
+            toolbar._overlayOriginParent = toolbar.parentNode
+            toolbar._overlayPlaceholder = toolbarPlaceholder
+            toolbar.parentNode.insertBefore(toolbarPlaceholder, toolbar)
+            toolbar.classList.add('overlay-board-toolbar--modal')
+            modalLayout.appendChild(toolbar)
+          }
+          modalLayout.appendChild(board)
           modalHost.innerHTML = ''
-          modalHost.appendChild(board)
+          modalHost.appendChild(modalLayout)
+          board._overlayModalLayout = modalLayout
           board.classList.add('overlay-board--modal')
           resizeModalBoard()
           if (window.bootstrap && window.bootstrap.Modal) {

@@ -163,7 +163,7 @@ header.fixed-top {
 
 .overlay-board {
     width: 100%;
-    max-width: 420px;
+    max-width: 100%;
 }
 
 .overlay-board-toolbar {
@@ -204,18 +204,30 @@ header.fixed-top {
     color: #ffffff;
 }
 
-.btn-overlay:hover,
-.btn-overlay:focus {
+.btn-overlay:hover {
     background-color: #019c75;
     border-color: #019c75;
     color: #ffffff;
 }
 
 .btn-overlay.is-active,
+.btn-overlay.is-active:focus,
+.btn-overlay.is-active:focus-visible,
 .btn-overlay:active {
     background-color: #019c75;
     border-color: #019c75;
     color: #ffffff;
+}
+
+.btn-overlay:not(.is-active):focus {
+    background-color: #343a40;
+    border-color: #343a40;
+    color: #ffffff;
+}
+
+.btn-overlay:focus-visible {
+    outline: 2px solid #6c757d;
+    outline-offset: 2px;
 }
 
 .overlay-board-zoom-label {
@@ -237,6 +249,99 @@ header.fixed-top {
     border: 1px solid #343a40;
     border-radius: 6px;
     overflow: hidden;
+}
+
+.overlay-board--landscape,
+.overlay-board--landscape {
+    max-width: 100%;
+}
+
+.overlay-board-toolbox {
+    margin-top: 0.75rem;
+}
+
+.overlay-board-toolbox .overlay-board-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 0;
+    max-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    width: 100%;
+}
+
+.overlay-board-toolbox .overlay-board-toolbar-group {
+    display: flex;
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+}
+
+.overlay-board-toolbox .overlay-board-align-group {
+    display: flex;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.overlay-board-modal-layout {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: 0.75rem;
+    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.overlay-board-row .overlay-board-controls {
+    flex: 0 0 30%;
+    max-width: 30%;
+}
+
+.overlay-board-row .overlay-board-preview {
+    flex: 0 0 70%;
+    max-width: 70%;
+}
+
+@media (max-width: 900px) {
+    .overlay-board-row .overlay-board-controls,
+    .overlay-board-row .overlay-board-preview {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+.overlay-board-modal-layout .overlay-board-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 0;
+    max-height: 100%;
+    overflow: auto;
+}
+
+.overlay-board-modal-layout .overlay-board-toolbar-group {
+    margin-left: 0;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+    .overlay-board-modal-layout {
+        display: block;
+    }
+
+    .overlay-board-toolbox .overlay-board-toolbar,
+    .overlay-board-modal-layout .overlay-board-toolbar {
+        flex-direction: row;
+        margin-bottom: 0.5rem;
+        max-height: none;
+        overflow: visible;
+    }
+
+    .overlay-board-toolbox .overlay-board-toolbar-group,
+    .overlay-board-modal-layout .overlay-board-toolbar-group {
+        margin-left: auto;
+    }
 }
 
 .overlay-board-canvas {
@@ -314,17 +419,23 @@ header.fixed-top {
     display: none;
 }
 
+.overlay-board-toolbar--modal [data-overlay-board-open="modal"] {
+    display: none;
+}
+
 .overlay-canvas-modal .modal-body {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: flex-start;
+    min-height: 0;
 }
 
 .overlay-board-modal-host {
     width: 100%;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: flex-start;
+    min-height: 0;
 }
 
 .overlay-jump-container {
