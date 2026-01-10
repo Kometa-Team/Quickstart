@@ -1,107 +1,142 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-<center>
-  <p><b class="text-danger">Read this warning (hover over the icon): </b>
-    <i class="bi bi-exclamation-circle-fill text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
-      data-bs-custom-class="text-tooltip"
-      title="Quickstart is designed to be run by you, on your own machine, to ensure your data and credentials remain secure. All information entered, including credentials, is stored locally on your device, and Quickstart only communicates with third-party services to verify credentials. Kometa does not collect or share any data. We strongly advise against using a version of Quickstart hosted by someone else.">
-    </i>
-  </p>
-</center>
-<div class="form-text" id="pin-info">
-  <p class="fs-5">Quickstart is a Web UI that will guide you through creating a Configuration File for Kometa.</p>
-  <p class="fs-5"><a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click here</a> for a more in-depth
-    explanation and example of what Quickstart does</p>
-  <p class="fs-5">To use Quickstart, you will need at least a Plex URL & Token, and a TMDb API Key.</p>
-  <p class="fs-5">We <b>strongly</b> suggest you set up test libraries if this is your first time running
-    Quickstart/Kometa, <a href="#" data-bs-toggle="modal" data-bs-target="#Modal2">click here</a> to learn more</p>
-  <div id="test-lib-status" class="alert alert-warning d-none mt-3">
-    <span id="test-lib-status-message">
-      <strong>Test media libraries not found.</strong>
-      <span class="ms-1">We recommend setting them up for testing with Kometa. Be patient as the repository is about
-        7GB.</span>
-    </span>
-    <br>
-    <button class="btn btn-sm btn-primary mt-2" id="clone-test-lib-btn" type="button">
-      <span id="ctlb-spin" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
-      <span id="ctlb-label">Download Test Libraries</span>
-      <span id="ctlb-sub" class="ms-2 small text-muted d-none"></span>
-    </button>
-
-    <button type="button" class="btn btn-sm btn-danger ms-2 mt-2 d-none" id="purge-test-lib-btn">
-      <i class="bi bi-trash3 me-1"></i> Delete Test Libraries
-    </button>
-    <!-- Progress UI (hidden by default; shown by JS while running) -->
-    <div id="test-lib-progress" class="d-none mt-2">
-      <div class="progress" style="height: 18px;">
-        <div id="test-lib-progress-bar" class="progress-bar" role="progressbar" style="width:0%">0%</div>
-      </div>
-      <small id="test-lib-progress-text" class="text-muted" aria-live="polite"></small>
-    </div>
-    <!-- Persistent update banner (hidden by default; toggled by JS) -->
-    <div id="test-lib-update-row" class="d-none mt-2">
-      <div class="alert alert-warning py-2 px-3 d-flex align-items-center justify-content-between mb-0">
-        <div class="small">
-          <strong>Update available.</strong>
-          <span class="ms-2">
-            Installed: <code id="test-lib-local-sha"></code> • Latest: <code id="test-lib-remote-sha"></code>
-          </span>
+<div class="row g-3 start-hero">
+  <div class="col-lg-8">
+    <div class="card h-100 border-secondary start-card">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-center gap-2 mb-3 start-warning">
+          <span class="text-danger fw-semibold">Read this warning</span>
+          <i class="bi bi-exclamation-circle-fill text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
+            data-bs-custom-class="text-tooltip"
+            title="Quickstart is designed to be run by you, on your own machine, to ensure your data and credentials remain secure. All information entered, including credentials, is stored locally on your device, and Quickstart only communicates with third-party services to verify credentials. Kometa does not collect or share any data. We strongly advise against using a version of Quickstart hosted by someone else.">
+          </i>
         </div>
-        <div>
-          <button id="update-test-lib-btn" class="btn btn-sm btn-primary" type="button">
-            <i class="bi bi-arrow-repeat me-1"></i> Update Now
+        <div class="form-text" id="pin-info">
+          <p class="fs-5">Quickstart is a Web UI that will guide you through creating a Configuration File for Kometa.</p>
+          <p class="fs-5"><a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click here</a> for a more in-depth
+            explanation and example of what Quickstart does</p>
+          <p class="fs-5">To use Quickstart, you will need at least a Plex URL & Token, and a TMDb API Key.</p>
+          <p class="fs-5">We <b>strongly</b> suggest you set up test libraries if this is your first time running
+            Quickstart/Kometa, <a href="#" data-bs-toggle="modal" data-bs-target="#Modal2">click here</a> to learn more</p>
+          <div id="test-lib-status" class="alert alert-warning d-none mt-3">
+            <span id="test-lib-status-message">
+              <strong>Test media libraries not found.</strong>
+              <span class="ms-1">We recommend setting them up for testing with Kometa. Be patient as the repository is about
+                7GB.</span>
+            </span>
+            <br>
+            <button class="btn btn-sm btn-primary mt-2" id="clone-test-lib-btn" type="button">
+              <span id="ctlb-spin" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+              <span id="ctlb-label">Download Test Libraries</span>
+              <span id="ctlb-sub" class="ms-2 small text-muted d-none"></span>
+            </button>
+
+            <button type="button" class="btn btn-sm btn-danger ms-2 mt-2 d-none" id="purge-test-lib-btn">
+              <i class="bi bi-trash3 me-1"></i> Delete Test Libraries
+            </button>
+            <!-- Progress UI (hidden by default; shown by JS while running) -->
+            <div id="test-lib-progress" class="d-none mt-2">
+              <div class="progress" style="height: 18px;">
+                <div id="test-lib-progress-bar" class="progress-bar" role="progressbar" style="width:0%">0%</div>
+              </div>
+              <small id="test-lib-progress-text" class="text-muted" aria-live="polite"></small>
+            </div>
+            <!-- Persistent update banner (hidden by default; toggled by JS) -->
+            <div id="test-lib-update-row" class="d-none mt-2">
+              <div class="alert alert-warning py-2 px-3 d-flex align-items-center justify-content-between mb-0">
+                <div class="small">
+                  <strong>Update available.</strong>
+                  <span class="ms-2">
+                    Installed: <code id="test-lib-local-sha"></code>  Latest: <code id="test-lib-remote-sha"></code>
+                  </span>
+                </div>
+                <div>
+                  <button id="update-test-lib-btn" class="btn btn-sm btn-primary" type="button">
+                    <i class="bi bi-arrow-repeat me-1"></i> Update Now
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="fs-5">Review the Config Data section below and press the arrow button above when you are ready to begin.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% if version_info.running_on != "Docker" %}
+  <div class="col-lg-4">
+    <div class="card h-100 border-secondary start-card">
+      <div class="card-body">
+        <h6 class="text-uppercase text-muted mb-2">Quick Actions</h6>
+        <p class="small text-muted">Manage this Quickstart session.</p>
+        <div class="d-grid gap-2">
+          <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#shutdownModal">
+            <i class="bi bi-power me-1"></i> Shutdown Quickstart
           </button>
         </div>
+        <p class="small text-muted mt-3 mb-0">Switch profiles or delete saved configs below.</p>
       </div>
     </div>
   </div>
-  <p class="fs-5">Review the Config Data section below and press the arrow button above when you are ready to begin.</p>
-</div><br>
-<label class="form-label">
-  <h6>Config Data</h6>
-</label>
-<div class="form-text" id="name-info">
-  <p class="fs-6">The config name below is used for saving your config and progress within the Quickstart database. You
-    can change it if you wish before getting started, or choose one of your previously-created configs from the
-    drop-down.</p>
+  {% endif %}
 </div>
 
-<div class="form-floating mb-2">
-  <select id="configSelector" name="configSelector" class="form-select" onchange="toggleConfigInput(this)">
-    <option value="add_config" {% if page_info['config_name'] not in available_configs %}selected{% endif %}>
-      Add Config
-    </option>
-    {% for name in available_configs %}
-    <option value="{{ name }}" {% if name==page_info['config_name'] %}selected{% endif %}>
-      {{ name }}
-    </option>
-    {% endfor %}
-  </select>
-  <label for="configSelector">Select or Add Config</label>
-</div>
+<div class="card border-secondary start-card mt-4">
+  <div class="card-body">
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+      <div>
+        <h6 class="mb-1">Config Data</h6>
+        <p class="small text-muted mb-0">The config name below is used for saving your config and progress within the Quickstart database. You
+          can change it if you wish before getting started, or choose one of your previously-created configs from the
+          drop-down.</p>
+      </div>
+    </div>
 
-{% set show_new_config = page_info['config_name'] not in available_configs %}
+    <div class="form-floating mb-2 mt-3">
+      <select id="configSelector" name="configSelector" class="form-select" onchange="toggleConfigInput(this)">
+        <option value="add_config" {% if page_info['config_name'] not in available_configs %}selected{% endif %}>
+          Add Config
+        </option>
+        {% for name in available_configs %}
+        <option value="{{ name }}" {% if name==page_info['config_name'] %}selected{% endif %}>
+          {{ name }}
+        </option>
+        {% endfor %}
+      </select>
+      <label for="configSelector">Select or Add Config</label>
+    </div>
 
-<div id="newConfigInput" class="form-floating mb-2 {{ '' if show_new_config else 'd-none' }}">
-  <input type="text" id="newConfigName" name="newConfigName" class="form-control" placeholder="Enter a new config name"
-    value="{% if page_info['config_name'] not in available_configs %}{{ page_info['config_name'] }}{% else %}{{ page_info['new_config_name'] }}{% endif %}">
-  <label for="newConfigName">New Config Name</label>
-</div>
-<form>
-  <div class="form-floating mb-2">
-    <!-- Reset (Start Over) Button -->
-    <button type="button" class="btn btn-warning" id="resetConfigButton" disabled data-bs-toggle="modal"
-      data-bs-target="#configActionModal" data-action="reset">
-      <i class="bi bi-arrow-clockwise"></i> Reset
-    </button>
+    {% set show_new_config = page_info['config_name'] not in available_configs %}
 
-    <!-- Delete Config Button -->
-    <button type="button" class="btn btn-danger ms-3" id="deleteConfigButton" disabled data-bs-toggle="modal"
-      data-bs-target="#configActionModal" data-action="delete">
-      <i class="bi bi-trash"></i> Delete
-    </button>
+    <div id="newConfigInput" class="form-floating mb-2 {{ '' if show_new_config else 'd-none' }}">
+      <input type="text" id="newConfigName" name="newConfigName" class="form-control" placeholder="Enter a new config name"
+        value="{% if page_info['config_name'] not in available_configs %}{{ page_info['config_name'] }}{% else %}{{ page_info['new_config_name'] }}{% endif %}">
+      <label for="newConfigName">New Config Name</label>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-2">
+      <!-- Reset (Start Over) Button -->
+      <button type="button" class="btn btn-warning" id="resetConfigButton" disabled data-bs-toggle="modal"
+        data-bs-target="#configActionModal" data-action="reset">
+        <i class="bi bi-arrow-clockwise"></i> Reset
+      </button>
+
+      <!-- Delete Config Button -->
+      <button type="button" class="btn btn-danger" id="deleteConfigButton" disabled data-bs-toggle="modal"
+        data-bs-target="#configActionModal" data-action="delete">
+        <i class="bi bi-trash"></i> Delete
+      </button>
+
+      <!-- Bulk Delete Button -->
+      <button type="button" class="btn btn-outline-danger" id="bulkDeleteButton" data-bs-toggle="modal"
+        data-bs-target="#bulkDeleteModal">
+        <i class="bi bi-trash3"></i> Delete Multiple
+      </button>
+    </div>
   </div>
+</div>
+
 </form>
 
 <!-- Reset and Delete Confirmation Modal -->
@@ -147,10 +182,62 @@
     </div>
   </div>
 </div>
+<!-- Bulk Delete Profiles Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="bulkDeleteModalLabel">
+          <i class="bi bi-trash3 me-2"></i>Delete Multiple Profiles
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2">Select one or more profiles to delete. This cannot be undone.</p>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="bulkDeleteSelectAll">
+          <label class="form-check-label" for="bulkDeleteSelectAll">Select all profiles</label>
+        </div>
+        <div id="bulkDeleteList" class="bulk-delete-list"></div>
+        <div class="small text-muted mt-2">Selected: <span id="bulkDeleteCount">0</span></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" autofocus>No, keep them</button>
+        <button type="button" class="btn btn-danger" id="confirmBulkDeleteButton" disabled>Delete Selected</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% if version_info.running_on != "Docker" %}
+<!-- Shutdown Confirmation Modal -->
+<div class="modal fade" id="shutdownModal" tabindex="-1" aria-labelledby="shutdownModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="shutdownModalLabel">
+          <i class="bi bi-power me-2"></i>Shutdown Quickstart
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to shut down Quickstart? You will need to restart it to use the UI again.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="shutdownCancelButton" data-bs-dismiss="modal" autofocus>No, keep running</button>
+        <button type="button" class="btn btn-danger" id="confirmShutdownButton">
+          Yes, shut down
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 <script>
   window.pageInfo = {
     quickstart_root: "{{ page_info.quickstart_root | escape | replace('\\', '\\\\') }}",
-    install_type: "{{ version_info.running_on }}"
+    install_type: "{{ version_info.running_on }}",
+    config_name: "{{ page_info.config_name }}",
+    shutdown_nonce: "{{ page_info.shutdown_nonce }}"
   };
 </script>
 {% endblock %}

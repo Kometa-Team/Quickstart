@@ -52,6 +52,14 @@ document.addEventListener('DOMContentLoaded', function () {
   const resetConfigButton = document.getElementById('resetConfigButton')
   const deleteConfigButton = document.getElementById('deleteConfigButton')
   const confirmConfigActionButton = document.getElementById('confirmConfigAction')
+  const bulkDeleteModalEl = document.getElementById('bulkDeleteModal')
+  const bulkDeleteList = document.getElementById('bulkDeleteList')
+  const bulkDeleteSelectAll = document.getElementById('bulkDeleteSelectAll')
+  const bulkDeleteCount = document.getElementById('bulkDeleteCount')
+  const confirmBulkDeleteButton = document.getElementById('confirmBulkDeleteButton')
+  const confirmShutdownButton = document.getElementById('confirmShutdownButton')
+  const shutdownModalEl = document.getElementById('shutdownModal')
+  const shutdownCancelButton = document.getElementById('shutdownCancelButton')
 
   const configActionModalElement = document.getElementById('configActionModal')
   let configActionModal = null
@@ -73,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
   updateButtonState()
   configSelector.addEventListener('change', updateButtonState)
 
-  document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
+  document.querySelectorAll('[data-action]').forEach(button => {
     button.addEventListener('click', function () {
       currentAction = this.dataset.action
       const selectedConfig = configSelector.value
@@ -93,6 +101,171 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     })
   })
+
+  function getAvailableConfigs () {
+    if (!configSelector) return []
+    const names = Array.from(configSelector.options)
+      .map(option => option.value)
+      .filter(value => value && value !== 'add_config')
+    return Array.from(new Set(names))
+  }
+
+  function updateBulkDeleteState () {
+    if (!bulkDeleteList || !confirmBulkDeleteButton) return
+    const allBoxes = bulkDeleteList.querySelectorAll('.bulk-delete-checkbox')
+    const checked = bulkDeleteList.querySelectorAll('.bulk-delete-checkbox:checked')
+
+    if (bulkDeleteCount) bulkDeleteCount.textContent = String(checked.length)
+    confirmBulkDeleteButton.disabled = checked.length === 0
+
+    if (bulkDeleteSelectAll) {
+      bulkDeleteSelectAll.checked = allBoxes.length > 0 && checked.length === allBoxes.length
+      bulkDeleteSelectAll.indeterminate = checked.length > 0 && checked.length < allBoxes.length
+    }
+  }
+
+  function buildBulkDeleteRow (name, isCurrent, index) {
+    const row = document.createElement('div')
+    row.className = 'form-check bulk-delete-item'
+
+    const input = document.createElement('input')
+    input.type = 'checkbox'
+    input.className = 'form-check-input bulk-delete-checkbox'
+    input.value = name
+    input.id = `bulk-delete-${index}-${name.replace(/[^a-zA-Z0-9_-]/g, '_')}`
+    input.addEventListener('change', updateBulkDeleteState)
+
+    const label = document.createElement('label')
+    label.className = 'form-check-label'
+    label.setAttribute('for', input.id)
+    label.textContent = name
+
+    if (isCurrent) {
+      const badge = document.createElement('span')
+      badge.className = 'badge bg-secondary ms-2'
+      badge.textContent = 'current'
+      label.appendChild(badge)
+    }
+
+    row.appendChild(input)
+    row.appendChild(label)
+    return row
+  }
+
+  function renderBulkDeleteList () {
+    if (!bulkDeleteList) return
+    bulkDeleteList.innerHTML = ''
+
+    const configs = getAvailableConfigs()
+    if (!configs.length) {
+      const empty = document.createElement('div')
+      empty.className = 'text-muted small'
+      empty.textContent = 'No saved profiles found.'
+      bulkDeleteList.appendChild(empty)
+      if (bulkDeleteSelectAll) {
+        bulkDeleteSelectAll.checked = false
+        bulkDeleteSelectAll.indeterminate = false
+        bulkDeleteSelectAll.disabled = true
+      }
+      updateBulkDeleteState()
+      return
+    }
+
+    const currentConfig = window.pageInfo?.config_name || configSelector?.value
+    configs.forEach((name, index) => {
+      bulkDeleteList.appendChild(buildBulkDeleteRow(name, name === currentConfig, index))
+    })
+
+    if (bulkDeleteSelectAll) {
+      bulkDeleteSelectAll.checked = false
+      bulkDeleteSelectAll.indeterminate = false
+      bulkDeleteSelectAll.disabled = false
+    }
+    updateBulkDeleteState()
+  }
+
+  if (bulkDeleteModalEl) {
+    bulkDeleteModalEl.addEventListener('show.bs.modal', renderBulkDeleteList)
+  }
+
+  if (bulkDeleteSelectAll) {
+    bulkDeleteSelectAll.addEventListener('change', () => {
+      if (!bulkDeleteList) return
+      const checkboxes = bulkDeleteList.querySelectorAll('.bulk-delete-checkbox')
+      checkboxes.forEach(box => { box.checked = bulkDeleteSelectAll.checked })
+      updateBulkDeleteState()
+    })
+  }
+
+  if (confirmBulkDeleteButton) {
+    confirmBulkDeleteButton.addEventListener('click', async () => {
+      if (!bulkDeleteList) return
+      const selected = Array.from(bulkDeleteList.querySelectorAll('.bulk-delete-checkbox:checked'))
+        .map(box => box.value)
+      if (!selected.length) {
+        showToast('error', 'Select at least one profile to delete.')
+        return
+      }
+
+      confirmBulkDeleteButton.disabled = true
+      const originalText = confirmBulkDeleteButton.textContent
+      confirmBulkDeleteButton.textContent = 'Deleting...'
+
+      try {
+        const res = await fetch('/bulk-delete-configs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ names: selected })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to delete profiles.')
+        }
+        showToast('success', `Deleted ${data.deleted.length} profile(s).`)
+        const modal = bootstrap.Modal.getInstance(bulkDeleteModalEl)
+        if (modal) modal.hide()
+        setTimeout(() => window.location.reload(), 1200)
+      } catch (err) {
+        confirmBulkDeleteButton.disabled = false
+        confirmBulkDeleteButton.textContent = originalText
+        showToast('error', err.message || 'Failed to delete profiles.')
+      }
+    })
+  }
+
+  if (confirmShutdownButton) {
+    confirmShutdownButton.addEventListener('click', async () => {
+      const modal = shutdownModalEl ? bootstrap.Modal.getInstance(shutdownModalEl) : null
+      confirmShutdownButton.disabled = true
+      const originalText = confirmShutdownButton.textContent
+      confirmShutdownButton.textContent = 'Shutting down...'
+
+      try {
+        const res = await fetch('/shutdown', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nonce: window.pageInfo?.shutdown_nonce,
+            confirmed: true
+          })
+        })
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok || !data.success) throw new Error(data.message || 'Shutdown request failed.')
+        if (modal) modal.hide()
+        showToast('info', data.message || 'Shutting down Quickstart...')
+      } catch (err) {
+        confirmShutdownButton.disabled = false
+        confirmShutdownButton.textContent = originalText
+        showToast('error', err.message || 'Failed to shut down Quickstart.')
+      }
+    })
+  }
+
+  if (shutdownModalEl && shutdownCancelButton) {
+    shutdownModalEl.addEventListener('shown.bs.modal', () => {
+      shutdownCancelButton.focus()
+    })
+  }
 
   confirmConfigActionButton.addEventListener('click', function () {
     const selectedConfig = configSelector.value

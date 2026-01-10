@@ -259,6 +259,59 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })
 
+document.addEventListener('DOMContentLoaded', () => {
+  const modalEl = document.getElementById('configSwitchModal')
+  if (!modalEl) return
+
+  const select = modalEl.querySelector('#configSwitchSelect')
+  const confirmBtn = modalEl.querySelector('#configSwitchConfirm')
+  const badgeBtn = document.querySelector('.config-badge-button')
+
+  function getCurrentConfig () {
+    return badgeBtn?.dataset.current || ''
+  }
+
+  if (select) {
+    modalEl.addEventListener('show.bs.modal', () => {
+      const current = getCurrentConfig()
+      if (current) select.value = current
+    })
+  }
+
+  if (confirmBtn && select) {
+    confirmBtn.addEventListener('click', async () => {
+      const target = select.value
+      const current = getCurrentConfig()
+      if (!target || target === current) {
+        const modal = bootstrap.Modal.getInstance(modalEl)
+        if (modal) modal.hide()
+        return
+      }
+
+      confirmBtn.disabled = true
+      confirmBtn.textContent = 'Switching...'
+
+      try {
+        const res = await fetch('/switch-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: target })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to switch profiles.')
+        }
+        showToast('success', `Switched to profile "${data.name}".`)
+        setTimeout(() => location.reload(), 500)
+      } catch (err) {
+        confirmBtn.disabled = false
+        confirmBtn.textContent = 'Switch'
+        showToast('error', err.message || 'Failed to switch profiles.')
+      }
+    })
+  }
+})
+
 // Optional: Rotate icon spinner style
 const style = document.createElement('style')
 style.innerHTML = `

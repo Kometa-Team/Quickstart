@@ -1188,3 +1188,40 @@ div#loading {
     gap: .25rem;
   }
 }
+
+/* -------------------- */
+/* START PAGE LAYOUT    */
+/* -------------------- */
+
+.start-hero {
+    margin-bottom: 0.75rem;
+}
+
+.start-card {
+    background: linear-gradient(145deg, rgba(33, 37, 41, 0.9), rgba(24, 26, 31, 0.95));
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.start-warning i {
+    cursor: help;
+}
+
+.bulk-delete-list {
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 0.25rem 0.1rem;
+}
+
+.bulk-delete-item + .bulk-delete-item {
+    margin-top: 0.4rem;
+}
+
+.config-badge-button {
+    border: none;
+    cursor: pointer;
+}
+
+.config-badge-button:hover,
+.config-badge-button:focus {
+    opacity: 0.85;
+}

@@ -17,6 +17,7 @@ import time
 import uuid
 import webbrowser
 import zipfile
+import secrets
 from io import BytesIO
 from threading import Thread
 from pathlib import Path
@@ -742,6 +743,48 @@ def clear_data(name):
     return redirect(url_for("start"))
 
 
+@app.route("/switch-config", methods=["POST"])
+def switch_config():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify(success=False, message="Config name is required."), 400
+
+    available = database.get_unique_config_names() or []
+    if name not in available:
+        return jsonify(success=False, message="Config not found."), 404
+
+    session["config_name"] = name
+    return jsonify(success=True, name=name)
+
+
+@app.route("/bulk-delete-configs", methods=["POST"])
+def bulk_delete_configs():
+    data = request.get_json(silent=True) or {}
+    names = data.get("names") or []
+    if not isinstance(names, list):
+        return jsonify(success=False, message="Invalid request payload."), 400
+
+    cleaned = [n.strip() for n in names if isinstance(n, str) and n.strip()]
+    if not cleaned:
+        return jsonify(success=False, message="No profiles selected."), 400
+
+    available = set(database.get_unique_config_names() or [])
+    deleted = []
+    for name in cleaned:
+        if name in available:
+            database.reset_data(name)
+            deleted.append(name)
+
+    remaining = database.get_unique_config_names() or []
+    current = session.get("config_name")
+    if current in deleted:
+        session["config_name"] = remaining[0] if remaining else namesgenerator.get_random_name()
+        current = session["config_name"]
+
+    return jsonify(success=True, deleted=deleted, remaining=remaining, current=current)
+
+
 @app.route("/step/<name>", methods=["GET", "POST"])
 def step(name):
     page_info = {}
@@ -807,6 +850,9 @@ def step(name):
     page_info["config_name"] = selected_config
     page_info["header_style"] = header_style
     page_info["template_name"] = name
+    if name == "001-start":
+        session["shutdown_nonce"] = secrets.token_urlsafe(16)
+        page_info["shutdown_nonce"] = session["shutdown_nonce"]
 
     # Generate a placeholder name for "Add Config"
     page_info["new_config_name"] = namesgenerator.get_random_name()
@@ -1617,8 +1663,21 @@ def validate_notifiarr():
         return jsonify(result.get_json()), 400
 
 
-@app.route("/shutdown")
+@app.route("/shutdown", methods=["POST"])
 def shutdown():
+    if app.config.get("QUICKSTART_DOCKER"):
+        return jsonify(success=False, message="Shutdown is disabled in Docker."), 403
+
+    data = request.get_json(silent=True) or {}
+    nonce = data.get("nonce")
+    confirmed = data.get("confirmed") is True
+    session_nonce = session.get("shutdown_nonce")
+
+    if not confirmed or not nonce or nonce != session_nonce:
+        return jsonify(success=False, message="Shutdown not authorized."), 403
+
+    session.pop("shutdown_nonce", None)
+
     shutdown_func = request.environ.get("werkzeug.server.shutdown")
 
     def shutdown_later():
@@ -1648,7 +1707,7 @@ def shutdown():
         os._exit(0)
 
     threading.Thread(target=shutdown_later, daemon=True).start()
-    return "Shutting down...", 200
+    return jsonify(success=True, message="Shutting down..."), 200
 
 
 @app.route("/start-kometa", methods=["POST"])

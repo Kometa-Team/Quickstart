@@ -4,9 +4,12 @@
     <!-- Page Title + top-right badge -->
     <div class="container text-center mt-3 page-title">
       <h2 class="fw-bold text-white mb-0">{{ page_info['title'] }}</h2>
-      <span class="badge bg-secondary config-badge">
-        Config: {{ page_info.config_name }}
-      </span>
+      <button type="button" class="badge bg-secondary config-badge config-badge-button"
+        data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}">
+        <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="Switch profile">
+          Config: {{ page_info.config_name }} <i class="bi bi-chevron-down ms-1"></i>
+        </span>
+      </button>
     </div>
 
     <!-- Navigation Bar -->
@@ -77,5 +80,34 @@
 
       </div>
     </nav>
+
+    <!-- Switch Profile Modal -->
+    <div class="modal fade" id="configSwitchModal" tabindex="-1" aria-labelledby="configSwitchModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-secondary">
+          <div class="modal-header">
+            <h5 class="modal-title" id="configSwitchModalLabel">Switch Profile</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            {% if available_configs|length > 0 %}
+            <label for="configSwitchSelect" class="form-label">Choose a profile</label>
+            <select id="configSwitchSelect" class="form-select">
+              {% for name in available_configs %}
+              <option value="{{ name }}">{{ name }}</option>
+              {% endfor %}
+            </select>
+            {% else %}
+            <p class="text-muted mb-0">No saved profiles yet. Create and save a config first.</p>
+            {% endif %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="configSwitchCancel" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="configSwitchConfirm"
+              {% if available_configs|length == 0 %}disabled{% endif %}>Switch</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <hr class="hr">
