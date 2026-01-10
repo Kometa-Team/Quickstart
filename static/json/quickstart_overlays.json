@@ -2064,15 +2064,6 @@
             "input_type": "text",
             "default": "#FFFFFFFF"
           },
-          "flag_alignment": {
-            "label": "Flag Alignment",
-            "input_type": "select",
-            "default": "left",
-            "options": [
-              "left",
-              "right"
-            ]
-          },
           "hide_text": {
             "label": "Hide Text",
             "input_type": "toggle",
@@ -2090,36 +2081,6 @@
             "options": [
               "vertical",
               "horizontal"
-            ]
-          },
-          "horizontal_position": {
-            "label": "Horizontal Position",
-            "input_type": "select",
-            "default": "left",
-            "options": [
-              "left",
-              "left2",
-              "center_left",
-              "center",
-              "center_right",
-              "right",
-              "right2"
-            ]
-          },
-          "vertical_position": {
-            "label": "Vertical Position",
-            "input_type": "select",
-            "default": "top3",
-            "options": [
-              "top",
-              "top2",
-              "top3",
-              "center_top",
-              "center",
-              "center_bottom",
-              "bottom",
-              "bottom2",
-              "bottom3"
             ]
           },
           "offset": {
@@ -2145,18 +2106,6 @@
                 "label": "Apply to Episode",
                 "value": "episode"
               }
-            ]
-          },
-          "back_align": {
-            "input_type": "select",
-            "default": "left",
-            "label": "Backdrop Alignment",
-            "options": [
-              "left",
-              "center",
-              "right",
-              "top",
-              "bottom"
             ]
           },
           "back_color": {
@@ -2268,15 +2217,6 @@
             "input_type": "text",
             "default": "#FFFFFFFF"
           },
-          "flag_alignment": {
-            "label": "Flag Alignment",
-            "input_type": "select",
-            "default": "right",
-            "options": [
-              "left",
-              "right"
-            ]
-          },
           "hide_text": {
             "label": "Hide Text",
             "input_type": "toggle",
@@ -2294,36 +2234,6 @@
             "options": [
               "vertical",
               "horizontal"
-            ]
-          },
-          "horizontal_position": {
-            "label": "Horizontal Position",
-            "input_type": "select",
-            "default": "right",
-            "options": [
-              "left",
-              "left2",
-              "center_left",
-              "center",
-              "center_right",
-              "right",
-              "right2"
-            ]
-          },
-          "vertical_position": {
-            "label": "Vertical Position",
-            "input_type": "select",
-            "default": "top3",
-            "options": [
-              "top",
-              "top2",
-              "top3",
-              "center_top",
-              "center",
-              "center_bottom",
-              "bottom",
-              "bottom2",
-              "bottom3"
             ]
           },
           "offset": {
@@ -2353,18 +2263,6 @@
                 "label": "Apply to Episode",
                 "value": "episode"
               }
-            ]
-          },
-          "back_align": {
-            "input_type": "select",
-            "default": "left",
-            "label": "Backdrop Alignment",
-            "options": [
-              "left",
-              "center",
-              "right",
-              "top",
-              "bottom"
             ]
           },
           "back_color": {

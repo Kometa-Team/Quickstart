@@ -632,7 +632,6 @@ const OverlayHandler = {
       return {
         style: String(getVal('style', 'round') || 'round').toLowerCase(),
         size: String(getVal('size', 'small') || 'small').toLowerCase(),
-        flag_alignment: String(getVal('flag_alignment', 'left') || 'left').toLowerCase(),
         hide_text: normalizeBool(getVal('hide_text', false), false),
         use_lowercase: normalizeBool(getVal('use_lowercase', false), false),
         group_alignment: String(getVal('group_alignment', 'vertical') || 'vertical').toLowerCase(),
@@ -650,10 +649,10 @@ const OverlayHandler = {
       return container.querySelector(`[name="${templateName}[${key}]"]`)
     }
 
-    const setBackdropHeight = (cfg, height, emit = true) => {
-      const input = getTemplateInput(cfg, 'back_height')
+    const setTemplateNumber = (cfg, key, value, emit = true) => {
+      const input = getTemplateInput(cfg, key)
       if (!input) return
-      const next = String(height)
+      const next = String(value)
       input.dataset.default = next
       if (input.value !== next) {
         input.value = next
@@ -662,6 +661,10 @@ const OverlayHandler = {
           input.dispatchEvent(new Event('change', { bubbles: true }))
         }
       }
+    }
+
+    const setBackdropHeight = (cfg, height, emit = true) => {
+      setTemplateNumber(cfg, 'back_height', height, emit)
     }
 
     const syncAudioCodecBackdropHeight = (cfg, emit = true) => {
@@ -677,6 +680,17 @@ const OverlayHandler = {
       const useEdition = toggle ? toggle.checked : true
       const height = useEdition ? 189 : 105
       setBackdropHeight(cfg, height, emit)
+    }
+
+    const syncFlagSizeDefaults = (cfg, emit = true) => {
+      if (!isFlagsOverlay(cfg)) return
+      const sizeInput = getTemplateInput(cfg, 'size')
+      const size = (sizeInput?.value || 'small').toLowerCase()
+      const fontSize = size === 'big' ? 70 : 50
+      const backWidth = size === 'big' ? 216 : 190
+      setTemplateNumber(cfg, 'font_size', fontSize, emit)
+      setTemplateNumber(cfg, 'back_width', backWidth, emit)
+      setTemplateNumber(cfg, 'back_height', 60, emit)
     }
 
     const RATINGS_IMAGE_BASE = 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/rating/'
@@ -2708,8 +2722,6 @@ const OverlayHandler = {
           const refreshFlags = () => updateFlagsLayer(cfg, layer)
           const flagSelectors = [
             `[name="${templateName}[style]"]`,
-            `[name="${templateName}[size]"]`,
-            `[name="${templateName}[flag_alignment]"]`,
             `[name="${templateName}[hide_text]"]`,
             `[name="${templateName}[use_lowercase]"]`,
             `[name="${templateName}[group_alignment]"]`,
@@ -2717,7 +2729,6 @@ const OverlayHandler = {
             `[name="${templateName}[font]"]`,
             `[name="${templateName}[font_size]"]`,
             `[name="${templateName}[font_color]"]`,
-            `[name="${templateName}[back_align]"]`,
             `[name="${templateName}[back_color]"]`,
             `[name="${templateName}[back_height]"]`,
             `[name="${templateName}[back_width]"]`,
@@ -2731,6 +2742,15 @@ const OverlayHandler = {
             input.addEventListener('input', refreshFlags)
             input.addEventListener('change', refreshFlags)
           })
+          const sizeInput = cfg.container.querySelector(`[name="${templateName}[size]"]`)
+          if (sizeInput) {
+            const handleSizeChange = () => {
+              syncFlagSizeDefaults(cfg, true)
+              refreshFlags()
+            }
+            sizeInput.addEventListener('input', handleSizeChange)
+            sizeInput.addEventListener('change', handleSizeChange)
+          }
           refreshFlags()
         }
 
