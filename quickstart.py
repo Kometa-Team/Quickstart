@@ -223,6 +223,7 @@ def update_quickstart():
 # Initialize Flask-Session
 server_session = Session(app)
 server_thread = None
+shutdown_event = threading.Event()
 
 # Ensure json-schema files are up to date at startup
 helpers.ensure_json_schema()
@@ -1618,9 +1619,35 @@ def validate_notifiarr():
 
 @app.route("/shutdown")
 def shutdown():
-    func = request.environ.get("werkzeug.server.shutdown")
-    if func:
-        func()
+    shutdown_func = request.environ.get("werkzeug.server.shutdown")
+
+    def shutdown_later():
+        # Allow the response to flush before stopping the process.
+        time.sleep(0.5)
+
+        if shutdown_func:
+            try:
+                shutdown_func()
+            except Exception as e:
+                helpers.ts_log(f"Werkzeug shutdown failed: {e}", level="DEBUG")
+
+        shutdown_event.set()
+
+        try:
+            from PyQt5.QtCore import QTimer
+            from PyQt5.QtWidgets import QApplication
+
+            qt_app = QApplication.instance()
+            if qt_app:
+                QTimer.singleShot(0, qt_app.quit)
+        except Exception:
+            pass
+
+        # Fallback: ensure the process exits even if threads linger.
+        time.sleep(2)
+        os._exit(0)
+
+    threading.Thread(target=shutdown_later, daemon=True).start()
     return "Shutting down...", 200
 
 
@@ -2446,11 +2473,14 @@ if __name__ == "__main__":
         server_thread.start()
 
         try:
-            while True:
+            while not shutdown_event.is_set():
                 time.sleep(1)  # Keep main thread alive
         except KeyboardInterrupt:
-            helpers.ts_log(f"\nShutting down Quickstart...", level="INFO")
+            helpers.ts_log("\nShutting down Quickstart...", level="INFO")
             sys.exit(0)
+
+        helpers.ts_log("Shutting down Quickstart...", level="INFO")
+        sys.exit(0)
 
     else:
         # GUI mode: show tray
@@ -2515,6 +2545,8 @@ if __name__ == "__main__":
                 helpers.ts_log(f"Quickstart is Running", level="INFO")
                 helpers.ts_log(f"Access it locally at: http://localhost:{running_port}", level="INFO")
                 helpers.ts_log(f"Access it from other devices at: http://{ip_address}:{running_port}", level="INFO")
+                helpers.ts_log(f"Shutdown locally at: http://localhost:{running_port}/shutdown", level="INFO")
+                helpers.ts_log(f"Shutdown from other devices at: http://{ip_address}:{running_port}/shutdown", level="INFO")
                 helpers.ts_log(
                     f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file", level="INFO"
                 )  # Open the browser automatically

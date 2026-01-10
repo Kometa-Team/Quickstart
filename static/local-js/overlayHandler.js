@@ -356,6 +356,7 @@ const OverlayHandler = {
   initializeOverlayBoards: function (scope) {
     const root = scope || document
     const defaultDims = OverlayHandler.baseDimensions
+    const isFlagsOverlay = (cfg) => cfg.id === 'overlay_languages' || cfg.id === 'overlay_languages_subtitles'
 
     const resolveOverlayImage = (cfg) => {
       const replacePathSegment = (baseUrl, marker, newSegment) => {
@@ -404,6 +405,11 @@ const OverlayHandler = {
         const allowed = ['compact', 'standard']
         const styleSafe = allowed.includes(style) ? style : 'compact'
         return replacePathSegment(cfg.image, 'audio_codec', styleSafe)
+      }
+      if ((cfg.id === 'overlay_languages' || cfg.id === 'overlay_languages_subtitles') && cfg.styleInput) {
+        const style = (cfg.styleInput.value || 'round').toLowerCase()
+        const styleSafe = style === 'square' || style === 'half' ? 'square' : 'round'
+        return replacePathSegment(cfg.image, 'flag', styleSafe)
       }
       if (cfg.id && cfg.id.startsWith('overlay_content_rating_')) {
         let colorVal = 'true'
@@ -599,6 +605,44 @@ const OverlayHandler = {
       }
     }
 
+    const getFlagVars = (cfg) => {
+      const container = cfg.container
+      const templateName = container?.dataset.overlayTemplate
+      const getEl = (key) => {
+        if (!container || !templateName) return null
+        return container.querySelector(`[name="${templateName}[${key}]"]`)
+      }
+      const getVal = (key, defaultVal) => {
+        const el = getEl(key)
+        if (!el) return defaultVal
+        const fallback = el.dataset?.default ?? defaultVal
+        if (el.type === 'checkbox') return el.checked
+        if (el.tagName === 'SELECT') return el.value || fallback
+        if (el.type === 'number') {
+          const n = Number(el.value)
+          return Number.isFinite(n) ? n : (Number(fallback) || defaultVal)
+        }
+        return el.value || fallback
+      }
+      const normalizeBool = (val, fallback = false) => {
+        if (typeof val === 'boolean') return val
+        if (typeof val === 'string') return val.toLowerCase() === 'true'
+        return Boolean(val ?? fallback)
+      }
+      return {
+        style: String(getVal('style', 'round') || 'round').toLowerCase(),
+        size: String(getVal('size', 'small') || 'small').toLowerCase(),
+        flag_alignment: String(getVal('flag_alignment', 'left') || 'left').toLowerCase(),
+        hide_text: normalizeBool(getVal('hide_text', false), false),
+        use_lowercase: normalizeBool(getVal('use_lowercase', false), false),
+        group_alignment: String(getVal('group_alignment', 'vertical') || 'vertical').toLowerCase(),
+        offset: Number(getVal('offset', 10)) || 10,
+        font: String(getVal('font', 'Inter-Bold.ttf') || 'Inter-Bold.ttf'),
+        font_size: Number(getVal('font_size', 50)) || 50,
+        font_color: String(getVal('font_color', '#FFFFFFFF') || '#FFFFFFFF')
+      }
+    }
+
     const getTemplateInput = (cfg, key) => {
       const container = cfg.container
       const templateName = container?.dataset.overlayTemplate
@@ -659,6 +703,23 @@ const OverlayHandler = {
       'rt tomatoes': 'RT-Crit-Fresh',
       myanimelist: 'MAL'
     }
+    const FLAG_PREVIEW_ITEMS = [
+      {
+        text: 'EN',
+        round: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/us.png',
+        square: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/square/us.png'
+      },
+      {
+        text: 'DE',
+        round: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/de.png',
+        square: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/square/de.png'
+      },
+      {
+        text: 'FR',
+        round: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/fr.png',
+        square: 'https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/square/fr.png'
+      }
+    ]
 
     const buildRatingFilenameCandidates = (value, label) => {
       const valueKey = (value || '').toString().trim().toLowerCase()
@@ -849,6 +910,140 @@ const OverlayHandler = {
       imageCache.set(src, promise)
       promise.catch(() => imageCache.delete(src))
       return promise
+    }
+
+    const buildFlagsCompositeDataUrl = async (cfg) => {
+      if (!isFlagsOverlay(cfg)) return null
+      const vars = getFlagVars(cfg)
+      const backdrop = getBackdropVars(cfg)
+      const size = vars.size === 'big' ? 'big' : 'small'
+      const fontSize = size === 'big' ? 70 : 50
+      const fontFile = vars.font || 'Inter-Bold.ttf'
+      const fontFamily = (await ensureRuntimeFontLoaded(fontFile)) || normalizeFontFile(fontFile).family || 'Inter-Bold'
+      const align = cfg.id === 'overlay_languages_subtitles' ? 'right' : 'left'
+      const hideText = vars.hide_text
+      const textCase = vars.use_lowercase
+      const useSquareFlags = vars.style === 'square' || vars.style === 'half'
+      const groupAlignment = vars.group_alignment === 'horizontal' ? 'horizontal' : 'vertical'
+
+      const baseBoxWidth = size === 'big' ? 216 : 190
+      const boxHeight = 60
+      const gap = Number(vars.offset) || 10
+      const lineWidth = Math.max(0, Number(backdrop.back_line_width) || 0)
+      const radius = vars.style === 'square' ? 0 : 26
+      const innerPad = 0
+      const fill = parseHexColor(backdrop.back_color, { r: 0, g: 0, b: 0, a: 0 })
+      const stroke = parseHexColor(backdrop.back_line_color, { r: 0, g: 0, b: 0, a: 0 })
+
+      const items = FLAG_PREVIEW_ITEMS
+      let images = []
+      try {
+        images = await Promise.all(
+          items.map(item => loadImage(useSquareFlags ? item.square : item.round))
+        )
+      } catch (err) {
+        console.warn('[OverlayBoards] Failed to load flag images', err)
+        return resolveOverlayImage(cfg)
+      }
+
+      const measureCanvas = document.createElement('canvas')
+      const measureCtx = measureCanvas.getContext('2d')
+      if (!measureCtx) return resolveOverlayImage(cfg)
+      measureCtx.font = `${fontSize}px "${fontFamily}"`
+
+      const rows = items.map((item, idx) => {
+        const textValue = hideText ? '' : (textCase ? item.text.toLowerCase() : item.text)
+        const metrics = textValue
+          ? measureCtx.measureText(textValue)
+          : { width: 0, actualBoundingBoxAscent: 0, actualBoundingBoxDescent: 0 }
+        const textWidth = Number(metrics.width) || 0
+        const textAscent = Number(metrics.actualBoundingBoxAscent) || (fontSize * 0.8)
+        const textDescent = Number(metrics.actualBoundingBoxDescent) || (fontSize * 0.2)
+        const textHeight = textAscent + textDescent
+
+        const img = images[idx]
+        const flagW = img.width
+        const flagH = img.height
+
+        const rowWidth = hideText ? flagW : baseBoxWidth
+        return {
+          textValue,
+          textWidth,
+          textAscent,
+          textDescent,
+          textHeight,
+          flagW,
+          flagH,
+          rowWidth
+        }
+      })
+
+      const maxRowWidth = rows.reduce((max, row) => Math.max(max, row.rowWidth), 0)
+
+      const canvas = document.createElement('canvas')
+      if (groupAlignment === 'horizontal') {
+        const totalWidth = rows.reduce((sum, row) => sum + row.rowWidth, 0)
+        canvas.width = Math.ceil(totalWidth)
+        canvas.height = Math.ceil(boxHeight)
+      } else {
+        canvas.width = Math.ceil(maxRowWidth)
+        canvas.height = Math.ceil(boxHeight * rows.length)
+      }
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return resolveOverlayImage(cfg)
+      ctx.font = `${fontSize}px "${fontFamily}"`
+      ctx.textAlign = align === 'right' ? 'right' : 'left'
+      ctx.textBaseline = 'alphabetic'
+
+      let runningX = 0
+      rows.forEach((row, idx) => {
+        const boxWidth = row.rowWidth
+        const boxX = groupAlignment === 'horizontal' ? runningX : 0
+        const boxY = groupAlignment === 'horizontal' ? 0 : (boxHeight * idx)
+
+        drawRoundedRect(ctx, boxX, boxY, boxWidth, boxHeight, radius)
+        if (fill.a > 0) {
+          ctx.fillStyle = `rgba(${fill.r}, ${fill.g}, ${fill.b}, ${fill.a})`
+          ctx.fill()
+        }
+        if (lineWidth > 0 && stroke.a > 0) {
+          const inset = lineWidth / 2
+          const strokeRadius = Math.max(0, radius - inset)
+          drawRoundedRect(ctx, boxX + inset, boxY + inset, boxWidth - (inset * 2), boxHeight - (inset * 2), strokeRadius)
+          ctx.strokeStyle = `rgba(${stroke.r}, ${stroke.g}, ${stroke.b}, ${stroke.a})`
+          ctx.lineWidth = lineWidth
+          ctx.stroke()
+        }
+
+        const img = images[idx]
+        const centerY = boxY + (boxHeight / 2)
+        const textValue = row.textValue
+        const flagX = align === 'right'
+          ? (boxX + boxWidth - innerPad - row.flagW)
+          : (boxX + innerPad)
+
+        const flagY = centerY - (row.flagH / 2)
+        ctx.drawImage(img, flagX, flagY, row.flagW, row.flagH)
+
+        if (textValue) {
+          const textX = align === 'right'
+            ? (flagX - gap)
+            : (flagX + row.flagW + gap)
+          const textTop = boxY + ((boxHeight - row.textHeight) / 2)
+          const textY = textTop + row.textAscent
+          const fontColor = parseHexColor(vars.font_color, { r: 255, g: 255, b: 255, a: 1 })
+          ctx.fillStyle = `rgba(${fontColor.r}, ${fontColor.g}, ${fontColor.b}, ${fontColor.a})`
+          ctx.fillText(textValue, textX, textY)
+        }
+
+        if (groupAlignment === 'horizontal') {
+          runningX += boxWidth
+        }
+      })
+
+      cfg.naturalWidth = canvas.width
+      cfg.naturalHeight = canvas.height
+      return canvas.toDataURL('image/png')
     }
 
     const buildResolutionCompositeDataUrl = async (cfg) => {
@@ -2128,6 +2323,13 @@ const OverlayHandler = {
         toggle.addEventListener('change', handler)
       }
 
+      const updateFlagsLayer = (cfg, layer) => {
+        buildFlagsCompositeDataUrl(cfg).then(dataUrl => {
+          layer.src = dataUrl
+          applyPosition(cfg)
+        })
+      }
+
       const addOverlayLayer = (cfg) => {
         if (layers.has(cfg.id)) return layers.get(cfg.id)
         const layer = document.createElement('img')
@@ -2146,7 +2348,9 @@ const OverlayHandler = {
         layer.addEventListener('load', handleLoad)
 
         let initialSrc = resolveOverlayImage(cfg)
-        if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
+        if (isFlagsOverlay(cfg)) {
+          updateFlagsLayer(cfg, layer)
+        } else if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
           buildBackdropDataUrl(cfg).then(dataUrl => {
             layer.src = dataUrl
             applyPosition(cfg)
@@ -2192,6 +2396,10 @@ const OverlayHandler = {
           cfg.styleInput.addEventListener('change', () => {
             if (cfg.id === 'overlay_audio_codec') {
               syncAudioCodecBackdropHeight(cfg, false)
+            }
+            if (isFlagsOverlay(cfg)) {
+              updateFlagsLayer(cfg, layer)
+              return
             }
             if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
               buildBackdropDataUrl(cfg).then(dataUrl => {
@@ -2493,6 +2701,37 @@ const OverlayHandler = {
             input.addEventListener('change', refreshRatings)
           })
           refreshRatings()
+        }
+
+        if (isFlagsOverlay(cfg) && layer && cfg.container) {
+          const templateName = cfg.container.dataset.overlayTemplate
+          const refreshFlags = () => updateFlagsLayer(cfg, layer)
+          const flagSelectors = [
+            `[name="${templateName}[style]"]`,
+            `[name="${templateName}[size]"]`,
+            `[name="${templateName}[flag_alignment]"]`,
+            `[name="${templateName}[hide_text]"]`,
+            `[name="${templateName}[use_lowercase]"]`,
+            `[name="${templateName}[group_alignment]"]`,
+            `[name="${templateName}[offset]"]`,
+            `[name="${templateName}[font]"]`,
+            `[name="${templateName}[font_size]"]`,
+            `[name="${templateName}[font_color]"]`,
+            `[name="${templateName}[back_align]"]`,
+            `[name="${templateName}[back_color]"]`,
+            `[name="${templateName}[back_height]"]`,
+            `[name="${templateName}[back_width]"]`,
+            `[name="${templateName}[back_line_color]"]`,
+            `[name="${templateName}[back_line_width]"]`,
+            `[name="${templateName}[back_padding]"]`,
+            `[name="${templateName}[back_radius]"]`
+          ]
+          const inputs = cfg.container.querySelectorAll(flagSelectors.join(', '))
+          inputs.forEach(input => {
+            input.addEventListener('input', refreshFlags)
+            input.addEventListener('change', refreshFlags)
+          })
+          refreshFlags()
         }
 
         if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id) && layer && cfg.container) {

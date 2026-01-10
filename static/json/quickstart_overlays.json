@@ -2017,9 +2017,11 @@
         "label": "Audio Language Flags",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/languages/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/us.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 223
+          "vertical": 223,
+          "origin": "top_left"
         },
         "media_types": [
           "movie",
@@ -2046,6 +2048,84 @@
               "square",
               "half"
             ]
+          },
+          "font": {
+            "label": "Font",
+            "input_type": "text",
+            "default": "Inter-Bold.ttf"
+          },
+          "font_size": {
+            "label": "Font Size",
+            "input_type": "number",
+            "default": 50
+          },
+          "font_color": {
+            "label": "Font Color",
+            "input_type": "text",
+            "default": "#FFFFFFFF"
+          },
+          "flag_alignment": {
+            "label": "Flag Alignment",
+            "input_type": "select",
+            "default": "left",
+            "options": [
+              "left",
+              "right"
+            ]
+          },
+          "hide_text": {
+            "label": "Hide Text",
+            "input_type": "toggle",
+            "default": false
+          },
+          "use_lowercase": {
+            "label": "Use Lowercase",
+            "input_type": "toggle",
+            "default": false
+          },
+          "group_alignment": {
+            "label": "Group Alignment",
+            "input_type": "select",
+            "default": "vertical",
+            "options": [
+              "vertical",
+              "horizontal"
+            ]
+          },
+          "horizontal_position": {
+            "label": "Horizontal Position",
+            "input_type": "select",
+            "default": "left",
+            "options": [
+              "left",
+              "left2",
+              "center_left",
+              "center",
+              "center_right",
+              "right",
+              "right2"
+            ]
+          },
+          "vertical_position": {
+            "label": "Vertical Position",
+            "input_type": "select",
+            "default": "top3",
+            "options": [
+              "top",
+              "top2",
+              "top3",
+              "center_top",
+              "center",
+              "center_bottom",
+              "bottom",
+              "bottom2",
+              "bottom3"
+            ]
+          },
+          "offset": {
+            "label": "Addon Offset",
+            "input_type": "number",
+            "default": 10
           },
           "builder_level": {
             "input_type": "toggle",
@@ -2067,6 +2147,63 @@
               }
             ]
           },
+          "back_align": {
+            "input_type": "select",
+            "default": "left",
+            "label": "Backdrop Alignment",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 60,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 190,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 26,
+            "label": "Backdrop Radius"
+          },
+          "horizontal_offset": {
+            "input_type": "number",
+            "default": 15,
+            "label": "Horizontal Offset"
+          },
+          "vertical_offset": {
+            "input_type": "number",
+            "default": 223,
+            "label": "Vertical Offset"
+          },
           "initial_horizontal_offset": {
             "input_type": "number",
             "default": 15,
@@ -2084,9 +2221,11 @@
         "label": "Subtitle Language Flags",
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/languages/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/languages.png",
+        "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/flag/round/us.png",
         "default_offsets": {
           "horizontal": 15,
-          "vertical": 223
+          "vertical": 223,
+          "origin": "top_right"
         },
         "media_types": [
           "movie",
@@ -2113,6 +2252,84 @@
               "square",
               "half"
             ]
+          },
+          "font": {
+            "label": "Font",
+            "input_type": "text",
+            "default": "Inter-Bold.ttf"
+          },
+          "font_size": {
+            "label": "Font Size",
+            "input_type": "number",
+            "default": 50
+          },
+          "font_color": {
+            "label": "Font Color",
+            "input_type": "text",
+            "default": "#FFFFFFFF"
+          },
+          "flag_alignment": {
+            "label": "Flag Alignment",
+            "input_type": "select",
+            "default": "right",
+            "options": [
+              "left",
+              "right"
+            ]
+          },
+          "hide_text": {
+            "label": "Hide Text",
+            "input_type": "toggle",
+            "default": false
+          },
+          "use_lowercase": {
+            "label": "Use Lowercase",
+            "input_type": "toggle",
+            "default": false
+          },
+          "group_alignment": {
+            "label": "Group Alignment",
+            "input_type": "select",
+            "default": "vertical",
+            "options": [
+              "vertical",
+              "horizontal"
+            ]
+          },
+          "horizontal_position": {
+            "label": "Horizontal Position",
+            "input_type": "select",
+            "default": "right",
+            "options": [
+              "left",
+              "left2",
+              "center_left",
+              "center",
+              "center_right",
+              "right",
+              "right2"
+            ]
+          },
+          "vertical_position": {
+            "label": "Vertical Position",
+            "input_type": "select",
+            "default": "top3",
+            "options": [
+              "top",
+              "top2",
+              "top3",
+              "center_top",
+              "center",
+              "center_bottom",
+              "bottom",
+              "bottom2",
+              "bottom3"
+            ]
+          },
+          "offset": {
+            "label": "Addon Offset",
+            "input_type": "number",
+            "default": 10
           },
           "use_subtitles": {
             "input_type": "hidden",
@@ -2137,6 +2354,63 @@
                 "value": "episode"
               }
             ]
+          },
+          "back_align": {
+            "input_type": "select",
+            "default": "left",
+            "label": "Backdrop Alignment",
+            "options": [
+              "left",
+              "center",
+              "right",
+              "top",
+              "bottom"
+            ]
+          },
+          "back_color": {
+            "input_type": "text",
+            "default": "#00000099",
+            "label": "Backdrop Color"
+          },
+          "back_height": {
+            "input_type": "number",
+            "default": 60,
+            "label": "Backdrop Height"
+          },
+          "back_width": {
+            "input_type": "number",
+            "default": 190,
+            "label": "Backdrop Width"
+          },
+          "back_line_color": {
+            "input_type": "text",
+            "default": "#00000000",
+            "label": "Backdrop Line Color"
+          },
+          "back_line_width": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Line Width"
+          },
+          "back_padding": {
+            "input_type": "number",
+            "default": 0,
+            "label": "Backdrop Padding"
+          },
+          "back_radius": {
+            "input_type": "number",
+            "default": 26,
+            "label": "Backdrop Radius"
+          },
+          "horizontal_offset": {
+            "input_type": "number",
+            "default": 15,
+            "label": "Horizontal Offset"
+          },
+          "vertical_offset": {
+            "input_type": "number",
+            "default": 223,
+            "label": "Vertical Offset"
           },
           "initial_horizontal_offset": {
             "input_type": "number",
