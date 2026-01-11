@@ -28,3 +28,5 @@ walkthroughs
 xxxx
 yozora
 yozoraxcii
+AppIndicator
+KStatusNotifierItem
