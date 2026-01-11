@@ -706,7 +706,7 @@ def get_plex_summary():
 
         # Final summary string
         return (
-            f"Connected to server {server_name} version {version}\n"
+            f"Connected to Plex server {server_name} version {version}\n"
             f"Running on {platform} version {platform_version}\n"
             f"Plex DB cache setting: {db_cache_str}\n"
             f"{plex_pass_str}\n"

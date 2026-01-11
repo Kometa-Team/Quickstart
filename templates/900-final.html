@@ -339,14 +339,20 @@
           </button>
           <div class="d-flex align-items-center gap-2">
             <label for="run-log-filter" class="form-label mb-0">Filter</label>
-            <input id="run-log-filter" class="form-control form-control-sm" style="width: 180px;"
-              placeholder="Regex or text">
+            <div class="input-group input-group-sm" style="width: 210px;">
+              <input id="run-log-filter" class="form-control" placeholder="Regex or text">
+              <button class="btn btn-outline-secondary d-none" type="button" id="clear-log-filter"
+                aria-label="Clear filter" title="Clear filter">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
             <div class="btn-group btn-group-sm" role="group" aria-label="Quick filters">
-              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[INFO]">INFO</button>
               <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[DEBUG]">DEBUG</button>
+              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[INFO]">INFO</button>
               <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[WARNING]">WARN</button>
               <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[ERROR]">ERROR</button>
               <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[CRITICAL]">CRIT</button>
+              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="Traceback">TRACE</button>
             </div>
           </div>
         </div>

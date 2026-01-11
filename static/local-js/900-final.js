@@ -43,6 +43,7 @@ $(document).ready(function () {
   const $downloadLogBtn = $('#download-log-btn')
   const $pauseLogBtn = $('#pause-log-btn')
   const $filterInput = $('#run-log-filter')
+  const $clearFilterBtn = $('#clear-log-filter')
   const $levelButtons = $('.log-level-btn')
 
   const showYAML = plexValid && tmdbValid && libsValid && settValid && yamlValid
@@ -704,10 +705,26 @@ $(document).ready(function () {
     return text.split('\n').filter(line => re.test(line)).join('\n')
   }
 
+  function updateClearFilterButton () {
+    if (!$clearFilterBtn.length) return
+    const hasValue = $filterInput.val().trim().length > 0
+    $clearFilterBtn.toggleClass('d-none', !hasValue)
+  }
+
   $filterInput.on('input', function () {
     logFilter = $(this).val().trim()
     const filtered = applyLogFilter(lastLogText, logFilter)
     $runLog.text(filtered)
+    updateClearFilterButton()
+  })
+
+  $clearFilterBtn.on('click', function () {
+    logFilter = ''
+    $filterInput.val('')
+    const filtered = applyLogFilter(lastLogText, logFilter)
+    $runLog.text(filtered)
+    updateClearFilterButton()
+    $filterInput.trigger('focus')
   })
 
   $levelButtons.on('click', function () {
@@ -716,6 +733,7 @@ $(document).ready(function () {
     $filterInput.val(val)
     const filtered = applyLogFilter(lastLogText, logFilter)
     $runLog.text(filtered)
+    updateClearFilterButton()
   })
 
   $tailSelect.on('change', function () {
@@ -748,6 +766,7 @@ $(document).ready(function () {
       })
       .catch(() => showToast('error', 'Failed to download log.'))
   })
+  updateClearFilterButton()
   // Ensure we check Kometa status once on page load to catch unclean exits
   // Keep the run area hidden until validated, then check status immediately
   if (showYAML) {

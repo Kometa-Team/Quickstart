@@ -1899,6 +1899,107 @@ def tail_log():
         return jsonify({"error": f"Failed to read log: {str(e)}"}), 500
 
 
+@app.route("/support-info")
+def support_info():
+    def format_mb(value):
+        return int(value / (1024 * 1024))
+
+    def normalize_config_name(name):
+        cleaned = (name or "").strip().lower().replace(" ", "_")
+        return cleaned or "default"
+
+    config_name = session.get("config_name") or "default"
+    normalized_name = normalize_config_name(config_name)
+    config_path = Path(helpers.CONFIG_DIR) / f"{normalized_name}_config.yml"
+
+    if config_path.exists():
+        created_ts = datetime.fromtimestamp(config_path.stat().st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+        created_line = f"# {config_name} config created by Quickstart on {created_ts}"
+    else:
+        created_line = f"# {config_name} config created by Quickstart on Unavailable"
+
+    version_info = app.config.get("VERSION_CHECK") or helpers.check_for_update()
+    quickstart_version = version_info.get("local_version", "unknown")
+    quickstart_branch = version_info.get("branch", "unknown")
+    quickstart_environment = version_info.get("running_on", "unknown")
+
+    system_name = platform.system() or "Unknown OS"
+    system_release = platform.release() or ""
+    cpu_name = platform.processor() or platform.uname().processor or "Unknown CPU"
+    cpu_cores = psutil.cpu_count(logical=True) or 0
+    vm = psutil.virtual_memory()
+    mem_total = format_mb(vm.total)
+    mem_available = format_mb(vm.available)
+    mem_used = format_mb(vm.total - vm.available)
+    mem_percent = int(vm.percent)
+    is_docker = bool(app.config.get("QUICKSTART_DOCKER")) or "Docker" in str(quickstart_environment)
+
+    plex_summary = helpers.get_plex_summary()
+    if not plex_summary or plex_summary.lower().startswith("plex summary unavailable"):
+        plex_summary = "Plex info unavailable."
+
+    library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
+    movie_libraries = []
+    show_libraries = []
+    for key, value in library_settings.items():
+        if not key.endswith("-library") or value in [None, "", False]:
+            continue
+        if key.startswith("mov-library_"):
+            movie_libraries.append(str(value))
+        elif key.startswith("sho-library_"):
+            show_libraries.append(str(value))
+
+    library_names = movie_libraries + show_libraries
+    if library_names:
+        library_details = helpers.get_library_summaries(library_names)
+        if library_details.lower().startswith("plex library summary unavailable"):
+            library_details = "Library details unavailable."
+    else:
+        library_details = "No libraries configured."
+
+    lines = []
+    lines.append(f"#==================== {config_name} ====================#")
+    lines.append(created_line)
+    lines.append("# System Information")
+    lines.append(f"# OS: {system_name} {system_release}".strip())
+    lines.append(f"# Docker: {is_docker}")
+    lines.append(f"# CPU: {cpu_name} ({cpu_cores} cores)")
+    lines.append(f"# Memory: {mem_used} MB / {mem_total} MB ({mem_percent}%) | {mem_available} MB Free")
+    lines.extend([f"# {line}" for line in plex_summary.splitlines()])
+    lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")
+    lines.append("###")
+    lines.append(f"# Libraries configured with Quickstart: {len(movie_libraries)} movie, {len(show_libraries)} show")
+    if library_details:
+        for line in library_details.splitlines():
+            if line.strip():
+                lines.append(f"# {line}")
+            else:
+                lines.append("#")
+    lines.append("###")
+    lines.append("# Quickstart log tail (last 200 lines)")
+    lines.append("")
+
+    log_path = Path(helpers.LOG_FILE).resolve()
+    log_lines = []
+
+    if log_path.exists():
+        try:
+            with log_path.open("r", encoding="utf-8", errors="replace") as f:
+                tail = deque(f, maxlen=200)
+            for line in tail:
+                log_lines.append(helpers.redact_string(line.rstrip("\n")))
+            if not log_lines:
+                log_lines.append("Quickstart log is empty.")
+        except Exception:
+            log_lines.append("Quickstart log unavailable.")
+    else:
+        log_lines.append("Quickstart log unavailable.")
+
+    text = "\n".join(lines + log_lines)
+    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return jsonify({"text": text, "generated_at": generated_at})
+
+
 @app.route("/validate-kometa-root", methods=["POST"])
 def validate_kometa_root():
     root_path = request.json.get("path", "").strip()

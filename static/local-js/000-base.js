@@ -312,6 +312,86 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 })
 
+document.addEventListener('DOMContentLoaded', () => {
+  const modalEl = document.getElementById('supportInfoModal')
+  if (!modalEl) return
+
+  const output = modalEl.querySelector('#supportInfoOutput')
+  const refreshBtn = modalEl.querySelector('#supportInfoRefresh')
+  const copyBtn = modalEl.querySelector('#supportInfoCopy')
+  const status = modalEl.querySelector('#supportInfoStatus')
+
+  function setStatus (text, isError) {
+    if (!status) return
+    status.textContent = text || ''
+    status.classList.toggle('text-danger', Boolean(isError))
+    status.classList.toggle('text-muted', !isError)
+  }
+
+  async function loadSupportInfo () {
+    if (!output) return
+    setStatus('Loading...', false)
+    output.textContent = 'Loading support info...'
+
+    try {
+      const res = await fetch('/support-info')
+      const data = await res.json()
+      if (!res.ok || !data || !data.text) {
+        throw new Error((data && data.error) || 'Failed to load support info.')
+      }
+      output.textContent = data.text
+      setStatus(data.generated_at ? `Updated ${data.generated_at}` : 'Updated', false)
+    } catch (err) {
+      output.textContent = `Unable to load support info.\n${err.message || String(err)}`
+      setStatus('Error loading support info', true)
+    }
+  }
+
+  function fallbackCopy (text) {
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'absolute'
+    textarea.style.left = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+    try {
+      document.execCommand('copy')
+      showToast('success', 'Support info copied to clipboard.')
+    } catch (err) {
+      showToast('error', 'Copy failed. Please copy manually.')
+    } finally {
+      document.body.removeChild(textarea)
+    }
+  }
+
+  async function copySupportInfo () {
+    if (!output) return
+    const text = output.textContent || ''
+    if (!text.trim()) {
+      showToast('warning', 'Nothing to copy yet.')
+      return
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(text)
+        showToast('success', 'Support info copied to clipboard.')
+      } catch (err) {
+        fallbackCopy(text)
+      }
+    } else {
+      fallbackCopy(text)
+    }
+  }
+
+  modalEl.addEventListener('show.bs.modal', () => {
+    loadSupportInfo()
+  })
+
+  if (refreshBtn) refreshBtn.addEventListener('click', loadSupportInfo)
+  if (copyBtn) copyBtn.addEventListener('click', copySupportInfo)
+})
+
 // Optional: Rotate icon spinner style
 const style = document.createElement('style')
 style.innerHTML = `

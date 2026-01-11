@@ -70,13 +70,19 @@
           </ul>
         </div>
 
-        <!-- Next Button (Hidden on Final Page) -->
-        {% if page_info['template_name'] != '910-sponsor' %}
-        <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
-          title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
-          Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
-        </button>
-        {% endif %}
+        <!-- Next Button + Support -->
+        <div class="d-flex align-items-center gap-2">
+          {% if page_info['template_name'] != '910-sponsor' %}
+          <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
+            title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
+            Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+          </button>
+          {% endif %}
+          <button type="button" class="btn nav-button" data-bs-toggle="modal" data-bs-target="#supportInfoModal"
+            title="Gather support info and logs">
+            <i class="bi bi-life-preserver"></i> Support Info
+          </button>
+        </div>
 
       </div>
     </nav>
@@ -105,6 +111,29 @@
             <button type="button" class="btn btn-secondary" id="configSwitchCancel" data-bs-dismiss="modal">Cancel</button>
             <button type="button" class="btn btn-primary" id="configSwitchConfirm"
               {% if available_configs|length == 0 %}disabled{% endif %}>Switch</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support Info Modal -->
+    <div class="modal fade" id="supportInfoModal" tabindex="-1" aria-labelledby="supportInfoModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-secondary">
+          <div class="modal-header">
+            <h5 class="modal-title" id="supportInfoModalLabel">Support Info</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <button type="button" class="btn btn-sm btn-outline-light" id="supportInfoRefresh">Refresh</button>
+              <button type="button" class="btn btn-sm btn-outline-light" id="supportInfoCopy">Copy</button>
+              <span class="text-muted small" id="supportInfoStatus"></span>
+            </div>
+            <p class="text-muted small mb-2">
+              Share this info with support in Discord. We made every effort to redact secrets, but please review before posting.
+            </p>
+            <pre id="supportInfoOutput" class="form-control bg-dark text-light" style="height: 320px; overflow: auto; white-space: pre;">Loading support info...</pre>
           </div>
         </div>
       </div>
