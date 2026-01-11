@@ -39,7 +39,7 @@ def section_heading(title, font="standard"):
 
 def clean_section_data(section_data, config_attribute):
     """
-    Cleans out temporary or irrelevant data before integrating it into the final config
+    Cleans out temporary or irrelevant data before integrating it into the final config.yml
     """
     clean_data = {}
 
