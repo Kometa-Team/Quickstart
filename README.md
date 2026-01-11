@@ -18,7 +18,7 @@
 
 ## ✨ Features
 
-Kometa Quickstart is more than just a YAML generator — it’s a full interactive environment for configuring, validating, and running Kometa. Key features include:
+Kometa Quickstart is more than just a YAML generator - it's a full interactive environment for configuring, validating, and running Kometa. Key features include:
 
 ### Multiple Ways to Run Quickstart
 - **Local Python:** Works on Windows, macOS, and Linux
@@ -53,6 +53,17 @@ Kometa Quickstart is more than just a YAML generator — it’s a full interacti
 - **Quickstart Self-Updater:** One-click update to latest master or develop branch
 - **Kometa Sync:** Option to pull and update Kometa itself (nightly/master) before running
 
+### Quickstart Scope
+- **Quickstart support vs Kometa support:** The Support Info workflow is for Quickstart issues. Kometa runtime issues should be handled in Kometa support channels.
+
+### Support & Troubleshooting
+- **Support Info (every page):** Use the Support Info button to gather system info and the Quickstart log tail.
+- **Redaction notice:** We attempt to redact secrets, but always review before posting.
+- **Log file:** `config/logs/quickstart.log`
+
+### Data & Privacy (Quickstart)
+- **Local-first:** Config data is stored locally in SQLite and versioned `.yml` files in `config/`.
+- **Network access:** Quickstart only contacts external services when you validate settings or fetch remote assets.
 
 Kometa Quickstart is a guided Web UI that helps you create a Configuration File for use with Kometa.
 
