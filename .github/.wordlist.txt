@@ -30,3 +30,5 @@ yozora
 yozoraxcii
 AppIndicator
 KStatusNotifierItem
+PyQt
+Wayland
