@@ -3,6 +3,8 @@ import os
 import json
 import re
 from datetime import datetime
+import platform
+import psutil
 
 import jsonschema
 import pyfiglet
@@ -1131,6 +1133,18 @@ def build_config(header_style="standard", config_name=None):
     quickstart_version = version_info.get("local_version", "unknown")
     quickstart_environment = version_info.get("running_on", "unknown")
 
+    system_name = platform.system() or "Unknown OS"
+    system_release = platform.release() or ""
+    cpu_name = platform.processor() or platform.uname().processor or "Unknown CPU"
+    cpu_cores = psutil.cpu_count(logical=True) or 0
+    vm = psutil.virtual_memory()
+    mem_total = int(vm.total / (1024 * 1024))
+    mem_available = int(vm.available / (1024 * 1024))
+    mem_used = int((vm.total - vm.available) / (1024 * 1024))
+    mem_percent = int(vm.percent)
+    is_docker = bool(app.config.get("QUICKSTART_DOCKER")) or "Docker" in str(quickstart_environment)
+    os_line = f"# OS: {system_name} {system_release}".strip()
+
     # Get the current timestamp in a readable format
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -1144,6 +1158,11 @@ def build_config(header_style="standard", config_name=None):
         f"{add_border_to_ascii_art(section_heading('KOMETA', font=header_style)) if header_style not in ['none', 'single line'] else section_heading('KOMETA', font=header_style)}\n\n"
         f"#==================== {config_name} ====================#\n"
         f"# {config_name} config created by Quickstart on {timestamp}\n"
+        f"# System Information\n"
+        f"{os_line}\n"
+        f"# Docker: {is_docker}\n"
+        f"# CPU: {cpu_name} ({cpu_cores} cores)\n"
+        f"# Memory: {mem_used} MB / {mem_total} MB ({mem_percent}%) | {mem_available} MB Free\n"
         f"{'# ' + plex_summary.replace(chr(10), chr(10) + '# ')}\n"
         f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}\n"
         f"###\n"
