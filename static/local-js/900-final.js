@@ -2,6 +2,8 @@
 
 // Global flag so other handlers know an update is in progress
 let KOMETA_UPDATING = false
+let KOMETA_VALIDATED = false
+let KOMETA_VALIDATION_IN_PROGRESS = false
 // Polling handles (hoist to top so all handlers see them safely)
 let kometaInterval = null
 let kometaStatusInterval = null
@@ -214,6 +216,28 @@ $(document).ready(function () {
     updateFlagLabels(showCli)
   })
 
+  function isRunCommandValid () {
+    const cmd = $('#run-command-output').text().trim()
+    return Boolean(cmd) && !cmd.startsWith('??')
+  }
+
+  function updateRunNowState () {
+    const $runNow = $('#run-now')
+    if (!$runNow.length) return
+
+    if (!showYAML || KOMETA_VALIDATION_IN_PROGRESS || KOMETA_UPDATING || KOMETA_STATUS === 'running' || !KOMETA_VALIDATED) {
+      $runNow.prop('disabled', true)
+      return
+    }
+
+    if (!isRunCommandValid()) {
+      $runNow.prop('disabled', true)
+      return
+    }
+
+    $runNow.prop('disabled', false)
+  }
+
   function buildCommand () {
     const runCmdOutput = $('#run-command-output')
     const configFilename = runCmdOutput.data('config-filename') || ''
@@ -245,7 +269,8 @@ $(document).ready(function () {
       if (!isValid) {
         $('#times-error').removeClass('d-none')
         runCmdOutput.text('⚠️ Invalid time format. Use pipe-separated 24h times like 06:00|15:00.')
-        return
+        updateRunNowState()
+        return false
       } else {
         $('#times-error').addClass('d-none')
         checkMaintenanceWarning(mainOption)
@@ -258,7 +283,8 @@ $(document).ready(function () {
     if (mainOption === '--run-libraries') {
       if (!selectedLibs.length) {
         runCmdOutput.text('⚠️ Please select at least one library when using --run-libraries.')
-        return
+        updateRunNowState()
+        return false
       }
       cli += ` "${selectedLibs.join('|')}"`
     }
@@ -289,7 +315,8 @@ $(document).ready(function () {
       if (!/^\d+$/.test(timeoutValue) || timeoutNum <= 0) {
         $('#timeout-error').removeClass('d-none')
         runCmdOutput.text('⚠️ Invalid timeout. Please enter a positive whole number.')
-        return
+        updateRunNowState()
+        return false
       } else {
         $('#timeout-error').addClass('d-none')
         cli += ` --timeout ${timeoutNum}`
@@ -303,7 +330,8 @@ $(document).ready(function () {
       if (!/^\d+$/.test(widthValue) || widthNum < 90 || widthNum > 300) {
         $('#width-error').removeClass('d-none')
         runCmdOutput.text('⚠️ Width must be a number between 90 and 300.')
-        return
+        updateRunNowState()
+        return false
       } else {
         $('#width-error').addClass('d-none')
         cli += ` --width ${widthNum}`
@@ -315,7 +343,8 @@ $(document).ready(function () {
       if (!dividerValue || dividerValue.length !== 1) {
         $('#divider-error').removeClass('d-none')
         runCmdOutput.text('⚠️ Divider must be a single character.')
-        return
+        updateRunNowState()
+        return false
       } else {
         $('#divider-error').addClass('d-none')
         cli += ` --divider "${dividerValue}"`
@@ -323,6 +352,8 @@ $(document).ready(function () {
     }
 
     runCmdOutput.text(cli)
+    updateRunNowState()
+    return true
   }
 
   $('input[name="run-option"]').on('change', function () {
@@ -350,6 +381,8 @@ $(document).ready(function () {
   })
 
   function validateKometaRoot () {
+    if (KOMETA_VALIDATION_IN_PROGRESS) return
+    KOMETA_VALIDATION_IN_PROGRESS = true
     const $logBox = $('#kometa-validation-log')
     const $spinner = $('#spinner_validate')
     const $runNow = $('#run-now')
@@ -420,11 +453,16 @@ $(document).ready(function () {
           try { buildCommand() } catch (_) { }
 
           if (allValid) {
+            KOMETA_VALIDATED = true
             showRunCommandSectionAfterValidated()
           } else {
+            KOMETA_VALIDATED = false
+            hideRunCommandSectionUntilValidated()
             $runNow.prop('disabled', true)
           }
         } else {
+          KOMETA_VALIDATED = false
+          hideRunCommandSectionUntilValidated()
           $runNow.prop('disabled', true)
         }
 
@@ -433,8 +471,14 @@ $(document).ready(function () {
       error: (xhr) => {
         const msg = xhr?.responseJSON?.error || 'The Kometa root path is invalid or inaccessible. Please try again.'
         $logBox.append(`❌ ${msg}\n`)
+        KOMETA_VALIDATED = false
+        hideRunCommandSectionUntilValidated()
         $runNow.prop('disabled', true)
         if ($spinner.length) $spinner.hide()
+      },
+      complete: () => {
+        KOMETA_VALIDATION_IN_PROGRESS = false
+        updateRunNowState()
       }
     })
   }
@@ -516,7 +560,9 @@ $(document).ready(function () {
       box.addClass('fade-in') // Let browser register change, then fade in
     }, 10)
 
-    $('#run-now').prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Run Now')
+    $('#run-now').html('<i class="bi bi-play-fill me-1"></i> Run Now')
+    try { buildCommand() } catch (_) {}
+    updateRunNowState()
   }
   function startPollingIfNeeded () {
     if (kometaPollingStarted) return
@@ -542,6 +588,8 @@ $(document).ready(function () {
     const branch = $btn.data('branch') || 'master'
 
     KOMETA_UPDATING = true
+    KOMETA_VALIDATED = false
+    hideRunCommandSectionUntilValidated()
     const prevRunNowHtml = $runNow.html()
     const prevRunNowDisabled = $runNow.prop('disabled')
 
@@ -568,6 +616,7 @@ $(document).ready(function () {
       $runNow.prop('disabled', prevRunNowDisabled).html(prevRunNowHtml)
       $stopNow.prop('disabled', false)
       $btn.prop('disabled', false).html('🔄 Update Kometa Now')
+      updateRunNowState()
     }
 
     fetch('/update-kometa', {
@@ -600,6 +649,7 @@ $(document).ready(function () {
         } else if (!data.blocked) {
           showToast('error', data.error || 'Kometa update failed.')
           $logBox.append('❌ Kometa update failed.\n')
+          validateKometaRoot()
           if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
         }
       })
@@ -751,7 +801,7 @@ $(document).ready(function () {
   })
 
   $downloadLogBtn.on('click', function () {
-    const href = `/tail-log?size=${encodeURIComponent(tailSize)}&download=1`
+    const href = '/tail-log?size=all&download=1'
     fetch(href)
       .then(res => res.blob())
       .then(blob => {
@@ -767,22 +817,14 @@ $(document).ready(function () {
       .catch(() => showToast('error', 'Failed to download log.'))
   })
   updateClearFilterButton()
-  // Ensure we check Kometa status once on page load to catch unclean exits
-  // Keep the run area hidden until validated, then check status immediately
-  if (showYAML) {
-    showRunCommandSectionAfterValidated()
-  } else {
-    hideRunCommandSectionUntilValidated()
-  }
+  // Ensure we check Kometa status once on page load to catch unclean exits.
+  // Keep the run area hidden until Kometa validation completes.
+  hideRunCommandSectionUntilValidated()
   checkKometaStatus()
 
-  // First-run: ensure Kometa exists/updated if not running
+  // First-run: validate Kometa root once the log box is present.
   if (document.getElementById('kometa-validation-log')) {
-    checkKometaStatus().then(() => {
-      if (KOMETA_STATUS !== 'running') {
-        callUpdateKometa()
-      }
-    })
+    validateKometaRoot()
   }
 
   if (document.getElementById('header-style')) {
@@ -794,6 +836,16 @@ $(document).ready(function () {
   $('#run-now').on('click', function () {
     if (KOMETA_UPDATING) {
       showToast('warning', 'Kometa is updating. Please wait for it to finish before running.')
+      return
+    }
+
+    if (KOMETA_VALIDATION_IN_PROGRESS) {
+      showToast('info', 'Kometa validation is still running. Please wait.')
+      return
+    }
+
+    if (!KOMETA_VALIDATED) {
+      showToast('warning', 'Kometa has not been validated yet.')
       return
     }
 
@@ -926,8 +978,9 @@ $(document).ready(function () {
         if (typeof kometaInterval !== 'undefined' && kometaInterval) clearInterval(kometaInterval)
         if (typeof kometaStatusInterval !== 'undefined' && kometaStatusInterval) clearInterval(kometaStatusInterval)
 
-        $runNow.prop('disabled', false).html('<i class="bi bi-play-fill me-1"></i> Run Now')
+        $runNow.html('<i class="bi bi-play-fill me-1"></i> Run Now')
         $stopNow.addClass('d-none').prop('disabled', false)
+        updateRunNowState()
 
         if (data.status === 'done') {
           if (data.return_code === 0) {

@@ -407,7 +407,7 @@ const EventHandler = {
       if (accordionBody) {
         // 1. Check for directly selected inputs (checkboxes, radios, list selections)
         isCheckedOrSelected = accordionBody.querySelector(
-          "input[type='checkbox']:checked:not(.readonly-toggle):not([hidden]):not([type='hidden']), " +
+          "input[type='checkbox']:checked:not(.readonly-toggle):not(.template-child-toggle):not([hidden]):not([type='hidden']), " +
           "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
           '.list-group li'
         ) !== null
@@ -468,7 +468,7 @@ const EventHandler = {
 
         // Only highlight if child toggle is on or has modified select tied to an enabled toggle
         const hasActiveToggle = child.querySelector(
-          "input[type='checkbox']:checked:not(.readonly-toggle):not([hidden]):not([type='hidden']), " +
+          "input[type='checkbox']:checked:not(.readonly-toggle):not(.template-child-toggle):not([hidden]):not([type='hidden']), " +
           "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
           '.list-group li'
         )
@@ -517,7 +517,7 @@ const EventHandler = {
           const childText = childHeader ? childHeader.textContent.trim() : ''
           const isPreviewChild = childText.toLowerCase().includes('preview overlays')
 
-          return !isPreviewChild && child.querySelector('input:checked')
+          return !isPreviewChild && child.querySelector('input:checked:not(.template-child-toggle)')
         })
 
         if (!hasValidChild) {
@@ -552,7 +552,7 @@ const EventHandler = {
     }
 
     const hasSelections = accordionBody?.querySelector(
-      "input[type='checkbox']:checked:not(.readonly-toggle):not([hidden]):not([type='hidden']), " +
+      "input[type='checkbox']:checked:not(.readonly-toggle):not(.template-child-toggle):not([hidden]):not([type='hidden']), " +
       "input[type='radio']:checked:not([hidden]):not([type='hidden']), " +
       "select[data-user-modified='true'] option:checked:not([value='']):not([value='none']), " +
       '.list-group li'

@@ -1933,6 +1933,22 @@ def support_info():
     mem_used = format_mb(vm.total - vm.available)
     mem_percent = int(vm.percent)
     is_docker = bool(app.config.get("QUICKSTART_DOCKER")) or "Docker" in str(quickstart_environment)
+    python_version = platform.python_version() or sys.version.split()[0]
+    git_version = "Unavailable"
+    git_path = shutil.which("git")
+    if git_path:
+        try:
+            git_result = subprocess.run(
+                [git_path, "--version"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            git_output = (git_result.stdout or git_result.stderr or "").strip()
+            if git_output:
+                git_version = git_output
+        except Exception:
+            git_version = "Unavailable"
 
     plex_summary = helpers.get_plex_summary()
     if not plex_summary or plex_summary.lower().startswith("plex summary unavailable"):
@@ -1965,6 +1981,8 @@ def support_info():
     lines.append(f"# Docker: {is_docker}")
     lines.append(f"# CPU: {cpu_name} ({cpu_cores} cores)")
     lines.append(f"# Memory: {mem_used} MB / {mem_total} MB ({mem_percent}%) | {mem_available} MB Free")
+    lines.append(f"# Python: {python_version}")
+    lines.append(f"# Git: {git_version}")
     lines.extend([f"# {line}" for line in plex_summary.splitlines()])
     lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")
     lines.append("###")

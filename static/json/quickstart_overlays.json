@@ -113,12 +113,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -207,13 +207,13 @@
             "input_type": "number",
             "key": "back_line_width",
             "label": "Backdrop Line Width",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
             "key": "back_padding",
             "label": "Backdrop Padding",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
@@ -320,12 +320,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -622,7 +622,7 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
@@ -857,7 +857,7 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
@@ -969,12 +969,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -1075,12 +1075,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -1182,12 +1182,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -1289,12 +1289,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -1396,12 +1396,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -1503,12 +1503,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -1621,13 +1621,13 @@
             "input_type": "number",
             "key": "back_line_width",
             "label": "Backdrop Line Width",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
             "key": "back_padding",
             "label": "Backdrop Padding",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
@@ -1758,13 +1758,13 @@
             "input_type": "number",
             "key": "back_line_width",
             "label": "Backdrop Line Width",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
             "key": "back_padding",
             "label": "Backdrop Padding",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
@@ -1885,12 +1885,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -1969,13 +1969,13 @@
             "input_type": "number",
             "key": "back_line_width",
             "label": "Backdrop Line Width",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
             "key": "back_padding",
             "label": "Backdrop Padding",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
@@ -2130,12 +2130,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -2287,12 +2287,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -2349,7 +2349,7 @@
             "key": "use_edition",
             "label": "Use Edition",
             "value": "true",
-            "default": true,
+            "default": false,
             "options": [
               "true",
               "false"
@@ -2396,13 +2396,13 @@
             "input_type": "number",
             "key": "back_line_width",
             "label": "Backdrop Line Width",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
             "key": "back_padding",
             "label": "Backdrop Padding",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
@@ -2526,13 +2526,13 @@
             "input_type": "number",
             "key": "back_line_width",
             "label": "Backdrop Line Width",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
             "key": "back_padding",
             "label": "Backdrop Padding",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
@@ -2641,13 +2641,13 @@
             "input_type": "number",
             "key": "back_line_width",
             "label": "Backdrop Line Width",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
             "key": "back_padding",
             "label": "Backdrop Padding",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
@@ -2769,13 +2769,13 @@
             "input_type": "number",
             "key": "back_line_width",
             "label": "Backdrop Line Width",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
             "key": "back_padding",
             "label": "Backdrop Padding",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
@@ -2902,12 +2902,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -3008,12 +3008,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -3113,12 +3113,12 @@
           },
           "back_line_width": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Line Width"
           },
           "back_padding": {
             "input_type": "number",
-            "default": 0,
+            "default": 1,
             "label": "Backdrop Padding"
           },
           "back_radius": {
@@ -3206,13 +3206,13 @@
             "input_type": "number",
             "key": "back_line_width",
             "label": "Backdrop Line Width",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",
             "key": "back_padding",
             "label": "Backdrop Padding",
-            "default": 0
+            "default": 1
           },
           {
             "input_type": "number",

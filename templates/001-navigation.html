@@ -2,18 +2,26 @@
   <div id="{{ page_info['title'] }}Section">
 
     <!-- Page Title + top-right badge -->
-    <div class="container text-center mt-3 page-title">
-      <h2 class="fw-bold text-white mb-0">{{ page_info['title'] }}</h2>
-      <button type="button" class="badge bg-secondary config-badge config-badge-button"
-        data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}">
-        <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="Switch profile">
-          Config: {{ page_info.config_name }} <i class="bi bi-chevron-down ms-1"></i>
-        </span>
-      </button>
+    <div class="container text-center mt-0 page-title">
+      <div class="page-title-row">
+        <h2 class="fw-bold text-white mb-0">{{ page_info['title'] }}</h2>
+      </div>
+      <div class="page-title-row page-title-actions">
+        <button type="button" class="badge bg-secondary config-badge-button support-badge"
+          data-bs-toggle="modal" data-bs-target="#supportInfoModal" title="Support info for Quickstart">
+          <i class="bi bi-life-preserver me-1"></i> Support Info
+        </button>
+        <button type="button" class="badge bg-secondary config-badge config-badge-button"
+          data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}">
+          <span title="Switch profile">
+            Config: {{ page_info.config_name }} <i class="bi bi-chevron-down ms-1"></i>
+          </span>
+        </button>
+      </div>
     </div>
 
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark page-nav">
       <div class="container-fluid d-flex justify-content-between align-items-center">
 
         <!-- Previous Button (Hidden on Start Page) -->
@@ -70,19 +78,13 @@
           </ul>
         </div>
 
-        <!-- Next Button + Support -->
-        <div class="d-flex align-items-center gap-2">
-          {% if page_info['template_name'] != '910-sponsor' %}
-          <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
-            title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
-            Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
-          </button>
-          {% endif %}
-          <button type="button" class="btn nav-button" data-bs-toggle="modal" data-bs-target="#supportInfoModal"
-            title="Gather support info and logs">
-            <i class="bi bi-life-preserver"></i> Support Info
-          </button>
-        </div>
+        <!-- Next Button (Hidden on Final Page) -->
+        {% if page_info['template_name'] != '910-sponsor' %}
+        <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
+          title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
+          Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+        </button>
+        {% endif %}
 
       </div>
     </nav>
@@ -139,4 +141,4 @@
       </div>
     </div>
 
-    <hr class="hr">
+    <hr class="hr page-nav-divider">

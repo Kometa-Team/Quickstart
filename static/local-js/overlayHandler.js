@@ -682,6 +682,37 @@ const OverlayHandler = {
       setBackdropHeight(cfg, height, emit)
     }
 
+    const syncResolutionEditionVisibility = (cfg, emit = true) => {
+      if (cfg.id !== 'overlay_resolution') return
+      if (!cfg.container) return
+      const templateName = cfg.container.dataset.overlayTemplate
+      if (!templateName) return
+      const toggle = getTemplateInput(cfg, 'use_edition')
+      const useEdition = toggle ? toggle.checked : true
+      const keys = [
+        'back_align',
+        'back_color',
+        'back_height',
+        'back_width',
+        'back_line_color',
+        'back_line_width',
+        'back_padding',
+        'back_radius'
+      ]
+      keys.forEach((key) => {
+        const input = cfg.container.querySelector(`[name="${templateName}[${key}]"]`)
+        if (!input) return
+        const group = input.closest('.rgba-group') || input.closest('.input-group') || input.closest('.form-check') || input.parentElement
+        if (group) {
+          group.classList.toggle('d-none', useEdition)
+        }
+        input.disabled = useEdition
+        if (emit) {
+          input.dispatchEvent(new Event('change', { bubbles: true }))
+        }
+      })
+    }
+
     const syncFlagSizeDefaults = (cfg, emit = true) => {
       if (!isFlagsOverlay(cfg)) return
       const sizeInput = getTemplateInput(cfg, 'size')
@@ -2525,6 +2556,7 @@ const OverlayHandler = {
           if (cfg.edition.toggle) {
             cfg.edition.toggle.addEventListener('change', () => {
               syncResolutionBackdropHeight(cfg)
+              syncResolutionEditionVisibility(cfg)
               if (BACKDROP_IMAGE_OVERLAYS.has(cfg.id)) {
                 buildBackdropDataUrl(cfg).then(dataUrl => {
                   layer.src = dataUrl
@@ -2581,6 +2613,7 @@ const OverlayHandler = {
         }
         syncAudioCodecBackdropHeight(cfg, false)
         syncResolutionBackdropHeight(cfg, false)
+        syncResolutionEditionVisibility(cfg, false)
         configs.push(cfg)
         configsById.set(cfg.id, cfg)
         const layer = addOverlayLayer(cfg)

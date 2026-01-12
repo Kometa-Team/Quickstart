@@ -2,6 +2,8 @@ import io
 import os
 import json
 import re
+import shutil
+import subprocess
 from datetime import datetime
 import platform
 import psutil
@@ -520,6 +522,26 @@ def build_libraries_section(
                     tv = ov.get("template_variables")
                     if not isinstance(tv, dict):
                         continue
+                    if tv.get("builder_level") == "show":
+                        tv.pop("builder_level", None)
+                        if not tv:
+                            ov.pop("template_variables", None)
+                            continue
+                    if isinstance(default_name, str) and default_name in {"resolution", "overlay_resolution"}:
+                        use_edition_val = tv.get("use_edition")
+                        if isinstance(use_edition_val, str):
+                            use_edition_val = use_edition_val.lower() == "true"
+                        if use_edition_val is None or use_edition_val is False:
+                            tv["use_edition"] = False
+                            use_edition_val = False
+                        if use_edition_val is True:
+                            keep_keys = {"use_edition", "horizontal_offset", "vertical_offset"}
+                            for key in list(tv.keys()):
+                                if key not in keep_keys:
+                                    tv.pop(key, None)
+                            if not tv:
+                                ov.pop("template_variables", None)
+                                continue
                     if isinstance(default_name, str) and default_name in {"commonsense", "overlay_content_rating_commonsense", "content_rating_commonsense"}:
                         for key in ["text", "font", "font_size", "font_color"]:
                             tv.pop(key, None)
@@ -1143,6 +1165,22 @@ def build_config(header_style="standard", config_name=None):
     mem_used = int((vm.total - vm.available) / (1024 * 1024))
     mem_percent = int(vm.percent)
     is_docker = bool(app.config.get("QUICKSTART_DOCKER")) or "Docker" in str(quickstart_environment)
+    python_version = platform.python_version() or platform.python_version_tuple()[0]
+    git_version = "Unavailable"
+    git_path = shutil.which("git")
+    if git_path:
+        try:
+            git_result = subprocess.run(
+                [git_path, "--version"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            git_output = (git_result.stdout or git_result.stderr or "").strip()
+            if git_output:
+                git_version = git_output
+        except Exception:
+            git_version = "Unavailable"
     os_line = f"# OS: {system_name} {system_release}".strip()
 
     # Get the current timestamp in a readable format
@@ -1163,6 +1201,8 @@ def build_config(header_style="standard", config_name=None):
         f"# Docker: {is_docker}\n"
         f"# CPU: {cpu_name} ({cpu_cores} cores)\n"
         f"# Memory: {mem_used} MB / {mem_total} MB ({mem_percent}%) | {mem_available} MB Free\n"
+        f"# Python: {python_version}\n"
+        f"# Git: {git_version}\n"
         f"{'# ' + plex_summary.replace(chr(10), chr(10) + '# ')}\n"
         f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}\n"
         f"###\n"

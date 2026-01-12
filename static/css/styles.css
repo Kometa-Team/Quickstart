@@ -31,8 +31,8 @@ code {
 
 .header-container {
     text-align: center;
-    margin-bottom: 20px;
-}
+    margin-bottom: 12px;
+  }
 
 .header-image {
     max-width: 40%;
@@ -49,9 +49,16 @@ header.fixed-top {
 
 /* Ensure content is not hidden under the fixed header */
 .content-wrapper {
-    margin-top: 80px;
+    margin-top: 32px;
     /* Adjust based on header height */
-}
+  }
+.early-warning {
+    margin-bottom: 6px;
+  }
+  .page-top-divider {
+    margin: .5rem 0;
+    opacity: 0.25;
+  }
 
 .title.text-center {
     text-align: center !important;
@@ -1163,31 +1170,49 @@ div#loading {
 }
 
 /* Desktop/tablet: keep badge top-right of the title block */
-.page-title {
-  position: relative;
-}
-.config-badge {
-  position: absolute;
-  top: .25rem;
-  right: .75rem;
-  font-size: .85rem;
-  padding: .35rem .6rem;
-}
-
-/* Phones: let it stack under the title and center it */
-@media (max-width: 576px) {
-  .config-badge {
-    position: static;          /* no absolute positioning */
-    display: inline-block;
-    margin-top: .5rem;         /* space below the title */
-  }
   .page-title {
     display: flex;
-    flex-direction: column;    /* title then badge */
+    flex-direction: column;
     align-items: center;
-    gap: .25rem;
+    gap: .2rem;
   }
-}
+  .page-title h2 {
+    font-size: 1.6rem;
+    line-height: 1.2;
+  }
+  .page-title-actions {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .35rem;
+  }
+  .page-nav {
+    padding-top: .25rem;
+    padding-bottom: .25rem;
+  }
+  .page-nav .nav-button {
+    padding: 6px 10px;
+    font-size: .9rem;
+  }
+  .page-nav-divider {
+    margin: .5rem 0;
+  }
+  .config-badge,
+  .support-badge {
+    position: static;
+    font-size: .85rem;
+    padding: .35rem .6rem;
+  }
+
+  /* Phones: stack buttons and center them */
+  @media (max-width: 576px) {
+    .page-title-actions {
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: .5rem;
+    }
+  }
 
 /* -------------------- */
 /* START PAGE LAYOUT    */

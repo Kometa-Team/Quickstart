@@ -1305,18 +1305,29 @@ prefix) %}
                                                     {% if var_name in ['vertical_offset', 'initial_vertical_offset'] %}{% set ns.has_offsets = true %}{% set ns.v_id = template_name ~ '-' ~ var_name %}{% endif %}
                                                     {% if var_name == 'horizontal_position' %}{% set ns.position_id = template_name ~ '-' ~ var_name %}{% endif %}
                                                     {% set display_label = var_details.label or var_name.replace('_', ' ') %}
+                                                    {% set display_value = selected_value %}
+                                                    {% if var_name in ['back_line_width', 'back_padding', 'back_radius', 'back_width', 'back_height'] %}
+                                                        {% set min_value = 1 %}
+                                                        {% set selected_num = (selected_value if selected_value is not none else var_details.default) | int %}
+                                                        {% if selected_num < min_value %}
+                                                            {% set display_value = min_value %}
+                                                        {% else %}
+                                                            {% set display_value = selected_num %}
+                                                        {% endif %}
+                                                    {% endif %}
                                                     <div class="input-group mb-2">
                                                         <span class="input-group-text"
                                                             id="{{ template_name }}-{{ var_name }}_text"
                                                             style="width: 170px;">
                                                             {{ display_label }}
                                                         </span>
-                                                        <input type="number" class="form-control template-variable-number"
+                                                    <input type="number" class="form-control template-variable-number"
                                                             id="{{ template_name }}-{{ var_name }}"
                                                             name="{{ template_name }}[{{ var_name }}]"
                                                             aria-describedby="{{ template_name }}-{{ var_name }}_text"
                                                             {% if var_name == 'font_size' %}min="1"{% endif %}
-                                                            value="{{ selected_value }}"
+                                                            {% if var_name in ['back_line_width', 'back_padding', 'back_radius', 'back_width', 'back_height'] %}min="1"{% endif %}
+                                                            value="{{ display_value }}"
                                                             data-default="{{ var_details.default }}">
                                                     </div>
                                                     {% elif var_details.input_type == "text" %}
