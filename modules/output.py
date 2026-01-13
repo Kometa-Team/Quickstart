@@ -10,7 +10,7 @@ import psutil
 
 import jsonschema
 import pyfiglet
-from flask import current_app as app
+from flask import current_app as app, has_request_context, session
 from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import PlainScalarString
 from ruamel.yaml.comments import CommentedSeq
@@ -1182,12 +1182,28 @@ def build_config(header_style="standard", config_name=None):
         except Exception:
             git_version = "Unavailable"
     os_line = f"# OS: {system_name} {system_release}".strip()
+    browser_line = "Unknown"
+    if has_request_context():
+        browser_name = session.get("qs_user_agent_browser") or ""
+        browser_version = session.get("qs_user_agent_version") or ""
+        browser_platform = session.get("qs_user_agent_platform") or ""
+        if browser_name:
+            browser_line = browser_name
+            if browser_version:
+                browser_line = f"{browser_line} {browser_version}"
+            if browser_platform:
+                browser_line = f"{browser_line} ({browser_platform})"
+        else:
+            browser_line = session.get("qs_user_agent_raw") or session.get("qs_user_agent") or "Unknown"
 
     # Get the current timestamp in a readable format
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Get plex info
     plex_summary = helpers.get_plex_summary()
+    qs_port = app.config.get("QS_PORT", "Unknown")
+    qs_debug = "Enabled" if app.config.get("QS_DEBUG") else "Disabled"
+    qs_theme = app.config.get("QS_THEME", "kometa")
     library_names = list(movie_libraries.values()) + list(show_libraries.values())
     library_details = helpers.get_library_summaries(library_names)
 
@@ -1203,6 +1219,10 @@ def build_config(header_style="standard", config_name=None):
         f"# Memory: {mem_used} MB / {mem_total} MB ({mem_percent}%) | {mem_available} MB Free\n"
         f"# Python: {python_version}\n"
         f"# Git: {git_version}\n"
+        f"# Browser: {browser_line}\n"
+        f"# Quickstart Port: {qs_port}\n"
+        f"# Quickstart Debug: {qs_debug}\n"
+        f"# Quickstart Theme: {qs_theme}\n"
         f"{'# ' + plex_summary.replace(chr(10), chr(10) + '# ')}\n"
         f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}\n"
         f"###\n"

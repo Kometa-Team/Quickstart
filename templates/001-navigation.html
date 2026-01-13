@@ -1,4 +1,5 @@
 <form method="post" id="configForm" name="configForm">
+  {% set qs_is_docker = version_info and version_info.running_on and ('Docker' in version_info.running_on) %}
   <div id="{{ page_info['title'] }}Section">
 
     <!-- Page Title + top-right badge -->
@@ -11,12 +12,20 @@
           data-bs-toggle="modal" data-bs-target="#supportInfoModal" title="Support info for Quickstart">
           <i class="bi bi-life-preserver me-1"></i> Support Info
         </button>
-        <button type="button" class="badge bg-secondary config-badge config-badge-button"
-          data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}">
-          <span title="Switch profile">
-            Config: {{ page_info.config_name }} <i class="bi bi-chevron-down ms-1"></i>
-          </span>
-        </button>
+        <div class="page-title-actions-right">
+          <button type="button" class="badge bg-secondary config-badge-button settings-badge"
+            id="quickstart-settings-btn" data-bs-toggle="modal" data-bs-target="#quickstartSettingsModal"
+            data-current-port="{{ page_info.running_port }}" data-current-debug="{{ 'true' if page_info.qs_debug else 'false' }}"
+            data-current-theme="{{ page_info.qs_theme }}" title="Quickstart settings">
+            <i class="bi bi-gear-fill"></i>
+          </button>
+          <button type="button" class="badge bg-secondary config-badge config-badge-button"
+            data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}">
+            <span title="Switch profile">
+              Config: {{ page_info.config_name }} <i class="bi bi-chevron-down ms-1"></i>
+            </span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -140,5 +149,168 @@
         </div>
       </div>
     </div>
+
+    <!-- Quickstart Settings Modal -->
+    <div class="modal fade" id="quickstartSettingsModal" tabindex="-1" aria-labelledby="quickstartSettingsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-secondary">
+          <div class="modal-header">
+            <h5 class="modal-title" id="quickstartSettingsModalLabel">Quickstart Settings</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label" for="quickstart-settings-theme">Theme</label>
+              <div class="dropdown theme-picker">
+                <button class="btn dropdown-toggle w-100 theme-picker-toggle" type="button"
+                  id="quickstart-settings-theme-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                  <span class="theme-picker-label">
+                    <span class="theme-swatch theme-swatch--kometa" data-theme-swatch></span>
+                    <span class="theme-picker-text">Kometa</span>
+                  </span>
+                </button>
+                <ul class="dropdown-menu w-100 theme-picker-menu" aria-labelledby="quickstart-settings-theme-btn">
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="kometa" data-label="Kometa">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--kometa"></span> Kometa
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="dark" data-label="Dark">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--dark"></span> Dark
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="plex" data-label="Plex">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--plex"></span> Plex
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="jellyfin" data-label="Jellyfin">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--jellyfin"></span> Jellyfin
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="emby" data-label="Emby">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--emby"></span> Emby
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="seerr" data-label="Seerr">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--seerr"></span> Seerr
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="mind" data-label="Mind Stone">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--mind"></span> Mind Stone
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="power" data-label="Power Stone">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--power"></span> Power Stone
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="reality" data-label="Reality Stone">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--reality"></span> Reality Stone
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="soul" data-label="Soul Stone">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--soul"></span> Soul Stone
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="space" data-label="Space Stone">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--space"></span> Space Stone
+                      </span>
+                    </button>
+                  </li>
+                  <li>
+                    <button class="dropdown-item theme-option" type="button" data-theme="time" data-label="Time Stone">
+                      <span class="theme-option-label">
+                        <span class="theme-swatch theme-swatch--time"></span> Time Stone
+                      </span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
+              <input type="hidden" id="quickstart-settings-theme" value="kometa">
+              <div class="form-text">Theme changes apply immediately.</div>
+            </div>
+            {% if not qs_is_docker %}
+            <div class="mb-3">
+              <label class="form-label" for="quickstart-settings-port">Port</label>
+              <input type="number" class="form-control" id="quickstart-settings-port" min="1" max="65535" inputmode="numeric">
+              <div class="form-text">Changing the port will restart Quickstart.</div>
+            </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="quickstart-settings-debug">
+              <label class="form-check-label" for="quickstart-settings-debug">Enable Debug Mode</label>
+            </div>
+            <p class="text-muted small mb-0">Port changes require a restart. Debug applies immediately.</p>
+            <div class="border-top pt-3 mt-3">
+              <h6 class="text-uppercase text-muted mb-2">Session</h6>
+              <p class="small text-muted mb-2">Stop the Quickstart server running on this machine.</p>
+              <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#shutdownModal">
+                <i class="bi bi-power me-1"></i> Shutdown Quickstart
+              </button>
+            </div>
+            {% else %}
+            <p class="text-muted small mb-0">Docker settings are managed by your container. Theme changes apply immediately.</p>
+            {% endif %}
+            <div class="text-muted small mt-2" id="quickstart-settings-status"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="quickstart-settings-apply">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% if not qs_is_docker %}
+    <div class="modal fade" id="shutdownModal" tabindex="-1" aria-labelledby="shutdownModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-danger">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title" id="shutdownModalLabel">
+              <i class="bi bi-power me-2"></i>Shutdown Quickstart
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to shut down Quickstart? You will need to restart it to use the UI again.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="shutdownCancelButton" data-bs-dismiss="modal" autofocus>No, keep running</button>
+            <button type="button" class="btn btn-danger" id="confirmShutdownButton" data-shutdown-nonce="{{ page_info.shutdown_nonce }}">
+              Yes, shut down
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
 
     <hr class="hr page-nav-divider">

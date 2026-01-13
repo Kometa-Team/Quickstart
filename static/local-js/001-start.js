@@ -57,10 +57,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const bulkDeleteSelectAll = document.getElementById('bulkDeleteSelectAll')
   const bulkDeleteCount = document.getElementById('bulkDeleteCount')
   const confirmBulkDeleteButton = document.getElementById('confirmBulkDeleteButton')
-  const confirmShutdownButton = document.getElementById('confirmShutdownButton')
-  const shutdownModalEl = document.getElementById('shutdownModal')
-  const shutdownCancelButton = document.getElementById('shutdownCancelButton')
-
   const configActionModalElement = document.getElementById('configActionModal')
   let configActionModal = null
   if (configActionModalElement) configActionModal = new bootstrap.Modal(configActionModalElement)
@@ -72,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const onlyAddConfigAvailable = configSelector.options.length === 1 && isAddConfig
 
     resetConfigButton.disabled = isAddConfig
-    deleteConfigButton.disabled = isAddConfig
+    if (deleteConfigButton) deleteConfigButton.disabled = isAddConfig
 
     const box = document.getElementById('newConfigInput')
     if (box) box.classList.toggle('d-none', !(isAddConfig || onlyAddConfigAvailable))
@@ -230,40 +226,6 @@ document.addEventListener('DOMContentLoaded', function () {
         confirmBulkDeleteButton.textContent = originalText
         showToast('error', err.message || 'Failed to delete profiles.')
       }
-    })
-  }
-
-  if (confirmShutdownButton) {
-    confirmShutdownButton.addEventListener('click', async () => {
-      const modal = shutdownModalEl ? bootstrap.Modal.getInstance(shutdownModalEl) : null
-      confirmShutdownButton.disabled = true
-      const originalText = confirmShutdownButton.textContent
-      confirmShutdownButton.textContent = 'Shutting down...'
-
-      try {
-        const res = await fetch('/shutdown', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nonce: window.pageInfo?.shutdown_nonce,
-            confirmed: true
-          })
-        })
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok || !data.success) throw new Error(data.message || 'Shutdown request failed.')
-        if (modal) modal.hide()
-        showToast('info', data.message || 'Shutting down Quickstart...')
-      } catch (err) {
-        confirmShutdownButton.disabled = false
-        confirmShutdownButton.textContent = originalText
-        showToast('error', err.message || 'Failed to shut down Quickstart.')
-      }
-    })
-  }
-
-  if (shutdownModalEl && shutdownCancelButton) {
-    shutdownModalEl.addEventListener('shown.bs.modal', () => {
-      shutdownCancelButton.focus()
     })
   }
 

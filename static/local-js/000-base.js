@@ -313,6 +313,207 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 document.addEventListener('DOMContentLoaded', () => {
+  const modalEl = document.getElementById('quickstartSettingsModal')
+  if (!modalEl) return
+
+  const portInput = document.getElementById('quickstart-settings-port')
+  const debugInput = document.getElementById('quickstart-settings-debug')
+  const themeInput = document.getElementById('quickstart-settings-theme')
+  const themeButton = document.getElementById('quickstart-settings-theme-btn')
+  const themeText = modalEl.querySelector('.theme-picker-text')
+  const themeSwatch = modalEl.querySelector('[data-theme-swatch]')
+  const themeOptions = modalEl.querySelectorAll('.theme-option')
+  const applyBtn = document.getElementById('quickstart-settings-apply')
+  const statusEl = document.getElementById('quickstart-settings-status')
+  const triggerBtn = document.getElementById('quickstart-settings-btn')
+
+  function setStatus (text, isError) {
+    if (!statusEl) return
+    statusEl.textContent = text || ''
+    statusEl.classList.toggle('text-danger', Boolean(isError))
+    statusEl.classList.toggle('text-muted', !isError)
+  }
+
+  function getCurrentPort () {
+    if (triggerBtn && triggerBtn.dataset.currentPort) return triggerBtn.dataset.currentPort
+    return window.QS_PORT || ''
+  }
+
+  function getCurrentDebug () {
+    const raw = (triggerBtn && triggerBtn.dataset.currentDebug) ? triggerBtn.dataset.currentDebug : window.QS_DEBUG
+    return String(raw).toLowerCase() === 'true'
+  }
+
+  function getCurrentTheme () {
+    if (triggerBtn && triggerBtn.dataset.currentTheme) return triggerBtn.dataset.currentTheme
+    return window.QS_THEME || 'kometa'
+  }
+
+  function getThemeLabel (themeValue) {
+    const option = modalEl.querySelector(`.theme-option[data-theme="${themeValue}"]`)
+    return option?.dataset?.label || themeValue
+  }
+
+  function updateThemeUi (themeValue) {
+    const value = themeValue || 'kometa'
+    if (themeInput) themeInput.value = value
+    if (themeText) themeText.textContent = getThemeLabel(value)
+    if (themeSwatch) {
+      const baseClass = 'theme-swatch'
+      themeSwatch.className = `${baseClass} theme-swatch--${value}`
+    }
+    if (themeOptions.length) {
+      themeOptions.forEach(option => {
+        option.classList.toggle('active', option.dataset.theme === value)
+      })
+    }
+  }
+
+  if (themeOptions.length && themeButton) {
+    themeOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        const value = option.dataset.theme || 'kometa'
+        updateThemeUi(value)
+        const dropdown = bootstrap.Dropdown.getOrCreateInstance(themeButton)
+        dropdown.hide()
+      })
+    })
+  }
+
+  modalEl.addEventListener('show.bs.modal', () => {
+    if (portInput) portInput.value = getCurrentPort()
+    if (debugInput) debugInput.checked = getCurrentDebug()
+    updateThemeUi(getCurrentTheme())
+    setStatus('', false)
+    if (applyBtn) applyBtn.disabled = false
+  })
+
+  if (applyBtn) {
+    applyBtn.addEventListener('click', async () => {
+      const payload = {}
+      let portNum = null
+      let hasPortChange = false
+      if (portInput) {
+        const portValue = portInput.value.trim()
+        if (!/^\d+$/.test(portValue)) {
+          setStatus('Port must be a number between 1 and 65535.', true)
+          return
+        }
+        portNum = Number(portValue)
+        if (portNum < 1 || portNum > 65535) {
+          setStatus('Port must be a number between 1 and 65535.', true)
+          return
+        }
+        if (String(portNum) !== String(getCurrentPort())) {
+          payload.port = portNum
+          hasPortChange = true
+        }
+      }
+
+      if (debugInput) payload.debug = debugInput.checked
+      if (themeInput) payload.theme = themeInput.value
+
+      applyBtn.disabled = true
+      setStatus('Saving settings...', false)
+
+      try {
+        const res = await fetch('/update-quickstart-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to update settings.')
+        }
+
+        if (!data.restart) {
+          if (data.theme) {
+            document.documentElement.setAttribute('data-theme', data.theme)
+            window.QS_THEME = data.theme
+            if (triggerBtn) triggerBtn.dataset.currentTheme = data.theme
+            updateThemeUi(data.theme)
+          }
+          if (typeof payload.debug !== 'undefined') {
+            const debugFlag = Boolean(payload.debug)
+            window.QS_DEBUG = debugFlag
+            if (triggerBtn) triggerBtn.dataset.currentDebug = debugFlag ? 'true' : 'false'
+          }
+          if (hasPortChange && triggerBtn) {
+            triggerBtn.dataset.currentPort = String(portNum)
+          }
+          setStatus(data.message || 'Settings updated.', false)
+          showToast('success', data.message || 'Settings updated.')
+          applyBtn.disabled = false
+          return
+        }
+
+        setStatus('Restarting Quickstart...', false)
+        showToast('info', 'Restarting Quickstart...')
+        await fetch('/restart', { method: 'POST' })
+
+        const newPort = data.new_port || portNum || getCurrentPort()
+        if (data.theme) {
+          document.documentElement.setAttribute('data-theme', data.theme)
+          window.QS_THEME = data.theme
+          if (triggerBtn) triggerBtn.dataset.currentTheme = data.theme
+          updateThemeUi(data.theme)
+        }
+        const protocol = window.location.protocol
+        const host = window.location.hostname
+        setTimeout(() => {
+          window.location.href = `${protocol}//${host}:${newPort}`
+        }, 4000)
+      } catch (err) {
+        setStatus(err.message || 'Failed to update settings.', true)
+        showToast('error', err.message || 'Failed to update settings.')
+        applyBtn.disabled = false
+      }
+    })
+  }
+})
+
+document.addEventListener('DOMContentLoaded', () => {
+  const confirmShutdownButton = document.getElementById('confirmShutdownButton')
+  if (!confirmShutdownButton) return
+
+  const shutdownModalEl = document.getElementById('shutdownModal')
+  const shutdownCancelButton = document.getElementById('shutdownCancelButton')
+
+  confirmShutdownButton.addEventListener('click', async () => {
+    const modal = shutdownModalEl ? bootstrap.Modal.getInstance(shutdownModalEl) : null
+    confirmShutdownButton.disabled = true
+    const originalText = confirmShutdownButton.textContent
+    confirmShutdownButton.textContent = 'Shutting down...'
+
+    try {
+      const res = await fetch('/shutdown', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nonce: confirmShutdownButton.dataset.shutdownNonce || window.pageInfo?.shutdown_nonce,
+          confirmed: true
+        })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) throw new Error(data.message || 'Shutdown request failed.')
+      if (modal) modal.hide()
+      showToast('info', data.message || 'Shutting down Quickstart...')
+    } catch (err) {
+      confirmShutdownButton.disabled = false
+      confirmShutdownButton.textContent = originalText
+      showToast('error', err.message || 'Failed to shut down Quickstart.')
+    }
+  })
+
+  if (shutdownModalEl && shutdownCancelButton) {
+    shutdownModalEl.addEventListener('shown.bs.modal', () => {
+      shutdownCancelButton.focus()
+    })
+  }
+})
+
+document.addEventListener('DOMContentLoaded', () => {
   const modalEl = document.getElementById('supportInfoModal')
   if (!modalEl) return
 

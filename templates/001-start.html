@@ -2,7 +2,7 @@
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
 <div class="row g-3 start-hero">
-  <div class="col-lg-8">
+  <div class="col-lg-12">
     <div class="card h-100 border-secondary start-card">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-center gap-2 mb-3 start-warning">
@@ -64,22 +64,6 @@
       </div>
     </div>
   </div>
-  {% if version_info.running_on != "Docker" %}
-  <div class="col-lg-4">
-    <div class="card h-100 border-secondary start-card">
-      <div class="card-body">
-        <h6 class="text-uppercase text-muted mb-2">Quick Actions</h6>
-        <p class="small text-muted">Manage this Quickstart session.</p>
-        <div class="d-grid gap-2">
-          <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#shutdownModal">
-            <i class="bi bi-power me-1"></i> Shutdown Quickstart
-          </button>
-        </div>
-        <p class="small text-muted mt-3 mb-0">Switch profiles or delete saved configs below.</p>
-      </div>
-    </div>
-  </div>
-  {% endif %}
 </div>
 
 <div class="card border-secondary start-card mt-4">
@@ -122,16 +106,10 @@
         <i class="bi bi-arrow-clockwise"></i> Reset
       </button>
 
-      <!-- Delete Config Button -->
-      <button type="button" class="btn btn-danger" id="deleteConfigButton" disabled data-bs-toggle="modal"
-        data-bs-target="#configActionModal" data-action="delete">
-        <i class="bi bi-trash"></i> Delete
-      </button>
-
       <!-- Bulk Delete Button -->
-      <button type="button" class="btn btn-outline-danger" id="bulkDeleteButton" data-bs-toggle="modal"
+      <button type="button" class="btn btn-danger" id="bulkDeleteButton" data-bs-toggle="modal"
         data-bs-target="#bulkDeleteModal">
-        <i class="bi bi-trash3"></i> Delete Multiple
+        <i class="bi bi-trash3"></i> Delete
       </button>
     </div>
   </div>
@@ -188,7 +166,7 @@
     <div class="modal-content border-danger">
       <div class="modal-header bg-danger text-white">
         <h5 class="modal-title" id="bulkDeleteModalLabel">
-          <i class="bi bi-trash3 me-2"></i>Delete Multiple Profiles
+          <i class="bi bi-trash3 me-2"></i>Delete Profiles
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -208,30 +186,6 @@
     </div>
   </div>
 </div>
-{% if version_info.running_on != "Docker" %}
-<!-- Shutdown Confirmation Modal -->
-<div class="modal fade" id="shutdownModal" tabindex="-1" aria-labelledby="shutdownModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-danger">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title" id="shutdownModalLabel">
-          <i class="bi bi-power me-2"></i>Shutdown Quickstart
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Are you sure you want to shut down Quickstart? You will need to restart it to use the UI again.
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="shutdownCancelButton" data-bs-dismiss="modal" autofocus>No, keep running</button>
-        <button type="button" class="btn btn-danger" id="confirmShutdownButton">
-          Yes, shut down
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-{% endif %}
 <script>
   window.pageInfo = {
     quickstart_root: "{{ page_info.quickstart_root | escape | replace('\\', '\\\\') }}",

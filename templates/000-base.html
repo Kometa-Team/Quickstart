@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en" data-bs-theme="dark" data-theme="{{ config.get('QS_THEME', 'kometa') }}">
 
 <head>
   <meta charset="UTF-8" />
@@ -44,6 +44,7 @@
 <body>
   <script>
     window.QS_DEBUG = "{{ 'true' if config['QS_DEBUG'] else 'false' }}";
+    window.QS_THEME = "{{ config.get('QS_THEME', 'kometa') }}";
   </script>
   <script type="text/javascript" src="{{ url_for('static', filename='local-js/000-base.js') }}"></script>
   <div class="header-container text-center">

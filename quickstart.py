@@ -158,6 +158,7 @@ def inject_kometa_root():
 
 # Use booler() for FLASK_DEBUG conversion
 app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
+app.config["QS_THEME"] = os.getenv("QS_THEME", "kometa").strip() or "kometa"
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
@@ -191,6 +192,16 @@ def before_request():
             helpers.ts_log(f"Form field count: {len(form_data)}", level="DEBUG")
         except Exception as e:
             helpers.ts_log(f"Failed to parse form: {e}", level="ERROR")
+
+    try:
+        ua = request.user_agent
+        session["qs_user_agent"] = ua.string or ""
+        session["qs_user_agent_browser"] = ua.browser or ""
+        session["qs_user_agent_version"] = ua.version or ""
+        session["qs_user_agent_platform"] = ua.platform or ""
+        session["qs_user_agent_raw"] = request.headers.get("User-Agent", "") or ""
+    except Exception:
+        pass
 
 
 @app.route("/update-quickstart", methods=["POST"])
@@ -236,6 +247,7 @@ args = parser.parse_args()
 
 port = args.port if args.port else int(os.getenv("QS_PORT", "7171"))
 running_port = port
+app.config["QS_PORT"] = running_port
 debug_mode = args.debug if args.debug else helpers.booler(os.getenv("QS_DEBUG", "0"))
 
 helpers.ts_log(f"Running on port: {port} | Debug Mode: {'Enabled' if debug_mode else 'Disabled'}", level="INFO")
@@ -848,11 +860,14 @@ def step(name):
     # Update session with the chosen config
     session["config_name"] = selected_config
     page_info["config_name"] = selected_config
+    page_info["running_port"] = running_port
+    page_info["qs_debug"] = app.config["QS_DEBUG"]
+    page_info["qs_theme"] = app.config.get("QS_THEME", "kometa")
     page_info["header_style"] = header_style
     page_info["template_name"] = name
-    if name == "001-start":
+    if "shutdown_nonce" not in session:
         session["shutdown_nonce"] = secrets.token_urlsafe(16)
-        page_info["shutdown_nonce"] = session["shutdown_nonce"]
+    page_info["shutdown_nonce"] = session["shutdown_nonce"]
 
     # Generate a placeholder name for "Add Config"
     page_info["new_config_name"] = namesgenerator.get_random_name()
@@ -1950,6 +1965,19 @@ def support_info():
         except Exception:
             git_version = "Unavailable"
 
+    ua = request.user_agent
+    browser_name = ua.browser or ""
+    browser_version = ua.version or ""
+    browser_platform = ua.platform or ""
+    browser_line = browser_name
+    if browser_name:
+        if browser_version:
+            browser_line = f"{browser_line} {browser_version}"
+        if browser_platform:
+            browser_line = f"{browser_line} ({browser_platform})"
+    else:
+        browser_line = request.headers.get("User-Agent", "") or session.get("qs_user_agent_raw") or session.get("qs_user_agent") or "Unknown"
+
     plex_summary = helpers.get_plex_summary()
     if not plex_summary or plex_summary.lower().startswith("plex summary unavailable"):
         plex_summary = "Plex info unavailable."
@@ -1983,6 +2011,10 @@ def support_info():
     lines.append(f"# Memory: {mem_used} MB / {mem_total} MB ({mem_percent}%) | {mem_available} MB Free")
     lines.append(f"# Python: {python_version}")
     lines.append(f"# Git: {git_version}")
+    lines.append(f"# Browser: {browser_line}")
+    lines.append(f"# Quickstart Port: {running_port}")
+    lines.append(f"# Quickstart Debug: {'Enabled' if app.config['QS_DEBUG'] else 'Disabled'}")
+    lines.append(f"# Quickstart Theme: {app.config.get('QS_THEME', 'kometa')}")
     lines.extend([f"# {line}" for line in plex_summary.splitlines()])
     lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")
     lines.append("###")
@@ -2016,6 +2048,101 @@ def support_info():
     text = "\n".join(lines + log_lines)
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return jsonify({"text": text, "generated_at": generated_at})
+
+
+@app.route("/update-quickstart-settings", methods=["POST"])
+def update_quickstart_settings():
+    data = request.get_json(silent=True) or {}
+    errors = []
+    restart_required = False
+    changes_applied = False
+    theme_changed = False
+
+    allowed_themes = {
+        "kometa",
+        "dark",
+        "plex",
+        "jellyfin",
+        "emby",
+        "seerr",
+        "mind",
+        "power",
+        "reality",
+        "soul",
+        "space",
+        "time",
+    }
+
+    new_port = None
+    if "port" in data:
+        try:
+            new_port = int(str(data.get("port", "")).strip())
+        except (TypeError, ValueError):
+            new_port = None
+        if not new_port or new_port < 1 or new_port > 65535:
+            errors.append("Port must be a number between 1 and 65535.")
+
+    debug_raw = data.get("debug")
+    debug_value = None
+    if debug_raw is not None:
+        debug_value = helpers.booler(str(debug_raw))
+
+    theme_raw = data.get("theme")
+    theme_value = None
+    if theme_raw is not None:
+        theme_value = str(theme_raw).strip().lower()
+        if not theme_value:
+            theme_value = "kometa"
+        if theme_value not in allowed_themes:
+            errors.append("Theme must be one of: " + ", ".join(sorted(allowed_themes)) + ".")
+
+    if errors:
+        return jsonify(success=False, message=" ".join(errors)), 400
+
+    if new_port and new_port != running_port:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            if sock.connect_ex(("localhost", new_port)) == 0:
+                return jsonify(success=False, message=f"Port {new_port} is already in use."), 409
+        finally:
+            sock.close()
+
+        helpers.update_env_variable("QS_PORT", str(new_port))
+        app.config["QS_PORT"] = new_port
+        restart_required = True
+        changes_applied = True
+
+    if debug_value is not None and debug_value != app.config["QS_DEBUG"]:
+        helpers.update_env_variable("QS_DEBUG", "1" if debug_value else "0")
+        app.config["QS_DEBUG"] = debug_value
+        changes_applied = True
+
+    if theme_value and theme_value != app.config.get("QS_THEME", "kometa"):
+        helpers.update_env_variable("QS_THEME", theme_value)
+        app.config["QS_THEME"] = theme_value
+        changes_applied = True
+        theme_changed = True
+
+    if not changes_applied:
+        return jsonify(success=True, message="No changes applied.", restart=False, theme=app.config.get("QS_THEME", "kometa"))
+
+    if restart_required:
+        return jsonify(
+            success=True,
+            message="Settings updated. Restarting Quickstart...",
+            restart=True,
+            new_port=new_port or running_port,
+            theme=app.config.get("QS_THEME", "kometa"),
+            theme_changed=theme_changed,
+        )
+
+    return jsonify(
+        success=True,
+        message="Settings updated.",
+        restart=False,
+        theme=app.config.get("QS_THEME", "kometa"),
+        theme_changed=theme_changed,
+    )
 
 
 @app.route("/validate-kometa-root", methods=["POST"])
