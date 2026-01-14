@@ -32,3 +32,4 @@ AppIndicator
 KStatusNotifierItem
 PyQt
 Wayland
+Personalization
