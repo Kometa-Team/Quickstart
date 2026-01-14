@@ -39,6 +39,7 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Step-by-Step Pages:** Each section validates its own data, giving you instant feedback before proceeding
 - **Library Telemetry:** Pulls real Plex server data (Plex Pass status, library types, agent/scanner compatibility)
 - **Dynamic Toggles & Templates:** Rich UI for enabling collections, overlays, and builder template variables
+- **Filtered Page Search:** Find matches on Libraries and Settings pages and auto-expand matching sections
 
 ### Built-in Kometa Runner
 - **One-Click Execution:** The final page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
@@ -52,6 +53,9 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 ### Automatic Updates
 - **Quickstart Self-Updater:** One-click update to latest master or develop branch
 - **Kometa Sync:** Option to pull and update Kometa itself (nightly/master) before running
+
+### Themes & Personalization
+- **Theme Picker:** Switch between Kometa, Plex, Jellyfin, Emby, Seerr, and more with instant apply
 
 ### Quickstart Scope
 - **Quickstart support vs Kometa support:** The Support Info workflow is for Quickstart issues. Kometa runtime issues should be handled in Kometa support channels.
@@ -76,10 +80,11 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
   - [Multiple Ways to Run Quickstart](#multiple-ways-to-run-quickstart)
   - [Safe Playground Mode](#safe-playground-mode)
   - [Config Management \& History](#config-management--history)
-  - [Guided, Validated Workflow](#guided-validated-workflow)
-  - [Built-in Kometa Runner](#built-in-kometa-runner)
-  - [Live Previews \& Assets](#live-previews--assets)
-  - [Automatic Updates](#automatic-updates)
+- [Guided, Validated Workflow](#guided-validated-workflow)
+- [Built-in Kometa Runner](#built-in-kometa-runner)
+- [Live Previews \& Assets](#live-previews--assets)
+- [Automatic Updates](#automatic-updates)
+- [Themes \& Personalization](#themes--personalization)
 - [Table of Contents](#table-of-contents)
 - [Prerequisites](#prerequisites)
 - [Installing Quickstart](#installing-quickstart)
@@ -313,6 +318,7 @@ There are three ways to enable debugging:
 - Open the `.env` file at the root of the Quickstart directory, and set `QS_DEBUG=1` (restart required).
 
 - Use the Quickstart system tray icon to toggle it on or off (no restart required).
+- Use the Settings cog in the UI to toggle it on or off (no restart required).
 
 Quickstart runs on port 7171 by default. You can change it in one of three ways:
 
@@ -321,5 +327,6 @@ Quickstart runs on port 7171 by default. You can change it in one of three ways:
 - Open the `.env` file at the root of the Quickstart directory, and set `QS_PORT=XXXX` where XXXX is the port you want to run on. (restart required)
 
 - Use the Quickstart system tray icon to choose a new port (restarts automatically).
+- Use the Settings cog in the UI to choose a new port (restarts automatically).
 
 <!--body3-end-->

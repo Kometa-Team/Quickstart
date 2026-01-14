@@ -5,22 +5,24 @@
 </div>
 <div id="libraries-container" style="display: none;">
   <div class="form-floating mb-2">
-    <label for="libraries">Select Movie Libraries:</label><br><br>
+    <div class="form-label">Select Movie Libraries:</div>
     {% set movie_libraries = plex_data.get('tmp_movie_libraries', []) | sort %}
     {% for library in movie_libraries %}
+    {% set library_id = library|replace(' ', '-')|replace('/', '-') %}
     <div class="form-check form-switch">
-      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
-      <label class="form-check-label" for="library_{{ library }}">{{ library }}</label>
+      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library_id }}">
+      <label class="form-check-label" for="library_{{ library_id }}">{{ library }}</label>
     </div>
     {% endfor %}
   </div>
   <div class="form-floating mb-2">
-    <label for="libraries">Select Show Libraries:</label><br><br>
+    <div class="form-label">Select Show Libraries:</div>
     {% set show_libraries = plex_data.get('tmp_show_libraries', []) | sort %}
     {% for library in show_libraries %}
+    {% set library_id = library|replace(' ', '-')|replace('/', '-') %}
     <div class="form-check form-switch">
-      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library }}">
-      <label class="form-check-label" for="library_{{ library }}">{{ library }}</label>
+      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library_id }}">
+      <label class="form-check-label" for="library_{{ library_id }}">{{ library }}</label>
     </div>
     {% endfor %}
   </div>

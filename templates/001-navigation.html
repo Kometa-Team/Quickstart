@@ -98,6 +98,22 @@
       </div>
     </nav>
 
+    {% set qs_search_enabled = page_info['template_name'] in ['025-libraries', '150-settings'] %}
+    {% set qs_search_scope = 'library-form-container' if page_info['template_name'] == '025-libraries' else 'configForm' %}
+    {% if qs_search_enabled %}
+    <div class="page-search" data-qs-search-scope="{{ qs_search_scope }}">
+      <div class="input-group input-group-sm page-search-group">
+        <span class="input-group-text">
+          <i class="bi bi-search"></i>
+        </span>
+        <input type="search" class="form-control" placeholder="Search this page" aria-label="Search this page"
+          data-qs-search-input>
+        <button type="button" class="btn btn-outline-secondary d-none" data-qs-search-clear>Clear</button>
+      </div>
+      <div class="small text-muted page-search-status" data-qs-search-status></div>
+    </div>
+    {% endif %}
+
     <!-- Switch Profile Modal -->
     <div class="modal fade" id="configSwitchModal" tabindex="-1" aria-labelledby="configSwitchModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -160,7 +176,7 @@
           </div>
           <div class="modal-body">
             <div class="mb-3">
-              <label class="form-label" for="quickstart-settings-theme">Theme</label>
+              <label class="form-label" for="quickstart-settings-theme-btn">Theme</label>
               <div class="dropdown theme-picker">
                 <button class="btn dropdown-toggle w-100 theme-picker-toggle" type="button"
                   id="quickstart-settings-theme-btn" data-bs-toggle="dropdown" aria-expanded="false">

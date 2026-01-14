@@ -70,7 +70,7 @@
                     <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="multi" aria-pressed="false">
                       Select
                     </button>
-                    <select class="form-select form-select-sm overlay-board-select" data-overlay-board-snap-step aria-label="Snap step">
+                    <select id="{{ library.id }}-movie-snap-step" class="form-select form-select-sm overlay-board-select" data-overlay-board-snap-step aria-label="Snap step">
                       <option value="5">5px</option>
                       <option value="10">10px</option>
                       <option value="15">15px</option>
@@ -98,7 +98,7 @@
                       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-distribute="vertical" title="Distribute Vertical" aria-label="Distribute Vertical">DV</button>
                     </div>
                     <div class="overlay-board-align-group" role="group" aria-label="Nudge">
-                      <select class="form-select form-select-sm overlay-board-select" data-overlay-board-nudge-step aria-label="Nudge step">
+                      <select id="{{ library.id }}-movie-nudge-step" class="form-select form-select-sm overlay-board-select" data-overlay-board-nudge-step aria-label="Nudge step">
                         <option value="1" selected>1px</option>
                         <option value="5">5px</option>
                       </select>

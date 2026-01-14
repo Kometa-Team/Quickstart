@@ -1735,9 +1735,11 @@ div#loading {
     padding: 6px 10px;
     font-size: .9rem;
   }
-  .page-nav-divider {
+.page-nav-divider {
     margin: .5rem 0;
-  }
+    opacity: 1;
+    border-color: var(--theme-primary);
+}
   .config-badge,
   .support-badge {
     position: static;
@@ -1750,6 +1752,40 @@ div#loading {
   .settings-badge i {
     font-size: .9rem;
   }
+
+.page-search {
+    max-width: 480px;
+    margin: 0.35rem auto 0.5rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.page-search-group .input-group-text {
+    background-color: var(--button-color);
+    border-color: var(--theme-border);
+    color: var(--button-text);
+}
+
+.page-search-group .form-control {
+    background-color: var(--theme-bg-card);
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+}
+
+.page-search-status {
+    min-height: 1rem;
+}
+
+.qs-search-hidden {
+    display: none !important;
+}
+
+.qs-search-match {
+    border-color: var(--theme-primary) !important;
+    box-shadow: 0 0 0 2px rgba(var(--accent-color), 0.35);
+}
 
   /* Phones: stack buttons and center them */
   @media (max-width: 576px) {

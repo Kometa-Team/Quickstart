@@ -1,4 +1,4 @@
-/* global bootstrap, $, location */
+/* global bootstrap, $, location, MutationObserver */
 
 (function () {
   const isDebug = typeof window.QS_DEBUG !== 'undefined' && String(window.QS_DEBUG).toLowerCase() === 'true'
@@ -471,6 +471,171 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     })
   }
+})
+
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.querySelector('[data-qs-search-input]')
+  if (!searchInput) return
+
+  const searchWrapper = searchInput.closest('[data-qs-search-scope]')
+  const searchScopeId = searchWrapper?.dataset?.qsSearchScope
+  const searchClear = document.querySelector('[data-qs-search-clear]')
+  const searchStatus = document.querySelector('[data-qs-search-status]')
+  const scopedContainer = searchScopeId ? document.getElementById(searchScopeId) : null
+  const container = scopedContainer || document.getElementById('configForm') || document.body
+  const selectorList = ['.accordion-item', '.card', '.template-toggle-group']
+  let targets = []
+  let targetData = []
+  let refreshTimer = null
+  let lastQuery = ''
+
+  function normalizeText (value) {
+    return String(value || '').toLowerCase().replace(/\s+/g, ' ').trim()
+  }
+
+  function refreshTargets () {
+    const rawTargets = Array.from(container.querySelectorAll(selectorList.join(',')))
+      .filter(element => !element.closest('.modal'))
+      .filter(element => !element.closest('.page-search'))
+
+    targets = rawTargets.filter(element => {
+      if (element.classList.contains('template-toggle-group')) return true
+      if (element.classList.contains('accordion-item')) {
+        return !element.querySelector('.accordion-item') && !element.querySelector('.template-toggle-group')
+      }
+      if (element.classList.contains('card')) {
+        return !element.querySelector('.accordion-item') && !element.querySelector('.template-toggle-group')
+      }
+      return true
+    })
+
+    targetData = targets.map(element => ({
+      element,
+      text: normalizeText(element.textContent)
+    }))
+  }
+
+  function toggleAccordionParentControl (disable) {
+    const collapseEls = container.querySelectorAll('.accordion-collapse')
+    collapseEls.forEach(collapseEl => {
+      if (disable) {
+        if (collapseEl.hasAttribute('data-bs-parent')) {
+          collapseEl.dataset.qsParent = collapseEl.getAttribute('data-bs-parent')
+          collapseEl.removeAttribute('data-bs-parent')
+        }
+        return
+      }
+      if (collapseEl.dataset.qsParent) {
+        collapseEl.setAttribute('data-bs-parent', collapseEl.dataset.qsParent)
+        delete collapseEl.dataset.qsParent
+      }
+    })
+  }
+
+  function setStatus (visibleCount, totalCount, query) {
+    if (!searchStatus) return
+    if (!query) {
+      searchStatus.textContent = ''
+      return
+    }
+    searchStatus.textContent = `matches (${visibleCount})`
+  }
+
+  function applySearch () {
+    const query = normalizeText(searchInput.value)
+    let visibleCount = 0
+    let firstMatch = null
+    const hasQuery = Boolean(query)
+
+    toggleAccordionParentControl(hasQuery)
+
+    targetData.forEach(({ element, text }) => {
+      const match = !query || text.includes(query)
+      element.classList.toggle('qs-search-hidden', !match)
+      element.classList.toggle('qs-search-match', Boolean(query && match))
+      if (match) visibleCount += 1
+      if (match && query) {
+        if (!firstMatch) firstMatch = element
+        expandAccordionFor(element)
+      }
+    })
+
+    if (searchClear) searchClear.classList.toggle('d-none', !query)
+    setStatus(visibleCount, targetData.length, query)
+
+    if (query && query !== lastQuery && firstMatch && firstMatch.scrollIntoView) {
+      firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+    lastQuery = query
+  }
+
+  function expandAccordionFor (element) {
+    const collapseEls = new Set()
+
+    if (element.classList.contains('accordion-item')) {
+      const collapseEl = element.querySelector('.accordion-collapse')
+      if (collapseEl) collapseEls.add(collapseEl)
+    }
+
+    if (element.classList.contains('accordion-collapse')) {
+      collapseEls.add(element)
+    }
+
+    const parentItem = element.closest('.accordion-item')
+    const parentCollapse = element.closest('.accordion-collapse')
+    if (parentItem) {
+      const collapseEl = parentItem.querySelector('.accordion-collapse')
+      if (collapseEl) collapseEls.add(collapseEl)
+    }
+    if (parentCollapse) collapseEls.add(parentCollapse)
+
+    let ancestor = element.parentElement
+    while (ancestor) {
+      if (ancestor.classList && ancestor.classList.contains('accordion-collapse')) {
+        collapseEls.add(ancestor)
+      }
+      ancestor = ancestor.parentElement
+    }
+
+    if (!collapseEls.size) return
+
+    collapseEls.forEach(collapseEl => {
+      if (collapseEl.classList.contains('show')) return
+      if (!window.bootstrap || !window.bootstrap.Collapse) {
+        collapseEl.classList.add('show')
+        return
+      }
+      const collapse = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false })
+      collapse.show()
+    })
+  }
+
+  searchInput.addEventListener('input', applySearch)
+  searchInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') event.preventDefault()
+  })
+
+  if (searchClear) {
+    searchClear.addEventListener('click', () => {
+      searchInput.value = ''
+      searchInput.focus()
+      applySearch()
+    })
+  }
+
+  refreshTargets()
+  applySearch()
+
+  const observer = new MutationObserver(() => {
+    if (refreshTimer) return
+    refreshTimer = setTimeout(() => {
+      refreshTimer = null
+      refreshTargets()
+      applySearch()
+    }, 150)
+  })
+
+  observer.observe(container, { childList: true, subtree: true })
 })
 
 document.addEventListener('DOMContentLoaded', () => {

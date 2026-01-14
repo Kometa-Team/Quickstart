@@ -2772,7 +2772,10 @@ if __name__ == "__main__":
             helpers.ts_log(f"Quickstart is Running", level="INFO")
             helpers.ts_log(f"Access it at http://{ip_address}:{running_port}", level="INFO")
 
-        helpers.ts_log(f"Port and Debug Settings can be amended by editing your {DOTENV} file", level="INFO")
+        helpers.ts_log(
+            f"Port and Debug Settings can be amended via the Settings cog in the UI or by editing your {DOTENV} file",
+            level="INFO",
+        )
         server_thread = Thread(target=start_flask_app)
         server_thread.daemon = True
         server_thread.start()
@@ -2850,10 +2853,10 @@ if __name__ == "__main__":
                 helpers.ts_log(f"Quickstart is Running", level="INFO")
                 helpers.ts_log(f"Access it locally at: http://localhost:{running_port}", level="INFO")
                 helpers.ts_log(f"Access it from other devices at: http://{ip_address}:{running_port}", level="INFO")
-                helpers.ts_log(f"Shutdown locally at: http://localhost:{running_port}/shutdown", level="INFO")
-                helpers.ts_log(f"Shutdown from other devices at: http://{ip_address}:{running_port}/shutdown", level="INFO")
                 helpers.ts_log(
-                    f"Port and Debug Settings can be amended by right-clicking the system tray icon or by editing your {DOTENV} file", level="INFO"
+                    f"Port and Debug Settings can be amended via the Settings cog in the UI, "
+                    f"right-clicking the system tray icon, or by editing your {DOTENV} file",
+                    level="INFO",
                 )  # Open the browser automatically
                 webbrowser.open(f"http://localhost:{running_port}")
 

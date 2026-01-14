@@ -249,10 +249,11 @@ document.addEventListener('DOMContentLoaded', function () {
         options.forEach(opt => {
           const id = opt.value
           const label = opt.dataset.label || opt.textContent
+          const inputId = `copy-target-${id}`
           const item = document.createElement('label')
           item.className = 'list-group-item d-flex align-items-center gap-2'
           item.innerHTML = `
-            <input class="form-check-input me-2 copy-target-checkbox" type="checkbox" value="${id}">
+            <input id="${inputId}" name="copy_target" class="form-check-input me-2 copy-target-checkbox" type="checkbox" value="${id}">
             <span>${label}</span>
           `
           copyTargetsContainer.appendChild(item)
