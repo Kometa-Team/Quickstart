@@ -542,26 +542,39 @@ def build_libraries_section(
                 operations[field] = value
 
         # Handle nested delete_collections block
-        delete_fields = [
-            "delete_collections_configured",
-            "delete_collections_managed",
-            "delete_collections_less",
-            "delete_collections_ignore_empty_smart_collections",
-        ]
         delete_collections = {}
-        for df in delete_fields:
-            attr_key = f"{library_type}-library_{lib_id}-attribute_{df}"
-            value = attr_group.get(attr_key, None)
-            if value in [None, "", False, "None", "none"]:
-                continue
-            yaml_key = df.replace("delete_collections_", "")
-            if yaml_key == "less":
-                try:
-                    value = int(value)
-                except Exception:
-                    helpers.ts_log(f"Skipping invalid delete_collections_less value: {value}", level="DEBUG")
-                    continue
-            delete_collections[yaml_key] = value
+        configured_key = f"{library_type}-library_{lib_id}-attribute_delete_collections_configured"
+        managed_key = f"{library_type}-library_{lib_id}-attribute_delete_collections_managed"
+        ignore_key = f"{library_type}-library_{lib_id}-attribute_delete_collections_ignore_empty_smart_collections"
+        less_key = f"{library_type}-library_{lib_id}-attribute_delete_collections_less"
+
+        configured_value = _coerce_bool(attr_group.get(configured_key, None))
+        managed_value = _coerce_bool(attr_group.get(managed_key, None))
+        ignore_value = _coerce_bool(attr_group.get(ignore_key, None))
+        less_value = None
+        raw_less = attr_group.get(less_key, None)
+        if raw_less not in [None, "", "None", "none"]:
+            try:
+                less_value = int(raw_less)
+            except Exception:
+                helpers.ts_log(f"Skipping invalid delete_collections_less value: {raw_less}", level="DEBUG")
+
+        delete_collections_enabled = any(
+            [
+                configured_value is True,
+                managed_value is True,
+                ignore_value is True,
+                less_value is not None,
+            ]
+        )
+
+        if delete_collections_enabled:
+            delete_collections["configured"] = configured_value if configured_value is not None else False
+            delete_collections["managed"] = managed_value if managed_value is not None else False
+            if less_value is not None:
+                delete_collections["less"] = less_value
+            if ignore_value is True:
+                delete_collections["ignore_empty_smart_collections"] = True
 
         if delete_collections:
             operations["delete_collections"] = delete_collections

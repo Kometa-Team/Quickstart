@@ -51,6 +51,8 @@ $(document).ready(function () {
   const $levelButtons = $('.log-level-btn')
   const $logStats = $('#run-log-stats')
   const $logStatsFiltered = $('#run-log-stats-filtered')
+  const $yamlOutput = $('#final-yaml')
+  const $yamlLineCount = $('#yaml-line-count')
 
   const showYAML = plexValid && tmdbValid && libsValid && settValid && yamlValid
 
@@ -76,6 +78,23 @@ $(document).ready(function () {
     $('#run-now').prop('disabled', true)
     $('#run-now-label').text('Run Now')
   }
+
+  function computeYamlLineCount (text) {
+    if (!text) return 0
+    const normalized = String(text).replace(/\r\n/g, '\n')
+    let count = normalized.split('\n').length
+    if (normalized.endsWith('\n')) count -= 1
+    return Math.max(0, count)
+  }
+
+  function updateYamlLineCount () {
+    if (!$yamlLineCount.length || !$yamlOutput.length) return
+    const lineCount = computeYamlLineCount($yamlOutput.val())
+    $yamlLineCount.text(`Line count (includes comments and blank lines): ${lineCount}`)
+  }
+
+  updateYamlLineCount()
+  $yamlOutput.on('input', updateYamlLineCount)
 
   function updateLibraryVisibility (mainOption) {
     const librarySection = $('#library-multiselect').closest('.mb-2')

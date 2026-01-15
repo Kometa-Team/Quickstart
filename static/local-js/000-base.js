@@ -449,8 +449,9 @@ document.addEventListener('DOMContentLoaded', () => {
             window.QS_DEBUG = debugFlag
             if (triggerBtn) triggerBtn.dataset.currentDebug = debugFlag ? 'true' : 'false'
           }
+          let optimizeFlag = getCurrentOptimizeDefaults()
           if (typeof payload.optimize_defaults !== 'undefined') {
-            const optimizeFlag = Boolean(payload.optimize_defaults)
+            optimizeFlag = Boolean(payload.optimize_defaults)
             window.QS_OPTIMIZE_DEFAULTS = optimizeFlag
             if (triggerBtn) triggerBtn.dataset.currentOptimizeDefaults = optimizeFlag ? 'true' : 'false'
           }
@@ -462,6 +463,12 @@ document.addEventListener('DOMContentLoaded', () => {
           applyBtn.disabled = false
           const modal = bootstrap.Modal.getInstance(modalEl)
           if (modal) modal.hide()
+          const isFinalPage = Boolean(document.getElementById('final-yaml'))
+          if (optimizeFlag && isFinalPage) {
+            setStatus('Refreshing final config...', false)
+            setTimeout(() => window.location.reload(), 250)
+            return
+          }
           return
         }
 

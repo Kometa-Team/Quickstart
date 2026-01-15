@@ -447,13 +447,6 @@ tooltip_variant='info', container_class='border rounded p-3 mb-2') %}
         <div id="{{ library.id }}-{{ prefix }}-body" class="accordion-collapse collapse"
             aria-labelledby="{{ library.id }}-{{ prefix }}-header">
             <div class="accordion-body">
-                {% if wiki %}
-                <div class="mb-2">
-                    <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">
-                        <i class="bi bi-box-arrow-up-right"></i>
-                    </a>
-                </div>
-                {% endif %}
                 {% else %}
                 <div class="{{ container_class }}">
                     <label class="form-check-label" for="{{ library.id }}-attribute_{{ prefix }}_header">
