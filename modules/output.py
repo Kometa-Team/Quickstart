@@ -165,7 +165,7 @@ def _extract_template_defaults(template_vars):
 
 
 def _build_collection_defaults():
-    defaults = {}
+    defaults = {"movie": {}, "show": {}, "all": {}}
     try:
         data = helpers.load_quickstart_config("quickstart_collections.json")
     except Exception as e:
@@ -178,7 +178,18 @@ def _build_collection_defaults():
             if not collection_id:
                 continue
             key = collection_id.replace("collection_", "", 1)
-            defaults[key] = _extract_template_defaults(collection.get("template_variables"))
+            tv_defaults = _extract_template_defaults(collection.get("template_variables"))
+            media_types = collection.get("media_types") or []
+            media_types = [mt for mt in media_types if mt in ("movie", "show")]
+
+            if not media_types:
+                defaults["all"][key] = tv_defaults
+                continue
+
+            for mt in media_types:
+                defaults[mt][key] = tv_defaults
+            if len(media_types) > 1:
+                defaults["all"][key] = tv_defaults
     return defaults
 
 
@@ -303,7 +314,12 @@ def optimize_template_variables(config_data, library_types=None):
                 tv = entry.get("template_variables")
                 if not isinstance(tv, dict):
                     continue
-                defaults = collection_defaults.get(entry.get("default"))
+                defaults = None
+                if isinstance(collection_defaults, dict):
+                    if library_type in ("movie", "show"):
+                        defaults = collection_defaults.get(library_type, {}).get(entry.get("default"))
+                    if defaults is None:
+                        defaults = collection_defaults.get("all", {}).get(entry.get("default"))
                 if not defaults:
                     continue
                 pruned = _prune_template_variables(tv, defaults)
