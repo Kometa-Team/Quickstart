@@ -58,6 +58,18 @@
   </button>
 </div>
 
+<div class="form-check form-switch mb-2">
+  <input class="form-check-input" type="checkbox" name="trakt_force_refresh" id="trakt_force_refresh" value="true" {%
+    if data['trakt']['force_refresh']|string|lower=='true' %}checked{% endif %}>
+  <input type="hidden" name="trakt_force_refresh" value="false">
+  <label class="form-check-label" for="trakt_force_refresh">Force Refresh
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Refresh credentials on every run.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </label>
+</div>
+
 <input type="hidden" class="form-control" id="access_token" name="access_token"
   value="{{ data['trakt']['authorization']['access_token'] }}" readonly>
 <input type="hidden" class="form-control" id="token_type" name="token_type"

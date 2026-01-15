@@ -45,6 +45,7 @@
   <script>
     window.QS_DEBUG = "{{ 'true' if config['QS_DEBUG'] else 'false' }}";
     window.QS_THEME = "{{ config.get('QS_THEME', 'kometa') }}";
+    window.QS_OPTIMIZE_DEFAULTS = "{{ 'true' if config.get('QS_OPTIMIZE_DEFAULTS', True) else 'false' }}";
   </script>
   <script type="text/javascript" src="{{ url_for('static', filename='local-js/000-base.js') }}"></script>
   <div class="header-container text-center">
@@ -146,6 +147,15 @@
 
   <!-- Global Toast Container -->
   <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toastContainer"></div>
+
+  <div class="qs-scroll-controls" id="qs-scroll-controls" aria-hidden="true">
+    <button type="button" class="qs-scroll-btn" id="qs-scroll-top" aria-label="Jump to top" title="Jump to top">
+      <i class="bi bi-arrow-up"></i>
+    </button>
+    <button type="button" class="qs-scroll-btn" id="qs-scroll-bottom" aria-label="Jump to bottom" title="Jump to bottom">
+      <i class="bi bi-arrow-down"></i>
+    </button>
+  </div>
 
 </body>
 

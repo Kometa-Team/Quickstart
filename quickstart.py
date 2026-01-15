@@ -56,6 +56,7 @@ from typing import Dict, Any
 
 # A very simple in-memory progress store
 CLONE_PROGRESS: Dict[str, Dict[str, Any]] = {}
+LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
 load_dotenv(DOTENV, override=True)
@@ -159,6 +160,7 @@ def inject_kometa_root():
 # Use booler() for FLASK_DEBUG conversion
 app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
 app.config["QS_THEME"] = os.getenv("QS_THEME", "kometa").strip() or "kometa"
+app.config["QS_OPTIMIZE_DEFAULTS"] = helpers.booler(os.getenv("QS_OPTIMIZE_DEFAULTS", "1"))
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
@@ -863,6 +865,7 @@ def step(name):
     page_info["running_port"] = running_port
     page_info["qs_debug"] = app.config["QS_DEBUG"]
     page_info["qs_theme"] = app.config.get("QS_THEME", "kometa")
+    page_info["qs_optimize_defaults"] = app.config.get("QS_OPTIMIZE_DEFAULTS", True)
     page_info["header_style"] = header_style
     page_info["template_name"] = name
     if "shutdown_nonce" not in session:
@@ -1887,6 +1890,8 @@ def tail_log():
 
         size_param = request.args.get("size", "2000")
         download = request.args.get("download")
+        stats_param = request.args.get("stats", "")
+        include_stats = str(stats_param).lower() in ("1", "true", "yes", "on", "total")
         max_lines = None
         if size_param.lower() not in ("all", "full"):
             try:
@@ -1909,7 +1914,53 @@ def tail_log():
                 download_name="meta.log",
             )
 
-        return jsonify({"log": log_content})
+        def get_log_stats(path):
+            try:
+                stats = path.stat()
+            except Exception:
+                return None
+
+            cached = LOG_STATS_CACHE
+            if cached.get("mtime") == stats.st_mtime and cached.get("size") == stats.st_size:
+                return cached.get("stats")
+
+            counts = {
+                "debug": 0,
+                "info": 0,
+                "warning": 0,
+                "error": 0,
+                "critical": 0,
+                "trace": 0,
+            }
+            try:
+                with path.open("r", encoding="utf-8", errors="replace") as handle:
+                    for line in handle:
+                        upper = line.upper()
+                        if "[DEBUG]" in upper:
+                            counts["debug"] += 1
+                        if "[INFO]" in upper:
+                            counts["info"] += 1
+                        if "[WARNING]" in upper:
+                            counts["warning"] += 1
+                        if "[ERROR]" in upper:
+                            counts["error"] += 1
+                        if "[CRITICAL]" in upper:
+                            counts["critical"] += 1
+                        if "TRACEBACK" in upper:
+                            counts["trace"] += 1
+            except Exception:
+                return None
+
+            LOG_STATS_CACHE.update({"mtime": stats.st_mtime, "size": stats.st_size, "stats": counts})
+            return counts
+
+        response = {"log": log_content}
+        if include_stats:
+            stats = get_log_stats(log_path)
+            if stats:
+                response["stats"] = stats
+
+        return jsonify(response)
     except Exception as e:
         return jsonify({"error": f"Failed to read log: {str(e)}"}), 500
 
@@ -2015,6 +2066,7 @@ def support_info():
     lines.append(f"# Quickstart Port: {running_port}")
     lines.append(f"# Quickstart Debug: {'Enabled' if app.config['QS_DEBUG'] else 'Disabled'}")
     lines.append(f"# Quickstart Theme: {app.config.get('QS_THEME', 'kometa')}")
+    lines.append(f"# Quickstart Optimize Template Defaults: {'Enabled' if app.config.get('QS_OPTIMIZE_DEFAULTS', True) else 'Disabled'}")
     lines.extend([f"# {line}" for line in plex_summary.splitlines()])
     lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")
     lines.append("###")
@@ -2026,8 +2078,6 @@ def support_info():
             else:
                 lines.append("#")
     lines.append("###")
-    lines.append("# Quickstart log tail (last 200 lines)")
-    lines.append("")
 
     log_path = Path(helpers.LOG_FILE).resolve()
     log_lines = []
@@ -2044,6 +2094,9 @@ def support_info():
             log_lines.append("Quickstart log unavailable.")
     else:
         log_lines.append("Quickstart log unavailable.")
+
+    lines.append("# Quickstart log tail (last 200 lines)")
+    lines.append("")
 
     text = "\n".join(lines + log_lines)
     generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -2087,6 +2140,11 @@ def update_quickstart_settings():
     if debug_raw is not None:
         debug_value = helpers.booler(str(debug_raw))
 
+    optimize_raw = data.get("optimize_defaults")
+    optimize_value = None
+    if optimize_raw is not None:
+        optimize_value = helpers.booler(str(optimize_raw))
+
     theme_raw = data.get("theme")
     theme_value = None
     if theme_raw is not None:
@@ -2123,8 +2181,19 @@ def update_quickstart_settings():
         changes_applied = True
         theme_changed = True
 
+    if optimize_value is not None and optimize_value != app.config.get("QS_OPTIMIZE_DEFAULTS", True):
+        helpers.update_env_variable("QS_OPTIMIZE_DEFAULTS", "1" if optimize_value else "0")
+        app.config["QS_OPTIMIZE_DEFAULTS"] = optimize_value
+        changes_applied = True
+
     if not changes_applied:
-        return jsonify(success=True, message="No changes applied.", restart=False, theme=app.config.get("QS_THEME", "kometa"))
+        return jsonify(
+            success=True,
+            message="No changes applied.",
+            restart=False,
+            theme=app.config.get("QS_THEME", "kometa"),
+            optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
+        )
 
     if restart_required:
         return jsonify(
@@ -2134,6 +2203,7 @@ def update_quickstart_settings():
             new_port=new_port or running_port,
             theme=app.config.get("QS_THEME", "kometa"),
             theme_changed=theme_changed,
+            optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
         )
 
     return jsonify(
@@ -2142,6 +2212,7 @@ def update_quickstart_settings():
         restart=False,
         theme=app.config.get("QS_THEME", "kometa"),
         theme_changed=theme_changed,
+        optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
     )
 
 

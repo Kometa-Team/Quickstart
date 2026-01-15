@@ -949,12 +949,16 @@ prefix) %}
                         {% set input_name = library.id ~ '-template_collection_' ~ clean_id ~ '_' ~ item.key %}
 
                         {% if item.type == 'toggle' %}
+                        {% set stored_val = data['libraries'].get(input_name) %}
+                        {% set stored_true = stored_val|string|lower == 'true' %}
+                        {% set has_stored = stored_val is not none and stored_val|string|length > 0 %}
+                        {% set default_true = item.default is defined and item.default|string|lower == 'true' %}
                         <div class="form-check form-switch d-flex align-items-center mb-1">
                             <input class="form-check-input template-child-toggle me-2" type="checkbox"
                                 id="{{ input_name }}" name="{{ input_name }}" value="true"
                                 data-parent-toggle="{{ library.id }}-{{ collection.id }}" {% if disable_toggle
                                 %}disabled{% endif %} {% if not disable_toggle and
-                                data['libraries'][input_name]|string|lower=='true' %}checked{% endif %}>
+                                (stored_true or (not has_stored and default_true)) %}checked{% endif %}>
                             <input type="hidden" name="{{ input_name }}" value="false">
                             <label class="form-check-label me-2 mb-0" for="{{ input_name }}">{{ item.label }}</label>
                             {% if item.tooltip %}

@@ -1440,9 +1440,9 @@ div#loading {
 
 .sponsor-btn,
 .discord-btn {
-    background-color: #24292e;
-    color: white;
-    border: none;
+    background-color: var(--button-color);
+    color: var(--button-text);
+    border: 1px solid var(--theme-border);
     transition: background-color 0.3s ease;
 }
 
@@ -1836,4 +1836,71 @@ div#loading {
     border-color: var(--theme-primary) !important;
     color: var(--button-text-hover) !important;
     opacity: 1;
+}
+
+.qs-scroll-controls {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1050;
+}
+
+.qs-scroll-controls.is-visible {
+    display: flex;
+}
+
+.qs-scroll-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 1px solid var(--theme-border);
+    background: var(--theme-bg-dark);
+    color: var(--button-text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.qs-scroll-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+    background: var(--theme-primary);
+    border-color: var(--theme-primary);
+    color: var(--button-text-hover);
+}
+
+.qs-scroll-btn.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.log-level-wrap {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+}
+
+.log-level-legend {
+    font-size: 0.7rem;
+    color: var(--theme-text-muted);
+}
+
+.log-level-counts {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 6px;
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.log-level-counts--filtered {
+    color: var(--theme-text);
 }

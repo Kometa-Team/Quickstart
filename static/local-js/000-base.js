@@ -1,4 +1,4 @@
-/* global bootstrap, $, location, MutationObserver */
+/* global bootstrap, $, location, MutationObserver, requestAnimationFrame */
 
 (function () {
   const isDebug = typeof window.QS_DEBUG !== 'undefined' && String(window.QS_DEBUG).toLowerCase() === 'true'
@@ -320,6 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const debugInput = document.getElementById('quickstart-settings-debug')
   const themeInput = document.getElementById('quickstart-settings-theme')
   const themeButton = document.getElementById('quickstart-settings-theme-btn')
+  const optimizeInput = document.getElementById('quickstart-settings-optimize')
   const themeText = modalEl.querySelector('.theme-picker-text')
   const themeSwatch = modalEl.querySelector('[data-theme-swatch]')
   const themeOptions = modalEl.querySelectorAll('.theme-option')
@@ -347,6 +348,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function getCurrentTheme () {
     if (triggerBtn && triggerBtn.dataset.currentTheme) return triggerBtn.dataset.currentTheme
     return window.QS_THEME || 'kometa'
+  }
+
+  function getCurrentOptimizeDefaults () {
+    const raw = (triggerBtn && triggerBtn.dataset.currentOptimizeDefaults)
+      ? triggerBtn.dataset.currentOptimizeDefaults
+      : window.QS_OPTIMIZE_DEFAULTS
+    return String(raw).toLowerCase() === 'true'
   }
 
   function getThemeLabel (themeValue) {
@@ -383,6 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
   modalEl.addEventListener('show.bs.modal', () => {
     if (portInput) portInput.value = getCurrentPort()
     if (debugInput) debugInput.checked = getCurrentDebug()
+    if (optimizeInput) optimizeInput.checked = getCurrentOptimizeDefaults()
     updateThemeUi(getCurrentTheme())
     setStatus('', false)
     if (applyBtn) applyBtn.disabled = false
@@ -411,6 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (debugInput) payload.debug = debugInput.checked
+      if (optimizeInput) payload.optimize_defaults = optimizeInput.checked
       if (themeInput) payload.theme = themeInput.value
 
       applyBtn.disabled = true
@@ -439,12 +449,19 @@ document.addEventListener('DOMContentLoaded', () => {
             window.QS_DEBUG = debugFlag
             if (triggerBtn) triggerBtn.dataset.currentDebug = debugFlag ? 'true' : 'false'
           }
+          if (typeof payload.optimize_defaults !== 'undefined') {
+            const optimizeFlag = Boolean(payload.optimize_defaults)
+            window.QS_OPTIMIZE_DEFAULTS = optimizeFlag
+            if (triggerBtn) triggerBtn.dataset.currentOptimizeDefaults = optimizeFlag ? 'true' : 'false'
+          }
           if (hasPortChange && triggerBtn) {
             triggerBtn.dataset.currentPort = String(portNum)
           }
           setStatus(data.message || 'Settings updated.', false)
           showToast('success', data.message || 'Settings updated.')
           applyBtn.disabled = false
+          const modal = bootstrap.Modal.getInstance(modalEl)
+          if (modal) modal.hide()
           return
         }
 
@@ -756,6 +773,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (refreshBtn) refreshBtn.addEventListener('click', loadSupportInfo)
   if (copyBtn) copyBtn.addEventListener('click', copySupportInfo)
+})
+
+document.addEventListener('DOMContentLoaded', () => {
+  const controls = document.getElementById('qs-scroll-controls')
+  const topBtn = document.getElementById('qs-scroll-top')
+  const bottomBtn = document.getElementById('qs-scroll-bottom')
+  if (!controls || !topBtn || !bottomBtn) return
+
+  const doc = document.documentElement
+  const threshold = 20
+  let ticking = false
+
+  const updateControls = () => {
+    const scrollHeight = doc.scrollHeight
+    const clientHeight = doc.clientHeight
+    const scrollTop = window.pageYOffset || doc.scrollTop || 0
+    const canScroll = scrollHeight > clientHeight + threshold
+    controls.classList.toggle('is-visible', canScroll)
+    if (!canScroll) return
+    const atTop = scrollTop <= threshold
+    const atBottom = scrollTop + clientHeight >= scrollHeight - threshold
+    topBtn.classList.toggle('is-hidden', atTop)
+    bottomBtn.classList.toggle('is-hidden', atBottom)
+  }
+
+  const onScroll = () => {
+    if (ticking) return
+    ticking = true
+    requestAnimationFrame(() => {
+      updateControls()
+      ticking = false
+    })
+  }
+
+  topBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  })
+
+  bottomBtn.addEventListener('click', () => {
+    window.scrollTo({ top: doc.scrollHeight, behavior: 'smooth' })
+  })
+
+  window.addEventListener('scroll', onScroll, { passive: true })
+  window.addEventListener('resize', onScroll)
+  updateControls()
 })
 
 // Optional: Rotate icon spinner style

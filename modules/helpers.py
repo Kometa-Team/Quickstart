@@ -180,8 +180,8 @@ def ensure_json_schema():
             new_content = response.text
             new_hash = calculate_hash(new_content)
 
-            # Compare hash with previous version
-            if filename in previous_hashes and previous_hashes[filename] == new_hash:
+            # Compare hash with previous version, but re-download if file is missing
+            if filename in previous_hashes and previous_hashes[filename] == new_hash and os.path.exists(file_path):
                 new_hashes[filename] = new_hash  # Keep existing hash
                 continue
 
@@ -342,6 +342,7 @@ def build_oauth_dict(source, form_data):
             "client_id",
             "client_secret",
             "pin",
+            "force_refresh",
             "cache_expiration",
             "localhost_url",
         ]:

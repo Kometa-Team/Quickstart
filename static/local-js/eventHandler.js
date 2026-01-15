@@ -682,9 +682,12 @@ mappingPrefixes.forEach(prefix => {
 function expandCheckedChildToggleSections () {
   document.querySelectorAll('.child-toggle-wrapper').forEach(wrapper => {
     const anyChecked = wrapper.querySelector('.template-child-toggle:checked')
-    console.log(`[DEBUG] Child section check: ${wrapper.id || 'unknown'}, checked: ${!!anyChecked}`)
+    const parentId = wrapper.dataset.toggleParent
+    const parentToggle = parentId ? document.getElementById(parentId) : null
+    const parentChecked = parentToggle ? parentToggle.checked : false
+    console.log(`[DEBUG] Child section check: ${wrapper.id || 'unknown'}, checked: ${!!anyChecked}, parent: ${parentChecked}`)
 
-    if (anyChecked) {
+    if (anyChecked && parentChecked) {
       wrapper.style.display = 'block'
     }
   })

@@ -16,7 +16,7 @@
           <button type="button" class="badge bg-secondary config-badge-button settings-badge"
             id="quickstart-settings-btn" data-bs-toggle="modal" data-bs-target="#quickstartSettingsModal"
             data-current-port="{{ page_info.running_port }}" data-current-debug="{{ 'true' if page_info.qs_debug else 'false' }}"
-            data-current-theme="{{ page_info.qs_theme }}" title="Quickstart settings">
+            data-current-theme="{{ page_info.qs_theme }}" data-current-optimize-defaults="{{ 'true' if page_info.qs_optimize_defaults else 'false' }}" title="Quickstart settings">
             <i class="bi bi-gear-fill"></i>
           </button>
           <button type="button" class="badge bg-secondary config-badge config-badge-button"
@@ -274,6 +274,13 @@
               </div>
               <input type="hidden" id="quickstart-settings-theme" value="kometa">
               <div class="form-text">Theme changes apply immediately.</div>
+            </div>
+            <div class="form-check form-switch mb-3">
+              <input class="form-check-input" type="checkbox" id="quickstart-settings-optimize">
+              <label class="form-check-label" for="quickstart-settings-optimize">
+                Optimize Template Variables
+              </label>
+              <div class="form-text">Omit lines from template variables in the final config output that are not necessary for Kometa to run.</div>
             </div>
             {% if not qs_is_docker %}
             <div class="mb-3">

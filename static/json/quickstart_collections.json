@@ -36,7 +36,8 @@
             "key": "use_best_picture",
             "label": "Oscars Best Picture Winners",
             "tooltip": "Collection of Oscars Best Picture Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best_picture",
@@ -52,7 +53,8 @@
             "key": "use_best_director",
             "label": "Oscars Best Director Winners",
             "tooltip": "Collection of Oscars Best Director Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best_director",
@@ -94,7 +96,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -104,7 +106,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -114,7 +116,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -497,7 +499,8 @@
             "key": "use_golden",
             "label": "Berlinale Golden Bears",
             "tooltip": "Collection of Berlin International Film Festival Golden Bear Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_golden",
@@ -539,7 +542,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -549,7 +552,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -559,7 +562,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -942,7 +945,8 @@
             "key": "use_best",
             "label": "BAFTA Best Films",
             "tooltip": "Collection of British Academy of Film and Television Arts Best Film Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best",
@@ -984,7 +988,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -994,7 +998,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -1004,7 +1008,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -1387,7 +1391,8 @@
             "key": "use_palm",
             "label": "Cannes Golden Palm Winners",
             "tooltip": "Collection of Cannes Golden Palm Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_palm",
@@ -1429,7 +1434,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -1439,7 +1444,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -1449,7 +1454,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -1832,7 +1837,8 @@
             "key": "use_best",
             "label": "César Best Film Winners",
             "tooltip": "Collection of César Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best",
@@ -1874,7 +1880,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -1884,7 +1890,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -1894,7 +1900,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -2278,7 +2284,8 @@
             "key": "use_best",
             "label": "Critics Choice Best Picture Winners",
             "tooltip": "Collection of Critics Choice Best Feature Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best",
@@ -2330,21 +2337,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -2725,7 +2732,8 @@
             "key": "use_best",
             "label": "Emmys Best in Category Winners",
             "tooltip": "Collection of Emmys Best in Category Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best",
@@ -2777,21 +2785,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -3172,7 +3180,8 @@
             "key": "use_best_picture",
             "label": "Golden Globes Best Picture Winners",
             "tooltip": "Collection of Golden Globe Best Picture Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best_picture",
@@ -3198,7 +3207,8 @@
             "key": "use_best_director",
             "label": "Golden Globes Best Director Winners",
             "tooltip": "Collection of Golden Globe Best Director Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best_director",
@@ -3250,21 +3260,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -3644,7 +3654,8 @@
             "key": "use_best",
             "label": "Independent Spirit Best Feature Winners",
             "tooltip": "Collection of Independent Spirit Best Feature Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best",
@@ -3686,7 +3697,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -3696,7 +3707,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -3706,7 +3717,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -4089,7 +4100,8 @@
             "key": "use_all_time",
             "label": "National Film Registry All Time",
             "tooltip": "Collection of Films added to the National Film Registry.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_all_time",
@@ -4131,7 +4143,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -4141,7 +4153,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -4151,7 +4163,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -4535,7 +4547,8 @@
             "key": "use_pca",
             "label": "People's Choice Award Winners",
             "tooltip": "Collection of People's Choice Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_pca",
@@ -4587,21 +4600,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -4981,7 +4994,8 @@
             "key": "use_golden",
             "label": "Golden Raspberry Award Winners",
             "tooltip": "Collection of Razzie Golden Raspberry Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_golden",
@@ -5023,7 +5037,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -5033,7 +5047,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -5043,7 +5057,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -5426,7 +5440,8 @@
             "key": "use_golden",
             "label": "Screen Actors Guild Award Winners",
             "tooltip": "Collection of Screen Actors Guild Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_golden",
@@ -5468,7 +5483,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -5478,7 +5493,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -5488,7 +5503,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -5871,7 +5886,8 @@
             "key": "use_grand",
             "label": "Grand Jury Winners",
             "tooltip": "Collection of Sundance Film Festival Grand Jury Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_grand",
@@ -5913,7 +5929,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -5923,7 +5939,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -5933,7 +5949,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -6316,7 +6332,8 @@
             "key": "use_best",
             "label": "Toronto People's Choice Award Winners",
             "tooltip": "Collection of Toronto International Film Festival People's Choice Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_best",
@@ -6358,7 +6375,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -6368,7 +6385,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -6378,7 +6395,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -6761,7 +6778,8 @@
             "key": "use_golden",
             "label": "Golden Lion Winners",
             "tooltip": "Collection of Venice Film Festival Golden Lions Award Winners.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_golden",
@@ -6803,7 +6821,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -6813,7 +6831,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -6823,7 +6841,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -7226,7 +7244,8 @@
             "label": "New Episodes",
             "tooltip": "Collection of Episodes released in the last 7 days.",
             "tooltip_variant": "info",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_episodes",
@@ -7253,7 +7272,8 @@
             "label": "Newly Released",
             "tooltip": "Media released in the last 90 days.",
             "tooltip_variant": "info",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_released",
@@ -7316,21 +7336,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -7696,7 +7716,8 @@
             "label": "Plex Popular",
             "tooltip": "Enable the most Popular Movies/Shows on Plex",
             "tooltip_variant": "info",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_popular",
@@ -7723,7 +7744,8 @@
             "label": "Plex Watched",
             "tooltip": "Enable the most Watched Movies/Shows on Plex",
             "tooltip_variant": "info",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_watched",
@@ -7786,21 +7808,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -8182,7 +8204,8 @@
             "label": "IMDb Top 250",
             "tooltip": "Collection of Top 250 Movies/Shows on IMDb.",
             "tooltip_variant": "info",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_top",
@@ -8209,7 +8232,8 @@
             "label": "IMDb Popular",
             "tooltip": "Collection of the most Popular Movies/Shows on IMDb",
             "tooltip_variant": "info",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_popular",
@@ -8236,7 +8260,8 @@
             "label": "IMDb Lowest Rated",
             "tooltip": "Collection of the lowest Rated Movies on IMDb.",
             "tooltip_variant": "info",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_lowest",
@@ -8299,21 +8324,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -8694,7 +8719,8 @@
             "key": "use_airing",
             "label": "TMDb Airing Today",
             "tooltip": "Collection of Shows Airing Today on TMDb.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_airing",
@@ -8720,7 +8746,8 @@
             "key": "use_air",
             "label": "TMDb On The Air",
             "tooltip": "Collection of Shows currently On The Air on TMDb.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_air",
@@ -8746,7 +8773,8 @@
             "key": "use_popular",
             "label": "TMDb Popular",
             "tooltip": "Collection of the Most Popular Movies/Shows on TMDb.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_popular",
@@ -8772,7 +8800,8 @@
             "key": "use_top",
             "label": "TMDb Top Rated",
             "tooltip": "Collection of the Top Rated Movies/Shows on TMDb.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_top",
@@ -8798,7 +8827,8 @@
             "key": "use_trending",
             "label": "TMDb Trending",
             "tooltip": "Collection of Trending Movies/Shows on TMDb.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_trending",
@@ -8861,21 +8891,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -9258,7 +9288,8 @@
             "key": "use_collected",
             "label": "Trakt Collected",
             "tooltip": "Collection of the Most Collected Movies/Shows on Trakt.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_collected",
@@ -9284,7 +9315,8 @@
             "key": "use_popular",
             "label": "Trakt Popular",
             "tooltip": "Collection of the Most Popular Movies/Shows on Trakt.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_popular",
@@ -9310,7 +9342,8 @@
             "key": "use_recommended",
             "label": "Trakt Recommended",
             "tooltip": "Collection of Recommended Movies/Shows on Trakt.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_recommended",
@@ -9336,7 +9369,8 @@
             "key": "use_trending",
             "label": "Trakt Trending",
             "tooltip": "Collection of Trending Movies/Shows on Trakt.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_trending",
@@ -9362,7 +9396,8 @@
             "key": "use_watched",
             "label": "Trakt Watched",
             "tooltip": "Collection of the Most Watched Movies/Shows on Trakt.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_watched",
@@ -9425,21 +9460,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -9820,7 +9855,8 @@
             "key": "use_popular",
             "label": "AniList Popular",
             "tooltip": "Collection of the most Popular Anime on AniList.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_popular",
@@ -9846,7 +9882,8 @@
             "key": "use_season",
             "label": "AniList Season",
             "tooltip": "Collection of the Current Season's Anime on AniList.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_season",
@@ -9872,7 +9909,8 @@
             "key": "use_top",
             "label": "AniList Top Rated",
             "tooltip": "Collection of the Top Rated Anime on AniList.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_top",
@@ -9898,7 +9936,8 @@
             "key": "use_trending",
             "label": "AniList Trending",
             "tooltip": "Collection of the Trending Anime on AniList.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_trending",
@@ -9961,21 +10000,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -10356,7 +10395,8 @@
             "key": "use_favorited",
             "label": "MyAnimeList Favorited",
             "tooltip": "Collection of most Favorited Anime on MyAnimeList.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_favorited",
@@ -10382,7 +10422,8 @@
             "key": "use_popular",
             "label": "MyAnimeList Popular",
             "tooltip": "Collection of the most Popular Anime on MyAnimeList.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_popular",
@@ -10408,7 +10449,8 @@
             "key": "use_season",
             "label": "MyAnimeList Season",
             "tooltip": "Collection of the Current Seasons Anime on MyAnimeList.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_season",
@@ -10434,7 +10476,8 @@
             "key": "use_airing",
             "label": "MyAnimeList Top Airing",
             "tooltip": "Collection of the Top Rated Airing on MyAnimeList.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_airing",
@@ -10460,7 +10503,8 @@
             "key": "use_top",
             "label": "MyAnimeList Top Rated",
             "tooltip": "Collection of the Top Rated Anime on MyAnimeList.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_top",
@@ -10512,21 +10556,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -10906,7 +10950,8 @@
             "key": "use_1001_movies",
             "label": "1,001 To See Before You Die",
             "tooltip": "Collection of 1,001 Movies You Must See Before You Die.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_1001_movies",
@@ -10922,7 +10967,8 @@
             "key": "use_afi_100",
             "label": "AFI 100 Years 100 Movies",
             "tooltip": "Collection of AFI's 100 Years...100 Movies.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_afi_100",
@@ -10938,7 +10984,8 @@
             "key": "use_boxofficemojo_100",
             "label": "Box Office Mojo All Time 100",
             "tooltip": "Collection of Box Office Mojo's all-time top 100 films.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_boxofficemojo_100",
@@ -10954,7 +11001,8 @@
             "key": "use_cannes",
             "label": "Cannes Palme d'Or Winners",
             "tooltip": "Collection of films that have won the Palme d'Or at the Cannes Film Festival.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_cannes",
@@ -10970,7 +11018,8 @@
             "key": "use_edgarwright",
             "label": "Edgar Wright's 1,000 Favorites",
             "tooltip": "Collection of Edgar Wright's 1,000 Favorite Movies.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_edgarwright",
@@ -10986,7 +11035,8 @@
             "key": "use_imdb_top_250",
             "label": "IMDb Top 250 (Letterboxd)",
             "tooltip": "Collection of the Top 250 Movies on IMDb, from Letterboxd.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_imdb_top_250",
@@ -11002,7 +11052,8 @@
             "key": "use_top_250",
             "label": "Letterboxd Top 250",
             "tooltip": "Collection of the Top 250 films on Letterboxd.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_top_250",
@@ -11018,7 +11069,8 @@
             "key": "use_oscars",
             "label": "Oscar Best Picture Winners",
             "tooltip": "Collection of films that have won the Academy Award for Best Picture.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_oscars",
@@ -11034,7 +11086,8 @@
             "key": "use_rogerebert",
             "label": "Roger Ebert's Great Movies",
             "tooltip": "Collection of films from Roger Ebert's \"Great Movies\" essays.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_rogerebert",
@@ -11050,7 +11103,8 @@
             "key": "use_sight_sound",
             "label": "Sight & Sound Greatest Films",
             "tooltip": "Collection of Sight and Sound's Greatest Films of All Time.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_sight_sound",
@@ -11066,7 +11120,8 @@
             "key": "use_animation",
             "label": "Top 100 Animation",
             "tooltip": "Collection of the Top 100 animated films on Letterboxd.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_animation",
@@ -11082,7 +11137,8 @@
             "key": "use_black_directors",
             "label": "Top 100 Black-Directed",
             "tooltip": "Collection of the Top 100 Black-Directed films on Letterboxd.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_black_directors",
@@ -11098,7 +11154,8 @@
             "key": "use_documentaries",
             "label": "Top 250 Documentaries",
             "tooltip": "Collection of the Top 250 documentary films on Letterboxd.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_documentaries",
@@ -11114,7 +11171,8 @@
             "key": "use_horror",
             "label": "Top 250 Horror",
             "tooltip": "Collection of the Top 250 horror films on Letterboxd.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_horror",
@@ -11130,7 +11188,8 @@
             "key": "use_most_fans",
             "label": "Top 250 Most Fans",
             "tooltip": "Collection of the Top 250 films with the most fans on Letterboxd.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_most_fans",
@@ -11146,7 +11205,8 @@
             "key": "use_women_directors",
             "label": "Top 250 Women-Directed",
             "tooltip": "Collection of the Top 250 Women-Directed films on Letterboxd.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_women_directors",
@@ -11199,7 +11259,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -11209,7 +11269,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -11219,7 +11279,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -11603,7 +11663,8 @@
             "key": "use_anidb",
             "label": "AniDB Popular",
             "tooltip": "Collection of the most Popular Anime on AniDB.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_anidb",
@@ -11629,7 +11690,8 @@
             "key": "use_commonsense",
             "label": "Common Sense Selection",
             "tooltip": "Collection of Common Sense Selection Movies/Shows.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_commonsense",
@@ -11655,7 +11717,8 @@
             "key": "use_metacritic",
             "label": "Metacritic Must See Movies",
             "tooltip": "Collection of Metacritic Must See Movies.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_metacritic",
@@ -11681,7 +11744,8 @@
             "key": "use_stevenlu",
             "label": "StevenLu's Popular Movies",
             "tooltip": "Collection of StevenLu's Popular Movies.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_stevenlu",
@@ -11707,7 +11771,8 @@
             "key": "use_pirated",
             "label": "Top 10 Pirated Movies of the Week",
             "tooltip": "Collection of the Top 10 Pirated Movies of the Week.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_pirated",
@@ -11770,21 +11835,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -12197,21 +12262,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -12593,21 +12658,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -13007,21 +13072,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -13402,7 +13467,8 @@
             "key": "use_avp",
             "label": "Alien / Predator",
             "tooltip": "Collection of Movies in the Alien / Predator Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_avp",
@@ -13428,7 +13494,8 @@
             "key": "use_arrow",
             "label": "Arrowverse",
             "tooltip": "Collection of Movies in the The Arrow Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_arrow",
@@ -13454,7 +13521,8 @@
             "key": "use_dca",
             "label": "DC Animated Universe",
             "tooltip": "Collection of Movies in the DC Animated Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_dca",
@@ -13480,7 +13548,8 @@
             "key": "use_dcu",
             "label": "DC Extended Universe",
             "tooltip": "Collection of Movies in the DC Extended Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_dcu",
@@ -13506,7 +13575,8 @@
             "key": "use_fast",
             "label": "Fast & Furious",
             "tooltip": "Collection of Movies in the Fast & Furious Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_fast",
@@ -13532,7 +13602,8 @@
             "key": "use_marvel",
             "label": "In Association with Marvel",
             "tooltip": "Collection of Movies in the Marvel Universe (but not part of MCU)",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_marvel",
@@ -13558,7 +13629,8 @@
             "key": "use_mcu",
             "label": "Marvel Cinematic Universe",
             "tooltip": "Collection of Movies in the Marvel Cinematic Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_mcu",
@@ -13584,7 +13656,8 @@
             "key": "use_middle",
             "label": "Middle Earth",
             "tooltip": "Collection of Movies in the Middle Earth Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_middle",
@@ -13610,7 +13683,8 @@
             "key": "use_rocky",
             "label": "Rocky / Creed",
             "tooltip": "Collection of Movies in the Rocky / Creed Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_rocky",
@@ -13636,7 +13710,8 @@
             "key": "use_trek",
             "label": "Star Trek",
             "tooltip": "Collection of Movies in the Star Trek Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_trek",
@@ -13662,7 +13737,8 @@
             "key": "use_star",
             "label": "Star Wars Universe",
             "tooltip": "Collection of Movies in the Star Wars Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_star",
@@ -13688,7 +13764,8 @@
             "key": "use_mummy",
             "label": "The Mummy Universe",
             "tooltip": "Collection of Movies in the The Mummy Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_mummy",
@@ -13714,7 +13791,8 @@
             "key": "use_askew",
             "label": "View Askewverse",
             "tooltip": "Collection of Movies in the The View Askew Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_askew",
@@ -13740,7 +13818,8 @@
             "key": "use_wizard",
             "label": "Wizarding World",
             "tooltip": "Collection of Movies in the Wizarding World Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_wizard",
@@ -13766,7 +13845,8 @@
             "key": "use_xmen",
             "label": "X-Men Universe",
             "tooltip": "Collection of Movies in the X-Men Universe",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_xmen",
@@ -13818,21 +13898,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "collection_order",
@@ -14213,7 +14293,8 @@
             "key": "use_books",
             "label": "Based on a Book",
             "tooltip": "Collection of Movies/Shows based on or inspired by books",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_books",
@@ -14239,7 +14320,8 @@
             "key": "use_comics",
             "label": "Based on a Comic",
             "tooltip": "Collection of Movies/Shows based on or inspired by comics",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_comics",
@@ -14265,7 +14347,8 @@
             "key": "use_true_story",
             "label": "Based on a True Story",
             "tooltip": "Collection of Movies/Shows based on or inspired by true stories",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_true_story",
@@ -14291,7 +14374,8 @@
             "key": "use_video_games",
             "label": "Based on a Video Game",
             "tooltip": "Collection of Movies/Shows based on or inspired by video games",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_video_games",
@@ -14343,21 +14427,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -15145,21 +15229,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -15547,21 +15631,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -15950,21 +16034,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -16353,21 +16437,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -16756,21 +16840,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -17159,21 +17243,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -17562,21 +17646,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -17965,21 +18049,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -18373,21 +18457,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -18775,21 +18859,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -19152,7 +19236,8 @@
             "key": "use_Northern Africa",
             "label": "Northern Africa",
             "tooltip": "Collection of Movies that have been filmed in Northern Africa.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Northern Africa",
@@ -19178,7 +19263,8 @@
             "key": "use_Eastern Africa",
             "label": "Eastern Africa",
             "tooltip": "Collection of Movies that have been filmed in Eastern Africa.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Eastern Africa",
@@ -19204,7 +19290,8 @@
             "key": "use_Central Africa",
             "label": "Central Africa",
             "tooltip": "Collection of Movies that have been filmed in Central Africa.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Central Africa",
@@ -19230,7 +19317,8 @@
             "key": "use_Southern Africa",
             "label": "Southern Africa",
             "tooltip": "Collection of Movies that have been filmed in Southern Africa.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Southern Africa",
@@ -19256,7 +19344,8 @@
             "key": "use_Western Africa",
             "label": "Western Africa",
             "tooltip": "Collection of Movies that have been filmed in Western Africa.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Western Africa",
@@ -19282,7 +19371,8 @@
             "key": "use_Caribbean",
             "label": "Caribbean",
             "tooltip": "Collection of Movies that have been filmed in the Caribbean.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Caribbean",
@@ -19308,7 +19398,8 @@
             "key": "use_Central America",
             "label": "Central America",
             "tooltip": "Collection of Movies that have been filmed in Central America.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Central America",
@@ -19334,7 +19425,8 @@
             "key": "use_South America",
             "label": "South America",
             "tooltip": "Collection of Movies that have been filmed in South America.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_South America",
@@ -19360,7 +19452,8 @@
             "key": "use_North America",
             "label": "North America",
             "tooltip": "Collection of Movies that have been filmed in North America.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_North America",
@@ -19386,7 +19479,8 @@
             "key": "use_Antarctica",
             "label": "Antarctica",
             "tooltip": "Collection of Movies that have been filmed in Antarctica.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Antarctica",
@@ -19412,7 +19506,8 @@
             "key": "use_Central Asia",
             "label": "Central Asia",
             "tooltip": "Collection of Movies that have been filmed in Central Asia.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Central Asia",
@@ -19438,7 +19533,8 @@
             "key": "use_Eastern Asia",
             "label": "Eastern Asia",
             "tooltip": "Collection of Movies that have been filmed in Eastern Asia.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Eastern Asia",
@@ -19464,7 +19560,8 @@
             "key": "use_South Eastern Asia",
             "label": "South-Eastern Asia",
             "tooltip": "Collection of Movies that have been filmed in South-Eastern Asia.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_South Eastern Asia",
@@ -19490,7 +19587,8 @@
             "key": "use_Southern Asia",
             "label": "Southern Asia",
             "tooltip": "Collection of Movies that have been filmed in Southern Asia.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Southern Asia",
@@ -19516,7 +19614,8 @@
             "key": "use_Western Asia",
             "label": "Western Asia",
             "tooltip": "Collection of Movies that have been filmed in Western Asia.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Western Asia",
@@ -19542,7 +19641,8 @@
             "key": "use_Eastern Europe",
             "label": "Eastern Europe",
             "tooltip": "Collection of Movies that have been filmed in Eastern Europe.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Eastern Europe",
@@ -19568,7 +19668,8 @@
             "key": "use_Northern Europe",
             "label": "Northern Europe",
             "tooltip": "Collection of Movies that have been filmed in Northern Europe.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Northern Europe",
@@ -19594,7 +19695,8 @@
             "key": "use_Southern Europe",
             "label": "Southern Europe",
             "tooltip": "Collection of Movies that have been filmed in Southern Europe.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Southern Europe",
@@ -19620,7 +19722,8 @@
             "key": "use_Western Europe",
             "label": "Western Europe",
             "tooltip": "Collection of Movies that have been filmed in Western Europe.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Western Europe",
@@ -19646,7 +19749,8 @@
             "key": "use_Australia and New Zealand",
             "label": "Australia and New Zealand",
             "tooltip": "Collection of Movies that have been filmed in Australia and New Zealand.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Australia and New Zealand",
@@ -19672,7 +19776,8 @@
             "key": "use_Melanesia",
             "label": "Melanesia",
             "tooltip": "Collection of Movies that have been filmed in Melanesia.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Melanesia",
@@ -19698,7 +19803,8 @@
             "key": "use_Micronesia",
             "label": "Micronesia",
             "tooltip": "Collection of Movies that have been filmed in Micronesia.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Micronesia",
@@ -19724,7 +19830,8 @@
             "key": "use_Polynesia",
             "label": "Polynesia",
             "tooltip": "Collection of Movies that have been filmed in Polynesia.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Polynesia",
@@ -19750,7 +19857,8 @@
             "key": "use_other",
             "label": "Other Regions",
             "tooltip": "Collection of Movies that are in other uncommon Regions.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_other",
@@ -19802,21 +19910,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -20179,7 +20287,8 @@
             "key": "use_Africa",
             "label": "Africa",
             "tooltip": "Collection of Movies filmed in Africa.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Africa",
@@ -20205,7 +20314,8 @@
             "key": "use_Americas",
             "label": "Americas",
             "tooltip": "Collection of Movies filmed in Americas.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Americas",
@@ -20231,7 +20341,8 @@
             "key": "use_Antarctica",
             "label": "Antarctica",
             "tooltip": "Collection of Movies filmed in Antarctica.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Antarctica",
@@ -20257,7 +20368,8 @@
             "key": "use_Asia",
             "label": "Asia",
             "tooltip": "Collection of Movies filmed in Asia.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Asia",
@@ -20283,7 +20395,8 @@
             "key": "use_Europe",
             "label": "Europe",
             "tooltip": "Collection of Movies filmed in Europe.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Europe",
@@ -20309,7 +20422,8 @@
             "key": "use_Oceania",
             "label": "Oceania",
             "tooltip": "Collection of Movies filmed in Oceania.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_Oceania",
@@ -20335,7 +20449,8 @@
             "key": "use_other",
             "label": "Other Continents",
             "tooltip": "Collection of Movies that are in other uncommon Continents.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_other",
@@ -20387,21 +20502,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -20770,7 +20885,8 @@
             "key": "use_1.33",
             "label": "1.33 - Academy Aperture",
             "tooltip": "Collection of Movies/Shows with a 1.33 aspect ratio.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_1.33",
@@ -20796,7 +20912,8 @@
             "key": "use_1.65",
             "label": "1.65 - Early Widescreen",
             "tooltip": "Collection of Movies/Shows with a 1.65 aspect ratio.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_1.65",
@@ -20822,7 +20939,8 @@
             "key": "use_1.66",
             "label": "1.66 - European Widescreen",
             "tooltip": "Collection of Movies/Shows with a 1.66 aspect ratio.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_1.66",
@@ -20848,7 +20966,8 @@
             "key": "use_1.78",
             "label": "1.78 - Widescreen TV",
             "tooltip": "Collection of Movies/Shows with a 1.78 aspect ratio.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_1.78",
@@ -20874,7 +20993,8 @@
             "key": "use_1.85",
             "label": "1.85 - American Widescreen",
             "tooltip": "Collection of Movies/Shows with a 1.85 aspect ratio.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_1.85",
@@ -20900,7 +21020,8 @@
             "key": "use_2.2",
             "label": "2.2 - 70mm Frame",
             "tooltip": "Collection of Movies/Shows with a 2.2 aspect ratio.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_2.2",
@@ -20926,7 +21047,8 @@
             "key": "use_2.35",
             "label": "2.35 - Anamorphic Projection",
             "tooltip": "Collection of Movies/Shows with a 2.35 aspect ratio.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_2.35",
@@ -20952,7 +21074,8 @@
             "key": "use_2.77",
             "label": "2.77 - Cinerama",
             "tooltip": "Collection of Movies/Shows with a 2.77 aspect ratio.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_2.77",
@@ -21004,21 +21127,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -21407,21 +21530,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -21810,21 +21933,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -22213,21 +22336,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -22624,21 +22747,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -23028,7 +23151,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -23038,7 +23161,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -23048,7 +23171,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -23441,7 +23564,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -23451,7 +23574,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -23461,7 +23584,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -23854,7 +23977,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -23864,7 +23987,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -23874,7 +23997,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -24248,7 +24371,8 @@
             "key": "use_appletv",
             "label": "Apple TV Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Apple TV.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_appletv",
@@ -24274,7 +24398,8 @@
             "key": "use_bet",
             "label": "BET+ Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on BET+.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_bet",
@@ -24300,7 +24425,8 @@
             "key": "use_channel4",
             "label": "Channel 4 Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Channel 4.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_channel4",
@@ -24326,7 +24452,8 @@
             "key": "use_crave",
             "label": "Crave Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Crave.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_crave",
@@ -24352,7 +24479,8 @@
             "key": "use_crunchyroll",
             "label": "Crunchyroll Shows",
             "tooltip": "Collection of Shows Streaming on Crunchyroll.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_crunchyroll",
@@ -24378,7 +24506,8 @@
             "key": "use_discovery",
             "label": "discovery+ Shows",
             "tooltip": "Collection of Shows Streaming on discovery+.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_discovery",
@@ -24404,7 +24533,8 @@
             "key": "use_disney",
             "label": "Disney+ Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Disney+.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_disney",
@@ -24430,7 +24560,8 @@
             "key": "use_hayu",
             "label": "Hayu Shows",
             "tooltip": "Collection of Shows Streaming on Hulu.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_hayu",
@@ -24456,7 +24587,8 @@
             "key": "use_hulu",
             "label": "Hulu Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Hulu.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_hulu",
@@ -24482,7 +24614,8 @@
             "key": "use_itvx",
             "label": "ITVX Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on ITVX.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_itvx",
@@ -24508,7 +24641,8 @@
             "key": "use_hbomax",
             "label": "HBO Max Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on HBO Max.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_hbomax",
@@ -24534,7 +24668,8 @@
             "key": "use_netflix",
             "label": "Netflix Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Netflix.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_netflix",
@@ -24560,7 +24695,8 @@
             "key": "use_now",
             "label": "NOW Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on NOW.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_now",
@@ -24586,7 +24722,8 @@
             "key": "use_paramount",
             "label": "Paramount+ Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Paramount+.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_paramount",
@@ -24612,7 +24749,8 @@
             "key": "use_peacock",
             "label": "Peacock Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Peacock.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_peacock",
@@ -24638,7 +24776,8 @@
             "key": "use_amazon",
             "label": "Prime Video Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on Prime Video.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_amazon",
@@ -24664,7 +24803,8 @@
             "key": "use_youtube",
             "label": "YouTube Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on YouTube.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_youtube",
@@ -24690,7 +24830,8 @@
             "key": "use_tubi",
             "label": "tubi Movies/Shows",
             "tooltip": "Collection of Movies/Shows Streaming on tubi.",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_tubi",
@@ -24753,21 +24894,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -25156,21 +25297,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -25571,21 +25712,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -25953,7 +26094,8 @@
             "key": "use_aapi",
             "label": "Asian American Pacific Islander Movies",
             "tooltip": "Movies related to Asian American Pacific Islander Month",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_aapi",
@@ -25969,7 +26111,8 @@
             "key": "use_black_history",
             "label": "Black History Month Movies",
             "tooltip": "Movies related to Black History Month",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_black_history",
@@ -25985,7 +26128,8 @@
             "key": "use_christmas",
             "label": "Christmas Movies",
             "tooltip": "Movies related to Christmas",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_christmas",
@@ -26001,7 +26145,8 @@
             "key": "use_disabilities",
             "label": "Disability Month Movies",
             "tooltip": "Movies related to Disability Awareness Month",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_disabilities",
@@ -26017,7 +26162,8 @@
             "key": "use_easter",
             "label": "Easter Movies",
             "tooltip": "Movies related to Easter",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_easter",
@@ -26033,7 +26179,8 @@
             "key": "use_father",
             "label": "Father's Day Movies",
             "tooltip": "Movies related to Father's Day",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_father",
@@ -26049,7 +26196,8 @@
             "key": "use_halloween",
             "label": "Halloween Movies",
             "tooltip": "Movies related to Halloween",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_halloween",
@@ -26065,7 +26213,8 @@
             "key": "use_independence",
             "label": "Independence Day Movies",
             "tooltip": "Movies related to Independence Day",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_independence",
@@ -26081,7 +26230,8 @@
             "key": "use_labor",
             "label": "Labor Day Movies",
             "tooltip": "Movies related to Labor Day",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_labor",
@@ -26097,7 +26247,8 @@
             "key": "use_lgbtq",
             "label": "LGBTQ Month Movies",
             "tooltip": "Movies related to LGBTQ Pride Month",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_lgbtq",
@@ -26113,7 +26264,8 @@
             "key": "use_memorial",
             "label": "Memorial Day Movies",
             "tooltip": "Movies related to Memorial Day",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_memorial",
@@ -26129,7 +26281,8 @@
             "key": "use_mother",
             "label": "Mother's Day Movies",
             "tooltip": "Movies related to Mother's Day",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_mother",
@@ -26145,7 +26298,8 @@
             "key": "use_latinx",
             "label": "National Hispanic Heritage Movies",
             "tooltip": "Movies related to National Hispanic Heritage Month",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_latinx",
@@ -26161,7 +26315,8 @@
             "key": "use_years",
             "label": "New Year's Day Movies",
             "tooltip": "Movies related to New Year's Day",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_years",
@@ -26177,7 +26332,8 @@
             "key": "use_patrick",
             "label": "St. Patrick's Day Movies",
             "tooltip": "Movies related to St. Patrick's Day",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_patrick",
@@ -26193,7 +26349,8 @@
             "key": "use_thanksgiving",
             "label": "Thanksgiving Movies",
             "tooltip": "Movies related to Thanksgiving",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_thanksgiving",
@@ -26209,7 +26366,8 @@
             "key": "use_valentine",
             "label": "Valentine's Day Movies",
             "tooltip": "Movies related to Valentine's Day",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_valentine",
@@ -26225,7 +26383,8 @@
             "key": "use_veteran",
             "label": "Veteran's Day Movies",
             "tooltip": "Movies related to Veteran's Day",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_veteran",
@@ -26241,7 +26400,8 @@
             "key": "use_women",
             "label": "Women's History Month Movies",
             "tooltip": "Movies related to Women's History Month",
-            "type": "toggle"
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "radarr_add_missing_women",
@@ -26283,7 +26443,7 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -26293,7 +26453,7 @@
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -26303,7 +26463,7 @@
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default",
+            "default": false,
             "media_types": [
               "movie"
             ]
@@ -26695,21 +26855,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -27097,21 +27257,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",
@@ -27499,21 +27659,21 @@
             "label": "Visible Home",
             "type": "toggle",
             "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_library",
             "label": "Visible Library",
             "type": "toggle",
             "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "visible_shared",
             "label": "Visible Shared",
             "type": "toggle",
             "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
-            "default": "default"
+            "default": false
           },
           {
             "key": "sort_by",

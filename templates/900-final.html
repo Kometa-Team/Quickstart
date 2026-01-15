@@ -337,7 +337,7 @@
           <button type="button" class="btn btn-outline-secondary btn-sm" id="pause-log-btn">
             <i class="bi bi-pause-circle me-1"></i> Pause
           </button>
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2 flex-wrap log-filter-row">
             <label for="run-log-filter" class="form-label mb-0">Filter</label>
             <div class="input-group input-group-sm" style="width: 210px;">
               <input id="run-log-filter" class="form-control" placeholder="Regex or text">
@@ -346,13 +346,32 @@
                 <i class="bi bi-x-lg"></i>
               </button>
             </div>
-            <div class="btn-group btn-group-sm" role="group" aria-label="Quick filters">
-              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[DEBUG]">DEBUG</button>
-              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[INFO]">INFO</button>
-              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[WARNING]">WARN</button>
-              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[ERROR]">ERROR</button>
-              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[CRITICAL]">CRIT</button>
-              <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="Traceback">TRACE</button>
+            <div class="log-level-wrap">
+              <div class="btn-group btn-group-sm log-level-buttons" role="group" aria-label="Quick filters">
+                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[DEBUG]">DEBUG</button>
+                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[INFO]">INFO</button>
+                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[WARNING]">WARN</button>
+                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[ERROR]">ERROR</button>
+                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[CRITICAL]">CRIT</button>
+                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="Traceback">TRACE</button>
+              </div>
+              <div class="log-level-legend">Totals (full log) / Matches (current filter)</div>
+              <div class="log-level-counts" id="run-log-stats" aria-live="polite">
+                <span data-log-stat="debug" data-log-scope="total">0</span>
+                <span data-log-stat="info" data-log-scope="total">0</span>
+                <span data-log-stat="warning" data-log-scope="total">0</span>
+                <span data-log-stat="error" data-log-scope="total">0</span>
+                <span data-log-stat="critical" data-log-scope="total">0</span>
+                <span data-log-stat="trace" data-log-scope="total">0</span>
+              </div>
+              <div class="log-level-counts log-level-counts--filtered" id="run-log-stats-filtered" aria-live="polite">
+                <span data-log-stat="debug" data-log-scope="filtered">0</span>
+                <span data-log-stat="info" data-log-scope="filtered">0</span>
+                <span data-log-stat="warning" data-log-scope="filtered">0</span>
+                <span data-log-stat="error" data-log-scope="filtered">0</span>
+                <span data-log-stat="critical" data-log-scope="filtered">0</span>
+                <span data-log-stat="trace" data-log-scope="filtered">0</span>
+              </div>
             </div>
           </div>
         </div>

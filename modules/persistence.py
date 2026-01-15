@@ -266,6 +266,14 @@ def retrieve_settings(target):
     if not data[source_name]:
         data[source_name] = get_dummy_data(source_name)
 
+    if source_name == "trakt":
+        section = data[source_name]
+        if isinstance(section, dict):
+            auth = section.get("authorization")
+            if isinstance(auth, dict) and "force_refresh" in auth and "force_refresh" not in section:
+                section["force_refresh"] = auth.pop("force_refresh")
+            section.setdefault("force_refresh", False)
+
     # Only modify if the target is 'libraries'
     if source_name == "libraries":
         # Ensure mov-template_variables and sho-template_variables are always present

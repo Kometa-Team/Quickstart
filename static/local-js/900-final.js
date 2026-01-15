@@ -14,6 +14,8 @@ let KOMETA_STATUS = null
 let logPollingPaused = false
 let logFilter = ''
 let lastLogText = ''
+let lastLogStatsTotal = null
+let logStatsPollCounter = 0
 
 const _qsEnvEl = document.getElementById('qs-env')
 const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
@@ -47,6 +49,8 @@ $(document).ready(function () {
   const $filterInput = $('#run-log-filter')
   const $clearFilterBtn = $('#clear-log-filter')
   const $levelButtons = $('.log-level-btn')
+  const $logStats = $('#run-log-stats')
+  const $logStatsFiltered = $('#run-log-stats-filtered')
 
   const showYAML = plexValid && tmdbValid && libsValid && settValid && yamlValid
 
@@ -755,6 +759,47 @@ $(document).ready(function () {
     return text.split('\n').filter(line => re.test(line)).join('\n')
   }
 
+  function computeLogStats (text) {
+    const stats = {
+      debug: 0,
+      info: 0,
+      warning: 0,
+      error: 0,
+      critical: 0,
+      trace: 0
+    }
+    if (!text) return stats
+    const lines = text.split(/\r?\n/)
+    lines.forEach(line => {
+      if (!line) return
+      if (line.includes('[DEBUG]')) stats.debug += 1
+      if (line.includes('[INFO]')) stats.info += 1
+      if (line.includes('[WARNING]')) stats.warning += 1
+      if (line.includes('[ERROR]')) stats.error += 1
+      if (line.includes('[CRITICAL]')) stats.critical += 1
+      if (line.toLowerCase().includes('traceback')) stats.trace += 1
+    })
+    return stats
+  }
+
+  function updateStatRow ($row, stats) {
+    if (!$row || !$row.length || !stats) return
+    const keys = ['debug', 'info', 'warning', 'error', 'critical', 'trace']
+    keys.forEach(key => {
+      const val = typeof stats[key] === 'number' ? stats[key] : 0
+      $row.find(`[data-log-stat="${key}"]`).text(val)
+    })
+  }
+
+  function renderLogStats () {
+    if (!$logStats.length && !$logStatsFiltered.length) return
+    const totalStats = lastLogStatsTotal || computeLogStats(lastLogText)
+    const filteredText = applyLogFilter(lastLogText, logFilter)
+    const filteredStats = computeLogStats(filteredText)
+    updateStatRow($logStats, totalStats)
+    updateStatRow($logStatsFiltered, filteredStats)
+  }
+
   function updateClearFilterButton () {
     if (!$clearFilterBtn.length) return
     const hasValue = $filterInput.val().trim().length > 0
@@ -766,6 +811,7 @@ $(document).ready(function () {
     const filtered = applyLogFilter(lastLogText, logFilter)
     $runLog.text(filtered)
     updateClearFilterButton()
+    renderLogStats()
   })
 
   $clearFilterBtn.on('click', function () {
@@ -774,6 +820,7 @@ $(document).ready(function () {
     const filtered = applyLogFilter(lastLogText, logFilter)
     $runLog.text(filtered)
     updateClearFilterButton()
+    renderLogStats()
     $filterInput.trigger('focus')
   })
 
@@ -784,6 +831,7 @@ $(document).ready(function () {
     const filtered = applyLogFilter(lastLogText, logFilter)
     $runLog.text(filtered)
     updateClearFilterButton()
+    renderLogStats()
   })
 
   $tailSelect.on('change', function () {
@@ -912,7 +960,11 @@ $(document).ready(function () {
     const logEl = $runLog[0]
     const wasAtBottom = logEl ? (logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 5) : true
 
-    fetch(`/tail-log?size=${encodeURIComponent(tailSize)}`)
+    logStatsPollCounter += 1
+    const wantStats = (logStatsPollCounter % 5 === 0) || !lastLogStatsTotal
+    const statsQuery = wantStats ? '&stats=1' : ''
+
+    fetch(`/tail-log?size=${encodeURIComponent(tailSize)}${statsQuery}`)
       .then(res => res.json())
       .then(data => {
         if (!$runLog.length) return
@@ -921,8 +973,12 @@ $(document).ready(function () {
           return
         }
         lastLogText = data.log || ''
+        if (data.stats) {
+          lastLogStatsTotal = data.stats
+        }
         const filtered = applyLogFilter(lastLogText, logFilter)
         $runLog.text(filtered)
+        renderLogStats()
         const shouldStick = autoScrollEnabled || wasAtBottom
         if (shouldStick && logEl) {
           logEl.scrollTop = logEl.scrollHeight
