@@ -583,6 +583,7 @@ def build_libraries_section(
             entry["operations"] = operations
 
         # Process Collections
+        has_collectionless = False
         collection_key = helpers.extract_library_name(library_key)
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"collections keys for {collection_key}: {list(collections.get(collection_key, {}).keys())}", level="DEBUG")
@@ -601,6 +602,8 @@ def build_libraries_section(
                     continue
 
                 raw_id = key.split(f"{library_type}-library_{collection_key}-collection_")[-1]
+                if isinstance(raw_id, str) and raw_id.strip().lower().endswith("collectionless"):
+                    has_collectionless = True
                 file_entry = {"default": raw_id}
 
                 # IMPORTANT: Template collection children do NOT contain '-library-' in key
@@ -631,6 +634,11 @@ def build_libraries_section(
                 collection_files.append(file_entry)
 
             if collection_files:
+                def is_collectionless(item):
+                    default_name = str(item.get("default", "")).strip().lower()
+                    return default_name in {"collectionless", "collection_collectionless"} or default_name.endswith("collectionless")
+
+                collection_files.sort(key=lambda item: (is_collectionless(item)))
                 entry["collection_files"] = collection_files
 
             # Process Overlays
@@ -940,6 +948,9 @@ def build_libraries_section(
 
         if language_value:
             template_vars["language"] = language_value
+
+        if has_collectionless:
+            template_vars["collection_mode"] = "hide_items"
 
         entry["template_variables"] = template_vars
 

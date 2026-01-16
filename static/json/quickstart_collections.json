@@ -66,7 +66,7 @@
               "movie"
             ]
           },
-          {
+                    {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -91,6 +91,7 @@
               }
             ]
           },
+
           {
             "key": "visible_home",
             "label": "Visible Home",
@@ -14791,40 +14792,15 @@
           "movie",
           "show"
         ],
-        "tooltip": "Please visit the wiki for this file to understand what it does",
+        "tooltip": "Please visit the wiki for this collection to understand what it does.<br><br><b>Note:</b> When enabled, Quickstart automatically sets <code>collection_mode: hide_items</code> at the library level.",
         "tooltip_variant": "danger",
         "template_variables": [
-          {
-            "key": "collection_mode",
-            "label": "Collection Mode",
-            "type": "select",
-            "tooltip": "Controls the collection mode of all collections in a Defaults File.<br><br> Default is <b>Library Default</b> ",
-            "default": "default",
-            "options": [
-              {
-                "value": "default",
-                "label": "Library Default"
-              },
-              {
-                "value": "hide",
-                "label": "Hide Collection"
-              },
-              {
-                "value": "hide_items",
-                "label": "Hide Items in this Collection"
-              },
-              {
-                "value": "show_items",
-                "label": "Show this Collection and its Items"
-              }
-            ]
-          },
           {
             "key": "collection_order",
             "label": "Collection Order",
             "type": "select",
             "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
-            "default": "custom",
+            "default": "alpha",
             "options": [
               {
                 "value": "custom",

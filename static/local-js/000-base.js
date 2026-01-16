@@ -402,6 +402,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const payload = {}
       let portNum = null
       let hasPortChange = false
+      const currentOptimize = getCurrentOptimizeDefaults()
+      const desiredOptimize = optimizeInput ? optimizeInput.checked : currentOptimize
+      const hasOptimizeChange = optimizeInput ? desiredOptimize !== currentOptimize : false
       if (portInput) {
         const portValue = portInput.value.trim()
         if (!/^\d+$/.test(portValue)) {
@@ -420,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (debugInput) payload.debug = debugInput.checked
-      if (optimizeInput) payload.optimize_defaults = optimizeInput.checked
+      if (optimizeInput) payload.optimize_defaults = desiredOptimize
       if (themeInput) payload.theme = themeInput.value
 
       applyBtn.disabled = true
@@ -449,9 +452,8 @@ document.addEventListener('DOMContentLoaded', () => {
             window.QS_DEBUG = debugFlag
             if (triggerBtn) triggerBtn.dataset.currentDebug = debugFlag ? 'true' : 'false'
           }
-          let optimizeFlag = getCurrentOptimizeDefaults()
           if (typeof payload.optimize_defaults !== 'undefined') {
-            optimizeFlag = Boolean(payload.optimize_defaults)
+            const optimizeFlag = Boolean(payload.optimize_defaults)
             window.QS_OPTIMIZE_DEFAULTS = optimizeFlag
             if (triggerBtn) triggerBtn.dataset.currentOptimizeDefaults = optimizeFlag ? 'true' : 'false'
           }
@@ -464,8 +466,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const modal = bootstrap.Modal.getInstance(modalEl)
           if (modal) modal.hide()
           const isFinalPage = Boolean(document.getElementById('final-yaml'))
-          if (optimizeFlag && isFinalPage) {
+          if (isFinalPage && hasOptimizeChange) {
             setStatus('Refreshing final config...', false)
+            const configForm = document.getElementById('configForm')
+            if (configForm) {
+              configForm.submit()
+              return
+            }
             setTimeout(() => window.location.reload(), 250)
             return
           }
