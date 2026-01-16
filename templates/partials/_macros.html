@@ -1174,7 +1174,7 @@ prefix) %}
                                                 {% set ns = namespace(has_offsets=false, position_id=None, h_id=None, v_id=None) %}
                                                 {% set extra_reset_ids = [] %}
                                                 {% if overlay.id in ['overlay_runtimes', 'overlay_aspect', 'overlay_video_format'] %}
-                                                    {% set reset_vars = ['text', 'format', 'font', 'font_size', 'font_color'] %}
+                                                    {% set reset_vars = ['text', 'format', 'font', 'font_size', 'font_color', 'stroke_width', 'stroke_color'] %}
                                                     {% for rv in reset_vars %}
                                                         {% set _ = extra_reset_ids.append(template_name ~ '-' ~ rv) %}
                                                     {% endfor %}
@@ -1183,7 +1183,7 @@ prefix) %}
                                                 {% elif overlay.id == 'overlay_ribbon' %}
                                                     {% set _ = extra_reset_ids.append(template_name ~ '-style') %}
                                                 {% elif overlay.id == 'overlay_content_rating_commonsense' %}
-                                                    {% set reset_vars = ['text', 'post_text', 'addon_offset', 'font', 'font_size', 'font_color'] %}
+                                                    {% set reset_vars = ['text', 'post_text', 'addon_offset', 'font', 'font_size', 'font_color', 'stroke_width', 'stroke_color'] %}
                                                     {% for rv in reset_vars %}
                                                         {% set _ = extra_reset_ids.append(template_name ~ '-' ~ rv) %}
                                                     {% endfor %}
@@ -1323,7 +1323,7 @@ prefix) %}
                                                             name="{{ template_name }}[{{ var_name }}]"
                                                             aria-describedby="{{ template_name }}-{{ var_name }}_text"
                                                             {% if var_name == 'font_size' %}min="1"{% endif %}
-                                                            {% if var_name in ['back_line_width', 'back_padding', 'back_radius', 'back_width', 'back_height'] %}min="1"{% endif %}
+                                                            {% if var_name in ['back_line_width', 'back_padding', 'back_radius', 'back_width', 'back_height', 'stroke_width'] %}min="1"{% endif %}
                                                             value="{{ display_value }}"
                                                             data-default="{{ var_details.default }}">
                                                     </div>
@@ -1356,7 +1356,7 @@ prefix) %}
                                                     {% endif %}
                                                     {% set color_hex = "#%02X%02X%02X" % (r, g, b) %}
                                                     {% set color_hex_alpha = "#%02X%02X%02X%02X" % (r, g, b, (a_pct * 255 // 100)) %}
-                                                    {% if var_name in ['font_color', 'back_color', 'back_line_color'] %}
+                                                    {% if var_name in ['font_color', 'back_color', 'back_line_color', 'stroke_color'] %}
                                                     <div class="rgba-group mb-2">
                                                         <div class="rgba-bar-wrap mb-2">
                                                             <input type="color" class="form-control form-control-color rgba-color-picker visually-hidden"
