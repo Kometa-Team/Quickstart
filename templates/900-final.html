@@ -349,30 +349,34 @@
               </button>
             </div>
             <div class="log-level-wrap">
-              <div class="btn-group btn-group-sm log-level-buttons" role="group" aria-label="Quick filters">
-                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[DEBUG]">DEBUG</button>
-                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[INFO]">INFO</button>
-                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[WARNING]">WARN</button>
-                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[ERROR]">ERROR</button>
-                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[CRITICAL]">CRIT</button>
-                <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="Traceback">TRACE</button>
-              </div>
-              <div class="log-level-legend">Totals (full log) / Matches (current filter)</div>
-              <div class="log-level-counts" id="run-log-stats" aria-live="polite">
-                <span data-log-stat="debug" data-log-scope="total">0</span>
-                <span data-log-stat="info" data-log-scope="total">0</span>
-                <span data-log-stat="warning" data-log-scope="total">0</span>
-                <span data-log-stat="error" data-log-scope="total">0</span>
-                <span data-log-stat="critical" data-log-scope="total">0</span>
-                <span data-log-stat="trace" data-log-scope="total">0</span>
-              </div>
-              <div class="log-level-counts log-level-counts--filtered" id="run-log-stats-filtered" aria-live="polite">
-                <span data-log-stat="debug" data-log-scope="filtered">0</span>
-                <span data-log-stat="info" data-log-scope="filtered">0</span>
-                <span data-log-stat="warning" data-log-scope="filtered">0</span>
-                <span data-log-stat="error" data-log-scope="filtered">0</span>
-                <span data-log-stat="critical" data-log-scope="filtered">0</span>
-                <span data-log-stat="trace" data-log-scope="filtered">0</span>
+              <div class="log-level-grid">
+                <div class="log-level-row-label">Filter</div>
+                <div class="btn-group btn-group-sm log-level-buttons" role="group" aria-label="Quick filters">
+                  <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[DEBUG]">DEBUG</button>
+                  <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[INFO]">INFO</button>
+                  <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[WARNING]">WARN</button>
+                  <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[ERROR]">ERROR</button>
+                  <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[CRITICAL]">CRIT</button>
+                  <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="Traceback">TRACE</button>
+                </div>
+                <div class="log-level-row-label">Totals (full log)</div>
+                <div class="log-level-counts" id="run-log-stats" aria-live="polite">
+                  <span data-log-stat="debug" data-log-scope="total">0</span>
+                  <span data-log-stat="info" data-log-scope="total">0</span>
+                  <span data-log-stat="warning" data-log-scope="total">0</span>
+                  <span data-log-stat="error" data-log-scope="total">0</span>
+                  <span data-log-stat="critical" data-log-scope="total">0</span>
+                  <span data-log-stat="trace" data-log-scope="total">0</span>
+                </div>
+                <div class="log-level-row-label">Matches (current filter)</div>
+                <div class="log-level-counts log-level-counts--filtered" id="run-log-stats-filtered" aria-live="polite">
+                  <span data-log-stat="debug" data-log-scope="filtered">0</span>
+                  <span data-log-stat="info" data-log-scope="filtered">0</span>
+                  <span data-log-stat="warning" data-log-scope="filtered">0</span>
+                  <span data-log-stat="error" data-log-scope="filtered">0</span>
+                  <span data-log-stat="critical" data-log-scope="filtered">0</span>
+                  <span data-log-stat="trace" data-log-scope="filtered">0</span>
+                </div>
               </div>
             </div>
           </div>

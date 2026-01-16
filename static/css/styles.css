@@ -1561,6 +1561,29 @@ div#loading {
         /* transform: translateX(-50%); */
         text-align: left;
     }
+
+    .page-nav .nav-button.d-none {
+        display: inline-flex !important;
+    }
+
+    .page-nav .nav-button {
+        font-size: 0;
+        padding: 6px 8px;
+        gap: 0;
+    }
+
+    .page-nav .nav-button i {
+        font-size: 1rem;
+    }
+
+    .page-nav .dropdown .btn {
+        min-width: auto;
+        text-align: center;
+    }
+
+    .page-nav .dropdown-toggle::after {
+        margin-left: 0.35rem;
+    }
 }
 
 /* Progress Bar Styling Inside Dropdown */
@@ -1881,14 +1904,23 @@ div#loading {
 
 .log-level-wrap {
     display: inline-flex;
-    flex-direction: column;
     align-items: stretch;
-    gap: 4px;
 }
 
-.log-level-legend {
-    font-size: 0.7rem;
+.log-level-grid {
+    display: grid;
+    grid-template-columns: minmax(80px, auto) 1fr;
+    gap: 4px 10px;
+    align-items: center;
+}
+
+.log-level-row-label {
+    font-size: 0.72rem;
     color: var(--theme-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: right;
+    padding-right: 2px;
 }
 
 .log-level-counts {
@@ -1903,4 +1935,11 @@ div#loading {
 
 .log-level-counts--filtered {
     color: var(--theme-text);
+}
+
+#run-output-log {
+    resize: both;
+    overflow: auto;
+    min-height: 220px;
+    min-width: 280px;
 }
