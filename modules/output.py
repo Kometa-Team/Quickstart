@@ -634,6 +634,7 @@ def build_libraries_section(
                 collection_files.append(file_entry)
 
             if collection_files:
+
                 def is_collectionless(item):
                     default_name = str(item.get("default", "")).strip().lower()
                     return default_name in {"collectionless", "collection_collectionless"} or default_name.endswith("collectionless")
