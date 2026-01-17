@@ -181,7 +181,8 @@ function showToast (type, message) {
 // Mark all <select> elements when changed, so we can tell if a user modified them
 function trackModifiedSelects () {
   document.querySelectorAll('select').forEach(select => {
-    select.addEventListener('change', () => {
+    select.addEventListener('change', (event) => {
+      if (event && event.isTrusted === false) return
       select.setAttribute('data-user-modified', 'true')
     })
   })

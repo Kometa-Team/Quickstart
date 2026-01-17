@@ -757,6 +757,19 @@ const OverlayHandler = {
       'rt tomatoes': 'RT-Crit-Fresh',
       myanimelist: 'MAL'
     }
+    const RATING_FONT_MAP = {
+      anidb: 'config/metadata/overlays/fonts/Handel Gothic ITC W01 Heavy.ttf',
+      imdb: 'config/metadata/overlays/fonts/Impact.ttf',
+      letterboxd: 'config/metadata/overlays/fonts/HelveticaNowDisplay-ExtBlk.ttf',
+      metacritic: 'config/metadata/overlays/fonts/Myriad Bold.otf',
+      tmdb: 'config/metadata/overlays/fonts/Avenir_95_Black.ttf',
+      trakt: 'config/metadata/overlays/fonts/Claspo-ND-Medium.ttf',
+      rt_tomato: 'config/metadata/overlays/fonts/Adlib.ttf',
+      rt_popcorn: 'config/metadata/overlays/fonts/Adlib.ttf',
+      'rt tomato': 'config/metadata/overlays/fonts/Adlib.ttf',
+      'rt popcorn': 'config/metadata/overlays/fonts/Adlib.ttf',
+      rotten: 'config/metadata/overlays/fonts/Adlib.ttf'
+    }
     const FLAG_PREVIEW_ITEMS = [
       {
         text: 'EN',
@@ -806,6 +819,58 @@ const OverlayHandler = {
         }
       }
       throw lastErr || new Error('No rating image URL matched')
+    }
+
+    const getRatingFontKey = (value, label) => {
+      const key = (value || '').toString().trim().toLowerCase()
+      if (key) return key
+      return (label || '').toString().trim().toLowerCase()
+    }
+
+    const ensureFontOption = (input, value) => {
+      if (!input || input.tagName !== 'SELECT' || !value) return
+      const exists = Array.from(input.options || []).some(opt => opt.value === value)
+      if (exists) return
+      const option = document.createElement('option')
+      option.value = value
+      option.textContent = value.split(/[\\/]/).pop()
+      input.appendChild(option)
+    }
+
+    const shouldAutoUpdateFont = (input) => {
+      if (!input) return false
+      if (input.dataset.ratingFontUser === 'true') return false
+      if (input.dataset.userModified === 'true') return false
+      const current = (input.value || '').trim()
+      const defaultVal = (input.dataset.default || '').trim()
+      const autoVal = (input.dataset.ratingFontAutoValue || '').trim()
+      if (!current) return true
+      if (current === defaultVal) return true
+      return input.dataset.ratingFontAuto === 'true' && current === autoVal
+    }
+
+    const applyRatingFontDefaults = (cfg) => {
+      if (!cfg || cfg.id !== 'overlay_ratings') return
+      const slots = [
+        { imageKey: 'rating1_image', fontKey: 'rating1_font' },
+        { imageKey: 'rating2_image', fontKey: 'rating2_font' },
+        { imageKey: 'rating3_image', fontKey: 'rating3_font' }
+      ]
+      slots.forEach(slot => {
+        const imageInput = getTemplateInput(cfg, slot.imageKey)
+        const fontInput = getTemplateInput(cfg, slot.fontKey)
+        if (!imageInput || !fontInput) return
+        const imageVal = imageInput.value || imageInput.dataset?.default
+        const label = imageInput.selectedOptions?.[0]?.textContent
+        const key = getRatingFontKey(imageVal, label)
+        const mapped = RATING_FONT_MAP[key]
+        if (!mapped || !shouldAutoUpdateFont(fontInput)) return
+        ensureFontOption(fontInput, mapped)
+        fontInput.value = mapped
+        fontInput.dataset.default = mapped
+        fontInput.dataset.ratingFontAuto = 'true'
+        fontInput.dataset.ratingFontAutoValue = mapped
+      })
     }
 
     const buildRatingsCompositeDataUrl = async (cfg) => {
@@ -2835,12 +2900,28 @@ const OverlayHandler = {
 
         if (cfg.id === 'overlay_ratings' && layer && cfg.container) {
           const refreshRatings = () => {
+            applyRatingFontDefaults(cfg)
             buildBackdropDataUrl(cfg).then(dataUrl => {
               layer.src = dataUrl
               applyPosition(cfg)
             })
           }
           const templateName = cfg.container.dataset.overlayTemplate
+          const ratingFontInputs = [
+            getTemplateInput(cfg, 'rating1_font'),
+            getTemplateInput(cfg, 'rating2_font'),
+            getTemplateInput(cfg, 'rating3_font')
+          ]
+          ratingFontInputs.forEach(input => {
+            if (!input || input.dataset.ratingFontWatch === 'true') return
+            input.addEventListener('change', (event) => {
+              if (event && event.isTrusted) {
+                input.dataset.ratingFontUser = 'true'
+                input.dataset.ratingFontAuto = 'false'
+              }
+            })
+            input.dataset.ratingFontWatch = 'true'
+          })
           const ratingSelectors = [
             `[name="${templateName}[rating1]"]`,
             `[name="${templateName}[rating1_image]"]`,
