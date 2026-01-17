@@ -1322,8 +1322,8 @@ prefix) %}
                                                             id="{{ template_name }}-{{ var_name }}"
                                                             name="{{ template_name }}[{{ var_name }}]"
                                                             aria-describedby="{{ template_name }}-{{ var_name }}_text"
-                                                            {% if var_name == 'font_size' %}min="1"{% endif %}
-                                                            {% if var_name in ['back_line_width', 'back_padding', 'back_radius', 'back_width', 'back_height', 'stroke_width'] %}min="1"{% endif %}
+                                                            {% if var_name == 'font_size' or var_name.endswith('_font_size') %}min="1"{% endif %}
+                                                            {% if var_name in ['back_line_width', 'back_padding', 'back_radius', 'back_width', 'back_height', 'stroke_width'] or var_name.endswith('_stroke_width') %}min="1"{% endif %}
                                                             value="{{ display_value }}"
                                                             data-default="{{ var_details.default }}">
                                                     </div>
@@ -1356,7 +1356,7 @@ prefix) %}
                                                     {% endif %}
                                                     {% set color_hex = "#%02X%02X%02X" % (r, g, b) %}
                                                     {% set color_hex_alpha = "#%02X%02X%02X%02X" % (r, g, b, (a_pct * 255 // 100)) %}
-                                                    {% if var_name in ['font_color', 'back_color', 'back_line_color', 'stroke_color'] %}
+                                                    {% if var_name in ['font_color', 'back_color', 'back_line_color', 'stroke_color'] or var_name.endswith('_font_color') or var_name.endswith('_stroke_color') %}
                                                     <div class="rgba-group mb-2">
                                                         <div class="rgba-bar-wrap mb-2">
                                                             <input type="color" class="form-control form-control-color rgba-color-picker visually-hidden"
@@ -1391,7 +1391,7 @@ prefix) %}
                                                                 oninput="(function(slider){ const picker = document.getElementById('{{ input_id }}_picker'); const target = document.getElementById('{{ input_id }}'); const alphaInput = document.getElementById('{{ alpha_id }}_pct'); const bar = document.getElementById('{{ input_id }}_bar'); const hex = picker && picker.value ? picker.value.toUpperCase() : '#FFFFFF'; const a = Number(slider.value)/100; const r=parseInt(hex.substr(1,2),16); const g=parseInt(hex.substr(3,2),16); const b=parseInt(hex.substr(5,2),16); const aa = Math.round(a * 255); const hexAlpha = aa.toString(16).padStart(2,'0').toUpperCase(); const full = `#${hex.substr(1)}${hexAlpha}`; if (target) { target.value = full; target.dispatchEvent(new Event('input', { bubbles: true })); target.dispatchEvent(new Event('change', { bubbles: true })); } if (bar) bar.style.background = `rgba(${r}, ${g}, ${b}, ${a})`; if (alphaInput) alphaInput.value = slider.value; slider.title = `Opacity: ${slider.value}%`; })(this)">
                                                         </div>
                                                     </div>
-                                                    {% elif var_name == 'font' %}
+                                                    {% elif var_name == 'font' or var_name.endswith('_font') %}
                                                     <div class="input-group mb-2">
                                                         <span class="input-group-text"
                                                             id="{{ input_id }}_text"

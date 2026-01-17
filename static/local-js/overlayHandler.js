@@ -815,10 +815,58 @@ const OverlayHandler = {
         audience: '85%',
         user: '85%'
       }
+      const fontDefaults = {
+        font: 'Inter-Medium.ttf',
+        font_size: 55,
+        font_color: '#FFFFFFFF',
+        stroke_width: 1,
+        stroke_color: '#00000000'
+      }
+      const getInputValue = (input, fallback) => {
+        if (!input) return fallback
+        const defaultVal = input.dataset?.default ?? fallback
+        if (input.type === 'number') {
+          const n = Number(input.value)
+          if (Number.isFinite(n)) return n
+          const fallbackNum = Number(defaultVal)
+          return Number.isFinite(fallbackNum) ? fallbackNum : fallback
+        }
+        if (input.tagName === 'SELECT') {
+          return input.value || defaultVal
+        }
+        return input.value || defaultVal
+      }
+      const getSlotValue = (key, fallback) => {
+        return getInputValue(getTemplateInput(cfg, key), fallback)
+      }
       const slots = [
-        { ratingKey: 'rating1', imageKey: 'rating1_image' },
-        { ratingKey: 'rating2', imageKey: 'rating2_image' },
-        { ratingKey: 'rating3', imageKey: 'rating3_image' }
+        {
+          ratingKey: 'rating1',
+          imageKey: 'rating1_image',
+          fontKey: 'rating1_font',
+          fontSizeKey: 'rating1_font_size',
+          fontColorKey: 'rating1_font_color',
+          strokeWidthKey: 'rating1_stroke_width',
+          strokeColorKey: 'rating1_stroke_color'
+        },
+        {
+          ratingKey: 'rating2',
+          imageKey: 'rating2_image',
+          fontKey: 'rating2_font',
+          fontSizeKey: 'rating2_font_size',
+          fontColorKey: 'rating2_font_color',
+          strokeWidthKey: 'rating2_stroke_width',
+          strokeColorKey: 'rating2_stroke_color'
+        },
+        {
+          ratingKey: 'rating3',
+          imageKey: 'rating3_image',
+          fontKey: 'rating3_font',
+          fontSizeKey: 'rating3_font_size',
+          fontColorKey: 'rating3_font_color',
+          strokeWidthKey: 'rating3_stroke_width',
+          strokeColorKey: 'rating3_stroke_color'
+        }
       ]
       const isEmpty = (val) => {
         if (val === null || val === undefined) return true
@@ -839,13 +887,39 @@ const OverlayHandler = {
         try {
           const img = await loadImageWithFallback(urls)
           const text = ratingTextMap[String(ratingVal).toLowerCase()] || 'NR'
-          items.push({ img, text })
+          items.push({
+            img,
+            text,
+            fontFile: getSlotValue(slot.fontKey, fontDefaults.font),
+            fontSize: getSlotValue(slot.fontSizeKey, fontDefaults.font_size),
+            fontColor: getSlotValue(slot.fontColorKey, fontDefaults.font_color),
+            strokeWidth: getSlotValue(slot.strokeWidthKey, fontDefaults.stroke_width),
+            strokeColor: getSlotValue(slot.strokeColorKey, fontDefaults.stroke_color)
+          })
         } catch (err) {
           console.warn('[OverlayBoards] Failed to load rating image', { value: imageVal, label, err })
         }
       }
 
       if (!items.length) return resolveOverlayImage(cfg)
+
+      const fontFamilyMap = new Map()
+      const fontLoads = []
+      items.forEach((item) => {
+        const fontFile = String(item.fontFile || '').trim()
+        if (!fontFile || fontFamilyMap.has(fontFile)) return
+        fontFamilyMap.set(fontFile, null)
+        fontLoads.push(
+          ensureRuntimeFontLoaded(fontFile).then((family) => {
+            if (family) {
+              fontFamilyMap.set(fontFile, family)
+            }
+          })
+        )
+      })
+      if (fontLoads.length) {
+        await Promise.all(fontLoads)
+      }
 
       const vars = getBackdropVars(cfg)
       const boxWidth = Math.max(1, Number(vars.back_width) || 160)
@@ -865,8 +939,6 @@ const OverlayHandler = {
         ? Math.max(0, Number(vars.back_padding))
         : Math.round(boxHeight * 0.08)
 
-      const fontSize = Math.max(10, Math.round(boxHeight * 0.32))
-      const fontFamily = 'Inter, "Arial Black", Arial, sans-serif'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'alphabetic'
 
@@ -886,10 +958,17 @@ const OverlayHandler = {
           ctx.stroke()
         }
 
+        const fontFile = String(item.fontFile || fontDefaults.font || 'Inter-Medium.ttf')
+        const { family: normalizedFamily } = normalizeFontFile(fontFile)
+        const fontFamily = fontFamilyMap.get(fontFile) || normalizedFamily || 'Inter-Medium'
+        const fontSize = Math.max(1, Number(item.fontSize) || fontDefaults.font_size)
+        const fontColor = item.fontColor || fontDefaults.font_color
+        const strokeWidth = Math.max(0, Number(item.strokeWidth) || 0)
+        const strokeColor = item.strokeColor || fontDefaults.stroke_color
+
         const textBottom = boxTop + boxHeight - innerPad
-        ctx.fillStyle = '#FFFFFF'
-        ctx.font = `700 ${fontSize}px ${fontFamily}`
-        ctx.fillText(item.text, boxWidth / 2, textBottom)
+        ctx.font = `700 ${fontSize}px "${fontFamily}"`
+        drawTextWithStroke(ctx, item.text, boxWidth / 2, textBottom, fontColor, strokeColor, strokeWidth)
 
         const iconMaxHeight = Math.max(1, boxHeight - fontSize - (innerPad * 2))
         const iconMaxWidth = Math.max(1, boxWidth - (innerPad * 2))
@@ -2765,10 +2844,25 @@ const OverlayHandler = {
           const ratingSelectors = [
             `[name="${templateName}[rating1]"]`,
             `[name="${templateName}[rating1_image]"]`,
+            `[name="${templateName}[rating1_font]"]`,
+            `[name="${templateName}[rating1_font_size]"]`,
+            `[name="${templateName}[rating1_font_color]"]`,
+            `[name="${templateName}[rating1_stroke_width]"]`,
+            `[name="${templateName}[rating1_stroke_color]"]`,
             `[name="${templateName}[rating2]"]`,
             `[name="${templateName}[rating2_image]"]`,
+            `[name="${templateName}[rating2_font]"]`,
+            `[name="${templateName}[rating2_font_size]"]`,
+            `[name="${templateName}[rating2_font_color]"]`,
+            `[name="${templateName}[rating2_stroke_width]"]`,
+            `[name="${templateName}[rating2_stroke_color]"]`,
             `[name="${templateName}[rating3]"]`,
-            `[name="${templateName}[rating3_image]"]`
+            `[name="${templateName}[rating3_image]"]`,
+            `[name="${templateName}[rating3_font]"]`,
+            `[name="${templateName}[rating3_font_size]"]`,
+            `[name="${templateName}[rating3_font_color]"]`,
+            `[name="${templateName}[rating3_stroke_width]"]`,
+            `[name="${templateName}[rating3_stroke_color]"]`
           ]
           const inputs = cfg.container.querySelectorAll(ratingSelectors.join(', '))
           inputs.forEach(input => {
