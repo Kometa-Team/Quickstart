@@ -239,9 +239,25 @@ def _build_overlay_defaults():
             for key, value in offset_defaults.items():
                 base_defaults.setdefault(key, value)
 
-            entry = {"defaults": base_defaults, "offsets_by_type": per_type_offsets}
-            defaults[base_key] = entry
+            entry = defaults.get(base_key)
+            if not entry:
+                entry = {"defaults": base_defaults, "offsets_by_type": {}, "defaults_by_type": {}}
+                defaults[base_key] = entry
+            elif not entry.get("defaults"):
+                entry["defaults"] = base_defaults
+
             defaults[overlay_id] = entry
+
+            media_types = overlay.get("media_types") or []
+            for media_type in media_types:
+                if media_type not in {"movie", "show", "season", "episode"}:
+                    continue
+                entry["defaults_by_type"][media_type] = base_defaults
+                if offset_defaults:
+                    entry["offsets_by_type"][media_type] = offset_defaults
+            for media_type, offsets in per_type_offsets.items():
+                if media_type in {"movie", "show", "season", "episode"}:
+                    entry["offsets_by_type"][media_type] = offsets
 
             if base_key == "content_rating_commonsense":
                 defaults["commonsense"] = entry
@@ -402,6 +418,9 @@ def optimize_template_variables(config_data, library_types=None):
                     overlay_level = "movie" if library_type == "movie" else "show"
 
                 if overlay_level:
+                    type_defaults = defaults_entry.get("defaults_by_type", {}).get(overlay_level)
+                    if type_defaults:
+                        defaults = dict(type_defaults)
                     offsets = defaults_entry.get("offsets_by_type", {}).get(overlay_level)
                     if offsets:
                         defaults.update(offsets)
