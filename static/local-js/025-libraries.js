@@ -83,6 +83,95 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function updateFontSelects (fonts, scope) {
+      if (!Array.isArray(fonts)) return
+      const root = scope || document
+      root.querySelectorAll('select[data-font-select]').forEach(select => {
+        const currentValue = select.value || ''
+        const seen = new Set()
+        const merged = []
+        fonts.forEach(font => {
+          if (!font || seen.has(font)) return
+          merged.push(font)
+          seen.add(font)
+        })
+        if (currentValue && !seen.has(currentValue)) {
+          merged.push(currentValue)
+        }
+        select.innerHTML = ''
+        const placeholder = document.createElement('option')
+        placeholder.value = ''
+        placeholder.textContent = 'Select font'
+        if (!currentValue) placeholder.selected = true
+        select.appendChild(placeholder)
+        merged.forEach(font => {
+          const option = document.createElement('option')
+          option.value = font
+          option.textContent = font
+          if (font === currentValue) option.selected = true
+          select.appendChild(option)
+        })
+      })
+    }
+
+    function wireFontUploads (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-font-upload]').forEach(card => {
+        if (card.dataset.fontUploadBound === 'true') return
+        const input = card.querySelector('[data-font-upload-input]')
+        const button = card.querySelector('[data-font-upload-button]')
+        const status = card.querySelector('[data-font-upload-status]')
+        if (!input || !button) return
+
+        const setStatus = (text, isError) => {
+          if (!status) return
+          status.textContent = text || ''
+          status.classList.toggle('text-danger', Boolean(isError))
+          status.classList.toggle('text-muted', !isError)
+        }
+
+        button.addEventListener('click', async () => {
+          const files = input.files ? Array.from(input.files) : []
+          if (!files.length) {
+            setStatus('Choose one or more .ttf/.otf files to upload.', true)
+            return
+          }
+
+          const formData = new FormData()
+          files.forEach(file => formData.append('fonts', file))
+          button.disabled = true
+          setStatus('Uploading fonts...', false)
+
+          try {
+            const res = await fetch('/upload-fonts', { method: 'POST', body: formData })
+            const data = await res.json()
+            if (!res.ok || data.status !== 'success') {
+              throw new Error(data.message || 'Font upload failed.')
+            }
+            updateFontSelects(data.fonts || [], root)
+            input.value = ''
+            const saved = Array.isArray(data.saved) ? data.saved.length : 0
+            setStatus(`Uploaded ${saved} font(s).`, false)
+            if (typeof showToast === 'function') {
+              showToast('success', data.message || 'Fonts uploaded.')
+            }
+            if (Array.isArray(data.errors) && data.errors.length) {
+              setStatus(data.errors.join(' '), true)
+            }
+          } catch (err) {
+            setStatus(err.message || 'Font upload failed.', true)
+            if (typeof showToast === 'function') {
+              showToast('error', err.message || 'Font upload failed.')
+            }
+          } finally {
+            button.disabled = false
+          }
+        })
+
+        card.dataset.fontUploadBound = 'true'
+      })
+    }
+
     function updateConfiguredCounts () {
       if (!libraryPicker || !configuredCountsDisplay) return
       const counts = { movie: 0, show: 0 }
@@ -176,6 +265,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
         ValidationHandler.updateValidationState()
       }
+      wireFontUploads(card)
     }
 
     function buildPayloadFromCard (card) {

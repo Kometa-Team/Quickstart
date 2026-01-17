@@ -41,6 +41,7 @@ from flask import (
     session,
     send_file,
     send_from_directory,
+    abort,
 )
 from waitress import serve
 from werkzeug.datastructures import MultiDict
@@ -74,6 +75,7 @@ for folder in UPLOAD_FOLDERS.values():
 IMAGES_FOLDER = os.path.join(helpers.MEIPASS_DIR, "static", "images")
 OVERLAY_FOLDER = os.path.join(IMAGES_FOLDER, "overlays")
 FONTS_FOLDER = os.path.join(helpers.MEIPASS_DIR, "static", "fonts")
+CUSTOM_FONTS_FOLDER = os.path.join(helpers.CONFIG_DIR, "fonts")
 DEFAULT_IMAGE_MAP = {
     "movie": os.path.join(IMAGES_FOLDER, "default.png"),
     "show": os.path.join(IMAGES_FOLDER, "default-sho_preview.png"),
@@ -94,11 +96,7 @@ def list_overlay_fonts() -> list[str]:
     if _FONT_CACHE:
         return _FONT_CACHE
     fonts: list[str] = []
-    font_dirs = [
-        os.path.join(helpers.MEIPASS_DIR, "static", "fonts"),
-        os.path.join(helpers.BASE_DIR, "static", "fonts"),
-        os.path.join(helpers.WORKING_DIR, "static", "fonts"),
-    ]
+    font_dirs = helpers.get_font_dirs(include_static=True, include_custom=True)
     for fdir in font_dirs:
         try:
             if os.path.isdir(fdir):
@@ -161,6 +159,10 @@ def inject_kometa_root():
 app.config["QS_DEBUG"] = helpers.booler(os.getenv("QS_DEBUG", "0"))
 app.config["QS_THEME"] = os.getenv("QS_THEME", "kometa").strip() or "kometa"
 app.config["QS_OPTIMIZE_DEFAULTS"] = helpers.booler(os.getenv("QS_OPTIMIZE_DEFAULTS", "1"))
+try:
+    app.config["QS_CONFIG_HISTORY"] = max(0, int(str(os.getenv("QS_CONFIG_HISTORY", "0")).strip()))
+except (TypeError, ValueError):
+    app.config["QS_CONFIG_HISTORY"] = 0
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 app.config["SESSION_TYPE"] = "cachelib"
@@ -312,6 +314,72 @@ def upload_library_image():
             "filename": filename,
         }
     )
+
+
+@app.route("/upload-fonts", methods=["POST"])
+def upload_fonts():
+    files = request.files.getlist("fonts")
+    if not files:
+        return jsonify({"status": "error", "message": "No fonts uploaded"}), 400
+
+    os.makedirs(CUSTOM_FONTS_FOLDER, exist_ok=True)
+    saved = []
+    errors = []
+
+    for font_file in files:
+        if not font_file or not font_file.filename:
+            continue
+        filename = secure_filename(font_file.filename)
+        ext = os.path.splitext(filename)[1].lower()
+        if ext not in helpers.FONT_EXTENSIONS:
+            errors.append(f"Invalid font type: {filename}")
+            continue
+        save_path = os.path.join(CUSTOM_FONTS_FOLDER, filename)
+        base, ext_only = os.path.splitext(filename)
+        counter = 1
+        while os.path.exists(save_path):
+            filename = f"{base}_{counter}{ext_only}"
+            save_path = os.path.join(CUSTOM_FONTS_FOLDER, filename)
+            counter += 1
+        font_file.save(save_path)
+        saved.append(filename)
+
+    if saved:
+        try:
+            helpers.sync_custom_fonts()
+        except Exception as exc:
+            errors.append(f"Failed to sync fonts to Kometa: {exc}")
+        global _FONT_CACHE
+        _FONT_CACHE = []
+
+    if not saved:
+        return jsonify({"status": "error", "message": "No valid fonts uploaded.", "errors": errors}), 400
+
+    return jsonify(
+        {
+            "status": "success",
+            "message": f"Uploaded {len(saved)} font(s).",
+            "saved": saved,
+            "errors": errors,
+            "fonts": list_overlay_fonts(),
+        }
+    )
+
+
+@app.route("/custom-fonts/<path:filename>", methods=["GET"])
+def custom_fonts(filename):
+    safe_name = os.path.basename(filename)
+    if not safe_name or safe_name != filename:
+        abort(404)
+    if not safe_name.lower().endswith((".ttf", ".otf")):
+        abort(404)
+
+    for fdir in helpers.get_font_dirs(include_static=True, include_custom=True):
+        candidate = os.path.join(str(fdir), safe_name)
+        if os.path.exists(candidate):
+            return send_from_directory(str(fdir), safe_name)
+
+    abort(404)
 
 
 @app.route("/fetch_library_image", methods=["POST"])
@@ -577,7 +645,11 @@ def generate_preview():
             font_candidates = []
             if font_path:
                 font_candidates.append(font_path)
-                font_candidates.append(os.path.join(FONTS_FOLDER, os.path.basename(font_path)))
+                base_font = os.path.basename(font_path)
+                for fdir in helpers.get_font_dirs(include_static=True, include_custom=True):
+                    font_candidates.append(os.path.join(str(fdir), base_font))
+            seen_candidates = set()
+            font_candidates = [c for c in font_candidates if c and not (c in seen_candidates or seen_candidates.add(c))]
             for candidate in font_candidates:
                 if candidate and os.path.exists(candidate):
                     try:
@@ -866,6 +938,7 @@ def step(name):
     page_info["qs_debug"] = app.config["QS_DEBUG"]
     page_info["qs_theme"] = app.config.get("QS_THEME", "kometa")
     page_info["qs_optimize_defaults"] = app.config.get("QS_OPTIMIZE_DEFAULTS", True)
+    page_info["qs_config_history"] = app.config.get("QS_CONFIG_HISTORY", 0)
     page_info["header_style"] = header_style
     page_info["template_name"] = name
     if "shutdown_nonce" not in session:
@@ -2145,6 +2218,17 @@ def update_quickstart_settings():
     if optimize_raw is not None:
         optimize_value = helpers.booler(str(optimize_raw))
 
+    history_raw = data.get("config_history")
+    history_value = None
+    if history_raw is not None:
+        try:
+            history_value = int(str(history_raw).strip())
+        except (TypeError, ValueError):
+            errors.append("Config history must be a non-negative number.")
+            history_value = None
+        if history_value is not None and history_value < 0:
+            errors.append("Config history must be a non-negative number.")
+
     theme_raw = data.get("theme")
     theme_value = None
     if theme_raw is not None:
@@ -2186,6 +2270,11 @@ def update_quickstart_settings():
         app.config["QS_OPTIMIZE_DEFAULTS"] = optimize_value
         changes_applied = True
 
+    if history_value is not None and history_value != app.config.get("QS_CONFIG_HISTORY", 0):
+        helpers.update_env_variable("QS_CONFIG_HISTORY", str(history_value))
+        app.config["QS_CONFIG_HISTORY"] = history_value
+        changes_applied = True
+
     if not changes_applied:
         return jsonify(
             success=True,
@@ -2193,6 +2282,7 @@ def update_quickstart_settings():
             restart=False,
             theme=app.config.get("QS_THEME", "kometa"),
             optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
+            config_history=app.config.get("QS_CONFIG_HISTORY", 0),
         )
 
     if restart_required:
@@ -2204,6 +2294,7 @@ def update_quickstart_settings():
             theme=app.config.get("QS_THEME", "kometa"),
             theme_changed=theme_changed,
             optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
+            config_history=app.config.get("QS_CONFIG_HISTORY", 0),
         )
 
     return jsonify(
@@ -2213,6 +2304,7 @@ def update_quickstart_settings():
         theme=app.config.get("QS_THEME", "kometa"),
         theme_changed=theme_changed,
         optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
+        config_history=app.config.get("QS_CONFIG_HISTORY", 0),
     )
 
 
@@ -2364,6 +2456,13 @@ def validate_kometa_root():
         log(f"✅ YAML copied to Kometa config folder at: {dest_yaml}")
     except Exception as e:
         log(f"⚠️ Failed to copy YAML: {e}")
+
+    try:
+        copied = helpers.sync_custom_fonts(kometa_root=p)
+        if copied:
+            log(f"✅ Synced {len(copied)} custom font(s) to Kometa config/fonts.")
+    except Exception as e:
+        log(f"⚠️ Failed to sync custom fonts: {e}")
 
     log("✅ Kometa root is valid and ready.")
 

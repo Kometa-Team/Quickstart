@@ -480,7 +480,7 @@ const OverlayHandler = {
         return Promise.resolve(null)
       }
       if (runtimeFontCache.has(file)) return runtimeFontCache.get(file)
-      const face = new FontFace(family, `url(/static/fonts/${encodeURIComponent(file)})`)
+      const face = new FontFace(family, `url(/custom-fonts/${encodeURIComponent(file)})`)
       const p = face.load()
         .then(loaded => {
           document.fonts.add(loaded)

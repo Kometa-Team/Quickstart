@@ -34,6 +34,7 @@ GITHUB_API_BRANCH = "https://api.github.com/repos/kometa-team/Kometa/branches/{b
 GITHUB_ZIP_URL = "https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/{branch}"
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
+FONT_EXTENSIONS = {".ttf", ".otf"}
 
 BASE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 WORKING_DIR = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else BASE_DIR
@@ -891,17 +892,34 @@ def save_to_named_config(yaml_text, config_name):
     latest_filename = f"{name}_config.yml"
     latest_path = config_dir / latest_filename
     kometa_path = kometa_config_dir / latest_filename
+    history_limit = app.config.get("QS_CONFIG_HISTORY", 0)
+    try:
+        history_limit = int(str(history_limit).strip())
+    except (TypeError, ValueError):
+        history_limit = 0
+    if history_limit < 0:
+        history_limit = 0
 
     # If latest exists, archive it to _1, _2, etc.
     if latest_path.exists():
+        archive_dir = config_dir / "archives" / name
+        archive_dir.mkdir(parents=True, exist_ok=True)
         counter = 1
         while True:
-            archive_path = config_dir / f"{name}_config_{counter}.yml"
+            archive_path = archive_dir / f"{name}_config_{counter}.yml"
             if not archive_path.exists():
                 latest_path.rename(archive_path)
                 ts_log(f"Archived old config to: {archive_path}")
                 break
             counter += 1
+        if history_limit > 0:
+            archives = sorted(archive_dir.glob(f"{name}_config_*.yml"), key=lambda p: p.stat().st_mtime)
+            if len(archives) > history_limit:
+                for old_path in archives[: len(archives) - history_limit]:
+                    try:
+                        old_path.unlink()
+                    except Exception as exc:
+                        ts_log(f"Failed to prune archive {old_path}: {exc}", level="WARNING")
 
     # Save the new config to both locations
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -911,6 +929,11 @@ def save_to_named_config(yaml_text, config_name):
         f.write(yaml_text)
     with open(kometa_path, "w", encoding="utf-8") as f:
         f.write(yaml_text)
+
+    try:
+        sync_custom_fonts(kometa_root=kometa_root)
+    except Exception as exc:
+        ts_log(f"Failed to sync custom fonts: {exc}", level="WARNING")
 
     ts_log(f"Saved new config to: {latest_path}")
     ts_log(f"Also copied config to: {kometa_path}")
@@ -1623,6 +1646,62 @@ def get_kometa_root_path() -> Path:
     """
     base = app.config.get("KOMETA_ROOT") or session.get("kometa_root") or os.path.join(CONFIG_DIR, "kometa")
     return Path(os.path.normpath(base)).resolve()
+
+
+def get_custom_fonts_dir() -> Path:
+    return Path(CONFIG_DIR) / "fonts"
+
+
+def get_kometa_fonts_dir(kometa_root: Path | None = None) -> Path:
+    root = Path(kometa_root) if kometa_root else get_kometa_root_path()
+    return root / "config" / "fonts"
+
+
+def get_font_dirs(include_static: bool = True, include_custom: bool = True) -> list[Path]:
+    dirs: list[Path] = []
+    seen: set[str] = set()
+
+    if include_custom:
+        for path in (get_custom_fonts_dir(), get_kometa_fonts_dir()):
+            key = str(path)
+            if key not in seen:
+                dirs.append(path)
+                seen.add(key)
+
+    if include_static:
+        for base in (MEIPASS_DIR, BASE_DIR, WORKING_DIR):
+            path = Path(base) / "static" / "fonts"
+            key = str(path)
+            if key not in seen:
+                dirs.append(path)
+                seen.add(key)
+
+    return dirs
+
+
+def list_custom_fonts() -> list[str]:
+    fonts: set[str] = set()
+    for folder in (get_custom_fonts_dir(), get_kometa_fonts_dir()):
+        if not folder.is_dir():
+            continue
+        for entry in folder.iterdir():
+            if entry.is_file() and entry.suffix.lower() in FONT_EXTENSIONS:
+                fonts.add(entry.name)
+    return sorted(fonts)
+
+
+def sync_custom_fonts(kometa_root: Path | None = None) -> list[str]:
+    source_dir = get_custom_fonts_dir()
+    if not source_dir.is_dir():
+        return []
+    dest_dir = get_kometa_fonts_dir(kometa_root)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    copied: list[str] = []
+    for entry in source_dir.iterdir():
+        if entry.is_file() and entry.suffix.lower() in FONT_EXTENSIONS:
+            shutil.copy2(entry, dest_dir / entry.name)
+            copied.append(entry.name)
+    return copied
 
 
 def _unwrap_doublewrap(s: str) -> str:

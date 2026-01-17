@@ -68,6 +68,44 @@ def _normalize_template_value(value):
     return value
 
 
+def _rewrite_custom_font_paths(config_data):
+    custom_fonts = set(helpers.list_custom_fonts())
+    if not custom_fonts:
+        return config_data
+
+    def normalize_font_value(value):
+        if isinstance(value, dict):
+            raw = value.get("value")
+            if isinstance(raw, str):
+                updated = normalize_font_value(raw)
+                if updated != raw:
+                    value["value"] = updated
+            return value
+        if not isinstance(value, str):
+            return value
+        stripped = value.strip()
+        if not stripped:
+            return value
+        base = os.path.basename(stripped)
+        if base in custom_fonts:
+            return f"fonts/{base}"
+        return value
+
+    def walk(obj):
+        if isinstance(obj, dict):
+            for key, val in obj.items():
+                if isinstance(key, str) and (key == "font" or key.endswith("_font")):
+                    obj[key] = normalize_font_value(val)
+                else:
+                    walk(val)
+        elif isinstance(obj, list):
+            for item in obj:
+                walk(item)
+
+    walk(config_data)
+    return config_data
+
+
 def _coerce_bool(value):
     if isinstance(value, bool):
         return value
@@ -1937,6 +1975,7 @@ def build_config(header_style="standard", config_name=None):
 
     # Apply enforce_string_fields to ensure proper formatting
     config_data = helpers.enforce_string_fields(config_data, helpers.STRING_FIELDS)
+    config_data = _rewrite_custom_font_paths(config_data)
 
     for section_key, section_stem in ordered_sections:
         if section_key in config_data:

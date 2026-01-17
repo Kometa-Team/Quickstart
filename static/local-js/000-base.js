@@ -321,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeInput = document.getElementById('quickstart-settings-theme')
   const themeButton = document.getElementById('quickstart-settings-theme-btn')
   const optimizeInput = document.getElementById('quickstart-settings-optimize')
+  const historyInput = document.getElementById('quickstart-settings-config-history')
   const themeText = modalEl.querySelector('.theme-picker-text')
   const themeSwatch = modalEl.querySelector('[data-theme-swatch]')
   const themeOptions = modalEl.querySelectorAll('.theme-option')
@@ -355,6 +356,14 @@ document.addEventListener('DOMContentLoaded', () => {
       ? triggerBtn.dataset.currentOptimizeDefaults
       : window.QS_OPTIMIZE_DEFAULTS
     return String(raw).toLowerCase() === 'true'
+  }
+
+  function getCurrentConfigHistory () {
+    const raw = (triggerBtn && triggerBtn.dataset.currentConfigHistory)
+      ? triggerBtn.dataset.currentConfigHistory
+      : window.QS_CONFIG_HISTORY
+    const parsed = Number.parseInt(raw, 10)
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
   }
 
   function getThemeLabel (themeValue) {
@@ -392,6 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (portInput) portInput.value = getCurrentPort()
     if (debugInput) debugInput.checked = getCurrentDebug()
     if (optimizeInput) optimizeInput.checked = getCurrentOptimizeDefaults()
+    if (historyInput) historyInput.value = getCurrentConfigHistory()
     updateThemeUi(getCurrentTheme())
     setStatus('', false)
     if (applyBtn) applyBtn.disabled = false
@@ -405,6 +415,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const currentOptimize = getCurrentOptimizeDefaults()
       const desiredOptimize = optimizeInput ? optimizeInput.checked : currentOptimize
       const hasOptimizeChange = optimizeInput ? desiredOptimize !== currentOptimize : false
+      const currentHistory = getCurrentConfigHistory()
+      let desiredHistory = currentHistory
+      if (historyInput) {
+        const rawHistory = historyInput.value.trim()
+        if (!/^\d+$/.test(rawHistory)) {
+          setStatus('Config history must be a non-negative number.', true)
+          return
+        }
+        desiredHistory = Number(rawHistory)
+        if (desiredHistory < 0) {
+          setStatus('Config history must be a non-negative number.', true)
+          return
+        }
+        if (desiredHistory !== currentHistory) {
+          payload.config_history = desiredHistory
+        }
+      }
       if (portInput) {
         const portValue = portInput.value.trim()
         if (!/^\d+$/.test(portValue)) {
@@ -457,6 +484,11 @@ document.addEventListener('DOMContentLoaded', () => {
             window.QS_OPTIMIZE_DEFAULTS = optimizeFlag
             if (triggerBtn) triggerBtn.dataset.currentOptimizeDefaults = optimizeFlag ? 'true' : 'false'
           }
+          if (typeof payload.config_history !== 'undefined') {
+            const historyFlag = Number(payload.config_history)
+            window.QS_CONFIG_HISTORY = historyFlag
+            if (triggerBtn) triggerBtn.dataset.currentConfigHistory = String(historyFlag)
+          }
           if (hasPortChange && triggerBtn) {
             triggerBtn.dataset.currentPort = String(portNum)
           }
@@ -489,6 +521,11 @@ document.addEventListener('DOMContentLoaded', () => {
           window.QS_THEME = data.theme
           if (triggerBtn) triggerBtn.dataset.currentTheme = data.theme
           updateThemeUi(data.theme)
+        }
+        if (typeof payload.config_history !== 'undefined') {
+          const historyFlag = Number(payload.config_history)
+          window.QS_CONFIG_HISTORY = historyFlag
+          if (triggerBtn) triggerBtn.dataset.currentConfigHistory = String(historyFlag)
         }
         const protocol = window.location.protocol
         const host = window.location.hostname

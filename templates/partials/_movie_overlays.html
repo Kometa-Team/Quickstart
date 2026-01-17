@@ -172,6 +172,22 @@
   </button>
 </div>
 
+<div class="card mb-4 border shadow-sm" data-font-upload>
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+      <div>
+        <h6 class="fw-bold mb-1">Custom Fonts</h6>
+        <p class="small text-muted mb-0">Upload .ttf or .otf files. Saved to <code>config/fonts</code> and mirrored to Kometa.</p>
+      </div>
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <input type="file" class="form-control form-control-sm" data-font-upload-input accept=".ttf,.otf" multiple>
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-font-upload-button>Upload Fonts</button>
+      </div>
+    </div>
+    <div class="small text-muted mt-2" data-font-upload-status></div>
+  </div>
+</div>
+
 <!-- Render All Overlay Groups -->
 {% import 'partials/_macros.html' as macros %}
 {% for group in overlay_config %}
