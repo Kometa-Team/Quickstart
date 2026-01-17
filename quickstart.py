@@ -165,6 +165,18 @@ except (TypeError, ValueError):
     app.config["QS_CONFIG_HISTORY"] = 0
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
+cleanup_flag = os.getenv("QS_CONFIG_CLEANUP_DONE", "").strip().lower()
+if cleanup_flag not in {"1", "true", "yes"}:
+    result = helpers.migrate_config_archives(history_limit=app.config.get("QS_CONFIG_HISTORY", 0))
+    if result.get("moved"):
+        helpers.ts_log(f"Config cleanup moved {result['moved']} archived file(s).", level="INFO")
+    if result.get("errors"):
+        for msg in result["errors"]:
+            helpers.ts_log(msg, level="WARNING")
+    else:
+        helpers.update_env_variable("QS_CONFIG_CLEANUP_DONE", "1")
+        os.environ["QS_CONFIG_CLEANUP_DONE"] = "1"
+
 app.config["SESSION_TYPE"] = "cachelib"
 
 # Flask session cache dir (portable default)

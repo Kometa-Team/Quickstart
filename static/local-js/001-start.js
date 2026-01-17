@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
         modalTitle.textContent = 'Reset Config'
         modalBody.textContent = `Are you sure you want to reset "${selectedConfig}"? This will wipe all settings, but keep the config available.`
       } else if (currentAction === 'delete') {
-        modalTitle.textContent = 'Delete Config'
+        modalTitle.textContent = 'Delete Configs'
         modalBody.textContent = `Are you sure you want to delete "${selectedConfig}" permanently? This action cannot be undone.`
       }
     })
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!configs.length) {
       const empty = document.createElement('div')
       empty.className = 'text-muted small'
-      empty.textContent = 'No saved profiles found.'
+      empty.textContent = 'No saved configs found.'
       bulkDeleteList.appendChild(empty)
       if (bulkDeleteSelectAll) {
         bulkDeleteSelectAll.checked = false
@@ -199,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const selected = Array.from(bulkDeleteList.querySelectorAll('.bulk-delete-checkbox:checked'))
         .map(box => box.value)
       if (!selected.length) {
-        showToast('error', 'Select at least one profile to delete.')
+        showToast('error', 'Select at least one config to delete.')
         return
       }
 
@@ -215,16 +215,16 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         const data = await res.json()
         if (!res.ok || !data.success) {
-          throw new Error(data.message || 'Failed to delete profiles.')
+          throw new Error(data.message || 'Failed to delete configs.')
         }
-        showToast('success', `Deleted ${data.deleted.length} profile(s).`)
+        showToast('success', `Deleted ${data.deleted.length} config(s).`)
         const modal = bootstrap.Modal.getInstance(bulkDeleteModalEl)
         if (modal) modal.hide()
         setTimeout(() => window.location.reload(), 1200)
       } catch (err) {
         confirmBulkDeleteButton.disabled = false
         confirmBulkDeleteButton.textContent = originalText
-        showToast('error', err.message || 'Failed to delete profiles.')
+        showToast('error', err.message || 'Failed to delete configs.')
       }
     })
   }
