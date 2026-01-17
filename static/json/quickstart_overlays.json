@@ -421,7 +421,7 @@
         "default_offsets": {
           "horizontal": 15,
           "vertical": 0,
-          "origin": "center_right"
+          "origin": "center_left"
         },
         "media_types": [
           "movie",
@@ -705,7 +705,7 @@
           },
           "horizontal_position": {
             "input_type": "select",
-            "default": "right",
+            "default": "left",
             "options": [
               "left",
               "center",
