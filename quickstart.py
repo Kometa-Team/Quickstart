@@ -44,6 +44,7 @@ from flask import (
     abort,
 )
 from waitress import serve
+from ruamel.yaml import YAML
 from werkzeug.datastructures import MultiDict
 from werkzeug.utils import secure_filename
 
@@ -347,20 +348,10 @@ def upload_fonts():
             errors.append(f"Invalid font type: {filename}")
             continue
         save_path = os.path.join(CUSTOM_FONTS_FOLDER, filename)
-        base, ext_only = os.path.splitext(filename)
-        counter = 1
-        while os.path.exists(save_path):
-            filename = f"{base}_{counter}{ext_only}"
-            save_path = os.path.join(CUSTOM_FONTS_FOLDER, filename)
-            counter += 1
         font_file.save(save_path)
         saved.append(filename)
 
     if saved:
-        try:
-            helpers.sync_custom_fonts()
-        except Exception as exc:
-            errors.append(f"Failed to sync fonts to Kometa: {exc}")
         global _FONT_CACHE
         _FONT_CACHE = []
 
@@ -1200,7 +1191,8 @@ def step(name):
 
     if name == "900-final":
         validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
-        saved_filename = helpers.save_to_named_config(yaml_content, config_name)
+        used_fonts = helpers.collect_font_references(config_data)
+        saved_filename = helpers.save_to_named_config(yaml_content, config_name, used_fonts)
         page_info["saved_filename"] = saved_filename
         page_info["yaml_valid"] = validated
         page_info["quickstart_root"] = helpers.get_app_root()
@@ -2470,11 +2462,23 @@ def validate_kometa_root():
         log(f"⚠️ Failed to copy YAML: {e}")
 
     try:
-        copied = helpers.sync_custom_fonts(kometa_root=p)
-        if copied:
-            log(f"✅ Synced {len(copied)} custom font(s) to Kometa config/fonts.")
+        yaml_parser = YAML(typ="safe")
+        with src_yaml.open("r", encoding="utf-8") as f:
+            parsed_config = yaml_parser.load(f) or {}
+        font_refs = helpers.collect_font_references(parsed_config)
+        if font_refs:
+            font_result = helpers.copy_fonts_to_kometa(font_refs, kometa_root=p)
+            copied = font_result.get("copied", [])
+            missing = font_result.get("missing", [])
+            errors = font_result.get("errors", [])
+            if copied:
+                log(f"✅ Synced {len(copied)} font(s) referenced in the config to Kometa config/fonts.")
+            if missing:
+                log(f"⚠️ Fonts referenced in the config not found: {', '.join(missing)}")
+            for err in errors:
+                log(f"⚠️ {err}")
     except Exception as e:
-        log(f"⚠️ Failed to sync custom fonts: {e}")
+        log(f"⚠️ Failed to sync fonts referenced in the config: {e}")
 
     log("✅ Kometa root is valid and ready.")
 

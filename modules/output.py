@@ -69,8 +69,8 @@ def _normalize_template_value(value):
 
 
 def _rewrite_custom_font_paths(config_data):
-    custom_fonts = set(helpers.list_custom_fonts())
-    if not custom_fonts:
+    available_fonts = set(helpers.list_available_fonts(include_static=True, include_custom=True))
+    if not available_fonts:
         return config_data
 
     def normalize_font_value(value):
@@ -87,8 +87,8 @@ def _rewrite_custom_font_paths(config_data):
         if not stripped:
             return value
         base = os.path.basename(stripped)
-        if base in custom_fonts:
-            return f"fonts/{base}"
+        if base in available_fonts:
+            return f"config/fonts/{base}"
         return value
 
     def walk(obj):

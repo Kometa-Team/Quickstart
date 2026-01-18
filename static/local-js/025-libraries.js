@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap */
+/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -111,6 +111,60 @@ document.addEventListener('DOMContentLoaded', function () {
           if (font === currentValue) option.selected = true
           select.appendChild(option)
         })
+        if (typeof updateFontPreviewForSelect === 'function') {
+          updateFontPreviewForSelect(select)
+        }
+      })
+    }
+
+    const fontPreviewCache = new Map()
+
+    function loadFontPreview (file) {
+      if (!file) return Promise.resolve(null)
+      if (fontPreviewCache.has(file)) return fontPreviewCache.get(file)
+      if (typeof FontFace === 'undefined') {
+        fontPreviewCache.set(file, Promise.resolve(null))
+        return fontPreviewCache.get(file)
+      }
+      const family = file.replace(/\.[^.]+$/, '')
+      const face = new FontFace(family, `url(/custom-fonts/${encodeURIComponent(file)})`)
+      const promise = face.load()
+        .then(loaded => {
+          document.fonts.add(loaded)
+          return family
+        })
+        .catch(() => null)
+      fontPreviewCache.set(file, promise)
+      return promise
+    }
+
+    function updateFontPreviewForSelect (select) {
+      if (!select) return
+      const preview = document.querySelector(`[data-preview-for="${select.id}"]`)
+      if (!preview) return
+      const value = select.value || select.dataset.default || ''
+      const file = value.split(/[\\/]/).pop()
+      preview.textContent = file ? 'AaBb123' : 'AaBb123'
+      preview.title = file || ''
+      if (!file) {
+        preview.style.fontFamily = ''
+        return
+      }
+      loadFontPreview(file).then(family => {
+        if (family) {
+          preview.style.fontFamily = `"${family}", sans-serif`
+        }
+      })
+    }
+    window.updateFontPreviewForSelect = updateFontPreviewForSelect
+
+    function wireFontPreviews (scope) {
+      const root = scope || document
+      root.querySelectorAll('select[data-font-select]').forEach(select => {
+        if (select.dataset.fontPreviewBound === 'true') return
+        select.addEventListener('change', () => updateFontPreviewForSelect(select))
+        updateFontPreviewForSelect(select)
+        select.dataset.fontPreviewBound = 'true'
       })
     }
 
@@ -266,6 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
         ValidationHandler.updateValidationState()
       }
       wireFontUploads(card)
+      wireFontPreviews(card)
     }
 
     function buildPayloadFromCard (card) {

@@ -486,6 +486,30 @@ header.fixed-top {
     border-top: 1px solid var(--theme-primary);
 }
 
+.footer-links {
+    flex-wrap: wrap;
+    row-gap: 0.75rem;
+    column-gap: 0.75rem;
+}
+
+.footer-links .btn {
+    white-space: nowrap;
+}
+
+.footer-links .btn i {
+    margin-right: 4px;
+}
+
+@media (max-width: 576px) {
+    .footer-links {
+        gap: 0.5rem;
+    }
+
+    .footer-links .btn {
+        flex: 1 1 140px;
+    }
+}
+
 .footer.bg-dark {
     background-color: transparent !important;
 }
@@ -1942,4 +1966,18 @@ div#loading {
     overflow: auto;
     min-height: 220px;
     min-width: 280px;
+}
+
+.font-preview {
+    font-size: 1.3rem;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    color: var(--theme-primary);
+    font-weight: 700;
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(var(--accent-color), 0.55);
+    background: rgba(var(--accent-color), 0.12);
+    box-shadow: 0 0 0 2px rgba(var(--accent-color), 0.18);
 }

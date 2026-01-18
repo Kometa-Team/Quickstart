@@ -1409,9 +1409,10 @@ prefix) %}
                                                             {% for fnt in fonts_list %}
                                                             <option value="{{ fnt }}" {% if selected_value==fnt %}selected{% endif %}>{{ fnt }}</option>
                                                             {% endfor %}
-                                                        </select>
-                                                    </div>
-                                                        {% else %}
+                                                          </select>
+                                                      </div>
+                                                      <div class="font-preview text-muted mb-2" data-font-preview data-preview-for="{{ input_id }}">8.0AaBb123%</div>
+                                                          {% else %}
                                                     <div class="input-group mb-2">
                                                         <span class="input-group-text"
                                                             id="{{ input_id }}_text"

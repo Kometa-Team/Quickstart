@@ -758,17 +758,22 @@ const OverlayHandler = {
       myanimelist: 'MAL'
     }
     const RATING_FONT_MAP = {
-      anidb: 'config/metadata/overlays/fonts/Handel Gothic ITC W01 Heavy.ttf',
-      imdb: 'config/metadata/overlays/fonts/Impact.ttf',
-      letterboxd: 'config/metadata/overlays/fonts/HelveticaNowDisplay-ExtBlk.ttf',
-      metacritic: 'config/metadata/overlays/fonts/Myriad Bold.otf',
-      tmdb: 'config/metadata/overlays/fonts/Avenir_95_Black.ttf',
-      trakt: 'config/metadata/overlays/fonts/Claspo-ND-Medium.ttf',
-      rt_tomato: 'config/metadata/overlays/fonts/Adlib.ttf',
-      rt_popcorn: 'config/metadata/overlays/fonts/Adlib.ttf',
-      'rt tomato': 'config/metadata/overlays/fonts/Adlib.ttf',
-      'rt popcorn': 'config/metadata/overlays/fonts/Adlib.ttf',
-      rotten: 'config/metadata/overlays/fonts/Adlib.ttf'
+      anidb: 'Roboto-Medium.ttf',
+      imdb: 'Roboto-Medium.ttf',
+      tmdb: 'SourceSans3-SemiBold.ttf',
+      metacritic: 'SourceSans3-SemiBold.ttf',
+      letterboxd: 'Montserrat-Bold.ttf',
+      trakt: 'Inter-Medium.ttf',
+      rt_tomato: 'Montserrat-Bold.ttf',
+      rt_popcorn: 'Montserrat-Bold.ttf',
+      'rt tomato': 'Montserrat-Bold.ttf',
+      'rt popcorn': 'Montserrat-Bold.ttf',
+      myanimelist: 'Roboto-Medium.ttf',
+      mal: 'Roboto-Medium.ttf',
+      mdblist: 'Inter-Medium.ttf',
+      mdb: 'Inter-Medium.ttf',
+      star: 'Roboto-Medium.ttf',
+      plex_star: 'Roboto-Medium.ttf'
     }
     const FLAG_PREVIEW_ITEMS = [
       {
@@ -821,6 +826,24 @@ const OverlayHandler = {
       throw lastErr || new Error('No rating image URL matched')
     }
 
+    const sortRatingImageOptions = (input) => {
+      if (!input || input.tagName !== 'SELECT') return
+      const options = Array.from(input.options)
+      if (!options.length) return
+      const selectedValue = input.value
+      const noneOption = options.find(opt => opt.value === '')
+      const rest = options.filter(opt => opt.value !== '')
+      rest.sort((a, b) => {
+        const aText = (a.textContent || '').trim().toLowerCase()
+        const bText = (b.textContent || '').trim().toLowerCase()
+        return aText.localeCompare(bText)
+      })
+      input.innerHTML = ''
+      if (noneOption) input.appendChild(noneOption)
+      rest.forEach(opt => input.appendChild(opt))
+      if (selectedValue) input.value = selectedValue
+    }
+
     const getRatingFontKey = (value, label) => {
       const key = (value || '').toString().trim().toLowerCase()
       if (key) return key
@@ -860,6 +883,7 @@ const OverlayHandler = {
         const imageInput = getTemplateInput(cfg, slot.imageKey)
         const fontInput = getTemplateInput(cfg, slot.fontKey)
         if (!imageInput || !fontInput) return
+        sortRatingImageOptions(imageInput)
         const imageVal = imageInput.value || imageInput.dataset?.default
         const label = imageInput.selectedOptions?.[0]?.textContent
         const key = getRatingFontKey(imageVal, label)
@@ -870,6 +894,9 @@ const OverlayHandler = {
         fontInput.dataset.default = mapped
         fontInput.dataset.ratingFontAuto = 'true'
         fontInput.dataset.ratingFontAutoValue = mapped
+        if (typeof window.updateFontPreviewForSelect === 'function') {
+          window.updateFontPreviewForSelect(fontInput)
+        }
       })
     }
 
