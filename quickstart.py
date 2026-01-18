@@ -2144,6 +2144,12 @@ def support_info():
     lines.append(f"# Quickstart Debug: {'Enabled' if app.config['QS_DEBUG'] else 'Disabled'}")
     lines.append(f"# Quickstart Theme: {app.config.get('QS_THEME', 'kometa')}")
     lines.append(f"# Quickstart Optimize Template Defaults: {'Enabled' if app.config.get('QS_OPTIMIZE_DEFAULTS', True) else 'Disabled'}")
+    qs_config_history = app.config.get("QS_CONFIG_HISTORY", 0)
+    if qs_config_history == 0:
+        qs_config_history_display = "Keep all (0)"
+    else:
+        qs_config_history_display = str(qs_config_history)
+    lines.append(f"# Quickstart Config Archive History: {qs_config_history_display}")
     lines.extend([f"# {line}" for line in plex_summary.splitlines()])
     lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")
     lines.append("###")
