@@ -616,6 +616,57 @@ header.fixed-top {
     font-variant-numeric: tabular-nums;
 }
 
+.run-sparkline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.run-sparkline-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--theme-text-muted);
+}
+
+.run-sparkline svg {
+    display: block;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--theme-border);
+    border-radius: 6px;
+}
+
+.run-sparkline-system {
+    fill: none;
+    stroke: #4cc9f0;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.9;
+}
+
+.run-sparkline-kometa {
+    fill: none;
+    stroke: #f9c74f;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.9;
+}
+
+.overlay-warning {
+    display: none;
+    align-items: center;
+}
+
+.form-check-input:checked ~ .overlay-toggle-row .overlay-warning {
+    display: inline-flex;
+}
+
+.overlay-warning i {
+    font-size: 0.95rem;
+}
+
 /* -------------------- */
 /* OVERLAY BOARD        */
 /* -------------------- */

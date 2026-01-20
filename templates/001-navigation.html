@@ -1,5 +1,6 @@
 <form method="post" id="configForm" name="configForm">
   {% set qs_is_docker = version_info and version_info.running_on and ('Docker' in version_info.running_on) %}
+  {% set hide_step_nav = page_info.get('hide_step_nav', False) %}
   <div id="{{ page_info['title'] }}Section">
 
     <!-- Page Title + top-right badge -->
@@ -20,6 +21,11 @@
             data-current-config-history="{{ page_info.qs_config_history }}" title="Quickstart settings">
             <i class="bi bi-gear-fill"></i>
           </button>
+          <a href="/logscan-trends"
+            class="badge support-badge d-inline-flex align-items-center {{ 'bg-primary' if page_info['template_name'] == 'logscan-trends' else 'bg-secondary' }} config-badge-button"
+            title="Logscan trends">
+            <i class="bi bi-graph-up-arrow me-1"></i> Trends
+          </a>
           <button type="button" class="badge bg-secondary config-badge config-badge-button"
             data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}">
             <span title="Switch profile">
@@ -35,7 +41,7 @@
       <div class="container-fluid d-flex justify-content-between align-items-center">
 
         <!-- Previous Button (Hidden on Start Page) -->
-        {% if page_info['template_name'] != '001-start' %}
+        {% if not hide_step_nav and page_info['template_name'] != '001-start' %}
         <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('prev')"
           title="Previous Step: {{ page_info['prev_page_name'] }}" formaction="/step/{{ page_info['prev_page'] }}">
           <i id="prev-spinner-icon" class="fa fa-arrow-left"></i> Previous
@@ -43,6 +49,11 @@
         {% endif %}
 
         <!-- Jump-To Dropdown -->
+        {% if hide_step_nav %}
+        <a class="btn nav-button" href="/step/900-final" title="Back to Final Validation">
+          <i class="fa fa-arrow-left"></i> Back to Final
+        </a>
+        {% else %}
         <div class="dropdown">
           <button class="btn nav-button dropdown-toggle" id="stepDropdown" data-bs-toggle="dropdown"
             aria-expanded="false">
@@ -87,9 +98,10 @@
             {% endfor %}
           </ul>
         </div>
+        {% endif %}
 
         <!-- Next Button (Hidden on Final Page) -->
-        {% if page_info['template_name'] != '910-sponsor' %}
+        {% if not hide_step_nav and page_info['template_name'] != '910-sponsor' %}
         <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
           title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
           Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>

@@ -1130,7 +1130,7 @@ prefix) %}
                                                 <input type="hidden" name="{{ input_name }}" value="false">
                                                 {% endif %}
 
-                                                <div class="d-flex align-items-center">
+                                                <div class="d-flex align-items-center overlay-toggle-row">
                                                     <label class="form-check-label me-3" for="{{ base_id }}">
                                                         <a target="_blank" href="{{ overlay.url }}">{{ overlay.label
                                                             }}</a>
@@ -1140,6 +1140,13 @@ prefix) %}
                                                     <i class="bi bi-search text-success" data-bs-toggle="tooltip"
                                                         data-bs-html="true"
                                                         title='<img src="{{ overlay.image_url }}" height="200" style="opacity: 1;">'></i>
+                                                    {% endif %}
+                                                    {% if overlay.id == 'overlay_ratings' %}
+                                                    <span class="overlay-warning text-warning ms-3"
+                                                        data-bs-toggle="tooltip"
+                                                        title="Enable the matching mass_*_rating_update operations in Attributes > Library Operations so the rating source stays aligned.">
+                                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                                    </span>
                                                     {% endif %}
                                                     {% if overlay.tooltip %}
                                                     <i class="bi {% if overlay.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ overlay.tooltip_variant or 'info' }} ms-3"

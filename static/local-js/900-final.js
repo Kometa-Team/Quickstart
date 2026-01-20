@@ -16,6 +16,8 @@ let logFilter = ''
 let lastLogText = ''
 let lastLogStatsTotal = null
 let logStatsPollCounter = 0
+let lastLogscanPayload = null
+let logscanPollCounter = 0
 
 const _qsEnvEl = document.getElementById('qs-env')
 const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
@@ -51,6 +53,22 @@ $(document).ready(function () {
   const $levelButtons = $('.log-level-btn')
   const $logStats = $('#run-log-stats')
   const $logStatsFiltered = $('#run-log-stats-filtered')
+  const $logscanPanel = $('#logscan-panel')
+  const $logscanRecommendations = $('#logscan-recommendations')
+  const $logscanSummary = $('#logscan-summary')
+  const $logscanMissing = $('#logscan-missing-people')
+  const $logscanSections = $('#logscan-sections')
+  const $updateKometaBtn = $('#update-kometa-btn')
+  const $forceUpdateToggle = $('#force-kometa-update')
+  const $runStatusRow = $('#run-status-row')
+  const $runStatusTimer = $('#run-status-timer')
+  const $runStatusMetrics = $('#run-status-metrics')
+  const $runStatusLog = $('#run-status-log')
+  const $runStatusSparklines = $('#run-status-sparklines')
+  const $runSparkCpuSystem = $('#run-spark-cpu-system')
+  const $runSparkCpuKometa = $('#run-spark-cpu-kometa')
+  const $runSparkMemSystem = $('#run-spark-mem-system')
+  const $runSparkMemKometa = $('#run-spark-mem-kometa')
   const $yamlOutput = $('#final-yaml')
   const $yamlLineCount = $('#yaml-line-count')
 
@@ -78,6 +96,14 @@ $(document).ready(function () {
     $('#run-now').prop('disabled', true)
     $('#run-now-label').text('Run Now')
   }
+
+  tailSize = $tailSelect.val() || tailSize
+  updateTailNotice()
+  $tailSelect.on('change', function () {
+    tailSize = $(this).val() || tailSize
+    updateTailNotice()
+    fetchKometaLog()
+  })
 
   function computeYamlLineCount (text) {
     if (!text) return 0
@@ -597,18 +623,31 @@ $(document).ready(function () {
     kometaStatusInterval = setInterval(checkKometaStatus, 5000)
   }
 
+  function getUpdateButtonLabel () {
+    const force = $forceUpdateToggle.is(':checked')
+    const label = force ? 'Force Update Kometa' : 'Check for Kometa Updates'
+    return `<i class="bi bi-arrow-clockwise me-1"></i> ${label}`
+  }
+
+  function syncUpdateButtonLabel () {
+    if ($updateKometaBtn.length) {
+      $updateKometaBtn.html(getUpdateButtonLabel())
+    }
+  }
+
   function callUpdateKometa () {
     if (KOMETA_STATUS === 'running') {
       showToast('info', 'Kometa is currently running; update skipped.')
       return
     }
 
-    const $btn = $('#update-kometa-btn')
+    const $btn = $updateKometaBtn
     const $logBox = $('#kometa-validation-log')
     const $runNow = $('#run-now')
     const $stopNow = $('#stop-now')
     const $runBox = $('#run-command-box')
     const branch = $btn.data('branch') || 'master'
+    const forceUpdate = $forceUpdateToggle.is(':checked')
 
     KOMETA_UPDATING = true
     KOMETA_VALIDATED = false
@@ -620,8 +659,9 @@ $(document).ready(function () {
     $runNow.prop('disabled', true).html('<i class="bi bi-hourglass me-1"></i> Updating...')
     $stopNow.prop('disabled', true)
 
-    $btn.prop('disabled', true).html('<i class="bi bi-arrow-repeat me-1"></i> Updating...')
-    $logBox.append('\n🔧 Initializing/Updating Kometa...\n')
+    $btn.prop('disabled', true).html(`<i class="bi bi-arrow-repeat me-1"></i> ${forceUpdate ? 'Force Updating...' : 'Checking for updates...'}`)
+    $forceUpdateToggle.prop('disabled', true)
+    $logBox.append('\nInitializing/Updating Kometa...\n')
     if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
 
     // progress heartbeat
@@ -632,26 +672,33 @@ $(document).ready(function () {
       showToast('info', `Still working on Kometa... (${secs} seconds elapsed)`, 10000)
     }, 30000) // every 30s
 
+    let postUpdateLabel = null
     const cleanupUI = () => {
       clearInterval(heartbeatId)
       KOMETA_UPDATING = false
       $runBox.removeClass('opacity-50 position-relative')
       $runNow.prop('disabled', prevRunNowDisabled).html(prevRunNowHtml)
       $stopNow.prop('disabled', false)
-      $btn.prop('disabled', false).html('🔄 Update Kometa Now')
+      $btn.prop('disabled', false)
+      $forceUpdateToggle.prop('disabled', false)
+      syncUpdateButtonLabel()
       updateRunNowState()
+      if (postUpdateLabel) {
+        $btn.html(postUpdateLabel)
+        setTimeout(syncUpdateButtonLabel, 6000)
+      }
     }
 
     fetch('/update-kometa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ branch })
+      body: JSON.stringify({ branch, force: forceUpdate })
     })
       .then(async res => {
         const data = await res.json()
         if (res.status === 409) {
           showToast('warning', data.error || 'Kometa is running; stop it before updating.')
-          $logBox.append(`❌ ${data.error || 'Update blocked: Kometa running.'}\n`)
+          $logBox.append(`${data.error || 'Update blocked: Kometa running.'}\n`)
           if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
           return { success: false, log: data.log || [], blocked: true }
         }
@@ -665,13 +712,19 @@ $(document).ready(function () {
         }
         if (data.success) {
           const elapsed = formatElapsed(Date.now() - startTs)
-          showToast('success', `Kometa update completed in ${elapsed}.`)
-          $logBox.append('✅ Kometa update completed successfully.\n')
+          if (data.up_to_date) {
+            showToast('info', 'Kometa is already up to date.')
+            postUpdateLabel = '<i class="bi bi-check-circle me-1"></i> Up to date'
+            $logBox.append('Kometa is already up to date.\n')
+          } else {
+            showToast('success', `Kometa update completed in ${elapsed}.`)
+            $logBox.append('Kometa update completed successfully.\n')
+          }
           if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
           validateKometaRoot()
         } else if (!data.blocked) {
           showToast('error', data.error || 'Kometa update failed.')
-          $logBox.append('❌ Kometa update failed.\n')
+          $logBox.append('Kometa update failed.\n')
           validateKometaRoot()
           if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
         }
@@ -679,7 +732,7 @@ $(document).ready(function () {
       .catch(err => {
         console.error(err)
         showToast('error', 'Error during Kometa update.')
-        $logBox.append('❌ Error occurred during Kometa update.\n')
+        $logBox.append('Error occurred during Kometa update.\n')
         if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
       })
       .finally(() => {
@@ -688,7 +741,11 @@ $(document).ready(function () {
   }
 
   // Kometa Update Button Click
-  $('#update-kometa-btn').on('click', callUpdateKometa)
+  $updateKometaBtn.on('click', callUpdateKometa)
+  $forceUpdateToggle.on('change', function () {
+    if (!KOMETA_UPDATING) syncUpdateButtonLabel()
+  })
+  syncUpdateButtonLabel()
 
   // Sync visibility for timeout and divider on page load
   $('#opt-timeout-container').toggleClass('d-none', !$('#opt-timeout').is(':checked'))
@@ -817,6 +874,302 @@ $(document).ready(function () {
     const filteredStats = computeLogStats(filteredText)
     updateStatRow($logStats, totalStats)
     updateStatRow($logStatsFiltered, filteredStats)
+  }
+
+  function formatRunSeconds (seconds) {
+    if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return ''
+    const total = Math.max(0, Math.floor(seconds))
+    const hrs = Math.floor(total / 3600)
+    const mins = Math.floor((total % 3600) / 60)
+    const secs = total % 60
+    const parts = []
+    if (hrs) parts.push(`${hrs}h`)
+    if (mins || hrs) parts.push(`${mins}m`)
+    parts.push(`${secs}s`)
+    return parts.join(' ')
+  }
+
+  function escapeHtml (value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+  }
+
+  function linkifyText (value) {
+    if (!value) return ''
+    const escaped = escapeHtml(value)
+    const placeholders = []
+    let counter = 0
+    const withPlaceholders = escaped.replace(/\[(https?:\/\/[^\s\]]+)\]/g, (_match, url) => {
+      const token = `__URLTOKEN${counter}__`
+      placeholders.push({ token, url })
+      counter += 1
+      return token
+    })
+    let linked = withPlaceholders.replace(/(https?:\/\/[^\s<]+)/g, (url) => {
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
+    })
+    placeholders.forEach(({ token, url }) => {
+      const anchor = `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`
+      linked = linked.replace(token, anchor)
+    })
+    return linked
+  }
+
+  function formatTimestampLocal (value) {
+    if (!value) return 'n/a'
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return String(value)
+    return parsed.toLocaleString()
+  }
+
+  function updateTailNotice () {
+    if (!$tailNotice.length) return
+    const sizeLabel = tailSize === 'all' ? 'all lines' : `last ${tailSize} lines`
+    $tailNotice.text(`Showing ${sizeLabel} from meta.log`)
+  }
+
+  const SPARKLINE_WIDTH = 120
+  const SPARKLINE_HEIGHT = 28
+  const SPARKLINE_PADDING = 2
+  const SPARKLINE_MAX_POINTS = 40
+  const runSparkState = {
+    cpu: { system: [], kometa: [] },
+    mem: { system: [], kometa: [] }
+  }
+
+  function clampPercent (value) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null
+    return Math.max(0, Math.min(100, value))
+  }
+
+  function pushSparkValue (series, value) {
+    if (value == null) {
+      if (!series.length) return false
+      series.push(series[series.length - 1])
+    } else {
+      series.push(value)
+    }
+    if (series.length > SPARKLINE_MAX_POINTS) series.shift()
+    return true
+  }
+
+  function buildSparklinePoints (series) {
+    if (!series.length) return ''
+    const width = SPARKLINE_WIDTH - SPARKLINE_PADDING * 2
+    const height = SPARKLINE_HEIGHT - SPARKLINE_PADDING * 2
+    const step = series.length > 1 ? width / (series.length - 1) : 0
+    return series.map((value, idx) => {
+      const x = SPARKLINE_PADDING + (idx * step)
+      const y = SPARKLINE_PADDING + (height - (height * (value / 100)))
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    }).join(' ')
+  }
+
+  function renderRunSparklines () {
+    if (!$runStatusSparklines.length) return
+    const hasData = runSparkState.cpu.system.length || runSparkState.cpu.kometa.length ||
+      runSparkState.mem.system.length || runSparkState.mem.kometa.length
+    $runStatusSparklines.toggleClass('d-none', !hasData)
+    if (!hasData) {
+      if ($runSparkCpuSystem.length) $runSparkCpuSystem.attr('points', '')
+      if ($runSparkCpuKometa.length) $runSparkCpuKometa.attr('points', '')
+      if ($runSparkMemSystem.length) $runSparkMemSystem.attr('points', '')
+      if ($runSparkMemKometa.length) $runSparkMemKometa.attr('points', '')
+      return
+    }
+    if ($runSparkCpuSystem.length) $runSparkCpuSystem.attr('points', buildSparklinePoints(runSparkState.cpu.system))
+    if ($runSparkCpuKometa.length) $runSparkCpuKometa.attr('points', buildSparklinePoints(runSparkState.cpu.kometa))
+    if ($runSparkMemSystem.length) $runSparkMemSystem.attr('points', buildSparklinePoints(runSparkState.mem.system))
+    if ($runSparkMemKometa.length) $runSparkMemKometa.attr('points', buildSparklinePoints(runSparkState.mem.kometa))
+  }
+
+  function resetRunSparklines () {
+    runSparkState.cpu.system = []
+    runSparkState.cpu.kometa = []
+    runSparkState.mem.system = []
+    runSparkState.mem.kometa = []
+    renderRunSparklines()
+  }
+
+  function updateRunSparklines (data) {
+    if (!data || data.status !== 'running') {
+      resetRunSparklines()
+      return
+    }
+    const cpuSystem = clampPercent(data.system_cpu_percent)
+    const cpuKometa = clampPercent(data.cpu_percent)
+    const memSystem = clampPercent(data.system_memory_percent)
+    const memKometa = clampPercent(data.memory_percent)
+    pushSparkValue(runSparkState.cpu.system, cpuSystem)
+    pushSparkValue(runSparkState.cpu.kometa, cpuKometa)
+    pushSparkValue(runSparkState.mem.system, memSystem)
+    pushSparkValue(runSparkState.mem.kometa, memKometa)
+    renderRunSparklines()
+  }
+
+  function syncRunStatusVisibility () {
+    if (!$runStatusRow.length) return
+    const hasText = Boolean($runStatusTimer.text() || $runStatusMetrics.text() || $runStatusLog.text())
+    $runStatusRow.toggleClass('d-none', !hasText)
+  }
+
+  function updateRunStatus (data) {
+    if (!$runStatusRow.length) return
+    if (data && data.status === 'running') {
+      const startedAt = formatTimestampLocal(data.started_at)
+      const elapsed = formatRunSeconds(data.elapsed_seconds)
+      const formatMem = (valueMb) => {
+        if (typeof valueMb !== 'number' || !Number.isFinite(valueMb)) return 'n/a'
+        if (valueMb >= 1024) return `${(valueMb / 1024).toFixed(1)} GB`
+        return `${valueMb.toFixed(1)} MB`
+      }
+      const cpuText = (typeof data.cpu_percent === 'number' && Number.isFinite(data.cpu_percent))
+        ? `${data.cpu_percent.toFixed(1)}%`
+        : 'n/a'
+      const memRss = formatMem(data.memory_rss_mb)
+      const memPct = (typeof data.memory_percent === 'number' && Number.isFinite(data.memory_percent))
+        ? `${data.memory_percent.toFixed(1)}%`
+        : 'n/a'
+      const sysCpu = (typeof data.system_cpu_percent === 'number' && Number.isFinite(data.system_cpu_percent))
+        ? `${data.system_cpu_percent.toFixed(1)}%`
+        : 'n/a'
+      const sysUsed = formatMem(data.system_memory_used_mb)
+      const sysTotal = formatMem(data.system_memory_total_mb)
+      const sysPct = (typeof data.system_memory_percent === 'number' && Number.isFinite(data.system_memory_percent))
+        ? `${data.system_memory_percent.toFixed(1)}%`
+        : 'n/a'
+      $runStatusTimer.text(`Running since: ${startedAt} • Elapsed: ${elapsed || 'n/a'}`)
+      $runStatusMetrics.text(`Kometa: ${cpuText} CPU • ${memRss} (${memPct}) | System: ${sysCpu} CPU • ${sysUsed} / ${sysTotal} (${sysPct})`)
+    } else if (data && data.status === 'done') {
+      $runStatusTimer.text('Kometa run complete.')
+      $runStatusMetrics.text('')
+    } else {
+      $runStatusTimer.text('')
+      $runStatusMetrics.text('')
+    }
+    updateRunSparklines(data)
+    syncRunStatusVisibility()
+  }
+
+  function updateLogRecency (data) {
+    if (!$runStatusLog.length) return
+    if (!data || typeof data.log_age_seconds !== 'number') {
+      $runStatusLog.text('')
+      syncRunStatusVisibility()
+      return
+    }
+    const ageText = formatRunSeconds(data.log_age_seconds) || 'n/a'
+    let logText = `meta.log updated ${ageText} ago`
+    if (data.log_is_stale && KOMETA_STATUS === 'running') {
+      logText += ' • waiting for new meta.log entries from this run'
+      $runStatusLog.addClass('text-warning').removeClass('text-muted')
+    } else {
+      $runStatusLog.removeClass('text-warning').addClass('text-muted')
+    }
+    $runStatusLog.text(logText)
+    syncRunStatusVisibility()
+  }
+
+  function renderLogscan (data) {
+    if (!$logscanPanel.length) return
+    if (!data || data.error) {
+      $logscanSummary.text('')
+      $logscanRecommendations.html('<div class="text-muted">Logscan unavailable.</div>')
+      $logscanMissing.addClass('d-none').empty()
+      return
+    }
+
+    const summary = data.summary || {}
+    const finishedAt = summary.finished_at || ''
+    const runSeconds = summary.run_time_seconds
+    let runtime = ''
+    if (typeof runSeconds === 'number' && Number.isFinite(runSeconds) && runSeconds > 0) {
+      runtime = formatRunSeconds(runSeconds)
+    } else if (runSeconds === 0 || runSeconds == null) {
+      runtime = 'n/a'
+    }
+    let summaryText = ''
+    if (finishedAt) summaryText = `Last run: ${finishedAt}`
+    if (runtime) summaryText = summaryText ? `${summaryText} • Runtime: ${runtime}` : `Runtime: ${runtime}`
+    $logscanSummary.text(summaryText)
+
+    const recs = Array.isArray(data.recommendations) ? data.recommendations : []
+    $logscanRecommendations.empty()
+    if (!recs.length) {
+      $logscanRecommendations.html('<div class="text-muted">No recommendations yet.</div>')
+    } else {
+      const maxRecs = 8
+      recs.slice(0, maxRecs).forEach(rec => {
+        const title = rec && rec.first_line ? rec.first_line : 'Recommendation'
+        let message = rec && rec.message ? rec.message : ''
+        if (message && title) {
+          const firstLine = message.split('\n')[0].trim()
+          const normalizedFirst = firstLine.replace(/\*/g, '').trim().toLowerCase()
+          const normalizedTitle = title.replace(/\*/g, '').trim().toLowerCase()
+          if (normalizedFirst === normalizedTitle) {
+            message = message.split('\n').slice(1).join('\n').trim()
+          }
+        }
+        const $item = $('<div class="border rounded p-2 mb-2 bg-body-tertiary"></div>')
+        $('<div class="fw-semibold mb-1"></div>').text(title).appendTo($item)
+        $('<div class="text-muted" style="white-space: pre-wrap;"></div>').html(linkifyText(message)).appendTo($item)
+        $logscanRecommendations.append($item)
+      })
+      if (recs.length > maxRecs) {
+        $logscanRecommendations.append(
+          $('<div class="text-muted"></div>').text(`Showing ${maxRecs} of ${recs.length} recommendations.`)
+        )
+      }
+    }
+
+    $logscanSections.empty()
+    const sections = summary.section_runtimes || {}
+    const sectionEntries = Object.entries(sections)
+      .filter(([, value]) => typeof value === 'number' && Number.isFinite(value))
+      .sort((a, b) => b[1] - a[1])
+    if (sectionEntries.length) {
+      $('<div class="fw-semibold mb-1"></div>').text('Section runtimes').appendTo($logscanSections)
+      const listLines = sectionEntries.map(([name, seconds]) => `${name}: ${formatRunSeconds(seconds)}`)
+      $('<div class="text-muted" style="white-space: pre-wrap;"></div>').text(listLines.join('\n')).appendTo($logscanSections)
+    } else {
+      $logscanSections.html('<div class="text-muted">No section runtimes yet.</div>')
+    }
+
+    const missing = Array.isArray(data.missing_people) ? data.missing_people : []
+    $logscanMissing.empty()
+    if (missing.length) {
+      $logscanMissing.removeClass('d-none')
+      const message = data.missing_people_message || 'Missing people posters detected.'
+      $('<div class="fw-semibold"></div>').text('Missing people posters').appendTo($logscanMissing)
+      $('<div class="text-muted mb-2" style="white-space: pre-wrap;"></div>').html(linkifyText(message)).appendTo($logscanMissing)
+      $('<div class="text-muted" style="white-space: pre-wrap;"></div>')
+        .text(missing.map(name => `- ${name}`).join('\n'))
+        .appendTo($logscanMissing)
+    } else {
+      $logscanMissing.addClass('d-none')
+    }
+  }
+
+  function fetchLogscanAnalysis () {
+    if (!$logscanPanel.length) return
+    logscanPollCounter += 1
+    const shouldFetch = (logscanPollCounter % 5 === 0) || !lastLogscanPayload
+    if (!shouldFetch) return
+
+    fetch('/logscan/analyze')
+      .then(res => res.json())
+      .then(data => {
+        lastLogscanPayload = data
+        renderLogscan(data)
+      })
+      .catch(err => {
+        console.error('Error fetching logscan analysis:', err)
+        $logscanRecommendations.html('<div class="text-muted">Logscan unavailable.</div>')
+      })
   }
 
   function updateClearFilterButton () {
@@ -989,15 +1342,18 @@ $(document).ready(function () {
         if (!$runLog.length) return
         if (data.error) {
           $runLog.text(`❌ ${data.error}`)
+          updateLogRecency(null)
           return
         }
         lastLogText = data.log || ''
+        updateLogRecency(data)
         if (data.stats) {
           lastLogStatsTotal = data.stats
         }
         const filtered = applyLogFilter(lastLogText, logFilter)
         $runLog.text(filtered)
         renderLogStats()
+        fetchLogscanAnalysis()
         const shouldStick = autoScrollEnabled || wasAtBottom
         if (shouldStick && logEl) {
           logEl.scrollTop = logEl.scrollHeight
@@ -1014,7 +1370,8 @@ $(document).ready(function () {
       .then(res => res.json())
       .then(data => {
         KOMETA_STATUS = data.status || null
-        const $updateBtn = $('#update-kometa-btn')
+        const $updateBtn = $updateKometaBtn
+        const $forceUpdate = $forceUpdateToggle
         const $runNow = $('#run-now')
         const $stopNow = $('#stop-now')
 
@@ -1025,17 +1382,21 @@ $(document).ready(function () {
           $updateBtn.prop('disabled', true)
             .attr('title', why)
             .tooltip({ placement: 'top' })
+          $forceUpdate.prop('disabled', true)
         } else {
           $updateBtn.prop('disabled', false)
             .removeAttr('title')
             .tooltip('dispose')
+          $forceUpdate.prop('disabled', false)
         }
+
+        updateRunStatus(data)
 
         // Lock the Run UI while updating
         if (KOMETA_UPDATING) {
           $runNow.prop('disabled', true).html('<i class="bi bi-hourglass me-1"></i> Updating...')
           $stopNow.prop('disabled', true)
-          return // don’t do the rest while we’re mid-update
+          return // don't do the rest while we're mid-update
         }
 
         // Handle Kometa process states

@@ -1,0 +1,72 @@
+{% extends "000-base.html" %}
+{% block content %}
+{% include "001-navigation.html" %}
+
+<div class="card bg-dark text-light border-secondary mb-3">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <h5 class="mb-1">Logscan Trends</h5>
+        <p class="text-muted small mb-0">
+          Review recent Kometa runs parsed from <code>config/kometa/config/logs/meta.log</code>. Tokens and secrets are excluded.
+        </p>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <select id="logscan-trends-limit" class="form-select form-select-sm w-auto">
+          <option value="25">Last 25 runs</option>
+          <option value="50" selected>Last 50 runs</option>
+          <option value="100">Last 100 runs</option>
+          <option value="200">Last 200 runs</option>
+        </select>
+        <button id="logscan-trends-refresh" class="btn btn-outline-light btn-sm" type="button">Refresh</button>
+        <a href="/step/900-final" class="btn btn-outline-secondary btn-sm">Back to Final</a>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-lg-4">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Summary</h6>
+          <div id="logscan-trends-summary" class="small text-muted">Loading summary...</div>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Daily Runs</h6>
+          <div id="logscan-trends-daily" class="small text-muted">Loading daily totals...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="small text-muted mt-2" id="logscan-trends-status"></div>
+  </div>
+</div>
+
+<div class="card bg-dark text-light border-secondary">
+  <div class="card-body">
+    <h6 class="mb-3">Recent Runs</h6>
+    <div class="table-responsive">
+      <table class="table table-dark table-sm align-middle mb-0" id="logscan-trends-table">
+        <thead>
+          <tr>
+            <th>Finished</th>
+            <th>Runtime</th>
+            <th>Config</th>
+            <th>Command</th>
+            <th>Counts</th>
+            <th>Kometa</th>
+            <th>Top Sections</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="7" class="text-muted">Loading runs...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</form>
+{% endblock %}

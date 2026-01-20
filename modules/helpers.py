@@ -1595,11 +1595,11 @@ def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str]) -> bool:
     return True
 
 
-def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "nightly"):
+def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "nightly", force: bool = False):
     """
     Update Kometa by downloading/extracting the branch ZIP into:
         {config_root}/kometa
-    Uses upstream commit SHA to skip when up-to-date.
+    Uses upstream commit SHA to skip when up-to-date unless force is True.
     Works identically for local, PyInstaller, and Docker installs.
     """
     logs = []
@@ -1616,9 +1616,11 @@ def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "night
             return {"success": False, "log": logs}
 
         local_sha = _read_text(sha_file)
-        if local_sha == upstream_sha:
+        if local_sha == upstream_sha and not force:
             logs.append("✅ Up to date (SHA matches). Skipping download.")
-            return {"success": True, "log": logs}
+            return {"success": True, "log": logs, "up_to_date": True, "skipped": True}
+        if force:
+            logs.append("Force update requested; proceeding without SHA match check.")
 
         zip_bytes = _download_zip(branch, logs)
         if not zip_bytes:

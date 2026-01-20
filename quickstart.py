@@ -53,12 +53,59 @@ from werkzeug.wrappers import Request
 Request.max_form_parts = 100000  # Allow more form fields if needed
 
 from flask_session import Session
-from modules import validations, output, persistence, helpers, database
+from modules import validations, output, persistence, helpers, database, logscan
 from typing import Dict, Any
 
 # A very simple in-memory progress store
 CLONE_PROGRESS: Dict[str, Dict[str, Any]] = {}
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
+LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
+KOMETA_CPU_CACHE = {}
+SYSTEM_CPU_CACHE = {"total": None, "idle": None}
+
+
+def _calculate_process_cpu_percent(proc):
+    try:
+        cpu_times = proc.cpu_times()
+    except Exception:
+        return None
+    total_cpu = cpu_times.user + cpu_times.system
+    now = time.time()
+    entry = KOMETA_CPU_CACHE.get(proc.pid)
+    KOMETA_CPU_CACHE[proc.pid] = {"time": now, "cpu": total_cpu}
+    if not entry:
+        return None
+    elapsed = now - entry.get("time", now)
+    if elapsed <= 0:
+        return None
+    delta_cpu = total_cpu - entry.get("cpu", total_cpu)
+    if delta_cpu < 0:
+        return None
+    cpu_count = psutil.cpu_count(logical=True) or 1
+    percent = (delta_cpu / elapsed) * 100.0 / cpu_count
+    return max(0.0, percent)
+
+
+def _calculate_system_cpu_percent():
+    try:
+        cpu_times = psutil.cpu_times()
+    except Exception:
+        return None
+    total = sum(cpu_times)
+    idle = getattr(cpu_times, "idle", 0)
+    last_total = SYSTEM_CPU_CACHE.get("total")
+    last_idle = SYSTEM_CPU_CACHE.get("idle")
+    SYSTEM_CPU_CACHE["total"] = total
+    SYSTEM_CPU_CACHE["idle"] = idle
+    if last_total is None or last_idle is None:
+        return None
+    delta_total = total - last_total
+    if delta_total <= 0:
+        return None
+    delta_idle = idle - last_idle
+    busy = max(0.0, delta_total - delta_idle)
+    percent = (busy / delta_total) * 100.0
+    return max(0.0, min(100.0, percent))
 
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
 load_dotenv(DOTENV, override=True)
@@ -1933,8 +1980,32 @@ def kometa_status():
             # Extra guard: ensure it's actually kometa.py
             cmdline = " ".join(proc.cmdline() or [])
             if "kometa.py" in cmdline:
-                return jsonify(status="running", pid=pid)
-        # If we’re here, it likely ended; try to get a return code
+                started_at_ts = proc.create_time()
+                started_at = datetime.fromtimestamp(started_at_ts).isoformat()
+                elapsed_seconds = max(0, int(time.time() - started_at_ts))
+                cpu_percent = _calculate_process_cpu_percent(proc)
+                mem_info = proc.memory_info()
+                mem_rss_mb = mem_info.rss / (1024 * 1024)
+                mem_percent = proc.memory_percent()
+                system_cpu_percent = _calculate_system_cpu_percent()
+                vm = psutil.virtual_memory()
+                system_mem_used_mb = (vm.total - vm.available) / (1024 * 1024)
+                system_mem_total_mb = vm.total / (1024 * 1024)
+                return jsonify(
+                    status="running",
+                    pid=pid,
+                    started_at=started_at,
+                    started_at_ts=started_at_ts,
+                    elapsed_seconds=elapsed_seconds,
+                    cpu_percent=round(cpu_percent, 1) if cpu_percent is not None else None,
+                    memory_rss_mb=round(mem_rss_mb, 1),
+                    memory_percent=round(mem_percent, 1),
+                    system_cpu_percent=round(system_cpu_percent, 1) if system_cpu_percent is not None else None,
+                    system_memory_percent=round(vm.percent, 1),
+                    system_memory_used_mb=round(system_mem_used_mb, 1),
+                    system_memory_total_mb=round(system_mem_total_mb, 1),
+                )
+        # If we're here, it likely ended; try to get a return code
         try:
             rc = proc.wait(timeout=0.1)
         except psutil.TimeoutExpired:
@@ -1945,8 +2016,10 @@ def kometa_status():
                 os.remove(helpers.get_kometa_pid_file())
             except Exception:
                 pass
+        KOMETA_CPU_CACHE.pop(pid, None)
         return jsonify(status="done", return_code=rc if rc is not None else -1)
     except psutil.NoSuchProcess:
+        KOMETA_CPU_CACHE.pop(pid, None)
         try:
             os.remove(helpers.get_kometa_pid_file())
         except Exception:
@@ -1975,6 +2048,12 @@ def tail_log():
                 max_lines = max(1, min(int(size_param), 20000))
             except Exception:
                 max_lines = 2000
+
+        log_stats = None
+        try:
+            log_stats = log_path.stat()
+        except Exception:
+            log_stats = None
 
         if max_lines:
             with log_path.open("r", encoding="utf-8", errors="replace") as f:
@@ -2031,7 +2110,34 @@ def tail_log():
             LOG_STATS_CACHE.update({"mtime": stats.st_mtime, "size": stats.st_size, "stats": counts})
             return counts
 
-        response = {"log": log_content}
+        log_mtime = log_stats.st_mtime if log_stats else None
+        log_age_seconds = None
+        if log_mtime is not None:
+            log_age_seconds = max(0, int(time.time() - log_mtime))
+
+        kometa_started_at = None
+        pid = helpers.get_kometa_pid()
+        if pid:
+            try:
+                proc = psutil.Process(pid)
+                if proc.is_running() and proc.status() != psutil.STATUS_ZOMBIE:
+                    cmdline = " ".join(proc.cmdline() or [])
+                    if "kometa.py" in cmdline:
+                        kometa_started_at = proc.create_time()
+            except Exception:
+                kometa_started_at = None
+
+        log_is_stale = False
+        if log_mtime is not None and kometa_started_at is not None:
+            log_is_stale = log_mtime < (kometa_started_at - 30)
+
+        response = {
+            "log": log_content,
+            "log_mtime": log_mtime,
+            "log_age_seconds": log_age_seconds,
+            "log_is_stale": log_is_stale,
+            "log_path": str(log_path),
+        }
         if include_stats:
             stats = get_log_stats(log_path)
             if stats:
@@ -2040,6 +2146,85 @@ def tail_log():
         return jsonify(response)
     except Exception as e:
         return jsonify({"error": f"Failed to read log: {str(e)}"}), 500
+
+
+@app.route("/logscan/analyze", methods=["GET"])
+def logscan_analyze():
+    kometa_root = helpers.get_kometa_root_path()
+    log_path = kometa_root / "config" / "logs" / "meta.log"
+    config_name = session.get("config_name")
+    normalized_name = (config_name or "").strip().lower().replace(" ", "_") or "default"
+    config_path = kometa_root / "config" / f"{normalized_name}_config.yml"
+
+    if not log_path.exists():
+        return jsonify({"error": f"Log file not found at: {log_path}"}), 404
+
+    try:
+        stats = log_path.stat()
+    except Exception as e:
+        return jsonify({"error": f"Failed to stat log: {str(e)}"}), 500
+
+    cached = LOGSCAN_ANALYSIS_CACHE
+    if cached.get("mtime") == stats.st_mtime and cached.get("size") == stats.st_size:
+        data = cached.get("data") or {}
+        data["cached"] = True
+        return jsonify(data)
+
+    analyzer = logscan.LogscanAnalyzer()
+    result = analyzer.analyze_log_file(
+        log_path,
+        config_name=config_name,
+        config_path=config_path,
+    )
+    summary = result.get("summary") if isinstance(result, dict) else None
+    if summary:
+        database.save_log_run(summary)
+
+    LOGSCAN_ANALYSIS_CACHE.update(
+        {"mtime": stats.st_mtime, "size": stats.st_size, "data": result}
+    )
+    result["cached"] = False
+    return jsonify(result)
+
+
+@app.route("/logscan/trends", methods=["GET"])
+def logscan_trends():
+    try:
+        limit = int(request.args.get("limit", "50"))
+    except Exception:
+        limit = 50
+    limit = max(1, min(limit, 500))
+    return jsonify({"runs": database.get_log_runs(limit=limit)})
+
+
+@app.route("/logscan-trends", methods=["GET"])
+def logscan_trends_page():
+    if "config_name" not in session:
+        session["config_name"] = namesgenerator.get_random_name()
+    if "shutdown_nonce" not in session:
+        session["shutdown_nonce"] = secrets.token_urlsafe(16)
+
+    page_info = {
+        "title": "Logscan Trends",
+        "template_name": "logscan-trends",
+        "config_name": session.get("config_name"),
+        "running_port": running_port,
+        "qs_debug": app.config["QS_DEBUG"],
+        "qs_theme": app.config.get("QS_THEME", "kometa"),
+        "qs_optimize_defaults": app.config.get("QS_OPTIMIZE_DEFAULTS", True),
+        "qs_config_history": app.config.get("QS_CONFIG_HISTORY", 0),
+        "shutdown_nonce": session["shutdown_nonce"],
+        "hide_step_nav": True,
+    }
+
+    template_list = helpers.get_menu_list()
+    available_configs = database.get_unique_config_names() or []
+    return render_template(
+        "logscan-trends.html",
+        page_info=page_info,
+        template_list=template_list,
+        available_configs=available_configs,
+    )
 
 
 @app.route("/support-info")
@@ -2527,15 +2712,31 @@ def update_kometa():
         data = request.get_json(silent=True) or {}
         qs_branch = data.get("branch") or helpers.detect_git_branch(app.root_path)
         kometa_branch = "master" if qs_branch == "master" else "nightly"
+        force_update = helpers.booler(data.get("force", False))
 
         logs.append(f"🔎 Quickstart branch: {qs_branch}")
         logs.append(f"⚙️ Kometa branch selected: {kometa_branch} (ZIP mode)")
+        if force_update:
+            logs.append("Force update enabled.")
 
-        result = helpers.perform_kometa_update_zip_only(cfg_dir, branch=kometa_branch)
+        result = helpers.perform_kometa_update_zip_only(cfg_dir, branch=kometa_branch, force=force_update)
         logs.extend(result.get("log", []))
         status = 200 if result.get("success") else 500
 
-        return jsonify({"success": result.get("success", False), "log": logs, "qs_branch": qs_branch, "kometa_branch": kometa_branch}), status
+        return (
+            jsonify(
+                {
+                    "success": result.get("success", False),
+                    "log": logs,
+                    "qs_branch": qs_branch,
+                    "kometa_branch": kometa_branch,
+                    "up_to_date": result.get("up_to_date", False),
+                    "skipped": result.get("skipped", False),
+                    "force": force_update,
+                }
+            ),
+            status,
+        )
 
     except Exception as e:
         logs.append(f"Exception during Kometa update: {e}")

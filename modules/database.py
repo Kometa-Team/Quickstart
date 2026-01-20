@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 import sqlite3
@@ -83,3 +84,130 @@ def get_unique_config_names():
         with closing(connection.cursor()) as cursor:
             cursor.execute("SELECT DISTINCT name FROM section_data ORDER BY name ASC")
             return [row["name"] for row in cursor.fetchall()]
+
+
+def log_runs_table_create():
+    return """CREATE TABLE IF NOT EXISTS log_runs (
+        run_key TEXT PRIMARY KEY,
+        finished_at TEXT,
+        run_time_seconds INTEGER,
+        kometa_version TEXT,
+        kometa_newest_version TEXT,
+        config_name TEXT,
+        config_hash TEXT,
+        run_command TEXT,
+        command_signature TEXT,
+        section_runtimes TEXT,
+        log_mtime REAL,
+        log_size INTEGER,
+        debug_count INTEGER,
+        info_count INTEGER,
+        warning_count INTEGER,
+        error_count INTEGER,
+        critical_count INTEGER,
+        trace_count INTEGER,
+        created_at TEXT
+    )"""
+
+
+def _ensure_log_runs_columns(cursor):
+    cursor.execute(log_runs_table_create())
+    existing = {row["name"] for row in cursor.execute("PRAGMA table_info(log_runs)")}
+    columns = {
+        "config_name": "TEXT",
+        "config_hash": "TEXT",
+        "run_command": "TEXT",
+        "command_signature": "TEXT",
+        "section_runtimes": "TEXT",
+    }
+    for name, ddl in columns.items():
+        if name not in existing:
+            cursor.execute(f"ALTER TABLE log_runs ADD COLUMN {name} {ddl}")
+
+
+def save_log_run(summary):
+    if not summary:
+        return False
+    run_key = summary.get("run_key")
+    if not run_key:
+        return False
+
+    counts = summary.get("log_counts") or {}
+    section_runtimes = summary.get("section_runtimes")
+    if isinstance(section_runtimes, dict):
+        section_runtimes = json.dumps(section_runtimes, ensure_ascii=True)
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            _ensure_log_runs_columns(cursor)
+            cursor.execute(
+                """INSERT OR IGNORE INTO log_runs (
+                    run_key,
+                    finished_at,
+                    run_time_seconds,
+                    kometa_version,
+                    kometa_newest_version,
+                    config_name,
+                    config_hash,
+                    run_command,
+                    command_signature,
+                    section_runtimes,
+                    log_mtime,
+                    log_size,
+                    debug_count,
+                    info_count,
+                    warning_count,
+                    error_count,
+                    critical_count,
+                    trace_count,
+                    created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    run_key,
+                    summary.get("finished_at"),
+                    summary.get("run_time_seconds"),
+                    summary.get("kometa_version"),
+                    summary.get("kometa_newest_version"),
+                    summary.get("config_name"),
+                    summary.get("config_hash"),
+                    summary.get("run_command"),
+                    summary.get("command_signature"),
+                    section_runtimes,
+                    summary.get("log_mtime"),
+                    summary.get("log_size"),
+                    counts.get("debug", 0),
+                    counts.get("info", 0),
+                    counts.get("warning", 0),
+                    counts.get("error", 0),
+                    counts.get("critical", 0),
+                    counts.get("trace", 0),
+                    summary.get("created_at"),
+                ),
+            )
+    return True
+
+
+def get_log_runs(limit=100):
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            _ensure_log_runs_columns(cursor)
+            cursor.execute(
+                """SELECT run_key, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
+                          config_name, config_hash, run_command, command_signature, section_runtimes,
+                          log_mtime, log_size, debug_count, info_count, warning_count, error_count,
+                          critical_count, trace_count, created_at
+                   FROM log_runs
+                   ORDER BY created_at DESC
+                   LIMIT ?""",
+                (limit,),
+            )
+            rows = [dict(row) for row in cursor.fetchall()]
+            for row in rows:
+                section_runtimes = row.get("section_runtimes")
+                if isinstance(section_runtimes, str):
+                    try:
+                        row["section_runtimes"] = json.loads(section_runtimes)
+                    except json.JSONDecodeError:
+                        row["section_runtimes"] = None
+            return rows
