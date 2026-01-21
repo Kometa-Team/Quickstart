@@ -43,6 +43,24 @@ _PMS_VULN_HIGH = (1, 42, 0, 99999)  # through 1.42.0.x
 PEOPLE_README_URLS = [
     "https://raw.githubusercontent.com/Kometa-Team/People-Images/refs/heads/master/README.md",
 ]
+PEOPLE_MISSING_WARNING_REGEX = (
+    r"Collection Warning: No Poster Found at "
+    r"(https://raw\.githubusercontent\.com/"
+    r"(?:Kometa-Team/People-Images|meisnate12/Plex-Meta-Manager-People(?:-[^/]+)?)"
+    r"/[^\s\]]+)"
+)
+PEOPLE_MISSING_WARNING_RE = re.compile(PEOPLE_MISSING_WARNING_REGEX, re.IGNORECASE)
+PEOPLE_SECTION_START_STRONG = [
+    r"^(.+?) Collection in .+$",
+    r"^Running .+ Collection$",
+]
+PEOPLE_SECTION_START_WEAK = [
+    r"^Updating Details of .+ Collection$",
+    r"^Validating .+ Attributes$",
+]
+PEOPLE_SECTION_END_PATTERNS = [
+    r"^Finished .+ Collection$",
+]
 
 
 class LogscanAnalyzer:
@@ -53,10 +71,12 @@ class LogscanAnalyzer:
         self.current_kometa_version = None
         self.kometa_newest_version = None
         self.run_time = None
+        self.finished_at = None
         self.plex_timeout = None
         self.checkfiles_flg = None
         self.server_versions = []
         self.people_index_available = False
+        self._people_index = None
 
     def reset_server_versions(self):
         """Reset the server_versions list to an empty list."""
@@ -375,6 +395,12 @@ class LogscanAnalyzer:
         return unquote(os.path.splitext(os.path.basename(url))[0])
 
     def _get_people_cache_path(self, log_path):
+        cache_dir = Path(__file__).resolve().parent.parent / "config" / "cache" / "logscan"
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            return cache_dir / "logscan_people_readme.json"
+        except Exception:
+            pass
         if log_path:
             try:
                 log_path = Path(log_path)
@@ -447,37 +473,213 @@ class LogscanAnalyzer:
                 names.add(cleaned.lower())
         return names
 
+    def preload_people_index(self, log_path=None):
+        cache_path = self._get_people_cache_path(log_path)
+        readme_text, _used_cache = self._fetch_people_readme(cache_path)
+        self._people_index = self._build_people_index(readme_text)
+        self.people_index_available = bool(self._people_index)
+        return self._people_index
+
+    def _ensure_people_index(self, log_path=None, available_index=None):
+        if available_index is not None:
+            self.people_index_available = bool(available_index)
+            return available_index
+        if self._people_index is not None:
+            self.people_index_available = bool(self._people_index)
+            return self._people_index
+        cache_path = self._get_people_cache_path(log_path)
+        readme_text, _used_cache = self._fetch_people_readme(cache_path)
+        self._people_index = self._build_people_index(readme_text)
+        self.people_index_available = bool(self._people_index)
+        return self._people_index
+
+    def _is_blank_log_line(self, line):
+        return not line.strip()
+
+    def _is_divider_log_line(self, line):
+        stripped = line.strip()
+        if not stripped:
+            return False
+        compact = stripped.replace(" ", "")
+        if len(compact) < 8:
+            return False
+        return len(set(compact)) == 1
+
+    def _is_section_break(self, line):
+        return self._is_blank_log_line(line) or self._is_divider_log_line(line)
+
+    def _matches_any_pattern(self, normalized, patterns):
+        for pattern in patterns:
+            if re.match(pattern, normalized):
+                return True
+        return False
+
+    def _find_log_section_bounds(self, cleaned_lines, index, max_span=300):
+        start = None
+        end = None
+
+        min_index = max(0, index - max_span)
+        for idx in range(index, min_index - 1, -1):
+            normalized = self._normalize_name_line(cleaned_lines[idx])
+            if not normalized:
+                continue
+            if self._matches_any_pattern(normalized, PEOPLE_SECTION_START_STRONG):
+                start = idx
+                break
+
+        if start is None:
+            for idx in range(index, min_index - 1, -1):
+                normalized = self._normalize_name_line(cleaned_lines[idx])
+                if not normalized:
+                    continue
+                if self._matches_any_pattern(normalized, PEOPLE_SECTION_START_WEAK):
+                    start = idx
+                    break
+
+        if start is not None:
+            while start > 0 and self._is_divider_log_line(cleaned_lines[start - 1]):
+                start -= 1
+
+        max_index = len(cleaned_lines) - 1
+        max_end = min(max_index, index + max_span)
+        for idx in range(index, max_end + 1):
+            normalized = self._normalize_name_line(cleaned_lines[idx])
+            if not normalized:
+                continue
+            if self._matches_any_pattern(normalized, PEOPLE_SECTION_END_PATTERNS):
+                end = idx
+                break
+
+        if end is not None:
+            while end < max_index and self._is_divider_log_line(cleaned_lines[end + 1]):
+                end += 1
+
+        if start is None or end is None:
+            fallback_start = index
+            while fallback_start > 0 and (index - fallback_start) < max_span:
+                if self._is_section_break(cleaned_lines[fallback_start - 1]):
+                    if self._is_divider_log_line(cleaned_lines[fallback_start - 1]):
+                        fallback_start -= 1
+                    break
+                fallback_start -= 1
+
+            fallback_end = index
+            while fallback_end < max_index and (fallback_end - index) < max_span:
+                if self._is_section_break(cleaned_lines[fallback_end + 1]):
+                    if self._is_divider_log_line(cleaned_lines[fallback_end + 1]):
+                        fallback_end += 1
+                    break
+                fallback_end += 1
+
+            start = fallback_start if start is None else start
+            end = fallback_end if end is None else end
+
+        return start, end
+
+    def _normalize_name_line(self, line):
+        if not line:
+            return ""
+        return line.strip().strip("= ").strip()
+
+    def _extract_key_name_from_block(self, cleaned_lines, start, end):
+        block = cleaned_lines[start:end + 1]
+        for idx, line in enumerate(block):
+            if "Validating Method: key_name" in line:
+                for offset in range(1, 6):
+                    if idx + offset >= len(block):
+                        break
+                    candidate = block[idx + offset].strip()
+                    if not candidate:
+                        continue
+                    if "Value:" in candidate:
+                        value = candidate.split("Value:", 1)[1].strip()
+                        if value:
+                            return value
+                break
+
+        patterns = [
+            r"^Validating\s+(.+?)\s+Attributes$",
+            r"^Running\s+(.+?)\s+Collection$",
+            r"^Finished\s+(.+?)\s+Collection$",
+            r"^(.+?)\s+Collection\s+in\s+.+$",
+        ]
+        for line in block:
+            normalized = self._normalize_name_line(line)
+            if not normalized:
+                continue
+            for pattern in patterns:
+                match = re.match(pattern, normalized)
+                if match:
+                    return match.group(1).strip()
+        return None
+
+    def _extract_missing_people_names(self, lines, available, name_hint=None):
+        names = set()
+        for line in lines:
+            match = PEOPLE_MISSING_WARNING_RE.search(line)
+            if not match:
+                continue
+            name = name_hint
+            if not name:
+                url = match.group(1)
+                name = self.extract_filename_from_url(url)
+            if not name:
+                continue
+            key = name.lower()
+            if available and key in available:
+                continue
+            names.add(key)
+        return names
+
+    def collect_missing_people_lines(self, content, available_index=None, max_block_lines=300, log_path=None):
+        if not content:
+            return []
+        available = self._ensure_people_index(log_path=log_path, available_index=available_index)
+        raw_lines = content.splitlines()
+        cleaned_lines = self.cleanup_content(content).splitlines()
+        items = []
+        seen_blocks = set()
+
+        for idx, line in enumerate(raw_lines):
+            if not PEOPLE_MISSING_WARNING_RE.search(line):
+                continue
+
+            if idx < len(cleaned_lines):
+                start, end = self._find_log_section_bounds(cleaned_lines, idx, max_span=max_block_lines)
+            else:
+                start = max(0, idx - 2)
+                end = min(len(raw_lines) - 1, idx + 2)
+
+            block_lines = raw_lines[start:end + 1]
+            name_hint = None
+            if idx < len(cleaned_lines):
+                name_hint = self._extract_key_name_from_block(cleaned_lines, start, end)
+            names = self._extract_missing_people_names(block_lines, available, name_hint=name_hint)
+            if not names:
+                continue
+
+            block_text = "\n".join(block_lines)
+            if block_text in seen_blocks:
+                continue
+            seen_blocks.add(block_text)
+            items.append({
+                "names": names,
+                "block": block_text,
+            })
+
+        return items
+
     def scan_file_for_people_posters(self, content, log_path=None):
         if not content:
             return []
 
-        matches = re.findall(
-            r"https://raw\.githubusercontent\.com/Kometa-Team/People-Images[^\s\]]+",
-            content,
-            flags=re.IGNORECASE,
-        )
+        items = self.collect_missing_people_lines(content, log_path=log_path)
         names = set()
-        for match in matches:
-            name = self.extract_filename_from_url(match)
-            if name:
-                names.add(name)
-
+        for item in items:
+            names.update(item.get("names", set()))
         if not names:
             return []
-
-        cache_path = self._get_people_cache_path(log_path)
-        readme_text, _used_cache = self._fetch_people_readme(cache_path)
-        available = self._build_people_index(readme_text)
-        self.people_index_available = bool(available)
-
-        if not available:
-            return sorted(names, key=str.lower)
-
-        missing = [
-            name for name in sorted(names, key=str.lower)
-            if name.lower() not in available
-        ]
-        return missing
+        return sorted(names, key=str.lower)
 
     def extract_finished_runs(self, content):
         lines = content.splitlines()
@@ -537,12 +739,14 @@ class LogscanAnalyzer:
         lines = content.splitlines()
 
         run_time_index = None
+        run_time_is_final = False
         for idx in range(len(lines) - 1, -1, -1):
             line = lines[idx]
             if "Run Time:" not in line:
                 continue
             if "Finished:" in line or "Start Time:" in line or (idx > 0 and "Finished " in lines[idx - 1]):
                 run_time_index = idx
+                run_time_is_final = True
                 break
 
         if run_time_index is None:
@@ -558,8 +762,13 @@ class LogscanAnalyzer:
         extracted_lines = [line.lstrip() for line in lines[start_index:]]
         run_time_line = lines[run_time_index]
         parsed_run_time = self._parse_run_time_from_line(run_time_line)
-        if parsed_run_time:
+        if parsed_run_time and run_time_is_final:
             self.run_time = parsed_run_time
+            finished_match = re.search(r"Finished:\s*(.*?)\s+Run Time:", run_time_line)
+            if not finished_match:
+                finished_match = re.search(r"Finished:\s*(.*?)\s*$", run_time_line)
+            if finished_match:
+                self.finished_at = finished_match.group(1).strip()
         return "\n".join(extracted_lines)
 
     def format_contiguous_lines(self, line_numbers):
@@ -1790,6 +1999,27 @@ class LogscanAnalyzer:
                 flags.append(flag)
         return " ".join(flags)
 
+    def _extract_config_path_from_command(self, run_command):
+        if not run_command:
+            return None
+        tokens = self._split_command(run_command)
+        for idx, token in enumerate(tokens):
+            if token.startswith("--config="):
+                return token.split("=", 1)[1].strip('"')
+            if token == "--config" and idx + 1 < len(tokens):
+                return tokens[idx + 1].strip('"')
+        return None
+
+    def _derive_config_name_from_path(self, config_path):
+        try:
+            config_path = Path(config_path)
+        except Exception:
+            return None
+        stem = config_path.stem
+        if stem.endswith("_config"):
+            stem = stem[: -len("_config")]
+        return stem or None
+
     def sanitize_run_command(self, run_command, config_path=None):
         if not run_command:
             return None
@@ -1847,19 +2077,50 @@ class LogscanAnalyzer:
         section_times = {}
         if not content:
             return section_times
-        pattern = re.compile(r"Finished (?P<section>.+?) in (?P<time>\d+:\d{2}:\d{2})")
-        for line in content.splitlines():
-            if "Run Time:" in line:
+        inline_pattern = re.compile(r"Finished (?P<section>.+?) in (?P<time>\d+:\d{2}:\d{2})")
+        finished_pattern = re.compile(r"Finished (?P<section>.+?)\s*$")
+        runtime_pattern = re.compile(r"^\s*(?P<label>[A-Za-z][A-Za-z ]+?) Run Time:\s*(?P<time>\d+:\d{2}:\d{2})\s*$")
+        last_section = None
+        last_section_index = None
+        lines = content.splitlines()
+        for idx, line in enumerate(lines):
+            if not line:
                 continue
-            match = pattern.search(line)
-            if not match:
+            inline_match = inline_pattern.search(line)
+            if inline_match:
+                section = inline_match.group("section").strip()
+                if section.lower().startswith("at:"):
+                    continue
+                seconds = self._parse_hms_to_seconds(inline_match.group("time"))
+                if seconds is not None:
+                    section_times[section] = section_times.get(section, 0) + seconds
                 continue
-            section = match.group("section").strip()
-            if section.lower().startswith("at:"):
+            finished_match = finished_pattern.search(line)
+            if finished_match:
+                section = finished_match.group("section").strip()
+                lowered = section.lower()
+                if lowered in ("run",) or lowered.startswith("run "):
+                    continue
+                last_section = section
+                last_section_index = idx
                 continue
-            seconds = self._parse_hms_to_seconds(match.group("time"))
-            if seconds is not None:
-                section_times[section] = seconds
+            runtime_match = runtime_pattern.search(line)
+            if not runtime_match:
+                continue
+            seconds = self._parse_hms_to_seconds(runtime_match.group("time"))
+            if seconds is None:
+                continue
+            section = None
+            if last_section and last_section_index is not None and (idx - last_section_index) <= 3:
+                section = last_section
+            else:
+                label = runtime_match.group("label").strip()
+                if label and label.lower() != "run":
+                    section = label
+            if section:
+                section_times[section] = section_times.get(section, 0) + seconds
+            last_section = None
+            last_section_index = None
         return section_times
 
     def count_log_levels(self, content):
@@ -1900,8 +2161,8 @@ class LogscanAnalyzer:
         command_signature=None,
         section_runtimes=None,
     ):
-        finished_at = None
-        if finished_runs:
+        finished_at = self.finished_at
+        if not finished_at and finished_runs:
             last_run = finished_runs[-1]
             if " - " in last_run:
                 finished_at = last_run.split(" - ", 1)[0].strip()
@@ -1913,6 +2174,15 @@ class LogscanAnalyzer:
         run_time_seconds = None
         if isinstance(self.run_time, timedelta):
             run_time_seconds = int(self.run_time.total_seconds())
+        run_complete = run_time_seconds is not None
+        section_total_seconds = None
+        section_delta_seconds = None
+        if section_runtimes:
+            section_total_seconds = int(
+                sum(value for value in section_runtimes.values() if isinstance(value, (int, float)))
+            )
+            if run_time_seconds is not None:
+                section_delta_seconds = section_total_seconds - run_time_seconds
 
         log_mtime = None
         log_size = None
@@ -1939,6 +2209,9 @@ class LogscanAnalyzer:
             "run_key": run_key,
             "finished_at": finished_at,
             "run_time_seconds": run_time_seconds,
+            "run_complete": run_complete,
+            "section_runtime_total_seconds": section_total_seconds,
+            "section_runtime_delta_seconds": section_delta_seconds,
             "kometa_version": self.current_kometa_version,
             "kometa_newest_version": self.kometa_newest_version,
             "config_name": config_name,
@@ -1952,10 +2225,11 @@ class LogscanAnalyzer:
             "created_at": datetime.utcnow().isoformat(),
         }
 
-    def analyze_content(self, content, log_path=None, config_name=None, config_path=None):
+    def analyze_content(self, content, log_path=None, config_name=None, config_path=None, include_people_scan=True):
         self.reset_server_versions()
         self.checkfiles_flg = None
         self.run_time = None
+        self.finished_at = None
         self.plex_timeout = None
         self.current_kometa_version = None
         self.kometa_newest_version = None
@@ -1971,8 +2245,14 @@ class LogscanAnalyzer:
         finished_runs = self.extract_finished_runs(cleaned_content)
         self.extract_plex_config(cleaned_content)
         run_command_raw = self.extract_run_command(cleaned_content)
-        run_command = self.sanitize_run_command(run_command_raw, config_path=config_path)
         command_signature = self.compute_command_signature(run_command_raw)
+        if not config_path:
+            parsed_path = self._extract_config_path_from_command(run_command_raw)
+            if parsed_path:
+                config_path = Path(parsed_path)
+        if not config_name and config_path:
+            config_name = self._derive_config_name_from_path(config_path)
+        run_command = self.sanitize_run_command(run_command_raw, config_path=config_path)
         config_hash = self._hash_file(config_path)
         section_runtimes = self.extract_section_runtimes(cleaned_content)
 
@@ -1980,23 +2260,25 @@ class LogscanAnalyzer:
         if recommendations:
             recommendations = self.reorder_recommendations(recommendations)
 
-        missing_people = self.scan_file_for_people_posters(cleaned_content, log_path=log_path)
+        missing_people = []
         missing_people_message = None
-        if missing_people:
-            if self.people_index_available:
-                missing_people_message = (
-                    "Missing people posters detected. Drop your meta.log in the Kometa Discord #bot-spam channel "
-                    "and answer Yes to the Logscan prompt to request poster creation."
-                )
-            else:
-                missing_people_message = (
-                    "People-Images index unavailable; showing all people poster references from the log."
-                )
-            missing_people_lines = "\n".join(f"- {name}" for name in missing_people)
-            recommendations.append({
-                "first_line": "INFO - Missing people posters",
-                "message": f"{missing_people_message}\n\nMissing names:\n{missing_people_lines}",
-            })
+        if include_people_scan:
+            missing_people = self.scan_file_for_people_posters(cleaned_content, log_path=log_path)
+            if missing_people:
+                if self.people_index_available:
+                    missing_people_message = (
+                        "Missing people posters detected. Drop your meta.log in the Kometa Discord #bot-spam channel "
+                        "and answer Yes to the Logscan prompt to request poster creation."
+                    )
+                else:
+                    missing_people_message = (
+                        "People-Images index unavailable; showing all people poster references from the log."
+                    )
+                missing_people_lines = "\n".join(f"- {name}" for name in missing_people)
+                recommendations.append({
+                    "first_line": "INFO - Missing people posters",
+                    "message": f"{missing_people_message}\n\nMissing names:\n{missing_people_lines}",
+                })
 
         counts = self.count_log_levels(raw_content)
         summary = self._build_summary(
@@ -2009,6 +2291,14 @@ class LogscanAnalyzer:
             command_signature=command_signature,
             section_runtimes=section_runtimes,
         )
+        if summary and not summary.get("run_complete"):
+            recommendations.append({
+                "first_line": "INFO - Run incomplete",
+                "message": (
+                    "This log does not include a completed Finished Run block yet. "
+                    "Live logscan will still show findings, but trends ingestion is skipped until the run completes."
+                ),
+            })
 
         return {
             "summary": summary,
@@ -2019,7 +2309,7 @@ class LogscanAnalyzer:
             "finished_lines": finished_lines,
         }
 
-    def analyze_log_file(self, log_path, config_name=None, config_path=None):
+    def analyze_log_file(self, log_path, config_name=None, config_path=None, include_people_scan=True):
         log_path = Path(log_path)
         if not log_path.exists():
             raise FileNotFoundError(f"Log file not found at: {log_path}")
@@ -2029,4 +2319,5 @@ class LogscanAnalyzer:
             log_path=log_path,
             config_name=config_name,
             config_path=config_path,
+            include_people_scan=include_people_scan,
         )

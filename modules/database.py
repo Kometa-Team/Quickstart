@@ -184,6 +184,16 @@ def save_log_run(summary):
                     summary.get("created_at"),
                 ),
             )
+            return cursor.rowcount > 0
+    return False
+
+
+def clear_log_runs():
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(log_runs_table_create())
+            cursor.execute("DELETE FROM log_runs")
     return True
 
 

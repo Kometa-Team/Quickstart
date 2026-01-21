@@ -21,11 +21,6 @@
             data-current-config-history="{{ page_info.qs_config_history }}" title="Quickstart settings">
             <i class="bi bi-gear-fill"></i>
           </button>
-          <a href="/logscan-trends"
-            class="badge support-badge d-inline-flex align-items-center {{ 'bg-primary' if page_info['template_name'] == 'logscan-trends' else 'bg-secondary' }} config-badge-button"
-            title="Logscan trends">
-            <i class="bi bi-graph-up-arrow me-1"></i> Trends
-          </a>
           <button type="button" class="badge bg-secondary config-badge config-badge-button"
             data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}">
             <span title="Switch profile">
@@ -53,6 +48,46 @@
         <a class="btn nav-button" href="/step/900-final" title="Back to Final Validation">
           <i class="fa fa-arrow-left"></i> Back to Final
         </a>
+        {% if page_info.get('show_jump_to') %}
+        <div class="dropdown mx-auto">
+          <button class="btn nav-button dropdown-toggle" id="stepDropdown" data-bs-toggle="dropdown"
+            aria-expanded="false">
+            <i class="fa fa-list"></i>
+            Jump to: Pages
+          </button>
+
+          <ul class="dropdown-menu dropdown-menu-end text-center" style="max-height: 50vh; overflow-y: auto;">
+            <li class="dropdown-item progress-container">
+              <div class="progress" style="height: 5px;">
+                <div class="progress-bar bg-success" style="width: {{ page_info.get('progress', 0) }}%;"></div>
+              </div>
+              <small class="text-muted">{{ page_info.get('progress', 0) }}% Completed</small>
+            </li>
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+
+            {% for file, name in template_list %}
+            {% if name == 'Final Validation' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            <li>
+              <a class="dropdown-item {% if file.rsplit('.', 1)[0] == page_info['template_name'] %} active {% endif %}"
+                href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">
+                {{ name }}
+              </a>
+            </li>
+            {% if name == 'Start' %}
+            <li>
+              <hr class="dropdown-divider">
+            </li>
+            {% endif %}
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
         {% else %}
         <div class="dropdown">
           <button class="btn nav-button dropdown-toggle" id="stepDropdown" data-bs-toggle="dropdown"

@@ -1,0 +1,129 @@
+{% extends "000-base.html" %}
+{% block content %}
+{% include "001-navigation.html" %}
+
+<div class="card border-secondary mb-3">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <p class="text-muted small mb-0">
+          Recent Kometa runs parsed from <code>config/kometa/config/logs/meta.log</code>. Tokens and secrets are excluded.
+        </p>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <select id="logscan-trends-limit" class="form-select form-select-sm w-auto"
+          title="Display limit only. Does not affect reingest.">
+          <option value="25">Last 25 runs</option>
+          <option value="50" selected>Last 50 runs</option>
+          <option value="100">Last 100 runs</option>
+          <option value="200">Last 200 runs</option>
+        </select>
+        <a id="logscan-trends-missing-download" class="btn nav-button btn-sm d-none" href="/logscan/trends/people-missing">
+          Download missing people log
+        </a>
+        <button id="logscan-trends-reingest" class="btn nav-button btn-sm" type="button"
+          data-bs-toggle="modal" data-bs-target="#logscan-reingest-modal">Reingest logs</button>
+        <button id="logscan-trends-reset" class="btn nav-button btn-sm" type="button"
+          data-bs-toggle="modal" data-bs-target="#logscan-reset-modal">Reset trends</button>
+        <button id="logscan-trends-refresh" class="btn nav-button btn-sm" type="button"
+          title="Reload stored trends only (no reingest)">Reload data</button>
+      </div>
+    </div>
+    <div class="alert alert-danger small mt-3 mb-0">
+      WIP: This page is still evolving and may change as the reporting logic is refined.
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-lg-4">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Summary</h6>
+          <div id="logscan-trends-summary" class="small text-muted">Loading summary...</div>
+        </div>
+      </div>
+      <div class="col-lg-8">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Daily Runs</h6>
+          <div id="logscan-trends-daily" class="small text-muted">Loading daily totals...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="small text-muted mt-2" id="logscan-trends-status"></div>
+    <div class="mt-2 d-none" id="logscan-trends-progress">
+      <div class="progress" style="height: 8px;">
+        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated"
+          id="logscan-trends-progress-bar" style="width: 0%"></div>
+      </div>
+      <div class="small text-muted mt-1" id="logscan-trends-progress-text"></div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-secondary">
+  <div class="card-body">
+    <h6 class="mb-3">Recent Runs</h6>
+    <div class="table-responsive">
+      <table class="table table-dark table-sm align-middle mb-0" id="logscan-trends-table">
+        <thead>
+          <tr>
+            <th>Finished</th>
+            <th>Runtime</th>
+            <th>Config</th>
+            <th>Command</th>
+            <th>Counts</th>
+            <th>Kometa</th>
+            <th>Section Runtimes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="7" class="text-muted">Loading runs...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-reingest-modal" tabindex="-1" aria-labelledby="logscan-reingest-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-reingest-title">Reingest Logs</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        This will scan all <code>meta*.log</code> files in <code>config/kometa/config/logs</code> and rebuild trends.
+        Missing people entries are deduped and saved to <code>config/cache/logscan/meta_people_missing.log</code>.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button btn-sm" id="logscan-confirm-reingest">Reingest</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-reset-modal" tabindex="-1" aria-labelledby="logscan-reset-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-reset-title">Reset Trends</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        This will clear all stored trend data. You can reingest logs afterward to rebuild the history.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button nav-button-danger btn-sm" id="logscan-confirm-reset">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

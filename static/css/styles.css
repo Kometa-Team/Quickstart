@@ -1583,6 +1583,18 @@ div#loading {
     color: var(--button-text-hover) !important;
 }
 
+.nav-button.nav-button-danger {
+    background-color: var(--bs-danger) !important;
+    border-color: var(--bs-danger) !important;
+    color: #fff !important;
+}
+
+.nav-button.nav-button-danger:hover {
+    background-color: #b02a37 !important;
+    border-color: #b02a37 !important;
+    color: #fff !important;
+}
+
 .btn.nav-button:disabled,
 .btn.nav-button.disabled {
     background-color: var(--theme-bg-dark) !important;

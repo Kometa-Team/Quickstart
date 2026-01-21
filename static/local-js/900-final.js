@@ -1128,11 +1128,30 @@ $(document).ready(function () {
 
     $logscanSections.empty()
     const sections = summary.section_runtimes || {}
+    const sectionTotal = summary.section_runtime_total_seconds
+    const sectionDelta = summary.section_runtime_delta_seconds
+    const runTotal = summary.run_time_seconds
     const sectionEntries = Object.entries(sections)
       .filter(([, value]) => typeof value === 'number' && Number.isFinite(value))
       .sort((a, b) => b[1] - a[1])
     if (sectionEntries.length) {
-      $('<div class="fw-semibold mb-1"></div>').text('Section runtimes').appendTo($logscanSections)
+      let header = 'Section runtimes'
+      const metaParts = []
+      if (typeof sectionTotal === 'number' && Number.isFinite(sectionTotal)) {
+        metaParts.push(`sum: ${formatRunSeconds(sectionTotal)}`)
+      }
+      if (typeof runTotal === 'number' && Number.isFinite(runTotal)) {
+        metaParts.push(`run total: ${formatRunSeconds(runTotal)}`)
+      }
+      if (typeof sectionDelta === 'number' && Number.isFinite(sectionDelta)) {
+        const deltaText = formatRunSeconds(Math.abs(sectionDelta)) || '0s'
+        const sign = sectionDelta > 0 ? '+' : sectionDelta < 0 ? '-' : ''
+        metaParts.push(`delta: ${sign}${deltaText}`)
+      }
+      if (metaParts.length) {
+        header = `${header} (${metaParts.join(', ')})`
+      }
+      $('<div class="fw-semibold mb-1"></div>').text(header).appendTo($logscanSections)
       const listLines = sectionEntries.map(([name, seconds]) => `${name}: ${formatRunSeconds(seconds)}`)
       $('<div class="text-muted" style="white-space: pre-wrap;"></div>').text(listLines.join('\n')).appendTo($logscanSections)
     } else {

@@ -437,9 +437,14 @@ def user_visible_name(raw_name):
         formatted_name = "Libraries"
     elif raw_name == "final":
         formatted_name = "Final Validation"
+    elif raw_name == "logscan-trends":
+        formatted_name = "Logscan Trends"
     else:
-        # Capitalize the first letter
-        formatted_name = raw_name.capitalize()
+        if "-" in raw_name:
+            formatted_name = raw_name.replace("-", " ").title()
+        else:
+            # Capitalize the first letter
+            formatted_name = raw_name.capitalize()
 
     return formatted_name
 
@@ -464,8 +469,8 @@ def booler(thing):
 def get_bits(file):
     file_stem = Path(file).stem
     bits = file_stem.split("-")
-    num = bits[0]
-    raw_name = bits[1]
+    num = bits[0] if bits else file_stem
+    raw_name = "-".join(bits[1:]) if len(bits) > 1 else file_stem
 
     return file_stem, num, raw_name
 
@@ -510,26 +515,33 @@ def get_template_list():
     templates = {}
     type_counter = {"012": 0, "013": 0}  # Counters for movie, show types
     prev_record = "001-start"
+    included_files = []
 
     for file in file_list:
-        if belongs_in_template_list(file):
-            match = re.match(r"^(\d+)-", file)  # Match any length of digits followed by '-'
-            if match:
-                file_prefix = match.group(1)
-            else:
-                continue  # Skip files that do not match the pattern
+        if not belongs_in_template_list(file):
+            continue
+        included_files.append(file)
 
-            if file_prefix in type_counter:
-                type_counter[file_prefix] += 1
-                num = f"{file_prefix}{type_counter[file_prefix]:02d}"
-            else:
-                num = file_prefix
+    for idx, file in enumerate(included_files):
+        match = re.match(r"^(\d+)-", file)  # Match any length of digits followed by '-'
+        if match:
+            file_prefix = match.group(1)
+        else:
+            continue  # Skip files that do not match the pattern
 
-            next_record = get_next(file_list, file)
-            rec = template_record(file, prev_record, next_record)
-            rec["num"] = num  # Update the num to include the counter
-            templates[num] = rec
-            prev_record = rec["stem"]
+        if file_prefix in type_counter:
+            type_counter[file_prefix] += 1
+            num = f"{file_prefix}{type_counter[file_prefix]:02d}"
+        else:
+            num = file_prefix
+
+        next_record = None
+        if idx + 1 < len(included_files):
+            next_record = included_files[idx + 1].rsplit(".", 1)[0]
+        rec = template_record(file, prev_record, next_record)
+        rec["num"] = num  # Update the num to include the counter
+        templates[num] = rec
+        prev_record = rec["stem"]
 
     return templates
 
@@ -1425,6 +1437,75 @@ def _download_zip(branch: str, logs: list[str]) -> bytes | None:
         return None
 
 
+def _backup_kometa_runtime_assets(kometa_dir: Path, logs: list[str]) -> Path | None:
+    config_dir = kometa_dir / "config"
+    if not config_dir.exists():
+        return None
+
+    logs_dir = config_dir / "logs"
+    cache_files = list(config_dir.glob("*.cache"))
+    if not logs_dir.is_dir() and not cache_files:
+        return None
+
+    backup_root = Path(CONFIG_DIR) / "kometa-backup"
+    backup_root.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    backup_dir = backup_root / f"kometa-config-{stamp}"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        if logs_dir.is_dir():
+            shutil.copytree(logs_dir, backup_dir / "logs", dirs_exist_ok=True)
+        if cache_files:
+            cache_dir = backup_dir / "cache"
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            for cache_file in cache_files:
+                shutil.copy2(cache_file, cache_dir / cache_file.name)
+        logs.append(f"?? Backed up Kometa logs/cache to {backup_dir}")
+        return backup_dir
+    except Exception as e:
+        logs.append(f"? Failed to back up Kometa logs/cache: {e}")
+        return None
+
+
+def _restore_kometa_runtime_assets(kometa_dir: Path, backup_dir: Path, logs: list[str]) -> bool:
+    if not backup_dir or not backup_dir.exists():
+        return False
+
+    restored = False
+    try:
+        config_dir = kometa_dir / "config"
+        config_dir.mkdir(parents=True, exist_ok=True)
+
+        logs_backup = backup_dir / "logs"
+        if logs_backup.is_dir():
+            target_logs = config_dir / "logs"
+            if target_logs.exists():
+                shutil.rmtree(target_logs, ignore_errors=True)
+            shutil.copytree(logs_backup, target_logs, dirs_exist_ok=True)
+            restored = True
+
+        cache_backup = backup_dir / "cache"
+        if cache_backup.is_dir():
+            for cache_file in cache_backup.glob("*.cache"):
+                shutil.copy2(cache_file, config_dir / cache_file.name)
+            restored = True
+
+        if restored:
+            logs.append(f"?? Restored Kometa logs/cache from {backup_dir}")
+        return restored
+    except Exception as e:
+        logs.append(f"? Failed to restore Kometa logs/cache: {e}")
+        return False
+
+
+def _cleanup_kometa_backup(backup_dir: Path, logs: list[str]):
+    try:
+        shutil.rmtree(backup_dir, ignore_errors=True)
+    except Exception as e:
+        logs.append(f"? Failed to remove Kometa backup: {e}")
+
+
 def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> bool:
     try:
         _ensure_dir(dest_dir)
@@ -1626,8 +1707,19 @@ def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "night
         if not zip_bytes:
             return {"success": False, "log": logs}
 
+        backup_dir = _backup_kometa_runtime_assets(kometa_dir, logs)
+
         if not _extract_zip_bytes(zip_bytes, kometa_dir, logs):
+            if backup_dir:
+                restored = _restore_kometa_runtime_assets(kometa_dir, backup_dir, logs)
+                if restored:
+                    _cleanup_kometa_backup(backup_dir, logs)
             return {"success": False, "log": logs}
+
+        if backup_dir:
+            restored = _restore_kometa_runtime_assets(kometa_dir, backup_dir, logs)
+            if restored:
+                _cleanup_kometa_backup(backup_dir, logs)
 
         res = _ensure_venv(kometa_dir, logs)
         if not res:

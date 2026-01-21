@@ -231,6 +231,12 @@ app.config["SESSION_TYPE"] = "cachelib"
 flask_cache_dir = os.environ.get("QS_FLASK_SESSION_DIR", os.path.join(helpers.CONFIG_DIR, "flask_session"))
 os.makedirs(flask_cache_dir, exist_ok=True)
 
+logscan_reingest_lock = threading.Lock()
+logscan_reingest_state = {
+    "status": "idle",
+    "job_id": None,
+}
+
 app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir=flask_cache_dir, threshold=500)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
@@ -994,6 +1000,8 @@ def step(name):
     if "shutdown_nonce" not in session:
         session["shutdown_nonce"] = secrets.token_urlsafe(16)
     page_info["shutdown_nonce"] = session["shutdown_nonce"]
+    if name == "905-logscan-trends":
+        return redirect(url_for("logscan_trends_page"))
 
     # Generate a placeholder name for "Add Config"
     page_info["new_config_name"] = namesgenerator.get_random_name()
@@ -1007,17 +1015,25 @@ def step(name):
 
     file_list = helpers.get_menu_list()
     template_list = helpers.get_template_list()
-    total_steps = len(template_list)
+    progress_excludes = {"sponsor", "logscan-trends"}
+    progress_keys = [
+        key for key in template_list
+        if template_list[key].get("raw_name") not in progress_excludes
+    ]
+    total_steps = len(progress_keys)
 
     stem, num, b = helpers.get_bits(name)
 
     try:
-        current_index = list(template_list).index(num)
         item = template_list[num]
     except (ValueError, IndexError, KeyError):
         return f"ERROR WITH NAME {name}; stem, num, b: {stem}, {num}, {b}"
 
-    page_info["progress"] = round((current_index + 1) / total_steps * 100)
+    if num in progress_keys and total_steps:
+        progress_index = progress_keys.index(num)
+    else:
+        progress_index = max(total_steps - 1, 0)
+    page_info["progress"] = round(((progress_index + 1) / total_steps) * 100) if total_steps else 0
     page_info["title"] = item["name"]
     page_info["next_page"] = item["next"]
     page_info["prev_page"] = item["prev"]
@@ -2177,7 +2193,7 @@ def logscan_analyze():
         config_path=config_path,
     )
     summary = result.get("summary") if isinstance(result, dict) else None
-    if summary:
+    if summary and summary.get("run_complete"):
         database.save_log_run(summary)
 
     LOGSCAN_ANALYSIS_CACHE.update(
@@ -2197,6 +2213,310 @@ def logscan_trends():
     return jsonify({"runs": database.get_log_runs(limit=limit)})
 
 
+@app.route("/logscan/trends/reset", methods=["POST"])
+def logscan_trends_reset():
+    database.clear_log_runs()
+    return jsonify({"success": True})
+
+def _logscan_reingest_snapshot():
+    with logscan_reingest_lock:
+        return dict(logscan_reingest_state)
+
+def _update_logscan_reingest_state(**updates):
+    with logscan_reingest_lock:
+        logscan_reingest_state.update(updates)
+
+def _reset_logscan_reingest_state():
+    with logscan_reingest_lock:
+        logscan_reingest_state.clear()
+        logscan_reingest_state.update({
+            "status": "idle",
+            "job_id": None,
+        })
+
+def _get_logscan_cache_dir():
+    cache_dir = Path(helpers.CONFIG_DIR) / "cache" / "logscan"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
+
+def _perform_logscan_reingest(reset, job_id=None, update_state=True):
+    started_at = datetime.utcnow().isoformat()
+    if update_state:
+        _update_logscan_reingest_state(
+            status="running",
+            job_id=job_id,
+            started_at=started_at,
+            finished_at=None,
+            total=0,
+            scanned=0,
+            ingested=0,
+            duplicates=0,
+            skipped_incomplete=0,
+            skipped_invalid=0,
+            errors=0,
+            current_file=None,
+            missing_people_unique=0,
+            missing_people_logs=0,
+            missing_people_log_ready=False,
+            missing_people_log_lines=0,
+            sample_incomplete=[],
+            sample_errors=[],
+        )
+
+    if reset:
+        database.clear_log_runs()
+
+    kometa_root = helpers.get_kometa_root_path()
+    log_dir = kometa_root / "config" / "logs"
+    if not log_dir.exists():
+        message = f"Log folder not found at: {log_dir}"
+        if update_state:
+            _update_logscan_reingest_state(status="error", error=message, finished_at=datetime.utcnow().isoformat())
+        return {"success": False, "error": message}
+
+    log_files = []
+    for path in log_dir.glob("meta*.log*"):
+        if not path.is_file():
+            continue
+        suffixes = [suffix.lower() for suffix in path.suffixes]
+        if suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
+            continue
+        if ".log" not in path.name.lower():
+            continue
+        log_files.append(path)
+
+    def _mtime(value):
+        try:
+            return value.stat().st_mtime
+        except Exception:
+            return 0
+
+    def _extract_fake_people_header(text, max_lines=200):
+        header_lines = []
+        for line in text.splitlines():
+            header_lines.append(line)
+            if "Locating config..." in line:
+                break
+            if len(header_lines) >= max_lines:
+                break
+        return "\n".join(header_lines).rstrip()
+
+    log_files = sorted({path.resolve() for path in log_files}, key=_mtime)
+    total_files = len(log_files)
+    if update_state:
+        _update_logscan_reingest_state(total=total_files)
+
+    analyzer = logscan.LogscanAnalyzer()
+    if log_files:
+        analyzer.preload_people_index(log_files[0])
+    ingested = 0
+    duplicates = 0
+    skipped_incomplete = 0
+    skipped_invalid = 0
+    errors = 0
+    missing_people_unique = set()
+    missing_people_logs = 0
+    missing_people_blocks = []
+    missing_people_seen_blocks = set()
+    missing_people_seen_names = set()
+    missing_people_header = None
+    sample_incomplete = []
+    sample_errors = []
+
+    for idx, path in enumerate(log_files, start=1):
+        if update_state:
+            _update_logscan_reingest_state(current_file=path.name, scanned=max(0, idx - 1))
+        try:
+            content = path.read_text(encoding="utf-8", errors="replace")
+            result = analyzer.analyze_content(
+                content,
+                log_path=path,
+                include_people_scan=True,
+            )
+            summary = result.get("summary") if isinstance(result, dict) else None
+            if not summary:
+                skipped_invalid += 1
+                continue
+            if not summary.get("run_complete"):
+                skipped_incomplete += 1
+                if len(sample_incomplete) < 5:
+                    sample_incomplete.append(path.name)
+                continue
+            missing_people = result.get("missing_people") if isinstance(result, dict) else None
+            if missing_people:
+                missing_people_logs += 1
+                missing_people_unique.update({name.lower() for name in missing_people})
+                if missing_people_header is None:
+                    missing_people_header = _extract_fake_people_header(content)
+            people_items = analyzer.collect_missing_people_lines(content, available_index=analyzer._people_index)
+            if people_items:
+                for item in people_items:
+                    names = {name for name in item.get("names", set()) if name in missing_people_unique}
+                    if not names:
+                        continue
+                    if names.issubset(missing_people_seen_names):
+                        continue
+                    block = item.get("block")
+                    if block and block not in missing_people_seen_blocks:
+                        missing_people_blocks.append(block)
+                        missing_people_seen_blocks.add(block)
+                    missing_people_seen_names.update(names)
+            if database.save_log_run(summary):
+                ingested += 1
+            else:
+                duplicates += 1
+        except Exception as exc:
+            errors += 1
+            if len(sample_errors) < 5:
+                sample_errors.append(f"{path.name}: {exc}")
+        if update_state:
+            _update_logscan_reingest_state(
+                scanned=idx,
+                ingested=ingested,
+                duplicates=duplicates,
+                skipped_incomplete=skipped_incomplete,
+                skipped_invalid=skipped_invalid,
+                errors=errors,
+                missing_people_unique=len(missing_people_unique),
+                missing_people_logs=missing_people_logs,
+                sample_incomplete=sample_incomplete,
+                sample_errors=sample_errors,
+            )
+
+    cache_dir = _get_logscan_cache_dir()
+    missing_people_log = cache_dir / "meta_people_missing.log"
+    missing_people_meta = cache_dir / "meta_people_missing.json"
+    missing_people_log_ready = False
+    missing_people_log_lines = 0
+    if missing_people_blocks:
+        try:
+            missing_people_log_lines = sum(len(block.splitlines()) for block in missing_people_blocks)
+            output_parts = []
+            if missing_people_header:
+                output_parts.append(missing_people_header)
+                missing_people_log_lines += len(missing_people_header.splitlines())
+            output_parts.extend(missing_people_blocks)
+            missing_people_log.write_text("\n".join(output_parts).rstrip() + "\n", encoding="utf-8")
+            missing_people_log_ready = True
+            try:
+                missing_people_meta.write_text(
+                    json.dumps(
+                        {
+                            "missing_people_unique": len(missing_people_unique),
+                            "missing_people_logs": missing_people_logs,
+                            "updated_at": datetime.utcnow().isoformat(),
+                        },
+                        ensure_ascii=True,
+                        indent=2,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
+            except Exception:
+                pass
+        except Exception as exc:
+            errors += 1
+            if len(sample_errors) < 5:
+                sample_errors.append(f"{missing_people_log.name}: {exc}")
+    else:
+        try:
+            if missing_people_log.exists():
+                missing_people_log.unlink()
+            if missing_people_meta.exists():
+                missing_people_meta.unlink()
+        except Exception:
+            pass
+
+    result = {
+        "success": True,
+        "scanned": len(log_files),
+        "ingested": ingested,
+        "duplicates": duplicates,
+        "skipped_incomplete": skipped_incomplete,
+        "skipped_invalid": skipped_invalid,
+        "errors": errors,
+        "missing_people_unique": len(missing_people_unique),
+        "missing_people_logs": missing_people_logs,
+        "missing_people_log_ready": missing_people_log_ready,
+        "missing_people_log_lines": missing_people_log_lines,
+        "sample_incomplete": sample_incomplete,
+        "sample_errors": sample_errors,
+    }
+    if update_state:
+        _update_logscan_reingest_state(
+            status="complete",
+            finished_at=datetime.utcnow().isoformat(),
+            current_file=None,
+            **result,
+        )
+    return result
+
+def _run_logscan_reingest_job(job_id, reset):
+    try:
+        with app.app_context():
+            _perform_logscan_reingest(reset=reset, job_id=job_id, update_state=True)
+    except Exception as exc:
+        _update_logscan_reingest_state(
+            status="error",
+            error=str(exc),
+            finished_at=datetime.utcnow().isoformat(),
+            current_file=None,
+        )
+
+@app.route("/logscan/trends/reingest/status", methods=["GET"])
+def logscan_trends_reingest_status():
+    job_id = request.args.get("job")
+    snapshot = _logscan_reingest_snapshot()
+    if not snapshot or snapshot.get("status") == "idle":
+        return jsonify({"status": "idle"})
+    if job_id and snapshot.get("job_id") != job_id:
+        return jsonify({"status": "idle"}), 404
+    return jsonify(snapshot)
+
+
+@app.route("/logscan/trends/reingest", methods=["POST"])
+def logscan_trends_reingest():
+    data = request.get_json(silent=True) or {}
+    reset = data.get("reset") is True
+    background = data.get("background") is True
+    if background:
+        snapshot = _logscan_reingest_snapshot()
+        if snapshot.get("status") == "running":
+            return jsonify({
+                "error": "Reingest already running.",
+                "job_id": snapshot.get("job_id"),
+                "status": snapshot.get("status"),
+            }), 409
+        job_id = secrets.token_urlsafe(8)
+        _update_logscan_reingest_state(
+            status="running",
+            job_id=job_id,
+            started_at=datetime.utcnow().isoformat(),
+            finished_at=None,
+            total=0,
+            scanned=0,
+            ingested=0,
+            duplicates=0,
+            skipped_incomplete=0,
+            skipped_invalid=0,
+            errors=0,
+            current_file=None,
+            missing_people_unique=0,
+            missing_people_logs=0,
+            missing_people_log_ready=False,
+            missing_people_log_lines=0,
+            sample_incomplete=[],
+            sample_errors=[],
+        )
+        thread = threading.Thread(target=_run_logscan_reingest_job, args=(job_id, reset), daemon=True)
+        thread.start()
+        return jsonify({"success": True, "job_id": job_id, "status": "running"})
+
+    result = _perform_logscan_reingest(reset=reset, job_id=None, update_state=True)
+    status_code = 200 if result.get("success") else 400
+    return jsonify(result), status_code
+
+
 @app.route("/logscan-trends", methods=["GET"])
 def logscan_trends_page():
     if "config_name" not in session:
@@ -2206,7 +2526,7 @@ def logscan_trends_page():
 
     page_info = {
         "title": "Logscan Trends",
-        "template_name": "logscan-trends",
+        "template_name": "905-logscan-trends",
         "config_name": session.get("config_name"),
         "running_port": running_port,
         "qs_debug": app.config["QS_DEBUG"],
@@ -2214,17 +2534,79 @@ def logscan_trends_page():
         "qs_optimize_defaults": app.config.get("QS_OPTIMIZE_DEFAULTS", True),
         "qs_config_history": app.config.get("QS_CONFIG_HISTORY", 0),
         "shutdown_nonce": session["shutdown_nonce"],
-        "hide_step_nav": True,
+        "hide_step_nav": False,
     }
 
     template_list = helpers.get_menu_list()
+    step_templates = helpers.get_template_list()
+    _, num, _ = helpers.get_bits(page_info["template_name"])
+    item = step_templates.get(num)
+    if item:
+        page_info["next_page"] = item["next"]
+        page_info["prev_page"] = item["prev"]
+        if page_info["next_page"]:
+            next_num = page_info["next_page"].split("-")[0]
+            page_info["next_page_name"] = step_templates.get(next_num, {}).get("name", "Next")
+        else:
+            page_info["next_page_name"] = "Next"
+
+        if page_info["prev_page"]:
+            prev_num = page_info["prev_page"].split("-")[0]
+            page_info["prev_page_name"] = step_templates.get(prev_num, {}).get("name", "Previous")
+        else:
+            page_info["prev_page_name"] = "Previous"
+
+    progress_excludes = {"sponsor", "logscan-trends"}
+    progress_keys = [
+        key for key in step_templates
+        if step_templates[key].get("raw_name") not in progress_excludes
+    ]
+    total_steps = len(progress_keys)
+    if num in progress_keys and total_steps:
+        progress_index = progress_keys.index(num)
+    else:
+        progress_index = max(total_steps - 1, 0)
+    page_info["progress"] = round(((progress_index + 1) / total_steps) * 100) if total_steps else 0
     available_configs = database.get_unique_config_names() or []
     return render_template(
-        "logscan-trends.html",
+        "905-logscan-trends.html",
         page_info=page_info,
         template_list=template_list,
         available_configs=available_configs,
     )
+
+
+@app.route("/logscan/trends/people-missing", methods=["GET"])
+def logscan_trends_people_missing():
+    missing_log = _get_logscan_cache_dir() / "meta_people_missing.log"
+    if not missing_log.exists():
+        return jsonify({"error": "Missing people log not found."}), 404
+    return send_file(
+        missing_log,
+        mimetype="text/plain",
+        as_attachment=True,
+        download_name="meta_people_missing.log",
+    )
+
+
+@app.route("/logscan/trends/people-missing/status", methods=["GET"])
+def logscan_trends_people_missing_status():
+    cache_dir = _get_logscan_cache_dir()
+    missing_log = cache_dir / "meta_people_missing.log"
+    if not missing_log.exists():
+        return jsonify({"exists": False, "missing_people_unique": 0})
+    meta_path = cache_dir / "meta_people_missing.json"
+    meta = {}
+    if meta_path.exists():
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8")) or {}
+        except Exception:
+            meta = {}
+    return jsonify({
+        "exists": True,
+        "missing_people_unique": meta.get("missing_people_unique"),
+        "updated_at": meta.get("updated_at"),
+    })
 
 
 @app.route("/support-info")
