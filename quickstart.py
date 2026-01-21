@@ -107,6 +107,7 @@ def _calculate_system_cpu_percent():
     percent = (busy / delta_total) * 100.0
     return max(0.0, min(100.0, percent))
 
+
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
 load_dotenv(DOTENV, override=True)
 
@@ -1016,10 +1017,7 @@ def step(name):
     file_list = helpers.get_menu_list()
     template_list = helpers.get_template_list()
     progress_excludes = {"sponsor", "logscan-trends"}
-    progress_keys = [
-        key for key in template_list
-        if template_list[key].get("raw_name") not in progress_excludes
-    ]
+    progress_keys = [key for key in template_list if template_list[key].get("raw_name") not in progress_excludes]
     total_steps = len(progress_keys)
 
     stem, num, b = helpers.get_bits(name)
@@ -2196,9 +2194,7 @@ def logscan_analyze():
     if summary and summary.get("run_complete"):
         database.save_log_run(summary, recommendations=result.get("recommendations"))
 
-    LOGSCAN_ANALYSIS_CACHE.update(
-        {"mtime": stats.st_mtime, "size": stats.st_size, "data": result}
-    )
+    LOGSCAN_ANALYSIS_CACHE.update({"mtime": stats.st_mtime, "size": stats.st_size, "data": result})
     result["cached"] = False
     return jsonify(result)
 
@@ -2227,26 +2223,33 @@ def logscan_trends_reset():
     database.clear_log_runs()
     return jsonify({"success": True})
 
+
 def _logscan_reingest_snapshot():
     with logscan_reingest_lock:
         return dict(logscan_reingest_state)
+
 
 def _update_logscan_reingest_state(**updates):
     with logscan_reingest_lock:
         logscan_reingest_state.update(updates)
 
+
 def _reset_logscan_reingest_state():
     with logscan_reingest_lock:
         logscan_reingest_state.clear()
-        logscan_reingest_state.update({
-            "status": "idle",
-            "job_id": None,
-        })
+        logscan_reingest_state.update(
+            {
+                "status": "idle",
+                "job_id": None,
+            }
+        )
+
 
 def _get_logscan_cache_dir():
     cache_dir = Path(helpers.CONFIG_DIR) / "cache" / "logscan"
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
+
 
 def _perform_logscan_reingest(reset, job_id=None, update_state=True):
     started_at = datetime.utcnow().isoformat()
@@ -2460,6 +2463,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         )
     return result
 
+
 def _run_logscan_reingest_job(job_id, reset):
     try:
         with app.app_context():
@@ -2471,6 +2475,7 @@ def _run_logscan_reingest_job(job_id, reset):
             finished_at=datetime.utcnow().isoformat(),
             current_file=None,
         )
+
 
 @app.route("/logscan/trends/reingest/status", methods=["GET"])
 def logscan_trends_reingest_status():
@@ -2491,11 +2496,16 @@ def logscan_trends_reingest():
     if background:
         snapshot = _logscan_reingest_snapshot()
         if snapshot.get("status") == "running":
-            return jsonify({
-                "error": "Reingest already running.",
-                "job_id": snapshot.get("job_id"),
-                "status": snapshot.get("status"),
-            }), 409
+            return (
+                jsonify(
+                    {
+                        "error": "Reingest already running.",
+                        "job_id": snapshot.get("job_id"),
+                        "status": snapshot.get("status"),
+                    }
+                ),
+                409,
+            )
         job_id = secrets.token_urlsafe(8)
         _update_logscan_reingest_state(
             status="running",
@@ -2566,10 +2576,7 @@ def logscan_trends_page():
             page_info["prev_page_name"] = "Previous"
 
     progress_excludes = {"sponsor", "logscan-trends"}
-    progress_keys = [
-        key for key in step_templates
-        if step_templates[key].get("raw_name") not in progress_excludes
-    ]
+    progress_keys = [key for key in step_templates if step_templates[key].get("raw_name") not in progress_excludes]
     total_steps = len(progress_keys)
     if num in progress_keys and total_steps:
         progress_index = progress_keys.index(num)
@@ -2611,11 +2618,13 @@ def logscan_trends_people_missing_status():
             meta = json.loads(meta_path.read_text(encoding="utf-8")) or {}
         except Exception:
             meta = {}
-    return jsonify({
-        "exists": True,
-        "missing_people_unique": meta.get("missing_people_unique"),
-        "updated_at": meta.get("updated_at"),
-    })
+    return jsonify(
+        {
+            "exists": True,
+            "missing_people_unique": meta.get("missing_people_unique"),
+            "updated_at": meta.get("updated_at"),
+        }
+    )
 
 
 @app.route("/support-info")

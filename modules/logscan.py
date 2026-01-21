@@ -11,12 +11,12 @@ from urllib.parse import unquote
 import requests
 
 # Create logger
-mylogger = logging.getLogger('logscan')
+mylogger = logging.getLogger("logscan")
 mylogger.setLevel(logging.DEBUG)  # Set the logging level to DEBUG
 
 
-
 # --- PMS security vulnerability helpers (non-invasive; keep existing checks as-is) ---
+
 
 def _parse_pms_version_tuple(ver: str):
     """Return a 4-int tuple for PMS versions like '1.41.7.9100' (trims any '-xyz')."""
@@ -89,13 +89,13 @@ class LogscanAnalyzer:
         line = str(line)
 
         # Use regular expression to find and replace repeated dividers
-        line = re.sub(f'({re.escape(divider)}){{10,}}', '', line)
+        line = re.sub(f"({re.escape(divider)}){{10,}}", "", line)
 
         return line
 
     async def parse_attachment_content(self, content_bytes):
         try:
-            content = content_bytes.decode('utf-8')
+            content = content_bytes.decode("utf-8")
         except Exception as e:
             mylogger.error(f"Error decoding attachment content: {str(e)}")
             content = content_bytes.decode("utf-8", errors="replace")
@@ -117,7 +117,7 @@ class LogscanAnalyzer:
         # Define the patterns to search for
         patterns = [
             r'--divider \(KOMETA_DIVIDER\): ?["\']?([^"\']{1})["\']?',  # KOMETA_DIVIDER pattern
-            r'--divider \(PMM_DIVIDER\): ?["\']?([^"\']{1})["\']?'  # PMM_DIVIDER pattern
+            r'--divider \(PMM_DIVIDER\): ?["\']?([^"\']{1})["\']?',  # PMM_DIVIDER pattern
         ]
 
         # Try each pattern and set global_divider if a match is found
@@ -138,18 +138,18 @@ class LogscanAnalyzer:
         Extract the memory value from the given content.
         """
         # Regular expression to match the memory value
-        memory_match = re.search(r'Memory:\s*([\d.]+)\s*(\w+)', content)
+        memory_match = re.search(r"Memory:\s*([\d.]+)\s*(\w+)", content)
 
         if memory_match:
             value = float(memory_match.group(1))
             unit = memory_match.group(2).lower()
 
             # Convert value to gigabytes (GB)
-            if unit == 'gb':
+            if unit == "gb":
                 return value
-            elif unit == 'mb':
+            elif unit == "mb":
                 return value / 1024  # Convert MB to GB
-            elif unit == 'tb':
+            elif unit == "tb":
                 return value * 1024  # Convert TB to GB
 
         return None  # Return None if no valid memory value is found
@@ -159,18 +159,18 @@ class LogscanAnalyzer:
         Extract the db_cache value from the given content.
         """
         # Regular expression to match the memory value
-        memory_match = re.search(r'Plex DB cache setting:\s*([\d.]+)\s*(\w+)', content)
+        memory_match = re.search(r"Plex DB cache setting:\s*([\d.]+)\s*(\w+)", content)
 
         if memory_match:
             value = float(memory_match.group(1))
             unit = memory_match.group(2).lower()
 
             # Convert value to gigabytes (GB)
-            if unit == 'gb':
+            if unit == "gb":
                 return value
-            elif unit == 'mb':
+            elif unit == "mb":
                 return value / 1024  # Convert MB to GB
-            elif unit == 'tb':
+            elif unit == "tb":
                 return value * 1024  # Convert TB to GB
 
         return None  # Return None if no valid memory value is found
@@ -182,7 +182,7 @@ class LogscanAnalyzer:
         # Define the patterns to search for
         patterns = [
             r'--times? \((KOMETA_TIMES?)\): ?["\']?(\d{1,2}:\d{2})["\']?',  # KOMETA_TIMES pattern
-            r'--times? \((PMM_TIMES?)\): ?["\']?(\d{1,2}:\d{2})["\']?'  # PMM_TIMES pattern
+            r'--times? \((PMM_TIMES?)\): ?["\']?(\d{1,2}:\d{2})["\']?',  # PMM_TIMES pattern
         ]
 
         # Try each pattern and return the first match found
@@ -201,7 +201,7 @@ class LogscanAnalyzer:
         """
         Extract the start and end times of the maintenance from the content.
         """
-        maintenance_times_match = re.search(r'Scheduled maintenance running between (\d+:\d+) and (\d+:\d+)', content)
+        maintenance_times_match = re.search(r"Scheduled maintenance running between (\d+:\d+) and (\d+:\d+)", content)
 
         if maintenance_times_match:
             start_time = maintenance_times_match.group(1)
@@ -214,11 +214,11 @@ class LogscanAnalyzer:
 
     def contains_overlay_path(self, content):
         # Regular expression to search for overlay_path
-        return bool(re.search(r'\boverlay_path:\s*', content, re.IGNORECASE))
+        return bool(re.search(r"\boverlay_path:\s*", content, re.IGNORECASE))
 
     def contains_overlay_files(self, content):
         # Regular expression to search for overlay_files
-        return bool(re.search(r'\boverlay_files:\s*', content, re.IGNORECASE))
+        return bool(re.search(r"\boverlay_files:\s*", content, re.IGNORECASE))
 
     def detect_wsl_and_recommendation(self, content):
         # Regular expression to check if the content contains information about WSL platform
@@ -242,8 +242,10 @@ class LogscanAnalyzer:
         return None  # Return None if WSL is not detected in the content
 
     def make_db_cache_recommendations(self, parsed_content):
-        disclaimer = "**NOTE**:The number you choose can vary wildly based on a number of factors " \
-                     "(such as the size and number of libraries, and the amount of files/operations/overlays that are being utilized)."
+        disclaimer = (
+            "**NOTE**:The number you choose can vary wildly based on a number of factors "
+            "(such as the size and number of libraries, and the amount of files/operations/overlays that are being utilized)."
+        )
         url_info = "https://kometa.wiki/en/latest/config/plex#plex-attributes"
 
         # Extract db_cache value and total memory value
@@ -255,24 +257,30 @@ class LogscanAnalyzer:
 
         if db_cache_value >= total_memory_value:
             # db_cache should not be greater than or equal to total memory
-            return f"❌ **PLEX DB CACHE ISSUE**\n" \
-                   f"The Plex DB cache setting (**{db_cache_value:.2f} GB**) is equal to or greater than the total memory " \
-                   f"(**{total_memory_value:.2f} GB**). Consider adjusting the Plex DB cache setting to a value **below** the total memory.\n" \
-                   f"For more info on this setting: {url_info}\n" \
-                   f"{disclaimer}"
+            return (
+                f"❌ **PLEX DB CACHE ISSUE**\n"
+                f"The Plex DB cache setting (**{db_cache_value:.2f} GB**) is equal to or greater than the total memory "
+                f"(**{total_memory_value:.2f} GB**). Consider adjusting the Plex DB cache setting to a value **below** the total memory.\n"
+                f"For more info on this setting: {url_info}\n"
+                f"{disclaimer}"
+            )
 
         elif db_cache_value < 1:
             # db_cache is less than 1 GB, recommend updating based on total memory
-            return f"💬💡️ **PLEX DB CACHE ADVICE**\n" \
-                   f"Consider updating the Plex DB cache setting from **{db_cache_value:.2f} GB**, to a value **greater** than **1 GB** based on the total memory of **{total_memory_value:.2f} GB**.\nSetting `db_cache: 1024` within the plex settings in your config.yml is effectively 1024MB which is 1GB. " \
-                   f"For more info on this setting: {url_info}\n" \
-                   f"{disclaimer}"
+            return (
+                f"💬💡️ **PLEX DB CACHE ADVICE**\n"
+                f"Consider updating the Plex DB cache setting from **{db_cache_value:.2f} GB**, to a value **greater** than **1 GB** based on the total memory of **{total_memory_value:.2f} GB**.\nSetting `db_cache: 1024` within the plex settings in your config.yml is effectively 1024MB which is 1GB. "
+                f"For more info on this setting: {url_info}\n"
+                f"{disclaimer}"
+            )
 
         return None  # No issues or recommendations
 
     def calculate_memory_recommendation(self, content):
-        disclaimer = "These numbers are purely estimates and can vary wildly based on a number of factors " \
-                     "(such as the size and number of libraries, and the amount of files/operations/overlays that are being utilized)."
+        disclaimer = (
+            "These numbers are purely estimates and can vary wildly based on a number of factors "
+            "(such as the size and number of libraries, and the amount of files/operations/overlays that are being utilized)."
+        )
 
         # Extract memory value from the content
         memory_value = self.extract_memory_value(content)
@@ -287,22 +295,28 @@ class LogscanAnalyzer:
 
         if memory_value < 4:
             if overlay_value:
-                return f"⚠️ **MEMORY RECOMMENDATION**\n" \
-                       f"The memory value is {memory_value:.2f} GB, which is less than 4 GB. " \
-                       f"We advise having at least 8GB of RAM when running Kometa with overlays (we have detected overlays) to avoid potential out-of-memory issues.\n\n" \
-                       f"{disclaimer}"
+                return (
+                    f"⚠️ **MEMORY RECOMMENDATION**\n"
+                    f"The memory value is {memory_value:.2f} GB, which is less than 4 GB. "
+                    f"We advise having at least 8GB of RAM when running Kometa with overlays (we have detected overlays) to avoid potential out-of-memory issues.\n\n"
+                    f"{disclaimer}"
+                )
             else:
-                return f"⚠️ **MEMORY RECOMMENDATION**\n" \
-                       f"The memory value is {memory_value:.2f} GB, which is less than 4 GB. " \
-                       f"We advise having at least 4GB of RAM when running Kometa without overlays (we have NOT detected overlays) to avoid potential out-of-memory issues.\n\n" \
-                       f"{disclaimer}"
+                return (
+                    f"⚠️ **MEMORY RECOMMENDATION**\n"
+                    f"The memory value is {memory_value:.2f} GB, which is less than 4 GB. "
+                    f"We advise having at least 4GB of RAM when running Kometa without overlays (we have NOT detected overlays) to avoid potential out-of-memory issues.\n\n"
+                    f"{disclaimer}"
+                )
 
         elif memory_value < 8:
             if overlay_value:
-                return f"⚠️ **MEMORY RECOMMENDATION**\n" \
-                       f"The memory value is {memory_value:.2f} GB, which is less than 8 GB. " \
-                       f"We advise having at least 8GB of RAM when running Kometa with overlays (we have detected overlays) for optimal performance.\n\n" \
-                       f"{disclaimer}"
+                return (
+                    f"⚠️ **MEMORY RECOMMENDATION**\n"
+                    f"The memory value is {memory_value:.2f} GB, which is less than 8 GB. "
+                    f"We advise having at least 8GB of RAM when running Kometa with overlays (we have detected overlays) for optimal performance.\n\n"
+                    f"{disclaimer}"
+                )
             else:
                 return None  # No specific recommendation for memory < 8GB without overlays
 
@@ -312,14 +326,14 @@ class LogscanAnalyzer:
         if not kometa_scheduled_time:
             return "Error: Plex scheduled time is missing."
 
-        kometa_scheduled_time = datetime.strptime(kometa_scheduled_time, '%H:%M').time()
+        kometa_scheduled_time = datetime.strptime(kometa_scheduled_time, "%H:%M").time()
 
         # Check if maintenance times are provided
         if maintenance_start_time is None or maintenance_end_time is None:
             return None  # Cannot provide recommendations without maintenance times
 
-        maintenance_start_time = datetime.strptime(maintenance_start_time, '%H:%M').time()
-        maintenance_end_time = datetime.strptime(maintenance_end_time, '%H:%M').time()
+        maintenance_start_time = datetime.strptime(maintenance_start_time, "%H:%M").time()
+        maintenance_end_time = datetime.strptime(maintenance_end_time, "%H:%M").time()
 
         plex_scheduled_datetime = datetime.combine(datetime.today(), kometa_scheduled_time)
         maintenance_start_datetime = datetime.combine(datetime.today(), maintenance_start_time)
@@ -327,18 +341,12 @@ class LogscanAnalyzer:
 
         if maintenance_start_datetime > plex_scheduled_datetime:
             # Plex maintenance period starts on the next day
-            time_before_plex_maintenance = (
-                    (maintenance_start_datetime - plex_scheduled_datetime).seconds // 60
-            )
+            time_before_plex_maintenance = (maintenance_start_datetime - plex_scheduled_datetime).seconds // 60
         else:
             # Plex maintenance period starts on the same day
-            time_before_plex_maintenance = (
-                    (maintenance_start_datetime - plex_scheduled_datetime).seconds // 60
-            )
+            time_before_plex_maintenance = (maintenance_start_datetime - plex_scheduled_datetime).seconds // 60
         # Calculate the buffer until the next plex maintenance in minutes
-        buffer_until_next_plex_maintenance = (
-                                                     (24 + maintenance_start_time.hour - maintenance_end_time.hour) * 60
-                                             ) % 1440  # 1440 minutes in a day
+        buffer_until_next_plex_maintenance = ((24 + maintenance_start_time.hour - maintenance_end_time.hour) * 60) % 1440  # 1440 minutes in a day
 
         run_time_in_minutes = self.run_time.total_seconds() / 60
         time_buffer = timedelta(minutes=buffer_until_next_plex_maintenance)
@@ -381,7 +389,7 @@ class LogscanAnalyzer:
 
         # Second pass to remove trailing '|'
         lines = cleaned_content.splitlines()
-        cleaned_lines = [line.rstrip('|') if line.rstrip().endswith('|') else line for line in lines]
+        cleaned_lines = [line.rstrip("|") if line.rstrip().endswith("|") else line for line in lines]
         cleaned_content = "\n".join(cleaned_lines)
 
         # Third pass to remove trailing spaces
@@ -582,7 +590,7 @@ class LogscanAnalyzer:
         return line.strip().strip("= ").strip()
 
     def _extract_key_name_from_block(self, cleaned_lines, start, end):
-        block = cleaned_lines[start:end + 1]
+        block = cleaned_lines[start : end + 1]
         for idx, line in enumerate(block):
             if "Validating Method: key_name" in line:
                 for offset in range(1, 6):
@@ -650,7 +658,7 @@ class LogscanAnalyzer:
                 start = max(0, idx - 2)
                 end = min(len(raw_lines) - 1, idx + 2)
 
-            block_lines = raw_lines[start:end + 1]
+            block_lines = raw_lines[start : end + 1]
             name_hint = None
             if idx < len(cleaned_lines):
                 name_hint = self._extract_key_name_from_block(cleaned_lines, start, end)
@@ -662,10 +670,12 @@ class LogscanAnalyzer:
             if block_text in seen_blocks:
                 continue
             seen_blocks.add(block_text)
-            items.append({
-                "names": names,
-                "block": block_text,
-            })
+            items.append(
+                {
+                    "names": names,
+                    "block": block_text,
+                }
+            )
 
         return items
 
@@ -693,8 +703,8 @@ class LogscanAnalyzer:
             if "Finished " in line and " Run Time: " in next_line:
                 # mylogger.info(f"Pair Found L1: {line}")
                 # mylogger.info(f"Pair Found L2: {next_line}")
-                finished_match = re.search(r'.*Finished\s+(.*?)\s*$', line)
-                run_time_match = re.search(r'.*Run Time:(.*?)\s*$', next_line)
+                finished_match = re.search(r".*Finished\s+(.*?)\s*$", line)
+                run_time_match = re.search(r".*Run Time:(.*?)\s*$", next_line)
 
                 finished_text = finished_match.group(1).strip() if finished_match else "N/A"
                 run_time_text = run_time_match.group(1).strip() if run_time_match else "N/A"
@@ -708,8 +718,8 @@ class LogscanAnalyzer:
 
             # Check if there's a line with "Finished:" and "Run Time:" at the end
             if "Finished: " in line and " Run Time: " in line:
-                finished_match = re.search(r'.*Finished:\s+(.*?)\s*$', line)
-                run_time_match = re.search(r'.*Run Time:(.*?)\s*$', line)
+                finished_match = re.search(r".*Finished:\s+(.*?)\s*$", line)
+                run_time_match = re.search(r".*Run Time:(.*?)\s*$", line)
 
                 finished_text = finished_match.group(1).strip() if finished_match else "N/A"
                 run_time_text = run_time_match.group(1).strip() if run_time_match else "N/A"
@@ -863,10 +873,9 @@ class LogscanAnalyzer:
                     run_order_errors.append(idx)
             if "No Anime Found for AniDB ID: 69" in line:
                 anidb69_errors.append(idx)
-            if re.search(r'\bcache: false\b', line):
+            if re.search(r"\bcache: false\b", line):
                 cache_false.append(idx)
-            if self.server_versions and (
-                    "mass_user_rating_update" in line or "mass_episode_user_ratings_update" in line):
+            if self.server_versions and ("mass_user_rating_update" in line or "mass_episode_user_ratings_update" in line):
 
                 # Set to keep track of unique (server_name, server_version, idx) combinations
                 unique_entries = set()
@@ -885,10 +894,7 @@ class LogscanAnalyzer:
                         unique_entries.add(identifier)
 
             # Detect PMS versions in "Connected to server ..." lines and flag the vulnerable range
-            m = re.search(
-                r"Connected to server\s+(.+?)\s+(?:\(?\s*(?:version|Version:)\s+)(\d+\.\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?)",
-                line
-            )
+            m = re.search(r"Connected to server\s+(.+?)\s+(?:\(?\s*(?:version|Version:)\s+)(\d+\.\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?)", line)
             if m:
                 sn = m.group(1).strip()
                 ver = m.group(2).strip()
@@ -1792,7 +1798,7 @@ class LogscanAnalyzer:
 
         for idx, message in enumerate(special_check_lines, start=1):
             # Split the message into lines and log the first line with a label
-            lines = message.split('\n')
+            lines = message.split("\n")
             first_line = lines[0] if lines else ""
             mylogger.info(f"Kometa Recommendation {idx}: {first_line}")
 
@@ -1803,14 +1809,14 @@ class LogscanAnalyzer:
 
     def reorder_recommendations(self, recommendations):
         # Define the priority order of symbols
-        priority_order = {'🚀': 1, '💥': 2, '❌': 3, '⚠': 4, '💬': 5}
+        priority_order = {"🚀": 1, "💥": 2, "❌": 3, "⚠": 4, "💬": 5}
 
         def sort_key(recommendation):
             # Get the first symbol in the message
-            first_symbol = recommendation.get('first_line', 'No first line available')[0]
+            first_symbol = recommendation.get("first_line", "No first line available")[0]
 
             # Remove variation selector if present
-            first_symbol = first_symbol.rstrip('\uFE0F')
+            first_symbol = first_symbol.rstrip("\ufe0f")
 
             # Check if the first symbol is in the priority_order dictionary
             if first_symbol in priority_order:
@@ -1821,7 +1827,7 @@ class LogscanAnalyzer:
                 return priority
             else:
                 # mylogger.info(f"Priority not found for symbol {first_symbol}, using default priority")
-                return float('inf')
+                return float("inf")
 
         # Sort recommendations based on the custom key
         sorted_recommendations = sorted(recommendations, key=sort_key)
@@ -1829,7 +1835,7 @@ class LogscanAnalyzer:
         # Print or log the sorted recommendations for debugging
         # mylogger.info("Sorted Recommendations:")
         for rec in sorted_recommendations:
-            mylogger.info(rec.get('first_line', 'No first line available'))
+            mylogger.info(rec.get("first_line", "No first line available"))
 
         return sorted_recommendations
 
@@ -1857,15 +1863,16 @@ class LogscanAnalyzer:
 
                     # Store the extracted server info in a variable
                     if server_info:
-                        my_server_name = server_info['server_name']
-                        my_server_version = server_info['version']
+                        my_server_name = server_info["server_name"]
+                        my_server_version = server_info["version"]
 
                         stable_version = "1.40.0.7998-c29d4c0c8"
                         good_version = "1.40.3.8555-fef15d30c"
 
                         if stable_version < my_server_version < good_version:
                             mylogger.info(
-                                f"Server Name: {my_server_name} has Version: {my_server_version}. Potential Rounding Issue because > {stable_version} and < {good_version}")
+                                f"Server Name: {my_server_name} has Version: {my_server_version}. Potential Rounding Issue because > {stable_version} and < {good_version}"
+                            )
                             # Store the server version globally in a list
                             self.server_versions.append((my_server_name, my_server_version))
                         elif my_server_version >= good_version:
@@ -1906,7 +1913,7 @@ class LogscanAnalyzer:
             total_lines = len(config_section)
             start_remove = traceback_line_number + 1
             end_remove = total_lines - 2
-            config_section = config_section[:start_remove] + config_section[end_remove + 1:]
+            config_section = config_section[:start_remove] + config_section[end_remove + 1 :]
 
         return "\n".join(config_section) if config_section else None
 
@@ -1932,14 +1939,15 @@ class LogscanAnalyzer:
                 version = match.group(2).strip()
 
                 # Store server name and version in dictionary
-                server_info['server_name'] = server_name
-                server_info['version'] = version
+                server_info["server_name"] = server_name
+                server_info["version"] = version
 
         # Log if server info extraction failed for all lines
         if not server_info:
             mylogger.info("Failed to extract server info from config_section")
 
         return server_info, all_lines
+
     def extract_header_lines(self, content):
         start_marker_current = "Version: "
         start_marker_newest = "Newest Version: "
@@ -1957,8 +1965,7 @@ class LogscanAnalyzer:
                     i += 1
                     line = lines[i] if i < len(lines) else ""
                     if start_marker_newest in line:
-                        newest_version_value = line.split(start_marker_newest)[
-                            1].strip()  # Extract newest version value
+                        newest_version_value = line.split(start_marker_newest)[1].strip()  # Extract newest version value
                         self.kometa_newest_version = newest_version_value  # Store the newest version as a class variable
                 header_lines.append(line.strip())  # Append the "Run Command" line
                 # mylogger.info(f"header_lines bef replacement: {header_lines}")
@@ -2178,9 +2185,7 @@ class LogscanAnalyzer:
         section_total_seconds = None
         section_delta_seconds = None
         if section_runtimes:
-            section_total_seconds = int(
-                sum(value for value in section_runtimes.values() if isinstance(value, (int, float)))
-            )
+            section_total_seconds = int(sum(value for value in section_runtimes.values() if isinstance(value, (int, float))))
             if run_time_seconds is not None:
                 section_delta_seconds = section_total_seconds - run_time_seconds
 
@@ -2271,14 +2276,14 @@ class LogscanAnalyzer:
                         "and answer Yes to the Logscan prompt to request poster creation."
                     )
                 else:
-                    missing_people_message = (
-                        "People-Images index unavailable; showing all people poster references from the log."
-                    )
+                    missing_people_message = "People-Images index unavailable; showing all people poster references from the log."
                 missing_people_lines = "\n".join(f"- {name}" for name in missing_people)
-                recommendations.append({
-                    "first_line": "INFO - Missing people posters",
-                    "message": f"{missing_people_message}\n\nMissing names:\n{missing_people_lines}",
-                })
+                recommendations.append(
+                    {
+                        "first_line": "INFO - Missing people posters",
+                        "message": f"{missing_people_message}\n\nMissing names:\n{missing_people_lines}",
+                    }
+                )
 
         counts = self.count_log_levels(raw_content)
         summary = self._build_summary(
@@ -2292,13 +2297,15 @@ class LogscanAnalyzer:
             section_runtimes=section_runtimes,
         )
         if summary and not summary.get("run_complete"):
-            recommendations.append({
-                "first_line": "INFO - Run incomplete",
-                "message": (
-                    "This log does not include a completed Finished Run block yet. "
-                    "Live logscan will still show findings, but trends ingestion is skipped until the run completes."
-                ),
-            })
+            recommendations.append(
+                {
+                    "first_line": "INFO - Run incomplete",
+                    "message": (
+                        "This log does not include a completed Finished Run block yet. "
+                        "Live logscan will still show findings, but trends ingestion is skipped until the run completes."
+                    ),
+                }
+            )
 
         return {
             "summary": summary,
