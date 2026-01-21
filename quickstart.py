@@ -2194,7 +2194,7 @@ def logscan_analyze():
     )
     summary = result.get("summary") if isinstance(result, dict) else None
     if summary and summary.get("run_complete"):
-        database.save_log_run(summary)
+        database.save_log_run(summary, recommendations=result.get("recommendations"))
 
     LOGSCAN_ANALYSIS_CACHE.update(
         {"mtime": stats.st_mtime, "size": stats.st_size, "data": result}
@@ -2211,6 +2211,15 @@ def logscan_trends():
         limit = 50
     limit = max(1, min(limit, 500))
     return jsonify({"runs": database.get_log_runs(limit=limit)})
+
+
+@app.route("/logscan/trends/recommendations", methods=["GET"])
+def logscan_trends_recommendations():
+    run_key = request.args.get("run_key")
+    if not run_key:
+        return jsonify({"error": "run_key required"}), 400
+    recommendations = database.get_log_run_recommendations(run_key)
+    return jsonify({"run_key": run_key, "recommendations": recommendations})
 
 
 @app.route("/logscan/trends/reset", methods=["POST"])
@@ -2275,7 +2284,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         return {"success": False, "error": message}
 
     log_files = []
-    for path in log_dir.glob("meta*.log*"):
+    for path in log_dir.glob("*meta*.log*"):
         if not path.is_file():
             continue
         suffixes = [suffix.lower() for suffix in path.suffixes]
@@ -2361,7 +2370,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                         missing_people_blocks.append(block)
                         missing_people_seen_blocks.add(block)
                     missing_people_seen_names.update(names)
-            if database.save_log_run(summary):
+            if database.save_log_run(summary, recommendations=result.get("recommendations")):
                 ingested += 1
             else:
                 duplicates += 1

@@ -15,8 +15,14 @@ $(document).ready(function () {
   const $confirmReset = $('#logscan-confirm-reset')
   const $confirmReingest = $('#logscan-confirm-reingest')
   const $missingDownload = $('#logscan-trends-missing-download')
+  const $confirmMissingDownload = $('#logscan-confirm-missing-download')
+  const $runDetailsBody = $('#logscan-run-details-body')
+  const $runDetailsTitle = $('#logscan-run-details-title')
   const resetModalEl = document.getElementById('logscan-reset-modal')
   const reingestModalEl = document.getElementById('logscan-reingest-modal')
+  const missingDownloadModalEl = document.getElementById('logscan-missing-download-modal')
+  const runDetailsModalEl = document.getElementById('logscan-run-details-modal')
+  let missingDownloadUrl = ''
   let reingestPollTimer = null
   let reingestJobId = null
 
@@ -43,10 +49,20 @@ $(document).ready(function () {
   }
 
   function formatTimestamp (value) {
-    if (!value) return 'n/a'
-    const parsed = new Date(value)
-    if (Number.isNaN(parsed.getTime())) return String(value)
-    return parsed.toLocaleString()
+    if (!value) return null
+    const text = String(value).trim()
+    const match = text.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})/)
+    if (match) return `${match[1]} ${match[2]}`
+    if (!/\d{4}-\d{2}-\d{2}/.test(text)) return null
+    const parsed = new Date(text)
+    if (Number.isNaN(parsed.getTime())) return null
+    const yyyy = parsed.getFullYear()
+    const MM = String(parsed.getMonth() + 1).padStart(2, '0')
+    const dd = String(parsed.getDate()).padStart(2, '0')
+    const hh = String(parsed.getHours()).padStart(2, '0')
+    const mm = String(parsed.getMinutes()).padStart(2, '0')
+    const ss = String(parsed.getSeconds()).padStart(2, '0')
+    return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`
   }
 
   function extractDateKey (value) {
@@ -70,11 +86,14 @@ $(document).ready(function () {
 
   function getDisplayFinished (run) {
     if (!run) return 'n/a'
-    if (run.finished_at) return run.finished_at
+    const finished = formatTimestamp(run.finished_at)
+    if (finished) return finished
     if (typeof run.log_mtime === 'number' && Number.isFinite(run.log_mtime)) {
-      return formatTimestamp(new Date(run.log_mtime * 1000).toISOString())
+      const mtime = formatTimestamp(new Date(run.log_mtime * 1000).toISOString())
+      if (mtime) return mtime
     }
-    return formatTimestamp(run.created_at)
+    const created = formatTimestamp(run.created_at)
+    return created || 'n/a'
   }
 
   function getCount (run, key) {
@@ -91,7 +110,7 @@ $(document).ready(function () {
     const totalSeconds = entries.reduce((sum, [, seconds]) => sum + seconds, 0)
     const lines = []
     if (Number.isFinite(totalSeconds)) {
-      lines.push(`sum: ${formatSeconds(totalSeconds)}`)
+      lines.push(`Sum: ${formatSeconds(totalSeconds)}`)
     }
     if (typeof runSeconds === 'number' && Number.isFinite(runSeconds)) {
       lines.push(`run total: ${formatSeconds(runSeconds)}`)
@@ -161,28 +180,54 @@ $(document).ready(function () {
 
   function renderTable (runs) {
     if (!runs.length) {
-      $tableBody.html('<tr><td colspan="7" class="text-muted">No runs stored yet.</td></tr>')
+      $tableBody.html('<tr><td colspan="8" class="text-muted">No runs stored yet.</td></tr>')
       return
     }
-    const rows = runs.map(run => {
+    const rows = runs.map((run, index) => {
       const command = run.command_signature || 'n/a'
       const commandTitle = run.run_command || ''
       const counts = `W:${getCount(run, 'warning_count')} E:${getCount(run, 'error_count')} T:${getCount(run, 'trace_count')}`
+      const countsTitle = `Warnings: ${getCount(run, 'warning_count')} | Errors: ${getCount(run, 'error_count')} | Tracebacks: ${getCount(run, 'trace_count')}`
       const sectionLines = buildSectionDetails(run.section_runtimes, run.run_time_seconds)
-      const sectionHtml = sectionLines.map(line => `<div>${escapeHtml(line)}</div>`).join('')
+      const sectionId = `logscan-section-${index + 1}`
+      const sectionSummary = sectionLines.length ? sectionLines[0] : 'n/a'
+      const sectionDetails = sectionLines.length > 1 ? sectionLines.slice(1) : []
+      const sectionDetailsHtml = sectionDetails.map(line => `<div>${escapeHtml(line)}</div>`).join('')
+      let sectionCell = `
+        <div class="d-flex flex-column align-items-center gap-1">
+          <div class="text-muted small text-center">${escapeHtml(sectionSummary)}</div>
+      `
+      if (sectionDetails.length) {
+        sectionCell += `
+          <button type="button" class="btn nav-button btn-sm logscan-action-btn"
+            data-bs-toggle="collapse" data-bs-target="#${sectionId}"
+            aria-expanded="false" aria-controls="${sectionId}">
+            Expand
+          </button>
+          <div class="collapse mt-2" id="${sectionId}">
+            <div class="text-muted small">${sectionDetailsHtml}</div>
+          </div>
+        `
+      }
+      sectionCell += '</div>'
       let kometaDisplay = run.kometa_version || 'n/a'
       if (run.kometa_version && run.kometa_newest_version && run.kometa_version !== run.kometa_newest_version) {
         kometaDisplay = `${run.kometa_version} -> ${run.kometa_newest_version}`
       }
+      const runKey = run.run_key || ''
       return `
         <tr>
-          <td>${escapeHtml(getDisplayFinished(run))}</td>
+          <td class="text-nowrap">${escapeHtml(getDisplayFinished(run))}</td>
           <td>${escapeHtml(formatSeconds(run.run_time_seconds))}</td>
           <td>${escapeHtml(run.config_name || 'default')}</td>
           <td><span title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span></td>
-          <td>${escapeHtml(counts)}</td>
+          <td title="${escapeHtml(countsTitle)}">${escapeHtml(counts)}</td>
           <td>${escapeHtml(kometaDisplay)}</td>
-          <td class="text-muted small">${sectionHtml}</td>
+          <td class="text-center align-middle">${sectionCell}</td>
+          <td class="text-center align-middle">
+            <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-run-details"
+              data-run-key="${escapeHtml(runKey)}">Open</button>
+          </td>
         </tr>
       `
     })
@@ -239,6 +284,7 @@ $(document).ready(function () {
     $limit.prop('disabled', disabled)
     $confirmReset.prop('disabled', disabled)
     $confirmReingest.prop('disabled', disabled)
+    $confirmMissingDownload.prop('disabled', disabled)
   }
 
   function setMissingDownloadVisible (visible, count) {
@@ -400,6 +446,59 @@ $(document).ready(function () {
       })
   }
 
+  function formatRecommendationMessage (message) {
+    if (!message) return ''
+    return escapeHtml(message).replace(/\n/g, '<br>')
+  }
+
+  function showRunDetails (runKey) {
+    if (!runKey) return
+    if ($runDetailsBody.length) {
+      $runDetailsBody.html('Loading recommendations...')
+    }
+    if ($runDetailsTitle.length) {
+      $runDetailsTitle.text('Run Recommendations')
+    }
+    if (runDetailsModalEl) {
+      bootstrap.Modal.getOrCreateInstance(runDetailsModalEl).show()
+    }
+    fetch(`/logscan/trends/recommendations?run_key=${encodeURIComponent(runKey)}`)
+      .then(res => res.json().then(data => ({ ok: res.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          if ($runDetailsBody.length) {
+            $runDetailsBody.text(data && data.error ? data.error : 'Unable to load recommendations.')
+          }
+          return
+        }
+        const recs = Array.isArray(data.recommendations) ? data.recommendations : []
+        if (!recs.length) {
+          if ($runDetailsBody.length) {
+            $runDetailsBody.text('No recommendations recorded for this run.')
+          }
+          return
+        }
+        const blocks = recs.map(rec => {
+          const title = rec && rec.first_line ? escapeHtml(rec.first_line) : 'Recommendation'
+          const message = rec && rec.message ? formatRecommendationMessage(rec.message) : ''
+          return `
+            <div class="mb-3">
+              <div class="fw-semibold mb-1">${title}</div>
+              <div class="small text-muted">${message}</div>
+            </div>
+          `
+        })
+        if ($runDetailsBody.length) {
+          $runDetailsBody.html(blocks.join(''))
+        }
+      })
+      .catch(() => {
+        if ($runDetailsBody.length) {
+          $runDetailsBody.text('Unable to load recommendations.')
+        }
+      })
+  }
+
   function fetchRuns (options = {}) {
     const suppressStatus = options && options.suppressStatus
     const limit = parseInt($limit.val() || '50', 10)
@@ -429,6 +528,29 @@ $(document).ready(function () {
   $limit.on('change', fetchRuns)
   $confirmReset.on('click', handleReset)
   $confirmReingest.on('click', handleReingest)
+  $missingDownload.on('click', function (event) {
+    event.preventDefault()
+    if (!$missingDownload.length || $missingDownload.hasClass('d-none')) return
+    missingDownloadUrl = $missingDownload.attr('href') || ''
+    if (!missingDownloadModalEl) {
+      if (missingDownloadUrl) window.location.href = missingDownloadUrl
+      return
+    }
+    const modal = bootstrap.Modal.getOrCreateInstance(missingDownloadModalEl)
+    modal.show()
+  })
+  $confirmMissingDownload.on('click', function () {
+    if (!missingDownloadUrl) {
+      hideModal(missingDownloadModalEl)
+      return
+    }
+    hideModal(missingDownloadModalEl)
+    window.location.href = missingDownloadUrl
+  })
+  $tableBody.on('click', '.logscan-run-details', function () {
+    const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+    showRunDetails(runKey)
+  })
   checkMissingDownload()
   fetchRuns()
   fetchReingestStatus()

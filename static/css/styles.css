@@ -1595,6 +1595,11 @@ div#loading {
     color: #fff !important;
 }
 
+.logscan-action-btn {
+    min-width: 72px;
+    justify-content: center;
+}
+
 .btn.nav-button:disabled,
 .btn.nav-button.disabled {
     background-color: var(--theme-bg-dark) !important;

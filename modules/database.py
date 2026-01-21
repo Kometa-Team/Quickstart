@@ -98,6 +98,7 @@ def log_runs_table_create():
         run_command TEXT,
         command_signature TEXT,
         section_runtimes TEXT,
+        recommendations TEXT,
         log_mtime REAL,
         log_size INTEGER,
         debug_count INTEGER,
@@ -119,13 +120,14 @@ def _ensure_log_runs_columns(cursor):
         "run_command": "TEXT",
         "command_signature": "TEXT",
         "section_runtimes": "TEXT",
+        "recommendations": "TEXT",
     }
     for name, ddl in columns.items():
         if name not in existing:
             cursor.execute(f"ALTER TABLE log_runs ADD COLUMN {name} {ddl}")
 
 
-def save_log_run(summary):
+def save_log_run(summary, recommendations=None):
     if not summary:
         return False
     run_key = summary.get("run_key")
@@ -136,6 +138,10 @@ def save_log_run(summary):
     section_runtimes = summary.get("section_runtimes")
     if isinstance(section_runtimes, dict):
         section_runtimes = json.dumps(section_runtimes, ensure_ascii=True)
+    if recommendations is None:
+        recommendations = summary.get("recommendations")
+    if isinstance(recommendations, (list, dict)):
+        recommendations = json.dumps(recommendations, ensure_ascii=True)
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
         connection.row_factory = sqlite3.Row
         with closing(connection.cursor()) as cursor:
@@ -152,6 +158,7 @@ def save_log_run(summary):
                     run_command,
                     command_signature,
                     section_runtimes,
+                    recommendations,
                     log_mtime,
                     log_size,
                     debug_count,
@@ -161,7 +168,7 @@ def save_log_run(summary):
                     critical_count,
                     trace_count,
                     created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     run_key,
                     summary.get("finished_at"),
@@ -173,6 +180,7 @@ def save_log_run(summary):
                     summary.get("run_command"),
                     summary.get("command_signature"),
                     section_runtimes,
+                    recommendations,
                     summary.get("log_mtime"),
                     summary.get("log_size"),
                     counts.get("debug", 0),
@@ -221,3 +229,24 @@ def get_log_runs(limit=100):
                     except json.JSONDecodeError:
                         row["section_runtimes"] = None
             return rows
+
+
+def get_log_run_recommendations(run_key):
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            _ensure_log_runs_columns(cursor)
+            cursor.execute(
+                "SELECT recommendations FROM log_runs WHERE run_key == ?",
+                (run_key,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return []
+            recs = row["recommendations"]
+            if isinstance(recs, str):
+                try:
+                    recs = json.loads(recs)
+                except json.JSONDecodeError:
+                    recs = None
+            return recs if isinstance(recs, list) else []
