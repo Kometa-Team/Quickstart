@@ -28,7 +28,7 @@ import namesgenerator
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 from cachelib.file import FileSystemCache
-from datetime import datetime
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -70,6 +70,15 @@ def _calculate_process_cpu_percent(proc):
     except Exception:
         return None
     total_cpu = cpu_times.user + cpu_times.system
+    try:
+        for child in proc.children(recursive=True):
+            try:
+                child_times = child.cpu_times()
+                total_cpu += child_times.user + child_times.system
+            except Exception:
+                continue
+    except Exception:
+        pass
     now = time.time()
     entry = KOMETA_CPU_CACHE.get(proc.pid)
     KOMETA_CPU_CACHE[proc.pid] = {"time": now, "cpu": total_cpu}
@@ -81,8 +90,7 @@ def _calculate_process_cpu_percent(proc):
     delta_cpu = total_cpu - entry.get("cpu", total_cpu)
     if delta_cpu < 0:
         return None
-    cpu_count = psutil.cpu_count(logical=True) or 1
-    percent = (delta_cpu / elapsed) * 100.0 / cpu_count
+    percent = (delta_cpu / elapsed) * 100.0
     return max(0.0, percent)
 
 
@@ -106,6 +114,59 @@ def _calculate_system_cpu_percent():
     busy = max(0.0, delta_total - delta_idle)
     percent = (busy / delta_total) * 100.0
     return max(0.0, min(100.0, percent))
+
+
+def _write_quickstart_run_marker(kometa_root, config_name=None):
+    try:
+        log_dir = Path(kometa_root) / "config" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / "meta.log"
+        version_info = app.config.get("VERSION_CHECK") or {}
+        qs_version = version_info.get("local_version") or "unknown"
+        qs_branch = version_info.get("branch") or "unknown"
+        safe_config = (config_name or "default").strip() or "default"
+        timestamp = datetime.now(timezone.utc).isoformat()
+        marker = (
+            f"[Quickstart] Run marker: started={timestamp} "
+            f"config={safe_config} quickstart={qs_version} branch={qs_branch}"
+        )
+        with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
+            handle.write(marker + "\n")
+    except Exception:
+        pass
+
+
+def _schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20):
+    log_path = Path(kometa_root) / "config" / "logs" / "meta.log"
+    state = {"mtime": None, "size": None}
+    if log_path.exists():
+        try:
+            stat = log_path.stat()
+            state["mtime"] = stat.st_mtime
+            state["size"] = stat.st_size
+        except OSError:
+            pass
+
+    def worker():
+        deadline = time.time() + timeout_seconds
+        while time.time() < deadline:
+            try:
+                if log_path.exists():
+                    stat = log_path.stat()
+                    if state["mtime"] is None:
+                        if stat.st_size > 0:
+                            _write_quickstart_run_marker(kometa_root, config_name)
+                            return
+                    else:
+                        if stat.st_mtime != state["mtime"] and stat.st_size > 0:
+                            _write_quickstart_run_marker(kometa_root, config_name)
+                            return
+            except OSError:
+                pass
+            time.sleep(0.5)
+        _write_quickstart_run_marker(kometa_root, config_name)
+
+    threading.Thread(target=worker, daemon=True).start()
 
 
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
@@ -233,6 +294,7 @@ flask_cache_dir = os.environ.get("QS_FLASK_SESSION_DIR", os.path.join(helpers.CO
 os.makedirs(flask_cache_dir, exist_ok=True)
 
 logscan_reingest_lock = threading.Lock()
+logscan_ingest_lock = threading.Lock()
 logscan_reingest_state = {
     "status": "idle",
     "job_id": None,
@@ -1918,6 +1980,8 @@ def start_kometa():
         with open(helpers.get_kometa_pid_file(), "w", encoding="utf-8") as f:
             f.write(str(proc.pid))
 
+        _schedule_quickstart_run_marker(kometa_root, session.get("config_name"))
+
         return jsonify({"status": "Kometa started", "pid": proc.pid})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1998,13 +2062,21 @@ def kometa_status():
                 started_at = datetime.fromtimestamp(started_at_ts).isoformat()
                 elapsed_seconds = max(0, int(time.time() - started_at_ts))
                 cpu_percent = _calculate_process_cpu_percent(proc)
-                mem_info = proc.memory_info()
-                mem_rss_mb = mem_info.rss / (1024 * 1024)
-                mem_percent = proc.memory_percent()
+                mem_rss = proc.memory_info().rss
+                try:
+                    for child in proc.children(recursive=True):
+                        try:
+                            mem_rss += child.memory_info().rss
+                        except Exception:
+                            continue
+                except Exception:
+                    pass
+                mem_rss_mb = mem_rss / (1024 * 1024)
                 system_cpu_percent = _calculate_system_cpu_percent()
                 vm = psutil.virtual_memory()
                 system_mem_used_mb = (vm.total - vm.available) / (1024 * 1024)
                 system_mem_total_mb = vm.total / (1024 * 1024)
+                mem_percent = (mem_rss / vm.total) * 100.0 if vm.total else None
                 return jsonify(
                     status="running",
                     pid=pid,
@@ -2013,7 +2085,7 @@ def kometa_status():
                     elapsed_seconds=elapsed_seconds,
                     cpu_percent=round(cpu_percent, 1) if cpu_percent is not None else None,
                     memory_rss_mb=round(mem_rss_mb, 1),
-                    memory_percent=round(mem_percent, 1),
+                    memory_percent=round(mem_percent, 2) if mem_percent is not None else None,
                     system_cpu_percent=round(system_cpu_percent, 1) if system_cpu_percent is not None else None,
                     system_memory_percent=round(vm.percent, 1),
                     system_memory_used_mb=round(system_mem_used_mb, 1),
@@ -2192,27 +2264,33 @@ def logscan_analyze():
     )
     summary = result.get("summary") if isinstance(result, dict) else None
     if summary:
-        ingest_cache = _load_logscan_ingest_cache()
-        cache_logs = ingest_cache["logs"]
-        cache_key = str(log_path.resolve())
-        cached_entry = cache_logs.get(cache_key, {})
-        cached_run_key = cached_entry.get("run_key")
-        if summary.get("run_complete"):
+        is_running = helpers.is_kometa_running()
+        has_finish = bool(summary.get("finished_at"))
+        run_complete = bool(summary.get("run_complete"))
+        can_ingest = run_complete and has_finish and not is_running
+        result["ingest_skipped"] = not can_ingest
+        if can_ingest:
+            ingest_cache = _load_logscan_ingest_cache()
+            cache_logs = ingest_cache["logs"]
+            cache_key = str(log_path.resolve())
+            cached_entry = cache_logs.get(cache_key, {})
+            cached_run_key = cached_entry.get("run_key")
             if not (cached_entry.get("run_complete") is True and cached_run_key == summary.get("run_key")):
                 database.save_log_run(summary, recommendations=result.get("recommendations"))
-        cache_logs[cache_key] = {
-            "mtime": stats.st_mtime,
-            "size": stats.st_size,
-            "run_key": summary.get("run_key"),
-            "run_complete": bool(summary.get("run_complete")),
-            "updated_at": datetime.utcnow().isoformat(),
-        }
-        _save_logscan_ingest_cache(ingest_cache)
-        if summary.get("run_complete"):
+            cache_logs[cache_key] = {
+                "mtime": stats.st_mtime,
+                "size": stats.st_size,
+                "run_key": summary.get("run_key"),
+                "run_complete": True,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            _save_logscan_ingest_cache(ingest_cache)
             try:
                 _archive_rotated_logs(log_path.parent)
             except Exception:
                 pass
+            if _logscan_needs_reingest(cache_logs, log_path.parent):
+                _start_logscan_auto_reingest(log_path.parent)
 
     LOGSCAN_ANALYSIS_CACHE.update({"mtime": stats.st_mtime, "size": stats.st_size, "data": result})
     result["cached"] = False
@@ -2242,6 +2320,12 @@ def logscan_trends_recommendations():
 def logscan_trends_reset():
     database.clear_log_runs()
     _clear_logscan_ingest_cache()
+    try:
+        missing_log = _get_logscan_cache_dir() / "meta_people_missing.log"
+        if missing_log.exists():
+            missing_log.unlink()
+    except Exception:
+        pass
     return jsonify({"success": True})
 
 
@@ -2276,6 +2360,35 @@ def _get_logscan_archive_dir():
     archive_dir = _get_logscan_cache_dir() / "archive"
     archive_dir.mkdir(parents=True, exist_ok=True)
     return archive_dir
+
+
+def _get_logscan_log_files(log_dir=None, include_archive=True):
+    log_dir = Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs"
+    archive_dir = _get_logscan_archive_dir() if include_archive else None
+    log_files = []
+    dirs = [log_dir]
+    if include_archive and archive_dir:
+        dirs.append(archive_dir)
+    for base_dir in dirs:
+        if not base_dir.exists():
+            continue
+        for path in base_dir.glob("*meta*.log*"):
+            if not path.is_file():
+                continue
+            suffixes = [suffix.lower() for suffix in path.suffixes]
+            if suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
+                continue
+            if ".log" not in path.name.lower():
+                continue
+            log_files.append(path)
+
+    def _mtime(value):
+        try:
+            return value.stat().st_mtime
+        except Exception:
+            return 0
+
+    return sorted({path.resolve() for path in log_files}, key=_mtime)
 
 
 def _get_logscan_ingest_cache_path():
@@ -2321,6 +2434,27 @@ def _clear_logscan_ingest_cache():
             cache_path.unlink()
     except Exception:
         pass
+
+
+def _logscan_needs_reingest(cache_logs, log_dir):
+    log_files = _get_logscan_log_files(log_dir=log_dir, include_archive=True)
+    for path in log_files:
+        entry = cache_logs.get(str(path.resolve()), {})
+        if not entry or not entry.get("run_complete"):
+            return True
+    return False
+
+
+def _start_logscan_auto_reingest(log_dir):
+    if logscan_ingest_lock.locked():
+        return False
+
+    def _runner():
+        _perform_logscan_reingest(reset=False, job_id=None, update_state=False)
+
+    thread = threading.Thread(target=_runner, daemon=True)
+    thread.start()
+    return True
 
 
 def _archive_log_file(path, archive_dir, log_dir=None):
@@ -2377,7 +2511,12 @@ def _archive_rotated_logs(log_dir):
 
 
 def _perform_logscan_reingest(reset, job_id=None, update_state=True):
-    started_at = datetime.utcnow().isoformat()
+    if not logscan_ingest_lock.acquire(blocking=False):
+        message = "Logscan ingest already running."
+        if update_state:
+            _update_logscan_reingest_state(status="error", error=message, finished_at=datetime.now(timezone.utc).isoformat())
+        return {"success": False, "error": message}
+    started_at = datetime.now(timezone.utc).isoformat()
     if update_state:
         _update_logscan_reingest_state(
             status="running",
@@ -2400,42 +2539,6 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
             sample_errors=[],
         )
 
-    ingest_cache = _load_logscan_ingest_cache()
-    cache_dirty = False
-    if reset:
-        database.clear_log_runs()
-        ingest_cache = {"version": 1, "logs": {}}
-        _clear_logscan_ingest_cache()
-        cache_dirty = True
-    cache_logs = ingest_cache["logs"]
-
-    kometa_root = helpers.get_kometa_root_path()
-    log_dir = kometa_root / "config" / "logs"
-    if not log_dir.exists():
-        message = f"Log folder not found at: {log_dir}"
-        if update_state:
-            _update_logscan_reingest_state(status="error", error=message, finished_at=datetime.utcnow().isoformat())
-        return {"success": False, "error": message}
-
-    log_files = []
-    archive_dir = _get_logscan_archive_dir()
-    for base_dir in (log_dir, archive_dir):
-        for path in base_dir.glob("*meta*.log*"):
-            if not path.is_file():
-                continue
-            suffixes = [suffix.lower() for suffix in path.suffixes]
-            if suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
-                continue
-            if ".log" not in path.name.lower():
-                continue
-            log_files.append(path)
-
-    def _mtime(value):
-        try:
-            return value.stat().st_mtime
-        except Exception:
-            return 0
-
     def _extract_fake_people_header(text, max_lines=200):
         header_lines = []
         for line in text.splitlines():
@@ -2446,197 +2549,218 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 break
         return "\n".join(header_lines).rstrip()
 
-    log_files = sorted({path.resolve() for path in log_files}, key=_mtime)
-    total_files = len(log_files)
-    if update_state:
-        _update_logscan_reingest_state(total=total_files)
+    try:
+        ingest_cache = _load_logscan_ingest_cache()
+        cache_dirty = False
+        if reset:
+            database.clear_log_runs()
+            ingest_cache = {"version": 1, "logs": {}}
+            _clear_logscan_ingest_cache()
+            cache_dirty = True
+        cache_logs = ingest_cache["logs"]
 
-    analyzer = logscan.LogscanAnalyzer()
-    if log_files:
-        analyzer.preload_people_index(log_files[0])
-    ingested = 0
-    duplicates = 0
-    skipped_incomplete = 0
-    skipped_invalid = 0
-    errors = 0
-    missing_people_unique = set()
-    missing_people_logs = 0
-    missing_people_blocks = []
-    missing_people_seen_blocks = set()
-    missing_people_seen_names = set()
-    missing_people_header = None
-    sample_incomplete = []
-    sample_errors = []
+        kometa_root = helpers.get_kometa_root_path()
+        log_dir = kometa_root / "config" / "logs"
+        if not log_dir.exists():
+            message = f"Log folder not found at: {log_dir}"
+            if update_state:
+                _update_logscan_reingest_state(status="error", error=message, finished_at=datetime.now(timezone.utc).isoformat())
+            return {"success": False, "error": message}
 
-    for idx, path in enumerate(log_files, start=1):
+        log_files = _get_logscan_log_files(log_dir=log_dir, include_archive=True)
+        total_files = len(log_files)
         if update_state:
-            _update_logscan_reingest_state(current_file=path.name, scanned=max(0, idx - 1))
-        try:
-            stats = path.stat()
-            cache_key = str(path.resolve())
-            cached_entry = cache_logs.get(cache_key, {})
-            cached_run_key = cached_entry.get("run_key")
-            skip_save_if_cached = cached_entry.get("run_complete") is True and cached_run_key
+            _update_logscan_reingest_state(total=total_files)
 
-            content = path.read_text(encoding="utf-8", errors="replace")
-            result = analyzer.analyze_content(
-                content,
-                log_path=path,
-                include_people_scan=True,
-            )
-            summary = result.get("summary") if isinstance(result, dict) else None
-            if not summary:
-                skipped_invalid += 1
-                continue
-            if not summary.get("run_complete"):
-                skipped_incomplete += 1
-                if len(sample_incomplete) < 5:
-                    sample_incomplete.append(path.name)
+        analyzer = logscan.LogscanAnalyzer()
+        if log_files:
+            analyzer.preload_people_index(log_files[0])
+        ingested = 0
+        duplicates = 0
+        skipped_incomplete = 0
+        skipped_invalid = 0
+        errors = 0
+        missing_people_unique = set()
+        missing_people_logs = 0
+        missing_people_blocks = []
+        missing_people_seen_blocks = set()
+        missing_people_seen_names = set()
+        missing_people_header = None
+        sample_incomplete = []
+        sample_errors = []
+
+        archive_dir = _get_logscan_archive_dir()
+        for idx, path in enumerate(log_files, start=1):
+            if update_state:
+                _update_logscan_reingest_state(current_file=path.name, scanned=max(0, idx - 1))
+            try:
+                stats = path.stat()
+                cache_key = str(path.resolve())
+                cached_entry = cache_logs.get(cache_key, {})
+                cached_run_key = cached_entry.get("run_key")
+                skip_save_if_cached = cached_entry.get("run_complete") is True and cached_run_key
+
+                content = path.read_text(encoding="utf-8", errors="replace")
+                result = analyzer.analyze_content(
+                    content,
+                    log_path=path,
+                    include_people_scan=True,
+                )
+                summary = result.get("summary") if isinstance(result, dict) else None
+                if not summary:
+                    skipped_invalid += 1
+                    continue
+                if not summary.get("run_complete"):
+                    skipped_incomplete += 1
+                    if len(sample_incomplete) < 5:
+                        sample_incomplete.append(path.name)
+                    cache_logs[cache_key] = {
+                        "mtime": stats.st_mtime,
+                        "size": stats.st_size,
+                        "run_key": summary.get("run_key"),
+                        "run_complete": False,
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    cache_dirty = True
+                    continue
+                missing_people = result.get("missing_people") if isinstance(result, dict) else None
+                if missing_people:
+                    missing_people_logs += 1
+                    missing_people_unique.update({name.lower() for name in missing_people})
+                    if missing_people_header is None:
+                        missing_people_header = _extract_fake_people_header(content)
+                people_items = analyzer.collect_missing_people_lines(content, available_index=analyzer._people_index)
+                if people_items:
+                    for item in people_items:
+                        names = {name for name in item.get("names", set()) if name in missing_people_unique}
+                        if not names:
+                            continue
+                        if names.issubset(missing_people_seen_names):
+                            continue
+                        block = item.get("block")
+                        if block and block not in missing_people_seen_blocks:
+                            missing_people_blocks.append(block)
+                            missing_people_seen_blocks.add(block)
+                        missing_people_seen_names.update(names)
+                if skip_save_if_cached and cached_run_key == summary.get("run_key"):
+                    duplicates += 1
+                else:
+                    if database.save_log_run(summary, recommendations=result.get("recommendations")):
+                        ingested += 1
+                    else:
+                        duplicates += 1
                 cache_logs[cache_key] = {
                     "mtime": stats.st_mtime,
                     "size": stats.st_size,
                     "run_key": summary.get("run_key"),
-                    "run_complete": False,
-                    "updated_at": datetime.utcnow().isoformat(),
+                    "run_complete": True,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
                 }
                 cache_dirty = True
-                continue
-            missing_people = result.get("missing_people") if isinstance(result, dict) else None
-            if missing_people:
-                missing_people_logs += 1
-                missing_people_unique.update({name.lower() for name in missing_people})
-                if missing_people_header is None:
-                    missing_people_header = _extract_fake_people_header(content)
-            people_items = analyzer.collect_missing_people_lines(content, available_index=analyzer._people_index)
-            if people_items:
-                for item in people_items:
-                    names = {name for name in item.get("names", set()) if name in missing_people_unique}
-                    if not names:
-                        continue
-                    if names.issubset(missing_people_seen_names):
-                        continue
-                    block = item.get("block")
-                    if block and block not in missing_people_seen_blocks:
-                        missing_people_blocks.append(block)
-                        missing_people_seen_blocks.add(block)
-                    missing_people_seen_names.update(names)
-            if skip_save_if_cached and cached_run_key == summary.get("run_key"):
-                duplicates += 1
-            else:
-                if database.save_log_run(summary, recommendations=result.get("recommendations")):
-                    ingested += 1
-                else:
-                    duplicates += 1
-            cache_logs[cache_key] = {
-                "mtime": stats.st_mtime,
-                "size": stats.st_size,
-                "run_key": summary.get("run_key"),
-                "run_complete": True,
-                "updated_at": datetime.utcnow().isoformat(),
-            }
-            cache_dirty = True
-            if path.parent.resolve() == log_dir.resolve():
-                archived_path = _archive_log_file(path, archive_dir, log_dir=log_dir)
-                if archived_path:
-                    try:
-                        archived_stats = archived_path.stat()
-                        cache_logs[str(archived_path.resolve())] = {
-                            "mtime": archived_stats.st_mtime,
-                            "size": archived_stats.st_size,
-                            "run_key": summary.get("run_key"),
-                            "run_complete": True,
-                            "updated_at": datetime.utcnow().isoformat(),
-                        }
-                        cache_dirty = True
-                    except Exception:
-                        pass
-        except Exception as exc:
-            errors += 1
-            if len(sample_errors) < 5:
-                sample_errors.append(f"{path.name}: {exc}")
-        if update_state:
-            _update_logscan_reingest_state(
-                scanned=idx,
-                ingested=ingested,
-                duplicates=duplicates,
-                skipped_incomplete=skipped_incomplete,
-                skipped_invalid=skipped_invalid,
-                errors=errors,
-                missing_people_unique=len(missing_people_unique),
-                missing_people_logs=missing_people_logs,
-                sample_incomplete=sample_incomplete,
-                sample_errors=sample_errors,
-            )
-
-    cache_dir = _get_logscan_cache_dir()
-    missing_people_log = cache_dir / "meta_people_missing.log"
-    missing_people_meta = cache_dir / "meta_people_missing.json"
-    missing_people_log_ready = False
-    missing_people_log_lines = 0
-    if missing_people_blocks:
-        try:
-            missing_people_log_lines = sum(len(block.splitlines()) for block in missing_people_blocks)
-            output_parts = []
-            if missing_people_header:
-                output_parts.append(missing_people_header)
-                missing_people_log_lines += len(missing_people_header.splitlines())
-            output_parts.extend(missing_people_blocks)
-            missing_people_log.write_text("\n".join(output_parts).rstrip() + "\n", encoding="utf-8")
-            missing_people_log_ready = True
-            try:
-                missing_people_meta.write_text(
-                    json.dumps(
-                        {
-                            "missing_people_unique": len(missing_people_unique),
-                            "missing_people_logs": missing_people_logs,
-                            "updated_at": datetime.utcnow().isoformat(),
-                        },
-                        ensure_ascii=True,
-                        indent=2,
-                    )
-                    + "\n",
-                    encoding="utf-8",
+                if path.parent.resolve() == log_dir.resolve():
+                    archived_path = _archive_log_file(path, archive_dir, log_dir=log_dir)
+                    if archived_path:
+                        try:
+                            archived_stats = archived_path.stat()
+                            cache_logs[str(archived_path.resolve())] = {
+                                "mtime": archived_stats.st_mtime,
+                                "size": archived_stats.st_size,
+                                "run_key": summary.get("run_key"),
+                                "run_complete": True,
+                                "updated_at": datetime.now(timezone.utc).isoformat(),
+                            }
+                            cache_dirty = True
+                        except Exception:
+                            pass
+            except Exception as exc:
+                errors += 1
+                if len(sample_errors) < 5:
+                    sample_errors.append(f"{path.name}: {exc}")
+            if update_state:
+                _update_logscan_reingest_state(
+                    scanned=idx,
+                    ingested=ingested,
+                    duplicates=duplicates,
+                    skipped_incomplete=skipped_incomplete,
+                    skipped_invalid=skipped_invalid,
+                    errors=errors,
+                    missing_people_unique=len(missing_people_unique),
+                    missing_people_logs=missing_people_logs,
+                    sample_incomplete=sample_incomplete,
+                    sample_errors=sample_errors,
                 )
+
+        cache_dir = _get_logscan_cache_dir()
+        missing_people_log = cache_dir / "meta_people_missing.log"
+        missing_people_meta = cache_dir / "meta_people_missing.json"
+        missing_people_log_ready = False
+        missing_people_log_lines = 0
+        if missing_people_blocks:
+            try:
+                missing_people_log_lines = sum(len(block.splitlines()) for block in missing_people_blocks)
+                output_parts = []
+                if missing_people_header:
+                    output_parts.append(missing_people_header)
+                    missing_people_log_lines += len(missing_people_header.splitlines())
+                output_parts.extend(missing_people_blocks)
+                missing_people_log.write_text("\n".join(output_parts).rstrip() + "\n", encoding="utf-8")
+                missing_people_log_ready = True
+                try:
+                    missing_people_meta.write_text(
+                        json.dumps(
+                            {
+                                "missing_people_unique": len(missing_people_unique),
+                                "missing_people_logs": missing_people_logs,
+                                "updated_at": datetime.now(timezone.utc).isoformat(),
+                            },
+                            ensure_ascii=True,
+                            indent=2,
+                        )
+                        + "\n",
+                        encoding="utf-8",
+                    )
+                except Exception:
+                    pass
+            except Exception as exc:
+                errors += 1
+                if len(sample_errors) < 5:
+                    sample_errors.append(f"{missing_people_log.name}: {exc}")
+        else:
+            try:
+                if missing_people_log.exists():
+                    missing_people_log.unlink()
+                if missing_people_meta.exists():
+                    missing_people_meta.unlink()
             except Exception:
                 pass
-        except Exception as exc:
-            errors += 1
-            if len(sample_errors) < 5:
-                sample_errors.append(f"{missing_people_log.name}: {exc}")
-    else:
-        try:
-            if missing_people_log.exists():
-                missing_people_log.unlink()
-            if missing_people_meta.exists():
-                missing_people_meta.unlink()
-        except Exception:
-            pass
 
-    result = {
-        "success": True,
-        "scanned": len(log_files),
-        "ingested": ingested,
-        "duplicates": duplicates,
-        "skipped_incomplete": skipped_incomplete,
-        "skipped_invalid": skipped_invalid,
-        "errors": errors,
-        "missing_people_unique": len(missing_people_unique),
-        "missing_people_logs": missing_people_logs,
-        "missing_people_log_ready": missing_people_log_ready,
-        "missing_people_log_lines": missing_people_log_lines,
-        "sample_incomplete": sample_incomplete,
-        "sample_errors": sample_errors,
-    }
-    if update_state:
-        _update_logscan_reingest_state(
-            status="complete",
-            finished_at=datetime.utcnow().isoformat(),
-            current_file=None,
-            **result,
-        )
-    if cache_dirty:
-        _save_logscan_ingest_cache(ingest_cache)
-    return result
+        result = {
+            "success": True,
+            "scanned": len(log_files),
+            "ingested": ingested,
+            "duplicates": duplicates,
+            "skipped_incomplete": skipped_incomplete,
+            "skipped_invalid": skipped_invalid,
+            "errors": errors,
+            "missing_people_unique": len(missing_people_unique),
+            "missing_people_logs": missing_people_logs,
+            "missing_people_log_ready": missing_people_log_ready,
+            "missing_people_log_lines": missing_people_log_lines,
+            "sample_incomplete": sample_incomplete,
+            "sample_errors": sample_errors,
+        }
+        if update_state:
+            _update_logscan_reingest_state(
+                status="complete",
+                finished_at=datetime.now(timezone.utc).isoformat(),
+                current_file=None,
+                **result,
+            )
+        if cache_dirty:
+            _save_logscan_ingest_cache(ingest_cache)
+        return result
+    finally:
+        logscan_ingest_lock.release()
 
 
 def _run_logscan_reingest_job(job_id, reset):
@@ -2647,7 +2771,7 @@ def _run_logscan_reingest_job(job_id, reset):
         _update_logscan_reingest_state(
             status="error",
             error=str(exc),
-            finished_at=datetime.utcnow().isoformat(),
+            finished_at=datetime.now(timezone.utc).isoformat(),
             current_file=None,
         )
 
@@ -2668,6 +2792,8 @@ def logscan_trends_reingest():
     data = request.get_json(silent=True) or {}
     reset = data.get("reset") is True
     background = data.get("background") is True
+    if logscan_ingest_lock.locked():
+        return jsonify({"error": "Reingest already running."}), 409
     if background:
         snapshot = _logscan_reingest_snapshot()
         if snapshot.get("status") == "running":
@@ -2685,7 +2811,7 @@ def logscan_trends_reingest():
         _update_logscan_reingest_state(
             status="running",
             job_id=job_id,
-            started_at=datetime.utcnow().isoformat(),
+            started_at=datetime.now(timezone.utc).isoformat(),
             finished_at=None,
             total=0,
             scanned=0,

@@ -617,9 +617,17 @@ header.fixed-top {
 }
 
 .run-sparkline {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 200px;
+}
+
+.run-sparkline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
 }
 
 .run-sparkline-label {
@@ -627,6 +635,18 @@ header.fixed-top {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     color: var(--theme-text-muted);
+}
+
+.run-sparkline-axis {
+    font-size: 0.7rem;
+    color: var(--theme-text-muted);
+}
+
+.run-sparkline-axis-x {
+    font-size: 0.65rem;
+    color: var(--theme-text-muted);
+    text-align: right;
+    width: 100%;
 }
 
 .run-sparkline svg {
@@ -652,6 +672,35 @@ header.fixed-top {
     stroke-linecap: round;
     stroke-linejoin: round;
     opacity: 0.9;
+}
+
+.run-sparkline-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    font-size: 0.7rem;
+    color: var(--theme-text-muted);
+}
+
+.run-sparkline-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.run-sparkline-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+.run-sparkline-swatch-system {
+    background: #4cc9f0;
+}
+
+.run-sparkline-swatch-kometa {
+    background: #f9c74f;
 }
 
 .overlay-warning {
@@ -1644,6 +1693,194 @@ div#loading {
 
 .logscan-sort-button.is-desc .logscan-sort-down {
     border-top-color: var(--theme-primary);
+}
+
+.logscan-daily-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.logscan-daily-svg {
+    width: 100%;
+    height: 140px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--theme-border);
+    border-radius: 8px;
+    font-family: var(--bs-body-font-family, inherit);
+}
+
+.logscan-daily-line {
+    fill: none;
+    stroke: var(--theme-primary);
+    stroke-width: 2;
+}
+
+.logscan-daily-labels {
+    display: grid;
+    gap: 0.2rem;
+    font-size: 0.7rem;
+    color: var(--theme-text-muted);
+}
+
+.logscan-daily-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.logscan-daily-label-date {
+    line-height: 1.1;
+}
+
+.logscan-daily-label-count {
+    line-height: 1.1;
+    color: var(--theme-text);
+    font-weight: 600;
+}
+
+.logscan-daily-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+}
+
+.logscan-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.logscan-legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+.logscan-legend-line {
+    width: 18px;
+    height: 2px;
+    background: var(--theme-primary);
+    display: inline-block;
+}
+
+.logscan-histogram-row,
+.logscan-stack-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+}
+
+.logscan-histogram-label,
+.logscan-stack-label {
+    width: 76px;
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+}
+
+.logscan-histogram-bar-wrap,
+.logscan-stack-bar-wrap {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.logscan-histogram-bar {
+    height: 100%;
+    background: var(--theme-primary);
+}
+
+.logscan-histogram-count {
+    width: 36px;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+}
+
+.logscan-stack-bar {
+    display: flex;
+    height: 100%;
+}
+
+.logscan-stack-segment {
+    height: 100%;
+    display: inline-block;
+}
+
+.logscan-stack-warning {
+    background: #f9c74f;
+}
+
+.logscan-stack-error {
+    background: #f94144;
+}
+
+.logscan-stack-trace {
+    background: #4cc9f0;
+}
+
+.logscan-stack-convert {
+    background: #f9c74f;
+}
+
+.logscan-stack-anidb {
+    background: #f3722c;
+}
+
+.logscan-stack-regex {
+    background: #577590;
+}
+
+.logscan-stack-count {
+    width: 110px;
+    text-align: right;
+    font-size: 0.7rem;
+    color: var(--theme-text-muted);
+}
+
+.logscan-stack-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+}
+
+.logscan-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+}
+
+.logscan-kpi {
+    border: 1px solid var(--theme-border);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    background: rgba(255, 255, 255, 0.04);
+    text-align: center;
+}
+
+.logscan-kpi-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--theme-text-muted);
+}
+
+.logscan-kpi-value {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--theme-text);
 }
 
 .btn.nav-button:disabled,

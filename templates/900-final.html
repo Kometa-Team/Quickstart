@@ -396,18 +396,34 @@
           <span id="run-status-log"></span>
           <div class="d-flex align-items-center gap-2 flex-wrap" id="run-status-sparklines">
             <div class="run-sparkline">
-              <span class="run-sparkline-label">CPU</span>
-              <svg id="run-spark-cpu" viewBox="0 0 120 28" width="120" height="28" aria-hidden="true">
+              <div class="run-sparkline-header">
+                <span class="run-sparkline-label">CPU</span>
+                <span class="run-sparkline-axis">0-100%</span>
+              </div>
+              <svg id="run-spark-cpu" viewBox="0 0 180 48" width="180" height="48" aria-hidden="true">
                 <polyline id="run-spark-cpu-system" class="run-sparkline-system" points=""></polyline>
                 <polyline id="run-spark-cpu-kometa" class="run-sparkline-kometa" points=""></polyline>
               </svg>
+              <div class="run-sparkline-axis-x">Time</div>
             </div>
             <div class="run-sparkline">
-              <span class="run-sparkline-label">Memory</span>
-              <svg id="run-spark-mem" viewBox="0 0 120 28" width="120" height="28" aria-hidden="true">
+              <div class="run-sparkline-header">
+                <span class="run-sparkline-label">Memory</span>
+                <span class="run-sparkline-axis">0-100%</span>
+              </div>
+              <svg id="run-spark-mem" viewBox="0 0 180 48" width="180" height="48" aria-hidden="true">
                 <polyline id="run-spark-mem-system" class="run-sparkline-system" points=""></polyline>
                 <polyline id="run-spark-mem-kometa" class="run-sparkline-kometa" points=""></polyline>
               </svg>
+              <div class="run-sparkline-axis-x">Time</div>
+            </div>
+            <div class="run-sparkline-legend">
+              <span class="run-sparkline-legend-item">
+                <span class="run-sparkline-swatch run-sparkline-swatch-system"></span>System
+              </span>
+              <span class="run-sparkline-legend-item">
+                <span class="run-sparkline-swatch run-sparkline-swatch-kometa"></span>Kometa
+              </span>
             </div>
           </div>
         </div>

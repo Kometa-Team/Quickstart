@@ -4,6 +4,10 @@ $(document).ready(function () {
   const $tableBody = $('#logscan-trends-table tbody')
   const $summary = $('#logscan-trends-summary')
   const $daily = $('#logscan-trends-daily')
+  const $runtime = $('#logscan-trends-runtime')
+  const $counts = $('#logscan-trends-counts')
+  const $ingest = $('#logscan-trends-ingest')
+  const $analyze = $('#logscan-trends-analyze')
   const $status = $('#logscan-trends-status')
   const $progress = $('#logscan-trends-progress')
   const $progressBar = $('#logscan-trends-progress-bar')
@@ -28,6 +32,7 @@ $(document).ready(function () {
   let reingestJobId = null
   let allRuns = []
   const sortState = { key: 'finished_at', dir: 'desc' }
+  let lastIngestState = null
 
   function escapeHtml (value) {
     return String(value || '')
@@ -77,6 +82,15 @@ $(document).ready(function () {
     return null
   }
 
+  function isFutureDateKey (key) {
+    if (!key) return false
+    const parsed = new Date(`${key}T00:00:00`)
+    if (Number.isNaN(parsed.getTime())) return false
+    const now = new Date()
+    const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+    return parsed > cutoff
+  }
+
   function getSortTimestamp (run) {
     if (!run) return null
     if (run.finished_at) {
@@ -96,9 +110,10 @@ $(document).ready(function () {
   function getRunDateKey (run) {
     if (!run) return null
     const finishedKey = extractDateKey(run.finished_at)
-    if (finishedKey) return finishedKey
+    if (finishedKey && !isFutureDateKey(finishedKey)) return finishedKey
     if (typeof run.log_mtime === 'number' && Number.isFinite(run.log_mtime)) {
-      return new Date(run.log_mtime * 1000).toISOString().slice(0, 10)
+      const key = new Date(run.log_mtime * 1000).toISOString().slice(0, 10)
+      if (!isFutureDateKey(key)) return key
     }
     return null
   }
@@ -135,6 +150,60 @@ $(document).ready(function () {
   function getCount (run, key) {
     const value = run && typeof run[key] === 'number' ? run[key] : 0
     return Number.isFinite(value) ? value : 0
+  }
+
+  function getAnalyzeCount (run, key) {
+    const counts = run && run.analysis_counts && typeof run.analysis_counts === 'object'
+      ? run.analysis_counts
+      : {}
+    const value = counts && typeof counts[key] === 'number' ? counts[key] : 0
+    return Number.isFinite(value) ? value : 0
+  }
+
+  const CONFIG_COLORS = [
+    '#f9c74f',
+    '#4cc9f0',
+    '#90be6d',
+    '#f94144',
+    '#577590',
+    '#f9844a',
+    '#43aa8b',
+    '#f3722c'
+  ]
+
+  function buildConfigColorMap (configs) {
+    const map = {}
+    configs.forEach((config, index) => {
+      map[config] = CONFIG_COLORS[index % CONFIG_COLORS.length]
+    })
+    return map
+  }
+
+  function buildDailyBuckets (runs) {
+    const buckets = {}
+    runs.forEach(run => {
+      const key = getRunDateKey(run)
+      if (!key) return
+      const config = normalizeConfigName(run.config_name)
+      if (!buckets[key]) {
+        buckets[key] = { total: 0, configs: {} }
+      }
+      buckets[key].total += 1
+      buckets[key].configs[config] = (buckets[key].configs[config] || 0) + 1
+    })
+    return buckets
+  }
+
+  function computeRollingAverage (values, windowSize) {
+    const window = Math.max(1, windowSize || 1)
+    const averages = []
+    for (let i = 0; i < values.length; i += 1) {
+      const start = Math.max(0, i - window + 1)
+      const slice = values.slice(start, i + 1)
+      const total = slice.reduce((sum, value) => sum + value, 0)
+      averages.push(slice.length ? total / slice.length : 0)
+    }
+    return averages
   }
 
   function buildSectionDetails (sectionRuntimes, runSeconds) {
@@ -196,34 +265,89 @@ $(document).ready(function () {
   }
 
   function renderDaily (runs) {
-    const dayCounts = {}
-    runs.forEach(run => {
-      const key = getRunDateKey(run)
-      if (!key) return
-      dayCounts[key] = (dayCounts[key] || 0) + 1
-    })
-    const days = Object.keys(dayCounts).sort().slice(-14)
+    const buckets = buildDailyBuckets(runs)
+    const days = Object.keys(buckets).sort().slice(-14)
     if (!days.length) {
       $daily.text('No daily totals yet.')
       return
     }
-    const maxCount = Math.max(...days.map(day => dayCounts[day]))
-    const rows = days.map(day => {
-      const count = dayCounts[day]
-      const pct = maxCount ? Math.round((count / maxCount) * 100) : 0
-      return `
-        <div class="d-flex align-items-center gap-2 mb-1">
-          <div class="text-muted small" style="width: 96px;">${escapeHtml(day)}</div>
-          <div class="flex-grow-1">
-            <div class="progress" style="height: 6px;">
-              <div class="progress-bar bg-info" style="width: ${pct}%"></div>
-            </div>
-          </div>
-          <div class="text-muted small" style="width: 28px; text-align: right;">${count}</div>
-        </div>
-      `
+    const totals = days.map(day => buckets[day].total || 0)
+    const maxTotal = Math.max(...totals, 1)
+    const selectedConfig = $configFilter.val()
+    const configTotals = {}
+    days.forEach(day => {
+      const configs = buckets[day].configs || {}
+      Object.entries(configs).forEach(([config, count]) => {
+        configTotals[config] = (configTotals[config] || 0) + count
+      })
     })
-    $daily.html(rows.join(''))
+    let configs = Object.keys(configTotals)
+    if (selectedConfig) {
+      configs = [selectedConfig]
+    } else {
+      configs.sort((a, b) => (configTotals[b] || 0) - (configTotals[a] || 0))
+    }
+    if (!configs.length) {
+      configs = ['default']
+    }
+    const colorMap = buildConfigColorMap(configs)
+    const rollingAvg = computeRollingAverage(totals, 7)
+    const barWidth = 18
+    const gap = 10
+    const chartHeight = 120
+    const paddingTop = 6
+    const paddingBottom = 14
+    const chartAreaHeight = chartHeight - paddingTop - paddingBottom
+    const chartWidth = Math.max(1, (barWidth + gap) * days.length - gap)
+    const bars = []
+    const linePoints = []
+    days.forEach((day, index) => {
+      const bucket = buckets[day]
+      const x = index * (barWidth + gap)
+      let yCursor = paddingTop + chartAreaHeight
+      configs.forEach(config => {
+        const count = bucket.configs[config] || 0
+        if (!count) return
+        const height = chartAreaHeight * (count / maxTotal)
+        const y = yCursor - height
+        bars.push(
+          `<rect x="${x}" y="${y.toFixed(2)}" width="${barWidth}" height="${height.toFixed(2)}" fill="${colorMap[config]}"></rect>`
+        )
+        yCursor = y
+      })
+      const avgValue = rollingAvg[index] || 0
+      const lineX = x + (barWidth / 2)
+      const lineY = paddingTop + (chartAreaHeight - (chartAreaHeight * (avgValue / maxTotal)))
+      linePoints.push(`${lineX.toFixed(2)},${lineY.toFixed(2)}`)
+    })
+    const dayLabels = days.map(day => {
+      const total = buckets[day].total || 0
+      const runLabel = total === 1 ? 'run' : 'runs'
+      return (
+      `<div class="logscan-daily-label" title="${escapeHtml(day)}">
+        <span class="logscan-daily-label-date">${escapeHtml(day.slice(5))}</span>
+        <span class="logscan-daily-label-count">${total} ${runLabel}</span>
+      </div>`
+      )
+    })
+    const labelStyle = `style="grid-template-columns: repeat(${days.length}, minmax(0, 1fr));"`
+    const legendItems = configs.map(config => (
+      `<span class="logscan-legend-item"><span class="logscan-legend-swatch" style="background:${colorMap[config]}"></span>${escapeHtml(config)}</span>`
+    ))
+    legendItems.push('<span class="logscan-legend-item"><span class="logscan-legend-line"></span>7-day avg</span>')
+    const html = `
+      <div class="logscan-daily-chart">
+        <svg class="logscan-daily-svg" viewBox="0 0 ${chartWidth} ${chartHeight}" preserveAspectRatio="none">
+          ${bars.join('')}
+          <polyline class="logscan-daily-line" points="${linePoints.join(' ')}"></polyline>
+        </svg>
+        <div class="logscan-daily-labels" ${labelStyle}>
+          ${dayLabels.join('')}
+        </div>
+      </div>
+      <div class="logscan-daily-legend">${legendItems.join('')}</div>
+    `
+    $daily.html(html)
   }
 
   function renderTable (runs) {
@@ -280,6 +404,169 @@ $(document).ready(function () {
       `
     })
     $tableBody.html(rows.join(''))
+  }
+
+  function renderRuntimeDistribution (runs) {
+    if (!$runtime.length) return
+    const durations = runs
+      .map(run => run.run_time_seconds)
+      .filter(val => typeof val === 'number' && Number.isFinite(val) && val > 0)
+    if (!durations.length) {
+      $runtime.text('No runtime data yet.')
+      return
+    }
+    const bins = [
+      { label: '<10m', max: 600 },
+      { label: '10-30m', max: 1800 },
+      { label: '30-60m', max: 3600 },
+      { label: '1-2h', max: 7200 },
+      { label: '2-4h', max: 14400 },
+      { label: '4h+', max: Infinity }
+    ]
+    const counts = bins.map(() => 0)
+    durations.forEach(seconds => {
+      const idx = bins.findIndex(bin => seconds <= bin.max)
+      if (idx >= 0) counts[idx] += 1
+    })
+    const maxCount = Math.max(...counts, 1)
+    const rows = bins.map((bin, index) => {
+      const count = counts[index]
+      const pct = maxCount ? Math.round((count / maxCount) * 100) : 0
+      return `
+        <div class="logscan-histogram-row">
+          <div class="logscan-histogram-label">${escapeHtml(bin.label)}</div>
+          <div class="logscan-histogram-bar-wrap">
+            <div class="logscan-histogram-bar" style="width: ${pct}%"></div>
+          </div>
+          <div class="logscan-histogram-count">${count}</div>
+        </div>
+      `
+    })
+    $runtime.html(rows.join(''))
+  }
+
+  function renderCountsMix (runs) {
+    if (!$counts.length) return
+    const buckets = {}
+    runs.forEach(run => {
+      const key = getRunDateKey(run)
+      if (!key) return
+      if (!buckets[key]) {
+        buckets[key] = { warning: 0, error: 0, trace: 0 }
+      }
+      buckets[key].warning += getCount(run, 'warning_count')
+      buckets[key].error += getCount(run, 'error_count')
+      buckets[key].trace += getCount(run, 'trace_count')
+    })
+    const days = Object.keys(buckets).sort().slice(-14)
+    if (!days.length) {
+      $counts.text('No W/E/T totals yet.')
+      return
+    }
+    const totals = days.map(day => buckets[day].warning + buckets[day].error + buckets[day].trace)
+    const maxTotal = Math.max(...totals, 1)
+    const rows = days.map((day, index) => {
+      const data = buckets[day]
+      const total = totals[index]
+      const barWidth = maxTotal ? Math.round((total / maxTotal) * 100) : 0
+      const warningPct = total ? Math.round((data.warning / total) * 100) : 0
+      const errorPct = total ? Math.round((data.error / total) * 100) : 0
+      const tracePct = total ? Math.max(0, 100 - warningPct - errorPct) : 0
+      return `
+        <div class="logscan-stack-row">
+          <div class="logscan-stack-label">${escapeHtml(day)}</div>
+          <div class="logscan-stack-bar-wrap">
+            <div class="logscan-stack-bar" style="width: ${barWidth}%">
+              <span class="logscan-stack-segment logscan-stack-warning" style="width: ${warningPct}%"></span>
+              <span class="logscan-stack-segment logscan-stack-error" style="width: ${errorPct}%"></span>
+              <span class="logscan-stack-segment logscan-stack-trace" style="width: ${tracePct}%"></span>
+            </div>
+          </div>
+          <div class="logscan-stack-count">W:${data.warning} E:${data.error} T:${data.trace}</div>
+        </div>
+      `
+    })
+    const legend = `
+      <div class="logscan-stack-legend">
+        <span><span class="logscan-legend-swatch logscan-stack-warning"></span>Warnings</span>
+        <span><span class="logscan-legend-swatch logscan-stack-error"></span>Errors</span>
+        <span><span class="logscan-legend-swatch logscan-stack-trace"></span>Tracebacks</span>
+      </div>
+    `
+    $counts.html(`${rows.join('')}${legend}`)
+  }
+
+  function renderAnalyzeIssues (runs) {
+    if (!$analyze.length) return
+    const buckets = {}
+    runs.forEach(run => {
+      const key = getRunDateKey(run)
+      if (!key) return
+      if (!buckets[key]) {
+        buckets[key] = { convert: 0, anidb: 0, regex: 0 }
+      }
+      buckets[key].convert += getAnalyzeCount(run, 'convert')
+      buckets[key].anidb += getAnalyzeCount(run, 'anidb')
+      buckets[key].regex += getAnalyzeCount(run, 'regex')
+    })
+    const days = Object.keys(buckets).sort().slice(-14)
+    if (!days.length) {
+      $analyze.text('No analyze issue totals yet.')
+      return
+    }
+    const totals = days.map(day => buckets[day].convert + buckets[day].anidb + buckets[day].regex)
+    const maxTotal = Math.max(...totals, 1)
+    const rows = days.map((day, index) => {
+      const data = buckets[day]
+      const total = totals[index]
+      const barWidth = maxTotal ? Math.round((total / maxTotal) * 100) : 0
+      const convertPct = total ? Math.round((data.convert / total) * 100) : 0
+      const anidbPct = total ? Math.round((data.anidb / total) * 100) : 0
+      const regexPct = total ? Math.max(0, 100 - convertPct - anidbPct) : 0
+      return `
+        <div class="logscan-stack-row">
+          <div class="logscan-stack-label">${escapeHtml(day)}</div>
+          <div class="logscan-stack-bar-wrap">
+            <div class="logscan-stack-bar" style="width: ${barWidth}%">
+              <span class="logscan-stack-segment logscan-stack-convert" style="width: ${convertPct}%"></span>
+              <span class="logscan-stack-segment logscan-stack-anidb" style="width: ${anidbPct}%"></span>
+              <span class="logscan-stack-segment logscan-stack-regex" style="width: ${regexPct}%"></span>
+            </div>
+          </div>
+          <div class="logscan-stack-count">C:${data.convert} A:${data.anidb} R:${data.regex}</div>
+        </div>
+      `
+    })
+    const legend = `
+      <div class="logscan-stack-legend">
+        <span><span class="logscan-legend-swatch logscan-stack-convert"></span>Convert</span>
+        <span><span class="logscan-legend-swatch logscan-stack-anidb"></span>AniDB</span>
+        <span><span class="logscan-legend-swatch logscan-stack-regex"></span>Regex</span>
+      </div>
+    `
+    $analyze.html(`${rows.join('')}${legend}`)
+  }
+
+  function renderIngestHealth (state) {
+    if (!$ingest.length) return
+    if (!state || typeof state.scanned !== 'number') {
+      $ingest.text('No ingest history yet.')
+      return
+    }
+    const skipped = (state.skipped_incomplete || 0) + (state.skipped_invalid || 0)
+    const items = [
+      { label: 'Scanned', value: state.scanned || 0 },
+      { label: 'Ingested', value: state.ingested || 0 },
+      { label: 'Duplicates', value: state.duplicates || 0 },
+      { label: 'Skipped', value: skipped }
+    ]
+    const tiles = items.map(item => `
+      <div class="logscan-kpi">
+        <div class="logscan-kpi-label">${escapeHtml(item.label)}</div>
+        <div class="logscan-kpi-value">${item.value}</div>
+      </div>
+    `)
+    $ingest.html(`<div class="logscan-kpi-grid">${tiles.join('')}</div>`)
   }
 
   function getSortValue (run, key) {
@@ -366,7 +653,11 @@ $(document).ready(function () {
       : allRuns.slice()
     renderSummary(filtered)
     renderDaily(filtered)
+    renderRuntimeDistribution(filtered)
+    renderCountsMix(filtered)
+    renderAnalyzeIssues(filtered)
     renderTable(sortRuns(filtered))
+    renderIngestHealth(lastIngestState)
     updateSortIndicators()
   }
 
@@ -385,6 +676,8 @@ $(document).ready(function () {
 
   function updateProgressFromState (state) {
     if (!state || !$progressBar.length) return
+    lastIngestState = state
+    renderIngestHealth(lastIngestState)
     const total = Number.isFinite(state.total) ? state.total : 0
     const scanned = Number.isFinite(state.scanned) ? state.scanned : 0
     const ingested = Number.isFinite(state.ingested) ? state.ingested : 0
@@ -461,6 +754,8 @@ $(document).ready(function () {
       .then(data => {
         if (data && data.success) {
           updateStatus('Trends cleared. Reingest logs when you are ready.')
+          lastIngestState = null
+          renderIngestHealth(lastIngestState)
           fetchRuns({ suppressStatus: true })
           setMissingDownloadVisible(false)
         } else {
@@ -486,6 +781,8 @@ $(document).ready(function () {
       `Errors: ${data.errors || 0}`,
       `Missing people (deduped): ${data.missing_people_unique || 0}`
     ].join(' | ')
+    lastIngestState = data
+    renderIngestHealth(lastIngestState)
     updateStatus(`Reingest complete. ${summary}`)
     fetchRuns({ suppressStatus: true })
     setMissingDownloadVisible(Boolean(data.missing_people_log_ready), data.missing_people_unique)
@@ -656,6 +953,9 @@ $(document).ready(function () {
         if (!suppressStatus) updateStatus('Failed to load trends.')
         $summary.text('Unable to load summary.')
         $daily.text('Unable to load daily totals.')
+        $runtime.text('Unable to load runtime distribution.')
+        $counts.text('Unable to load W/E/T totals.')
+        $analyze.text('Unable to load analyze issue totals.')
         $tableBody.html('<tr><td colspan="8" class="text-muted">Unable to load runs.</td></tr>')
       })
   }

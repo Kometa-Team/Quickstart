@@ -33,6 +33,14 @@
           title="Reload stored trends only (no reingest)">Reload data</button>
       </div>
     </div>
+    <div class="small text-muted mt-2" id="logscan-trends-status"></div>
+    <div class="mt-2 d-none" id="logscan-trends-progress">
+      <div class="progress" style="height: 8px;">
+        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated"
+          id="logscan-trends-progress-bar" style="width: 0%"></div>
+      </div>
+      <div class="small text-muted mt-1" id="logscan-trends-progress-text"></div>
+    </div>
     <div class="alert alert-danger small mt-3 mb-0">
       WIP: This page is still evolving and may change as the reporting logic is refined.
     </div>
@@ -42,6 +50,10 @@
         <div class="border border-secondary rounded p-3 h-100">
           <h6 class="text-uppercase text-muted mb-2">Summary</h6>
           <div id="logscan-trends-summary" class="small text-muted">Loading summary...</div>
+          <div class="mt-3">
+            <h6 class="text-uppercase text-muted mb-2">Ingest Health</h6>
+            <div id="logscan-trends-ingest" class="small text-muted">Loading ingest status...</div>
+          </div>
         </div>
       </div>
       <div class="col-lg-8">
@@ -52,14 +64,30 @@
       </div>
     </div>
 
-    <div class="small text-muted mt-2" id="logscan-trends-status"></div>
-    <div class="mt-2 d-none" id="logscan-trends-progress">
-      <div class="progress" style="height: 8px;">
-        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated"
-          id="logscan-trends-progress-bar" style="width: 0%"></div>
+    <div class="row g-3 mt-3">
+      <div class="col-lg-6">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Runtime Distribution</h6>
+          <div id="logscan-trends-runtime" class="small text-muted">Loading runtime distribution...</div>
+        </div>
       </div>
-      <div class="small text-muted mt-1" id="logscan-trends-progress-text"></div>
+      <div class="col-lg-6">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Warnings / Errors / Tracebacks</h6>
+          <div id="logscan-trends-counts" class="small text-muted">Loading W/E/T totals...</div>
+        </div>
+      </div>
     </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-12">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Analyze Issues</h6>
+          <div id="logscan-trends-analyze" class="small text-muted">Loading analyze issue totals...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 

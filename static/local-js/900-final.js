@@ -932,8 +932,8 @@ $(document).ready(function () {
     $tailNotice.text(`Showing ${sizeLabel} from meta.log`)
   }
 
-  const SPARKLINE_WIDTH = 120
-  const SPARKLINE_HEIGHT = 28
+  const SPARKLINE_WIDTH = 180
+  const SPARKLINE_HEIGHT = 48
   const SPARKLINE_PADDING = 2
   const SPARKLINE_MAX_POINTS = 40
   const runSparkState = {

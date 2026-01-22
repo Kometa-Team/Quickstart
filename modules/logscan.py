@@ -774,11 +774,15 @@ class LogscanAnalyzer:
         parsed_run_time = self._parse_run_time_from_line(run_time_line)
         if parsed_run_time and run_time_is_final:
             self.run_time = parsed_run_time
-            finished_match = re.search(r"Finished:\s*(.*?)\s+Run Time:", run_time_line)
-            if not finished_match:
-                finished_match = re.search(r"Finished:\s*(.*?)\s*$", run_time_line)
-            if finished_match:
-                self.finished_at = finished_match.group(1).strip()
+            timestamp_match = re.search(r"\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),", run_time_line)
+            if timestamp_match:
+                self.finished_at = timestamp_match.group(1).strip()
+            else:
+                finished_match = re.search(r"Finished:\s*(.*?)\s+Run Time:", run_time_line)
+                if not finished_match:
+                    finished_match = re.search(r"Finished:\s*(.*?)\s*$", run_time_line)
+                if finished_match:
+                    self.finished_at = finished_match.group(1).strip()
         return "\n".join(extracted_lines)
 
     def format_contiguous_lines(self, line_numbers):
@@ -1807,9 +1811,21 @@ class LogscanAnalyzer:
 
         return recommendation_messages
 
+    def _ensure_recommendation_icons(self, recommendations):
+        priority_icons = {"🚀", "💥", "❌", "⚠", "💬", "ℹ"}
+        for rec in recommendations:
+            first_line = rec.get("first_line", "") or ""
+            trimmed = first_line.lstrip()
+            if not trimmed:
+                rec["first_line"] = "💬 Recommendation"
+                continue
+            first_symbol = trimmed[0].rstrip("\ufe0f")
+            if first_symbol not in priority_icons:
+                rec["first_line"] = f"💬 {trimmed}"
+
     def reorder_recommendations(self, recommendations):
         # Define the priority order of symbols
-        priority_order = {"🚀": 1, "💥": 2, "❌": 3, "⚠": 4, "💬": 5}
+        priority_order = {"🚀": 1, "💥": 2, "❌": 3, "⚠": 4, "💬": 5, "ℹ": 5}
 
         def sort_key(recommendation):
             # Get the first symbol in the message
@@ -2062,6 +2078,38 @@ class LogscanAnalyzer:
             mylogger.warning(f"Failed to hash config file {path}: {exc}")
             return None
 
+    def _parse_finished_datetime(self, value):
+        if not value:
+            return None
+        text = str(value).strip()
+        match = re.search(r"(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})", text)
+        if match:
+            try:
+                return datetime.strptime(f"{match.group(1)} {match.group(2)}", "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                return None
+        match = re.search(r"(\d{2}:\d{2}:\d{2})\s+(\d{4}-\d{2}-\d{2})", text)
+        if match:
+            try:
+                return datetime.strptime(f"{match.group(2)} {match.group(1)}", "%Y-%m-%d %H:%M:%S")
+            except Exception:
+                return None
+        return None
+
+    def _normalize_finished_at(self, finished_at, log_mtime):
+        parsed = self._parse_finished_datetime(finished_at)
+        now = datetime.now()
+        if parsed and parsed > now + timedelta(days=1):
+            parsed = None
+        if not parsed and log_mtime:
+            try:
+                parsed = datetime.fromtimestamp(log_mtime)
+            except Exception:
+                parsed = None
+        if parsed:
+            return parsed.strftime("%Y-%m-%d %H:%M:%S")
+        return finished_at
+
     def _parse_hms_to_seconds(self, value):
         if not value:
             return None
@@ -2157,6 +2205,27 @@ class LogscanAnalyzer:
                 counts["trace"] += 1
         return counts
 
+    def extract_analyze_issue_counts(self, content):
+        patterns = {
+            "convert": re.compile(r"\bconvert\s+(warning|error)\b", re.IGNORECASE),
+            "anidb": re.compile(r"\banidb\b.*\b(error|warning|failed)\b", re.IGNORECASE),
+            "regex": re.compile(r"\bregex\b.*\b(error|warning|invalid|failed)\b", re.IGNORECASE),
+        }
+        counts = {key: 0 for key in patterns}
+        if not content:
+            return counts
+        for line in content.splitlines():
+            for key, pattern in patterns.items():
+                if pattern.search(line):
+                    counts[key] += 1
+        return counts
+
+    def extract_quickstart_marker(self, content):
+        if not content:
+            return None
+        match = re.search(r"\[Quickstart\]\s+Run marker:.*", content)
+        return match.group(0) if match else None
+
     def _build_summary(
         self,
         finished_runs,
@@ -2198,6 +2267,8 @@ class LogscanAnalyzer:
                 log_size = stats.st_size
             except Exception as exc:
                 mylogger.debug(f"Failed to stat log file {log_path}: {exc}")
+
+        finished_at = self._normalize_finished_at(finished_at, log_mtime)
 
         run_key = None
         if finished_at or run_time_seconds is not None:
@@ -2263,8 +2334,9 @@ class LogscanAnalyzer:
         section_runtimes = self.extract_section_runtimes(cleaned_content)
 
         recommendations = self.make_recommendations(cleaned_content, "") or []
-        if recommendations:
-            recommendations = self.reorder_recommendations(recommendations)
+
+        analysis_counts = self.extract_analyze_issue_counts(cleaned_content)
+        quickstart_marker = self.extract_quickstart_marker(raw_content)
 
         missing_people = []
         missing_people_message = None
@@ -2297,6 +2369,9 @@ class LogscanAnalyzer:
             command_signature=command_signature,
             section_runtimes=section_runtimes,
         )
+        if summary:
+            summary["analysis_counts"] = analysis_counts
+            summary["quickstart_run_marker"] = bool(quickstart_marker)
         if summary and not summary.get("run_complete"):
             recommendations.append(
                 {
@@ -2307,6 +2382,10 @@ class LogscanAnalyzer:
                     ),
                 }
             )
+
+        if recommendations:
+            self._ensure_recommendation_icons(recommendations)
+            recommendations = self.reorder_recommendations(recommendations)
 
         return {
             "summary": summary,

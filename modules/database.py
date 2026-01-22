@@ -107,6 +107,8 @@ def log_runs_table_create():
         error_count INTEGER,
         critical_count INTEGER,
         trace_count INTEGER,
+        analysis_counts TEXT,
+        quickstart_run_marker INTEGER,
         created_at TEXT
     )"""
 
@@ -121,6 +123,8 @@ def _ensure_log_runs_columns(cursor):
         "command_signature": "TEXT",
         "section_runtimes": "TEXT",
         "recommendations": "TEXT",
+        "analysis_counts": "TEXT",
+        "quickstart_run_marker": "INTEGER",
     }
     for name, ddl in columns.items():
         if name not in existing:
@@ -142,6 +146,10 @@ def save_log_run(summary, recommendations=None):
         recommendations = summary.get("recommendations")
     if isinstance(recommendations, (list, dict)):
         recommendations = json.dumps(recommendations, ensure_ascii=True)
+    analysis_counts = summary.get("analysis_counts")
+    if isinstance(analysis_counts, dict):
+        analysis_counts = json.dumps(analysis_counts, ensure_ascii=True)
+    quickstart_run_marker = 1 if summary.get("quickstart_run_marker") else 0
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
         connection.row_factory = sqlite3.Row
         with closing(connection.cursor()) as cursor:
@@ -167,8 +175,10 @@ def save_log_run(summary, recommendations=None):
                     error_count,
                     critical_count,
                     trace_count,
+                    analysis_counts,
+                    quickstart_run_marker,
                     created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     run_key,
                     summary.get("finished_at"),
@@ -189,6 +199,8 @@ def save_log_run(summary, recommendations=None):
                     counts.get("error", 0),
                     counts.get("critical", 0),
                     counts.get("trace", 0),
+                    analysis_counts,
+                    quickstart_run_marker,
                     summary.get("created_at"),
                 ),
             )
@@ -214,7 +226,7 @@ def get_log_runs(limit=100):
                 """SELECT run_key, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
                           config_name, config_hash, run_command, command_signature, section_runtimes,
                           recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
-                          error_count, critical_count, trace_count, created_at
+                          error_count, critical_count, trace_count, analysis_counts, quickstart_run_marker, created_at
                    FROM log_runs
                    ORDER BY created_at DESC
                    LIMIT ?""",
@@ -239,6 +251,13 @@ def get_log_runs(limit=100):
                 else:
                     row["recommendations_count"] = 0
                 row.pop("recommendations", None)
+                analysis_counts = row.get("analysis_counts")
+                if isinstance(analysis_counts, str):
+                    try:
+                        row["analysis_counts"] = json.loads(analysis_counts)
+                    except json.JSONDecodeError:
+                        row["analysis_counts"] = None
+                row["quickstart_run_marker"] = bool(row.get("quickstart_run_marker"))
             return rows
 
 
