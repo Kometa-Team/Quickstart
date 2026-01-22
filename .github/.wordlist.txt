@@ -15,6 +15,7 @@ Jellyfin
 kometa
 KStatusNotifierItem
 localhost
+Logscan
 MacOS
 meisnate
 Plex
