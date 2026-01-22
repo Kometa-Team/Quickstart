@@ -1600,6 +1600,52 @@ div#loading {
     justify-content: center;
 }
 
+.logscan-sort-button {
+    background: transparent;
+    border: 0;
+    color: var(--theme-text);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    font-weight: 600;
+}
+
+.logscan-sort-button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.logscan-sort-icons {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.logscan-sort-up,
+.logscan-sort-down {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+}
+
+.logscan-sort-up {
+    border-bottom: 6px solid var(--theme-text-muted);
+}
+
+.logscan-sort-down {
+    border-top: 6px solid var(--theme-text-muted);
+}
+
+.logscan-sort-button.is-asc .logscan-sort-up {
+    border-bottom-color: var(--theme-primary);
+}
+
+.logscan-sort-button.is-desc .logscan-sort-down {
+    border-top-color: var(--theme-primary);
+}
+
 .btn.nav-button:disabled,
 .btn.nav-button.disabled {
     background-color: var(--theme-bg-dark) !important;

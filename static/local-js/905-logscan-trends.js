@@ -9,6 +9,7 @@ $(document).ready(function () {
   const $progressBar = $('#logscan-trends-progress-bar')
   const $progressText = $('#logscan-trends-progress-text')
   const $limit = $('#logscan-trends-limit')
+  const $configFilter = $('#logscan-trends-config-filter')
   const $refresh = $('#logscan-trends-refresh')
   const $reset = $('#logscan-trends-reset')
   const $reingest = $('#logscan-trends-reingest')
@@ -25,6 +26,8 @@ $(document).ready(function () {
   let missingDownloadUrl = ''
   let reingestPollTimer = null
   let reingestJobId = null
+  let allRuns = []
+  const sortState = { key: 'finished_at', dir: 'desc' }
 
   function escapeHtml (value) {
     return String(value || '')
@@ -74,6 +77,22 @@ $(document).ready(function () {
     return null
   }
 
+  function getSortTimestamp (run) {
+    if (!run) return null
+    if (run.finished_at) {
+      const parsed = new Date(run.finished_at)
+      if (!Number.isNaN(parsed.getTime())) return parsed.getTime()
+    }
+    if (typeof run.log_mtime === 'number' && Number.isFinite(run.log_mtime)) {
+      return run.log_mtime * 1000
+    }
+    if (run.created_at) {
+      const created = new Date(run.created_at)
+      if (!Number.isNaN(created.getTime())) return created.getTime()
+    }
+    return null
+  }
+
   function getRunDateKey (run) {
     if (!run) return null
     const finishedKey = extractDateKey(run.finished_at)
@@ -94,6 +113,23 @@ $(document).ready(function () {
     }
     const created = formatTimestamp(run.created_at)
     return created || 'n/a'
+  }
+
+  function getSectionTotal (sectionRuntimes) {
+    if (!sectionRuntimes || typeof sectionRuntimes !== 'object') return 0
+    return Object.values(sectionRuntimes).reduce((sum, value) => {
+      if (typeof value === 'number' && Number.isFinite(value)) return sum + value
+      return sum
+    }, 0)
+  }
+
+  function getCountsTotal (run) {
+    return getCount(run, 'warning_count') + getCount(run, 'error_count') + getCount(run, 'trace_count')
+  }
+
+  function normalizeConfigName (value) {
+    const cleaned = String(value || '').trim()
+    return cleaned || 'default'
   }
 
   function getCount (run, key) {
@@ -130,20 +166,32 @@ $(document).ready(function () {
       $summary.text('No runs stored yet.')
       return
     }
+    let latest = runs[0]
+    let latestTs = getSortTimestamp(latest) || 0
+    runs.forEach(run => {
+      const ts = getSortTimestamp(run)
+      if (typeof ts === 'number' && ts > latestTs) {
+        latest = run
+        latestTs = ts
+      }
+    })
     const runtimeValues = runs
       .map(run => run.run_time_seconds)
       .filter(val => typeof val === 'number' && Number.isFinite(val) && val > 0)
     const avgRuntime = runtimeValues.length
       ? runtimeValues.reduce((sum, val) => sum + val, 0) / runtimeValues.length
       : null
-    const configs = new Set(runs.map(run => run.config_name || 'default'))
-    const latest = runs[0]
+    const configs = new Set(runs.map(run => normalizeConfigName(run.config_name)))
     const lines = [
       `Runs stored: ${runs.length}`,
       `Latest run: ${getDisplayFinished(latest)}`,
       `Average runtime: ${avgRuntime ? formatSeconds(avgRuntime) : 'n/a'}`,
       `Configs tracked: ${configs.size}`
     ]
+    const selectedConfig = $configFilter.val()
+    if (selectedConfig) {
+      lines.push(`Filtered config: ${selectedConfig}`)
+    }
     $summary.html(lines.map(line => `<div>${escapeHtml(line)}</div>`).join(''))
   }
 
@@ -234,6 +282,94 @@ $(document).ready(function () {
     $tableBody.html(rows.join(''))
   }
 
+  function getSortValue (run, key) {
+    switch (key) {
+      case 'finished_at':
+        return getSortTimestamp(run)
+      case 'run_time_seconds':
+        return typeof run.run_time_seconds === 'number' ? run.run_time_seconds : 0
+      case 'config_name':
+        return normalizeConfigName(run.config_name)
+      case 'command_signature':
+        return run.command_signature || ''
+      case 'counts':
+        return getCountsTotal(run)
+      case 'kometa_version':
+        return run.kometa_version || ''
+      case 'section_runtimes':
+        return getSectionTotal(run.section_runtimes)
+      case 'recommendations_count':
+        return typeof run.recommendations_count === 'number' ? run.recommendations_count : 0
+      default:
+        return run[key] || ''
+    }
+  }
+
+  function compareValues (aVal, bVal, dir) {
+    const aMissing = aVal === null || aVal === undefined || aVal === ''
+    const bMissing = bVal === null || bVal === undefined || bVal === ''
+    if (aMissing && bMissing) return 0
+    if (aMissing) return 1
+    if (bMissing) return -1
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      return dir === 'asc' ? aVal - bVal : bVal - aVal
+    }
+    const aText = String(aVal)
+    const bText = String(bVal)
+    return dir === 'asc' ? aText.localeCompare(bText) : bText.localeCompare(aText)
+  }
+
+  function sortRuns (runs) {
+    if (!runs.length) return runs
+    const { key, dir } = sortState
+    const direction = dir === 'asc' ? 'asc' : 'desc'
+    return runs.slice().sort((a, b) => {
+      const aVal = getSortValue(a, key)
+      const bVal = getSortValue(b, key)
+      const result = compareValues(aVal, bVal, direction)
+      if (result !== 0) return result
+      const aTs = getSortTimestamp(a) || 0
+      const bTs = getSortTimestamp(b) || 0
+      return direction === 'asc' ? aTs - bTs : bTs - aTs
+    })
+  }
+
+  function updateSortIndicators () {
+    $('#logscan-trends-table thead .logscan-sort-button').removeClass('is-asc is-desc')
+    const selector = `.logscan-sort-button[data-sort="${sortState.key}"]`
+    const $button = $(selector)
+    if ($button.length) {
+      $button.addClass(sortState.dir === 'asc' ? 'is-asc' : 'is-desc')
+    }
+  }
+
+  function updateConfigFilter (runs) {
+    if (!$configFilter.length) return
+    const selected = $configFilter.val() || ''
+    const configs = Array.from(new Set(runs.map(run => normalizeConfigName(run.config_name)))).sort()
+    const options = ['<option value="">All configs</option>']
+    configs.forEach(cfg => {
+      options.push(`<option value="${escapeHtml(cfg)}">${escapeHtml(cfg)}</option>`)
+    })
+    $configFilter.html(options.join(''))
+    if (selected && configs.includes(selected)) {
+      $configFilter.val(selected)
+    } else {
+      $configFilter.val('')
+    }
+  }
+
+  function applyFiltersAndRender () {
+    const selectedConfig = $configFilter.val()
+    const filtered = selectedConfig
+      ? allRuns.filter(run => normalizeConfigName(run.config_name) === selectedConfig)
+      : allRuns.slice()
+    renderSummary(filtered)
+    renderDaily(filtered)
+    renderTable(sortRuns(filtered))
+    updateSortIndicators()
+  }
+
   function updateStatus (message) {
     if ($status.length) $status.text(message)
   }
@@ -282,6 +418,7 @@ $(document).ready(function () {
     $reingest.prop('disabled', disabled)
     $refresh.prop('disabled', disabled)
     $limit.prop('disabled', disabled)
+    $configFilter.prop('disabled', disabled)
     $confirmReset.prop('disabled', disabled)
     $confirmReingest.prop('disabled', disabled)
     $confirmMissingDownload.prop('disabled', disabled)
@@ -507,10 +644,9 @@ $(document).ready(function () {
     fetch(`/logscan/trends?limit=${safeLimit}`)
       .then(res => res.json())
       .then(data => {
-        const runs = Array.isArray(data.runs) ? data.runs : []
-        renderSummary(runs)
-        renderDaily(runs)
-        renderTable(runs)
+        allRuns = Array.isArray(data.runs) ? data.runs : []
+        updateConfigFilter(allRuns)
+        applyFiltersAndRender()
         if (!suppressStatus) {
           updateStatus(`Last updated: ${formatTimestamp(new Date().toISOString())}`)
         }
@@ -520,12 +656,13 @@ $(document).ready(function () {
         if (!suppressStatus) updateStatus('Failed to load trends.')
         $summary.text('Unable to load summary.')
         $daily.text('Unable to load daily totals.')
-        $tableBody.html('<tr><td colspan="7" class="text-muted">Unable to load runs.</td></tr>')
+        $tableBody.html('<tr><td colspan="8" class="text-muted">Unable to load runs.</td></tr>')
       })
   }
 
   $refresh.on('click', fetchRuns)
   $limit.on('change', fetchRuns)
+  $configFilter.on('change', applyFiltersAndRender)
   $confirmReset.on('click', handleReset)
   $confirmReingest.on('click', handleReingest)
   $missingDownload.on('click', function (event) {
@@ -550,6 +687,17 @@ $(document).ready(function () {
   $tableBody.on('click', '.logscan-run-details', function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
     showRunDetails(runKey)
+  })
+  $('#logscan-trends-table thead').on('click', '.logscan-sort-button', function () {
+    const key = $(this).data('sort')
+    if (!key) return
+    if (sortState.key === key) {
+      sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc'
+    } else {
+      sortState.key = key
+      sortState.dir = 'desc'
+    }
+    applyFiltersAndRender()
   })
   checkMissingDownload()
   fetchRuns()

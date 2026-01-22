@@ -2191,8 +2191,28 @@ def logscan_analyze():
         config_path=config_path,
     )
     summary = result.get("summary") if isinstance(result, dict) else None
-    if summary and summary.get("run_complete"):
-        database.save_log_run(summary, recommendations=result.get("recommendations"))
+    if summary:
+        ingest_cache = _load_logscan_ingest_cache()
+        cache_logs = ingest_cache["logs"]
+        cache_key = str(log_path.resolve())
+        cached_entry = cache_logs.get(cache_key, {})
+        cached_run_key = cached_entry.get("run_key")
+        if summary.get("run_complete"):
+            if not (cached_entry.get("run_complete") is True and cached_run_key == summary.get("run_key")):
+                database.save_log_run(summary, recommendations=result.get("recommendations"))
+        cache_logs[cache_key] = {
+            "mtime": stats.st_mtime,
+            "size": stats.st_size,
+            "run_key": summary.get("run_key"),
+            "run_complete": bool(summary.get("run_complete")),
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        _save_logscan_ingest_cache(ingest_cache)
+        if summary.get("run_complete"):
+            try:
+                _archive_rotated_logs(log_path.parent)
+            except Exception:
+                pass
 
     LOGSCAN_ANALYSIS_CACHE.update({"mtime": stats.st_mtime, "size": stats.st_size, "data": result})
     result["cached"] = False
@@ -2221,6 +2241,7 @@ def logscan_trends_recommendations():
 @app.route("/logscan/trends/reset", methods=["POST"])
 def logscan_trends_reset():
     database.clear_log_runs()
+    _clear_logscan_ingest_cache()
     return jsonify({"success": True})
 
 
@@ -2251,6 +2272,110 @@ def _get_logscan_cache_dir():
     return cache_dir
 
 
+def _get_logscan_archive_dir():
+    archive_dir = _get_logscan_cache_dir() / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    return archive_dir
+
+
+def _get_logscan_ingest_cache_path():
+    return _get_logscan_cache_dir() / "ingest_cache.json"
+
+
+def _load_logscan_ingest_cache():
+    cache_path = _get_logscan_ingest_cache_path()
+    if not cache_path.exists():
+        return {"version": 1, "logs": {}}
+    try:
+        data = json.loads(cache_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"version": 1, "logs": {}}
+    if not isinstance(data, dict):
+        return {"version": 1, "logs": {}}
+    logs = data.get("logs")
+    if not isinstance(logs, dict):
+        logs = {}
+    data["version"] = data.get("version", 1)
+    data["logs"] = logs
+    return data
+
+
+def _save_logscan_ingest_cache(cache):
+    if not isinstance(cache, dict):
+        return
+    if "version" not in cache:
+        cache["version"] = 1
+    if "logs" not in cache or not isinstance(cache["logs"], dict):
+        cache["logs"] = {}
+    cache_path = _get_logscan_ingest_cache_path()
+    try:
+        cache_path.write_text(json.dumps(cache, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _clear_logscan_ingest_cache():
+    cache_path = _get_logscan_ingest_cache_path()
+    try:
+        if cache_path.exists():
+            cache_path.unlink()
+    except Exception:
+        pass
+
+
+def _archive_log_file(path, archive_dir, log_dir=None):
+    try:
+        path = Path(path)
+        if not path.exists() or not path.is_file():
+            return None
+        if path.name.lower() == "meta.log":
+            return None
+        if log_dir and path.resolve().parent != Path(log_dir).resolve():
+            return None
+        archive_dir = Path(archive_dir)
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        src_stats = path.stat()
+        dest = archive_dir / path.name
+        if dest.exists():
+            try:
+                dst_stats = dest.stat()
+                if dst_stats.st_size == src_stats.st_size and dst_stats.st_mtime == src_stats.st_mtime:
+                    path.unlink()
+                    return dest
+            except Exception:
+                pass
+            suffix = "".join(path.suffixes)
+            base = path.name[:-len(suffix)] if suffix else path.stem
+            candidate = archive_dir / f"{base}-{int(src_stats.st_mtime)}-{src_stats.st_size}{suffix}"
+            counter = 1
+            while candidate.exists():
+                candidate = archive_dir / f"{base}-{int(src_stats.st_mtime)}-{src_stats.st_size}-{counter}{suffix}"
+                counter += 1
+            dest = candidate
+        shutil.move(str(path), str(dest))
+        return dest
+    except Exception:
+        return None
+
+
+def _archive_rotated_logs(log_dir):
+    archived = 0
+    archive_dir = _get_logscan_archive_dir()
+    for path in Path(log_dir).glob("*meta*.log*"):
+        if not path.is_file():
+            continue
+        suffixes = [suffix.lower() for suffix in path.suffixes]
+        if suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
+            continue
+        if ".log" not in path.name.lower():
+            continue
+        if path.name.lower() == "meta.log":
+            continue
+        if _archive_log_file(path, archive_dir, log_dir=log_dir):
+            archived += 1
+    return archived
+
+
 def _perform_logscan_reingest(reset, job_id=None, update_state=True):
     started_at = datetime.utcnow().isoformat()
     if update_state:
@@ -2275,8 +2400,14 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
             sample_errors=[],
         )
 
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_dirty = False
     if reset:
         database.clear_log_runs()
+        ingest_cache = {"version": 1, "logs": {}}
+        _clear_logscan_ingest_cache()
+        cache_dirty = True
+    cache_logs = ingest_cache["logs"]
 
     kometa_root = helpers.get_kometa_root_path()
     log_dir = kometa_root / "config" / "logs"
@@ -2287,15 +2418,17 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         return {"success": False, "error": message}
 
     log_files = []
-    for path in log_dir.glob("*meta*.log*"):
-        if not path.is_file():
-            continue
-        suffixes = [suffix.lower() for suffix in path.suffixes]
-        if suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
-            continue
-        if ".log" not in path.name.lower():
-            continue
-        log_files.append(path)
+    archive_dir = _get_logscan_archive_dir()
+    for base_dir in (log_dir, archive_dir):
+        for path in base_dir.glob("*meta*.log*"):
+            if not path.is_file():
+                continue
+            suffixes = [suffix.lower() for suffix in path.suffixes]
+            if suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
+                continue
+            if ".log" not in path.name.lower():
+                continue
+            log_files.append(path)
 
     def _mtime(value):
         try:
@@ -2339,6 +2472,12 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         if update_state:
             _update_logscan_reingest_state(current_file=path.name, scanned=max(0, idx - 1))
         try:
+            stats = path.stat()
+            cache_key = str(path.resolve())
+            cached_entry = cache_logs.get(cache_key, {})
+            cached_run_key = cached_entry.get("run_key")
+            skip_save_if_cached = cached_entry.get("run_complete") is True and cached_run_key
+
             content = path.read_text(encoding="utf-8", errors="replace")
             result = analyzer.analyze_content(
                 content,
@@ -2353,6 +2492,14 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 skipped_incomplete += 1
                 if len(sample_incomplete) < 5:
                     sample_incomplete.append(path.name)
+                cache_logs[cache_key] = {
+                    "mtime": stats.st_mtime,
+                    "size": stats.st_size,
+                    "run_key": summary.get("run_key"),
+                    "run_complete": False,
+                    "updated_at": datetime.utcnow().isoformat(),
+                }
+                cache_dirty = True
                 continue
             missing_people = result.get("missing_people") if isinstance(result, dict) else None
             if missing_people:
@@ -2373,10 +2520,36 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                         missing_people_blocks.append(block)
                         missing_people_seen_blocks.add(block)
                     missing_people_seen_names.update(names)
-            if database.save_log_run(summary, recommendations=result.get("recommendations")):
-                ingested += 1
-            else:
+            if skip_save_if_cached and cached_run_key == summary.get("run_key"):
                 duplicates += 1
+            else:
+                if database.save_log_run(summary, recommendations=result.get("recommendations")):
+                    ingested += 1
+                else:
+                    duplicates += 1
+            cache_logs[cache_key] = {
+                "mtime": stats.st_mtime,
+                "size": stats.st_size,
+                "run_key": summary.get("run_key"),
+                "run_complete": True,
+                "updated_at": datetime.utcnow().isoformat(),
+            }
+            cache_dirty = True
+            if path.parent.resolve() == log_dir.resolve():
+                archived_path = _archive_log_file(path, archive_dir, log_dir=log_dir)
+                if archived_path:
+                    try:
+                        archived_stats = archived_path.stat()
+                        cache_logs[str(archived_path.resolve())] = {
+                            "mtime": archived_stats.st_mtime,
+                            "size": archived_stats.st_size,
+                            "run_key": summary.get("run_key"),
+                            "run_complete": True,
+                            "updated_at": datetime.utcnow().isoformat(),
+                        }
+                        cache_dirty = True
+                    except Exception:
+                        pass
         except Exception as exc:
             errors += 1
             if len(sample_errors) < 5:
@@ -2461,6 +2634,8 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
             current_file=None,
             **result,
         )
+    if cache_dirty:
+        _save_logscan_ingest_cache(ingest_cache)
     return result
 
 

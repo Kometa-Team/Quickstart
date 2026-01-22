@@ -2199,16 +2199,17 @@ class LogscanAnalyzer:
             except Exception as exc:
                 mylogger.debug(f"Failed to stat log file {log_path}: {exc}")
 
-        run_key_parts = [
-            finished_at or "",
-            str(run_time_seconds or ""),
-            self.current_kometa_version or "",
-        ]
-        if log_mtime is not None:
-            run_key_parts.append(str(log_mtime))
-        if log_size is not None:
-            run_key_parts.append(str(log_size))
-        run_key = "|".join(run_key_parts).strip("|") or None
+        run_key = None
+        if finished_at or run_time_seconds is not None:
+            run_key_parts = [
+                finished_at or "",
+                str(run_time_seconds or ""),
+                config_name or "",
+                command_signature or "",
+                self.current_kometa_version or "",
+            ]
+            run_key_seed = "|".join(run_key_parts)
+            run_key = hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest()
 
         return {
             "run_key": run_key,

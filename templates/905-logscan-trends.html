@@ -18,6 +18,10 @@
           <option value="100">Last 100 runs</option>
           <option value="200">Last 200 runs</option>
         </select>
+        <select id="logscan-trends-config-filter" class="form-select form-select-sm w-auto"
+          title="Filter visuals by tracked config.">
+          <option value="">All configs</option>
+        </select>
         <a id="logscan-trends-missing-download" class="btn nav-button btn-sm d-none" href="/logscan/trends/people-missing">
           Download missing people log
         </a>
@@ -70,14 +74,86 @@
       <table class="table table-dark table-sm align-middle mb-0" id="logscan-trends-table">
         <thead>
           <tr>
-            <th>Finished</th>
-            <th>Runtime</th>
-            <th>Config</th>
-            <th>Command</th>
-            <th title="W = Warnings, E = Errors, T = Tracebacks">Counts (W/E/T)</th>
-            <th>Kometa</th>
-            <th>Section Runtimes</th>
-            <th class="text-center">Report</th>
+            <th>
+              <button type="button" class="logscan-sort-button is-desc" data-sort="finished_at"
+                title="Sort by finished timestamp" aria-label="Sort by finished timestamp">
+                Finished
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="run_time_seconds"
+                title="Sort by runtime" aria-label="Sort by runtime">
+                Runtime
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="config_name"
+                title="Sort by config" aria-label="Sort by config">
+                Config
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="command_signature"
+                title="Sort by command" aria-label="Sort by command">
+                Command
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th title="W = Warnings, E = Errors, T = Tracebacks">
+              <button type="button" class="logscan-sort-button" data-sort="counts"
+                title="Sort by total warnings/errors/tracebacks" aria-label="Sort by counts">
+                Counts (W/E/T)
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="kometa_version"
+                title="Sort by Kometa version" aria-label="Sort by Kometa version">
+                Kometa
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="section_runtimes"
+                title="Sort by section runtimes" aria-label="Sort by section runtimes">
+                Section Runtimes
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th class="text-center">
+              <button type="button" class="logscan-sort-button" data-sort="recommendations_count"
+                title="Sort by report count" aria-label="Sort by report count">
+                Report
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
           </tr>
         </thead>
         <tbody>

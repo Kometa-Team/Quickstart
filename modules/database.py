@@ -213,8 +213,8 @@ def get_log_runs(limit=100):
             cursor.execute(
                 """SELECT run_key, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
                           config_name, config_hash, run_command, command_signature, section_runtimes,
-                          log_mtime, log_size, debug_count, info_count, warning_count, error_count,
-                          critical_count, trace_count, created_at
+                          recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
+                          error_count, critical_count, trace_count, created_at
                    FROM log_runs
                    ORDER BY created_at DESC
                    LIMIT ?""",
@@ -228,6 +228,17 @@ def get_log_runs(limit=100):
                         row["section_runtimes"] = json.loads(section_runtimes)
                     except json.JSONDecodeError:
                         row["section_runtimes"] = None
+                recommendations = row.get("recommendations")
+                if isinstance(recommendations, str):
+                    try:
+                        recommendations = json.loads(recommendations)
+                    except json.JSONDecodeError:
+                        recommendations = None
+                if isinstance(recommendations, list):
+                    row["recommendations_count"] = len(recommendations)
+                else:
+                    row["recommendations_count"] = 0
+                row.pop("recommendations", None)
             return rows
 
 
