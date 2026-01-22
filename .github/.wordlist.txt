@@ -22,6 +22,7 @@ Precompiled
 py
 PyQt
 quickstart
+Reingest
 repo
 scm
 Seerr
