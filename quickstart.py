@@ -2345,7 +2345,7 @@ def _archive_log_file(path, archive_dir, log_dir=None):
             except Exception:
                 pass
             suffix = "".join(path.suffixes)
-            base = path.name[:-len(suffix)] if suffix else path.stem
+            base = path.name[: -len(suffix)] if suffix else path.stem
             candidate = archive_dir / f"{base}-{int(src_stats.st_mtime)}-{src_stats.st_size}{suffix}"
             counter = 1
             while candidate.exists():
