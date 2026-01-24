@@ -468,3 +468,31 @@ def save_analytics_preferences(config_name, preferences):
                 (name, payload),
             )
             return cursor.rowcount > 0
+
+
+def rename_config(old_name, new_name):
+    if not old_name or not new_name or old_name == new_name:
+        return {"success": False, "message": "Invalid config name."}
+    updated = {"section_data": 0, "log_runs": 0, "analytics_preferences": 0}
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(persisted_section_table_create())
+            cursor.execute(log_runs_table_create())
+            cursor.execute(analytics_preferences_table_create())
+            _ensure_log_runs_columns(cursor)
+
+            cursor.execute("UPDATE section_data SET name = ? WHERE name == ?", (new_name, old_name))
+            updated["section_data"] = cursor.rowcount
+
+            cursor.execute("UPDATE log_runs SET config_name = ? WHERE config_name == ?", (new_name, old_name))
+            updated["log_runs"] = cursor.rowcount
+
+            cursor.execute(
+                "UPDATE analytics_preferences SET config_name = ? WHERE config_name == ?",
+                (new_name, old_name),
+            )
+            updated["analytics_preferences"] = cursor.rowcount
+
+    updated["success"] = True
+    return updated

@@ -20,17 +20,19 @@ function toggleConfigInput (selectElement) {
 // expose for inline HTML usage: onchange="toggleConfigInput(this)"
 window.toggleConfigInput = toggleConfigInput
 
-function applyValidationStyles (inputElement, type) {
+function applyValidationStyles (inputElement, type, message) {
   removeValidationMessages(inputElement)
   let iconHTML = ''
   if (type === 'error') {
     inputElement.classList.add('is-invalid')
     inputElement.style.border = '1px solid #dc3545'
-    iconHTML = '<div class="invalid-feedback"><i class="bi bi-exclamation-triangle-fill text-danger"></i> Name already exists. Pick from dropdown instead?</div>'
+    const msg = message || 'Name already exists. Pick from dropdown instead?'
+    iconHTML = `<div class="invalid-feedback"><i class="bi bi-exclamation-triangle-fill text-danger"></i> ${msg}</div>`
   } else if (type === 'success') {
     inputElement.classList.add('is-valid')
     inputElement.style.border = '1px solid #28a745'
-    iconHTML = '<div class="valid-feedback"><i class="bi bi-check-circle-fill text-success"></i> Name is available</div>'
+    const msg = message || 'Name is available'
+    iconHTML = `<div class="valid-feedback"><i class="bi bi-check-circle-fill text-success"></i> ${msg}</div>`
   }
   inputElement.insertAdjacentHTML('afterend', iconHTML)
 }
@@ -42,6 +44,10 @@ function removeValidationMessages (inputElement) {
   if (feedback) feedback.remove()
 }
 
+function sanitizeConfigName (value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9_]/g, '')
+}
+
 /* ============================== */
 /* Main page logic                */
 /* ============================== */
@@ -51,6 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const newConfigInput = document.getElementById('newConfigName')
   const resetConfigButton = document.getElementById('resetConfigButton')
   const deleteConfigButton = document.getElementById('deleteConfigButton')
+  const renameConfigButton = document.getElementById('renameConfigButton')
   const confirmConfigActionButton = document.getElementById('confirmConfigAction')
   const bulkDeleteModalEl = document.getElementById('bulkDeleteModal')
   const bulkDeleteList = document.getElementById('bulkDeleteList')
@@ -58,10 +65,25 @@ document.addEventListener('DOMContentLoaded', function () {
   const bulkDeleteCount = document.getElementById('bulkDeleteCount')
   const confirmBulkDeleteButton = document.getElementById('confirmBulkDeleteButton')
   const configActionModalElement = document.getElementById('configActionModal')
+  const renameConfigModalEl = document.getElementById('renameConfigModal')
+  const renameConfigCurrentName = document.getElementById('renameConfigCurrentName')
+  const renameConfigNewName = document.getElementById('renameConfigNewName')
+  const renameConfigError = document.getElementById('renameConfigError')
+  const confirmRenameConfig = document.getElementById('confirmRenameConfig')
+  const importConfigModalEl = document.getElementById('importConfigModal')
+  const importConfigFile = document.getElementById('importConfigFile')
+  const importConfigName = document.getElementById('importConfigName')
+  const importConfigError = document.getElementById('importConfigError')
+  const previewImportButton = document.getElementById('previewImportButton')
+  const confirmImportButton = document.getElementById('confirmImportButton')
+  const importPreviewSection = document.getElementById('importPreviewSection')
+  const importSummary = document.getElementById('importSummary')
+  const importReport = document.getElementById('importReport')
   let configActionModal = null
   if (configActionModalElement) configActionModal = new bootstrap.Modal(configActionModalElement)
 
   let currentAction = ''
+  let importToken = null
 
   function updateButtonState () {
     const isAddConfig = configSelector.value === 'add_config'
@@ -69,6 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     resetConfigButton.disabled = isAddConfig
     if (deleteConfigButton) deleteConfigButton.disabled = isAddConfig
+    if (renameConfigButton) renameConfigButton.disabled = isAddConfig
 
     const box = document.getElementById('newConfigInput')
     if (box) box.classList.toggle('d-none', !(isAddConfig || onlyAddConfigAvailable))
@@ -273,9 +296,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (newConfigInput) {
     newConfigInput.addEventListener('input', function () {
-      let text = newConfigInput.value
-      text = text.toLowerCase().replace(/[^a-z0-9_]/g, '')
-      newConfigInput.value = text
+      newConfigInput.value = sanitizeConfigName(newConfigInput.value)
       checkDuplicateConfigName()
     })
   }
@@ -293,6 +314,222 @@ document.addEventListener('DOMContentLoaded', function () {
     } else if (name !== '') {
       applyValidationStyles(newConfigInput, 'success')
     }
+  }
+
+  function isDuplicateName (name, exclude) {
+    if (!name) return false
+    const lowerName = name.toLowerCase()
+    return getAvailableConfigs().some(existing => {
+      if (exclude && existing.toLowerCase() === exclude.toLowerCase()) return false
+      return existing.toLowerCase() === lowerName
+    })
+  }
+
+  function setRenameError (message) {
+    if (!renameConfigError) return
+    if (!message) {
+      renameConfigError.classList.add('d-none')
+      renameConfigError.textContent = ''
+      return
+    }
+    renameConfigError.classList.remove('d-none')
+    renameConfigError.textContent = message
+  }
+
+  function updateRenameState () {
+    if (!renameConfigNewName || !confirmRenameConfig) return
+    const currentName = configSelector?.value || ''
+    const sanitized = sanitizeConfigName(renameConfigNewName.value)
+    renameConfigNewName.value = sanitized
+    removeValidationMessages(renameConfigNewName)
+    confirmRenameConfig.disabled = true
+    setRenameError('')
+
+    if (!sanitized) return
+    if (currentName && sanitized.toLowerCase() === currentName.toLowerCase()) {
+      applyValidationStyles(renameConfigNewName, 'error', 'Name must be different.')
+      setRenameError('New name must be different.')
+      return
+    }
+    if (isDuplicateName(sanitized, currentName)) {
+      applyValidationStyles(renameConfigNewName, 'error', 'Name already exists.')
+      setRenameError('Config name already exists.')
+      return
+    }
+    applyValidationStyles(renameConfigNewName, 'success')
+    confirmRenameConfig.disabled = false
+  }
+
+  if (renameConfigModalEl) {
+    renameConfigModalEl.addEventListener('show.bs.modal', () => {
+      const currentName = configSelector?.value || ''
+      if (renameConfigCurrentName) renameConfigCurrentName.textContent = currentName || 'unknown'
+      if (renameConfigNewName) {
+        renameConfigNewName.value = ''
+        removeValidationMessages(renameConfigNewName)
+      }
+      setRenameError('')
+      if (confirmRenameConfig) confirmRenameConfig.disabled = true
+    })
+  }
+
+  if (renameConfigNewName) {
+    renameConfigNewName.addEventListener('input', updateRenameState)
+  }
+
+  if (confirmRenameConfig) {
+    confirmRenameConfig.addEventListener('click', async () => {
+      const oldName = configSelector?.value || ''
+      const newName = sanitizeConfigName(renameConfigNewName?.value || '')
+      if (!oldName || oldName === 'add_config') {
+        showToast('error', 'Select a config to rename.')
+        return
+      }
+      if (!newName) {
+        setRenameError('Enter a new config name.')
+        return
+      }
+      confirmRenameConfig.disabled = true
+      try {
+        const res = await fetch('/rename-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ old_name: oldName, new_name: newName })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Rename failed.')
+        }
+        showToast('success', `Renamed '${oldName}' to '${data.new_name}'.`)
+        const modal = bootstrap.Modal.getInstance(renameConfigModalEl)
+        if (modal) modal.hide()
+        setTimeout(() => window.location.reload(), 900)
+      } catch (err) {
+        confirmRenameConfig.disabled = false
+        setRenameError(err.message || 'Rename failed.')
+      }
+    })
+  }
+
+  function setImportError (message) {
+    if (!importConfigError) return
+    if (!message) {
+      importConfigError.classList.add('d-none')
+      importConfigError.textContent = ''
+      return
+    }
+    importConfigError.classList.remove('d-none')
+    importConfigError.textContent = message
+  }
+
+  function resetImportModal () {
+    importToken = null
+    if (importConfigFile) importConfigFile.value = ''
+    if (importConfigName) {
+      importConfigName.value = ''
+      removeValidationMessages(importConfigName)
+    }
+    if (importPreviewSection) importPreviewSection.classList.add('d-none')
+    if (importReport) importReport.textContent = ''
+    if (importSummary) importSummary.textContent = ''
+    if (confirmImportButton) confirmImportButton.classList.add('d-none')
+    if (previewImportButton) previewImportButton.disabled = false
+    setImportError('')
+  }
+
+  if (importConfigModalEl) {
+    importConfigModalEl.addEventListener('hidden.bs.modal', resetImportModal)
+  }
+
+  if (importConfigName) {
+    importConfigName.addEventListener('input', () => {
+      importConfigName.value = sanitizeConfigName(importConfigName.value)
+      removeValidationMessages(importConfigName)
+      if (isDuplicateName(importConfigName.value)) {
+        applyValidationStyles(importConfigName, 'error', 'Name already exists.')
+      } else if (importConfigName.value) {
+        applyValidationStyles(importConfigName, 'success', 'Name is available')
+      }
+    })
+  }
+
+  if (previewImportButton) {
+    previewImportButton.addEventListener('click', async () => {
+      setImportError('')
+      if (!importConfigFile || !importConfigFile.files || !importConfigFile.files[0]) {
+        setImportError('Select a .yml or .yaml file to import.')
+        return
+      }
+      if (!importConfigName || !importConfigName.value) {
+        setImportError('Enter a unique config name.')
+        return
+      }
+      if (isDuplicateName(importConfigName.value)) {
+        setImportError('That config name already exists.')
+        return
+      }
+
+      previewImportButton.disabled = true
+      previewImportButton.textContent = 'Previewing...'
+
+      try {
+        const formData = new FormData()
+        formData.append('file', importConfigFile.files[0])
+        formData.append('config_name', importConfigName.value)
+        const res = await fetch('/import-config/preview', {
+          method: 'POST',
+          body: formData
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Preview failed.')
+        }
+        importToken = data.token
+        if (importPreviewSection) importPreviewSection.classList.remove('d-none')
+        if (importReport) importReport.textContent = (data.report_lines || []).join('\n')
+        if (importSummary) {
+          const summary = data.summary || {}
+          importSummary.textContent = `Imported: ${summary.imported || 0} • Unmapped: ${summary.unmapped || 0} • Skipped: ${summary.skipped || 0}`
+        }
+        if (confirmImportButton) confirmImportButton.classList.remove('d-none')
+      } catch (err) {
+        setImportError(err.message || 'Preview failed.')
+      } finally {
+        previewImportButton.disabled = false
+        previewImportButton.textContent = 'Preview Import'
+      }
+    })
+  }
+
+  if (confirmImportButton) {
+    confirmImportButton.addEventListener('click', async () => {
+      if (!importToken) {
+        setImportError('Preview the import before confirming.')
+        return
+      }
+      confirmImportButton.disabled = true
+      confirmImportButton.textContent = 'Importing...'
+      try {
+        const res = await fetch('/import-config/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: importToken })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Import failed.')
+        }
+        showToast('success', `Imported config '${data.config_name}'.`)
+        const modal = bootstrap.Modal.getInstance(importConfigModalEl)
+        if (modal) modal.hide()
+        setTimeout(() => window.location.reload(), 1200)
+      } catch (err) {
+        setImportError(err.message || 'Import failed.')
+      } finally {
+        confirmImportButton.disabled = false
+        confirmImportButton.textContent = 'Import'
+      }
+    })
   }
 
   /* ============================== */

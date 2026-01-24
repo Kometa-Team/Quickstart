@@ -5,6 +5,7 @@ import os
 import hashlib
 import platform
 import psutil
+import re
 import shutil
 import shlex
 import signal
@@ -53,7 +54,7 @@ from werkzeug.wrappers import Request
 Request.max_form_parts = 100000  # Allow more form fields if needed
 
 from flask_session import Session
-from modules import validations, output, persistence, helpers, database, logscan
+from modules import validations, output, persistence, helpers, database, logscan, importer
 from typing import Dict, Any
 
 # A very simple in-memory progress store
@@ -216,6 +217,81 @@ def _stamp_quickstart_config_marker(config_path, config_name=None):
         return True
     except Exception:
         return False
+
+
+def _sanitize_config_name(raw_name: str | None) -> str:
+    if not isinstance(raw_name, str):
+        return ""
+    return re.sub(r"[^a-z0-9_]", "", raw_name.strip().lower())
+
+
+def _normalize_config_filename(config_name: str | None) -> str:
+    name = (config_name or "").strip().lower().replace(" ", "_")
+    return name or "default"
+
+
+def _rename_config_files(old_name: str, new_name: str, dry_run: bool = False) -> dict:
+    result = {"renamed": [], "skipped": [], "errors": []}
+    old_norm = _normalize_config_filename(old_name)
+    new_norm = _normalize_config_filename(new_name)
+    if old_norm == new_norm:
+        result["skipped"].append("Normalized filenames are identical.")
+        return result
+
+    config_dir = Path(helpers.CONFIG_DIR)
+    kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
+    config_file = config_dir / f"{old_norm}_config.yml"
+    new_config_file = config_dir / f"{new_norm}_config.yml"
+    kometa_file = kometa_root / "config" / f"{old_norm}_config.yml"
+    new_kometa_file = kometa_root / "config" / f"{new_norm}_config.yml"
+
+    if new_config_file.exists() or new_kometa_file.exists():
+        result["errors"].append("Target config filename already exists.")
+        return result
+
+    if dry_run:
+        if (config_dir / "archives" / new_norm).exists():
+            result["errors"].append("Target archive directory already exists.")
+        return result
+
+    try:
+        if config_file.exists():
+            config_file.rename(new_config_file)
+            result["renamed"].append(str(new_config_file))
+    except Exception as exc:
+        result["errors"].append(f"Failed to rename quickstart config file: {exc}")
+
+    try:
+        if kometa_file.exists():
+            kometa_file.rename(new_kometa_file)
+            result["renamed"].append(str(new_kometa_file))
+    except Exception as exc:
+        result["errors"].append(f"Failed to rename Kometa config file: {exc}")
+
+    archive_root = config_dir / "archives"
+    old_archive = archive_root / old_norm
+    new_archive = archive_root / new_norm
+    if old_archive.exists():
+        if new_archive.exists():
+            result["errors"].append("Target archive directory already exists.")
+        else:
+            try:
+                old_archive.rename(new_archive)
+                result["renamed"].append(str(new_archive))
+            except Exception as exc:
+                result["errors"].append(f"Failed to rename archive directory: {exc}")
+
+    if new_archive.exists():
+        for path in new_archive.glob(f"{old_norm}_config_*.yml"):
+            try:
+                new_name = path.name.replace(f"{old_norm}_config_", f"{new_norm}_config_", 1)
+                new_path = new_archive / new_name
+                path.rename(new_path)
+                result["renamed"].append(str(new_path))
+            except Exception as exc:
+                result["errors"].append(f"Failed to rename archive file {path.name}: {exc}")
+
+    return result
 
 
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
@@ -1041,6 +1117,168 @@ def bulk_delete_configs():
         current = session["config_name"]
 
     return jsonify(success=True, deleted=deleted, remaining=remaining, current=current)
+
+
+@app.route("/rename-config", methods=["POST"])
+def rename_config():
+    data = request.get_json(silent=True) or {}
+    old_name = str(data.get("old_name", "")).strip()
+    new_name = _sanitize_config_name(data.get("new_name"))
+    if not old_name or not new_name:
+        return jsonify(success=False, message="Config names are required."), 400
+    if old_name == new_name:
+        return jsonify(success=False, message="New name must be different."), 400
+
+    available = database.get_unique_config_names() or []
+    if old_name not in available:
+        return jsonify(success=False, message="Config not found."), 404
+
+    for name in available:
+        if name.lower() == new_name.lower() and name != old_name:
+            return jsonify(success=False, message="Config name already exists."), 400
+
+    file_check = _rename_config_files(old_name, new_name, dry_run=True)
+    if file_check.get("errors"):
+        return jsonify(success=False, message="Config files already exist for that name."), 400
+
+    update_result = database.rename_config(old_name, new_name)
+    if not update_result.get("success"):
+        return jsonify(success=False, message=update_result.get("message", "Rename failed.")), 500
+
+    file_result = _rename_config_files(old_name, new_name)
+    if file_result.get("errors"):
+        database.rename_config(new_name, old_name)
+        return jsonify(success=False, message="Failed to rename config files.", details=file_result), 500
+
+    if session.get("config_name") == old_name:
+        session["config_name"] = new_name
+
+    return jsonify(success=True, old_name=old_name, new_name=new_name, files=file_result)
+
+
+@app.route("/import-config/preview", methods=["POST"])
+def import_config_preview():
+    upload = request.files.get("file")
+    raw_name = request.form.get("config_name")
+    config_name = importer.sanitize_config_name(raw_name)
+
+    if not upload or not upload.filename:
+        return jsonify(success=False, message="No config file uploaded."), 400
+    if not upload.filename.lower().endswith((".yml", ".yaml")):
+        return jsonify(success=False, message="Only .yml or .yaml files are supported."), 400
+    if not config_name:
+        return jsonify(success=False, message="Config name is required."), 400
+
+    available = database.get_unique_config_names() or []
+    if any(name.lower() == config_name.lower() for name in available):
+        return jsonify(success=False, message="Config name already exists."), 400
+
+    raw_text = upload.read()
+    try:
+        config_text = raw_text.decode("utf-8")
+    except UnicodeDecodeError:
+        config_text = raw_text.decode("utf-8", errors="ignore")
+
+    parsed = importer.load_yaml_config(config_text)
+    if not parsed:
+        return jsonify(success=False, message="Unable to parse config file."), 400
+
+    def parse_list(value):
+        if isinstance(value, str):
+            return {v.strip() for v in value.split(",") if v.strip()}
+        if isinstance(value, list):
+            return {str(v).strip() for v in value if str(v).strip()}
+        return set()
+
+    plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
+    movie_names = parse_list(plex_data.get("tmp_movie_libraries", ""))
+    show_names = parse_list(plex_data.get("tmp_show_libraries", ""))
+
+    payload, report = importer.prepare_import_payload(parsed, movie_names, show_names)
+    if not payload:
+        return jsonify(success=False, message="No importable sections found."), 400
+
+    previous_path = session.get("import_preview_path")
+    if previous_path:
+        try:
+            os.remove(previous_path)
+        except OSError:
+            pass
+
+    cache_dir = Path(helpers.CONFIG_DIR) / "import_cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    token = secrets.token_urlsafe(12)
+    cache_path = cache_dir / f"import_{token}.json"
+    with cache_path.open("w", encoding="utf-8") as handle:
+        json.dump({"config_name": config_name, "payload": payload}, handle, ensure_ascii=True)
+
+    session["import_preview_token"] = token
+    session["import_preview_path"] = str(cache_path)
+    session["import_preview_name"] = config_name
+
+    lines = report.lines
+    max_lines = 500
+    if len(lines) > max_lines:
+        truncated = len(lines) - max_lines
+        lines = lines[:max_lines] + [f"skipped: report truncated ({truncated} more lines)"]
+
+    return jsonify(
+        success=True,
+        token=token,
+        config_name=config_name,
+        summary=report.summary(),
+        report_lines=lines,
+    )
+
+
+@app.route("/import-config/confirm", methods=["POST"])
+def import_config_confirm():
+    data = request.get_json(silent=True) or {}
+    token = data.get("token")
+    if not token or token != session.get("import_preview_token"):
+        return jsonify(success=False, message="Import token is invalid."), 400
+
+    cache_path = session.get("import_preview_path")
+    if not cache_path:
+        return jsonify(success=False, message="Import preview not found."), 400
+
+    try:
+        with open(cache_path, "r", encoding="utf-8") as handle:
+            cached = json.load(handle)
+    except Exception:
+        return jsonify(success=False, message="Import preview is unavailable."), 400
+
+    config_name = cached.get("config_name")
+    payload = cached.get("payload") or {}
+    if not config_name or not payload:
+        return jsonify(success=False, message="Import payload is invalid."), 400
+
+    available = database.get_unique_config_names() or []
+    if any(name.lower() == str(config_name).lower() for name in available):
+        return jsonify(success=False, message="Config name already exists."), 400
+
+    imported_sections = []
+    for section, data_blob in payload.items():
+        database.save_section_data(
+            name=config_name,
+            section=section,
+            validated=False,
+            user_entered=True,
+            data=data_blob,
+        )
+        imported_sections.append(section)
+
+    try:
+        os.remove(cache_path)
+    except OSError:
+        pass
+
+    session.pop("import_preview_token", None)
+    session.pop("import_preview_path", None)
+    session.pop("import_preview_name", None)
+    session["config_name"] = config_name
+
+    return jsonify(success=True, config_name=config_name, imported_sections=imported_sections)
 
 
 @app.route("/step/<name>", methods=["GET", "POST"])
