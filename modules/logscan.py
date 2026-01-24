@@ -1809,7 +1809,114 @@ class LogscanAnalyzer:
             # Append both the first line and the full recommendation message to the list
             recommendation_messages.append({"first_line": first_line, "message": message})
 
-        return recommendation_messages
+        issue_counts = {
+            "service_connectivity": (
+                len(tmdb_api_errors)
+                + len(tmdb_fail_errors)
+                + len(trakt_connection_errors)
+                + len(omdb_errors)
+                + len(omdb_api_limit_errors)
+                + len(mdblist_errors)
+                + len(mdblist_api_limit_errors)
+                + len(mdblist_attr_errors)
+                + len(mal_connection_errors)
+                + len(tautulli_url_errors)
+                + len(tautulli_apikey_errors)
+                + len(flixpatrol_errors)
+                + len(flixpatrol_paywall)
+                + len(lsio_errors)
+            ),
+            "config_setup": (
+                len(to_be_configured_errors)
+                + len(api_blank_errors)
+                + len(bad_version_found_errors)
+                + len(missing_path_errors)
+                + len(cache_false)
+                + len(mass_update_errors)
+                + len(other_award)
+                + len(delete_unmanaged_collections_errors)
+            ),
+            "plex_issues": len(plex_url_errors) + len(plex_regex_errors) + len(plex_lib_errors) + len(rounding_errors),
+            "metadata_overlay_playlist": (
+                len(metadata_attribute_errors)
+                + len(metadata_load_errors)
+                + len(overlay_load_errors)
+                + len(overlay_apply_errors)
+                + len(overlay_level_errors)
+                + len(overlay_font_missing)
+                + len(overlay_image_missing)
+                + len(playlist_load_errors)
+                + len(playlist_errors)
+                + len(overlays_bloat)
+            ),
+            "convert_issues": len(convert_errors),
+            "image_issues": len(corrupt_image_errors) + len(image_size),
+            "runtime_behavior": len(run_order_errors) + len(checkFiles) + len(timeout_errors),
+            "update_version": len(new_version_found_errors) + len(new_plexapi_version_found_errors) + len(git_kometa_errors),
+            "platform_system": (
+                (1 if wsl_recommendation else 0)
+                + (1 if kometa_time_recommendation else 0)
+                + (1 if kometa_mem_recommendation else 0)
+                + (1 if kometa_db_cache_recommendation else 0)
+            ),
+            "anidb_issues": len(anidb69_errors) + len(anidb_auth_errors),
+            "misc": len(internal_server_errors) + len(no_items_found_errors) + len(pmm_legacy_errors),
+            "tmdb_api_errors": len(tmdb_api_errors),
+            "tmdb_fail_errors": len(tmdb_fail_errors),
+            "trakt_connection_errors": len(trakt_connection_errors),
+            "omdb_errors": len(omdb_errors),
+            "omdb_api_limit_errors": len(omdb_api_limit_errors),
+            "mdblist_errors": len(mdblist_errors),
+            "mdblist_api_limit_errors": len(mdblist_api_limit_errors),
+            "mdblist_attr_errors": len(mdblist_attr_errors),
+            "mal_connection_errors": len(mal_connection_errors),
+            "tautulli_url_errors": len(tautulli_url_errors),
+            "tautulli_apikey_errors": len(tautulli_apikey_errors),
+            "flixpatrol_errors": len(flixpatrol_errors),
+            "flixpatrol_paywall": len(flixpatrol_paywall),
+            "lsio_errors": len(lsio_errors),
+            "config_to_be_configured": len(to_be_configured_errors),
+            "config_api_blank": len(api_blank_errors),
+            "config_bad_version": len(bad_version_found_errors),
+            "config_missing_path": len(missing_path_errors),
+            "config_cache_false": len(cache_false),
+            "config_mass_update": len(mass_update_errors),
+            "config_other_award": len(other_award),
+            "config_delete_unmanaged": len(delete_unmanaged_collections_errors),
+            "plex_url_errors": len(plex_url_errors),
+            "plex_regex_errors": len(plex_regex_errors),
+            "plex_library_errors": len(plex_lib_errors),
+            "plex_rounding_errors": len(rounding_errors),
+            "metadata_attribute_errors": len(metadata_attribute_errors),
+            "metadata_load_errors": len(metadata_load_errors),
+            "overlay_load_errors": len(overlay_load_errors),
+            "overlay_apply_errors": len(overlay_apply_errors),
+            "overlay_level_errors": len(overlay_level_errors),
+            "overlay_font_missing": len(overlay_font_missing),
+            "overlay_image_missing": len(overlay_image_missing),
+            "playlist_load_errors": len(playlist_load_errors),
+            "playlist_errors": len(playlist_errors),
+            "overlays_bloat": len(overlays_bloat),
+            "image_corrupt": len(corrupt_image_errors),
+            "image_size": len(image_size),
+            "runtime_run_order": len(run_order_errors),
+            "runtime_checkfiles": len(checkFiles),
+            "runtime_timeout": len(timeout_errors),
+            "update_kometa": len(new_version_found_errors),
+            "update_plexapi": len(new_plexapi_version_found_errors),
+            "update_git": len(git_kometa_errors),
+            "platform_wsl": 1 if wsl_recommendation else 0,
+            "platform_kometa_time": 1 if kometa_time_recommendation else 0,
+            "platform_memory": 1 if kometa_mem_recommendation else 0,
+            "platform_db_cache": 1 if kometa_db_cache_recommendation else 0,
+            "anidb_69": len(anidb69_errors),
+            "anidb_auth": len(anidb_auth_errors),
+            "misc_internal_server": len(internal_server_errors),
+            "misc_no_items": len(no_items_found_errors),
+            "misc_pmm_legacy": len(pmm_legacy_errors),
+        }
+
+        return recommendation_messages, issue_counts
 
     def _ensure_recommendation_icons(self, recommendations):
         priority_icons = {"🚀", "💥", "❌", "⚠", "💬", "ℹ"}
@@ -2207,17 +2314,23 @@ class LogscanAnalyzer:
 
     def extract_analyze_issue_counts(self, content):
         patterns = {
-            "convert": re.compile(r"\bconvert\s+(warning|error)\b", re.IGNORECASE),
-            "anidb": re.compile(r"\banidb\b.*\b(error|warning|failed)\b", re.IGNORECASE),
-            "regex": re.compile(r"\bregex\b.*\b(error|warning|invalid|failed)\b", re.IGNORECASE),
+            "analyze_convert": re.compile(r"\bconvert\s+(warning|error)\b", re.IGNORECASE),
+            "analyze_anidb": re.compile(r"\banidb\b.*\b(error|warning|failed)\b", re.IGNORECASE),
+            "analyze_regex": re.compile(r"\bregex\b.*\b(error|warning|invalid|failed)\b", re.IGNORECASE),
         }
         counts = {key: 0 for key in patterns}
         if not content:
+            counts["convert"] = 0
+            counts["anidb"] = 0
+            counts["regex"] = 0
             return counts
         for line in content.splitlines():
             for key, pattern in patterns.items():
                 if pattern.search(line):
                     counts[key] += 1
+        counts["convert"] = counts["analyze_convert"]
+        counts["anidb"] = counts["analyze_anidb"]
+        counts["regex"] = counts["analyze_regex"]
         return counts
 
     def extract_quickstart_marker(self, content):
@@ -2225,6 +2338,148 @@ class LogscanAnalyzer:
             return None
         match = re.search(r"\[Quickstart\]\s+Run marker:.*", content)
         return match.group(0) if match else None
+
+    def extract_config_line_count(self, content):
+        if not content:
+            return 0
+        lines = content.splitlines()
+        in_block = False
+        count = 0
+        for raw_line in lines:
+            line = raw_line.strip()
+            if not in_block:
+                if "Redacted Config" in line:
+                    in_block = True
+                continue
+            if "config.py:" not in line:
+                break
+            message = line.split("|", 1)[1].strip() if "|" in line else line
+            if not message:
+                continue
+            if "Quickstart run marker" in message:
+                break
+            if message.startswith("#"):
+                continue
+            if set(message.strip()) <= {"="}:
+                continue
+            count += 1
+        return count
+
+    def extract_library_counts(self, content):
+        if not content:
+            return {}
+        lines = content.splitlines()
+        library_counts = {}
+        library_sources = {}
+        current_library = None
+        current_type = None
+
+        header_patterns = [
+            re.compile(r"Processing Library:\s*(.+)", re.IGNORECASE),
+            re.compile(r"Library:\s*(.+)", re.IGNORECASE),
+            re.compile(r"Information on library:\s*(.+)", re.IGNORECASE),
+        ]
+        type_pattern = re.compile(r"\b(Movie|Show)\b", re.IGNORECASE)
+        items_pattern = re.compile(r"Items Found:\s*(\d+)", re.IGNORECASE)
+        movies_pattern = re.compile(r"Movies Found:\s*(\d+)", re.IGNORECASE)
+        shows_pattern = re.compile(r"Shows Found:\s*(\d+)", re.IGNORECASE)
+        episodes_pattern = re.compile(r"Episodes Found:\s*(\d+)", re.IGNORECASE)
+        content_movies_pattern = re.compile(r"Content Count:\s*(\d+)\s+movies?", re.IGNORECASE)
+        content_shows_pattern = re.compile(r"Content Count:\s*(\d+)\s+shows?\s*/\s*(\d+)\s+episodes", re.IGNORECASE)
+        library_items_pattern = re.compile(r"Library\s+(.+?)\s+has\s+(\d+)\s+items", re.IGNORECASE)
+
+        for raw_line in lines:
+            line = raw_line.strip()
+            if line.startswith("#"):
+                line = line.lstrip("#").strip()
+            if not line:
+                continue
+            for pattern in header_patterns:
+                match = pattern.search(line)
+                if match:
+                    name = match.group(1).strip()
+                    if "->" in name:
+                        name = name.split("->", 1)[-1].strip()
+                    name = name.strip("- ").strip()
+                    if name:
+                        current_library = name
+                        current_type = None
+                        type_match = type_pattern.search(line)
+                        if type_match:
+                            current_type = type_match.group(1).lower()
+                    break
+
+            direct_match = library_items_pattern.search(line)
+            if direct_match:
+                name = direct_match.group(1).strip()
+                count = int(direct_match.group(2))
+                library_counts[name] = {
+                    "items": count,
+                }
+                continue
+
+            if not current_library:
+                continue
+
+            content_match = content_movies_pattern.search(line)
+            if content_match:
+                library_counts[current_library] = {
+                    "items": int(content_match.group(1)),
+                    "type": "movie",
+                }
+                library_sources[current_library] = "content_count"
+                continue
+
+            content_match = content_shows_pattern.search(line)
+            if content_match:
+                library_counts[current_library] = {
+                    "items": int(content_match.group(1)),
+                    "episodes": int(content_match.group(2)),
+                    "type": "show",
+                }
+                library_sources[current_library] = "content_count"
+                continue
+
+            items_match = items_pattern.search(line)
+            if items_match:
+                if library_sources.get(current_library) == "content_count":
+                    continue
+                library_counts[current_library] = {
+                    "items": int(items_match.group(1)),
+                    "type": current_type,
+                }
+                continue
+
+            movies_match = movies_pattern.search(line)
+            if movies_match:
+                if library_sources.get(current_library) == "content_count":
+                    continue
+                library_counts[current_library] = {
+                    "items": int(movies_match.group(1)),
+                    "type": "movie",
+                }
+                continue
+
+            shows_match = shows_pattern.search(line)
+            if shows_match:
+                if library_sources.get(current_library) == "content_count":
+                    continue
+                entry = library_counts.get(current_library, {})
+                entry["items"] = int(shows_match.group(1))
+                entry["type"] = entry.get("type") or "show"
+                library_counts[current_library] = entry
+                continue
+
+            episodes_match = episodes_pattern.search(line)
+            if episodes_match:
+                if library_sources.get(current_library) == "content_count":
+                    continue
+                entry = library_counts.get(current_library, {})
+                entry["episodes"] = int(episodes_match.group(1))
+                entry["type"] = entry.get("type") or "show"
+                library_counts[current_library] = entry
+
+        return library_counts
 
     def _build_summary(
         self,
@@ -2333,10 +2588,12 @@ class LogscanAnalyzer:
         config_hash = self._hash_file(config_path)
         section_runtimes = self.extract_section_runtimes(cleaned_content)
 
-        recommendations = self.make_recommendations(cleaned_content, "") or []
+        recommendations, issue_counts = self.make_recommendations(cleaned_content, "")
 
         analysis_counts = self.extract_analyze_issue_counts(cleaned_content)
         quickstart_marker = self.extract_quickstart_marker(raw_content)
+        config_line_count = self.extract_config_line_count(raw_content)
+        library_counts = self.extract_library_counts(cleaned_content)
 
         missing_people = []
         missing_people_message = None
@@ -2357,6 +2614,10 @@ class LogscanAnalyzer:
                         "message": f"{missing_people_message}\n\nMissing names:\n{missing_people_lines}",
                     }
                 )
+        if issue_counts is None:
+            issue_counts = {}
+        issue_counts["people_posters"] = len(missing_people)
+        analysis_counts.update(issue_counts)
 
         counts = self.count_log_levels(raw_content)
         summary = self._build_summary(
@@ -2372,6 +2633,8 @@ class LogscanAnalyzer:
         if summary:
             summary["analysis_counts"] = analysis_counts
             summary["quickstart_run_marker"] = bool(quickstart_marker)
+            summary["library_counts"] = library_counts
+            summary["config_line_count"] = config_line_count
         if summary and not summary.get("run_complete"):
             recommendations.append(
                 {

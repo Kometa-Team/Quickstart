@@ -323,6 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeButton = document.getElementById('quickstart-settings-theme-btn')
   const optimizeInput = document.getElementById('quickstart-settings-optimize')
   const historyInput = document.getElementById('quickstart-settings-config-history')
+  const logKeepInput = document.getElementById('quickstart-settings-log-keep')
   const themeText = modalEl.querySelector('.theme-picker-text')
   const themeSwatch = modalEl.querySelector('[data-theme-swatch]')
   const themeOptions = modalEl.querySelectorAll('.theme-option')
@@ -367,6 +368,14 @@ document.addEventListener('DOMContentLoaded', () => {
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
   }
 
+  function getCurrentLogKeep () {
+    const raw = (triggerBtn && triggerBtn.dataset.currentLogKeep)
+      ? triggerBtn.dataset.currentLogKeep
+      : window.QS_KOMETA_LOG_KEEP
+    const parsed = Number.parseInt(raw, 10)
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
+  }
+
   function getThemeLabel (themeValue) {
     const option = modalEl.querySelector(`.theme-option[data-theme="${themeValue}"]`)
     return option?.dataset?.label || themeValue
@@ -403,6 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (debugInput) debugInput.checked = getCurrentDebug()
     if (optimizeInput) optimizeInput.checked = getCurrentOptimizeDefaults()
     if (historyInput) historyInput.value = getCurrentConfigHistory()
+    if (logKeepInput) logKeepInput.value = getCurrentLogKeep()
     updateThemeUi(getCurrentTheme())
     setStatus('', false)
     if (applyBtn) applyBtn.disabled = false
@@ -418,6 +428,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const hasOptimizeChange = optimizeInput ? desiredOptimize !== currentOptimize : false
       const currentHistory = getCurrentConfigHistory()
       let desiredHistory = currentHistory
+      const currentLogKeep = getCurrentLogKeep()
+      let desiredLogKeep = currentLogKeep
       if (historyInput) {
         const rawHistory = historyInput.value.trim()
         if (!/^\d+$/.test(rawHistory)) {
@@ -431,6 +443,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (desiredHistory !== currentHistory) {
           payload.config_history = desiredHistory
+        }
+      }
+      if (logKeepInput) {
+        const rawLogKeep = logKeepInput.value.trim()
+        if (!/^\d+$/.test(rawLogKeep)) {
+          setStatus('Kometa log retention must be a non-negative number.', true)
+          return
+        }
+        desiredLogKeep = Number(rawLogKeep)
+        if (desiredLogKeep < 0) {
+          setStatus('Kometa log retention must be a non-negative number.', true)
+          return
+        }
+        if (desiredLogKeep !== currentLogKeep) {
+          payload.kometa_log_keep = desiredLogKeep
         }
       }
       if (portInput) {
@@ -490,6 +517,11 @@ document.addEventListener('DOMContentLoaded', () => {
             window.QS_CONFIG_HISTORY = historyFlag
             if (triggerBtn) triggerBtn.dataset.currentConfigHistory = String(historyFlag)
           }
+          if (typeof payload.kometa_log_keep !== 'undefined') {
+            const logKeepFlag = Number(payload.kometa_log_keep)
+            window.QS_KOMETA_LOG_KEEP = logKeepFlag
+            if (triggerBtn) triggerBtn.dataset.currentLogKeep = String(logKeepFlag)
+          }
           if (hasPortChange && triggerBtn) {
             triggerBtn.dataset.currentPort = String(portNum)
           }
@@ -527,6 +559,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const historyFlag = Number(payload.config_history)
           window.QS_CONFIG_HISTORY = historyFlag
           if (triggerBtn) triggerBtn.dataset.currentConfigHistory = String(historyFlag)
+        }
+        if (typeof payload.kometa_log_keep !== 'undefined') {
+          const logKeepFlag = Number(payload.kometa_log_keep)
+          window.QS_KOMETA_LOG_KEEP = logKeepFlag
+          if (triggerBtn) triggerBtn.dataset.currentLogKeep = String(logKeepFlag)
         }
         const protocol = window.location.protocol
         const host = window.location.hostname

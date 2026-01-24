@@ -1,0 +1,832 @@
+{% extends "000-base.html" %}
+{% block content %}
+{% include "001-navigation.html" %}
+
+<div class="card border-secondary mb-3">
+  <div class="card-body">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <p class="text-muted small mb-0">
+          Recent Kometa runs parsed from <code>config/kometa/config/logs/meta.log</code>. Tokens and secrets are excluded.
+        </p>
+      </div>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <select id="logscan-trends-limit" class="form-select form-select-sm w-auto"
+          title="Display limit only. Does not affect reingest.">
+          <option value="10">Last 10 runs</option>
+          <option value="25" selected>Last 25 runs</option>
+          <option value="50">Last 50 runs</option>
+          <option value="100">Last 100 runs</option>
+          <option value="500">Last 500 runs</option>
+        </select>
+        <div id="logscan-trends-count" class="small text-muted"></div>
+        <div class="input-group input-group-sm w-auto">
+          <span class="input-group-text">From</span>
+          <input id="logscan-trends-date-start" type="date" class="form-control form-control-sm"
+            title="Start date">
+          <span class="input-group-text">To</span>
+          <input id="logscan-trends-date-end" type="date" class="form-control form-control-sm" title="End date">
+        </div>
+        <select id="logscan-trends-config-filter" class="form-select form-select-sm w-auto"
+          title="Filter visuals by tracked config.">
+          <option value="">All configs</option>
+        </select>
+        <select id="logscan-trends-command-filter" class="form-select form-select-sm w-auto"
+          title="Filter visuals by run command.">
+          <option value="">All commands</option>
+        </select>
+        <select id="logscan-trends-library-filter" class="form-select form-select-sm w-auto"
+          title="Filter library inventory by library.">
+          <option value="">All libraries</option>
+        </select>
+        <button id="logscan-trends-preferences" class="btn nav-button btn-sm" type="button"
+          data-bs-toggle="modal" data-bs-target="#logscan-preferences-modal">
+          Customize
+        </button>
+        <button id="logscan-trends-reset-filters" class="btn nav-button btn-sm" type="button">
+          Reset filters
+        </button>
+        <a id="logscan-trends-missing-download" class="btn nav-button btn-sm d-none" href="/logscan/trends/people-missing">
+          Download missing people log
+        </a>
+        <button id="logscan-trends-reingest" class="btn nav-button btn-sm" type="button"
+          data-bs-toggle="modal" data-bs-target="#logscan-reingest-modal">Reingest logs</button>
+        <button id="logscan-trends-reset" class="btn nav-button btn-sm" type="button"
+          data-bs-toggle="modal" data-bs-target="#logscan-reset-modal">Reset trends</button>
+      </div>
+    </div>
+    <div class="small text-muted mt-2" id="logscan-trends-status"></div>
+    <div class="mt-2 d-none" id="logscan-trends-progress">
+      <div class="progress" style="height: 8px;">
+        <div class="progress-bar bg-info progress-bar-striped progress-bar-animated"
+          id="logscan-trends-progress-bar" style="width: 0%"></div>
+      </div>
+      <div class="small text-muted mt-1" id="logscan-trends-progress-text"></div>
+    </div>
+    <div class="alert alert-danger small mt-3 mb-0">
+      WIP: This page is still evolving and may change as the reporting logic is refined.
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-lg-4" data-panel-key="summary">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Summary</h6>
+          <div id="logscan-trends-summary" class="small text-muted">Loading summary...</div>
+          <div class="mt-3">
+            <h6 class="text-uppercase text-muted mb-2">Ingest Health</h6>
+            <div id="logscan-trends-ingest" class="small text-muted">Loading ingest status...</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-8" data-panel-key="daily_runs">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Daily Runs</h6>
+          <div id="logscan-trends-daily" class="small text-muted">Loading daily totals...</div>
+          <div class="mt-3">
+            <h6 class="text-uppercase text-muted mb-2">Avg Runtime by Day</h6>
+            <div id="logscan-trends-daily-runtime" class="small text-muted">Loading average runtimes...</div>
+          </div>
+          <div class="mt-3" data-panel-key="library_inventory">
+            <h6 class="text-uppercase text-muted mb-2">Library Inventory</h6>
+            <div id="logscan-trends-libraries" class="small text-muted">Loading library totals...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-lg-6" data-panel-key="runtime_distribution">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Runtime Distribution</h6>
+          <div id="logscan-trends-runtime" class="small text-muted">Loading runtime distribution...</div>
+        </div>
+      </div>
+      <div class="col-lg-6" data-panel-key="counts_mix">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Warnings / Errors / Tracebacks (Avg per day)</h6>
+          <div id="logscan-trends-counts" class="small text-muted">Loading W/E/T averages...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-12" data-panel-key="issue_trends">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Issue Trends</h6>
+          <div id="logscan-trends-issues" class="small text-muted">Loading issue trends...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="card border-secondary">
+  <div class="card-body">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h6 class="mb-0 text-uppercase">RECENT RUNS</h6>
+      <button type="button" class="btn nav-button btn-sm" data-bs-toggle="modal"
+        data-bs-target="#logscan-columns-modal">Column Help</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-dark table-sm align-middle mb-0" id="logscan-trends-table">
+        <thead>
+          <tr>
+            <th>
+              <button type="button" class="logscan-sort-button is-desc" data-sort="finished_at"
+                title="Sort by finished timestamp" aria-label="Sort by finished timestamp">
+                Finished
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="run_time_seconds"
+                title="Sort by runtime" aria-label="Sort by runtime">
+                Runtime
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="config_name"
+                title="Sort by config" aria-label="Sort by config">
+                Config
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="command_signature"
+                title="Sort by command" aria-label="Sort by command">
+                Command
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th title="W = Warnings, E = Errors, T = Tracebacks; M = Movies, S = Shows, Ep = Episodes, Tot = Total">
+              <button type="button" class="logscan-sort-button" data-sort="counts"
+                title="Sort by total warnings/errors/tracebacks" aria-label="Sort by counts">
+                Counts (W/E/T + M/S/EP/TOT)
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="kometa_version"
+                title="Sort by Kometa version" aria-label="Sort by Kometa version">
+                Kometa
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
+              <button type="button" class="logscan-sort-button" data-sort="section_runtimes"
+                title="Sort by section runtimes" aria-label="Sort by section runtimes">
+                Section Runtimes
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th class="text-center">
+              <button type="button" class="logscan-sort-button" data-sort="recommendations_count"
+                title="Sort by report count" aria-label="Sort by report count">
+                Report
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="8" class="text-muted">Loading runs...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-reingest-modal" tabindex="-1" aria-labelledby="logscan-reingest-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-reingest-title">Reingest Logs</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        This will scan all <code>*meta*.log</code> files in <code>config/kometa/config/logs</code> and rebuild trends.
+        Missing people entries are deduped and saved to <code>config/cache/logscan/meta_people_missing.log</code>.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button btn-sm" id="logscan-confirm-reingest">Reingest</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-reset-modal" tabindex="-1" aria-labelledby="logscan-reset-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-reset-title">Reset Trends</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        This will clear all stored trend data. You can reingest logs afterward to rebuild the history.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button nav-button-danger btn-sm" id="logscan-confirm-reset">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-missing-download-modal" tabindex="-1" aria-labelledby="logscan-missing-download-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-missing-download-title">Download Missing People Log</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Download the <code>meta_people_missing.log</code> file, then drop it into the Kometa Discord
+        <a href="https://discord.com/channels/822460010649878528/1110266071849652335" target="_blank" rel="noopener noreferrer">
+          people requests channel
+        </a>.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button btn-sm" id="logscan-confirm-missing-download">Download</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-columns-modal" tabindex="-1" aria-labelledby="logscan-columns-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-columns-title">Logscan Columns</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><strong>Finished</strong>: timestamp of the run finishing.</div>
+        <div class="mb-2"><strong>Runtime</strong>: total run time.</div>
+        <div class="mb-2"><strong>Config</strong>: config name detected for the run.</div>
+        <div class="mb-2"><strong>Command</strong>: sanitized Kometa command line.</div>
+        <div class="mb-2"><strong>Counts (W/E/T + M/S/EP/TOT)</strong>: Warnings, Errors, Tracebacks plus library totals (Movies, Shows, Episodes, Total) for the run.</div>
+        <div class="mb-2"><strong>Kometa</strong>: version detected (and newest if different).</div>
+        <div class="mb-2"><strong>Section Runtimes</strong>: run time totals per section.</div>
+        <div class="mb-0"><strong>Report</strong>: open the recommendations recorded for the run.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-preferences-modal" tabindex="-1" aria-labelledby="logscan-preferences-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-preferences-title">Analytics Preferences</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="small text-muted mb-3">
+          These preferences are saved per config. Use "Recommended" to restore the default panel set.
+        </div>
+        <div class="accordion logscan-pref-accordion" id="logscan-preferences-accordion">
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-panels-heading">
+              <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-panels-body" aria-expanded="true" aria-controls="logscan-pref-panels-body">
+                Panels
+              </button>
+            </h2>
+            <div id="logscan-pref-panels-body" class="accordion-collapse collapse show">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-daily-runs" data-pref-group="panels" data-pref-key="daily_runs">
+                    <label class="form-check-label" for="logscan-pref-daily-runs">Daily runs</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-issue-trends" data-pref-group="panels" data-pref-key="issue_trends">
+                    <label class="form-check-label" for="logscan-pref-issue-trends">Issue trends</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-library-inventory" data-pref-group="panels" data-pref-key="library_inventory">
+                    <label class="form-check-label" for="logscan-pref-library-inventory">Library inventory</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-runtime-distribution" data-pref-group="panels" data-pref-key="runtime_distribution">
+                    <label class="form-check-label" for="logscan-pref-runtime-distribution">Runtime distribution</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-summary" data-pref-group="panels" data-pref-key="summary">
+                    <label class="form-check-label" for="logscan-pref-summary">Summary + ingest health</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-counts-mix" data-pref-group="panels" data-pref-key="counts_mix">
+                    <label class="form-check-label" for="logscan-pref-counts-mix">Warnings / Errors / Tracebacks</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-people-posters-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-people-posters-body" aria-expanded="false" aria-controls="logscan-pref-people-posters-body">
+                People posters
+              </button>
+            </h2>
+            <div id="logscan-pref-people-posters-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-people-posters" data-pref-group="issues" data-pref-key="people_posters">
+                    <label class="form-check-label" for="logscan-pref-people-posters">Missing people posters</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-service-connectivity-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-service-connectivity-body" aria-expanded="false" aria-controls="logscan-pref-service-connectivity-body">
+                Service/connectivity
+              </button>
+            </h2>
+            <div id="logscan-pref-service-connectivity-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-anidb-auth" data-pref-group="issues" data-pref-key="anidb_auth">
+                    <label class="form-check-label" for="logscan-pref-anidb-auth">AniDB auth errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-flixpatrol-errors" data-pref-group="issues" data-pref-key="flixpatrol_errors">
+                    <label class="form-check-label" for="logscan-pref-flixpatrol-errors">FlixPatrol errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-flixpatrol-paywall" data-pref-group="issues" data-pref-key="flixpatrol_paywall">
+                    <label class="form-check-label" for="logscan-pref-flixpatrol-paywall">FlixPatrol paywall</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-lsio-errors" data-pref-group="issues" data-pref-key="lsio_errors">
+                    <label class="form-check-label" for="logscan-pref-lsio-errors">LSIO errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-mal-connection-errors" data-pref-group="issues" data-pref-key="mal_connection_errors">
+                    <label class="form-check-label" for="logscan-pref-mal-connection-errors">MAL connection errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-mdblist-api-limit-errors" data-pref-group="issues" data-pref-key="mdblist_api_limit_errors">
+                    <label class="form-check-label" for="logscan-pref-mdblist-api-limit-errors">MDBList API limit</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-mdblist-attr-errors" data-pref-group="issues" data-pref-key="mdblist_attr_errors">
+                    <label class="form-check-label" for="logscan-pref-mdblist-attr-errors">MDBList attribute errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-mdblist-errors" data-pref-group="issues" data-pref-key="mdblist_errors">
+                    <label class="form-check-label" for="logscan-pref-mdblist-errors">MDBList errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-omdb-api-limit-errors" data-pref-group="issues" data-pref-key="omdb_api_limit_errors">
+                    <label class="form-check-label" for="logscan-pref-omdb-api-limit-errors">OMDb API limit</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-omdb-errors" data-pref-group="issues" data-pref-key="omdb_errors">
+                    <label class="form-check-label" for="logscan-pref-omdb-errors">OMDb errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-tautulli-apikey-errors" data-pref-group="issues" data-pref-key="tautulli_apikey_errors">
+                    <label class="form-check-label" for="logscan-pref-tautulli-apikey-errors">Tautulli API key errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-tautulli-url-errors" data-pref-group="issues" data-pref-key="tautulli_url_errors">
+                    <label class="form-check-label" for="logscan-pref-tautulli-url-errors">Tautulli URL errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-tmdb-api-errors" data-pref-group="issues" data-pref-key="tmdb_api_errors">
+                    <label class="form-check-label" for="logscan-pref-tmdb-api-errors">TMDb API errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-tmdb-fail-errors" data-pref-group="issues" data-pref-key="tmdb_fail_errors">
+                    <label class="form-check-label" for="logscan-pref-tmdb-fail-errors">TMDb connection failures</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-trakt-connection-errors" data-pref-group="issues" data-pref-key="trakt_connection_errors">
+                    <label class="form-check-label" for="logscan-pref-trakt-connection-errors">Trakt connection errors</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-config-setup-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-config-setup-body" aria-expanded="false" aria-controls="logscan-pref-config-setup-body">
+                Config/setup
+              </button>
+            </h2>
+            <div id="logscan-pref-config-setup-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-config-bad-version" data-pref-group="issues" data-pref-key="config_bad_version">
+                    <label class="form-check-label" for="logscan-pref-config-bad-version">Bad version found</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-config-api-blank" data-pref-group="issues" data-pref-key="config_api_blank">
+                    <label class="form-check-label" for="logscan-pref-config-api-blank">Blank API keys</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-config-cache-false" data-pref-group="issues" data-pref-key="config_cache_false">
+                    <label class="form-check-label" for="logscan-pref-config-cache-false">Cache false warnings</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-config-delete-unmanaged" data-pref-group="issues" data-pref-key="config_delete_unmanaged">
+                    <label class="form-check-label" for="logscan-pref-config-delete-unmanaged">Delete unmanaged warnings</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-config-mass-update" data-pref-group="issues" data-pref-key="config_mass_update">
+                    <label class="form-check-label" for="logscan-pref-config-mass-update">Mass update warnings</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-config-missing-path" data-pref-group="issues" data-pref-key="config_missing_path">
+                    <label class="form-check-label" for="logscan-pref-config-missing-path">Missing paths</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-config-other-award" data-pref-group="issues" data-pref-key="config_other_award">
+                    <label class="form-check-label" for="logscan-pref-config-other-award">Other awards errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-config-to-be-configured" data-pref-group="issues" data-pref-key="config_to_be_configured">
+                    <label class="form-check-label" for="logscan-pref-config-to-be-configured">"To be configured" builders</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-plex-issues-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-plex-issues-body" aria-expanded="false" aria-controls="logscan-pref-plex-issues-body">
+                Plex issues
+              </button>
+            </h2>
+            <div id="logscan-pref-plex-issues-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-plex-library-errors" data-pref-group="issues" data-pref-key="plex_library_errors">
+                    <label class="form-check-label" for="logscan-pref-plex-library-errors">Plex library errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-plex-regex-errors" data-pref-group="issues" data-pref-key="plex_regex_errors">
+                    <label class="form-check-label" for="logscan-pref-plex-regex-errors">Plex regex errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-plex-rounding-errors" data-pref-group="issues" data-pref-key="plex_rounding_errors">
+                    <label class="form-check-label" for="logscan-pref-plex-rounding-errors">Plex rounding errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-plex-url-errors" data-pref-group="issues" data-pref-key="plex_url_errors">
+                    <label class="form-check-label" for="logscan-pref-plex-url-errors">Plex URL errors</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-metadata-overlay-playlist-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-metadata-overlay-playlist-body" aria-expanded="false" aria-controls="logscan-pref-metadata-overlay-playlist-body">
+                Metadata/overlay/playlist
+              </button>
+            </h2>
+            <div id="logscan-pref-metadata-overlay-playlist-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-metadata-attribute-errors" data-pref-group="issues" data-pref-key="metadata_attribute_errors">
+                    <label class="form-check-label" for="logscan-pref-metadata-attribute-errors">Metadata attribute errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-metadata-load-errors" data-pref-group="issues" data-pref-key="metadata_load_errors">
+                    <label class="form-check-label" for="logscan-pref-metadata-load-errors">Metadata load errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-overlay-apply-errors" data-pref-group="issues" data-pref-key="overlay_apply_errors">
+                    <label class="form-check-label" for="logscan-pref-overlay-apply-errors">Overlay apply errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-overlay-font-missing" data-pref-group="issues" data-pref-key="overlay_font_missing">
+                    <label class="form-check-label" for="logscan-pref-overlay-font-missing">Overlay font missing</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-overlay-image-missing" data-pref-group="issues" data-pref-key="overlay_image_missing">
+                    <label class="form-check-label" for="logscan-pref-overlay-image-missing">Overlay image missing</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-overlay-level-errors" data-pref-group="issues" data-pref-key="overlay_level_errors">
+                    <label class="form-check-label" for="logscan-pref-overlay-level-errors">Overlay level errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-overlay-load-errors" data-pref-group="issues" data-pref-key="overlay_load_errors">
+                    <label class="form-check-label" for="logscan-pref-overlay-load-errors">Overlay load errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-overlays-bloat" data-pref-group="issues" data-pref-key="overlays_bloat">
+                    <label class="form-check-label" for="logscan-pref-overlays-bloat">Overlays bloat warnings</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-playlist-errors" data-pref-group="issues" data-pref-key="playlist_errors">
+                    <label class="form-check-label" for="logscan-pref-playlist-errors">Playlist errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-playlist-load-errors" data-pref-group="issues" data-pref-key="playlist_load_errors">
+                    <label class="form-check-label" for="logscan-pref-playlist-load-errors">Playlist load errors</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-convert-image-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-convert-image-body" aria-expanded="false" aria-controls="logscan-pref-convert-image-body">
+                Convert/image
+              </button>
+            </h2>
+            <div id="logscan-pref-convert-image-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-convert-issues" data-pref-group="issues" data-pref-key="convert_issues">
+                    <label class="form-check-label" for="logscan-pref-convert-issues">Convert errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-image-corrupt" data-pref-group="issues" data-pref-key="image_corrupt">
+                    <label class="form-check-label" for="logscan-pref-image-corrupt">Corrupt images</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-image-size" data-pref-group="issues" data-pref-key="image_size">
+                    <label class="form-check-label" for="logscan-pref-image-size">Image size warnings</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-runtime-behavior-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-runtime-behavior-body" aria-expanded="false" aria-controls="logscan-pref-runtime-behavior-body">
+                Runtime/behavior
+              </button>
+            </h2>
+            <div id="logscan-pref-runtime-behavior-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-runtime-checkfiles" data-pref-group="issues" data-pref-key="runtime_checkfiles">
+                    <label class="form-check-label" for="logscan-pref-runtime-checkfiles">checkFiles flagged</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-runtime-run-order" data-pref-group="issues" data-pref-key="runtime_run_order">
+                    <label class="form-check-label" for="logscan-pref-runtime-run-order">Run order errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-runtime-timeout" data-pref-group="issues" data-pref-key="runtime_timeout">
+                    <label class="form-check-label" for="logscan-pref-runtime-timeout">Timeout errors</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-update-version-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-update-version-body" aria-expanded="false" aria-controls="logscan-pref-update-version-body">
+                Update/version
+              </button>
+            </h2>
+            <div id="logscan-pref-update-version-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-update-git" data-pref-group="issues" data-pref-key="update_git">
+                    <label class="form-check-label" for="logscan-pref-update-git">Kometa git errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-update-kometa" data-pref-group="issues" data-pref-key="update_kometa">
+                    <label class="form-check-label" for="logscan-pref-update-kometa">New Kometa version</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-update-plexapi" data-pref-group="issues" data-pref-key="update_plexapi">
+                    <label class="form-check-label" for="logscan-pref-update-plexapi">New PlexAPI version</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-platform-system-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-platform-system-body" aria-expanded="false" aria-controls="logscan-pref-platform-system-body">
+                Platform/system
+              </button>
+            </h2>
+            <div id="logscan-pref-platform-system-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-platform-db-cache" data-pref-group="issues" data-pref-key="platform_db_cache">
+                    <label class="form-check-label" for="logscan-pref-platform-db-cache">DB cache recommendation</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-platform-kometa-time" data-pref-group="issues" data-pref-key="platform_kometa_time">
+                    <label class="form-check-label" for="logscan-pref-platform-kometa-time">Kometa time recommendation</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-platform-memory" data-pref-group="issues" data-pref-key="platform_memory">
+                    <label class="form-check-label" for="logscan-pref-platform-memory">Memory recommendation</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-platform-wsl" data-pref-group="issues" data-pref-key="platform_wsl">
+                    <label class="form-check-label" for="logscan-pref-platform-wsl">WSL detected</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item bg-dark text-light border-secondary">
+            <h2 class="accordion-header" id="logscan-pref-misc-heading">
+              <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                data-bs-target="#logscan-pref-misc-body" aria-expanded="false" aria-controls="logscan-pref-misc-body">
+                Misc
+              </button>
+            </h2>
+            <div id="logscan-pref-misc-body" class="accordion-collapse collapse">
+              <div class="accordion-body">
+                <div class="logscan-pref-list">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-anidb-69" data-pref-group="issues" data-pref-key="anidb_69">
+                    <label class="form-check-label" for="logscan-pref-anidb-69">AniDB 69 errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-misc-internal-server" data-pref-group="issues" data-pref-key="misc_internal_server">
+                    <label class="form-check-label" for="logscan-pref-misc-internal-server">Internal server errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-misc-pmm-legacy" data-pref-group="issues" data-pref-key="misc_pmm_legacy">
+                    <label class="form-check-label" for="logscan-pref-misc-pmm-legacy">Legacy PMM errors</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                      id="logscan-pref-misc-no-items" data-pref-group="issues" data-pref-key="misc_no_items">
+                    <label class="form-check-label" for="logscan-pref-misc-no-items">No items found</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <div id="logscan-preferences-status" class="small text-muted mt-3"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn nav-button btn-sm" id="logscan-preferences-recommended">Recommended</button>
+        <button type="button" class="btn nav-button btn-sm" id="logscan-preferences-save">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-run-details-modal" tabindex="-1" aria-labelledby="logscan-run-details-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-run-details-title">Run Recommendations</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="logscan-run-details-body">
+        Loading recommendations...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

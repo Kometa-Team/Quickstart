@@ -169,6 +169,61 @@ def _schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_secon
     threading.Thread(target=worker, daemon=True).start()
 
 
+def _extract_kometa_config_path(command_parts, kometa_root):
+    config_value = None
+    for idx, part in enumerate(command_parts):
+        if part in {"-c", "--config"} and idx + 1 < len(command_parts):
+            config_value = command_parts[idx + 1]
+            break
+        if part.startswith("--config="):
+            config_value = part.split("=", 1)[1]
+            break
+        if part.startswith("-c="):
+            config_value = part.split("=", 1)[1]
+            break
+    if not config_value:
+        return None
+    try:
+        path = Path(config_value)
+    except Exception:
+        return None
+    if not path.is_absolute():
+        path = Path(kometa_root) / path
+    return path
+
+
+def _stamp_quickstart_config_marker(config_path, config_name=None):
+    if not config_path:
+        return False
+    path = Path(config_path)
+    if not path.exists() or not path.is_file():
+        return False
+    try:
+        content = path.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        return False
+    newline = "\r\n" if "\r\n" in content else "\n"
+    lines = content.splitlines()
+    lines = [line for line in lines if not line.lstrip().startswith("# Quickstart run marker:")]
+    version_info = app.config.get("VERSION_CHECK") or {}
+    qs_version = version_info.get("local_version") or "unknown"
+    qs_branch = version_info.get("branch") or "unknown"
+    safe_config = (config_name or "default").strip() or "default"
+    timestamp = datetime.now(timezone.utc).isoformat()
+    marker = (
+        f"# Quickstart run marker: started={timestamp} "
+        f"config={safe_config} quickstart={qs_version} branch={qs_branch}"
+    )
+    if lines and lines[-1].strip():
+        lines.append("")
+    lines.append(marker)
+    try:
+        path.write_text(newline.join(lines) + newline, encoding="utf-8")
+        return True
+    except Exception:
+        return False
+
+
 DOTENV = os.path.relpath(os.path.join(helpers.CONFIG_DIR, ".env"))
 load_dotenv(DOTENV, override=True)
 
@@ -273,6 +328,10 @@ try:
     app.config["QS_CONFIG_HISTORY"] = max(0, int(str(os.getenv("QS_CONFIG_HISTORY", "0")).strip()))
 except (TypeError, ValueError):
     app.config["QS_CONFIG_HISTORY"] = 0
+try:
+    app.config["QS_KOMETA_LOG_KEEP"] = max(0, int(str(os.getenv("QS_KOMETA_LOG_KEEP", "0")).strip()))
+except (TypeError, ValueError):
+    app.config["QS_KOMETA_LOG_KEEP"] = 0
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 cleanup_flag = os.getenv("QS_CONFIG_CLEANUP_DONE", "").strip().lower()
@@ -1058,12 +1117,13 @@ def step(name):
     page_info["qs_theme"] = app.config.get("QS_THEME", "kometa")
     page_info["qs_optimize_defaults"] = app.config.get("QS_OPTIMIZE_DEFAULTS", True)
     page_info["qs_config_history"] = app.config.get("QS_CONFIG_HISTORY", 0)
+    page_info["qs_kometa_log_keep"] = app.config.get("QS_KOMETA_LOG_KEEP", 0)
     page_info["header_style"] = header_style
     page_info["template_name"] = name
     if "shutdown_nonce" not in session:
         session["shutdown_nonce"] = secrets.token_urlsafe(16)
     page_info["shutdown_nonce"] = session["shutdown_nonce"]
-    if name == "905-logscan-trends":
+    if name == "905-analytics":
         return redirect(url_for("logscan_trends_page"))
 
     # Generate a placeholder name for "Add Config"
@@ -1078,7 +1138,7 @@ def step(name):
 
     file_list = helpers.get_menu_list()
     template_list = helpers.get_template_list()
-    progress_excludes = {"sponsor", "logscan-trends"}
+    progress_excludes = {"sponsor", "analytics"}
     progress_keys = [key for key in template_list if template_list[key].get("raw_name") not in progress_excludes]
     total_steps = len(progress_keys)
 
@@ -1973,6 +2033,9 @@ def start_kometa():
 
         helpers.normalize_flag_values(command_parts)
 
+        config_path = _extract_kometa_config_path(command_parts, kometa_root)
+        _stamp_quickstart_config_marker(config_path, session.get("config_name"))
+
         helpers.ts_log(f"argv={command_parts!r}", level="DEBUG")
 
         proc = subprocess.Popen(command_parts, cwd=str(kometa_root), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
@@ -2304,7 +2367,8 @@ def logscan_trends():
     except Exception:
         limit = 50
     limit = max(1, min(limit, 500))
-    return jsonify({"runs": database.get_log_runs(limit=limit)})
+    total_runs = database.get_log_runs_count()
+    return jsonify({"runs": database.get_log_runs(limit=limit), "total_runs": total_runs})
 
 
 @app.route("/logscan/trends/recommendations", methods=["GET"])
@@ -2507,7 +2571,51 @@ def _archive_rotated_logs(log_dir):
             continue
         if _archive_log_file(path, archive_dir, log_dir=log_dir):
             archived += 1
+    _prune_logscan_archive(archive_dir)
     return archived
+
+
+def _prune_logscan_archive(archive_dir):
+    keep_limit = app.config.get("QS_KOMETA_LOG_KEEP", 0)
+    if keep_limit <= 0:
+        return 0
+    archive_dir = Path(archive_dir)
+    if not archive_dir.exists():
+        return 0
+    candidates = []
+    for path in archive_dir.glob("*meta*.log*"):
+        if not path.is_file():
+            continue
+        suffixes = [suffix.lower() for suffix in path.suffixes]
+        if suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
+            continue
+        if ".log" not in path.name.lower():
+            continue
+        candidates.append(path)
+    if len(candidates) <= keep_limit:
+        return 0
+    candidates.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    to_remove = candidates[keep_limit:]
+    removed = 0
+    for path in to_remove:
+        try:
+            path.unlink()
+            removed += 1
+        except Exception:
+            continue
+    if removed:
+        cache = _load_logscan_ingest_cache()
+        logs = cache.get("logs", {})
+        changed = False
+        for path in to_remove:
+            key = str(path.resolve())
+            if key in logs:
+                logs.pop(key, None)
+                changed = True
+        if changed:
+            cache["logs"] = logs
+            _save_logscan_ingest_cache(cache)
+    return removed
 
 
 def _perform_logscan_reingest(reset, job_id=None, update_state=True):
@@ -2845,14 +2953,15 @@ def logscan_trends_page():
         session["shutdown_nonce"] = secrets.token_urlsafe(16)
 
     page_info = {
-        "title": "Logscan Trends",
-        "template_name": "905-logscan-trends",
+        "title": "Analytics",
+        "template_name": "905-analytics",
         "config_name": session.get("config_name"),
         "running_port": running_port,
         "qs_debug": app.config["QS_DEBUG"],
         "qs_theme": app.config.get("QS_THEME", "kometa"),
         "qs_optimize_defaults": app.config.get("QS_OPTIMIZE_DEFAULTS", True),
         "qs_config_history": app.config.get("QS_CONFIG_HISTORY", 0),
+        "qs_kometa_log_keep": app.config.get("QS_KOMETA_LOG_KEEP", 0),
         "shutdown_nonce": session["shutdown_nonce"],
         "hide_step_nav": False,
     }
@@ -2876,7 +2985,7 @@ def logscan_trends_page():
         else:
             page_info["prev_page_name"] = "Previous"
 
-    progress_excludes = {"sponsor", "logscan-trends"}
+    progress_excludes = {"sponsor", "analytics"}
     progress_keys = [key for key in step_templates if step_templates[key].get("raw_name") not in progress_excludes]
     total_steps = len(progress_keys)
     if num in progress_keys and total_steps:
@@ -2886,11 +2995,29 @@ def logscan_trends_page():
     page_info["progress"] = round(((progress_index + 1) / total_steps) * 100) if total_steps else 0
     available_configs = database.get_unique_config_names() or []
     return render_template(
-        "905-logscan-trends.html",
+        "905-analytics.html",
         page_info=page_info,
         template_list=template_list,
         available_configs=available_configs,
     )
+
+
+@app.route("/logscan/trends/preferences", methods=["GET"])
+def logscan_trends_preferences():
+    config_name = request.args.get("config_name", "").strip() or "all"
+    preferences = database.get_analytics_preferences(config_name)
+    return jsonify({"success": True, "config_name": config_name, "preferences": preferences})
+
+
+@app.route("/logscan/trends/preferences", methods=["POST"])
+def logscan_trends_preferences_update():
+    payload = request.get_json(silent=True) or {}
+    config_name = str(payload.get("config_name", "")).strip() or "all"
+    preferences = payload.get("preferences")
+    saved = database.save_analytics_preferences(config_name, preferences)
+    result = database.get_analytics_preferences(config_name)
+    status_code = 200 if saved else 400
+    return jsonify({"success": saved, "config_name": config_name, "preferences": result}), status_code
 
 
 @app.route("/logscan/trends/people-missing", methods=["GET"])
@@ -3036,6 +3163,12 @@ def support_info():
     else:
         qs_config_history_display = str(qs_config_history)
     lines.append(f"# Quickstart Config Archive History: {qs_config_history_display}")
+    qs_log_keep = app.config.get("QS_KOMETA_LOG_KEEP", 0)
+    if qs_log_keep == 0:
+        qs_log_keep_display = "Keep all (0)"
+    else:
+        qs_log_keep_display = str(qs_log_keep)
+    lines.append(f"# Quickstart Kometa Log Retention: {qs_log_keep_display}")
     lines.extend([f"# {line}" for line in plex_summary.splitlines()])
     lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")
     lines.append("###")
@@ -3125,6 +3258,17 @@ def update_quickstart_settings():
         if history_value is not None and history_value < 0:
             errors.append("Config history must be a non-negative number.")
 
+    log_keep_raw = data.get("kometa_log_keep")
+    log_keep_value = None
+    if log_keep_raw is not None:
+        try:
+            log_keep_value = int(str(log_keep_raw).strip())
+        except (TypeError, ValueError):
+            errors.append("Kometa log retention must be a non-negative number.")
+            log_keep_value = None
+        if log_keep_value is not None and log_keep_value < 0:
+            errors.append("Kometa log retention must be a non-negative number.")
+
     theme_raw = data.get("theme")
     theme_value = None
     if theme_raw is not None:
@@ -3171,6 +3315,11 @@ def update_quickstart_settings():
         app.config["QS_CONFIG_HISTORY"] = history_value
         changes_applied = True
 
+    if log_keep_value is not None and log_keep_value != app.config.get("QS_KOMETA_LOG_KEEP", 0):
+        helpers.update_env_variable("QS_KOMETA_LOG_KEEP", str(log_keep_value))
+        app.config["QS_KOMETA_LOG_KEEP"] = log_keep_value
+        changes_applied = True
+
     if not changes_applied:
         return jsonify(
             success=True,
@@ -3179,6 +3328,7 @@ def update_quickstart_settings():
             theme=app.config.get("QS_THEME", "kometa"),
             optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
             config_history=app.config.get("QS_CONFIG_HISTORY", 0),
+            kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
         )
 
     if restart_required:
@@ -3191,6 +3341,7 @@ def update_quickstart_settings():
             theme_changed=theme_changed,
             optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
             config_history=app.config.get("QS_CONFIG_HISTORY", 0),
+            kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
         )
 
     return jsonify(
@@ -3201,6 +3352,7 @@ def update_quickstart_settings():
         theme_changed=theme_changed,
         optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
         config_history=app.config.get("QS_CONFIG_HISTORY", 0),
+        kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
     )
 
 

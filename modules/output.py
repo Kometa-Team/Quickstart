@@ -1751,6 +1751,11 @@ def build_config(header_style="standard", config_name=None):
         qs_config_history_display = "Keep all (0)"
     else:
         qs_config_history_display = str(qs_config_history)
+    qs_log_keep = app.config.get("QS_KOMETA_LOG_KEEP", 0)
+    if qs_log_keep == 0:
+        qs_log_keep_display = "Keep all (0)"
+    else:
+        qs_log_keep_display = str(qs_log_keep)
     library_names = list(movie_libraries.values()) + list(show_libraries.values())
     library_details = helpers.get_library_summaries(library_names)
 
@@ -1772,6 +1777,7 @@ def build_config(header_style="standard", config_name=None):
         f"# Quickstart Theme: {qs_theme}\n"
         f"# Quickstart Optimize Template Defaults: {'Enabled' if app.config.get('QS_OPTIMIZE_DEFAULTS', True) else 'Disabled'}\n"
         f"# Quickstart Config Archive History: {qs_config_history_display}\n"
+        f"# Quickstart Kometa Log Retention: {qs_log_keep_display}\n"
         f"{'# ' + plex_summary.replace(chr(10), chr(10) + '# ')}\n"
         f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}\n"
         f"###\n"

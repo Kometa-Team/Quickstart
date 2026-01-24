@@ -1649,6 +1649,14 @@ div#loading {
     justify-content: center;
 }
 
+.logscan-command {
+    display: inline-block;
+    max-width: 320px;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.3;
+}
+
 .logscan-sort-button {
     background: transparent;
     border: 0;
@@ -1741,6 +1749,13 @@ div#loading {
     font-weight: 600;
 }
 
+.logscan-daily-label-sub {
+    line-height: 1.1;
+    font-size: 0.65rem;
+    color: var(--theme-text-muted);
+    white-space: nowrap;
+}
+
 .logscan-daily-legend {
     display: flex;
     flex-wrap: wrap;
@@ -1780,9 +1795,16 @@ div#loading {
 
 .logscan-histogram-label,
 .logscan-stack-label {
-    width: 76px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: var(--theme-text-muted);
+}
+
+.logscan-histogram-label {
+    width: 76px;
+}
+
+.logscan-stack-label {
+    width: 120px;
 }
 
 .logscan-histogram-bar-wrap,
@@ -1804,6 +1826,68 @@ div#loading {
     text-align: right;
     font-size: 0.75rem;
     color: var(--theme-text-muted);
+}
+
+.logscan-breakdown-label {
+    width: 170px;
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+    white-space: normal;
+}
+
+.logscan-breakdown-count {
+    width: 52px;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+}
+
+.logscan-library-meta {
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.logscan-library-label {
+    width: 96px;
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+}
+
+.logscan-library-count {
+    width: 64px;
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--theme-text-muted);
+}
+
+.logscan-pref-accordion .accordion-button {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--theme-text);
+}
+
+.logscan-pref-accordion .accordion-button:not(.collapsed) {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--theme-text);
+}
+
+.logscan-pref-accordion .accordion-button:focus {
+    box-shadow: none;
+    border-color: var(--theme-border);
+}
+
+.logscan-pref-accordion .accordion-body {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.logscan-pref-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem 1rem;
+}
+
+.logscan-pref-list .form-check {
+    margin: 0;
 }
 
 .logscan-stack-bar {
@@ -1828,6 +1912,10 @@ div#loading {
     background: #4cc9f0;
 }
 
+.logscan-stack-runtime {
+    background: #43aa8b;
+}
+
 .logscan-stack-convert {
     background: #f9c74f;
 }
@@ -1840,8 +1928,16 @@ div#loading {
     background: #577590;
 }
 
+.logscan-stack-items {
+    background: #43aa8b;
+}
+
+.logscan-stack-episodes {
+    background: #4cc9f0;
+}
+
 .logscan-stack-count {
-    width: 110px;
+    width: 140px;
     text-align: right;
     font-size: 0.7rem;
     color: var(--theme-text-muted);

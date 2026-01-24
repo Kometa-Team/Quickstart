@@ -437,8 +437,8 @@ def user_visible_name(raw_name):
         formatted_name = "Libraries"
     elif raw_name == "final":
         formatted_name = "Final Validation"
-    elif raw_name == "logscan-trends":
-        formatted_name = "Logscan Trends"
+    elif raw_name == "analytics":
+        formatted_name = "Analytics"
     else:
         if "-" in raw_name:
             formatted_name = raw_name.replace("-", " ").title()

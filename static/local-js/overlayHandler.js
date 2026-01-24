@@ -775,6 +775,33 @@ const OverlayHandler = {
       star: 'Roboto-Medium.ttf',
       plex_star: 'Roboto-Medium.ttf'
     }
+    const RATING_MASS_GROUP_MAP = {
+      critic: 'mass_critic_rating_update',
+      audience: 'mass_audience_rating_update',
+      user: 'mass_user_rating_update'
+    }
+    const RATING_MASS_GROUP_MAP_EPISODE = {
+      critic: 'mass_episode_critic_rating_update',
+      audience: 'mass_episode_audience_rating_update',
+      user: 'mass_episode_user_rating_update'
+    }
+    const RATING_SOURCE_MAP = {
+      anidb: { any: 'anidb_rating' },
+      imdb: { any: 'imdb' },
+      letterboxd: { any: 'mdb_letterboxd' },
+      tmdb: { any: 'tmdb' },
+      metacritic: { critic: 'mdb_metacritic', audience: 'mdb_metacriticuser', user: 'mdb_metacriticuser' },
+      rt_tomato: { critic: 'mdb_tomatoes', audience: 'mdb_tomatoesaudience', user: 'mdb_tomatoes' },
+      rt_popcorn: { any: 'mdb_tomatoesaudience' },
+      trakt: { critic: 'trakt', audience: 'trakt', user: 'trakt_user' },
+      mal: { any: 'mal' },
+      mdb: { any: 'mdb' }
+    }
+    const RATING_SOURCE_MAP_EPISODE = {
+      imdb: { any: 'imdb' },
+      tmdb: { any: 'tmdb' },
+      trakt: { critic: 'trakt', audience: 'trakt', user: 'trakt_user' }
+    }
     const FLAG_PREVIEW_ITEMS = [
       {
         text: 'EN',
@@ -826,6 +853,61 @@ const OverlayHandler = {
       throw lastErr || new Error('No rating image URL matched')
     }
 
+    const normalizeRatingImageKey = (value, label) => {
+      const raw = (value || label || '').toString().trim().toLowerCase()
+      if (!raw) return ''
+      const normalized = raw.replace(/\s+/g, ' ').trim()
+      const mapped = {
+        'rt tomato': 'rt_tomato',
+        'rt tomatoes': 'rt_tomato',
+        'rt popcorn': 'rt_popcorn',
+        myanimelist: 'mal',
+        mdb: 'mdb'
+      }[normalized]
+      if (mapped) return mapped
+      return normalized.replace(/\s+/g, '_')
+    }
+
+    const setMassRatingSource = (libraryId, prefix, source) => {
+      if (!libraryId || !prefix) return
+      const inputPrefix = `${libraryId}-attribute_${prefix}_`
+      const toggles = document.querySelectorAll(`input.form-check-input[id^="${inputPrefix}"]`)
+      toggles.forEach(input => {
+        if (input.checked) {
+          input.checked = false
+          input.dispatchEvent(new Event('change', { bubbles: true }))
+        }
+      })
+      if (!source) return
+      const target = document.getElementById(`${inputPrefix}${source}`)
+      if (target) {
+        target.checked = true
+        target.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+    }
+
+    const syncRatingSources = (cfg, slot) => {
+      if (!cfg?.container) return
+      const overlayType = cfg.container.dataset.overlayType || ''
+      if (!['movie', 'show', 'episode'].includes(overlayType)) return
+      const libraryId = cfg.container.dataset.libraryId
+      const ratingSelect = getTemplateInput(cfg, slot.ratingKey)
+      const imageSelect = getTemplateInput(cfg, slot.imageKey)
+      const ratingVal = (ratingSelect?.value || ratingSelect?.dataset?.default || '').toString().trim().toLowerCase()
+      const group = overlayType === 'episode'
+        ? RATING_MASS_GROUP_MAP_EPISODE[ratingVal]
+        : RATING_MASS_GROUP_MAP[ratingVal]
+      if (!group) return
+      const imageVal = imageSelect?.value || imageSelect?.dataset?.default
+      const imageLabel = imageSelect?.selectedOptions?.[0]?.textContent
+      const imageKey = normalizeRatingImageKey(imageVal, imageLabel)
+      const sourceMap = overlayType === 'episode'
+        ? RATING_SOURCE_MAP_EPISODE[imageKey]
+        : RATING_SOURCE_MAP[imageKey]
+      const source = sourceMap ? (sourceMap[ratingVal] || sourceMap.any || null) : null
+      setMassRatingSource(libraryId, group, source)
+    }
+
     const sortRatingImageOptions = (input) => {
       if (!input || input.tagName !== 'SELECT') return
       const options = Array.from(input.options)
@@ -874,6 +956,7 @@ const OverlayHandler = {
 
     const applyRatingFontDefaults = (cfg) => {
       if (!cfg || cfg.id !== 'overlay_ratings') return
+      const forceFont = cfg.container?.dataset?.ratingFontForce === 'true'
       const slots = [
         { imageKey: 'rating1_image', fontKey: 'rating1_font' },
         { imageKey: 'rating2_image', fontKey: 'rating2_font' },
@@ -888,16 +971,24 @@ const OverlayHandler = {
         const label = imageInput.selectedOptions?.[0]?.textContent
         const key = getRatingFontKey(imageVal, label)
         const mapped = RATING_FONT_MAP[key]
-        if (!mapped || !shouldAutoUpdateFont(fontInput)) return
+        if (!mapped) return
+        if (!forceFont && !shouldAutoUpdateFont(fontInput)) return
         ensureFontOption(fontInput, mapped)
         fontInput.value = mapped
         fontInput.dataset.default = mapped
         fontInput.dataset.ratingFontAuto = 'true'
         fontInput.dataset.ratingFontAutoValue = mapped
+        if (forceFont) {
+          fontInput.dataset.ratingFontUser = 'false'
+          fontInput.dataset.userModified = 'false'
+        }
         if (typeof window.updateFontPreviewForSelect === 'function') {
           window.updateFontPreviewForSelect(fontInput)
         }
       })
+      if (forceFont && cfg.container) {
+        delete cfg.container.dataset.ratingFontForce
+      }
     }
 
     const buildRatingsCompositeDataUrl = async (cfg) => {
@@ -2926,7 +3017,24 @@ const OverlayHandler = {
         }
 
         if (cfg.id === 'overlay_ratings' && layer && cfg.container) {
-          const refreshRatings = () => {
+          const refreshRatings = (event) => {
+            if (event && event.target && cfg.container) {
+              const targetName = event.target.name || ''
+              if (targetName.includes('[rating1_image]') || targetName.includes('[rating2_image]') || targetName.includes('[rating3_image]')) {
+                cfg.container.dataset.ratingFontForce = 'true'
+              }
+              if (
+                targetName.includes('[rating1]') || targetName.includes('[rating2]') || targetName.includes('[rating3]') ||
+                targetName.includes('[rating1_image]') || targetName.includes('[rating2_image]') || targetName.includes('[rating3_image]')
+              ) {
+                const slots = [
+                  { ratingKey: 'rating1', imageKey: 'rating1_image' },
+                  { ratingKey: 'rating2', imageKey: 'rating2_image' },
+                  { ratingKey: 'rating3', imageKey: 'rating3_image' }
+                ]
+                slots.forEach(slot => syncRatingSources(cfg, slot))
+              }
+            }
             applyRatingFontDefaults(cfg)
             buildBackdropDataUrl(cfg).then(dataUrl => {
               layer.src = dataUrl

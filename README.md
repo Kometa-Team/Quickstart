@@ -57,11 +57,11 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 ### Themes & Personalization
 - **Theme Picker:** Switch between Kometa, Plex, Jellyfin, Emby, Seerr, and more with instant apply
 
-### Logscan Trends
-- **Reingest & trends:** Rebuild run history from `config/kometa/config/logs/*meta*.log*` plus archived logs in `config/cache/logscan/archive/`.
+### Analytics
+- **Reingest & analytics:** Rebuild run history from `config/kometa/config/logs/*meta*.log*` plus archived logs in `config/cache/logscan/archive/`.
 - **Stable run tracking:** Runs are deduped with a stable `run_key` and cached in `config/cache/logscan/ingest_cache.json`.
 - **Missing people requests:** Deduped output is written to `config/cache/logscan/meta_people_missing.log` (metadata in `meta_people_missing.json`).
-- **UI helpers:** Sortable table headers, config filter, and per-run “Report” recommendations.
+- **UI helpers:** Sortable table headers, config filter, analytics breakdowns, and per-run “Report” recommendations.
 
 ### Quickstart Scope
 - **Quickstart support vs Kometa support:** The Support Info workflow is for Quickstart issues. Kometa runtime issues should be handled in Kometa support channels.
