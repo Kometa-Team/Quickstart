@@ -126,10 +126,7 @@ def _write_quickstart_run_marker(kometa_root, config_name=None):
         qs_branch = version_info.get("branch") or "unknown"
         safe_config = (config_name or "default").strip() or "default"
         timestamp = datetime.now(timezone.utc).isoformat()
-        marker = (
-            f"[Quickstart] Run marker: started={timestamp} "
-            f"config={safe_config} quickstart={qs_version} branch={qs_branch}"
-        )
+        marker = f"[Quickstart] Run marker: started={timestamp} " f"config={safe_config} quickstart={qs_version} branch={qs_branch}"
         with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
             handle.write(marker + "\n")
     except Exception:
@@ -210,10 +207,7 @@ def _stamp_quickstart_config_marker(config_path, config_name=None):
     qs_branch = version_info.get("branch") or "unknown"
     safe_config = (config_name or "default").strip() or "default"
     timestamp = datetime.now(timezone.utc).isoformat()
-    marker = (
-        f"# Quickstart run marker: started={timestamp} "
-        f"config={safe_config} quickstart={qs_version} branch={qs_branch}"
-    )
+    marker = f"# Quickstart run marker: started={timestamp} " f"config={safe_config} quickstart={qs_version} branch={qs_branch}"
     if lines and lines[-1].strip():
         lines.append("")
     lines.append(marker)
@@ -2543,7 +2537,7 @@ def _archive_log_file(path, archive_dir, log_dir=None):
             except Exception:
                 pass
             suffix = "".join(path.suffixes)
-            base = path.name[:-len(suffix)] if suffix else path.stem
+            base = path.name[: -len(suffix)] if suffix else path.stem
             candidate = archive_dir / f"{base}-{int(src_stats.st_mtime)}-{src_stats.st_size}{suffix}"
             counter = 1
             while candidate.exists():

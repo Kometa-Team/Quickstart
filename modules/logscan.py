@@ -1854,10 +1854,7 @@ class LogscanAnalyzer:
             "runtime_behavior": len(run_order_errors) + len(checkFiles) + len(timeout_errors),
             "update_version": len(new_version_found_errors) + len(new_plexapi_version_found_errors) + len(git_kometa_errors),
             "platform_system": (
-                (1 if wsl_recommendation else 0)
-                + (1 if kometa_time_recommendation else 0)
-                + (1 if kometa_mem_recommendation else 0)
-                + (1 if kometa_db_cache_recommendation else 0)
+                (1 if wsl_recommendation else 0) + (1 if kometa_time_recommendation else 0) + (1 if kometa_mem_recommendation else 0) + (1 if kometa_db_cache_recommendation else 0)
             ),
             "anidb_issues": len(anidb69_errors) + len(anidb_auth_errors),
             "misc": len(internal_server_errors) + len(no_items_found_errors) + len(pmm_legacy_errors),
