@@ -1747,11 +1747,7 @@ def _get_custom_font_files() -> list[Path]:
     custom_dir = helpers.get_custom_fonts_dir()
     if not custom_dir.is_dir():
         return []
-    fonts = [
-        entry
-        for entry in custom_dir.iterdir()
-        if entry.is_file() and entry.suffix.lower() in helpers.FONT_EXTENSIONS
-    ]
+    fonts = [entry for entry in custom_dir.iterdir() if entry.is_file() and entry.suffix.lower() in helpers.FONT_EXTENSIONS]
     return sorted(fonts, key=lambda p: p.name.lower())
 
 
