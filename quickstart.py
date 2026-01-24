@@ -1414,6 +1414,13 @@ def step(name):
         "movie": sum(1 for lib in movie_libraries if lib["id"] in configured_ids),
         "show": sum(1 for lib in show_libraries if lib["id"] in configured_ids),
     }
+    service_validations = {
+        "tmdb": helpers.booler(persistence.retrieve_settings("020-tmdb").get("validated", False)),
+        "mdblist": helpers.booler(persistence.retrieve_settings("060-mdblist").get("validated", False)),
+        "trakt": helpers.booler(persistence.retrieve_settings("130-trakt").get("validated", False)),
+        "mal": helpers.booler(persistence.retrieve_settings("140-mal").get("validated", False)),
+        "anidb": helpers.booler(persistence.retrieve_settings("100-anidb").get("validated", False)),
+    }
 
     html = render_template(
         name + ".html",
@@ -1429,6 +1436,7 @@ def step(name):
         template_list=file_list,
         available_configs=available_configs,
         overlay_fonts=list_overlay_fonts(),
+        service_validations=service_validations,
         image_data={
             "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
             "show": os.listdir(UPLOAD_FOLDERS["show"]),
@@ -1725,10 +1733,91 @@ def copy_library_settings():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+def _normalize_config_name(raw_name: str | None) -> str:
+    name = (raw_name or "").strip().lower().replace(" ", "_")
+    return name or "default"
+
+
+def _safe_bundle_name(raw_name: str | None) -> str:
+    safe = secure_filename(_normalize_config_name(raw_name))
+    return safe or "default"
+
+
+def _get_custom_font_files() -> list[Path]:
+    custom_dir = helpers.get_custom_fonts_dir()
+    if not custom_dir.is_dir():
+        return []
+    fonts = [
+        entry
+        for entry in custom_dir.iterdir()
+        if entry.is_file() and entry.suffix.lower() in helpers.FONT_EXTENSIONS
+    ]
+    return sorted(fonts, key=lambda p: p.name.lower())
+
+
+def _build_config_bundle(
+    config_text: str,
+    config_filename: str,
+    font_files: list[Path],
+    config_name: str | None = None,
+    redacted: bool = False,
+) -> BytesIO | None:
+    if not config_text or not font_files:
+        return None
+    name = _normalize_config_name(config_name)
+    font_names = [font.name for font in font_files]
+    readme_lines = [
+        "Quickstart config bundle",
+        f"Config name: {name}",
+        "",
+        "This bundle includes:",
+        f"- {config_filename}",
+        "- fonts/ (custom fonts uploaded in Quickstart)",
+    ]
+    if font_names:
+        readme_lines.append(f"- Fonts included: {', '.join(font_names)}")
+    readme_lines += [
+        "",
+        "Install steps:",
+        "1) Copy the config file into your Kometa config folder (config/).",
+        "2) Copy the font files from fonts/ into your Kometa config/fonts/ folder.",
+        "",
+        "Note: The Quickstart Run Now button syncs fonts automatically.",
+        "This bundle is for manual installs.",
+    ]
+    if redacted:
+        readme_lines += [
+            "",
+            "This bundle uses a redacted config and is safe to share.",
+            "Review before sharing in case you manually added sensitive data.",
+        ]
+    readme_lines.append("")
+    bundle = BytesIO()
+    with zipfile.ZipFile(bundle, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(config_filename, config_text)
+        for font_path in font_files:
+            zf.write(font_path, f"fonts/{font_path.name}")
+        zf.writestr("README.txt", "\n".join(readme_lines))
+    bundle.seek(0)
+    return bundle
+
+
 @app.route("/download")
 def download():
     yaml_content = session.get("yaml_content", "")
     if yaml_content:
+        custom_fonts = _get_custom_font_files()
+        config_name = session.get("config_name")
+        if custom_fonts:
+            bundle = _build_config_bundle(yaml_content, "config.yml", custom_fonts, config_name=config_name)
+            if bundle:
+                bundle_name = f"{_safe_bundle_name(config_name)}_config_bundle.zip"
+                return send_file(
+                    bundle,
+                    mimetype="application/zip",
+                    as_attachment=True,
+                    download_name=bundle_name,
+                )
         return send_file(
             io.BytesIO(yaml_content.encode("utf-8")),
             mimetype="text/yaml",
@@ -1747,6 +1836,24 @@ def download_redacted():
         redacted_content = helpers.redact_sensitive_data(yaml_content)
 
         # Serve the redacted YAML as a file download
+        custom_fonts = _get_custom_font_files()
+        config_name = session.get("config_name")
+        if custom_fonts:
+            bundle = _build_config_bundle(
+                redacted_content,
+                "config_redacted.yml",
+                custom_fonts,
+                config_name=config_name,
+                redacted=True,
+            )
+            if bundle:
+                bundle_name = f"{_safe_bundle_name(config_name)}_config_bundle_redacted.zip"
+                return send_file(
+                    bundle,
+                    mimetype="application/zip",
+                    as_attachment=True,
+                    download_name=bundle_name,
+                )
         return send_file(
             io.BytesIO(redacted_content.encode("utf-8")),
             mimetype="text/yaml",
@@ -2362,7 +2469,8 @@ def logscan_trends():
         limit = 50
     limit = max(1, min(limit, 500))
     total_runs = database.get_log_runs_count()
-    return jsonify({"runs": database.get_log_runs(limit=limit), "total_runs": total_runs})
+    ingest_health = _logscan_ingest_health()
+    return jsonify({"runs": database.get_log_runs(limit=limit), "total_runs": total_runs, "ingest_health": ingest_health})
 
 
 @app.route("/logscan/trends/recommendations", methods=["GET"])
@@ -2501,6 +2609,58 @@ def _logscan_needs_reingest(cache_logs, log_dir):
         if not entry or not entry.get("run_complete"):
             return True
     return False
+
+
+def _logscan_ingest_health(log_dir=None):
+    log_dir = Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs"
+    log_dir_exists = log_dir.exists()
+    log_files = _get_logscan_log_files(log_dir=log_dir, include_archive=True) if log_dir_exists else []
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache["logs"]
+    missing = []
+    incomplete = []
+    tracked = 0
+    complete = 0
+    pending_active = False
+    latest_updated = None
+    is_running = helpers.is_kometa_running()
+
+    for path in log_files:
+        if is_running and path.name.lower() == "meta.log":
+            pending_active = True
+            continue
+        entry = cache_logs.get(str(path.resolve()))
+        if not entry:
+            missing.append(path.name)
+            continue
+        tracked += 1
+        updated_at = entry.get("updated_at")
+        if updated_at and (latest_updated is None or updated_at > latest_updated):
+            latest_updated = updated_at
+        if entry.get("run_complete"):
+            complete += 1
+        else:
+            incomplete.append(path.name)
+
+    total = len(log_files) - (1 if pending_active else 0)
+    if total < 0:
+        total = 0
+    needs_reingest = bool(missing or incomplete)
+
+    return {
+        "source": "health",
+        "log_dir_missing": not log_dir_exists,
+        "total": total,
+        "tracked": tracked,
+        "complete": complete,
+        "missing": len(missing),
+        "incomplete": len(incomplete),
+        "missing_sample": missing[:5],
+        "incomplete_sample": incomplete[:5],
+        "needs_reingest": needs_reingest,
+        "pending_active": pending_active,
+        "last_updated": latest_updated,
+    }
 
 
 def _start_logscan_auto_reingest(log_dir):

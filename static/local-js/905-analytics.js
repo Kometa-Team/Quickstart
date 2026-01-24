@@ -952,7 +952,7 @@ $(document).ready(function () {
 
   function renderTable (runs) {
     if (!runs.length) {
-      $tableBody.html('<tr><td colspan="8" class="text-muted">No runs stored yet.</td></tr>')
+      $tableBody.html('<tr><td colspan="9" class="text-muted">No runs stored yet.</td></tr>')
       return
     }
     const rows = runs.map((run, index) => {
@@ -970,6 +970,9 @@ $(document).ready(function () {
         ? `M:${libraryTotals.movies} S:${libraryTotals.shows} Ep:${libraryTotals.episodes} Tot:${libraryTotals.total}`
         : 'M:- S:- Ep:- Tot:-'
       const countsTitle = `Warnings: ${warnings} | Errors: ${errors} | Tracebacks: ${traces} | Movies: ${libraryTotals.movies} | Shows: ${libraryTotals.shows} | Episodes: ${libraryTotals.episodes} | Total: ${libraryTotals.total}`
+      const configLineCount = (typeof run.config_line_count === 'number' && Number.isFinite(run.config_line_count))
+        ? run.config_line_count
+        : 'n/a'
       const sectionLines = buildSectionDetails(run.section_runtimes, run.run_time_seconds)
       const sectionId = `logscan-section-${index + 1}`
       const sectionSummary = sectionLines.length ? sectionLines[0] : 'n/a'
@@ -1002,6 +1005,7 @@ $(document).ready(function () {
           <td class="text-nowrap">${escapeHtml(getDisplayFinished(run))}</td>
           <td>${escapeHtml(formatSeconds(run.run_time_seconds))}</td>
           <td>${escapeHtml(run.config_name || 'default')}</td>
+          <td class="text-center">${escapeHtml(configLineCount)}</td>
           <td><span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span></td>
           <td title="${escapeHtml(countsTitle)}">
             <div>${escapeHtml(counts)}</div>
@@ -1318,16 +1322,53 @@ $(document).ready(function () {
 
   function renderIngestHealth (state) {
     if (!$ingest.length) return
-    if (!state || typeof state.scanned !== 'number') {
+    if (!state) {
       $ingest.text('No ingest history yet.')
       return
     }
-    const skipped = (state.skipped_incomplete || 0) + (state.skipped_invalid || 0)
+
+    if (typeof state.scanned === 'number') {
+      const skipped = (state.skipped_incomplete || 0) + (state.skipped_invalid || 0)
+      const items = [
+        { label: 'Scanned', value: state.scanned || 0 },
+        { label: 'Ingested', value: state.ingested || 0 },
+        { label: 'Duplicates', value: state.duplicates || 0 },
+        { label: 'Skipped', value: skipped }
+      ]
+      const tiles = items.map(item => `
+        <div class="logscan-kpi">
+          <div class="logscan-kpi-label">${escapeHtml(item.label)}</div>
+          <div class="logscan-kpi-value">${item.value}</div>
+        </div>
+      `)
+      const notes = []
+      if (skipped > 0) {
+        notes.push('Some logs were skipped. Reingest after runs complete to catch missing data.')
+      }
+      if (state.errors) {
+        notes.push(`${state.errors} error(s) occurred while ingesting.`)
+      }
+      if (Array.isArray(state.sample_incomplete) && state.sample_incomplete.length) {
+        notes.push(`Incomplete samples: ${state.sample_incomplete.join(', ')}`)
+      }
+      if (Array.isArray(state.sample_errors) && state.sample_errors.length) {
+        notes.push(`Sample errors: ${state.sample_errors.join('; ')}`)
+      }
+      if (!notes.length) notes.push('Ingest complete.')
+      const notesHtml = notes.map(note => `<div>${escapeHtml(note)}</div>`).join('')
+      $ingest.html(`<div class="logscan-kpi-grid">${tiles.join('')}</div><div class="small text-muted mt-2">${notesHtml}</div>`)
+      return
+    }
+
+    if (typeof state.total !== 'number') {
+      $ingest.text('No ingest history yet.')
+      return
+    }
     const items = [
-      { label: 'Scanned', value: state.scanned || 0 },
-      { label: 'Ingested', value: state.ingested || 0 },
-      { label: 'Duplicates', value: state.duplicates || 0 },
-      { label: 'Skipped', value: skipped }
+      { label: 'Logs found', value: state.total || 0 },
+      { label: 'Tracked', value: state.tracked || 0 },
+      { label: 'Missing', value: state.missing || 0 },
+      { label: 'Incomplete', value: state.incomplete || 0 }
     ]
     const tiles = items.map(item => `
       <div class="logscan-kpi">
@@ -1335,7 +1376,31 @@ $(document).ready(function () {
         <div class="logscan-kpi-value">${item.value}</div>
       </div>
     `)
-    $ingest.html(`<div class="logscan-kpi-grid">${tiles.join('')}</div>`)
+    const lines = []
+    if (state.log_dir_missing) {
+      lines.push('Log folder not found: config/kometa/config/logs.')
+    } else if (state.total === 0) {
+      lines.push('No log files found yet.')
+    } else if (state.needs_reingest) {
+      lines.push('Missing or incomplete logs detected. Use Reingest logs to catch up.')
+    } else {
+      lines.push('All available logs are ingested.')
+    }
+    if (state.pending_active) {
+      lines.push('Active run detected; meta.log will ingest after completion.')
+    }
+    if (state.last_updated) {
+      const updated = formatTimestamp(state.last_updated) || state.last_updated
+      lines.push(`Ingest cache updated: ${updated}`)
+    }
+    if (Array.isArray(state.missing_sample) && state.missing_sample.length) {
+      lines.push(`Missing samples: ${state.missing_sample.join(', ')}`)
+    }
+    if (Array.isArray(state.incomplete_sample) && state.incomplete_sample.length) {
+      lines.push(`Incomplete samples: ${state.incomplete_sample.join(', ')}`)
+    }
+    const linesHtml = lines.map(line => `<div>${escapeHtml(line)}</div>`).join('')
+    $ingest.html(`<div class="logscan-kpi-grid">${tiles.join('')}</div><div class="small text-muted mt-2">${linesHtml}</div>`)
   }
 
   function getSortValue (run, key) {
@@ -1350,6 +1415,8 @@ $(document).ready(function () {
         return getRunCommandValue(run)
       case 'counts':
         return getCountsTotal(run)
+      case 'config_line_count':
+        return typeof run.config_line_count === 'number' ? run.config_line_count : 0
       case 'kometa_version':
         return run.kometa_version || ''
       case 'section_runtimes':
@@ -1823,6 +1890,9 @@ $(document).ready(function () {
       .then(data => {
         allRuns = Array.isArray(data.runs) ? data.runs : []
         allRunsTotal = Number.isFinite(data.total_runs) ? data.total_runs : allRuns.length
+        if (data && data.ingest_health && (!lastIngestState || lastIngestState.status !== 'running')) {
+          lastIngestState = data.ingest_health
+        }
         updateConfigFilter(allRuns)
         updateCommandFilter(allRuns)
         updateDateRangeInputs(allRuns, getFilterState())
@@ -1846,7 +1916,7 @@ $(document).ready(function () {
         $counts.text('Unable to load W/E/T averages.')
         $issues.text('Unable to load issue trends.')
         $libraries.text('Unable to load library totals.')
-        $tableBody.html('<tr><td colspan="8" class="text-muted">Unable to load runs.</td></tr>')
+        $tableBody.html('<tr><td colspan="9" class="text-muted">Unable to load runs.</td></tr>')
       })
   }
 

@@ -4,6 +4,7 @@
 let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
 let KOMETA_VALIDATION_IN_PROGRESS = false
+let KOMETA_UPDATE_AVAILABLE = false
 // Polling handles (hoist to top so all handlers see them safely)
 let kometaInterval = null
 let kometaStatusInterval = null
@@ -462,14 +463,22 @@ $(document).ready(function () {
           if (res.kometa_version) $logBox.append(`📦 Local Kometa version: ${res.kometa_version}\n`)
 
           if (res.remote_version && res.local_version) {
+            const hadUpdate = KOMETA_UPDATE_AVAILABLE
             if (res.kometa_update_available) {
+              KOMETA_UPDATE_AVAILABLE = true
               $logBox.append(`⬆️ Update available: ${res.local_version} → ${res.remote_version}\n`)
               $('#kometa-update-box').removeClass('d-none')
               $('#kometa-local-version').text(res.local_version)
               $('#kometa-remote-version').text(res.remote_version)
+              syncUpdateButtonLabel()
+              if (!hadUpdate) {
+                showToast('warning', `Kometa update available: ${res.local_version} → ${res.remote_version}.`)
+              }
             } else {
+              KOMETA_UPDATE_AVAILABLE = false
               $logBox.append('✅ Kometa is up to date.\n')
               $('#kometa-update-box').addClass('d-none')
+              syncUpdateButtonLabel()
             }
           }
 
@@ -625,7 +634,9 @@ $(document).ready(function () {
 
   function getUpdateButtonLabel () {
     const force = $forceUpdateToggle.is(':checked')
-    const label = force ? 'Force Update Kometa' : 'Check for Kometa Updates'
+    const label = force
+      ? 'Force Update Kometa'
+      : (KOMETA_UPDATE_AVAILABLE ? 'Update Available' : 'Check for Kometa Updates')
     return `<i class="bi bi-arrow-clockwise me-1"></i> ${label}`
   }
 
@@ -711,6 +722,9 @@ $(document).ready(function () {
           if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
         }
         if (data.success) {
+          KOMETA_UPDATE_AVAILABLE = false
+          $('#kometa-update-box').addClass('d-none')
+          syncUpdateButtonLabel()
           const elapsed = formatElapsed(Date.now() - startTs)
           if (data.up_to_date) {
             showToast('info', 'Kometa is already up to date.')

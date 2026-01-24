@@ -163,6 +163,16 @@
               </button>
             </th>
             <th>
+              <button type="button" class="logscan-sort-button" data-sort="config_line_count"
+                title="Sort by config line count" aria-label="Sort by config line count">
+                Config lines
+                <span class="logscan-sort-icons" aria-hidden="true">
+                  <span class="logscan-sort-up"></span>
+                  <span class="logscan-sort-down"></span>
+                </span>
+              </button>
+            </th>
+            <th>
               <button type="button" class="logscan-sort-button" data-sort="command_signature"
                 title="Sort by command" aria-label="Sort by command">
                 Command
@@ -216,7 +226,7 @@
         </thead>
         <tbody>
           <tr>
-            <td colspan="8" class="text-muted">Loading runs...</td>
+            <td colspan="9" class="text-muted">Loading runs...</td>
           </tr>
         </tbody>
       </table>
@@ -301,6 +311,7 @@
         <div class="mb-2"><strong>Finished</strong>: timestamp of the run finishing.</div>
         <div class="mb-2"><strong>Runtime</strong>: total run time.</div>
         <div class="mb-2"><strong>Config</strong>: config name detected for the run.</div>
+        <div class="mb-2"><strong>Config lines</strong>: non-comment lines captured from the redacted config output.</div>
         <div class="mb-2"><strong>Command</strong>: sanitized Kometa command line.</div>
         <div class="mb-2"><strong>Counts (W/E/T + M/S/EP/TOT)</strong>: Warnings, Errors, Tracebacks plus library totals (Movies, Shows, Episodes, Total) for the run.</div>
         <div class="mb-2"><strong>Kometa</strong>: version detected (and newest if different).</div>

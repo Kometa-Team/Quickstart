@@ -1141,13 +1141,6 @@ prefix) %}
                                                         data-bs-html="true"
                                                         title='<img src="{{ overlay.image_url }}" height="200" style="opacity: 1;">'></i>
                                                     {% endif %}
-                                                    {% if overlay.id == 'overlay_ratings' %}
-                                                    <span class="overlay-warning text-warning ms-3"
-                                                        data-bs-toggle="tooltip"
-                                                        title="Enable the matching mass_*_rating_update operations in Attributes > Library Operations so the rating source stays aligned.">
-                                                        <i class="bi bi-exclamation-triangle-fill"></i>
-                                                    </span>
-                                                    {% endif %}
                                                     {% if overlay.tooltip %}
                                                     <i class="bi {% if overlay.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %} text-{{ overlay.tooltip_variant or 'info' }} ms-3"
                                                         data-bs-toggle="tooltip" data-bs-html="true"
@@ -1303,6 +1296,14 @@ prefix) %}
                                                             </option>
                                                             {% endfor %}
                                                         </select>
+                                                        {% if var_name in ['rating1_image', 'rating2_image', 'rating3_image'] %}
+                                                        <span class="input-group-text rating-sync-status text-secondary"
+                                                            data-rating-slot="{{ var_name | replace('_image', '') }}"
+                                                            data-bs-toggle="tooltip"
+                                                            title="Select rating and image to sync with Library Operations.">
+                                                            <i class="bi bi-dash-circle-fill"></i>
+                                                        </span>
+                                                        {% endif %}
                                                     </div>
                                                     {% elif var_details.input_type == "number" %}
                                                     {% if var_name in ['horizontal_offset', 'initial_horizontal_offset'] %}{% set ns.has_offsets = true %}{% set ns.h_id = template_name ~ '-' ~ var_name %}{% endif %}

@@ -785,6 +785,14 @@ const OverlayHandler = {
       audience: 'mass_episode_audience_rating_update',
       user: 'mass_episode_user_rating_update'
     }
+    const RATING_GROUP_LABEL_MAP = {
+      mass_critic_rating_update: 'Mass Critic Rating Update',
+      mass_audience_rating_update: 'Mass Audience Rating Update',
+      mass_user_rating_update: 'Mass User Rating Update',
+      mass_episode_critic_rating_update: 'Mass Episode Critic Rating Update',
+      mass_episode_audience_rating_update: 'Mass Episode Audience Rating Update',
+      mass_episode_user_rating_update: 'Mass Episode User Rating Update'
+    }
     const RATING_SOURCE_MAP = {
       anidb: { any: 'anidb_rating' },
       imdb: { any: 'imdb' },
@@ -801,6 +809,47 @@ const OverlayHandler = {
       imdb: { any: 'imdb' },
       tmdb: { any: 'tmdb' },
       trakt: { critic: 'trakt', audience: 'trakt', user: 'trakt_user' }
+    }
+    const RATING_SOURCE_LABEL_MAP = {
+      anidb_rating: 'Use AniDB Rating',
+      imdb: 'Use IMDb Rating',
+      mdb_letterboxd: 'Use Letterboxd via MDBList',
+      tmdb: 'Use TMDb Rating',
+      mdb_metacritic: 'Use Metacritic via MDBList',
+      mdb_metacriticuser: 'Use Metacritic User via MDBList',
+      mdb_tomatoes: 'Use Rotten Tomatoes via MDBList',
+      mdb_tomatoesaudience: 'Use RT Audience via MDBList',
+      trakt: 'Use Trakt Rating',
+      trakt_user: 'Use Trakt User Rating',
+      mal: 'Use MyAnimeList Score',
+      mdb: 'Use MDBList Score'
+    }
+    const RATING_SOURCE_SERVICE_MAP = {
+      anidb_rating: 'anidb',
+      mdb_letterboxd: 'mdblist',
+      tmdb: 'tmdb',
+      mdb_metacritic: 'mdblist',
+      mdb_metacriticuser: 'mdblist',
+      mdb_tomatoes: 'mdblist',
+      mdb_tomatoesaudience: 'mdblist',
+      trakt: 'trakt',
+      trakt_user: 'trakt',
+      mal: 'mal',
+      mdb: 'mdblist'
+    }
+    const SERVICE_VALIDATION_INPUTS = {
+      tmdb: 'qs-validate-tmdb',
+      mdblist: 'qs-validate-mdblist',
+      trakt: 'qs-validate-trakt',
+      mal: 'qs-validate-mal',
+      anidb: 'qs-validate-anidb'
+    }
+    const SERVICE_LABEL_MAP = {
+      tmdb: 'TMDb',
+      mdblist: 'MDBList',
+      trakt: 'Trakt',
+      mal: 'MyAnimeList',
+      anidb: 'AniDB'
     }
     const FLAG_PREVIEW_ITEMS = [
       {
@@ -866,6 +915,117 @@ const OverlayHandler = {
       }[normalized]
       if (mapped) return mapped
       return normalized.replace(/\s+/g, '_')
+    }
+
+    const getServiceValidation = (service) => {
+      if (!service) return null
+      const inputId = SERVICE_VALIDATION_INPUTS[service]
+      if (!inputId) return null
+      const input = document.getElementById(inputId)
+      if (!input) return null
+      return String(input.value || '').toLowerCase() === 'true'
+    }
+
+    const getMassToggleLabel = (libraryId, group, source) => {
+      if (!libraryId || !group || !source) return null
+      const inputId = `${libraryId}-attribute_${group}_${source}`
+      const label = document.querySelector(`label[for="${inputId}"]`)
+      if (!label) return null
+      return (label.textContent || '').trim()
+    }
+
+    const setStatusTooltip = (el, message) => {
+      if (!el) return
+      el.setAttribute('title', message)
+      el.setAttribute('data-bs-original-title', message)
+      const Tooltip = window.bootstrap?.Tooltip
+      if (!Tooltip) return
+      const tooltip = Tooltip.getOrCreateInstance
+        ? Tooltip.getOrCreateInstance(el)
+        : new Tooltip(el)
+      if (tooltip && typeof tooltip.setContent === 'function') {
+        tooltip.setContent({ '.tooltip-inner': message })
+      }
+    }
+
+    const setStatusIcon = (el, status, message) => {
+      if (!el) return
+      const icon = el.querySelector('i') || el
+      icon.classList.remove('bi-check-circle-fill', 'bi-exclamation-circle-fill', 'bi-dash-circle-fill')
+      el.classList.remove('text-success', 'text-danger', 'text-secondary')
+      if (status === 'ok') {
+        icon.classList.add('bi-check-circle-fill')
+        el.classList.add('text-success')
+      } else if (status === 'warn') {
+        icon.classList.add('bi-exclamation-circle-fill')
+        el.classList.add('text-danger')
+      } else {
+        icon.classList.add('bi-dash-circle-fill')
+        el.classList.add('text-secondary')
+      }
+      if (message) {
+        setStatusTooltip(el, message)
+      }
+    }
+
+    const updateRatingSyncStatus = (cfg) => {
+      if (!cfg?.container) return
+      const overlayType = cfg.container.dataset.overlayType || ''
+      if (!['movie', 'show', 'episode'].includes(overlayType)) return
+      const libraryId = cfg.container.dataset.libraryId
+      const slots = [
+        { ratingKey: 'rating1', imageKey: 'rating1_image', label: 'Rating 1' },
+        { ratingKey: 'rating2', imageKey: 'rating2_image', label: 'Rating 2' },
+        { ratingKey: 'rating3', imageKey: 'rating3_image', label: 'Rating 3' }
+      ]
+      slots.forEach(slot => {
+        const statusEl = cfg.container.querySelector(`.rating-sync-status[data-rating-slot="${slot.ratingKey}"]`)
+        if (!statusEl) return
+        const ratingSelect = getTemplateInput(cfg, slot.ratingKey)
+        const imageSelect = getTemplateInput(cfg, slot.imageKey)
+        const ratingValRaw = (ratingSelect?.value || ratingSelect?.dataset?.default || '').toString().trim().toLowerCase()
+        const imageVal = imageSelect?.value || imageSelect?.dataset?.default
+        const ratingLabel = (ratingSelect?.selectedOptions?.[0]?.textContent || '').trim() || ratingValRaw
+        const imageLabel = (imageSelect?.selectedOptions?.[0]?.textContent || '').trim() || imageVal || 'None'
+        if (!ratingValRaw || !imageVal) {
+          setStatusIcon(statusEl, 'neutral', 'Select rating and image to sync with Library Operations.')
+          return
+        }
+        const group = overlayType === 'episode'
+          ? RATING_MASS_GROUP_MAP_EPISODE[ratingValRaw]
+          : RATING_MASS_GROUP_MAP[ratingValRaw]
+        if (!group) {
+          setStatusIcon(statusEl, 'neutral', 'Select rating and image to sync with Library Operations.')
+          return
+        }
+        const imageKey = normalizeRatingImageKey(imageVal, imageLabel)
+        const sourceMap = overlayType === 'episode'
+          ? RATING_SOURCE_MAP_EPISODE[imageKey]
+          : RATING_SOURCE_MAP[imageKey]
+        const source = sourceMap ? (sourceMap[ratingValRaw] || sourceMap.any || null) : null
+        if (!source) {
+          setStatusIcon(statusEl, 'neutral', `${slot.label} (${ratingLabel} + ${imageLabel}) has no matching rating source.`)
+          return
+        }
+        const groupLabel = RATING_GROUP_LABEL_MAP[group] || group
+        const toggleLabel = getMassToggleLabel(libraryId, group, source) || RATING_SOURCE_LABEL_MAP[source] || source
+        let message = `${slot.label} (${ratingLabel} + ${imageLabel}) → ${groupLabel}: ${toggleLabel}`
+        const service = RATING_SOURCE_SERVICE_MAP[source] || null
+        if (!service) {
+          message += '. No service required.'
+          setStatusIcon(statusEl, 'neutral', message)
+          return
+        }
+        const serviceLabel = SERVICE_LABEL_MAP[service] || service
+        const validated = getServiceValidation(service)
+        if (validated) {
+          message += `. ${serviceLabel} validated.`
+          setStatusIcon(statusEl, 'ok', message)
+        } else {
+          message += `. ${serviceLabel} is not validated; ratings won't update until validated.`
+          setStatusIcon(statusEl, 'warn', message)
+        }
+      })
     }
 
     const setMassRatingSource = (libraryId, prefix, source) => {
@@ -3036,6 +3196,7 @@ const OverlayHandler = {
               }
             }
             applyRatingFontDefaults(cfg)
+            updateRatingSyncStatus(cfg)
             buildBackdropDataUrl(cfg).then(dataUrl => {
               layer.src = dataUrl
               applyPosition(cfg)

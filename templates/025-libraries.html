@@ -18,6 +18,14 @@
 {% set maintenance_window = page_info.telemetry.maintenance_window or "Unknown" %}
 {% set has_plex_pass = page_info.telemetry.plex_pass is sameas true %}
 
+<div class="d-none" id="qs-rating-service-status">
+  <input type="hidden" id="qs-validate-tmdb" value="{{ 'true' if service_validations.tmdb else 'false' }}">
+  <input type="hidden" id="qs-validate-mdblist" value="{{ 'true' if service_validations.mdblist else 'false' }}">
+  <input type="hidden" id="qs-validate-trakt" value="{{ 'true' if service_validations.trakt else 'false' }}">
+  <input type="hidden" id="qs-validate-mal" value="{{ 'true' if service_validations.mal else 'false' }}">
+  <input type="hidden" id="qs-validate-anidb" value="{{ 'true' if service_validations.anidb else 'false' }}">
+</div>
+
 <div class="accordion mb-3" id="plexInfoAccordion">
   <div class="accordion-item">
     <h2 class="accordion-header {{ plex_pass_status }}" id="plexPassHeading">
