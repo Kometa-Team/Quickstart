@@ -678,6 +678,7 @@ document.addEventListener('DOMContentLoaded', function () {
           msg += ` Fonts skipped: ${data.fonts_skipped.length}.`
         }
         showToast('success', msg)
+        showToast('error', 'Review each page after import and validate before generating the final config.')
         const modal = bootstrap.Modal.getInstance(importConfigModalEl)
         if (modal) modal.hide()
         setTimeout(() => window.location.reload(), 1200)
@@ -702,6 +703,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const localShaEl = document.getElementById('test-lib-local-sha')
   const remoteShaEl = document.getElementById('test-lib-remote-sha')
   const updateBtn = document.getElementById('update-test-lib-btn')
+  const tempPathInput = document.getElementById('test-lib-temp-path')
+  const finalPathInput = document.getElementById('test-lib-final-path')
+  const savePathsBtn = document.getElementById('test-lib-paths-apply')
+  const pathsStatus = document.getElementById('test-lib-paths-status')
 
   // Progress block (existing or injected)
   let progWrap = document.getElementById('test-lib-progress')
@@ -814,13 +819,17 @@ document.addEventListener('DOMContentLoaded', function () {
     progTxt.textContent = ''
   }
 
-  function setScenarioNotFound (pathHtml) {
+  function setScenarioNotFound (pathHtml, opts = {}) {
+    const unrecognizedNote = opts.unrecognized
+      ? '<div class="small text-danger mt-1">Target path exists but does not look like test libraries.</div>'
+      : ''
     testLibStatus.classList.remove('d-none', 'alert-success', 'alert-danger')
     testLibStatus.classList.add('alert-warning')
     statusMsg.innerHTML = `
       <strong>Test media libraries not found.</strong>
       <span class="ms-1">We recommend setting them up for testing with Kometa. Be patient as the repository is about 7GB.</span>
       ${pathHtml || ''}
+      ${unrecognizedNote}
     `
     cloneBtn.classList.remove('d-none')
     purgeBtn.classList.add('d-none')
@@ -856,7 +865,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     const data = await res.json()
     const pathHtml = data.target_path ? `<br><code>${data.target_path}</code>` : ''
-    if (!data.found) setScenarioNotFound(pathHtml)
+    if (!data.found) setScenarioNotFound(pathHtml, { unrecognized: data.unrecognized })
     else setScenarioFoundZip(data, pathHtml)
   }
 
@@ -905,6 +914,74 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast('error', `Failed to purge: ${err.message}`)
       }
     })
+
+    function setPathsStatus (text, isError = false) {
+      if (!pathsStatus) return
+      pathsStatus.textContent = text || ''
+      pathsStatus.classList.remove('text-danger', 'text-success', 'text-muted')
+      if (!text) {
+        pathsStatus.classList.add('text-muted')
+        return
+      }
+      pathsStatus.classList.add(isError ? 'text-danger' : 'text-success')
+    }
+
+    async function saveTestLibPaths (confirmOverride = false) {
+      if (!savePathsBtn) return
+      savePathsBtn.disabled = true
+      savePathsBtn.textContent = 'Saving...'
+      setPathsStatus('Validating paths...')
+
+      const payload = {
+        quickstart_root: window.pageInfo.quickstart_root,
+        temp_path: tempPathInput ? tempPathInput.value.trim() : '',
+        final_path: finalPathInput ? finalPathInput.value.trim() : '',
+        confirm: confirmOverride
+      }
+
+      try {
+        const res = await fetch('/test-libraries-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        const data = await res.json()
+
+        if (!res.ok && data && data.needs_confirm) {
+          savePathsBtn.disabled = false
+          savePathsBtn.textContent = 'Save Paths'
+          setPathsStatus('')
+          const msg = data.message || 'Paths need confirmation.'
+          if (window.confirm(`${msg}\n\nContinue anyway?`)) {
+            await saveTestLibPaths(true)
+          }
+          return
+        }
+
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to save paths.')
+        }
+
+        if (data.temp_path && tempPathInput) tempPathInput.value = data.temp_path
+        if (data.final_path && finalPathInput) finalPathInput.value = data.final_path
+        setPathsStatus('Saved.')
+        showToast('success', data.message || 'Test library paths saved.')
+        await refreshStatus()
+      } catch (err) {
+        setPathsStatus('Failed to save.', true)
+        showToast('error', err.message || 'Failed to save paths.')
+      } finally {
+        savePathsBtn.disabled = false
+        savePathsBtn.textContent = 'Save Paths'
+      }
+    }
+
+    if (savePathsBtn) {
+      savePathsBtn.addEventListener('click', (e) => {
+        e.preventDefault()
+        saveTestLibPaths().catch(() => {})
+      })
+    }
 
     // DOWNLOAD / UPDATE flow (start + poll)
     let running = false

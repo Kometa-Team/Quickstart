@@ -19,6 +19,9 @@
             data-current-port="{{ page_info.running_port }}" data-current-debug="{{ 'true' if page_info.qs_debug else 'false' }}"
             data-current-theme="{{ page_info.qs_theme }}" data-current-optimize-defaults="{{ 'true' if page_info.qs_optimize_defaults else 'false' }}"
             data-current-config-history="{{ page_info.qs_config_history }}" data-current-log-keep="{{ page_info.qs_kometa_log_keep }}"
+            data-current-test-libs-path="{{ page_info.qs_test_libs_path }}"
+            data-current-test-libs-tmp="{{ page_info.qs_test_libs_tmp }}"
+            data-quickstart-root="{{ page_info.quickstart_root }}"
             title="Quickstart settings">
             <i class="bi bi-gear-fill"></i>
           </button>
@@ -340,6 +343,18 @@
               <label class="form-label" for="quickstart-settings-log-keep">Kometa Log Retention</label>
               <input type="number" class="form-control" id="quickstart-settings-log-keep" min="0" step="1" inputmode="numeric">
               <div class="form-text">0 keeps all archived <code>meta*.log</code> files.</div>
+            </div>
+            <div class="border-top pt-3 mt-3">
+              <h6 class="text-uppercase text-muted mb-2">Test Libraries</h6>
+              <div class="mb-3">
+                <label class="form-label" for="quickstart-settings-test-libs-tmp">Temp download/extract path</label>
+                <input type="text" class="form-control" id="quickstart-settings-test-libs-tmp" placeholder="Leave blank for default">
+              </div>
+              <div class="mb-3">
+                <label class="form-label" for="quickstart-settings-test-libs-path">Final test libraries path</label>
+                <input type="text" class="form-control" id="quickstart-settings-test-libs-path" placeholder="Leave blank for default">
+                <div class="form-text">Quickstart replaces this folder during install/update. Use a dedicated path.</div>
+              </div>
             </div>
             {% if not qs_is_docker %}
             <div class="mb-3">

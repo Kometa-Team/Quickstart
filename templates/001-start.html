@@ -58,6 +58,28 @@
                 </div>
               </div>
             </div>
+            <div class="border-top mt-3 pt-3">
+              <div class="small text-muted mb-2">Storage paths are shared across all configs. Choose a dedicated folder.</div>
+              <div class="row g-2">
+                <div class="col-12">
+                  <label class="form-label small" for="test-lib-temp-path">Temp download/extract path</label>
+                  <input type="text" class="form-control form-control-sm" id="test-lib-temp-path"
+                    value="{{ page_info.qs_test_libs_tmp | default('', true) | escape }}">
+                </div>
+                <div class="col-12">
+                  <label class="form-label small" for="test-lib-final-path">Final test libraries path</label>
+                  <input type="text" class="form-control form-control-sm" id="test-lib-final-path"
+                    value="{{ page_info.qs_test_libs_path | default('', true) | escape }}">
+                  <div class="form-text">Quickstart replaces this folder during install/update. Leave blank to use defaults.</div>
+                </div>
+                <div class="col-12 d-flex align-items-center gap-2">
+                  <button type="button" class="btn btn-sm btn-outline-secondary" id="test-lib-paths-apply">
+                    Save Paths
+                  </button>
+                  <span class="small text-muted" id="test-lib-paths-status"></span>
+                </div>
+              </div>
+            </div>
           </div>
           <p class="fs-5">Review the Config Data section below and press the arrow button above when you are ready to begin.</p>
         </div>
@@ -112,16 +134,16 @@
         <i class="bi bi-pencil-square"></i> Rename
       </button>
 
+      <!-- Import Button -->
+      <button type="button" class="btn btn-secondary" id="importConfigButton" data-bs-toggle="modal"
+        data-bs-target="#importConfigModal">
+        <i class="bi bi-upload"></i> Import Config
+      </button>
+
       <!-- Bulk Delete Button -->
       <button type="button" class="btn btn-danger" id="bulkDeleteButton" data-bs-toggle="modal"
         data-bs-target="#bulkDeleteModal">
         <i class="bi bi-trash3"></i> Delete Configs
-      </button>
-
-      <!-- Import Button -->
-      <button type="button" class="btn btn-primary" id="importConfigButton" data-bs-toggle="modal"
-        data-bs-target="#importConfigModal">
-        <i class="bi bi-upload"></i> Import Config
       </button>
     </div>
   </div>
@@ -270,8 +292,8 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-outline-primary" id="previewImportButton">Preview Import</button>
-        <button type="button" class="btn btn-primary d-none" id="confirmImportButton">Import</button>
+        <button type="button" class="btn btn-outline-secondary" id="previewImportButton">Preview Import</button>
+        <button type="button" class="btn btn-secondary d-none" id="confirmImportButton">Import</button>
       </div>
     </div>
   </div>

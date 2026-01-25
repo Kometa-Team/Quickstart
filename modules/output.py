@@ -1772,19 +1772,8 @@ def build_config(header_style="standard", config_name=None):
 
     # Get plex info
     plex_summary = helpers.get_plex_summary()
-    qs_port = app.config.get("QS_PORT", "Unknown")
-    qs_debug = "Enabled" if app.config.get("QS_DEBUG") else "Disabled"
-    qs_theme = app.config.get("QS_THEME", "kometa")
-    qs_config_history = app.config.get("QS_CONFIG_HISTORY", 0)
-    if qs_config_history == 0:
-        qs_config_history_display = "Keep all (0)"
-    else:
-        qs_config_history_display = str(qs_config_history)
-    qs_log_keep = app.config.get("QS_KOMETA_LOG_KEEP", 0)
-    if qs_log_keep == 0:
-        qs_log_keep_display = "Keep all (0)"
-    else:
-        qs_log_keep_display = str(qs_log_keep)
+    qs_settings_lines = helpers.get_quickstart_settings_summary()
+    qs_settings_block = "\n".join(qs_settings_lines) if qs_settings_lines else ""
     library_names = list(movie_libraries.values()) + list(show_libraries.values())
     library_details = helpers.get_library_summaries(library_names)
 
@@ -1801,12 +1790,7 @@ def build_config(header_style="standard", config_name=None):
         f"# Python: {python_version}\n"
         f"# Git: {git_version}\n"
         f"# Browser: {browser_line}\n"
-        f"# Quickstart Port: {qs_port}\n"
-        f"# Quickstart Debug: {qs_debug}\n"
-        f"# Quickstart Theme: {qs_theme}\n"
-        f"# Quickstart Optimize Template Defaults: {'Enabled' if app.config.get('QS_OPTIMIZE_DEFAULTS', True) else 'Disabled'}\n"
-        f"# Quickstart Config Archive History: {qs_config_history_display}\n"
-        f"# Quickstart Kometa Log Retention: {qs_log_keep_display}\n"
+        f"{qs_settings_block}\n"
         f"{'# ' + plex_summary.replace(chr(10), chr(10) + '# ')}\n"
         f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}\n"
         f"###\n"

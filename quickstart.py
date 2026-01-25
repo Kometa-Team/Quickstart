@@ -414,6 +414,10 @@ try:
     app.config["QS_KOMETA_LOG_KEEP"] = max(0, int(str(os.getenv("QS_KOMETA_LOG_KEEP", "0")).strip()))
 except (TypeError, ValueError):
     app.config["QS_KOMETA_LOG_KEEP"] = 0
+default_test_libs_path = os.path.join(helpers.CONFIG_DIR, "plex_test_libraries")
+default_test_libs_tmp = os.path.join(helpers.CONFIG_DIR, "tmp")
+app.config["QS_TEST_LIBS_PATH"] = os.getenv("QS_TEST_LIBS_PATH", default_test_libs_path).strip() or default_test_libs_path
+app.config["QS_TEST_LIBS_TMP"] = os.getenv("QS_TEST_LIBS_TMP", default_test_libs_tmp).strip() or default_test_libs_tmp
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
 
 cleanup_flag = os.getenv("QS_CONFIG_CLEANUP_DONE", "").strip().lower()
@@ -1773,6 +1777,9 @@ def step(name):
     page_info["qs_optimize_defaults"] = app.config.get("QS_OPTIMIZE_DEFAULTS", True)
     page_info["qs_config_history"] = app.config.get("QS_CONFIG_HISTORY", 0)
     page_info["qs_kometa_log_keep"] = app.config.get("QS_KOMETA_LOG_KEEP", 0)
+    _, test_libs_path, test_libs_tmp, _, _ = _resolve_test_libraries_paths(helpers.get_app_root())
+    page_info["qs_test_libs_path"] = test_libs_path
+    page_info["qs_test_libs_tmp"] = test_libs_tmp
     page_info["header_style"] = header_style
     page_info["template_name"] = name
     if "shutdown_nonce" not in session:
@@ -3964,22 +3971,7 @@ def support_info():
     lines.append(f"# Python: {python_version}")
     lines.append(f"# Git: {git_version}")
     lines.append(f"# Browser: {browser_line}")
-    lines.append(f"# Quickstart Port: {running_port}")
-    lines.append(f"# Quickstart Debug: {'Enabled' if app.config['QS_DEBUG'] else 'Disabled'}")
-    lines.append(f"# Quickstart Theme: {app.config.get('QS_THEME', 'kometa')}")
-    lines.append(f"# Quickstart Optimize Template Defaults: {'Enabled' if app.config.get('QS_OPTIMIZE_DEFAULTS', True) else 'Disabled'}")
-    qs_config_history = app.config.get("QS_CONFIG_HISTORY", 0)
-    if qs_config_history == 0:
-        qs_config_history_display = "Keep all (0)"
-    else:
-        qs_config_history_display = str(qs_config_history)
-    lines.append(f"# Quickstart Config Archive History: {qs_config_history_display}")
-    qs_log_keep = app.config.get("QS_KOMETA_LOG_KEEP", 0)
-    if qs_log_keep == 0:
-        qs_log_keep_display = "Keep all (0)"
-    else:
-        qs_log_keep_display = str(qs_log_keep)
-    lines.append(f"# Quickstart Kometa Log Retention: {qs_log_keep_display}")
+    lines.extend(helpers.get_quickstart_settings_summary())
     lines.extend([f"# {line}" for line in plex_summary.splitlines()])
     lines.append(f"# Quickstart: {quickstart_version} | Branch: {quickstart_branch} | Environment: {quickstart_environment}")
     lines.append("###")
@@ -4407,27 +4399,99 @@ def update_kometa():
         return jsonify({"success": False, "log": logs}), 500
 
 
+def _normalize_test_libraries_path(raw_path, base_dir):
+    value = str(raw_path or "").strip().strip('"').strip("'")
+    if not value:
+        return ""
+    value = os.path.expandvars(value)
+    value = os.path.expanduser(value)
+    if not os.path.isabs(value):
+        value = os.path.abspath(os.path.join(base_dir, value))
+    return os.path.abspath(value)
+
+
+def _resolve_test_libraries_paths(quickstart_root):
+    base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
+    default_final = os.path.join(base_config_dir, "config", "plex_test_libraries")
+    default_tmp = os.path.join(base_config_dir, "config", "tmp")
+    raw_final = app.config.get("QS_TEST_LIBS_PATH") or os.getenv("QS_TEST_LIBS_PATH") or default_final
+    raw_tmp = app.config.get("QS_TEST_LIBS_TMP") or os.getenv("QS_TEST_LIBS_TMP") or default_tmp
+    final_path = _normalize_test_libraries_path(raw_final, base_config_dir) or os.path.abspath(default_final)
+    tmp_path = _normalize_test_libraries_path(raw_tmp, base_config_dir) or os.path.abspath(default_tmp)
+    return base_config_dir, final_path, tmp_path, default_final, default_tmp
+
+
+def _test_libraries_present(path):
+    if not path or not os.path.isdir(path):
+        return False
+    expected_dirs = [
+        os.path.join(path, "test_tv_lib"),
+        os.path.join(path, "test_movie_lib"),
+    ]
+    marker = os.path.join(path, ".test_libraries_version")
+    return all(os.path.isdir(p) for p in expected_dirs) or os.path.exists(marker)
+
+
+def _paths_overlap(path_a, path_b):
+    if not path_a or not path_b:
+        return False
+    try:
+        common = os.path.commonpath([os.path.abspath(path_a), os.path.abspath(path_b)])
+    except ValueError:
+        return False
+    return common == os.path.abspath(path_a) or common == os.path.abspath(path_b)
+
+
+def _ensure_rw_dir(path):
+    if not path:
+        return False, "Path is empty."
+    if os.path.exists(path) and not os.path.isdir(path):
+        return False, "Path exists but is not a directory."
+    try:
+        os.makedirs(path, exist_ok=True)
+    except Exception as e:
+        return False, f"Unable to create folder: {path} ({e})"
+    test_file = os.path.join(path, f".qs_write_test_{uuid.uuid4().hex}")
+    try:
+        with open(test_file, "w", encoding="utf-8") as f:
+            f.write("test")
+        os.remove(test_file)
+    except Exception as e:
+        return False, f"Unable to write to folder: {path} ({e})"
+    return True, ""
+
+
+def _safe_to_replace_test_libraries(path):
+    if not path:
+        return False
+    if not os.path.exists(path):
+        return True
+    if _test_libraries_present(path):
+        return True
+    if os.path.isdir(path) and not os.listdir(path):
+        return True
+    return False
+
+
 @app.route("/check-test-libraries", methods=["POST"])
 def check_test_libraries():
     data = request.get_json(silent=True) or {}
     quickstart_root = data.get("quickstart_root", "")
-    # legacy flag ignored; we always use the config dir now
     if not quickstart_root:
         return jsonify(success=False, message="Quickstart root path not provided.")
 
-    # Always use config/<plex_test_libraries>
-    base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
-    target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
+    _, target_path, _, _, _ = _resolve_test_libraries_paths(quickstart_root)
     resolved_path = os.path.abspath(target_path)
 
-    found = os.path.isdir(target_path)
-    has_expected = all(os.path.isdir(os.path.join(target_path, name)) for name in ["test_tv_lib", "test_movie_lib"])
+    found = _test_libraries_present(target_path)
+    target_exists = os.path.exists(target_path)
+    unrecognized = bool(target_exists and not found)
 
     local_sha = ""
     remote_sha = ""
     is_outdated = False
 
-    if found and has_expected:
+    if found:
         sha_path = os.path.join(target_path, ".test_libraries_version")
         if os.path.exists(sha_path):
             try:
@@ -4448,12 +4512,83 @@ def check_test_libraries():
 
     return jsonify(
         {
-            "found": bool(found and has_expected),
+            "found": bool(found),
             "target_path": resolved_path,
             "is_outdated": is_outdated,
             "local_sha": local_sha,
             "remote_sha": remote_sha,
+            "target_exists": target_exists,
+            "unrecognized": unrecognized,
         }
+    )
+
+
+@app.route("/test-libraries-settings", methods=["POST"])
+def update_test_libraries_settings():
+    data = request.get_json(silent=True) or {}
+    quickstart_root = data.get("quickstart_root", "")
+    if not quickstart_root:
+        return jsonify(success=False, message="Quickstart root path not provided.")
+
+    temp_raw = data.get("temp_path", "")
+    final_raw = data.get("final_path", "")
+    confirm = helpers.booler(str(data.get("confirm", "")))
+
+    base_config_dir, _, _, default_final, default_tmp = _resolve_test_libraries_paths(quickstart_root)
+    temp_path = _normalize_test_libraries_path(temp_raw or default_tmp, base_config_dir)
+    final_path = _normalize_test_libraries_path(final_raw or default_final, base_config_dir)
+
+    if not temp_path or not final_path:
+        return jsonify(success=False, message="Temp and final paths are required."), 400
+
+    if _paths_overlap(temp_path, final_path):
+        return jsonify(success=False, message="Temp and final paths must be different and cannot be nested."), 400
+
+    ok, msg = _ensure_rw_dir(temp_path)
+    if not ok:
+        return jsonify(success=False, message=msg), 400
+    ok, msg = _ensure_rw_dir(final_path)
+    if not ok:
+        return jsonify(success=False, message=msg), 400
+
+    old_final = _normalize_test_libraries_path(app.config.get("QS_TEST_LIBS_PATH") or default_final, base_config_dir)
+    old_has_libs = _test_libraries_present(old_final)
+    if old_final and final_path != old_final and old_has_libs and not confirm:
+        return jsonify(
+            success=False,
+            needs_confirm=True,
+            message=f"Test libraries exist at the previous path: {old_final}. Quickstart will not move them.",
+            old_path=old_final,
+        ), 409
+
+    final_has_content = False
+    if os.path.isdir(final_path):
+        try:
+            final_has_content = any(os.scandir(final_path))
+        except Exception:
+            final_has_content = True
+    final_is_test_libs = _test_libraries_present(final_path)
+    if final_has_content and not final_is_test_libs and not confirm:
+        return jsonify(
+            success=False,
+            needs_confirm=True,
+            message=f"The final path is not empty and does not look like test libraries: {final_path}. Quickstart will replace this folder during install/update.",
+            final_path=final_path,
+        ), 409
+
+    helpers.update_env_variable("QS_TEST_LIBS_TMP", temp_path)
+    helpers.update_env_variable("QS_TEST_LIBS_PATH", final_path)
+    os.environ["QS_TEST_LIBS_TMP"] = temp_path
+    os.environ["QS_TEST_LIBS_PATH"] = final_path
+    app.config["QS_TEST_LIBS_TMP"] = temp_path
+    app.config["QS_TEST_LIBS_PATH"] = final_path
+
+    return jsonify(
+        success=True,
+        message="Test library paths saved.",
+        temp_path=temp_path,
+        final_path=final_path,
+        old_path=old_final if old_final and final_path != old_final else "",
     )
 
 
@@ -4472,15 +4607,19 @@ def clone_test_libraries_start():
     """
     data = request.get_json(silent=True) or {}
     quickstart_root = data.get("quickstart_root", "")
-    use_config_dir = True  # always managed
 
     if not quickstart_root:
         return jsonify(success=False, message="Quickstart root path not provided.")
 
-    # Resolve target path (managed/config dir)
-    base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
-    target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
+    _, target_path, tmp_root, _, _ = _resolve_test_libraries_paths(quickstart_root)
     resolved_path = os.path.abspath(target_path)
+    if _paths_overlap(tmp_root, target_path):
+        return jsonify(success=False, message="Temp and final paths must be different and cannot be nested.")
+    if not _safe_to_replace_test_libraries(target_path):
+        return jsonify(
+            success=False,
+            message="Target path exists but does not look like test libraries. Choose an empty folder or one containing test libraries.",
+        )
 
     # Ensure CLONE_PROGRESS dict exists
     try:
@@ -4522,18 +4661,18 @@ def clone_test_libraries_start():
                 "total": total_size,
             }
 
-            # Use a stable tmp folder under the config dir to avoid /tmp RAM mounts
-            tmp_root = os.path.join(base_config_dir, "config", "tmp")
-            # Proactively clean stale tmp folders from previous runs
-            if os.path.isdir(tmp_root):
+            ok, msg = _ensure_rw_dir(tmp_root)
+            if not ok:
+                raise RuntimeError(msg)
+            # Clean only our own stale temp folders
+            try:
                 for entry in os.listdir(tmp_root):
-                    try:
+                    if entry.startswith("qs_test_libs_"):
                         shutil.rmtree(os.path.join(tmp_root, entry), ignore_errors=True)
-                    except Exception:
-                        pass
-            os.makedirs(tmp_root, exist_ok=True)
+            except Exception:
+                pass
 
-            with tempfile.TemporaryDirectory(dir=tmp_root) as tmpdir:
+            with tempfile.TemporaryDirectory(prefix="qs_test_libs_", dir=tmp_root) as tmpdir:
                 zip_path = os.path.join(tmpdir, "main.zip")
 
                 # Stream download with throttled progress updates
@@ -4601,6 +4740,10 @@ def clone_test_libraries_start():
                 # Finalize (replace folder)
                 CLONE_PROGRESS[job_id] = {"phase": "finalize", "pct": 95, "text": "Finalizing…"}
                 if os.path.exists(target_path):
+                    if not _safe_to_replace_test_libraries(target_path):
+                        raise RuntimeError(
+                            "Target path exists but does not look like test libraries. Choose an empty folder or one containing test libraries."
+                        )
                     shutil.rmtree(target_path, onerror=helpers.handle_remove_readonly)
                 shutil.move(extracted_dir, target_path)
 
@@ -4652,25 +4795,25 @@ def clone_test_libraries_progress():
 def clone_test_libraries():
     data = request.get_json(silent=True) or {}
     quickstart_root = data.get("quickstart_root", "")
-    use_config_dir = data.get("use_config_dir", False)
 
     if not quickstart_root:
         return jsonify(success=False, message="Quickstart root path not provided.")
 
-    if use_config_dir:
-        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
-        target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
-    else:
-        parent_dir = os.path.dirname(quickstart_root)
-        target_path = os.path.join(parent_dir, "plex_test_libraries")
+    _, target_path, tmp_root, _, _ = _resolve_test_libraries_paths(quickstart_root)
 
     resolved_path = os.path.abspath(target_path)
+    if _paths_overlap(tmp_root, target_path):
+        return jsonify(success=False, message="Temp and final paths must be different and cannot be nested.")
+    if not _safe_to_replace_test_libraries(target_path):
+        return jsonify(
+            success=False,
+            message="Target path exists but does not look like test libraries. Choose an empty folder or one containing test libraries.",
+        )
 
     try:
         # If already exists
-        if os.path.exists(target_path):
-            if use_config_dir:
-                return jsonify(success=True, message="Test libraries already present (ZIP install).", target_path=resolved_path)
+        if os.path.exists(target_path) and _test_libraries_present(target_path):
+            return jsonify(success=True, message="Test libraries already present (ZIP install).", target_path=resolved_path)
 
         # ZIP fallback if git not found or Download failed
         zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
@@ -4681,17 +4824,17 @@ def clone_test_libraries():
         except Exception:
             commit_sha = None
 
-        tmp_root = os.path.join(base_config_dir if use_config_dir else parent_dir, "config", "tmp") if use_config_dir else os.path.join(parent_dir, "tmp")
-        # Clean stale tmp folders if they exist
-        if os.path.isdir(tmp_root):
+        ok, msg = _ensure_rw_dir(tmp_root)
+        if not ok:
+            return jsonify(success=False, message=msg)
+        try:
             for entry in os.listdir(tmp_root):
-                try:
+                if entry.startswith("qs_test_libs_"):
                     shutil.rmtree(os.path.join(tmp_root, entry), ignore_errors=True)
-                except Exception:
-                    pass
-        os.makedirs(tmp_root, exist_ok=True)
+        except Exception:
+            pass
 
-        with tempfile.TemporaryDirectory(dir=tmp_root) as tmpdir:
+        with tempfile.TemporaryDirectory(prefix="qs_test_libs_", dir=tmp_root) as tmpdir:
             zip_path = os.path.join(tmpdir, "main.zip")
 
             r = requests.get(zip_url)
@@ -4705,6 +4848,11 @@ def clone_test_libraries():
 
             extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
             if os.path.exists(target_path):
+                if not _safe_to_replace_test_libraries(target_path):
+                    return jsonify(
+                        success=False,
+                        message="Target path exists but does not look like test libraries. Choose an empty folder or one containing test libraries.",
+                    )
                 shutil.rmtree(target_path, onerror=helpers.handle_remove_readonly)
             shutil.move(extracted_dir, target_path)
 
@@ -4715,7 +4863,7 @@ def clone_test_libraries():
                 except Exception as e:
                     helpers.ts_log(f"Warning: Failed to write SHA version file: {e}", level="WARNING")
 
-        if use_config_dir and platform.system() in ["Linux", "Darwin"]:
+        if platform.system() in ["Linux", "Darwin"]:
             subprocess.run(["chmod", "-R", "777", target_path], check=False)
 
         return jsonify(success=True, message="Test libraries installed successfully.", target_path=resolved_path)
@@ -4728,23 +4876,22 @@ def clone_test_libraries():
 def purge_test_libraries():
     data = request.get_json(silent=True) or {}
     quickstart_root = data.get("quickstart_root", "")
-    use_config_dir = data.get("use_config_dir", False)
 
     if not quickstart_root:
         return jsonify(success=False, message="Quickstart root path not provided.")
 
-    if use_config_dir:
-        base_config_dir = os.path.dirname(sys.executable) if getattr(sys, "frozen", False) else quickstart_root
-        target_path = os.path.join(base_config_dir, "config", "plex_test_libraries")
-    else:
-        parent_dir = os.path.dirname(quickstart_root)
-        target_path = os.path.join(parent_dir, "plex_test_libraries")
+    _, target_path, _, _, _ = _resolve_test_libraries_paths(quickstart_root)
 
     resolved_path = os.path.abspath(target_path)
 
     try:
         if not os.path.exists(resolved_path):
             return jsonify(success=False, message="Test libraries folder does not exist.")
+        if not _test_libraries_present(resolved_path):
+            return jsonify(
+                success=False,
+                message="Target path does not look like test libraries. Refusing to delete.",
+            )
 
         shutil.rmtree(resolved_path, onerror=helpers.handle_remove_readonly)
         return jsonify(success=True, message=f"Test libraries deleted at: {resolved_path}")

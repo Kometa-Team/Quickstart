@@ -324,6 +324,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const optimizeInput = document.getElementById('quickstart-settings-optimize')
   const historyInput = document.getElementById('quickstart-settings-config-history')
   const logKeepInput = document.getElementById('quickstart-settings-log-keep')
+  const testLibsTmpInput = document.getElementById('quickstart-settings-test-libs-tmp')
+  const testLibsPathInput = document.getElementById('quickstart-settings-test-libs-path')
   const themeText = modalEl.querySelector('.theme-picker-text')
   const themeSwatch = modalEl.querySelector('[data-theme-swatch]')
   const themeOptions = modalEl.querySelectorAll('.theme-option')
@@ -376,6 +378,21 @@ document.addEventListener('DOMContentLoaded', () => {
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
   }
 
+  function getCurrentTestLibsTmp () {
+    if (triggerBtn && triggerBtn.dataset.currentTestLibsTmp) return triggerBtn.dataset.currentTestLibsTmp
+    return window.QS_TEST_LIBS_TMP || ''
+  }
+
+  function getCurrentTestLibsPath () {
+    if (triggerBtn && triggerBtn.dataset.currentTestLibsPath) return triggerBtn.dataset.currentTestLibsPath
+    return window.QS_TEST_LIBS_PATH || ''
+  }
+
+  function getQuickstartRoot () {
+    if (triggerBtn && triggerBtn.dataset.quickstartRoot) return triggerBtn.dataset.quickstartRoot
+    return window.QS_APP_ROOT || ''
+  }
+
   function getThemeLabel (themeValue) {
     const option = modalEl.querySelector(`.theme-option[data-theme="${themeValue}"]`)
     return option?.dataset?.label || themeValue
@@ -413,10 +430,55 @@ document.addEventListener('DOMContentLoaded', () => {
     if (optimizeInput) optimizeInput.checked = getCurrentOptimizeDefaults()
     if (historyInput) historyInput.value = getCurrentConfigHistory()
     if (logKeepInput) logKeepInput.value = getCurrentLogKeep()
+    if (testLibsTmpInput) testLibsTmpInput.value = getCurrentTestLibsTmp()
+    if (testLibsPathInput) testLibsPathInput.value = getCurrentTestLibsPath()
     updateThemeUi(getCurrentTheme())
     setStatus('', false)
     if (applyBtn) applyBtn.disabled = false
   })
+
+  async function saveTestLibraryPaths (confirmOverride = false) {
+    const quickstartRoot = getQuickstartRoot()
+    if (!quickstartRoot) {
+      throw new Error('Quickstart root not available.')
+    }
+
+    const payload = {
+      quickstart_root: quickstartRoot,
+      temp_path: testLibsTmpInput ? testLibsTmpInput.value.trim() : '',
+      final_path: testLibsPathInput ? testLibsPathInput.value.trim() : '',
+      confirm: confirmOverride
+    }
+
+    const res = await fetch('/test-libraries-settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    const data = await res.json()
+
+    if (!res.ok && data && data.needs_confirm) {
+      const proceed = window.confirm(`${data.message || 'Confirm test library path update.'}\n\nContinue anyway?`)
+      if (!proceed) {
+        return { skipped: true }
+      }
+      return await saveTestLibraryPaths(true)
+    }
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to save test library paths.')
+    }
+
+    if (triggerBtn) {
+      if (data.final_path) triggerBtn.dataset.currentTestLibsPath = data.final_path
+      if (data.temp_path) triggerBtn.dataset.currentTestLibsTmp = data.temp_path
+    }
+    if (typeof data.final_path === 'string') window.QS_TEST_LIBS_PATH = data.final_path
+    if (typeof data.temp_path === 'string') window.QS_TEST_LIBS_TMP = data.temp_path
+    if (testLibsTmpInput && data.temp_path) testLibsTmpInput.value = data.temp_path
+    if (testLibsPathInput && data.final_path) testLibsPathInput.value = data.final_path
+    return data
+  }
 
   if (applyBtn) {
     applyBtn.addEventListener('click', async () => {
@@ -485,6 +547,46 @@ document.addEventListener('DOMContentLoaded', () => {
       setStatus('Saving settings...', false)
 
       try {
+        const desiredTmp = testLibsTmpInput ? testLibsTmpInput.value.trim() : ''
+        const desiredPath = testLibsPathInput ? testLibsPathInput.value.trim() : ''
+        const currentTmp = getCurrentTestLibsTmp()
+        const currentPath = getCurrentTestLibsPath()
+        const hasTestLibChange = (testLibsTmpInput || testLibsPathInput)
+          ? (desiredTmp !== currentTmp || desiredPath !== currentPath)
+          : false
+
+        let testLibsResult = null
+        if (hasTestLibChange) {
+          setStatus('Saving test library paths...', false)
+          testLibsResult = await saveTestLibraryPaths(false)
+          if (testLibsResult && testLibsResult.skipped) {
+            showToast('info', 'Test library path update skipped.')
+          } else {
+            showToast('success', 'Test library paths saved.')
+          }
+        }
+
+        if (!Object.keys(payload).length) {
+          if (hasTestLibChange && !testLibsResult?.skipped) {
+            setStatus('Settings updated.', false)
+            applyBtn.disabled = false
+            const modal = bootstrap.Modal.getInstance(modalEl)
+            if (modal) modal.hide()
+            return
+          }
+          if (hasTestLibChange && testLibsResult?.skipped) {
+            setStatus('No changes applied.', false)
+            applyBtn.disabled = false
+            return
+          }
+        }
+
+        if (!Object.keys(payload).length) {
+          setStatus('No changes applied.', false)
+          applyBtn.disabled = false
+          return
+        }
+
         const res = await fetch('/update-quickstart-settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

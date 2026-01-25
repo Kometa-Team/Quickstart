@@ -466,6 +466,70 @@ def booler(thing):
     return bool(thing)
 
 
+def get_quickstart_settings_summary():
+    def get_value(key, default=""):
+        value = app.config.get(key)
+        if value is None or value == "":
+            value = os.getenv(key, default)
+        return value
+
+    def format_bool(value):
+        return "Enabled" if booler(value) else "Disabled"
+
+    def format_keep(value):
+        if value is None or str(value).strip() == "":
+            return "Keep all (0)"
+        try:
+            num = int(str(value).strip())
+        except (TypeError, ValueError):
+            return str(value)
+        return "Keep all (0)" if num == 0 else str(num)
+
+    handled = {
+        "QS_PORT",
+        "QS_DEBUG",
+        "QS_THEME",
+        "QS_OPTIMIZE_DEFAULTS",
+        "QS_CONFIG_HISTORY",
+        "QS_KOMETA_LOG_KEEP",
+        "QS_TEST_LIBS_TMP",
+        "QS_TEST_LIBS_PATH",
+    }
+    skip = {"QS_FLASK_SESSION_DIR", "QS_CONFIG_CLEANUP_DONE"}
+
+    summary = [
+        ("QS_PORT", "Quickstart Port", lambda v: v or "Unknown"),
+        ("QS_DEBUG", "Quickstart Debug", format_bool),
+        ("QS_THEME", "Quickstart Theme", lambda v: v or "kometa"),
+        ("QS_OPTIMIZE_DEFAULTS", "Quickstart Optimize Template Defaults", format_bool),
+        ("QS_CONFIG_HISTORY", "Quickstart Config Archive History", format_keep),
+        ("QS_KOMETA_LOG_KEEP", "Quickstart Kometa Log Retention", format_keep),
+        ("QS_TEST_LIBS_TMP", "Quickstart Test Libraries Temp Path", lambda v: v or "Default"),
+        ("QS_TEST_LIBS_PATH", "Quickstart Test Libraries Install Path", lambda v: v or "Default"),
+    ]
+
+    lines = []
+    for key, label, formatter in summary:
+        value = get_value(key, "")
+        lines.append(f"# {label}: {formatter(value)}")
+
+    extra_keys = sorted(
+        key for key in app.config.keys() if key.startswith("QS_") and key not in handled and key not in skip
+    )
+    for key in extra_keys:
+        value = get_value(key, "")
+        if value is None or value == "":
+            continue
+        if isinstance(value, bool) or str(value).strip().lower() in {"true", "false", "yes", "no", "1", "0"}:
+            display = format_bool(value)
+        else:
+            display = str(value)
+        label = "Quickstart " + key.replace("QS_", "").replace("_", " ").title()
+        lines.append(f"# {label}: {display}")
+
+    return lines
+
+
 def get_bits(file):
     file_stem = Path(file).stem
     bits = file_stem.split("-")
