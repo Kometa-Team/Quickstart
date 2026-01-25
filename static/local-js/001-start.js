@@ -79,6 +79,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const importPreviewSection = document.getElementById('importPreviewSection')
   const importSummary = document.getElementById('importSummary')
   const importReport = document.getElementById('importReport')
+  const downloadImportReport = document.getElementById('downloadImportReport')
+  const importLibraryMappingSection = document.getElementById('importLibraryMappingSection')
+  const importLibraryMappingList = document.getElementById('importLibraryMappingList')
+  const importMappingNote = document.getElementById('importMappingNote')
   let configActionModal = null
   if (configActionModalElement) configActionModal = new bootstrap.Modal(configActionModalElement)
 
@@ -422,6 +426,125 @@ document.addEventListener('DOMContentLoaded', function () {
     importConfigError.textContent = message
   }
 
+  function updateImportConfirmState () {
+    if (!confirmImportButton) return
+    if (confirmImportButton.classList.contains('d-none')) return
+    if (importLibraryMappingSection && !importLibraryMappingSection.classList.contains('d-none')) {
+      const selects = importLibraryMappingList
+        ? Array.from(importLibraryMappingList.querySelectorAll('.import-library-map'))
+        : []
+      const missing = selects.some(select => !select.value)
+      confirmImportButton.disabled = missing
+      if (missing) {
+        setImportError('Select a Plex library or Ignore for all listed libraries.')
+      } else {
+        setImportError('')
+      }
+      return
+    }
+    confirmImportButton.disabled = false
+  }
+
+  function renderLibraryMapping (items, plexLibraries) {
+    if (!importLibraryMappingSection || !importLibraryMappingList) return
+    importLibraryMappingList.innerHTML = ''
+    const pending = Array.isArray(items) ? items : []
+    if (!pending.length) {
+      importLibraryMappingSection.classList.add('d-none')
+      if (importMappingNote) importMappingNote.classList.add('d-none')
+      return
+    }
+    if (importMappingNote) importMappingNote.classList.remove('d-none')
+
+    const movieNames = Array.isArray(plexLibraries?.movie) ? plexLibraries.movie.map(name => String(name)) : []
+    const showNames = Array.isArray(plexLibraries?.show) ? plexLibraries.show.map(name => String(name)) : []
+    const plexNameMap = {}
+    movieNames.concat(showNames).forEach(name => {
+      plexNameMap[name.toLowerCase()] = name
+    })
+
+    function suggestPlexName (item) {
+      const rawName = String(item?.name || '').trim()
+      if (!rawName) return ''
+      const match = plexNameMap[rawName.toLowerCase()]
+      if (match) return match
+      if (item?.inferred_type === 'movie' && movieNames.length === 1) return movieNames[0]
+      if (item?.inferred_type === 'show' && showNames.length === 1) return showNames[0]
+      return ''
+    }
+
+    pending.forEach((item, idx) => {
+      const row = document.createElement('div')
+      row.className = 'd-flex align-items-center justify-content-between flex-wrap gap-2 border rounded p-2 mb-2'
+
+      const left = document.createElement('div')
+      left.className = 'd-flex flex-column'
+      const title = document.createElement('div')
+      title.innerHTML = `<strong>${item.name}</strong>`
+      const meta = document.createElement('div')
+      meta.className = 'small text-muted'
+      const confidence = item.confidence || 'unknown'
+      const inferred = item.inferred_type || 'unknown'
+      const scoreText = `movie ${item.movie_score || 0} / show ${item.show_score || 0}`
+      const suggested = suggestPlexName(item)
+      let metaText = `inferred: ${inferred} • confidence: ${confidence} (${scoreText})`
+      if (suggested) metaText += ` • suggested: ${suggested}`
+      meta.textContent = metaText
+      left.appendChild(title)
+      left.appendChild(meta)
+
+      const select = document.createElement('select')
+      select.className = 'form-select form-select-sm import-library-map'
+      select.dataset.libraryName = item.name
+      select.style.minWidth = '140px'
+
+      const emptyOption = document.createElement('option')
+      emptyOption.value = ''
+      emptyOption.textContent = 'Select Plex library'
+      select.appendChild(emptyOption)
+
+      const ignoreOption = document.createElement('option')
+      ignoreOption.value = '__ignore__'
+      ignoreOption.textContent = 'Ignore this library'
+      select.appendChild(ignoreOption)
+
+      if (movieNames.length) {
+        const group = document.createElement('optgroup')
+        group.label = 'Movies'
+        movieNames.forEach(name => {
+          const option = document.createElement('option')
+          option.value = name
+          option.textContent = name
+          group.appendChild(option)
+        })
+        select.appendChild(group)
+      }
+
+      if (showNames.length) {
+        const group = document.createElement('optgroup')
+        group.label = 'Shows'
+        showNames.forEach(name => {
+          const option = document.createElement('option')
+          option.value = name
+          option.textContent = name
+          group.appendChild(option)
+        })
+        select.appendChild(group)
+      }
+
+      if (suggested) select.value = suggested
+
+      select.addEventListener('change', updateImportConfirmState)
+
+      row.appendChild(left)
+      row.appendChild(select)
+      importLibraryMappingList.appendChild(row)
+    })
+
+    importLibraryMappingSection.classList.remove('d-none')
+    updateImportConfirmState()
+  }
+
   function resetImportModal () {
     importToken = null
     if (importConfigFile) importConfigFile.value = ''
@@ -432,6 +555,13 @@ document.addEventListener('DOMContentLoaded', function () {
     if (importPreviewSection) importPreviewSection.classList.add('d-none')
     if (importReport) importReport.textContent = ''
     if (importSummary) importSummary.textContent = ''
+    if (downloadImportReport) {
+      downloadImportReport.classList.add('d-none')
+      downloadImportReport.removeAttribute('href')
+    }
+    if (importLibraryMappingSection) importLibraryMappingSection.classList.add('d-none')
+    if (importLibraryMappingList) importLibraryMappingList.innerHTML = ''
+    if (importMappingNote) importMappingNote.classList.add('d-none')
     if (confirmImportButton) confirmImportButton.classList.add('d-none')
     if (previewImportButton) previewImportButton.disabled = false
     setImportError('')
@@ -456,8 +586,12 @@ document.addEventListener('DOMContentLoaded', function () {
   if (previewImportButton) {
     previewImportButton.addEventListener('click', async () => {
       setImportError('')
+      if (downloadImportReport) {
+        downloadImportReport.classList.add('d-none')
+        downloadImportReport.removeAttribute('href')
+      }
       if (!importConfigFile || !importConfigFile.files || !importConfigFile.files[0]) {
-        setImportError('Select a .yml or .yaml file to import.')
+        setImportError('Select a .yml, .yaml, or .zip file to import.')
         return
       }
       if (!importConfigName || !importConfigName.value) {
@@ -491,7 +625,14 @@ document.addEventListener('DOMContentLoaded', function () {
           const summary = data.summary || {}
           importSummary.textContent = `Imported: ${summary.imported || 0} • Unmapped: ${summary.unmapped || 0} • Skipped: ${summary.skipped || 0}`
         }
+        if (downloadImportReport && data.report_url) {
+          downloadImportReport.href = data.report_url
+          downloadImportReport.download = `import_report_${importConfigName.value}.txt`
+          downloadImportReport.classList.remove('d-none')
+        }
+        renderLibraryMapping(data.library_mapping || [], data.plex_libraries || {})
         if (confirmImportButton) confirmImportButton.classList.remove('d-none')
+        updateImportConfirmState()
       } catch (err) {
         setImportError(err.message || 'Preview failed.')
       } finally {
@@ -510,16 +651,31 @@ document.addEventListener('DOMContentLoaded', function () {
       confirmImportButton.disabled = true
       confirmImportButton.textContent = 'Importing...'
       try {
+        const libraryMapping = {}
+        if (importLibraryMappingList) {
+          importLibraryMappingList.querySelectorAll('.import-library-map').forEach(select => {
+            if (select.dataset.libraryName && select.value) {
+              libraryMapping[select.dataset.libraryName] = select.value
+            }
+          })
+        }
         const res = await fetch('/import-config/confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: importToken })
+          body: JSON.stringify({ token: importToken, library_mapping: libraryMapping })
         })
         const data = await res.json()
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Import failed.')
         }
-        showToast('success', `Imported config '${data.config_name}'.`)
+        let msg = `Imported config '${data.config_name}'.`
+        if (Array.isArray(data.fonts_copied) && data.fonts_copied.length) {
+          msg += ` Fonts added: ${data.fonts_copied.length}.`
+        }
+        if (Array.isArray(data.fonts_skipped) && data.fonts_skipped.length) {
+          msg += ` Fonts skipped: ${data.fonts_skipped.length}.`
+        }
+        showToast('success', msg)
         const modal = bootstrap.Modal.getInstance(importConfigModalEl)
         if (modal) modal.hide()
         setTimeout(() => window.location.reload(), 1200)

@@ -231,7 +231,7 @@ def _normalize_config_filename(config_name: str | None) -> str:
 
 
 def _rename_config_files(old_name: str, new_name: str, dry_run: bool = False) -> dict:
-    result = {"renamed": [], "skipped": [], "errors": []}
+    result = {"success": False, "renamed": [], "skipped": [], "errors": [], "rollback_errors": []}
     old_norm = _normalize_config_filename(old_name)
     new_norm = _normalize_config_filename(new_name)
     if old_norm == new_norm:
@@ -249,48 +249,60 @@ def _rename_config_files(old_name: str, new_name: str, dry_run: bool = False) ->
         result["errors"].append("Target config filename already exists.")
         return result
 
-    if dry_run:
-        if (config_dir / "archives" / new_norm).exists():
-            result["errors"].append("Target archive directory already exists.")
-        return result
-
-    try:
-        if config_file.exists():
-            config_file.rename(new_config_file)
-            result["renamed"].append(str(new_config_file))
-    except Exception as exc:
-        result["errors"].append(f"Failed to rename quickstart config file: {exc}")
-
-    try:
-        if kometa_file.exists():
-            kometa_file.rename(new_kometa_file)
-            result["renamed"].append(str(new_kometa_file))
-    except Exception as exc:
-        result["errors"].append(f"Failed to rename Kometa config file: {exc}")
-
     archive_root = config_dir / "archives"
     old_archive = archive_root / old_norm
     new_archive = archive_root / new_norm
     if old_archive.exists():
         if new_archive.exists():
             result["errors"].append("Target archive directory already exists.")
-        else:
-            try:
-                old_archive.rename(new_archive)
-                result["renamed"].append(str(new_archive))
-            except Exception as exc:
-                result["errors"].append(f"Failed to rename archive directory: {exc}")
+            return result
+        existing_names = {p.name for p in old_archive.glob("*.yml")}
+        for path in old_archive.glob(f"{old_norm}_config_*.yml"):
+            target_name = path.name.replace(f"{old_norm}_config_", f"{new_norm}_config_", 1)
+            if target_name in existing_names and target_name != path.name:
+                result["errors"].append(f"Archive file already exists: {target_name}")
+                return result
 
-    if new_archive.exists():
-        for path in new_archive.glob(f"{old_norm}_config_*.yml"):
-            try:
-                new_name = path.name.replace(f"{old_norm}_config_", f"{new_norm}_config_", 1)
-                new_path = new_archive / new_name
-                path.rename(new_path)
-                result["renamed"].append(str(new_path))
-            except Exception as exc:
-                result["errors"].append(f"Failed to rename archive file {path.name}: {exc}")
+    if dry_run:
+        result["success"] = True
+        return result
 
+    completed = []
+    try:
+        if config_file.exists():
+            config_file.rename(new_config_file)
+            completed.append((config_file, new_config_file))
+            result["renamed"].append(str(new_config_file))
+        if kometa_file.exists():
+            kometa_file.rename(new_kometa_file)
+            completed.append((kometa_file, new_kometa_file))
+            result["renamed"].append(str(new_kometa_file))
+
+        if old_archive.exists():
+            old_archive.rename(new_archive)
+            completed.append((old_archive, new_archive))
+            result["renamed"].append(str(new_archive))
+            file_ops = []
+            for path in new_archive.glob(f"{old_norm}_config_*.yml"):
+                new_path = new_archive / path.name.replace(f"{old_norm}_config_", f"{new_norm}_config_", 1)
+                if new_path.exists() and new_path != path:
+                    raise FileExistsError(f"Archive file already exists: {new_path.name}")
+                file_ops.append((path, new_path))
+            for src, dst in file_ops:
+                src.rename(dst)
+                completed.append((src, dst))
+                result["renamed"].append(str(dst))
+    except Exception as exc:
+        result["errors"].append(f"Rename failed: {exc}")
+        for src, dst in reversed(completed):
+            try:
+                if Path(dst).exists():
+                    Path(dst).rename(src)
+            except Exception as rollback_exc:
+                result["rollback_errors"].append(str(rollback_exc))
+        return result
+
+    result["success"] = True
     return result
 
 
@@ -1138,17 +1150,22 @@ def rename_config():
             return jsonify(success=False, message="Config name already exists."), 400
 
     file_check = _rename_config_files(old_name, new_name, dry_run=True)
-    if file_check.get("errors"):
-        return jsonify(success=False, message="Config files already exist for that name."), 400
-
-    update_result = database.rename_config(old_name, new_name)
-    if not update_result.get("success"):
-        return jsonify(success=False, message=update_result.get("message", "Rename failed.")), 500
+    if not file_check.get("success"):
+        return jsonify(success=False, message="Config files are not safe to rename.", details=file_check), 400
 
     file_result = _rename_config_files(old_name, new_name)
-    if file_result.get("errors"):
-        database.rename_config(new_name, old_name)
+    if not file_result.get("success"):
         return jsonify(success=False, message="Failed to rename config files.", details=file_result), 500
+
+    try:
+        update_result = database.rename_config(old_name, new_name)
+    except Exception as exc:
+        rollback = _rename_config_files(new_name, old_name)
+        return jsonify(success=False, message=f"Failed to update database: {exc}", details=rollback), 500
+
+    if not update_result.get("success"):
+        rollback = _rename_config_files(new_name, old_name)
+        return jsonify(success=False, message="Failed to update database.", details=rollback), 500
 
     if session.get("config_name") == old_name:
         session["config_name"] = new_name
@@ -1164,8 +1181,9 @@ def import_config_preview():
 
     if not upload or not upload.filename:
         return jsonify(success=False, message="No config file uploaded."), 400
-    if not upload.filename.lower().endswith((".yml", ".yaml")):
-        return jsonify(success=False, message="Only .yml or .yaml files are supported."), 400
+    file_name = upload.filename.lower()
+    if not file_name.endswith((".yml", ".yaml", ".zip")):
+        return jsonify(success=False, message="Only .yml, .yaml, or .zip files are supported."), 400
     if not config_name:
         return jsonify(success=False, message="Config name is required."), 400
 
@@ -1174,13 +1192,65 @@ def import_config_preview():
         return jsonify(success=False, message="Config name already exists."), 400
 
     raw_text = upload.read()
-    try:
-        config_text = raw_text.decode("utf-8")
-    except UnicodeDecodeError:
-        config_text = raw_text.decode("utf-8", errors="ignore")
+    config_text = ""
+    extracted_fonts = []
+    extracted_dir = None
+    if file_name.endswith(".zip"):
+        try:
+            with zipfile.ZipFile(BytesIO(raw_text)) as archive:
+                config_files = [n for n in archive.namelist() if n.lower().endswith((".yml", ".yaml"))]
+                if not config_files:
+                    return jsonify(success=False, message="No YAML config found in zip file."), 400
+                if len(config_files) > 1:
+                    return jsonify(success=False, message="Zip file must contain exactly one YAML config."), 400
+
+                try:
+                    with archive.open(config_files[0]) as handle:
+                        config_text = handle.read().decode("utf-8", errors="ignore")
+                except Exception:
+                    return jsonify(success=False, message="Unable to read config from zip."), 400
+
+                font_files = [n for n in archive.namelist() if n.lower().endswith((".ttf", ".otf"))]
+                if font_files:
+                    cache_dir = Path(helpers.CONFIG_DIR) / "import_cache"
+                    cache_dir.mkdir(parents=True, exist_ok=True)
+                    extracted_dir = cache_dir / f"fonts_{secrets.token_urlsafe(8)}"
+                    extracted_dir.mkdir(parents=True, exist_ok=True)
+                    seen_names = set()
+                    for font_name in font_files:
+                        base_name = os.path.basename(font_name)
+                        if not base_name:
+                            continue
+                        safe_name = base_name
+                        counter = 1
+                        while safe_name in seen_names:
+                            stem, ext = os.path.splitext(base_name)
+                            safe_name = f"{stem}_{counter}{ext}"
+                            counter += 1
+                        seen_names.add(safe_name)
+                        try:
+                            with archive.open(font_name) as source:
+                                target = extracted_dir / safe_name
+                                with open(target, "wb") as dest:
+                                    dest.write(source.read())
+                                extracted_fonts.append(safe_name)
+                        except Exception:
+                            continue
+        except Exception:
+            return jsonify(success=False, message="Unable to read zip file."), 400
+    else:
+        try:
+            config_text = raw_text.decode("utf-8")
+        except UnicodeDecodeError:
+            config_text = raw_text.decode("utf-8", errors="ignore")
 
     parsed = importer.load_yaml_config(config_text)
     if not parsed:
+        if extracted_dir:
+            try:
+                shutil.rmtree(extracted_dir)
+            except OSError:
+                pass
         return jsonify(success=False, message="Unable to parse config file."), 400
 
     def parse_list(value):
@@ -1190,18 +1260,97 @@ def import_config_preview():
             return {str(v).strip() for v in value if str(v).strip()}
         return set()
 
+    needs_plex = isinstance(parsed.get("libraries"), dict) and bool(parsed.get("libraries"))
     plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
     movie_names = parse_list(plex_data.get("tmp_movie_libraries", ""))
     show_names = parse_list(plex_data.get("tmp_show_libraries", ""))
+    plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
 
-    payload, report = importer.prepare_import_payload(parsed, movie_names, show_names)
+    if needs_plex:
+        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+        dummy = persistence.get_dummy_data("plex")
+        default_plex_url = dummy.get("url", "")
+        default_plex_token = dummy.get("token", "")
+        if (
+            not plex_url
+            or not plex_token
+            or plex_url == default_plex_url
+            or plex_token == default_plex_token
+        ):
+            if extracted_dir:
+                try:
+                    shutil.rmtree(extracted_dir)
+                except OSError:
+                    pass
+            return jsonify(
+                success=False,
+                message="Plex validation is required to import library settings. Please validate Plex first.",
+            ), 400
+
+        plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
+        plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+        if not plex_result or not plex_result.get("validated"):
+            if extracted_dir:
+                try:
+                    shutil.rmtree(extracted_dir)
+                except OSError:
+                    pass
+            error_message = plex_result.get("error") if isinstance(plex_result, dict) else None
+            return jsonify(
+                success=False,
+                message=error_message or "Plex validation failed.",
+            ), 400
+
+        persistence.update_stored_plex_libraries(
+            "010-plex",
+            plex_result.get("movie_libraries", []),
+            plex_result.get("show_libraries", []),
+            plex_result.get("music_libraries", []),
+        )
+        movie_names = parse_list(plex_result.get("movie_libraries", []))
+        show_names = parse_list(plex_result.get("show_libraries", []))
+        plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
+        if not movie_names and not show_names:
+            if extracted_dir:
+                try:
+                    shutil.rmtree(extracted_dir)
+                except OSError:
+                    pass
+            return jsonify(
+                success=False,
+                message="No movie or show libraries found in Plex.",
+            ), 400
+
+    library_types, library_inference, _ = importer.build_library_type_plan(parsed, movie_names, show_names)
+    payload, report = importer.prepare_import_payload(
+        parsed,
+        movie_names,
+        show_names,
+        library_type_overrides=library_types,
+    )
     if not payload:
+        if extracted_dir:
+            try:
+                shutil.rmtree(extracted_dir)
+            except OSError:
+                pass
         return jsonify(success=False, message="No importable sections found."), 400
+
+    report_lines = list(report.lines)
+    if extracted_fonts:
+        for font in extracted_fonts:
+            report_lines.append(f"imported: bundle.fonts.{font}")
 
     previous_path = session.get("import_preview_path")
     if previous_path:
         try:
             os.remove(previous_path)
+        except OSError:
+            pass
+    previous_dir = session.get("import_preview_fonts_dir")
+    if previous_dir:
+        try:
+            shutil.rmtree(previous_dir)
         except OSError:
             pass
 
@@ -1210,17 +1359,47 @@ def import_config_preview():
     token = secrets.token_urlsafe(12)
     cache_path = cache_dir / f"import_{token}.json"
     with cache_path.open("w", encoding="utf-8") as handle:
-        json.dump({"config_name": config_name, "payload": payload}, handle, ensure_ascii=True)
+        json.dump(
+            {
+                "config_name": config_name,
+                "config_data": parsed,
+                "payload": payload,
+                "fonts_dir": str(extracted_dir) if extracted_dir else None,
+                "fonts": extracted_fonts,
+                "report_lines": report_lines,
+                "report_summary": report.summary(),
+            },
+            handle,
+            ensure_ascii=True,
+        )
 
     session["import_preview_token"] = token
     session["import_preview_path"] = str(cache_path)
     session["import_preview_name"] = config_name
+    session["import_preview_fonts_dir"] = str(extracted_dir) if extracted_dir else ""
 
-    lines = report.lines
+    lines = list(report_lines)
     max_lines = 500
     if len(lines) > max_lines:
         truncated = len(lines) - max_lines
         lines = lines[:max_lines] + [f"skipped: report truncated ({truncated} more lines)"]
+
+    library_mapping = []
+    if needs_plex and isinstance(parsed.get("libraries"), dict):
+        inference_map = {item.get("name"): item for item in library_inference}
+        for lib_name in parsed.get("libraries", {}).keys():
+            if lib_name in movie_names or lib_name in show_names:
+                continue
+            info = inference_map.get(lib_name, {})
+            library_mapping.append(
+                {
+                    "name": lib_name,
+                    "inferred_type": info.get("type"),
+                    "confidence": info.get("confidence"),
+                    "movie_score": info.get("movie_score", 0),
+                    "show_score": info.get("show_score", 0),
+                }
+            )
 
     return jsonify(
         success=True,
@@ -1228,13 +1407,15 @@ def import_config_preview():
         config_name=config_name,
         summary=report.summary(),
         report_lines=lines,
+        report_url=f"/import-config/report?token={token}",
+        library_mapping=library_mapping,
+        plex_libraries=plex_libraries,
     )
 
 
-@app.route("/import-config/confirm", methods=["POST"])
-def import_config_confirm():
-    data = request.get_json(silent=True) or {}
-    token = data.get("token")
+@app.route("/import-config/report", methods=["GET"])
+def import_config_report():
+    token = request.args.get("token")
     if not token or token != session.get("import_preview_token"):
         return jsonify(success=False, message="Import token is invalid."), 400
 
@@ -1248,14 +1429,180 @@ def import_config_confirm():
     except Exception:
         return jsonify(success=False, message="Import preview is unavailable."), 400
 
+    config_name = cached.get("config_name") or "import"
+    report_lines = cached.get("report_lines") or []
+    summary = cached.get("report_summary") or {}
+
+    header = [
+        f"Import Report for {config_name}",
+        f"Imported: {summary.get('imported', 0)}",
+        f"Unmapped: {summary.get('unmapped', 0)}",
+        f"Skipped: {summary.get('skipped', 0)}",
+        "",
+    ]
+    text = "\n".join(header + [str(line) for line in report_lines])
+    response = app.response_class(text, mimetype="text/plain")
+    response.headers["Content-Disposition"] = f'attachment; filename="{config_name}_import_report.txt"'
+    return response
+
+
+@app.route("/import-config/confirm", methods=["POST"])
+def import_config_confirm():
+    data = request.get_json(silent=True) or {}
+    token = data.get("token")
+    library_mapping = data.get("library_mapping") or {}
+    if not token or token != session.get("import_preview_token"):
+        return jsonify(success=False, message="Import token is invalid."), 400
+    if library_mapping and not isinstance(library_mapping, dict):
+        return jsonify(success=False, message="Invalid library mapping."), 400
+
+    cache_path = session.get("import_preview_path")
+    if not cache_path:
+        return jsonify(success=False, message="Import preview not found."), 400
+
+    try:
+        with open(cache_path, "r", encoding="utf-8") as handle:
+            cached = json.load(handle)
+    except Exception:
+        return jsonify(success=False, message="Import preview is unavailable."), 400
+
     config_name = cached.get("config_name")
     payload = cached.get("payload") or {}
-    if not config_name or not payload:
+    config_data = cached.get("config_data") or {}
+    fonts_dir = cached.get("fonts_dir")
+    fonts = cached.get("fonts") or []
+    if not config_name:
         return jsonify(success=False, message="Import payload is invalid."), 400
 
     available = database.get_unique_config_names() or []
     if any(name.lower() == str(config_name).lower() for name in available):
         return jsonify(success=False, message="Config name already exists."), 400
+
+    def parse_list(value):
+        if isinstance(value, str):
+            return {v.strip() for v in value.split(",") if v.strip()}
+        if isinstance(value, list):
+            return {str(v).strip() for v in value if str(v).strip()}
+        return set()
+
+    movie_names = set()
+    show_names = set()
+    if config_data:
+        libraries_payload = config_data.get("libraries")
+        needs_plex = isinstance(libraries_payload, dict) and bool(libraries_payload)
+        if needs_plex:
+            plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+            dummy = persistence.get_dummy_data("plex")
+            default_plex_url = dummy.get("url", "")
+            default_plex_token = dummy.get("token", "")
+            if (
+                not plex_url
+                or not plex_token
+                or plex_url == default_plex_url
+                or plex_token == default_plex_token
+            ):
+                return jsonify(
+                    success=False,
+                    message="Plex validation is required to import library settings. Please validate Plex first.",
+                ), 400
+
+            plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
+            plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+            if not plex_result or not plex_result.get("validated"):
+                error_message = plex_result.get("error") if isinstance(plex_result, dict) else None
+                return jsonify(
+                    success=False,
+                    message=error_message or "Plex validation failed.",
+                ), 400
+
+            persistence.update_stored_plex_libraries(
+                "010-plex",
+                plex_result.get("movie_libraries", []),
+                plex_result.get("show_libraries", []),
+                plex_result.get("music_libraries", []),
+            )
+            movie_names = parse_list(plex_result.get("movie_libraries", []))
+            show_names = parse_list(plex_result.get("show_libraries", []))
+            if not movie_names and not show_names:
+                return jsonify(
+                    success=False,
+                    message="No movie or show libraries found in Plex.",
+                ), 400
+        else:
+            plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
+            movie_names = parse_list(plex_data.get("tmp_movie_libraries", ""))
+            show_names = parse_list(plex_data.get("tmp_show_libraries", ""))
+
+        plex_names = set(movie_names) | set(show_names)
+
+        if isinstance(libraries_payload, dict):
+            if needs_plex and not plex_names:
+                return jsonify(
+                    success=False,
+                    message="Plex libraries are unavailable. Validate Plex and preview the import again.",
+                ), 400
+
+            missing = []
+            invalid_targets = []
+            duplicates = []
+            used_targets = set()
+            mapped_libraries = {}
+
+            for lib_name, lib_cfg in libraries_payload.items():
+                name = str(lib_name)
+                if name in plex_names:
+                    target = name
+                else:
+                    mapped = library_mapping.get(name)
+                    if mapped is None:
+                        missing.append(name)
+                        continue
+                    mapped = str(mapped).strip()
+                    if not mapped:
+                        missing.append(name)
+                        continue
+                    if mapped == "__ignore__":
+                        continue
+                    if mapped not in plex_names:
+                        invalid_targets.append(mapped)
+                        continue
+                    target = mapped
+
+                if target in used_targets:
+                    duplicates.append(target)
+                    continue
+                used_targets.add(target)
+                mapped_libraries[target] = lib_cfg
+
+            if missing:
+                return jsonify(
+                    success=False,
+                    message=f"Library mapping required for: {', '.join(missing)}",
+                ), 400
+            if invalid_targets:
+                unique_targets = sorted(set(invalid_targets))
+                return jsonify(
+                    success=False,
+                    message=f"Invalid Plex libraries selected: {', '.join(unique_targets)}",
+                ), 400
+            if duplicates:
+                unique_targets = sorted(set(duplicates))
+                return jsonify(
+                    success=False,
+                    message=f"Multiple imports mapped to the same Plex library: {', '.join(unique_targets)}",
+                ), 400
+
+            if mapped_libraries:
+                config_data["libraries"] = mapped_libraries
+            else:
+                config_data.pop("libraries", None)
+
+        payload, report = importer.prepare_import_payload(config_data, movie_names, show_names)
+        if not payload:
+            return jsonify(success=False, message="No importable sections found."), 400
+
+    if not payload:
+        return jsonify(success=False, message="No importable sections found."), 400
 
     imported_sections = []
     for section, data_blob in payload.items():
@@ -1268,17 +1615,48 @@ def import_config_confirm():
         )
         imported_sections.append(section)
 
+    fonts_copied = []
+    fonts_skipped = []
+    if fonts_dir and fonts:
+        os.makedirs(CUSTOM_FONTS_FOLDER, exist_ok=True)
+        for font_name in fonts:
+            src_path = os.path.join(fonts_dir, font_name)
+            dest_path = os.path.join(CUSTOM_FONTS_FOLDER, font_name)
+            if os.path.exists(dest_path):
+                fonts_skipped.append(font_name)
+                continue
+            try:
+                shutil.copy2(src_path, dest_path)
+                fonts_copied.append(font_name)
+            except OSError:
+                fonts_skipped.append(font_name)
+        if fonts_copied:
+            global _FONT_CACHE
+            _FONT_CACHE = []
+
     try:
         os.remove(cache_path)
     except OSError:
         pass
+    if fonts_dir:
+        try:
+            shutil.rmtree(fonts_dir)
+        except OSError:
+            pass
 
     session.pop("import_preview_token", None)
     session.pop("import_preview_path", None)
     session.pop("import_preview_name", None)
+    session.pop("import_preview_fonts_dir", None)
     session["config_name"] = config_name
 
-    return jsonify(success=True, config_name=config_name, imported_sections=imported_sections)
+    return jsonify(
+        success=True,
+        config_name=config_name,
+        imported_sections=imported_sections,
+        fonts_copied=fonts_copied,
+        fonts_skipped=fonts_skipped,
+    )
 
 
 @app.route("/step/<name>", methods=["GET", "POST"])

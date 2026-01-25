@@ -236,8 +236,9 @@
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label class="form-label" for="importConfigFile">Config File (.yml or .yaml)</label>
-          <input class="form-control" type="file" id="importConfigFile" accept=".yml,.yaml">
+          <label class="form-label" for="importConfigFile">Config File (.yml, .yaml, or .zip)</label>
+          <input class="form-control" type="file" id="importConfigFile" accept=".yml,.yaml,.zip">
+          <div class="form-text">Zip files must contain exactly one YAML config; .ttf/.otf fonts will be imported.</div>
         </div>
         <div class="form-floating mb-2">
           <input type="text" class="form-control" id="importConfigName" placeholder="Config name">
@@ -249,10 +250,19 @@
         <div id="importPreviewSection" class="d-none mt-3">
           <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <h6 class="mb-0">Import Report (Preview)</h6>
-            <span class="small text-muted" id="importSummary"></span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-muted" id="importSummary"></span>
+              <a class="btn btn-sm btn-outline-light d-none" id="downloadImportReport" href="#" download>Download report</a>
+            </div>
           </div>
           <pre class="mt-2 p-2 border rounded small bg-dark text-light" id="importReport"
             style="max-height: 260px; overflow: auto;"></pre>
+        </div>
+        <div id="importLibraryMappingSection" class="d-none mt-3">
+          <h6 class="mb-1">Map Libraries to Plex</h6>
+          <div class="small text-muted mb-2">These libraries were not matched to Plex. Choose a target Plex library or ignore them.</div>
+          <div id="importLibraryMappingList"></div>
+          <div class="small text-muted mt-2 d-none" id="importMappingNote">Preview counts may change after mapping and Plex validation.</div>
         </div>
       </div>
       <div class="modal-footer">
