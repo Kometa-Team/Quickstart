@@ -513,9 +513,7 @@ def get_quickstart_settings_summary():
         value = get_value(key, "")
         lines.append(f"# {label}: {formatter(value)}")
 
-    extra_keys = sorted(
-        key for key in app.config.keys() if key.startswith("QS_") and key not in handled and key not in skip
-    )
+    extra_keys = sorted(key for key in app.config.keys() if key.startswith("QS_") and key not in handled and key not in skip)
     for key in extra_keys:
         value = get_value(key, "")
         if value is None or value == "":

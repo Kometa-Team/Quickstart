@@ -4554,12 +4554,15 @@ def update_test_libraries_settings():
     old_final = _normalize_test_libraries_path(app.config.get("QS_TEST_LIBS_PATH") or default_final, base_config_dir)
     old_has_libs = _test_libraries_present(old_final)
     if old_final and final_path != old_final and old_has_libs and not confirm:
-        return jsonify(
-            success=False,
-            needs_confirm=True,
-            message=f"Test libraries exist at the previous path: {old_final}. Quickstart will not move them.",
-            old_path=old_final,
-        ), 409
+        return (
+            jsonify(
+                success=False,
+                needs_confirm=True,
+                message=f"Test libraries exist at the previous path: {old_final}. Quickstart will not move them.",
+                old_path=old_final,
+            ),
+            409,
+        )
 
     final_has_content = False
     if os.path.isdir(final_path):
@@ -4569,12 +4572,15 @@ def update_test_libraries_settings():
             final_has_content = True
     final_is_test_libs = _test_libraries_present(final_path)
     if final_has_content and not final_is_test_libs and not confirm:
-        return jsonify(
-            success=False,
-            needs_confirm=True,
-            message=f"The final path is not empty and does not look like test libraries: {final_path}. Quickstart will replace this folder during install/update.",
-            final_path=final_path,
-        ), 409
+        return (
+            jsonify(
+                success=False,
+                needs_confirm=True,
+                message=f"The final path is not empty and does not look like test libraries: {final_path}. Quickstart will replace this folder during install/update.",
+                final_path=final_path,
+            ),
+            409,
+        )
 
     helpers.update_env_variable("QS_TEST_LIBS_TMP", temp_path)
     helpers.update_env_variable("QS_TEST_LIBS_PATH", final_path)
@@ -4741,9 +4747,7 @@ def clone_test_libraries_start():
                 CLONE_PROGRESS[job_id] = {"phase": "finalize", "pct": 95, "text": "Finalizing…"}
                 if os.path.exists(target_path):
                     if not _safe_to_replace_test_libraries(target_path):
-                        raise RuntimeError(
-                            "Target path exists but does not look like test libraries. Choose an empty folder or one containing test libraries."
-                        )
+                        raise RuntimeError("Target path exists but does not look like test libraries. Choose an empty folder or one containing test libraries.")
                     shutil.rmtree(target_path, onerror=helpers.handle_remove_readonly)
                 shutil.move(extracted_dir, target_path)
 
