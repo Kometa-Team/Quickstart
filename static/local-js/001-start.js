@@ -620,7 +620,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         importToken = data.token
         if (importPreviewSection) importPreviewSection.classList.remove('d-none')
-        if (importReport) importReport.textContent = (data.report_lines || []).join('\n')
+        if (importReport) {
+          importReport.textContent = data.annotated_report || (data.report_lines || []).join('\n')
+        }
         if (importSummary) {
           const summary = data.summary || {}
           importSummary.textContent = `Imported: ${summary.imported || 0} • Unmapped: ${summary.unmapped || 0} • Skipped: ${summary.skipped || 0}`

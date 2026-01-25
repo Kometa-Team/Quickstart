@@ -11057,6 +11057,91 @@
             "default": true
           },
           {
+            "key": "use_international",
+            "label": "Top 250 International",
+            "tooltip": "Collection of the Top 250 international films on Letterboxd.",
+            "type": "toggle",
+            "default": true
+          },
+          {
+            "key": "radarr_add_missing_international",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "use_science",
+            "label": "Top 250 Sci-Fi Films",
+            "tooltip": "Collection of the Top 250 science-fiction films on Letterboxd.",
+            "type": "toggle",
+            "default": true
+          },
+          {
+            "key": "radarr_add_missing_science",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "use_western",
+            "label": "Top 100 Western Films",
+            "tooltip": "Collection of the Top 100 western films on Letterboxd.",
+            "type": "toggle",
+            "default": true
+          },
+          {
+            "key": "radarr_add_missing_western",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "use_silent",
+            "label": "Top 100 Silent Films",
+            "tooltip": "Collection of the Top 100 silent films on Letterboxd.",
+            "type": "toggle",
+            "default": true
+          },
+          {
+            "key": "radarr_add_missing_silent",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "use_million",
+            "label": "One Million Watched Club",
+            "tooltip": "Collection of films in the One Million Watched Club on Letterboxd.",
+            "type": "toggle",
+            "default": true
+          },
+          {
+            "key": "radarr_add_missing_million",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
             "key": "radarr_add_missing_top_250",
             "label": "Add missing items to Radarr",
             "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
@@ -11136,8 +11221,8 @@
           },
           {
             "key": "use_black_directors",
-            "label": "Top 100 Black-Directed",
-            "tooltip": "Collection of the Top 100 Black-Directed films on Letterboxd.",
+            "label": "Top 250 Black-Directed",
+            "tooltip": "Collection of the Top 250 Black-Directed films on Letterboxd.",
             "type": "toggle",
             "default": true
           },

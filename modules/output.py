@@ -614,6 +614,20 @@ def build_libraries_section(
             except Exception as e:
                 helpers.ts_log(f"Skipping invalid JSON in content rating sources: {rating_custom_order_value} — {e}", level="ERROR")
 
+        rating_custom_list_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_custom"
+        rating_custom_list_value = attr_group.get(rating_custom_list_key)
+        if rating_custom_list_value:
+            try:
+                parsed_custom = json.loads(rating_custom_list_value)
+                if isinstance(parsed_custom, list):
+                    for item in parsed_custom:
+                        if isinstance(item, (int, float)):
+                            mass_content_rating_update.append(item)
+                        elif isinstance(item, str) and item.strip():
+                            mass_content_rating_update.append(item.strip())
+            except Exception as e:
+                helpers.ts_log(f"Skipping invalid JSON in content rating custom list: {rating_custom_list_value} — {e}", level="ERROR")
+
         # Get the optional custom string (e.g., "NR")
         rating_custom_string_key = f"{library_type}-library_{lib_id}-attribute_mass_content_rating_update_custom_string"
         rating_custom_string_value = None
@@ -649,6 +663,21 @@ def build_libraries_section(
                             mass_original_title_update.extend(item)
             except Exception as e:
                 helpers.ts_log(f"Skipping invalid JSON in original title order: {original_title_order_value} — {e}", level="DEBUG")
+
+        original_title_custom_list_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_custom"
+        original_title_custom_list_value = attr_group.get(original_title_custom_list_key)
+        if original_title_custom_list_value:
+            try:
+                parsed_custom = json.loads(original_title_custom_list_value)
+                if isinstance(parsed_custom, list):
+                    for item in parsed_custom:
+                        if isinstance(item, str) and item.strip():
+                            mass_original_title_update.append(item.strip())
+            except Exception as e:
+                helpers.ts_log(
+                    f"Skipping invalid JSON in original title custom list: {original_title_custom_list_value} — {e}",
+                    level="ERROR",
+                )
 
         # Handle the optional custom string (e.g., "Unknown")
         original_title_custom_key = f"{library_type}-library_{lib_id}-attribute_mass_original_title_update_custom_string"

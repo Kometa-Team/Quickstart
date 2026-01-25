@@ -1,3 +1,4 @@
+import json
 import re
 from typing import Any
 
@@ -55,6 +56,178 @@ class ImportReport:
         return dict(self.counts)
 
 
+def _parse_report_statuses(report_lines: list[str]) -> dict[str, str]:
+    status_map: dict[str, str] = {}
+    if not report_lines:
+        return status_map
+    for line in report_lines:
+        if not isinstance(line, str) or ":" not in line:
+            continue
+        status, rest = line.split(":", 1)
+        status = status.strip().lower()
+        if status not in {"imported", "unmapped", "skipped"}:
+            continue
+        path = rest.strip()
+        if " - " in path:
+            path = path.split(" - ", 1)[0].strip()
+        if not path:
+            continue
+        mapped = "mapped" if status == "imported" else status
+        status_map[path] = mapped
+    return status_map
+
+
+def _build_prefix_flags(status_map: dict[str, str]) -> dict[str, dict[str, bool]]:
+    prefix_map: dict[str, dict[str, bool]] = {}
+    for path, status in status_map.items():
+        parts = path.split(".")
+        for idx in range(1, len(parts) + 1):
+            prefix = ".".join(parts[:idx])
+            flags = prefix_map.setdefault(prefix, {"mapped": False, "unmapped": False, "skipped": False})
+            if status in flags:
+                flags[status] = True
+    return prefix_map
+
+
+def _status_from_flags(flags: dict[str, bool] | None) -> str | None:
+    if not flags:
+        return None
+    mapped = flags.get("mapped")
+    unmapped = flags.get("unmapped")
+    skipped = flags.get("skipped")
+    if mapped and (unmapped or skipped):
+        return "partial"
+    if mapped:
+        return "mapped"
+    if unmapped:
+        return "unmapped"
+    if skipped:
+        return "skipped"
+    return None
+
+
+def _split_inline_comment(text: str) -> tuple[str, str]:
+    in_single = False
+    in_double = False
+    for idx, char in enumerate(text):
+        if char == "'" and not in_double:
+            in_single = not in_single
+        elif char == '"' and not in_single:
+            in_double = not in_double
+        elif char == "#" and not in_single and not in_double:
+            return text[:idx], text[idx:]
+    return text, ""
+
+
+def _parse_mapping_key(text: str) -> tuple[str | None, str | None]:
+    if ":" not in text:
+        return None, None
+    key, rest = text.split(":", 1)
+    key = key.strip()
+    if not key:
+        return None, None
+    if key[0] in {"'", '"'} and key[-1:] == key[:1]:
+        key = key[1:-1]
+    return key, rest
+
+
+def _append_status_annotation(line: str, status: str | None) -> str:
+    if not status:
+        return line
+    if "#" in line:
+        return f"{line} | {status}"
+    return f"{line}  # {status}"
+
+
+def annotate_yaml_with_report(raw_text: str, report_lines: list[str]) -> str:
+    if not raw_text:
+        return ""
+    status_map = _parse_report_statuses(report_lines)
+    prefix_map = _build_prefix_flags(status_map)
+    if not prefix_map:
+        return raw_text
+
+    lines = raw_text.splitlines()
+    annotated: list[str] = []
+    stack: list[dict[str, str | int]] = []
+    list_counters: dict[tuple[str, int], int] = {}
+    prev_indent = 0
+    block_scalar_indent: int | None = None
+
+    for line in lines:
+        stripped = line.lstrip(" ")
+        indent = len(line) - len(stripped)
+
+        if block_scalar_indent is not None:
+            if not stripped or indent > block_scalar_indent:
+                annotated.append(line)
+                continue
+            block_scalar_indent = None
+
+        if not stripped or stripped.startswith("#"):
+            annotated.append(line)
+            continue
+
+        if indent < prev_indent:
+            list_counters = {k: v for k, v in list_counters.items() if k[1] < indent}
+        prev_indent = indent
+
+        while stack and indent <= stack[-1]["indent"]:
+            stack.pop()
+
+        content, _ = _split_inline_comment(stripped)
+        content = content.rstrip()
+        if not content:
+            annotated.append(line)
+            continue
+
+        line_path = None
+
+        if content.startswith("-"):
+            item_content = content[1:].lstrip()
+            parent_path = stack[-1]["path"] if stack else ""
+            list_id = (str(parent_path), indent)
+            index = list_counters.get(list_id, -1) + 1
+            list_counters[list_id] = index
+            list_path = f"{parent_path}[{index}]" if parent_path else f"[{index}]"
+            stack.append({"indent": indent, "path": list_path})
+
+            if item_content:
+                item_content, _ = _split_inline_comment(item_content)
+                key, rest = _parse_mapping_key(item_content)
+                if key:
+                    line_path = f"{list_path}.{key}" if list_path else key
+                    rest = rest or ""
+                    rest_text = rest.strip()
+                    if rest_text == "":
+                        stack.append({"indent": indent, "path": line_path})
+                    elif rest_text.startswith(("|", ">")):
+                        block_scalar_indent = indent
+                else:
+                    line_path = list_path
+            else:
+                line_path = list_path
+        else:
+            key, rest = _parse_mapping_key(content)
+            if key:
+                parent_path = stack[-1]["path"] if stack else ""
+                line_path = f"{parent_path}.{key}" if parent_path else key
+                rest_text = (rest or "").strip()
+                if rest_text == "":
+                    stack.append({"indent": indent, "path": line_path})
+                elif rest_text.startswith(("|", ">")):
+                    block_scalar_indent = indent
+
+        status_path = line_path
+        if status_path and status_path not in prefix_map and f"{status_path}.default" in prefix_map:
+            status_path = f"{status_path}.default"
+        flags = prefix_map.get(status_path) if status_path else None
+        status = _status_from_flags(flags)
+        annotated.append(_append_status_annotation(line, status))
+
+    return "\n".join(annotated)
+
+
 def _collect_template_keys(template_vars: Any) -> set[str]:
     keys = set()
     if isinstance(template_vars, dict):
@@ -97,7 +270,30 @@ def _build_overlay_index(overlay_config: list[dict]) -> tuple[dict[str, dict], d
             oid = overlay.get("id")
             if not oid:
                 continue
-            by_id[oid] = overlay
+            if oid in by_id:
+                existing = by_id[oid]
+                if isinstance(existing, dict):
+                    existing_media = existing.get("media_types")
+                    new_media = overlay.get("media_types")
+                    if isinstance(existing_media, list) or isinstance(new_media, list):
+                        merged = []
+                        for entry in (existing_media or []):
+                            if entry not in merged:
+                                merged.append(entry)
+                        for entry in (new_media or []):
+                            if entry not in merged:
+                                merged.append(entry)
+                        existing["media_types"] = merged
+                    existing_templates = existing.get("template_variables")
+                    new_templates = overlay.get("template_variables")
+                    if isinstance(existing_templates, dict) and isinstance(new_templates, dict):
+                        for key, value in new_templates.items():
+                            if key not in existing_templates:
+                                existing_templates[key] = value
+                    elif isinstance(new_templates, dict) and not isinstance(existing_templates, dict):
+                        existing["template_variables"] = new_templates
+            else:
+                by_id[oid] = overlay
             alias = oid.replace("overlay_", "", 1)
             by_alias[alias] = oid
             if input_type == "radio" and radio_group and "value" in overlay:
@@ -108,12 +304,16 @@ def _build_overlay_index(overlay_config: list[dict]) -> tuple[dict[str, dict], d
     return by_id, by_alias, radio_map
 
 
-def _build_attribute_sets(attribute_config: dict) -> tuple[set[str], set[str], dict[str, str], set[str]]:
+def _build_attribute_sets(
+    attribute_config: dict,
+) -> tuple[set[str], set[str], dict[str, str], set[str], dict[str, dict], dict[str, dict]]:
     template_var_keys = set()
     simple_attribute_keys = set()
     top_level_map: dict[str, str] = {}
-    special_template_vars = {"placeholder_imdb_id"}
+    special_template_vars = {"placeholder_imdb_id", "sep_style", "collection_mode", "use_separator"}
     simple_types = {"boolean_toggle", "select", "text_input", "number"}
+    mass_update_defs: dict[str, dict] = {}
+    toggle_select_defs: dict[str, dict] = {}
 
     for section in attribute_config.get("sections", []) if isinstance(attribute_config, dict) else []:
         if not isinstance(section, dict):
@@ -128,9 +328,57 @@ def _build_attribute_sets(attribute_config: dict) -> tuple[set[str], set[str], d
             alias = str(prefix).replace("top_level_", "", 1)
             top_level_map[alias] = str(prefix)
         elif yml_location == "attribute":
-            if section.get("type") in simple_types:
+            section_type = section.get("type")
+            if section_type in simple_types:
                 simple_attribute_keys.add(str(prefix))
-    return template_var_keys, simple_attribute_keys, top_level_map, special_template_vars
+            elif section_type == "mass_update":
+                sources = set()
+                raw_sources = section.get("sources")
+                if isinstance(raw_sources, list):
+                    for source in raw_sources:
+                        if isinstance(source, list) and source:
+                            sources.add(str(source[0]))
+                existing = mass_update_defs.setdefault(
+                    str(prefix),
+                    {
+                        "sources": set(),
+                        "has_custom_string": bool(section.get("has_custom_string")),
+                        "custom_string_behavior": section.get("custom_string_behavior") or "string",
+                    },
+                )
+                existing["sources"].update(sources)
+            elif section_type == "toggle_with_select":
+                select_input = section.get("select_input") or {}
+                select_key = select_input.get("key")
+                select_options = set()
+                raw_options = select_input.get("options")
+                if isinstance(raw_options, list):
+                    for option in raw_options:
+                        if isinstance(option, list) and option:
+                            value = str(option[0]).strip()
+                            if value:
+                                select_options.add(value)
+                toggle_keys = {
+                    str(toggle.get("key"))
+                    for toggle in section.get("toggles", [])
+                    if isinstance(toggle, dict) and toggle.get("key")
+                }
+                existing = toggle_select_defs.setdefault(
+                    str(prefix),
+                    {"select_key": select_key, "toggle_keys": set(), "select_options": set()},
+                )
+                if select_key:
+                    existing["select_key"] = select_key
+                existing["toggle_keys"].update(toggle_keys)
+                existing["select_options"].update(select_options)
+    return (
+        template_var_keys,
+        simple_attribute_keys,
+        top_level_map,
+        special_template_vars,
+        mass_update_defs,
+        toggle_select_defs,
+    )
 
 
 def _normalize_library_type(value: Any) -> tuple[str | None, str | None]:
@@ -350,7 +598,194 @@ def prepare_import_payload(
 
     collection_by_id, collection_by_alias = _build_collection_index(collection_config)
     overlay_by_id, overlay_by_alias, overlay_radio = _build_overlay_index(overlay_config)
-    template_vars, simple_attrs, top_level_map, special_template_vars = _build_attribute_sets(attribute_config)
+    (
+        template_vars,
+        simple_attrs,
+        top_level_map,
+        special_template_vars,
+        mass_update_defs,
+        toggle_select_defs,
+    ) = _build_attribute_sets(attribute_config)
+
+    def _encode_json(values: list) -> str:
+        return json.dumps(values, ensure_ascii=True)
+
+    def _clean_custom_value(value: Any) -> Any | None:
+        if value is None or value is False:
+            return None
+        if isinstance(value, (int, float)):
+            return value
+        text = str(value).strip()
+        return text if text else None
+
+    def _normalize_op_items(value: Any) -> list:
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        return [value]
+
+    def _handle_mass_update_operation(
+        lib_id: str,
+        lib_name: str,
+        op_key: str,
+        op_value: Any,
+    ) -> tuple[bool, bool]:
+        definition = mass_update_defs.get(op_key)
+        if not definition:
+            return False, False
+
+        sources = definition.get("sources", set())
+        has_custom = definition.get("has_custom_string")
+        custom_behavior = definition.get("custom_string_behavior") or "string"
+        order: list[str] = []
+        custom_values: list[Any] = []
+        items = _normalize_op_items(op_value)
+
+        for idx, item in enumerate(items):
+            item_path = (
+                f"libraries.{lib_name}.operations.{op_key}[{idx}]"
+                if isinstance(op_value, list)
+                else f"libraries.{lib_name}.operations.{op_key}"
+            )
+            if isinstance(item, list):
+                for entry in item:
+                    custom_value = _clean_custom_value(entry)
+                    if custom_value is not None:
+                        custom_values.append(custom_value)
+                if has_custom and item:
+                    report.add("imported", item_path)
+                else:
+                    report.add("unmapped", item_path, "Unsupported mass update list entry.")
+                continue
+            if isinstance(item, dict):
+                report.add("unmapped", item_path, "Unsupported mass update format.")
+                continue
+
+            if isinstance(item, (int, float)):
+                if has_custom:
+                    custom_values.append(item)
+                    report.add("imported", item_path)
+                else:
+                    report.add("unmapped", item_path, "Custom values are not supported.")
+                continue
+
+            text = str(item).strip()
+            if not text:
+                continue
+            if text in sources:
+                if text not in order:
+                    order.append(text)
+                libraries_data[f"{lib_id}-attribute_{op_key}_{text}"] = True
+                report.add("imported", item_path)
+            elif has_custom:
+                custom_values.append(text)
+                report.add("imported", item_path)
+            else:
+                report.add("unmapped", item_path, "Custom values are not supported.")
+
+        if order:
+            libraries_data[f"{lib_id}-attribute_{op_key}_order"] = _encode_json(order)
+
+        if custom_values:
+            if custom_behavior == "list":
+                libraries_data[f"{lib_id}-attribute_{op_key}_custom"] = _encode_json(custom_values)
+            else:
+                libraries_data[f"{lib_id}-attribute_{op_key}_custom_string"] = _clean_custom_value(custom_values[0])
+                if len(custom_values) > 1:
+                    libraries_data[f"{lib_id}-attribute_{op_key}_custom"] = _encode_json(custom_values[1:])
+
+        if order or custom_values:
+            report.add("imported", f"libraries.{lib_name}.operations.{op_key}")
+            return True, True
+
+        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "No importable values found.")
+        return True, False
+
+    def _handle_toggle_select_operation(
+        lib_id: str,
+        lib_name: str,
+        op_key: str,
+        op_value: Any,
+    ) -> tuple[bool, bool]:
+        definition = toggle_select_defs.get(op_key)
+        if not definition:
+            return False, False
+
+        select_key = definition.get("select_key")
+        select_options = set(definition.get("select_options") or [])
+        toggle_keys = set(definition.get("toggle_keys") or [])
+        toggle_aliases = {}
+        for key in toggle_keys:
+            toggle_aliases[key] = key
+            if key.startswith(f"{op_key}_"):
+                toggle_aliases[key.replace(f"{op_key}_", "", 1)] = key
+
+        def resolve_toggle_key(raw_key: str) -> str | None:
+            return toggle_aliases.get(raw_key)
+
+        source = None
+        imported_any = False
+
+        if isinstance(op_value, dict):
+            for raw_key, raw_value in op_value.items():
+                key = str(raw_key)
+                if key == "source":
+                    candidate = str(raw_value).strip()
+                    if candidate in select_options:
+                        source = candidate
+                        report.add("imported", f"libraries.{lib_name}.operations.{op_key}.source")
+                        imported_any = True
+                    else:
+                        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}.source")
+                    continue
+                resolved = resolve_toggle_key(key)
+                if resolved:
+                    if helpers.booler(raw_value):
+                        libraries_data[f"{lib_id}-attribute_{resolved}"] = True
+                    report.add("imported", f"libraries.{lib_name}.operations.{op_key}.{key}")
+                    imported_any = True
+                else:
+                    report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}.{key}")
+            if source and select_key:
+                libraries_data[f"{lib_id}-attribute_{select_key}"] = source
+            return True, imported_any
+
+        if isinstance(op_value, list):
+            for idx, item in enumerate(op_value):
+                item_path = f"libraries.{lib_name}.operations.{op_key}[{idx}]"
+                if isinstance(item, str):
+                    text = item.strip()
+                    if text in select_options:
+                        source = text
+                        report.add("imported", item_path)
+                        imported_any = True
+                        continue
+                    resolved = resolve_toggle_key(text)
+                    if resolved:
+                        libraries_data[f"{lib_id}-attribute_{resolved}"] = True
+                        report.add("imported", item_path)
+                        imported_any = True
+                        continue
+                report.add("unmapped", item_path, "Unsupported option.")
+            if source and select_key:
+                libraries_data[f"{lib_id}-attribute_{select_key}"] = source
+            if imported_any:
+                report.add("imported", f"libraries.{lib_name}.operations.{op_key}")
+            return True, imported_any
+
+        if isinstance(op_value, str):
+            candidate = op_value.strip()
+            if candidate in select_options and select_key:
+                libraries_data[f"{lib_id}-attribute_{select_key}"] = candidate
+                report.add("imported", f"libraries.{lib_name}.operations.{op_key}")
+                return True, True
+            else:
+                report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "Unsupported option.")
+                return True, False
+
+        report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "Unsupported operation format.")
+        return True, False
 
     for section in SIMPLE_SECTIONS:
         if section not in config_data:
@@ -424,9 +859,13 @@ def prepare_import_payload(
                     if key in template_vars or key in special_template_vars:
                         if key == "placeholder_imdb_id":
                             name = f"{lib_id}-attribute_template_variables[{key}]"
+                        elif key == "sep_style":
+                            name = f"{lib_id}-template_variables[{key}]"
+                            libraries_data[name] = value
+                            libraries_data[f"{lib_id}-template_variables[use_separator]"] = value
                         else:
                             name = f"{lib_id}-template_variables[{key}]"
-                        libraries_data[name] = value
+                            libraries_data[name] = value
                         report.add("imported", f"libraries.{lib_name}.template_variables.{key}")
                     else:
                         report.add(
@@ -562,19 +1001,33 @@ def prepare_import_payload(
             elif overlay_files is not None:
                 report.add("unmapped", f"libraries.{lib_name}.overlay_files", "Unsupported overlay_files format.")
 
-            # Operations (simple values only)
+            # Operations
             operations = lib_cfg.get("operations")
             if isinstance(operations, dict):
+                imported_ops = False
                 for key, value in operations.items():
                     if key in simple_attrs and not isinstance(value, (dict, list)):
                         libraries_data[f"{lib_id}-attribute_{key}"] = value
                         report.add("imported", f"libraries.{lib_name}.operations.{key}")
-                    else:
-                        report.add(
-                            "unmapped",
-                            f"libraries.{lib_name}.operations.{key}",
-                            "Complex operation not supported for import.",
-                        )
+                        imported_ops = True
+                        continue
+
+                    handled, imported = _handle_mass_update_operation(lib_id, str(lib_name), key, value)
+                    if handled:
+                        imported_ops = imported_ops or imported
+                        continue
+
+                    handled, imported = _handle_toggle_select_operation(lib_id, str(lib_name), key, value)
+                    if handled:
+                        imported_ops = imported_ops or imported
+                        continue
+                    report.add(
+                        "unmapped",
+                        f"libraries.{lib_name}.operations.{key}",
+                        "Complex operation not supported for import.",
+                    )
+                if imported_ops:
+                    report.add("imported", f"libraries.{lib_name}.operations")
             elif operations is not None:
                 report.add("unmapped", f"libraries.{lib_name}.operations", "Unsupported operations format.")
 

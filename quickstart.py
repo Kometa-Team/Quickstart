@@ -1340,6 +1340,18 @@ def import_config_preview():
     if extracted_fonts:
         for font in extracted_fonts:
             report_lines.append(f"imported: bundle.fonts.{font}")
+    annotated_body = importer.annotate_yaml_with_report(config_text, report_lines)
+    annotated_report = ""
+    if annotated_body:
+        legend_lines = [
+            "# Legend:",
+            "# mapped = imported into Quickstart",
+            "# partial = some fields imported, some not",
+            "# unmapped = unsupported or missing mapping",
+            "# skipped = ignored or not applicable",
+            "",
+        ]
+        annotated_report = "\n".join(legend_lines) + annotated_body
 
     previous_path = session.get("import_preview_path")
     if previous_path:
@@ -1368,6 +1380,7 @@ def import_config_preview():
                 "fonts": extracted_fonts,
                 "report_lines": report_lines,
                 "report_summary": report.summary(),
+                "annotated_report": annotated_report,
             },
             handle,
             ensure_ascii=True,
@@ -1407,6 +1420,7 @@ def import_config_preview():
         config_name=config_name,
         summary=report.summary(),
         report_lines=lines,
+        annotated_report=annotated_report,
         report_url=f"/import-config/report?token={token}",
         library_mapping=library_mapping,
         plex_libraries=plex_libraries,
@@ -1432,15 +1446,26 @@ def import_config_report():
     config_name = cached.get("config_name") or "import"
     report_lines = cached.get("report_lines") or []
     summary = cached.get("report_summary") or {}
+    annotated_report = cached.get("annotated_report")
 
-    header = [
-        f"Import Report for {config_name}",
-        f"Imported: {summary.get('imported', 0)}",
-        f"Unmapped: {summary.get('unmapped', 0)}",
-        f"Skipped: {summary.get('skipped', 0)}",
-        "",
-    ]
-    text = "\n".join(header + [str(line) for line in report_lines])
+    if annotated_report:
+        header = [
+            f"# Import Report for {config_name}",
+            f"# Imported: {summary.get('imported', 0)}",
+            f"# Unmapped: {summary.get('unmapped', 0)}",
+            f"# Skipped: {summary.get('skipped', 0)}",
+            "",
+        ]
+        text = "\n".join(header) + str(annotated_report)
+    else:
+        header = [
+            f"Import Report for {config_name}",
+            f"Imported: {summary.get('imported', 0)}",
+            f"Unmapped: {summary.get('unmapped', 0)}",
+            f"Skipped: {summary.get('skipped', 0)}",
+            "",
+        ]
+        text = "\n".join(header + [str(line) for line in report_lines])
     response = app.response_class(text, mimetype="text/plain")
     response.headers["Content-Disposition"] = f'attachment; filename="{config_name}_import_report.txt"'
     return response
