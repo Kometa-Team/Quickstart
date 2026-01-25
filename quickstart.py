@@ -1271,21 +1271,19 @@ def import_config_preview():
         dummy = persistence.get_dummy_data("plex")
         default_plex_url = dummy.get("url", "")
         default_plex_token = dummy.get("token", "")
-        if (
-            not plex_url
-            or not plex_token
-            or plex_url == default_plex_url
-            or plex_token == default_plex_token
-        ):
+        if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
             if extracted_dir:
                 try:
                     shutil.rmtree(extracted_dir)
                 except OSError:
                     pass
-            return jsonify(
-                success=False,
-                message="Plex validation is required to import library settings. Please validate Plex first.",
-            ), 400
+            return (
+                jsonify(
+                    success=False,
+                    message="Plex validation is required to import library settings. Please validate Plex first.",
+                ),
+                400,
+            )
 
         plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
         plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
@@ -1296,10 +1294,13 @@ def import_config_preview():
                 except OSError:
                     pass
             error_message = plex_result.get("error") if isinstance(plex_result, dict) else None
-            return jsonify(
-                success=False,
-                message=error_message or "Plex validation failed.",
-            ), 400
+            return (
+                jsonify(
+                    success=False,
+                    message=error_message or "Plex validation failed.",
+                ),
+                400,
+            )
 
         persistence.update_stored_plex_libraries(
             "010-plex",
@@ -1316,10 +1317,13 @@ def import_config_preview():
                     shutil.rmtree(extracted_dir)
                 except OSError:
                     pass
-            return jsonify(
-                success=False,
-                message="No movie or show libraries found in Plex.",
-            ), 400
+            return (
+                jsonify(
+                    success=False,
+                    message="No movie or show libraries found in Plex.",
+                ),
+                400,
+            )
 
     library_types, library_inference, _ = importer.build_library_type_plan(parsed, movie_names, show_names)
     payload, report = importer.prepare_import_payload(
@@ -1520,25 +1524,26 @@ def import_config_confirm():
             dummy = persistence.get_dummy_data("plex")
             default_plex_url = dummy.get("url", "")
             default_plex_token = dummy.get("token", "")
-            if (
-                not plex_url
-                or not plex_token
-                or plex_url == default_plex_url
-                or plex_token == default_plex_token
-            ):
-                return jsonify(
-                    success=False,
-                    message="Plex validation is required to import library settings. Please validate Plex first.",
-                ), 400
+            if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
+                return (
+                    jsonify(
+                        success=False,
+                        message="Plex validation is required to import library settings. Please validate Plex first.",
+                    ),
+                    400,
+                )
 
             plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
             plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
             if not plex_result or not plex_result.get("validated"):
                 error_message = plex_result.get("error") if isinstance(plex_result, dict) else None
-                return jsonify(
-                    success=False,
-                    message=error_message or "Plex validation failed.",
-                ), 400
+                return (
+                    jsonify(
+                        success=False,
+                        message=error_message or "Plex validation failed.",
+                    ),
+                    400,
+                )
 
             persistence.update_stored_plex_libraries(
                 "010-plex",
@@ -1549,10 +1554,13 @@ def import_config_confirm():
             movie_names = parse_list(plex_result.get("movie_libraries", []))
             show_names = parse_list(plex_result.get("show_libraries", []))
             if not movie_names and not show_names:
-                return jsonify(
-                    success=False,
-                    message="No movie or show libraries found in Plex.",
-                ), 400
+                return (
+                    jsonify(
+                        success=False,
+                        message="No movie or show libraries found in Plex.",
+                    ),
+                    400,
+                )
         else:
             plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
             movie_names = parse_list(plex_data.get("tmp_movie_libraries", ""))
@@ -1562,10 +1570,13 @@ def import_config_confirm():
 
         if isinstance(libraries_payload, dict):
             if needs_plex and not plex_names:
-                return jsonify(
-                    success=False,
-                    message="Plex libraries are unavailable. Validate Plex and preview the import again.",
-                ), 400
+                return (
+                    jsonify(
+                        success=False,
+                        message="Plex libraries are unavailable. Validate Plex and preview the import again.",
+                    ),
+                    400,
+                )
 
             missing = []
             invalid_targets = []
@@ -1600,22 +1611,31 @@ def import_config_confirm():
                 mapped_libraries[target] = lib_cfg
 
             if missing:
-                return jsonify(
-                    success=False,
-                    message=f"Library mapping required for: {', '.join(missing)}",
-                ), 400
+                return (
+                    jsonify(
+                        success=False,
+                        message=f"Library mapping required for: {', '.join(missing)}",
+                    ),
+                    400,
+                )
             if invalid_targets:
                 unique_targets = sorted(set(invalid_targets))
-                return jsonify(
-                    success=False,
-                    message=f"Invalid Plex libraries selected: {', '.join(unique_targets)}",
-                ), 400
+                return (
+                    jsonify(
+                        success=False,
+                        message=f"Invalid Plex libraries selected: {', '.join(unique_targets)}",
+                    ),
+                    400,
+                )
             if duplicates:
                 unique_targets = sorted(set(duplicates))
-                return jsonify(
-                    success=False,
-                    message=f"Multiple imports mapped to the same Plex library: {', '.join(unique_targets)}",
-                ), 400
+                return (
+                    jsonify(
+                        success=False,
+                        message=f"Multiple imports mapped to the same Plex library: {', '.join(unique_targets)}",
+                    ),
+                    400,
+                )
 
             if mapped_libraries:
                 config_data["libraries"] = mapped_libraries

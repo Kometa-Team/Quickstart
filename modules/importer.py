@@ -6,7 +6,6 @@ from ruamel.yaml import YAML
 
 from modules import helpers
 
-
 SIMPLE_SECTIONS = {
     "plex",
     "tmdb",
@@ -277,10 +276,10 @@ def _build_overlay_index(overlay_config: list[dict]) -> tuple[dict[str, dict], d
                     new_media = overlay.get("media_types")
                     if isinstance(existing_media, list) or isinstance(new_media, list):
                         merged = []
-                        for entry in (existing_media or []):
+                        for entry in existing_media or []:
                             if entry not in merged:
                                 merged.append(entry)
-                        for entry in (new_media or []):
+                        for entry in new_media or []:
                             if entry not in merged:
                                 merged.append(entry)
                         existing["media_types"] = merged
@@ -358,11 +357,7 @@ def _build_attribute_sets(
                             value = str(option[0]).strip()
                             if value:
                                 select_options.add(value)
-                toggle_keys = {
-                    str(toggle.get("key"))
-                    for toggle in section.get("toggles", [])
-                    if isinstance(toggle, dict) and toggle.get("key")
-                }
+                toggle_keys = {str(toggle.get("key")) for toggle in section.get("toggles", []) if isinstance(toggle, dict) and toggle.get("key")}
                 existing = toggle_select_defs.setdefault(
                     str(prefix),
                     {"select_key": select_key, "toggle_keys": set(), "select_options": set()},
@@ -643,11 +638,7 @@ def prepare_import_payload(
         items = _normalize_op_items(op_value)
 
         for idx, item in enumerate(items):
-            item_path = (
-                f"libraries.{lib_name}.operations.{op_key}[{idx}]"
-                if isinstance(op_value, list)
-                else f"libraries.{lib_name}.operations.{op_key}"
-            )
+            item_path = f"libraries.{lib_name}.operations.{op_key}[{idx}]" if isinstance(op_value, list) else f"libraries.{lib_name}.operations.{op_key}"
             if isinstance(item, list):
                 for entry in item:
                     custom_value = _clean_custom_value(entry)
