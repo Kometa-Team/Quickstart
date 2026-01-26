@@ -1783,7 +1783,7 @@
           "Show this Collection and its Items"
         ]
       ],
-      "yml_location": "attribute"
+      "yml_location": "template_variables"
     },
     {
       "prefix": "update_blank_track_titles",

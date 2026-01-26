@@ -1,5 +1,5 @@
 <!--logo-start-->
-![Quickstart Logo](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/logo.webp)
+![Quickstart Logo](static/images/logo.webp)
 <!--logo-end-->
 <!--shields-start-->
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/Kometa-Team/Quickstart?style=plastic)](https://github.com/Kometa-Team/Quickstart/releases)
@@ -19,6 +19,8 @@
 ## ✨ Features
 
 Kometa Quickstart is more than just a YAML generator - it's a full interactive environment for configuring, validating, and running Kometa. Key features include:
+
+![Quickstart Welcome Page](static/images/readme/quickstart-welcome.png)
 
 ### Multiple Ways to Run Quickstart
 - **Local Python:** Works on Windows, macOS, and Linux
@@ -41,14 +43,20 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Dynamic Toggles & Templates:** Rich UI for enabling collections, overlays, and builder template variables
 - **Filtered Page Search:** Find matches on Libraries and Settings pages and auto-expand matching sections
 
+![Libraries Page](static/images/readme/libraries-page.png)
+
 ### Built-in Kometa Runner
 - **One-Click Execution:** The final page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
 - **Run Command Builder:** Dynamically builds and previews CLI commands with flags like `--run`, `--operations-only`, `--times`, etc.
 - **Process Management:** Start, stop, and monitor Kometa runs directly from the web interface
 
+![Final Validation Runner](static/images/readme/final-validation-runner.png)
+
 ### Live Previews & Assets
 - **Overlay Preview Generator:** Combines overlays and template variables into real-time preview images
 - **Custom Artwork Uploads:** Drag-and-drop or fetch library images from a URL so you can see what the overlays look like on your favorite poster.
+
+![Overlay Preview Canvas](static/images/readme/overlay-preview.png)
 
 ### Automatic Updates
 - **Quickstart Self-Updater:** One-click update to latest master or develop branch
@@ -62,6 +70,17 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Stable run tracking:** Runs are deduped with a stable `run_key` and cached in `config/cache/logscan/ingest_cache.json`.
 - **Missing people requests:** Deduped output is written to `config/cache/logscan/meta_people_missing.log` (metadata in `meta_people_missing.json`).
 - **UI helpers:** Sortable table headers, config filter, analytics breakdowns, and per-run “Report” recommendations.
+
+### Logscan Analyzer & Analytics Page
+- **Logscan Analyzer:** Parses Kometa `meta.log` files to surface errors, run summaries, and missing items.
+- **Analytics Page:** Interactive dashboard for run history, filters, and per-run recommendations.
+
+![Analytics Page](static/images/readme/analytics-page.png)
+
+### Import Existing Config
+- **Import Config:** Bring an existing Kometa YAML into Quickstart to prefill settings, libraries, and templates.
+
+![Import Config](static/images/readme/import-config.png)
 
 ### Quickstart Scope
 - **Quickstart support vs Kometa support:** The Support Info workflow is for Quickstart issues. Kometa runtime issues should be handled in Kometa support channels.
@@ -86,11 +105,17 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
   - [Multiple Ways to Run Quickstart](#multiple-ways-to-run-quickstart)
   - [Safe Playground Mode](#safe-playground-mode)
   - [Config Management \& History](#config-management--history)
-- [Guided, Validated Workflow](#guided-validated-workflow)
-- [Built-in Kometa Runner](#built-in-kometa-runner)
-- [Live Previews \& Assets](#live-previews--assets)
-- [Automatic Updates](#automatic-updates)
-- [Themes \& Personalization](#themes--personalization)
+  - [Guided, Validated Workflow](#guided-validated-workflow)
+  - [Built-in Kometa Runner](#built-in-kometa-runner)
+  - [Live Previews \& Assets](#live-previews--assets)
+  - [Automatic Updates](#automatic-updates)
+  - [Themes \& Personalization](#themes--personalization)
+  - [Analytics](#analytics)
+  - [Logscan Analyzer \& Analytics Page](#logscan-analyzer--analytics-page)
+  - [Import Existing Config](#import-existing-config)
+  - [Quickstart Scope](#quickstart-scope)
+  - [Support \& Troubleshooting](#support--troubleshooting)
+  - [Data \& Privacy (Quickstart)](#data--privacy-quickstart)
 - [Table of Contents](#table-of-contents)
 - [Prerequisites](#prerequisites)
 - [Installing Quickstart](#installing-quickstart)
@@ -131,7 +156,7 @@ There are five primary ways to install and run Quickstart, listed from simplest 
 
 - Manage Quickstart from the system tray icon.
 
-![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher.png)
+![image](static/images/readme/system-tray-launcher.png)
 
 ## 2 - Installing on Mac
 
@@ -147,11 +172,11 @@ There are five primary ways to install and run Quickstart, listed from simplest 
 
 - You may need to allow unsigned applications in macOS System Settings under Privacy & Security.
 
-![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/macos-settings-privacy-and-security.png)
+![image](static/images/readme/macos-settings-privacy-and-security.png)
 
 -  Manage Quickstart from the system tray icon.
 
-![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher-mac.png)
+![image](static/images/readme/system-tray-launcher-mac.png)
 
 ## 3 - Installing on Ubuntu (Linux)
 
@@ -167,7 +192,7 @@ There are five primary ways to install and run Quickstart, listed from simplest 
 
 - Manage Quickstart from the system tray icon.
 
-![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher-ubuntu.png)
+![image](static/images/readme/system-tray-launcher-ubuntu.png)
 
 <!--body2-end-->
 > [!WARNING]
@@ -191,7 +216,7 @@ sudo dnf install gnome-shell-extension-appindicator
 ```
 
 Then enable it:
-![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/extension-manager.png)
+![image](static/images/readme/extension-manager.png)
 
 Open Extensions app (or “Extension Manager” if you use it)
 
@@ -199,7 +224,7 @@ Enable AppIndicator and KStatusNotifierItem Support (After a new installation, y
 
 After that, the tray icon usually appears.
 
-![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher-fedora.png)
+![image](static/images/readme/system-tray-launcher-fedora.png)
 
 <!--body3-start-->
 ## 4 - Running in Docker
@@ -305,13 +330,13 @@ python3 quickstart.py
 
 At this point, Quickstart has been installed and you should see something similar to this:
 
-![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/running-in-pwsh.png)
+![image](static/images/readme/running-in-pwsh.png)
 
 Quickstart should launch a browser automatically. If you are on a headless machine (Docker or Linux without a GUI), open a browser and navigate to the IP address of the machine running Quickstart; you should be taken to the Quickstart Welcome Page.
 
 - Manage Quickstart from the system tray icon
 
-![image](https://github.com/Kometa-Team/Quickstart/raw/master/static/images/system-tray-launcher.png)
+![image](static/images/readme/system-tray-launcher.png)
 
 ### Debugging & Changing Ports
 
