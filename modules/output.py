@@ -1192,7 +1192,7 @@ def build_libraries_section(
             template_vars["language"] = language_value
 
         if has_collectionless:
-            template_vars["collection_mode"] = "hide_items"
+            template_vars["collection_mode"] = "hide"
 
         entry["template_variables"] = template_vars
 
