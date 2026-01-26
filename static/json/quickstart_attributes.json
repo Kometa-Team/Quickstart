@@ -1750,6 +1750,42 @@
       "yml_location": "attribute"
     },
     {
+      "prefix": "collection_mode",
+      "type": "select",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Collection Mode",
+      "wiki": "https://kometa.wiki/en/nightly/files/updates/?h=collection_mode",
+      "description": "Changes the Collection Mode.",
+      "tooltip_variant": "info",
+      "options": [
+        [
+          "",
+          "None"
+        ],
+        [
+          "default",
+          "Library Default"
+        ],
+        [
+          "hide",
+          "Hide Collection"
+        ],
+        [
+          "hide_items",
+          "Hide Items in this Collection"
+        ],
+        [
+          "show_items",
+          "Show this Collection and its Items"
+        ]
+      ],
+      "yml_location": "attribute"
+    },
+    {
       "prefix": "update_blank_track_titles",
       "type": "boolean_toggle",
       "accordion": "library",
