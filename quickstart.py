@@ -1288,6 +1288,8 @@ def import_config_preview():
         imported_plex_url, imported_plex_token = parse_plex_credentials(parsed)
         has_form = bool(form_plex_url and form_plex_token)
         has_imported = bool(imported_plex_url and imported_plex_token)
+        used_plex_url = ""
+        used_plex_token = ""
 
         if not has_form and not has_imported:
             if extracted_dir:
@@ -1312,6 +1314,8 @@ def import_config_preview():
         plex_result = None
         last_error = None
         if has_form:
+            used_plex_url = form_plex_url
+            used_plex_token = form_plex_token
             plex_response = validations.validate_plex_server({"plex_url": form_plex_url, "plex_token": form_plex_token})
             plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
             if not plex_result or not plex_result.get("validated"):
@@ -1333,6 +1337,8 @@ def import_config_preview():
                     400,
                 )
         else:
+            used_plex_url = imported_plex_url
+            used_plex_token = imported_plex_token
             plex_response = validations.validate_plex_server({"plex_url": imported_plex_url, "plex_token": imported_plex_token})
             plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
             if not plex_result or not plex_result.get("validated"):
@@ -1356,6 +1362,8 @@ def import_config_preview():
                     ),
                     400,
                 )
+        session["import_preview_plex_url"] = used_plex_url
+        session["import_preview_plex_token"] = used_plex_token
         movie_names = parse_list(plex_result.get("movie_libraries", []))
         show_names = parse_list(plex_result.get("show_libraries", []))
         plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
@@ -1568,15 +1576,13 @@ def import_config_confirm():
         libraries_payload = config_data.get("libraries")
         needs_plex = isinstance(libraries_payload, dict) and bool(libraries_payload)
         if needs_plex:
-            plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
-            dummy = persistence.get_dummy_data("plex")
-            default_plex_url = dummy.get("url", "")
-            default_plex_token = dummy.get("token", "")
-            if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
+            plex_url = session.get("import_preview_plex_url") or ""
+            plex_token = session.get("import_preview_plex_token") or ""
+            if not plex_url or not plex_token:
                 return (
                     jsonify(
                         success=False,
-                        message="Plex validation is required to import library settings. Please validate Plex first.",
+                        message="Plex credentials are required to confirm the import. Re-run Preview Import.",
                     ),
                     400,
                 )
@@ -1588,17 +1594,10 @@ def import_config_confirm():
                 return (
                     jsonify(
                         success=False,
-                        message=error_message or "Plex validation failed.",
+                        message=error_message or "Plex validation failed. Re-run Preview Import.",
                     ),
                     400,
                 )
-
-            persistence.update_stored_plex_libraries(
-                "010-plex",
-                plex_result.get("movie_libraries", []),
-                plex_result.get("show_libraries", []),
-                plex_result.get("music_libraries", []),
-            )
             movie_names = parse_list(plex_result.get("movie_libraries", []))
             show_names = parse_list(plex_result.get("show_libraries", []))
             if not movie_names and not show_names:
@@ -1741,6 +1740,8 @@ def import_config_confirm():
     session.pop("import_preview_path", None)
     session.pop("import_preview_name", None)
     session.pop("import_preview_fonts_dir", None)
+    session.pop("import_preview_plex_url", None)
+    session.pop("import_preview_plex_token", None)
     session["config_name"] = config_name
 
     return jsonify(
