@@ -1301,10 +1301,7 @@ def import_config_preview():
                 jsonify(
                     success=False,
                     needs_plex_credentials=True,
-                    message=(
-                        "Plex credentials are required to import library settings. "
-                        "Enter a Plex URL and token to continue."
-                    ),
+                    message=("Plex credentials are required to import library settings. " "Enter a Plex URL and token to continue."),
                     plex_url="",
                     plex_token="",
                 ),
@@ -1353,10 +1350,7 @@ def import_config_preview():
                     jsonify(
                         success=False,
                         needs_plex_credentials=True,
-                        message=(
-                            "Plex credentials in the import file could not be validated. "
-                            "Please enter a valid Plex URL and token."
-                        ),
+                        message=("Plex credentials in the import file could not be validated. " "Please enter a valid Plex URL and token."),
                         plex_url=imported_plex_url or "",
                         plex_token=imported_plex_token or "",
                     ),
