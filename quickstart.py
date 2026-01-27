@@ -1264,6 +1264,19 @@ def import_config_preview():
             return {str(v).strip() for v in value if str(v).strip()}
         return set()
 
+    def parse_plex_credentials(config_data):
+        plex_block = config_data.get("plex", {}) if isinstance(config_data, dict) else {}
+        if not isinstance(plex_block, dict):
+            return "", ""
+        url = plex_block.get("url") or plex_block.get("plex_url") or ""
+        token = plex_block.get("token") or plex_block.get("plex_token") or ""
+        return str(url).strip(), str(token).strip()
+
+    def parse_form_plex_credentials(form_data):
+        url = form_data.get("plex_url", "") or ""
+        token = form_data.get("plex_token", "") or ""
+        return str(url).strip(), str(token).strip()
+
     needs_plex = isinstance(parsed.get("libraries"), dict) and bool(parsed.get("libraries"))
     plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
     movie_names = parse_list(plex_data.get("tmp_movie_libraries", ""))
@@ -1271,11 +1284,12 @@ def import_config_preview():
     plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
 
     if needs_plex:
-        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
-        dummy = persistence.get_dummy_data("plex")
-        default_plex_url = dummy.get("url", "")
-        default_plex_token = dummy.get("token", "")
-        if not plex_url or not plex_token or plex_url == default_plex_url or plex_token == default_plex_token:
+        form_plex_url, form_plex_token = parse_form_plex_credentials(request.form or {})
+        imported_plex_url, imported_plex_token = parse_plex_credentials(parsed)
+        has_form = bool(form_plex_url and form_plex_token)
+        has_imported = bool(imported_plex_url and imported_plex_token)
+
+        if not has_form and not has_imported:
             if extracted_dir:
                 try:
                     shutil.rmtree(extracted_dir)
@@ -1284,34 +1298,64 @@ def import_config_preview():
             return (
                 jsonify(
                     success=False,
-                    message="Plex validation is required to import library settings. Please validate Plex first.",
+                    needs_plex_credentials=True,
+                    message=(
+                        "Plex credentials are required to import library settings. "
+                        "Enter a Plex URL and token to continue."
+                    ),
+                    plex_url="",
+                    plex_token="",
                 ),
                 400,
             )
 
-        plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
-        plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
-        if not plex_result or not plex_result.get("validated"):
-            if extracted_dir:
-                try:
-                    shutil.rmtree(extracted_dir)
-                except OSError:
-                    pass
-            error_message = plex_result.get("error") if isinstance(plex_result, dict) else None
-            return (
-                jsonify(
-                    success=False,
-                    message=error_message or "Plex validation failed.",
-                ),
-                400,
-            )
-
-        persistence.update_stored_plex_libraries(
-            "010-plex",
-            plex_result.get("movie_libraries", []),
-            plex_result.get("show_libraries", []),
-            plex_result.get("music_libraries", []),
-        )
+        plex_result = None
+        last_error = None
+        if has_form:
+            plex_response = validations.validate_plex_server({"plex_url": form_plex_url, "plex_token": form_plex_token})
+            plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+            if not plex_result or not plex_result.get("validated"):
+                if isinstance(plex_result, dict):
+                    last_error = plex_result.get("error")
+                if extracted_dir:
+                    try:
+                        shutil.rmtree(extracted_dir)
+                    except OSError:
+                        pass
+                return (
+                    jsonify(
+                        success=False,
+                        needs_plex_credentials=True,
+                        message=last_error or "Plex validation failed. Please enter valid credentials.",
+                        plex_url=form_plex_url or "",
+                        plex_token=form_plex_token or "",
+                    ),
+                    400,
+                )
+        else:
+            plex_response = validations.validate_plex_server({"plex_url": imported_plex_url, "plex_token": imported_plex_token})
+            plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+            if not plex_result or not plex_result.get("validated"):
+                if isinstance(plex_result, dict):
+                    last_error = plex_result.get("error")
+                if extracted_dir:
+                    try:
+                        shutil.rmtree(extracted_dir)
+                    except OSError:
+                        pass
+                return (
+                    jsonify(
+                        success=False,
+                        needs_plex_credentials=True,
+                        message=(
+                            "Plex credentials in the import file could not be validated. "
+                            "Please enter a valid Plex URL and token."
+                        ),
+                        plex_url=imported_plex_url or "",
+                        plex_token=imported_plex_token or "",
+                    ),
+                    400,
+                )
         movie_names = parse_list(plex_result.get("movie_libraries", []))
         show_names = parse_list(plex_result.get("show_libraries", []))
         plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}

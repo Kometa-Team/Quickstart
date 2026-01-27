@@ -982,11 +982,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const scrollTop = window.pageYOffset || doc.scrollTop || 0
     const canScroll = scrollHeight > clientHeight + threshold
     controls.classList.toggle('is-visible', canScroll)
-    if (!canScroll) return
+    controls.setAttribute('aria-hidden', canScroll ? 'false' : 'true')
+    if (!canScroll) {
+      if (document.activeElement === topBtn || document.activeElement === bottomBtn) {
+        document.activeElement.blur()
+      }
+      topBtn.tabIndex = -1
+      bottomBtn.tabIndex = -1
+      return
+    }
     const atTop = scrollTop <= threshold
     const atBottom = scrollTop + clientHeight >= scrollHeight - threshold
     topBtn.classList.toggle('is-hidden', atTop)
     bottomBtn.classList.toggle('is-hidden', atBottom)
+    topBtn.tabIndex = atTop ? -1 : 0
+    bottomBtn.tabIndex = atBottom ? -1 : 0
   }
 
   const onScroll = () => {

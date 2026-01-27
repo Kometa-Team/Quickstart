@@ -73,6 +73,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const importConfigModalEl = document.getElementById('importConfigModal')
   const importConfigFile = document.getElementById('importConfigFile')
   const importConfigName = document.getElementById('importConfigName')
+  const importPlexCredentials = document.getElementById('importPlexCredentials')
+  const importPlexUrl = document.getElementById('importPlexUrl')
+  const importPlexToken = document.getElementById('importPlexToken')
+  const importPlexTokenToggle = document.getElementById('importPlexTokenToggle')
   const importConfigError = document.getElementById('importConfigError')
   const previewImportButton = document.getElementById('previewImportButton')
   const confirmImportButton = document.getElementById('confirmImportButton')
@@ -88,6 +92,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
   let currentAction = ''
   let importToken = null
+
+  if (importPlexTokenToggle && importPlexToken) {
+    if (!importPlexToken.value.trim()) {
+      importPlexToken.setAttribute('type', 'text')
+      importPlexTokenToggle.innerHTML = '<i class="bi bi-eye-slash"></i>'
+    }
+    importPlexTokenToggle.addEventListener('click', () => {
+      const isPassword = importPlexToken.getAttribute('type') === 'password'
+      importPlexToken.setAttribute('type', isPassword ? 'text' : 'password')
+      importPlexTokenToggle.innerHTML = isPassword ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>'
+    })
+  }
 
   function updateButtonState () {
     const isAddConfig = configSelector.value === 'add_config'
@@ -420,10 +436,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!message) {
       importConfigError.classList.add('d-none')
       importConfigError.textContent = ''
+      if (importPlexCredentials) importPlexCredentials.classList.add('d-none')
       return
     }
     importConfigError.classList.remove('d-none')
     importConfigError.textContent = message
+    if (importPlexCredentials) {
+      const needsPlex = /plex/i.test(message)
+      importPlexCredentials.classList.toggle('d-none', !needsPlex)
+    }
   }
 
   function updateImportConfirmState () {
@@ -552,6 +573,9 @@ document.addEventListener('DOMContentLoaded', function () {
       importConfigName.value = ''
       removeValidationMessages(importConfigName)
     }
+    if (importPlexCredentials) importPlexCredentials.classList.add('d-none')
+    if (importPlexUrl) importPlexUrl.value = ''
+    if (importPlexToken) importPlexToken.value = ''
     if (importPreviewSection) importPreviewSection.classList.add('d-none')
     if (importReport) importReport.textContent = ''
     if (importSummary) importSummary.textContent = ''
@@ -610,14 +634,31 @@ document.addEventListener('DOMContentLoaded', function () {
         const formData = new FormData()
         formData.append('file', importConfigFile.files[0])
         formData.append('config_name', importConfigName.value)
+        if (importPlexUrl && importPlexUrl.value.trim()) {
+          formData.append('plex_url', importPlexUrl.value.trim())
+        }
+        if (importPlexToken && importPlexToken.value.trim()) {
+          formData.append('plex_token', importPlexToken.value.trim())
+        }
         const res = await fetch('/import-config/preview', {
           method: 'POST',
           body: formData
         })
         const data = await res.json()
         if (!res.ok || !data.success) {
-          throw new Error(data.message || 'Preview failed.')
+          if (data && data.needs_plex_credentials && importPlexCredentials) {
+            importPlexCredentials.classList.remove('d-none')
+            if (importPlexUrl && data.plex_url && !importPlexUrl.value.trim()) {
+              importPlexUrl.value = data.plex_url
+            }
+            if (importPlexToken && data.plex_token && !importPlexToken.value.trim()) {
+              importPlexToken.value = data.plex_token
+            }
+          }
+          setImportError(data.message || 'Preview failed.')
+          return
         }
+        if (importPlexCredentials) importPlexCredentials.classList.add('d-none')
         importToken = data.token
         if (importPreviewSection) importPreviewSection.classList.remove('d-none')
         if (importReport) {

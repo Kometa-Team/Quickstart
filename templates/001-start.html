@@ -270,6 +270,26 @@
           <label for="importConfigName">Config Name</label>
         </div>
         <div class="form-text">Name must be unique and use lowercase letters, numbers, and underscore only.</div>
+        <div id="importPlexCredentials" class="d-none mt-3">
+          <div class="alert alert-warning py-2 small mb-3" role="alert">
+            Plex credentials are required to map libraries from the import.
+          </div>
+          <div class="input-group mb-2">
+            <span class="input-group-text" style="width: 110px; justify-content: space-between;">
+              Plex URL
+            </span>
+            <input type="text" class="form-control" id="importPlexUrl" placeholder="Plex URL">
+          </div>
+          <div class="input-group mb-2">
+            <span class="input-group-text" style="width: 110px; justify-content: space-between;">
+              Plex Token
+            </span>
+            <input type="password" class="form-control" id="importPlexToken" placeholder="Plex Token">
+            <button class="btn btn-outline-secondary" type="button" id="importPlexTokenToggle" aria-label="Show or hide Plex token">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
         <div id="importConfigError" class="text-danger small mt-2 d-none"></div>
 
         <div id="importPreviewSection" class="d-none mt-3">

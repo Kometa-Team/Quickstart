@@ -79,6 +79,10 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 
 ### Import Existing Config
 - **Import Config:** Bring an existing Kometa YAML into Quickstart to prefill settings, libraries, and templates.
+- **Preview required:** Quickstart always runs a preview before import and shows a line‑by‑line report (`mapped / partial / unmapped / skipped`).
+- **Plex credentials prompt:** If the import contains libraries, Plex validation is required for mapping. Quickstart will prompt for Plex URL/token if none are present; if the creds in the file fail validation, you’ll be prompted to correct them and re‑run Preview.
+- **Library mapping:** Imported library names must be mapped to Plex libraries (or ignored) before confirming the import.
+- **After import:** Review each page and validate services (Plex/TMDB/etc.) before generating the final config.
 
 ![Import Config](static/images/readme/import-config.png)
 
