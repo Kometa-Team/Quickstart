@@ -974,7 +974,7 @@ def generate_preview():
             overlay_img = Image.open(overlay_path).convert("RGBA")
             base_img.paste(overlay_img, (0, 0), overlay_img)
 
-            # Stack edition overlay below resolution when enabled
+            # Stack edition overlay below resolution when enabled.
             if overlay_id == "overlay_resolution":
                 use_edition = str(template_vars.get("use_edition", "false")).lower() == "true"
                 if use_edition:
