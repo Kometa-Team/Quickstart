@@ -1364,6 +1364,13 @@ def import_config_preview():
                 )
         session["import_preview_plex_url"] = used_plex_url
         session["import_preview_plex_token"] = used_plex_token
+        if used_plex_url and used_plex_token:
+            plex_block = parsed.get("plex")
+            if not isinstance(plex_block, dict):
+                plex_block = {}
+                parsed["plex"] = plex_block
+            plex_block["url"] = used_plex_url
+            plex_block["token"] = used_plex_token
         movie_names = parse_list(plex_result.get("movie_libraries", []))
         show_names = parse_list(plex_result.get("show_libraries", []))
         plex_libraries = {"movie": sorted(movie_names), "show": sorted(show_names)}
