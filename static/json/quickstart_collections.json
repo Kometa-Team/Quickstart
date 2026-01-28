@@ -7226,16 +7226,9 @@
             "label": "New Episodes",
             "tooltip": "Collection of Episodes released in the last 7 days.",
             "tooltip_variant": "info",
-            "type": "toggle"
-          },
-          {
-            "key": "radarr_add_missing_episodes",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
             "type": "toggle",
             "media_types": [
-              "movie"
+              "show"
             ]
           },
           {
@@ -7699,51 +7692,11 @@
             "type": "toggle"
           },
           {
-            "key": "radarr_add_missing_popular",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_popular",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_watched",
             "label": "Plex Watched",
             "tooltip": "Enable the most Watched Movies/Shows on Plex",
             "tooltip_variant": "info",
             "type": "toggle"
-          },
-          {
-            "key": "radarr_add_missing_watched",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_watched",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "style",
