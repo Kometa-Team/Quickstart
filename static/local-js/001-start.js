@@ -1,4 +1,4 @@
-/* global showToast, bootstrap, $ */
+/* global showToast, bootstrap, localStorage, $ */
 
 /* ============================== */
 /* Helpers for the config UI      */
@@ -807,8 +807,8 @@ document.addEventListener('DOMContentLoaded', function () {
   let elapsedTimer = null
   let startedAt = 0
   let baseBtnMsg = '' // e.g., "Downloading… 1.2 GB • 20 MB/s"
-  function startElapsedTimer () {
-    startedAt = Date.now()
+  function startElapsedTimer (resumeAt) {
+    startedAt = Number.isFinite(resumeAt) ? resumeAt : Date.now()
     clearInterval(elapsedTimer)
     elapsedTimer = setInterval(() => {
       const s = Math.floor((Date.now() - startedAt) / 1000)
@@ -822,9 +822,41 @@ document.addEventListener('DOMContentLoaded', function () {
     elapsedTimer = null
   }
 
+  function storeJob (jobId, startedAt) {
+    try {
+      localStorage.setItem(jobStorageKey, jobId)
+      const ts = Number.isFinite(startedAt) ? startedAt : Date.now()
+      localStorage.setItem(jobStartedKey, String(ts))
+    } catch (e) {
+      // ignore storage errors
+    }
+  }
+
+  function getStoredJob () {
+    try {
+      return {
+        jobId: localStorage.getItem(jobStorageKey),
+        startedAt: Number(localStorage.getItem(jobStartedKey))
+      }
+    } catch (e) {
+      return { jobId: null, startedAt: NaN }
+    }
+  }
+
+  function clearStoredJob () {
+    try {
+      localStorage.removeItem(jobStorageKey)
+      localStorage.removeItem(jobStartedKey)
+    } catch (e) {
+      // ignore storage errors
+    }
+  }
+
   // ---------------------------------------------------------------
 
   const isManagedInstall = true
+  const jobStorageKey = 'qs_test_lib_job_id'
+  const jobStartedKey = 'qs_test_lib_job_started_at'
 
   function bytes (n) {
     if (!n && n !== 0) return ''
@@ -840,7 +872,7 @@ document.addEventListener('DOMContentLoaded', function () {
     progWrap.classList.remove('d-none')
     if (indeterminate) {
       progBar.classList.add('progress-bar-striped', 'progress-bar-animated')
-      progBar.style.width = '100%'
+      progBar.style.width = '40%'
       progBar.textContent = ''
     } else {
       progBar.classList.remove('progress-bar-striped', 'progress-bar-animated')
@@ -1027,51 +1059,15 @@ document.addEventListener('DOMContentLoaded', function () {
     // DOWNLOAD / UPDATE flow (start + poll)
     let running = false
 
-    async function startJobAndPoll () {
-      if (running) return
-      running = true
+    function setPhase (msg) {
+      baseBtnMsg = msg // keep only the word; the timer appends (mm:ss)
+      const s = Math.floor((Date.now() - startedAt) / 1000)
+      const m = String(Math.floor(s / 60)).padStart(2, '0')
+      const ss = String(s % 60).padStart(2, '0')
+      updateButtonLabel(`${baseBtnMsg}  (${m}:${ss})`)
+    }
 
-      const isUpdate = updateRow && !updateRow.classList.contains('d-none')
-      baseBtnMsg = isUpdate ? 'Updating…' : 'Downloading…'
-
-      setButtonBusy(`${baseBtnMsg} (00:00)`)
-      if (updateBtn) updateBtn.disabled = true
-      resetProgress()
-      setProgress(0, isUpdate ? 'Preparing update…' : 'Preparing download…')
-      startElapsedTimer()
-
-      // 1) Start job
-      let jobId = null
-      try {
-        const startRes = await fetch('/clone-test-libraries-start', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            quickstart_root: window.pageInfo.quickstart_root,
-            use_config_dir: true
-          })
-        }).then(r => r.json())
-        if (!startRes.success) throw new Error(startRes.message || 'Failed to start')
-        jobId = startRes.job_id
-      } catch (err) {
-        running = false
-        stopElapsedTimer()
-        setButtonIdle('Download Again')
-        if (updateBtn) updateBtn.disabled = false
-        showToast('error', `Failed to start: ${err.message}`)
-        return
-      }
-
-      function setPhase (msg) {
-        baseBtnMsg = msg // keep only the word; the timer appends (mm:ss)
-        // also reflect immediately (don’t wait for the next 1s tick)
-        const s = Math.floor((Date.now() - startedAt) / 1000)
-        const m = String(Math.floor(s / 60)).padStart(2, '0')
-        const ss = String(s % 60).padStart(2, '0')
-        updateButtonLabel(`${baseBtnMsg}  (${m}:${ss})`)
-      }
-
-      // 2) Poll progress
+    async function pollJob (jobId) {
       let lastDownloaded = 0
       let lastTs = Date.now()
 
@@ -1084,7 +1080,13 @@ document.addEventListener('DOMContentLoaded', function () {
           const phase = prog.phase
           if (phase === 'download') {
             const hasTotal = Number.isFinite(prog.total) && prog.total > 0
-            const pct = (prog.pct == null && !hasTotal) ? null : prog.pct
+            const isEstimated = prog.estimated === true
+            const estimateNote = typeof prog.estimated_note === 'string' ? prog.estimated_note : ''
+            let pct = Number.isFinite(prog.pct) ? prog.pct : null
+            if (pct === null && hasTotal && Number.isFinite(prog.downloaded)) {
+              pct = Math.max(0, Math.min(100, Math.floor((prog.downloaded || 0) * 100 / prog.total)))
+            }
+            const estimateTooSmall = isEstimated && Number.isFinite(prog.downloaded) && prog.total > 0 && prog.downloaded > prog.total
             const now = Date.now()
             const dt = Math.max(1, now - lastTs) / 1000
             const deltaBytes = (prog.downloaded || 0) - lastDownloaded
@@ -1092,15 +1094,18 @@ document.addEventListener('DOMContentLoaded', function () {
             lastDownloaded = prog.downloaded || 0
             lastTs = now
 
-            // ✅ BUTTON: only the phase word + timer (kept elsewhere)
             setPhase('Downloading…')
 
-            // Details stay under the bar
-            if (pct === null) {
-              setProgress(100, `Downloading… ${bytes(prog.downloaded || 0)} ${speedStr ? `• ${speedStr}` : ''}`, { indeterminate: true })
+            if (pct === null || estimateTooSmall) {
+              const speedNote = speedStr ? `• ${speedStr}` : ''
+              const sizeNote = estimateTooSmall ? '• estimate too small' : '• size unknown'
+              setProgress(40, `Downloading… ${bytes(prog.downloaded || 0)} ${speedNote} ${sizeNote}`, { indeterminate: true })
             } else {
               const totalStr = hasTotal ? ` / ${bytes(prog.total)}` : ''
-              setProgress(pct, `Downloading… ${bytes(prog.downloaded || 0)}${totalStr} (${pct}%) ${speedStr ? `• ${speedStr}` : ''}`)
+              const estimateLabel = isEstimated
+                ? ` • estimated${estimateNote ? ` (${estimateNote})` : ''}`
+                : ''
+              setProgress(pct, `Downloading… ${bytes(prog.downloaded || 0)}${totalStr} (${pct}%) ${speedStr ? `• ${speedStr}` : ''}${estimateLabel}`)
             }
           } else if (phase === 'extract') {
             setPhase('Extracting…')
@@ -1128,10 +1133,51 @@ document.addEventListener('DOMContentLoaded', function () {
         showToast('error', String(err.message || err))
       } finally {
         running = false
+        clearStoredJob()
         stopElapsedTimer()
         setButtonIdle('Download Again')
         if (updateBtn) updateBtn.disabled = false
       }
+    }
+
+    async function startJobAndPoll () {
+      if (running) return
+      running = true
+
+      const isUpdate = updateRow && !updateRow.classList.contains('d-none')
+      baseBtnMsg = isUpdate ? 'Updating…' : 'Downloading…'
+
+      setButtonBusy(`${baseBtnMsg} (00:00)`)
+      if (updateBtn) updateBtn.disabled = true
+      resetProgress()
+      setProgress(0, isUpdate ? 'Preparing update…' : 'Preparing download…')
+      startElapsedTimer()
+
+      // 1) Start job
+      let jobId = null
+      try {
+        const startRes = await fetch('/clone-test-libraries-start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            quickstart_root: window.pageInfo.quickstart_root,
+            use_config_dir: true
+          })
+        }).then(r => r.json())
+        if (!startRes.success) throw new Error(startRes.message || 'Failed to start')
+        jobId = startRes.job_id
+        const startedAt = Number(startRes.started_at)
+        storeJob(jobId, Number.isFinite(startedAt) ? startedAt * 1000 : undefined)
+      } catch (err) {
+        running = false
+        stopElapsedTimer()
+        setButtonIdle('Download Again')
+        if (updateBtn) updateBtn.disabled = false
+        showToast('error', `Failed to start: ${err.message}`)
+        return
+      }
+
+      await pollJob(jobId)
     }
 
     // Buttons
@@ -1146,6 +1192,48 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault()
         startJobAndPoll()
       })
+    }
+
+    // Resume any in-flight job after refresh/navigation
+    function resumeJob (jobId, startedAtMs) {
+      running = true
+      baseBtnMsg = 'Resuming…'
+      setButtonBusy(`${baseBtnMsg} (00:00)`)
+      if (updateBtn) updateBtn.disabled = true
+      resetProgress()
+      setProgress(40, 'Resuming download…', { indeterminate: true })
+      startElapsedTimer(Number.isFinite(startedAtMs) ? startedAtMs : undefined)
+
+      fetch(`/clone-test-libraries-progress?job_id=${encodeURIComponent(jobId)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) throw new Error(data.message || 'Unknown job')
+          return pollJob(jobId)
+        })
+        .catch(() => {
+          running = false
+          clearStoredJob()
+          stopElapsedTimer()
+          setButtonIdle('Download Test Libraries')
+          if (updateBtn) updateBtn.disabled = false
+          resetProgress()
+        })
+    }
+
+    const stored = getStoredJob()
+    if (stored.jobId && !running) {
+      resumeJob(stored.jobId, stored.startedAt)
+    } else {
+      fetch('/clone-test-libraries-active')
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success || !data.active || !data.job_id || running) return
+          const startedAtSec = Number(data.started_at)
+          const startedAtMs = Number.isFinite(startedAtSec) ? startedAtSec * 1000 : undefined
+          storeJob(data.job_id, startedAtMs)
+          resumeJob(data.job_id, startedAtMs)
+        })
+        .catch(() => {})
     }
   }
 })
