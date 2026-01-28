@@ -19254,51 +19254,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Northern Africa",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Northern Africa",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Eastern Africa",
             "label": "Eastern Africa",
             "tooltip": "Collection of Movies that have been filmed in Eastern Africa.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Eastern Africa",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Eastern Africa",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Central Africa",
@@ -19308,51 +19268,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Central Africa",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Central Africa",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Southern Africa",
             "label": "Southern Africa",
             "tooltip": "Collection of Movies that have been filmed in Southern Africa.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Southern Africa",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Southern Africa",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Western Africa",
@@ -19362,51 +19282,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Western Africa",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Western Africa",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Caribbean",
             "label": "Caribbean",
             "tooltip": "Collection of Movies that have been filmed in the Caribbean.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Caribbean",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Caribbean",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Central America",
@@ -19416,51 +19296,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Central America",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Central America",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_South America",
             "label": "South America",
             "tooltip": "Collection of Movies that have been filmed in South America.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_South America",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_South America",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_North America",
@@ -19470,51 +19310,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_North America",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_North America",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Antarctica",
             "label": "Antarctica",
             "tooltip": "Collection of Movies that have been filmed in Antarctica.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Antarctica",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Antarctica",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Central Asia",
@@ -19524,51 +19324,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Central Asia",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Central Asia",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Eastern Asia",
             "label": "Eastern Asia",
             "tooltip": "Collection of Movies that have been filmed in Eastern Asia.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Eastern Asia",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Eastern Asia",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_South Eastern Asia",
@@ -19578,51 +19338,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_South Eastern Asia",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_South Eastern Asia",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Southern Asia",
             "label": "Southern Asia",
             "tooltip": "Collection of Movies that have been filmed in Southern Asia.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Southern Asia",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Southern Asia",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Western Asia",
@@ -19632,51 +19352,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Western Asia",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Western Asia",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Eastern Europe",
             "label": "Eastern Europe",
             "tooltip": "Collection of Movies that have been filmed in Eastern Europe.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Eastern Europe",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Eastern Europe",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Northern Europe",
@@ -19686,51 +19366,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Northern Europe",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Northern Europe",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Southern Europe",
             "label": "Southern Europe",
             "tooltip": "Collection of Movies that have been filmed in Southern Europe.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Southern Europe",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Southern Europe",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Western Europe",
@@ -19740,51 +19380,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Western Europe",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Western Europe",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Australia and New Zealand",
             "label": "Australia and New Zealand",
             "tooltip": "Collection of Movies that have been filmed in Australia and New Zealand.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Australia and New Zealand",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Australia and New Zealand",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Melanesia",
@@ -19794,51 +19394,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Melanesia",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Melanesia",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Micronesia",
             "label": "Micronesia",
             "tooltip": "Collection of Movies that have been filmed in Micronesia.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Micronesia",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Micronesia",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Polynesia",
@@ -19848,51 +19408,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Polynesia",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Polynesia",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_other",
             "label": "Other Regions",
             "tooltip": "Collection of Movies that are in other uncommon Regions.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_other",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_other",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "collection_mode",
@@ -20305,51 +19825,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Africa",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Africa",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Americas",
             "label": "Americas",
             "tooltip": "Collection of Movies filmed in Americas.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Americas",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Americas",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Antarctica",
@@ -20359,51 +19839,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Antarctica",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Antarctica",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Asia",
             "label": "Asia",
             "tooltip": "Collection of Movies filmed in Asia.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_Asia",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Asia",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "use_Europe",
@@ -20413,26 +19853,6 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Europe",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Europe",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_Oceania",
             "label": "Oceania",
             "tooltip": "Collection of Movies filmed in Oceania.",
@@ -20440,51 +19860,11 @@
             "default": true
           },
           {
-            "key": "radarr_add_missing_Oceania",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_Oceania",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_other",
             "label": "Other Continents",
             "tooltip": "Collection of Movies that are in other uncommon Continents.",
             "type": "toggle",
             "default": true
-          },
-          {
-            "key": "radarr_add_missing_other",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_other",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
           },
           {
             "key": "collection_mode",
