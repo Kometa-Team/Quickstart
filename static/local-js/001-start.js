@@ -593,6 +593,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (importConfigModalEl) {
     importConfigModalEl.addEventListener('hidden.bs.modal', resetImportModal)
+    importConfigModalEl.addEventListener('show.bs.modal', () => {
+      if (!importConfigName) return
+      removeValidationMessages(importConfigName)
+      setImportError('')
+      let suggested = ''
+      const selectorValue = configSelector?.value || ''
+      if (selectorValue === 'add_config') {
+        suggested = newConfigInput?.value || ''
+      } else {
+        suggested = selectorValue
+      }
+      suggested = sanitizeConfigName(suggested)
+      importConfigName.value = suggested
+      if (!suggested) return
+      if (isDuplicateName(suggested)) {
+        applyValidationStyles(importConfigName, 'error', 'Name already exists.')
+        setImportError('Config name already exists. Choose a unique name or rename it first.')
+      } else {
+        applyValidationStyles(importConfigName, 'success', 'Name is available')
+      }
+    })
   }
 
   if (importConfigName) {
