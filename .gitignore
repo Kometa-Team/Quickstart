@@ -27,6 +27,10 @@ gotify.db
 # Ignore local configuration file
 config.yml
 
+# Do not ignore the issue template config.yml
+!.github/ISSUE_TEMPLATE/config.yml
+
+
 # Ignore IDE files
 .idea/
 
