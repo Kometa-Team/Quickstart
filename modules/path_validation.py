@@ -6,7 +6,6 @@ from flask import current_app as app
 
 from modules import helpers
 
-
 WINDOWS_INVALID_CHARS = set('<>:"|?*')
 WINDOWS_RESERVED_NAMES = {
     "CON",
