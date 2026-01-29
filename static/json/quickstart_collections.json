@@ -50,16 +50,6 @@
             ]
           },
           {
-            "key": "file_background_best_picture",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
-          {
             "key": "use_best_director",
             "label": "Oscars Best Director Winners",
             "tooltip": "Collection of Oscars Best Director Award Winners.",
@@ -76,17 +66,7 @@
               "movie"
             ]
           },
-          {
-            "key": "file_background_best_director",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          }, 
-          {
+                    {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -111,6 +91,7 @@
               }
             ]
           },
+
           {
             "key": "visible_home",
             "label": "Visible Home",
@@ -532,16 +513,6 @@
               "movie"
             ]
           },
-          {
-            "key": "file_background_golden",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -989,16 +960,6 @@
             ]
           },
           {
-            "key": "file_background_best",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
-          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -1445,16 +1406,6 @@
             ]
           },
           {
-            "key": "file_background_palm",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },            
-          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -1900,16 +1851,6 @@
               "movie"
             ]
           },
-          {
-            "key": "file_background_best",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -2368,17 +2309,6 @@
             ]
           },
           {
-            "key": "file_background_best",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie",
-              "show"
-            ]
-          },  
-          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -2826,17 +2756,6 @@
               "show"
             ]
           },
-          {
-            "key": "file_background_best",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie",
-              "show"
-            ]
-          },  
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -3286,17 +3205,6 @@
             ]
           },
           {
-            "key": "file_background_best_picture",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie",
-              "show"
-            ]
-          },  
-          {
             "key": "use_best_director",
             "label": "Golden Globes Best Director Winners",
             "tooltip": "Collection of Golden Globe Best Director Award Winners.",
@@ -3323,17 +3231,6 @@
               "show"
             ]
           },
-          {
-            "key": "file_background_best_director",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie",
-              "show"
-            ]
-          },  
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -3771,16 +3668,6 @@
               "movie"
             ]
           },
-          {
-            "key": "file_background_best",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -4227,16 +4114,6 @@
               "movie"
             ]
           },
-          {
-            "key": "file_background_best",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -4695,17 +4572,6 @@
             ]
           },
           {
-            "key": "file_background_pca",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie",
-              "show"
-            ]
-          },  
-          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -5142,16 +5008,6 @@
               "movie"
             ]
           },
-          {
-            "key": "file_background_golden",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -5599,16 +5455,6 @@
             ]
           },
           {
-            "key": "file_background_golden",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
-          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -6054,16 +5900,6 @@
               "movie"
             ]
           },
-          {
-            "key": "file_background_grand",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
           {
             "key": "collection_mode",
             "label": "Collection Mode",
@@ -6511,16 +6347,6 @@
             ]
           },
           {
-            "key": "file_background_best",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
-          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -6966,16 +6792,6 @@
               "movie"
             ]
           },
-          {
-            "key": "file_background_best",
-            "label": "File Background",
-            "tooltip": "Sets the background filepath of the key's collection",
-            "tooltip_variant": "info",
-            "type":"text_input",
-            "media_types": [
-              "movie"
-            ]
-          },  
           {
             "key": "collection_mode",
             "label": "Collection Mode",
