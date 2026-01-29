@@ -54,7 +54,7 @@ from werkzeug.wrappers import Request
 Request.max_form_parts = 100000  # Allow more form fields if needed
 
 from flask_session import Session
-from modules import validations, output, persistence, helpers, database, logscan, importer
+from modules import validations, output, persistence, helpers, database, logscan, importer, path_validation
 from typing import Dict, Any
 
 # A very simple in-memory progress store
@@ -1759,10 +1759,15 @@ def import_config_confirm():
 def step(name):
     page_info = {}
     header_style = "standard"  # Default to 'standard' font
+    save_error = None
 
     if request.method == "POST":
-        persistence.save_settings(request.referrer, request.form)
-        header_style = request.form.get("header_style", "standard")
+        validation_errors = path_validation.validate_payload(request.form)
+        if validation_errors:
+            save_error = "Invalid path values: " + " ".join(validation_errors)
+        else:
+            persistence.save_settings(request.referrer, request.form)
+            header_style = request.form.get("header_style", "standard")
 
     # --- Detect config change ---
     previous_config = session.get("config_name")
@@ -1828,6 +1833,7 @@ def step(name):
     page_info["qs_test_libs_path"] = test_libs_path
     page_info["qs_test_libs_tmp"] = test_libs_tmp
     page_info["header_style"] = header_style
+    page_info["save_error"] = save_error
     page_info["template_name"] = name
     if "shutdown_nonce" not in session:
         session["shutdown_nonce"] = secrets.token_urlsafe(16)
@@ -2289,6 +2295,9 @@ def autosave_library(library_id):
     """Merge-save a single library when switching cards without requiring full navigation submit."""
     try:
         incoming = request.get_json(silent=True) or request.form
+        errors = path_validation.validate_payload(incoming)
+        if errors:
+            return jsonify({"success": False, "error": "Invalid path values.", "errors": errors}), 400
         persistence.save_settings("025-libraries", incoming)
         return jsonify({"success": True})
     except Exception as e:
@@ -2340,6 +2349,18 @@ def copy_library_settings():
 
         # If the client sent a fresh payload for the source card, merge it in before copying
         if isinstance(source_payload, dict) and source_payload:
+            payload_errors = path_validation.validate_payload(source_payload)
+            if payload_errors:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": "Invalid path values in source payload: " + " ".join(payload_errors),
+                            "errors": payload_errors,
+                        }
+                    ),
+                    400,
+                )
             try:
                 clean_payload = persistence.clean_form_data(MultiDict(source_payload))
                 incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
@@ -2368,6 +2389,18 @@ def copy_library_settings():
                 helpers.ts_log(f"Failed to merge live source payload during copy: {merge_err}", level="ERROR")
 
         source_items = {k: v for k, v in libraries_data.items() if k.startswith(f"{source_prefix}-")}
+        source_errors = path_validation.validate_payload(source_items)
+        if source_errors:
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Invalid path values found in source library: " + " ".join(source_errors),
+                        "errors": source_errors,
+                    }
+                ),
+                400,
+            )
         if not source_items:
             helpers.ts_log(f"Copy aborted: no saved settings found for source {source_prefix}", level="ERROR")
             return jsonify({"success": False, "error": "No saved settings found for source library"}), 404
@@ -2591,6 +2624,18 @@ def validate_ntfy():
 def validate_plex():
     data = request.json
     return validations.validate_plex_server(data)
+
+
+@app.route("/path-validation-rules", methods=["GET"])
+def path_validation_rules():
+    rules = path_validation.load_rules()
+    return jsonify(
+        {
+            "rules": rules,
+            "platform": path_validation.get_platform_key(),
+            "is_docker": bool(app.config.get("QUICKSTART_DOCKER")),
+        }
+    )
 
 
 @app.route("/refresh_plex_libraries", methods=["POST"])
@@ -4580,6 +4625,15 @@ def update_test_libraries_settings():
     temp_raw = data.get("temp_path", "")
     final_raw = data.get("final_path", "")
     confirm = helpers.booler(str(data.get("confirm", "")))
+
+    path_errors = path_validation.validate_payload(
+        {
+            "temp_path": temp_raw,
+            "final_path": final_raw,
+        }
+    )
+    if path_errors:
+        return jsonify(success=False, message="Invalid path values: " + " ".join(path_errors)), 400
 
     base_config_dir, _, _, default_final, default_tmp = _resolve_test_libraries_paths(quickstart_root)
     temp_path = _normalize_test_libraries_path(temp_raw or default_tmp, base_config_dir)

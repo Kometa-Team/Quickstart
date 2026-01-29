@@ -52,6 +52,7 @@
     window.QS_TEST_LIBS_TMP = {{ config.get('QS_TEST_LIBS_TMP', '') | tojson }};
   </script>
   <script type="text/javascript" src="{{ url_for('static', filename='local-js/000-base.js') }}"></script>
+  <script type="text/javascript" src="{{ url_for('static', filename='local-js/pathValidation.js') }}"></script>
   <div class="header-container text-center">
     <img src="{{ url_for('static', filename='images/logo.webp') }}" alt="QUICKSTART" class="header-image" />
   </div>
@@ -151,6 +152,9 @@
 
   <!-- Global Toast Container -->
   <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3" id="toastContainer"></div>
+  {% if page_info and page_info.save_error %}
+  <div id="qs-save-error" data-message="{{ page_info.save_error|e }}"></div>
+  {% endif %}
 
   <div class="qs-scroll-controls" id="qs-scroll-controls" aria-hidden="true">
     <button type="button" class="qs-scroll-btn" id="qs-scroll-top" aria-label="Jump to top" title="Jump to top">

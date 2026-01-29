@@ -1,4 +1,4 @@
-/* global $, initialSonarrRootFolderPath, initialSonarrQualityProfile, initialSonarrLanguageProfile, showSpinner, hideSpinner */
+/* global $, initialSonarrRootFolderPath, initialSonarrQualityProfile, initialSonarrLanguageProfile, showSpinner, hideSpinner, PathValidation */
 
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('sonarr_token')
@@ -51,6 +51,10 @@ $(document).ready(function () {
       event.preventDefault() // Prevent form submission if validation fails
     }
   })
+
+  if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
+    PathValidation.attach(document)
+  }
 })
 
 /* eslint-disable camelcase */
@@ -146,6 +150,9 @@ function validateSonarrPage () {
   const statusMessage = document.getElementById('statusMessage')
   let isValid = true
   const validationMessages = []
+  const pathsValid = (typeof PathValidation !== 'undefined' && PathValidation.validateAll)
+    ? PathValidation.validateAll()
+    : true
 
   const isValidated = document.getElementById('sonarr_validated').value.toLowerCase() === 'true'
 
@@ -164,6 +171,11 @@ function validateSonarrPage () {
       validationMessages.push('Please select a valid Language Profile.')
       isValid = false
     }
+  }
+
+  if (!pathsValid) {
+    validationMessages.push('Please fix invalid path fields before continuing.')
+    isValid = false
   }
 
   if (!isValid) {

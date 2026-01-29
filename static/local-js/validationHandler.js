@@ -1,4 +1,4 @@
-/* global $ */
+/* global $, PathValidation */
 
 const ValidationHandler = {
   updateValidationState: function () {
@@ -183,11 +183,15 @@ const ValidationHandler = {
     }
 
     const allPlaceholdersValid = validatePlaceholderSelection()
+    const pathValid = (typeof PathValidation !== 'undefined' && PathValidation.validateAll)
+      ? PathValidation.validateAll()
+      : true
 
     console.log(`[DEBUG] Libraries Valid: ${allLibrariesValid}`)
     console.log(`[DEBUG] Placeholders Valid: ${allPlaceholdersValid}`)
+    console.log(`[DEBUG] Paths Valid: ${pathValid}`)
 
-    if (allLibrariesValid && allPlaceholdersValid) {
+    if (allLibrariesValid && allPlaceholdersValid && pathValid) {
       console.log('[DEBUG] Validation Passed! Enabling navigation.')
       ValidationHandler.showValidationMessage('Validation successful! You may proceed.', 'success')
       ValidationHandler.enableNavigation()
@@ -195,7 +199,7 @@ const ValidationHandler = {
     } else {
       console.log('[DEBUG] Some validations failed! Disabling navigation.')
       ValidationHandler.showValidationMessage(
-        'Each selected library must have at least one highlighted item, and a valid Placeholder IMDb must be selected if a Separator is enabled.',
+        'Each selected library must have at least one highlighted item, a valid Placeholder IMDb must be selected if a Separator is enabled, and any path fields must be valid.',
         'danger'
       )
       ValidationHandler.disableNavigation(false)

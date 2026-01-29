@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace */
+/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const scriptsToLoad = [
     '/static/local-js/imageHandler.js',
     '/static/local-js/overlayHandler.js',
+    '/static/local-js/pathValidation.js',
     '/static/local-js/validationHandler.js',
     '/static/local-js/eventHandler.js'
   ]
@@ -40,6 +41,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   loadScriptsSequentially(scriptsToLoad, function () {
     console.log('[DEBUG] All dependencies loaded. Running Library Initialization...')
+    if (typeof PathValidation !== 'undefined' && PathValidation.init) {
+      PathValidation.init()
+    }
 
     const libraryPicker = document.getElementById('libraryPicker')
     const libraryContainer = document.getElementById('library-form-container')
@@ -316,6 +320,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (typeof EventHandler !== 'undefined') {
         EventHandler.attachLibraryListeners()
       }
+      if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
+        PathValidation.attach(card)
+      }
       if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
         ValidationHandler.updateValidationState()
       }
@@ -348,6 +355,16 @@ document.addEventListener('DOMContentLoaded', function () {
     function autosaveActiveLibrary () {
       const card = libraryContainer.firstElementChild
       if (!activeLibraryId || !card) return Promise.resolve()
+
+      if (typeof PathValidation !== 'undefined' && PathValidation.validateAll) {
+        const pathValid = PathValidation.validateAll(card)
+        if (!pathValid) {
+          if (typeof showToast === 'function') {
+            showToast('error', 'Please fix invalid path fields before saving.')
+          }
+          return Promise.reject(new Error('Invalid path fields'))
+        }
+      }
 
       const payload = buildPayloadFromCard(card)
       const option = libraryPicker?.querySelector(`option[value="${activeLibraryId}"]`)

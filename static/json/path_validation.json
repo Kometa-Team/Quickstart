@@ -1,0 +1,94 @@
+{
+  "rules": [
+    {
+      "id": "top_level_report_path",
+      "label": "Report Path",
+      "mode": "output_file",
+      "allow_relative": true,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    },
+    {
+      "id": "attribute_metadata_backup_path",
+      "label": "Metadata Backup Path",
+      "mode": "output_file",
+      "allow_relative": true,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    },
+    {
+      "id": "temp_path",
+      "label": "Temp download/extract path",
+      "mode": "output_dir",
+      "allow_relative": false,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    },
+    {
+      "id": "final_path",
+      "label": "Final test libraries path",
+      "mode": "output_dir",
+      "allow_relative": false,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    },
+    {
+      "id": "asset_directory",
+      "label": "Asset Directory",
+      "mode": "output_dir",
+      "allow_relative": true,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    },
+    {
+      "id": "radarr_radarr_path",
+      "label": "Radarr Path",
+      "mode": "output_dir",
+      "allow_relative": true,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    },
+    {
+      "id": "radarr_plex_path",
+      "label": "Plex Path (Radarr)",
+      "mode": "output_dir",
+      "allow_relative": true,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    },
+    {
+      "id": "sonarr_sonarr_path",
+      "label": "Sonarr Path",
+      "mode": "output_dir",
+      "allow_relative": true,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    },
+    {
+      "id": "sonarr_plex_path",
+      "label": "Plex Path (Sonarr)",
+      "mode": "output_dir",
+      "allow_relative": true,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    }
+  ]
+}

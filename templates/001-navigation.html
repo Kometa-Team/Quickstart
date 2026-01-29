@@ -348,12 +348,11 @@
               <h6 class="text-uppercase text-muted mb-2">Test Libraries</h6>
               <div class="mb-3">
                 <label class="form-label" for="quickstart-settings-test-libs-tmp">Temp download/extract path</label>
-                <input type="text" class="form-control" id="quickstart-settings-test-libs-tmp" placeholder="Leave blank for default">
+                <input type="text" class="form-control" id="quickstart-settings-test-libs-tmp" data-path-rule="temp_path" placeholder="Leave blank for default">
               </div>
               <div class="mb-3">
                 <label class="form-label" for="quickstart-settings-test-libs-path">Final test libraries path</label>
-                <input type="text" class="form-control" id="quickstart-settings-test-libs-path" placeholder="Leave blank for default">
-                <div class="form-text">Quickstart replaces this folder during install/update. Use a dedicated path.</div>
+                <input type="text" class="form-control" id="quickstart-settings-test-libs-path" data-path-rule="final_path" placeholder="Leave blank for default">
               </div>
             </div>
             {% if not qs_is_docker %}

@@ -75,7 +75,7 @@
         </span>
     </span>
     <input type="text" class="form-control" id="sonarr_sonarr_path" name="sonarr_sonarr_path"
-        value="{{ data['sonarr']['sonarr_path'] }}" aria-describedby="sonarr_sonarr_path_text">
+        value="{{ data['sonarr']['sonarr_path'] | default('', true) }}" aria-describedby="sonarr_sonarr_path_text">
 </div>
 
 <div class="input-group mb-2">
@@ -87,7 +87,7 @@
         </span>
     </span>
     <input type="text" class="form-control" id="sonarr_plex_path" name="sonarr_plex_path"
-        value="{{ data['sonarr']['plex_path'] }}" aria-describedby="sonarr_plex_path_text">
+        value="{{ data['sonarr']['plex_path'] | default('', true) }}" aria-describedby="sonarr_plex_path_text">
 </div>
 
 <div class="input-group mb-2">

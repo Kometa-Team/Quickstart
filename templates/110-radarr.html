@@ -110,7 +110,7 @@
         </span>
     </span>
     <input type="text" class="form-control" id="radarr_radarr_path" name="radarr_radarr_path"
-        value="{{ data['radarr']['radarr_path'] }}" aria-describedby="radarr_radarr_path_text">
+        value="{{ data['radarr']['radarr_path'] | default('', true) }}" aria-describedby="radarr_radarr_path_text">
 </div>
 
 <div class="input-group mb-2">
@@ -122,7 +122,7 @@
         </span>
     </span>
     <input type="text" class="form-control" id="radarr_plex_path" name="radarr_plex_path"
-        value="{{ data['radarr']['plex_path'] }}" aria-describedby="radarr_plex_path_text">
+        value="{{ data['radarr']['plex_path'] | default('', true) }}" aria-describedby="radarr_plex_path_text">
 </div>
 
 <div class="form-check form-switch">

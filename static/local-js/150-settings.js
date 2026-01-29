@@ -1,4 +1,4 @@
-/* global $ */
+/* global $, PathValidation */
 
 document.addEventListener('DOMContentLoaded', function () {
   const saveSyncChangesButton = document.getElementById('saveSyncChangesButton')
@@ -118,11 +118,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const fieldsToValidate = [
     {
-      id: 'asset_directory',
-      regex: /^(?:[a-zA-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*|\\{2}[^\\/:*?"<>|\r\n]+(?:\\[^\\/:*?"<>|\r\n]+)*|(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]+|\/(?:[^/]+\/)*[^/]*|\.{1,2}(?:\/[^/]*)*|(?:[^/]+\/)*[^/]*)$/,
-      errorMessage: 'Please enter a valid asset directory path.'
-    },
-    {
       id: 'asset_depth',
       regex: /^(0|[1-9]\d*)$/,
       errorMessage: 'Please enter a valid integer (0 or greater).'
@@ -187,34 +182,25 @@ document.addEventListener('DOMContentLoaded', function () {
     let isFormValid = true
 
     fieldsToValidate.forEach(({ id, regex, errorMessage }) => {
-      // Handle dynamically generated asset_directory inputs
-      const fields = id === 'asset_directory'
-        ? document.querySelectorAll('input[name="asset_directory"]')
-        : [document.getElementById(id)]
-
-      fields.forEach((field) => {
-        if (field) {
-          const isValid = validateField(field, regex, errorMessage)
-          if (!isValid) {
-            isFormValid = false
-          }
+      const field = document.getElementById(id)
+      if (field) {
+        const isValid = validateField(field, regex, errorMessage)
+        if (!isValid) {
+          isFormValid = false
         }
-      })
+      }
     })
+
+    if (typeof PathValidation !== 'undefined' && PathValidation.validateAll) {
+      const pathsValid = PathValidation.validateAll()
+      if (!pathsValid) {
+        isFormValid = false
+      }
+    }
 
     updateValidationMessages(isFormValid)
     return isFormValid
   }
-
-  document.querySelectorAll('input[name="asset_directory"]').forEach((input) => {
-    const fieldToValidate = fieldsToValidate.find(field => field.id === 'asset_directory')
-    if (fieldToValidate) {
-      input.addEventListener('input', function () {
-        validateField(input, fieldToValidate.regex, fieldToValidate.errorMessage)
-        validateForm() // Recheck the entire form
-      })
-    }
-  })
 
   document.querySelectorAll('input, select, textarea').forEach((element) => {
     const fieldToValidate = fieldsToValidate.find((field) => field.id === element.id)
@@ -240,15 +226,9 @@ document.addEventListener('DOMContentLoaded', function () {
         <button class="btn btn-danger remove-asset-directory" type="button">Remove</button>
     `
     assetDirectoryContainer.appendChild(newFieldGroup)
-
-    // Attach validation to the new field
     const newField = newFieldGroup.querySelector('input[name="asset_directory"]')
-    const fieldToValidate = fieldsToValidate.find(field => field.id === 'asset_directory')
-    if (fieldToValidate) {
-      newField.addEventListener('input', function () {
-        validateField(newField, fieldToValidate.regex, fieldToValidate.errorMessage)
-        validateForm() // Recheck the form
-      })
+    if (newField && typeof PathValidation !== 'undefined' && PathValidation.attach) {
+      PathValidation.attach(newFieldGroup)
     }
   })
 
@@ -261,6 +241,10 @@ document.addEventListener('DOMContentLoaded', function () {
   })
 
   // Validate form before submission
+  if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
+    PathValidation.attach(document)
+  }
+
   configForm.addEventListener('submit', function (event) {
     if (!validateForm()) {
       event.preventDefault() // Prevent form submission if validation fails

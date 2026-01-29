@@ -63,14 +63,13 @@
               <div class="row g-2">
                 <div class="col-12">
                   <label class="form-label small" for="test-lib-temp-path">Temp download/extract path</label>
-                  <input type="text" class="form-control form-control-sm" id="test-lib-temp-path"
+                  <input type="text" class="form-control form-control-sm" id="test-lib-temp-path" data-path-rule="temp_path"
                     value="{{ page_info.qs_test_libs_tmp | default('', true) | escape }}">
                 </div>
                 <div class="col-12">
                   <label class="form-label small" for="test-lib-final-path">Final test libraries path</label>
-                  <input type="text" class="form-control form-control-sm" id="test-lib-final-path"
+                  <input type="text" class="form-control form-control-sm" id="test-lib-final-path" data-path-rule="final_path"
                     value="{{ page_info.qs_test_libs_path | default('', true) | escape }}">
-                  <div class="form-text">Quickstart replaces this folder during install/update. Leave blank to use defaults.</div>
                 </div>
                 <div class="col-12 d-flex align-items-center gap-2">
                   <button type="button" class="btn btn-sm btn-outline-secondary" id="test-lib-paths-apply">
