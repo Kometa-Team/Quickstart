@@ -770,10 +770,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const savePathsBtn = document.getElementById('test-lib-paths-apply')
   const pathsStatus = document.getElementById('test-lib-paths-status')
 
-  if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
-    PathValidation.attach(document)
-  }
-
   // Progress block (existing or injected)
   let progWrap = document.getElementById('test-lib-progress')
   let progBar = document.getElementById('test-lib-progress-bar')

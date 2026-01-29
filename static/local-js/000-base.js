@@ -51,6 +51,9 @@ document.addEventListener('DOMContentLoaded', function () {
 })
 
 document.addEventListener('DOMContentLoaded', function () {
+  if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
+    PathValidation.attach(document)
+  }
   const saveError = document.getElementById('qs-save-error')
   if (saveError && saveError.dataset && saveError.dataset.message) {
     showToast('error', saveError.dataset.message)
@@ -442,9 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateThemeUi(getCurrentTheme())
     setStatus('', false)
     if (applyBtn) applyBtn.disabled = false
-    if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
-      PathValidation.attach(modalEl)
-    }
   })
 
   async function saveTestLibraryPaths (confirmOverride = false) {

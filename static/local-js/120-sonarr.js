@@ -51,10 +51,6 @@ $(document).ready(function () {
       event.preventDefault() // Prevent form submission if validation fails
     }
   })
-
-  if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
-    PathValidation.attach(document)
-  }
 })
 
 /* eslint-disable camelcase */

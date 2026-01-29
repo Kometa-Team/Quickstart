@@ -241,10 +241,6 @@ document.addEventListener('DOMContentLoaded', function () {
   })
 
   // Validate form before submission
-  if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
-    PathValidation.attach(document)
-  }
-
   configForm.addEventListener('submit', function (event) {
     if (!validateForm()) {
       event.preventDefault() // Prevent form submission if validation fails
