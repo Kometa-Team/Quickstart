@@ -59,6 +59,7 @@ from typing import Dict, Any
 
 # A very simple in-memory progress store
 CLONE_PROGRESS: Dict[str, Dict[str, Any]] = {}
+ACTIVE_TEST_LIB_JOB: Dict[str, Any] = {}
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
 KOMETA_CPU_CACHE = {}
@@ -4679,12 +4680,26 @@ def clone_test_libraries_start():
     except NameError:
         # Create if missing (keeps function drop-in friendly)
         globals()["CLONE_PROGRESS"] = {}
+    # If a job is already running, return it so other clients can follow along
+    active_job_id = ACTIVE_TEST_LIB_JOB.get("job_id")
+    if active_job_id:
+        info = CLONE_PROGRESS.get(active_job_id) or {}
+        phase = info.get("phase")
+        if phase and phase not in ["done", "error"]:
+            return jsonify(success=True, job_id=active_job_id, existing_job=True, started_at=ACTIVE_TEST_LIB_JOB.get("started_at"))
+        ACTIVE_TEST_LIB_JOB.clear()
     job_id = str(uuid.uuid4())
     CLONE_PROGRESS[job_id] = {"phase": "queued", "pct": 0, "text": "Queued..."}
+    ACTIVE_TEST_LIB_JOB["job_id"] = job_id
+    ACTIVE_TEST_LIB_JOB["started_at"] = time.time()
 
     def worker():
         zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
         commit_sha = ""
+        estimated_total = 0
+        estimated = False
+        estimated_note = ""
+        fallback_total = 5 * 1024 * 1024 * 1024  # 5 GiB
 
         try:
             # Best-effort SHA for UI banner
@@ -4704,13 +4719,53 @@ def clone_test_libraries_start():
                 total_size = int(head.headers.get("Content-Length", "0") or 0)
             except Exception:
                 total_size = 0
+            if not total_size:
+                try:
+                    release_info = requests.get(
+                        "https://api.github.com/repos/chazlarson/plex-test-libraries/releases/latest",
+                        timeout=5,
+                    ).json()
+                    assets = release_info.get("assets") or []
+                    release_zip = next(
+                        (a for a in assets if str(a.get("name", "")).lower().endswith(".zip")),
+                        None,
+                    )
+                    if release_zip and int(release_zip.get("size", 0) or 0) > 0:
+                        estimated_total = int(release_zip.get("size", 0) or 0)
+                        total_size = estimated_total
+                        estimated = True
+                        estimated_note = "release"
+                except Exception:
+                    estimated_total = 0
+                    estimated = False
+            if not total_size:
+                try:
+                    repo_info = requests.get(
+                        "https://api.github.com/repos/chazlarson/plex-test-libraries",
+                        timeout=5,
+                    ).json()
+                    size_kb = int(repo_info.get("size", 0) or 0)
+                    if size_kb > 0:
+                        estimated_total = size_kb * 1024
+                        total_size = estimated_total
+                        estimated = True
+                        estimated_note = "repo"
+                except Exception:
+                    estimated_total = 0
+                    estimated = False
+            if not total_size or (estimated and total_size < fallback_total):
+                total_size = fallback_total
+                estimated = True
+                estimated_note = "fallback"
 
             CLONE_PROGRESS[job_id] = {
                 "phase": "download",
-                "pct": None,  # None => indeterminate until we know size
+                "pct": 0 if total_size else None,  # None => indeterminate until we know size
                 "text": "Downloading zip…",
                 "downloaded": 0,
                 "total": total_size,
+                "estimated": estimated,
+                "estimated_note": estimated_note,
             }
 
             ok, msg = _ensure_rw_dir(tmp_root)
@@ -4738,6 +4793,10 @@ def clone_test_libraries_start():
                         try:
                             total_size = int(r.headers.get("Content-Length", "0") or 0)
                             CLONE_PROGRESS[job_id]["total"] = total_size
+                            if total_size:
+                                estimated = False
+                                CLONE_PROGRESS[job_id]["estimated"] = False
+                                CLONE_PROGRESS[job_id]["estimated_note"] = ""
                         except Exception:
                             total_size = 0
 
@@ -4760,6 +4819,8 @@ def clone_test_libraries_start():
                                     "text": "Downloading zip…",
                                     "downloaded": downloaded,
                                     "total": total_size,
+                                    "estimated": estimated,
+                                    "estimated_note": estimated_note,
                                 }
                                 last_push = now
 
@@ -4815,6 +4876,8 @@ def clone_test_libraries_start():
                     "text": "Installed/updated successfully.",
                     "target_path": resolved_path,
                 }
+                if ACTIVE_TEST_LIB_JOB.get("job_id") == job_id:
+                    ACTIVE_TEST_LIB_JOB.clear()
 
         except Exception as e:
             CLONE_PROGRESS[job_id] = {
@@ -4822,9 +4885,11 @@ def clone_test_libraries_start():
                 "pct": 0,
                 "text": f"Error: {str(e)}",
             }
+            if ACTIVE_TEST_LIB_JOB.get("job_id") == job_id:
+                ACTIVE_TEST_LIB_JOB.clear()
 
     threading.Thread(target=worker, daemon=True).start()
-    return jsonify(success=True, job_id=job_id)
+    return jsonify(success=True, job_id=job_id, started_at=ACTIVE_TEST_LIB_JOB.get("started_at"))
 
 
 @app.route("/clone-test-libraries-progress", methods=["GET"])
@@ -4839,6 +4904,27 @@ def clone_test_libraries_progress():
     info_no_flag.pop("success", None)
 
     return jsonify(success=True, **info_no_flag)
+
+
+@app.route("/clone-test-libraries-active", methods=["GET"])
+def clone_test_libraries_active():
+    job_id = ACTIVE_TEST_LIB_JOB.get("job_id")
+    if not job_id:
+        return jsonify(success=True, active=False)
+
+    info = CLONE_PROGRESS.get(job_id) or {}
+    phase = info.get("phase")
+    if phase in ["done", "error"]:
+        ACTIVE_TEST_LIB_JOB.clear()
+        return jsonify(success=True, active=False)
+
+    return jsonify(
+        success=True,
+        active=True,
+        job_id=job_id,
+        started_at=ACTIVE_TEST_LIB_JOB.get("started_at"),
+        progress=info,
+    )
 
 
 @app.route("/clone-test-libraries", methods=["POST"])

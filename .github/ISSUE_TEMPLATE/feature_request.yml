@@ -1,0 +1,76 @@
+name: ✨ Feature Request (Quickstart)
+description: Suggest an improvement or new feature for Kometa Quickstart
+title: "[Feature]: "
+labels: ["enhancement", "quickstart"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement!
+        This form is for **Quickstart feature requests** (not Kometa).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the pain point or limitation you’re facing.
+      placeholder: I’m trying to…
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: How would you like Quickstart to behave?
+      placeholder: It would be great if Quickstart could…
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Improvement area
+      description: Which part of Quickstart does this relate to?
+      options:
+        - UI / UX
+        - YAML generation
+        - Overlays
+        - Collections
+        - Kometa run command
+        - Validation / setup
+        - Performance
+        - Import / export
+        - Analytics
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you’ve considered (optional)
+      description: Any workarounds or other approaches you’ve tried.
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context (optional)
+      description: Mockups, screenshots, examples, links, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Are you willing to help test this?
+      options:
+        - label: Yes, I can test prereleases/PRs
+        - label: Yes, I can provide screenshots/logs/config examples
+        - label: No, just suggesting
+    validations:
+      required: false

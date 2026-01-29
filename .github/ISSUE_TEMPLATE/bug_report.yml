@@ -1,0 +1,99 @@
+name: 🐛 Bug Report (Quickstart)
+description: Report a reproducible bug in Kometa Quickstart (not support, not feature requests).
+title: "[Bug]: "
+labels: ["bug", "quickstart"]
+assignees:
+  - bullmoose20
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **THIS IS NOT THE PLACE TO ASK FOR SUPPORT OR FEATURE REQUESTS!**
+
+        - Support: Please use Kometa Discord and post under the `kometa-help` channel.
+        - Feature requests: Use the **Feature Request (Quickstart)** issue form.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: What happened? What did you expect to happen?
+      placeholder: Clear and concise description of the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the minimal steps to reproduce the issue.
+      placeholder: |
+        1. Go to…
+        2. Click…
+        3. Generate…
+        4. Run…
+    validations:
+      required: true
+
+  - type: dropdown
+    id: config_source
+    attributes:
+      label: Config source
+      description: Is this from an imported config or a fresh Quickstart walkthrough?
+      options:
+        - Fresh walkthrough (Quickstart)
+        - Imported existing config
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_type
+    attributes:
+      label: How are you running Quickstart?
+      options:
+        - Docker
+        - Python (venv)
+        - PyInstaller / EXE
+        - Unraid
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: support_info
+    attributes:
+      label: Support Info Output
+      description: |
+        In Quickstart, click **Support Info** and paste the full output here.
+        **Do not truncate/redact unless it contains secrets.**
+      placeholder: Paste the full Support Info output here…
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs (optional)
+      description: |
+        Paste the relevant log snippet here **or** link a Gist.
+        If you paste logs, please include enough lines before/after the error to provide context.
+      placeholder: |
+        - Paste logs here, OR
+        - https://gist.github.com/...
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing issues and this bug has not already been reported
+          required: true
+        - label: I can reproduce this issue consistently
+          required: true
+        - label: I included the full Support Info output
+          required: true
