@@ -21355,6 +21355,24 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "style",
+            "label": "Style",
+            "url":"https://kometa.wiki/en/nightly/defaults/both/resolution/#standards-style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "default",
+            "options": [
+              {
+                "value": "default",
+                "label": "Default"
+              },
+              {
+                "value": "standards",
+                "label": "Standards"
+              }
+            ]
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
