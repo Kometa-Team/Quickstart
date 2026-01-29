@@ -4,7 +4,7 @@
     "collections": [
       {
         "id": "collection_separator_award",
-        "label": "Award Separator",
+        "label": "Award Separator--",
         "url": "https://kometa.wiki/en/nightly/defaults/award/separator",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/posters/separator_award.png",
         "media_types": [
