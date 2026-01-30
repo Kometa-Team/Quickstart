@@ -2,7 +2,6 @@ import ipaddress
 import re
 from urllib.parse import urlparse
 
-
 URL_KEY_RE = re.compile(r"(^|[_-])url([_-]|$)")
 
 
