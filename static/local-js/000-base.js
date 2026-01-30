@@ -1,4 +1,4 @@
-/* global bootstrap, $, location, MutationObserver, requestAnimationFrame, PathValidation */
+/* global bootstrap, $, location, MutationObserver, requestAnimationFrame, PathValidation, URLValidation */
 
 (function () {
   const isDebug = typeof window.QS_DEBUG !== 'undefined' && String(window.QS_DEBUG).toLowerCase() === 'true'
@@ -53,6 +53,9 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
   if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
     PathValidation.attach(document)
+  }
+  if (typeof URLValidation !== 'undefined' && URLValidation.attach) {
+    URLValidation.attach(document)
   }
   const saveError = document.getElementById('qs-save-error')
   if (saveError && saveError.dataset && saveError.dataset.message) {

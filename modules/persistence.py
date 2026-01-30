@@ -10,7 +10,7 @@ from ruamel.yaml.constructor import DuplicateKeyError  # noqa
 from urllib.parse import urlparse
 from werkzeug.datastructures import MultiDict
 
-from modules import database, helpers, iso
+from modules import database, helpers, iso, url_validation
 
 
 def extract_names(raw_source):
@@ -49,6 +49,9 @@ def clean_form_data(form_data):
             prefix = "mov" if key.startswith("mov") else "sho"
             if form_data.get(f"{prefix}-template_variables[use_separator]", "false") != "none":
                 clean_data.setdefault(f"{prefix}-template_variables", {})["sep_style"] = value.strip()
+
+        elif url_validation.is_url_key(key) and isinstance(value, str) and url_validation.is_placeholder(value):
+            clean_data[key] = None
 
         elif isinstance(value, str):
             lc_value = value.lower().strip()

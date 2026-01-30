@@ -54,7 +54,7 @@ from werkzeug.wrappers import Request
 Request.max_form_parts = 100000  # Allow more form fields if needed
 
 from flask_session import Session
-from modules import validations, output, persistence, helpers, database, logscan, importer, path_validation
+from modules import validations, output, persistence, helpers, database, logscan, importer, path_validation, url_validation
 from typing import Dict, Any
 
 # A very simple in-memory progress store
@@ -1762,9 +1762,11 @@ def step(name):
     save_error = None
 
     if request.method == "POST":
-        validation_errors = path_validation.validate_payload(request.form)
+        path_errors = path_validation.validate_payload(request.form)
+        url_errors = url_validation.validate_payload(request.form)
+        validation_errors = path_errors + url_errors
         if validation_errors:
-            save_error = "Invalid path values: " + " ".join(validation_errors)
+            save_error = "Invalid values: " + " ".join(validation_errors)
         else:
             persistence.save_settings(request.referrer, request.form)
             header_style = request.form.get("header_style", "standard")

@@ -67,8 +67,12 @@ const PathValidation = (() => {
     if (value == null) return { valid: true }
     const str = String(value).trim()
     if (!str) return { valid: true }
-    if (str.toLowerCase() === 'none' || str.toLowerCase() === 'null') {
+    const lowered = str.toLowerCase()
+    if (lowered === 'none' || lowered === 'null') {
       return { valid: true }
+    }
+    if (lowered.includes('\\0') || lowered.includes('\\x00') || lowered.includes('\\u0000')) {
+      return { valid: false, message: 'Contains an invalid null sequence.' }
     }
 
     if (!rule.allow_relative && !isAbsolute(str, platform)) {
@@ -110,17 +114,54 @@ const PathValidation = (() => {
     return feedback
   }
 
+  function insertHintAfter (input, hintEl) {
+    let anchor = input
+    while (anchor && anchor.nextElementSibling) {
+      const next = anchor.nextElementSibling
+      if (next.classList && next.classList.contains('form-text')) {
+        anchor = next
+        continue
+      }
+      if (next.dataset && next.dataset.pathHint) {
+        anchor = next
+        continue
+      }
+      break
+    }
+    anchor.after(hintEl)
+  }
+
   function ensureDockerHint (input, rule) {
     if (!meta.is_docker) return
     const hint = rule && rule.ui && rule.ui.hint_docker
     if (!hint) return
     const parent = input.closest('.input-group') || input.parentElement
-    if (!parent || parent.dataset.dockerHintAdded) return
+    if (!parent) return
+    if (parent.dataset.dockerHintAdded) return
     const note = document.createElement('div')
     note.className = 'form-text text-muted'
     note.textContent = hint
-    parent.after(note)
+    note.dataset.pathHint = 'docker'
+    insertHintAfter(input, note)
     parent.dataset.dockerHintAdded = 'true'
+  }
+
+  const platformStatusEls = new WeakMap()
+
+  function ensurePlatformStatus (input, rule) {
+    if (!input) return null
+    if (rule && rule.ui && rule.ui.platform_status === false) return null
+    const parent = input.closest('.input-group') || input.parentElement
+    if (!parent) return null
+    let el = platformStatusEls.get(input)
+    if (el) return el
+
+    el = document.createElement('div')
+    el.className = 'form-text'
+    el.dataset.pathHint = 'platform-status'
+    insertHintAfter(input, el)
+    platformStatusEls.set(input, el)
+    return el
   }
 
   function applyResult (input, result) {
@@ -138,6 +179,30 @@ const PathValidation = (() => {
     if (feedback) feedback.textContent = result.message || 'Invalid path.'
   }
 
+  function buildPlatformLine (label, result) {
+    const line = document.createElement('div')
+    line.className = result.valid ? 'text-success' : 'text-danger'
+    const icon = document.createElement('i')
+    icon.className = result.valid
+      ? 'bi bi-check-circle-fill me-1'
+      : 'bi bi-exclamation-circle-fill me-1'
+    line.appendChild(icon)
+    const msg = result.valid ? 'OK' : (result.message || 'Invalid')
+    line.appendChild(document.createTextNode(`${label}: ${msg}`))
+    return line
+  }
+
+  function updatePlatformStatus (input, rule) {
+    const el = ensurePlatformStatus(input, rule)
+    if (!el) return
+    const windowsResult = validateValue(input.value, rule, 'windows')
+    const posixResult = validateValue(input.value, rule, 'linux')
+
+    el.innerHTML = ''
+    el.appendChild(buildPlatformLine('Windows', windowsResult))
+    el.appendChild(buildPlatformLine('Linux/macOS/Docker', posixResult))
+  }
+
   function bindInput (input, rule) {
     if (!input || input.dataset.pathValidationBound === 'true') return
     input.dataset.pathValidationBound = 'true'
@@ -145,6 +210,7 @@ const PathValidation = (() => {
     const validate = () => {
       const result = validateValue(input.value, rule, meta.platform)
       applyResult(input, result)
+      updatePlatformStatus(input, rule)
       return result.valid
     }
     input.addEventListener('input', validate)
@@ -170,6 +236,7 @@ const PathValidation = (() => {
       if (!rule) return
       const result = validateValue(input.value, rule, meta.platform)
       applyResult(input, result)
+      updatePlatformStatus(input, rule)
       if (!result.valid) allValid = false
     })
     return allValid
@@ -186,5 +253,4 @@ const PathValidation = (() => {
   }
 })()
 
-// Expose for pages that load via <script>
 window.PathValidation = PathValidation

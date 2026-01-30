@@ -86,6 +86,9 @@ def validate_path(value, rule, platform_key=None):
         return True, None
     if value.lower() in ("none", "null"):
         return True, None
+    lowered = value.lower()
+    if "\\0" in lowered or "\\x00" in lowered or "\\u0000" in lowered:
+        return False, "Contains an invalid null sequence."
 
     platform_key = platform_key or get_platform_key()
 
