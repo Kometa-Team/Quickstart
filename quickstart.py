@@ -1118,7 +1118,7 @@ def bulk_delete_configs():
 
     cleaned = [n.strip() for n in names if isinstance(n, str) and n.strip()]
     if not cleaned:
-        return jsonify(success=False, message="No profiles selected."), 400
+        return jsonify(success=False, message="No configs selected."), 400
 
     available = set(database.get_unique_config_names() or [])
     deleted = []

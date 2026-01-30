@@ -8,7 +8,7 @@ namesgenerator==0.3
 pillow==12.1.0
 PlexAPI==4.17.2
 pre-commit==4.5.1
-psutil==7.2.1
+psutil==7.2.2
 pyfiglet==1.0.4
 PyQt5==5.15.11; platform_system != "Linux" or platform_machine != "aarch64"
 python-dotenv==1.2.1

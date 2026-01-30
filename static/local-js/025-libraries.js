@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const scriptsToLoad = [
     '/static/local-js/imageHandler.js',
     '/static/local-js/overlayHandler.js',
-    '/static/local-js/pathValidation.js',
     '/static/local-js/validationHandler.js',
     '/static/local-js/eventHandler.js'
   ]
@@ -355,6 +354,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function autosaveActiveLibrary () {
       const card = libraryContainer.firstElementChild
       if (!activeLibraryId || !card) return Promise.resolve()
+      if (window.QS_SWITCHING_CONFIG) return Promise.resolve()
 
       if (typeof PathValidation !== 'undefined' && PathValidation.validateAll) {
         const pathValid = PathValidation.validateAll(card)

@@ -304,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       confirmBtn.disabled = true
       confirmBtn.textContent = 'Switching...'
+      window.QS_SWITCHING_CONFIG = true
 
       try {
         const res = await fetch('/switch-config', {
@@ -313,14 +314,16 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         const data = await res.json()
         if (!res.ok || !data.success) {
-          throw new Error(data.message || 'Failed to switch profiles.')
+          throw new Error(data.message || 'Failed to switch configs.')
         }
-        showToast('success', `Switched to profile "${data.name}".`)
-        setTimeout(() => location.reload(), 500)
+        showToast('success', `Switched to config "${data.name}".`)
+        const nextUrl = window.location.pathname + window.location.search
+        setTimeout(() => window.location.assign(nextUrl), 150)
       } catch (err) {
+        window.QS_SWITCHING_CONFIG = false
         confirmBtn.disabled = false
         confirmBtn.textContent = 'Switch'
-        showToast('error', err.message || 'Failed to switch profiles.')
+        showToast('error', err.message || 'Failed to switch configs.')
       }
     })
   }

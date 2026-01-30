@@ -27,7 +27,7 @@
           </button>
           <button type="button" class="badge bg-secondary config-badge config-badge-button"
             data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}">
-            <span title="Switch profile">
+            <span title="Switch config">
               Config: {{ page_info.config_name }} <i class="bi bi-chevron-down ms-1"></i>
             </span>
           </button>
@@ -166,24 +166,24 @@
     </div>
     {% endif %}
 
-    <!-- Switch Profile Modal -->
+    <!-- Switch Config Modal -->
     <div class="modal fade" id="configSwitchModal" tabindex="-1" aria-labelledby="configSwitchModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-secondary">
           <div class="modal-header">
-            <h5 class="modal-title" id="configSwitchModalLabel">Switch Profile</h5>
+            <h5 class="modal-title" id="configSwitchModalLabel">Switch Config</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             {% if available_configs|length > 0 %}
-            <label for="configSwitchSelect" class="form-label">Choose a profile</label>
+            <label for="configSwitchSelect" class="form-label">Choose a config</label>
             <select id="configSwitchSelect" class="form-select">
               {% for name in available_configs %}
               <option value="{{ name }}">{{ name }}</option>
               {% endfor %}
             </select>
             {% else %}
-            <p class="text-muted mb-0">No saved profiles yet. Create and save a config first.</p>
+            <p class="text-muted mb-0">No saved configs yet. Create and save a config first.</p>
             {% endif %}
           </div>
           <div class="modal-footer">
