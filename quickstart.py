@@ -371,9 +371,8 @@ app = Flask(__name__)
 # Run version check at startup
 app.config["VERSION_CHECK"] = helpers.check_for_update()
 
-# Path to the 'kometa' directory next to 'quickstart'
-base_dir = os.path.dirname(os.path.abspath(__file__))
-kometa_path = os.path.abspath(os.path.join(base_dir, "..", "kometa"))
+# Default Kometa root lives under Quickstart's config directory
+kometa_path = os.path.abspath(os.path.join(helpers.CONFIG_DIR, "kometa"))
 
 app.config["KOMETA_ROOT"] = os.environ.get("QS_KOMETA_PATH", kometa_path)
 

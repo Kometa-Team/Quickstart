@@ -997,14 +997,24 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
 
     # Save the new config to both locations
     config_dir.mkdir(parents=True, exist_ok=True)
-    kometa_config_dir.mkdir(parents=True, exist_ok=True)
+    kometa_write_ok = True
+    try:
+        kometa_config_dir.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        kometa_write_ok = False
+        ts_log(f"Failed to create Kometa config directory {kometa_config_dir}: {exc}", level="WARNING")
 
     with open(latest_path, "w", encoding="utf-8") as f:
         f.write(yaml_text)
-    with open(kometa_path, "w", encoding="utf-8") as f:
-        f.write(yaml_text)
+    if kometa_write_ok:
+        try:
+            with open(kometa_path, "w", encoding="utf-8") as f:
+                f.write(yaml_text)
+        except OSError as exc:
+            kometa_write_ok = False
+            ts_log(f"Failed to write Kometa config to {kometa_path}: {exc}", level="WARNING")
 
-    if font_refs:
+    if font_refs and kometa_write_ok:
         try:
             font_result = copy_fonts_to_kometa(font_refs, kometa_root=kometa_root)
             missing = font_result.get("missing", [])
@@ -1017,7 +1027,8 @@ def save_to_named_config(yaml_text, config_name, font_refs=None):
             ts_log(f"Failed to sync fonts to Kometa: {exc}", level="WARNING")
 
     ts_log(f"Saved new config to: {latest_path}")
-    ts_log(f"Also copied config to: {kometa_path}")
+    if kometa_write_ok:
+        ts_log(f"Also copied config to: {kometa_path}")
 
     # Return POSIX-style filename (used for CLI path like --config config/name_config.yml)
     return latest_path.name

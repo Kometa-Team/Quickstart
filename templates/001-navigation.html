@@ -344,6 +344,11 @@
               <input type="number" class="form-control" id="quickstart-settings-log-keep" min="0" step="1" inputmode="numeric">
               <div class="form-text">0 keeps all archived <code>meta*.log</code> files.</div>
             </div>
+            <div class="form-check form-switch mb-2">
+              <input class="form-check-input" type="checkbox" id="quickstart-settings-debug">
+              <label class="form-check-label" for="quickstart-settings-debug">Enable Debug Mode</label>
+              <div class="form-text">Debug applies immediately.</div>
+            </div>
             <div class="border-top pt-3 mt-3">
               <h6 class="text-uppercase text-muted mb-2">Test Libraries</h6>
               <div class="mb-3">
@@ -361,11 +366,6 @@
               <input type="number" class="form-control" id="quickstart-settings-port" min="1" max="65535" inputmode="numeric">
               <div class="form-text">Changing the port will restart Quickstart.</div>
             </div>
-            <div class="form-check form-switch mb-2">
-              <input class="form-check-input" type="checkbox" id="quickstart-settings-debug">
-              <label class="form-check-label" for="quickstart-settings-debug">Enable Debug Mode</label>
-            </div>
-            <p class="text-muted small mb-0">Port changes require a restart. Debug applies immediately.</p>
             <div class="border-top pt-3 mt-3">
               <h6 class="text-uppercase text-muted mb-2">Session</h6>
               <p class="small text-muted mb-2">Stop the Quickstart server running on this machine.</p>
@@ -373,8 +373,6 @@
                 <i class="bi bi-power me-1"></i> Shutdown Quickstart
               </button>
             </div>
-            {% else %}
-            <p class="text-muted small mb-0">Docker settings are managed by your container. Theme changes apply immediately.</p>
             {% endif %}
             <div class="text-muted small mt-2" id="quickstart-settings-status"></div>
           </div>
