@@ -120,6 +120,38 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function sortLanguageSelects (scope) {
+      const root = scope || document
+      const selects = Array.from(root.querySelectorAll('select')).filter(select => {
+        const name = select.name || ''
+        const id = select.id || ''
+        return name.includes('attribute_template_variables[language]') ||
+          name.includes('template_variables[language]') ||
+          /template_variables_language$/i.test(id)
+      })
+
+      selects.forEach(select => {
+        const options = Array.from(select.options)
+        if (!options.length) return
+        const currentValue = select.value
+        const keep = []
+        const sortable = []
+        options.forEach(option => {
+          const label = option.textContent.trim().toLowerCase()
+          if (option.value === '' || label === 'none') {
+            keep.push(option)
+          } else {
+            sortable.push(option)
+          }
+        })
+        sortable.sort((a, b) => a.textContent.trim().localeCompare(b.textContent.trim()))
+        select.innerHTML = ''
+        keep.forEach(option => select.appendChild(option))
+        sortable.forEach(option => select.appendChild(option))
+        select.value = currentValue
+      })
+    }
+
     const fontPreviewCache = new Map()
 
     function loadFontPreview (file) {
@@ -291,6 +323,7 @@ document.addEventListener('DOMContentLoaded', function () {
       wireIncludeToggle(card, libraryId)
       refreshPickerLabels()
       initTooltips(card)
+      sortLanguageSelects(card)
       wireOffsetReset(card)
       initSortablesInScope(card)
       setupCustomStringListHandlers('mass_genre_update', card)
