@@ -997,27 +997,34 @@ header.fixed-top {
     min-height: 0;
 }
 
-.overlay-jump-container {
-    position: relative;
-    display: flex;
-    justify-content: flex-end;
-    margin: 0.25rem 0 1rem;
-}
-
 .overlay-jump-button {
-    display: none;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.overlay-jump-button.is-visible {
     display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
-.overlay-jump-button.overlay-jump-button--floating {
-    position: fixed;
-    bottom: 1.25rem;
-    z-index: 1060;
+.overlay-jump-inline {
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: 0.4rem;
+}
+
+.overlay-jump-inline i {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.overlay-config-target {
+    scroll-margin-top: 6rem;
+}
+
+.overlay-config-target.is-jump-highlight {
+    outline: 2px solid var(--theme-primary);
+    outline-offset: 4px;
+    border-radius: 0.5rem;
 }
 
 #navbarDropdownMenuLink[disabled]::after {

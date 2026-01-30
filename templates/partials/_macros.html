@@ -854,12 +854,19 @@ prefix) %}
 <!-- {{ group.accordion }} Collection Accordion -->
 <div class="accordion mt-3" id="{{ library.id }}-{{ accordion_safe }}Accordion">
     <div class="accordion-item">
-        <h2 class="accordion-header">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        <h2 class="accordion-header overlay-accordion-header d-flex align-items-center">
+            <button class="accordion-button collapsed flex-grow-1" type="button" data-bs-toggle="collapse"
                 data-bs-target="#{{ library.id }}-{{ accordion_safe }}" aria-expanded="false"
                 aria-controls="{{ library.id }}-{{ accordion_safe }}">
                 {{ group.accordion }}
             </button>
+            {% if library.type == 'movie' %}
+            <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay overlay-jump-button ms-2"
+                data-jump-target="{{ library.id }}-movie-overlay-board" title="Jump to movie canvas"
+                aria-label="Jump to movie canvas">
+                <i class="bi bi-arrow-up-square"></i> Canvas
+            </button>
+            {% endif %}
         </h2>
         <div id="{{ library.id }}-{{ accordion_safe }}" class="accordion-collapse collapse"
             data-bs-parent="#{{ library.id }}-{{ accordion_safe }}Accordion">
@@ -1104,7 +1111,8 @@ prefix) %}
                                         else data.libraries[input_name]|string|lower == "true"
                                         ) %}
 
-                                        <div class="template-toggle-group ms-3 mb-2"
+                                        <div class="template-toggle-group ms-3 mb-2 overlay-config-target"
+                                            id="{{ base_id }}-overlay-config"
                                             data-overlay-id="{{ overlay.id }}"
                                             data-overlay-template="{{ template_name }}"
                                             data-overlay-image="{{ overlay_preview_image }}"
@@ -1146,6 +1154,14 @@ prefix) %}
                                                         data-bs-toggle="tooltip" data-bs-html="true"
                                                         title="{{ overlay.tooltip }}"></i>
                                                     {% endif %}
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay overlay-jump-button overlay-jump-inline ms-3"
+                                                        data-jump-target="{{ library.id }}-{{ type }}-overlay-board"
+                                                        data-overlay-id="{{ overlay.id }}"
+                                                        data-overlay-type="{{ type }}"
+                                                        data-library-id="{{ library.id }}"
+                                                        title="Back to canvas" aria-label="Back to canvas">
+                                                        <i class="bi bi-arrow-up-square"></i>
+                                                    </button>
                                                     {% if overlay.extra_url %}
                                                     <a href="{{ overlay.extra_url }}" target="_blank"
                                                         class="text-decoration-none ms-3">

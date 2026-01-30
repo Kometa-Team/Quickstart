@@ -1767,6 +1767,39 @@ const OverlayHandler = {
       return canvas.toDataURL('image/png')
     }
 
+    const openAccordionAncestors = (target) => {
+      if (!target) return
+      const collapses = []
+      let node = target
+      while (node) {
+        if (node.classList && node.classList.contains('accordion-collapse')) {
+          collapses.push(node)
+        }
+        node = node.parentElement
+      }
+      collapses.reverse().forEach(collapse => {
+        if (collapse.classList.contains('show')) return
+        if (window.bootstrap && window.bootstrap.Collapse) {
+          const instance = window.bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false })
+          instance.show()
+          return
+        }
+        const headerBtn = collapse.closest('.accordion-item')?.querySelector('.accordion-header .accordion-button')
+        headerBtn?.click()
+      })
+    }
+
+    const highlightJumpTarget = (target) => {
+      if (!target) return
+      document.querySelectorAll('.overlay-config-target.is-jump-highlight').forEach(node => {
+        if (node !== target) node.classList.remove('is-jump-highlight')
+      })
+      target.classList.add('is-jump-highlight')
+      window.setTimeout(() => {
+        target.classList.remove('is-jump-highlight')
+      }, 1600)
+    }
+
     Array.from(root.querySelectorAll('.overlay-board')).forEach(board => {
       if (board.dataset.boardBound === 'true') return
       board.dataset.boardBound = 'true'
@@ -1812,6 +1845,7 @@ const OverlayHandler = {
       const alignButtons = toolbar?.querySelectorAll('[data-overlay-board-align]') || []
       const distributeButtons = toolbar?.querySelectorAll('[data-overlay-board-distribute]') || []
       const exportBtn = toolbar?.querySelector('[data-overlay-board-export]')
+      const jumpToSettingsBtn = toolbar?.querySelector('[data-overlay-board-jump="config"]')
 
       const initialGridSize = Number(snapStepSelect?.value) || 25
       board.style.setProperty('--overlay-grid-size', `${initialGridSize}px`)
@@ -1833,7 +1867,58 @@ const OverlayHandler = {
         historyLocked: false
       }
 
+      const getActiveLayer = () => boardState.activeLayer || boardState.selectedLayers.values().next().value || null
+      const getJumpTargetId = (overlayId) => (overlayId ? `${libId}-${overlayType}-${overlayId}-overlay-config` : '')
+
+      const updateJumpButton = () => {
+        if (!jumpToSettingsBtn) return
+        const activeLayer = getActiveLayer()
+        const isEdition = activeLayer?.dataset?.overlayEdition === 'true'
+        const overlayId = isEdition ? activeLayer?.dataset?.overlayParentId : activeLayer?.dataset?.overlayId
+        const targetId = getJumpTargetId(overlayId)
+        if (!targetId) {
+          jumpToSettingsBtn.disabled = true
+          jumpToSettingsBtn.dataset.jumpTarget = ''
+          jumpToSettingsBtn.title = 'Select an overlay on the canvas to jump to its settings'
+          return
+        }
+        jumpToSettingsBtn.disabled = false
+        jumpToSettingsBtn.dataset.jumpTarget = targetId
+        jumpToSettingsBtn.title = 'Jump to selected overlay settings'
+      }
+
       let recalcAll = () => {}
+
+      if (jumpToSettingsBtn) {
+        jumpToSettingsBtn.addEventListener('click', () => {
+          const targetId = jumpToSettingsBtn.dataset.jumpTarget
+          if (!targetId) return
+          const target = document.getElementById(targetId)
+          if (!target) return
+
+          const performJump = () => {
+            openAccordionAncestors(target)
+            window.setTimeout(() => {
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              highlightJumpTarget(target)
+            }, 150)
+          }
+
+          if (board.classList.contains('overlay-board--modal')) {
+            const modalEl = board.closest('.modal')
+            if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+              modalEl.addEventListener('hidden.bs.modal', () => {
+                performJump()
+              }, { once: true })
+              const modalInstance = window.bootstrap.Modal.getOrCreateInstance(modalEl)
+              modalInstance.hide()
+              return
+            }
+          }
+          performJump()
+        })
+      }
+      updateJumpButton()
 
       const setToggleState = (btn, active) => {
         if (!btn) return
@@ -1869,6 +1954,7 @@ const OverlayHandler = {
           boardState.activeLayer.classList.remove('is-active')
         }
         boardState.activeLayer = null
+        updateJumpButton()
       }
 
       const setActiveLayer = (layer) => {
@@ -1883,7 +1969,19 @@ const OverlayHandler = {
             setLayerSelected(layer, true)
           }
         }
+        updateJumpButton()
       }
+
+      const selectLayerById = (overlayId) => {
+        if (!overlayId) return false
+        const layer = layers.get(overlayId)
+        if (!layer) return false
+        clearSelection()
+        setActiveLayer(layer)
+        return true
+      }
+
+      board._overlaySelectById = selectLayerById
 
       const getSnapshot = () => {
         const snapshot = {}
@@ -2984,6 +3082,7 @@ const OverlayHandler = {
           editionLayer.alt = `${cfg.id}-edition`
           editionLayer.dataset.overlayId = cfg.edition.id
           editionLayer.dataset.overlayEdition = 'true'
+          editionLayer.dataset.overlayParentId = cfg.id
           editionLayer.style.pointerEvents = 'none' // let dragging happen on the base resolution layer
           cfg.edition.layer = editionLayer
           layers.set(cfg.edition.id, editionLayer)
@@ -3480,69 +3579,49 @@ const OverlayHandler = {
       const targetId = button.dataset.jumpTarget
       const target = targetId ? document.getElementById(targetId) : null
       if (!target) return
-
-      const updateVisibility = () => {
-        if (target.classList.contains('collapse') && !target.classList.contains('show')) {
-          button.classList.remove('is-visible')
-          button.classList.remove('overlay-jump-button--floating')
-          button.style.right = ''
-          return
-        }
-
-        const rect = target.getBoundingClientRect()
-        const container = button.closest('.library-settings-card') || button.closest('.card') || button.parentElement
-        const containerRect = container?.getBoundingClientRect()
-        const withinContainer = containerRect
-          ? containerRect.bottom > 0 && containerRect.top < window.innerHeight
-          : true
-        const isPast = rect.top < -80
-        const shouldShow = withinContainer && isPast
-
-        if (shouldShow) {
-          document.querySelectorAll('.overlay-jump-button.is-visible').forEach(other => {
-            if (other !== button) other.classList.remove('is-visible')
-          })
-        }
-
-        button.classList.toggle('is-visible', shouldShow)
-
-        if (shouldShow) {
-          button.classList.add('overlay-jump-button--floating')
-          if (containerRect) {
-            const rightOffset = Math.max(16, window.innerWidth - containerRect.right + 16)
-            button.style.right = `${rightOffset}px`
+      const openAccordionAncestors = (node) => {
+        if (!node) return
+        const collapses = []
+        let current = node
+        while (current) {
+          if (current.classList && current.classList.contains('accordion-collapse')) {
+            collapses.push(current)
           }
-        } else {
-          button.classList.remove('overlay-jump-button--floating')
-          button.style.right = ''
+          current = current.parentElement
         }
-      }
-
-      updateVisibility()
-
-      const onScroll = () => {
-        if (button.dataset.jumpRaf === 'true') return
-        button.dataset.jumpRaf = 'true'
-        requestAnimationFrame(() => {
-          updateVisibility()
-          button.dataset.jumpRaf = 'false'
+        collapses.reverse().forEach(collapse => {
+          if (collapse.classList.contains('show')) return
+          if (window.bootstrap && window.bootstrap.Collapse) {
+            const instance = window.bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false })
+            instance.show()
+            return
+          }
+          const headerBtn = collapse.closest('.accordion-item')?.querySelector('.accordion-header .accordion-button')
+          headerBtn?.click()
         })
       }
 
-      window.addEventListener('scroll', onScroll, { passive: true })
-      window.addEventListener('resize', onScroll)
-
-      button.addEventListener('click', () => {
-        const accordionItem = target.closest('.accordion-item')
-        const toggleButton = accordionItem?.querySelector('.accordion-button')
-
-        if (target.classList.contains('collapse') && !target.classList.contains('show') && toggleButton) {
-          toggleButton.click()
-        }
-
-        setTimeout(() => {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }, 250)
+      button.addEventListener('click', (event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        openAccordionAncestors(target)
+        window.setTimeout(() => {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          const overlayId = button.dataset.overlayId
+          const overlayToggle = button.closest('.template-toggle-group')?.querySelector('.overlay-toggle')
+          if (overlayId && overlayToggle) {
+            if (!overlayToggle.checked) {
+              overlayToggle.checked = true
+              overlayToggle.dispatchEvent(new Event('change', { bubbles: true }))
+            }
+            const board = document.getElementById(targetId) || target.closest('.overlay-board')
+            if (board && typeof board._overlaySelectById === 'function') {
+              window.setTimeout(() => {
+                board._overlaySelectById(overlayId)
+              }, 50)
+            }
+          }
+        }, 150)
       })
     })
   }

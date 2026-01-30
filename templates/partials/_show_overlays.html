@@ -62,68 +62,104 @@
 
                 <div class="overlay-board-toolbox">
                   <div class="overlay-board-toolbar" data-overlay-board-toolbar data-library-id="{{ library.id }}" data-overlay-type="{{ level }}">
-                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="pan" aria-pressed="false">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="pan" aria-pressed="false"
+                      data-bs-toggle="tooltip" title="Pan: drag the canvas background without moving overlays">
                       Pan
                     </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="grid" aria-pressed="false">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="grid" aria-pressed="false"
+                      data-bs-toggle="tooltip" title="Grid: show/hide alignment grid">
                       Grid
                     </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="snap" aria-pressed="false">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="snap" aria-pressed="false"
+                      data-bs-toggle="tooltip" title="Snap: snap movement to the grid size">
                       Snap
                     </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="multi" aria-pressed="false">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-toggle="multi" aria-pressed="false"
+                      data-bs-toggle="tooltip" title="Select: enable multi-select (Shift/Ctrl to add/remove)">
                       Select
                     </button>
-                    <select id="{{ library.id }}-{{ level }}-snap-step" class="form-select form-select-sm overlay-board-select" data-overlay-board-snap-step aria-label="Snap step">
+                    <select id="{{ library.id }}-{{ level }}-snap-step" class="form-select form-select-sm overlay-board-select" data-overlay-board-snap-step aria-label="Snap step"
+                      data-bs-toggle="tooltip" title="Grid/Snap size">
                       <option value="5">5px</option>
                       <option value="10">10px</option>
                       <option value="15">15px</option>
                       <option value="25" selected>25px</option>
                     </select>
                     <div class="overlay-board-align-group" role="group" aria-label="History">
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-history="undo" title="Undo" aria-label="Undo">Undo</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-history="redo" title="Redo" aria-label="Redo">Redo</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-history="undo" title="Undo last move" aria-label="Undo"
+                        data-bs-toggle="tooltip">Undo</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-history="redo" title="Redo last move" aria-label="Redo"
+                        data-bs-toggle="tooltip">Redo</button>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-reset="position" title="Reset Position" aria-label="Reset Position">
+                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-reset="position" title="Reset selected overlays to defaults" aria-label="Reset Position"
+                      data-bs-toggle="tooltip">
                       Reset Pos
                     </button>
                     <div class="overlay-board-align-group" role="group" aria-label="Align horizontal">
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="left" title="Align Left" aria-label="Align Left">L</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="center" title="Align Center" aria-label="Align Center">C</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="right" title="Align Right" aria-label="Align Right">R</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="left" title="Align Left" aria-label="Align Left"
+                        data-bs-toggle="tooltip">L</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="center" title="Align Center" aria-label="Align Center"
+                        data-bs-toggle="tooltip">C</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="right" title="Align Right" aria-label="Align Right"
+                        data-bs-toggle="tooltip">R</button>
                     </div>
                     <div class="overlay-board-align-group" role="group" aria-label="Align vertical">
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="top" title="Align Top" aria-label="Align Top">T</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="middle" title="Align Middle" aria-label="Align Middle">M</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="bottom" title="Align Bottom" aria-label="Align Bottom">B</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="top" title="Align Top" aria-label="Align Top"
+                        data-bs-toggle="tooltip">T</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="middle" title="Align Middle" aria-label="Align Middle"
+                        data-bs-toggle="tooltip">M</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-align="bottom" title="Align Bottom" aria-label="Align Bottom"
+                        data-bs-toggle="tooltip">B</button>
                     </div>
                     <div class="overlay-board-align-group" role="group" aria-label="Distribute">
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-distribute="horizontal" title="Distribute Horizontal" aria-label="Distribute Horizontal">DH</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-distribute="vertical" title="Distribute Vertical" aria-label="Distribute Vertical">DV</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-distribute="horizontal" title="Distribute Horizontal" aria-label="Distribute Horizontal"
+                        data-bs-toggle="tooltip">DH</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-distribute="vertical" title="Distribute Vertical" aria-label="Distribute Vertical"
+                        data-bs-toggle="tooltip">DV</button>
                     </div>
                     <div class="overlay-board-align-group" role="group" aria-label="Nudge">
-                      <select id="{{ library.id }}-{{ level }}-nudge-step" class="form-select form-select-sm overlay-board-select" data-overlay-board-nudge-step aria-label="Nudge step">
+                      <select id="{{ library.id }}-{{ level }}-nudge-step" class="form-select form-select-sm overlay-board-select" data-overlay-board-nudge-step aria-label="Nudge step"
+                        data-bs-toggle="tooltip" title="Nudge step size">
                         <option value="1" selected>1px</option>
                         <option value="5">5px</option>
                       </select>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="left" title="Nudge Left" aria-label="Nudge Left">&lt;</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="up" title="Nudge Up" aria-label="Nudge Up">^</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="down" title="Nudge Down" aria-label="Nudge Down">v</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="right" title="Nudge Right" aria-label="Nudge Right">&gt;</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="left" title="Nudge Left" aria-label="Nudge Left"
+                        data-bs-toggle="tooltip">&lt;</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="up" title="Nudge Up" aria-label="Nudge Up"
+                        data-bs-toggle="tooltip">^</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="down" title="Nudge Down" aria-label="Nudge Down"
+                        data-bs-toggle="tooltip">v</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-nudge="right" title="Nudge Right" aria-label="Nudge Right"
+                        data-bs-toggle="tooltip">&gt;</button>
                     </div>
                     <div class="overlay-board-toolbar-group">
                       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay"
+                        data-bs-toggle="modal" data-bs-target="#{{ library.id }}-overlay-toolbox-help-modal"
+                        title="Canvas help" aria-label="Canvas help">
+                        <i class="bi bi-question-circle"></i>
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay"
                         data-overlay-board-open="modal"
-                        data-overlay-modal-id="{{ library.id }}-{{ level }}-overlay-canvas-modal">
+                        data-overlay-modal-id="{{ library.id }}-{{ level }}-overlay-canvas-modal"
+                        data-bs-toggle="tooltip" title="Expand canvas to full screen">
                         Expand
                       </button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-export="png">
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay"
+                        data-overlay-board-jump="config" title="Jump to selected overlay settings"
+                        aria-label="Jump to selected overlay settings" data-bs-toggle="tooltip" disabled>
+                        <i class="bi bi-arrow-down-square"></i> Settings
+                      </button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-export="png"
+                        data-bs-toggle="tooltip" title="Export canvas as PNG">
                         Export
                       </button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-zoom="out">-</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-zoom="out"
+                        data-bs-toggle="tooltip" title="Zoom out">-</button>
                       <span class="overlay-board-zoom-label" data-overlay-board-zoom-label>100%</span>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-zoom="in">+</button>
-                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-zoom="reset">Reset</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-zoom="in"
+                        data-bs-toggle="tooltip" title="Zoom in">+</button>
+                      <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay" data-overlay-board-zoom="reset"
+                        data-bs-toggle="tooltip" title="Reset zoom to 100%">Reset</button>
                     </div>
                   </div>
                 </div>
@@ -135,7 +171,7 @@
                 {% set board_base_width = 1920 if level == 'episode' else 1000 %}
                 {% set board_base_height = 1080 if level == 'episode' else 1500 %}
                 {% set board_bg = '/static/images/default-' ~ board_base_width ~ 'x' ~ board_base_height ~ '.png' %}
-                <div class="overlay-board"
+                <div class="overlay-board" id="{{ library.id }}-{{ level }}-overlay-board"
                   data-base-width="{{ board_base_width }}"
                   data-base-height="{{ board_base_height }}"
                   data-overlay-type="{{ level }}"
@@ -169,11 +205,59 @@
   </div>
 </div>
 
-<div class="overlay-jump-container">
-  <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay overlay-jump-button"
-    data-jump-target="{{ library.id }}-overlayPreviewContainer">
-    <i class="bi bi-arrow-up-square"></i> Jump to canvas
-  </button>
+<div class="modal fade overlay-toolbox-help-modal" id="{{ library.id }}-overlay-toolbox-help-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Canvas Toolbox Help</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted">Use these controls to position and manage overlays on the canvas.</p>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <h6 class="fw-bold">View & Navigation</h6>
+            <ul class="small text-muted mb-0">
+              <li><strong>Pan</strong>: Drag the canvas background without moving overlays.</li>
+              <li><strong>Grid</strong>: Show or hide the alignment grid.</li>
+              <li><strong>Snap</strong>: Snap overlay movement to the grid size.</li>
+              <li><strong>Grid size</strong>: Sets the grid/snap step (5/10/15/25px).</li>
+              <li><strong>Zoom</strong>: Use −/+ to zoom; Reset returns to 100%.</li>
+              <li><strong>Expand</strong>: Open the canvas full screen.</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold">Selection & Movement</h6>
+            <ul class="small text-muted mb-0">
+              <li><strong>Select</strong>: Enable multi-select; use Shift/Ctrl to add/remove.</li>
+              <li><strong>Nudge</strong>: Move selected overlays by the nudge step.</li>
+              <li><strong>Nudge step</strong>: Sets the nudge increment (1px/5px).</li>
+              <li><strong>Reset Pos</strong>: Reset selected overlays to their default offsets.</li>
+              <li><strong>Undo/Redo</strong>: Step backward/forward through position changes.</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold">Align & Distribute</h6>
+            <ul class="small text-muted mb-0">
+              <li><strong>L/C/R</strong>: Align selected overlays left/center/right.</li>
+              <li><strong>T/M/B</strong>: Align selected overlays top/middle/bottom.</li>
+              <li><strong>DH/DV</strong>: Evenly distribute selected overlays horizontally/vertically.</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6 class="fw-bold">Output</h6>
+            <ul class="small text-muted mb-0">
+              <li><strong>Export</strong>: Download a PNG of the current canvas.</li>
+              <li><strong>Settings</strong>: Jump to the selected overlay’s settings block.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="card mb-4 border shadow-sm" data-font-upload>

@@ -3,6 +3,7 @@ import re
 from urllib.parse import urlparse
 
 URL_KEY_RE = re.compile(r"(^|[_-])url([_-]|$)")
+BOOLEAN_TEXT_VALUES = {"true", "false", "on", "off", "yes", "no", "0", "1"}
 
 
 def is_url_key(key):
@@ -16,6 +17,15 @@ def is_placeholder(value):
         return False
     text = str(value).strip().lower()
     return text in {"http://", "https://"}
+
+
+def is_boolean_value(value):
+    if isinstance(value, bool):
+        return True
+    if value is None:
+        return False
+    text = str(value).strip().lower()
+    return text in BOOLEAN_TEXT_VALUES
 
 
 def validate_url(value):
@@ -99,6 +109,8 @@ def validate_payload(payload):
 
     for key, value in items:
         if not is_url_key(key):
+            continue
+        if is_boolean_value(value):
             continue
         valid, message = validate_url(value)
         if not valid:
