@@ -1428,12 +1428,7 @@ def import_config_preview():
     blank_count = count_blank_lines(config_text)
     total_lines = len(config_text.splitlines()) if isinstance(config_text, str) else 0
     annotated_counts = count_annotated_lines(annotated_report)
-    diff_count = total_lines - (
-        annotated_counts.get("imported", 0)
-        + annotated_counts.get("not_imported", 0)
-        + blank_count
-        + comments_count
-    )
+    diff_count = total_lines - (annotated_counts.get("imported", 0) + annotated_counts.get("not_imported", 0) + blank_count + comments_count)
     line_counts = {
         "imported_lines": annotated_counts.get("imported", 0),
         "not_imported_lines": annotated_counts.get("not_imported", 0),
