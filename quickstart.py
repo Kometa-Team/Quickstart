@@ -1179,6 +1179,29 @@ def rename_config():
 
 @app.route("/import-config/preview", methods=["POST"])
 def import_config_preview():
+    def count_comment_lines(text: str) -> int:
+        if not isinstance(text, str):
+            return 0
+        return sum(1 for line in text.splitlines() if line.lstrip().startswith("#"))
+
+    def count_blank_lines(text: str) -> int:
+        if not isinstance(text, str):
+            return 0
+        return sum(1 for line in text.splitlines() if not line.strip())
+
+    def count_annotated_lines(text: str) -> dict:
+        imported = 0
+        not_imported = 0
+        if not isinstance(text, str):
+            return {"imported": 0, "not_imported": 0}
+        for line in text.splitlines():
+            trimmed = line.rstrip()
+            if trimmed.endswith("| imported") or trimmed.endswith("# imported"):
+                imported += 1
+            elif trimmed.endswith("| not imported") or trimmed.endswith("# not imported"):
+                not_imported += 1
+        return {"imported": imported, "not_imported": not_imported}
+
     upload = request.files.get("file")
     raw_name = request.form.get("config_name")
     config_name = importer.sanitize_config_name(raw_name)
@@ -1382,12 +1405,11 @@ def import_config_preview():
                 400,
             )
 
-    library_types, library_inference, _ = importer.build_library_type_plan(parsed, movie_names, show_names)
+    _library_types, library_inference, _ = importer.build_library_type_plan(parsed, movie_names, show_names)
     payload, report = importer.prepare_import_payload(
         parsed,
         movie_names,
         show_names,
-        library_type_overrides=library_types,
     )
     if not payload:
         if extracted_dir:
@@ -1401,18 +1423,25 @@ def import_config_preview():
     if extracted_fonts:
         for font in extracted_fonts:
             report_lines.append(f"imported: bundle.fonts.{font}")
-    annotated_body = importer.annotate_yaml_with_report(config_text, report_lines)
-    annotated_report = ""
-    if annotated_body:
-        legend_lines = [
-            "# Legend:",
-            "# mapped = imported into Quickstart",
-            "# partial = some fields imported, some not",
-            "# unmapped = unsupported or missing mapping",
-            "# skipped = ignored or not applicable",
-            "",
-        ]
-        annotated_report = "\n".join(legend_lines) + annotated_body
+    annotated_report = importer.annotate_yaml_with_report(config_text, report_lines, binary=True)
+    comments_count = count_comment_lines(config_text)
+    blank_count = count_blank_lines(config_text)
+    total_lines = len(config_text.splitlines()) if isinstance(config_text, str) else 0
+    annotated_counts = count_annotated_lines(annotated_report)
+    diff_count = total_lines - (
+        annotated_counts.get("imported", 0)
+        + annotated_counts.get("not_imported", 0)
+        + blank_count
+        + comments_count
+    )
+    line_counts = {
+        "imported_lines": annotated_counts.get("imported", 0),
+        "not_imported_lines": annotated_counts.get("not_imported", 0),
+        "comments": comments_count,
+        "blank": blank_count,
+        "total": total_lines,
+        "diff": diff_count,
+    }
 
     previous_path = session.get("import_preview_path")
     if previous_path:
@@ -1436,12 +1465,17 @@ def import_config_preview():
             {
                 "config_name": config_name,
                 "config_data": parsed,
+                "config_text": config_text,
                 "payload": payload,
                 "fonts_dir": str(extracted_dir) if extracted_dir else None,
                 "fonts": extracted_fonts,
                 "report_lines": report_lines,
                 "report_summary": report.summary(),
                 "annotated_report": annotated_report,
+                "comments_count": comments_count,
+                "line_counts": line_counts,
+                "plex_movie_names": sorted(movie_names) if isinstance(movie_names, (set, list)) else [],
+                "plex_show_names": sorted(show_names) if isinstance(show_names, (set, list)) else [],
             },
             handle,
             ensure_ascii=True,
@@ -1480,6 +1514,8 @@ def import_config_preview():
         token=token,
         config_name=config_name,
         summary=report.summary(),
+        comments_count=comments_count,
+        line_counts=line_counts,
         report_lines=lines,
         annotated_report=annotated_report,
         report_url=f"/import-config/report?token={token}",
@@ -1508,28 +1544,182 @@ def import_config_report():
     report_lines = cached.get("report_lines") or []
     summary = cached.get("report_summary") or {}
     annotated_report = cached.get("annotated_report")
+    line_counts = cached.get("line_counts") or {}
+    imported_count = line_counts.get("imported_lines", summary.get("imported", 0))
+    not_imported_count = line_counts.get(
+        "not_imported_lines",
+        (summary.get("unmapped", 0) + summary.get("skipped", 0)),
+    )
+    comments_count = line_counts.get("comments", cached.get("comments_count", 0))
+    blank_count = line_counts.get("blank", 0)
+    total_count = line_counts.get("total", 0)
+    diff_count = line_counts.get(
+        "diff",
+        total_count - (imported_count + not_imported_count + blank_count + comments_count),
+    )
 
     if annotated_report:
         header = [
             f"# Import Report for {config_name}",
-            f"# Imported: {summary.get('imported', 0)}",
-            f"# Unmapped: {summary.get('unmapped', 0)}",
-            f"# Skipped: {summary.get('skipped', 0)}",
+            f"# Imported: {imported_count}",
+            f"# Not Imported: {not_imported_count}",
+            f"# Comments: {comments_count}",
+            f"# Blank: {blank_count}",
+            f"# Total: {total_count}",
+            f"# Diff: {diff_count}",
             "",
         ]
         text = "\n".join(header) + str(annotated_report)
     else:
         header = [
             f"Import Report for {config_name}",
-            f"Imported: {summary.get('imported', 0)}",
-            f"Unmapped: {summary.get('unmapped', 0)}",
-            f"Skipped: {summary.get('skipped', 0)}",
+            f"Imported: {imported_count}",
+            f"Not Imported: {not_imported_count}",
+            f"Comments: {comments_count}",
+            f"Blank: {blank_count}",
+            f"Total: {total_count}",
+            f"Diff: {diff_count}",
             "",
         ]
         text = "\n".join(header + [str(line) for line in report_lines])
     response = app.response_class(text, mimetype="text/plain")
     response.headers["Content-Disposition"] = f'attachment; filename="{config_name}_import_report.txt"'
     return response
+
+
+@app.route("/import-config/preview-mapped", methods=["POST"])
+def import_config_preview_mapped():
+    data = request.get_json(silent=True) or {}
+    token = data.get("token")
+    library_mapping = data.get("library_mapping") or {}
+    if not token or token != session.get("import_preview_token"):
+        return jsonify(success=False, message="Import token is invalid."), 400
+    if library_mapping and not isinstance(library_mapping, dict):
+        return jsonify(success=False, message="Invalid library mapping."), 400
+
+    cache_path = session.get("import_preview_path")
+    if not cache_path:
+        return jsonify(success=False, message="Import preview not found."), 400
+
+    try:
+        with open(cache_path, "r", encoding="utf-8") as handle:
+            cached = json.load(handle)
+    except Exception:
+        return jsonify(success=False, message="Import preview is unavailable."), 400
+
+    config_data = cached.get("config_data") or {}
+    if not isinstance(config_data, dict):
+        config_data = {}
+    config_text = cached.get("config_text") or ""
+
+    def parse_list(value):
+        if isinstance(value, str):
+            return {v.strip() for v in value.split(",") if v.strip()}
+        if isinstance(value, list):
+            return {str(v).strip() for v in value if str(v).strip()}
+        return set()
+
+    movie_names = parse_list(cached.get("plex_movie_names") or [])
+    show_names = parse_list(cached.get("plex_show_names") or [])
+    needs_plex = isinstance(config_data.get("libraries"), dict) and bool(config_data.get("libraries"))
+
+    if needs_plex and not movie_names and not show_names:
+        plex_url = session.get("import_preview_plex_url") or ""
+        plex_token = session.get("import_preview_plex_token") or ""
+        if plex_url and plex_token:
+            plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
+            plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+            if plex_result and plex_result.get("validated"):
+                movie_names = parse_list(plex_result.get("movie_libraries", []))
+                show_names = parse_list(plex_result.get("show_libraries", []))
+
+    plex_names = set(movie_names) | set(show_names)
+
+    if isinstance(config_data.get("libraries"), dict):
+        mapped_libraries = {}
+        used_targets = set()
+        for lib_name, lib_cfg in config_data.get("libraries", {}).items():
+            name = str(lib_name)
+            if name in plex_names:
+                target = name
+            else:
+                mapped = library_mapping.get(name)
+                if mapped is None or str(mapped).strip() == "":
+                    continue
+                mapped = str(mapped).strip()
+                if mapped == "__ignore__":
+                    continue
+                if mapped not in plex_names:
+                    continue
+                target = mapped
+
+            if target in used_targets:
+                continue
+            used_targets.add(target)
+            mapped_libraries[target] = lib_cfg
+
+        config_copy = json.loads(json.dumps(config_data))
+        if mapped_libraries:
+            config_copy["libraries"] = mapped_libraries
+        else:
+            config_copy.pop("libraries", None)
+    else:
+        config_copy = config_data
+
+    payload, report = importer.prepare_import_payload(config_copy, movie_names, show_names)
+    report_lines = list(report.lines)
+    annotated_report = importer.annotate_yaml_with_report(config_text, report_lines, binary=True)
+    comments_count = cached.get("comments_count")
+    if not isinstance(comments_count, int):
+        comments_count = sum(1 for line in str(config_text).splitlines() if line.lstrip().startswith("#"))
+    blank_count = sum(1 for line in str(config_text).splitlines() if not line.strip())
+    total_lines = len(str(config_text).splitlines())
+    imported_lines = 0
+    not_imported_lines = 0
+    for line in str(annotated_report).splitlines():
+        trimmed = line.rstrip()
+        if trimmed.endswith("| imported") or trimmed.endswith("# imported"):
+            imported_lines += 1
+        elif trimmed.endswith("| not imported") or trimmed.endswith("# not imported"):
+            not_imported_lines += 1
+    diff_count = total_lines - (imported_lines + not_imported_lines + blank_count + comments_count)
+    line_counts = {
+        "imported_lines": imported_lines,
+        "not_imported_lines": not_imported_lines,
+        "comments": comments_count,
+        "blank": blank_count,
+        "total": total_lines,
+        "diff": diff_count,
+    }
+
+    cached["payload"] = payload
+    cached["report_lines"] = report_lines
+    cached["report_summary"] = report.summary()
+    cached["annotated_report"] = annotated_report
+    cached["comments_count"] = comments_count
+    cached["line_counts"] = line_counts
+    cached["plex_movie_names"] = sorted(movie_names)
+    cached["plex_show_names"] = sorted(show_names)
+
+    with open(cache_path, "w", encoding="utf-8") as handle:
+        json.dump(cached, handle, ensure_ascii=True)
+
+    lines = list(report_lines)
+    max_lines = 500
+    if len(lines) > max_lines:
+        truncated = len(lines) - max_lines
+        lines = lines[:max_lines] + [f"skipped: report truncated ({truncated} more lines)"]
+
+    return jsonify(
+        success=True,
+        config_name=cached.get("config_name") or "",
+        summary=report.summary(),
+        comments_count=comments_count,
+        line_counts=line_counts,
+        report_lines=lines,
+        annotated_report=annotated_report,
+        report_url=f"/import-config/report?token={token}",
+    )
 
 
 @app.route("/import-config/confirm", methods=["POST"])

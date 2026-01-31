@@ -299,6 +299,15 @@
               <a class="btn btn-sm btn-outline-light d-none" id="downloadImportReport" href="#" download>Download report</a>
             </div>
           </div>
+          <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Import report filters" id="importReportFilters">
+              <button type="button" class="btn btn-outline-light active" data-filter="all">All</button>
+              <button type="button" class="btn btn-outline-light" data-filter="imported">Imported</button>
+              <button type="button" class="btn btn-outline-light" data-filter="not_imported">Not Imported</button>
+              <button type="button" class="btn btn-outline-light" data-filter="comments">Comments</button>
+            </div>
+            <div class="small text-muted d-none" id="importLegend"></div>
+          </div>
           <pre class="mt-2 p-2 border rounded small bg-dark text-light" id="importReport"
             style="max-height: 260px; overflow: auto;"></pre>
         </div>

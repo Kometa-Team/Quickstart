@@ -85,6 +85,12 @@ def _build_prefix_flags(status_map: dict[str, str]) -> dict[str, dict[str, bool]
             flags = prefix_map.setdefault(prefix, {"mapped": False, "unmapped": False, "skipped": False})
             if status in flags:
                 flags[status] = True
+            if "[" in prefix:
+                normalized = re.sub(r"\[\d+\]", "", prefix)
+                if normalized and normalized != prefix:
+                    norm_flags = prefix_map.setdefault(normalized, {"mapped": False, "unmapped": False, "skipped": False})
+                    if status in norm_flags:
+                        norm_flags[status] = True
     return prefix_map
 
 
@@ -122,6 +128,10 @@ def _parse_mapping_key(text: str) -> tuple[str | None, str | None]:
     if ":" not in text:
         return None, None
     key, rest = text.split(":", 1)
+    # Treat as mapping only when ":" is followed by space or end-of-line.
+    # This avoids misclassifying plain strings like "C:\Path" or "http://".
+    if rest and not rest.startswith(" "):
+        return None, None
     key = key.strip()
     if not key:
         return None, None
@@ -138,12 +148,16 @@ def _append_status_annotation(line: str, status: str | None) -> str:
     return f"{line}  # {status}"
 
 
-def annotate_yaml_with_report(raw_text: str, report_lines: list[str]) -> str:
+def annotate_yaml_with_report(raw_text: str, report_lines: list[str], binary: bool = False) -> str:
     if not raw_text:
         return ""
     status_map = _parse_report_statuses(report_lines)
-    prefix_map = _build_prefix_flags(status_map)
-    if not prefix_map:
+    if binary:
+        imported_only = {path: status for path, status in status_map.items() if status == "mapped"}
+        prefix_map = _build_prefix_flags(imported_only)
+    else:
+        prefix_map = _build_prefix_flags(status_map)
+    if not prefix_map and not binary:
         return raw_text
 
     lines = raw_text.splitlines()
@@ -171,14 +185,27 @@ def annotate_yaml_with_report(raw_text: str, report_lines: list[str]) -> str:
             list_counters = {k: v for k, v in list_counters.items() if k[1] < indent}
         prev_indent = indent
 
-        while stack and indent <= stack[-1]["indent"]:
-            stack.pop()
-
         content, _ = _split_inline_comment(stripped)
         content = content.rstrip()
         if not content:
             annotated.append(line)
             continue
+
+        is_list_line = content.startswith("-")
+        while stack:
+            top = stack[-1]
+            top_indent = top["indent"]
+            top_path = str(top.get("path", ""))
+            if indent < top_indent:
+                stack.pop()
+                continue
+            if is_list_line and indent == top_indent and "[" in top_path:
+                stack.pop()
+                continue
+            if not is_list_line and indent <= top_indent:
+                stack.pop()
+                continue
+            break
 
         line_path = None
 
@@ -221,7 +248,13 @@ def annotate_yaml_with_report(raw_text: str, report_lines: list[str]) -> str:
         if status_path and status_path not in prefix_map and f"{status_path}.default" in prefix_map:
             status_path = f"{status_path}.default"
         flags = prefix_map.get(status_path) if status_path else None
-        status = _status_from_flags(flags)
+        if not flags and status_path and "[" in status_path:
+            normalized_path = re.sub(r"\[\d+\]", "", status_path)
+            flags = prefix_map.get(normalized_path)
+        if binary and status_path:
+            status = "imported" if flags and flags.get("mapped") else "not imported"
+        else:
+            status = _status_from_flags(flags)
         annotated.append(_append_status_annotation(line, status))
 
     return "\n".join(annotated)
