@@ -1027,6 +1027,11 @@ header.fixed-top {
     border-radius: 0.5rem;
 }
 
+[data-path-hint="platform-status"],
+[data-path-hint="docker"] {
+    margin-bottom: 0.5rem;
+}
+
 #navbarDropdownMenuLink[disabled]::after {
     display: none !important;
 }

@@ -236,6 +236,13 @@ document.addEventListener('DOMContentLoaded', function () {
   assetDirectoryContainer.addEventListener('click', (event) => {
     if (event.target.classList.contains('remove-asset-directory')) {
       const fieldGroup = event.target.closest('.input-group')
+      if (!fieldGroup) return
+      let next = fieldGroup.nextElementSibling
+      while (next && next.dataset && next.dataset.pathHint) {
+        const toRemove = next
+        next = next.nextElementSibling
+        toRemove.remove()
+      }
       assetDirectoryContainer.removeChild(fieldGroup)
     }
   })

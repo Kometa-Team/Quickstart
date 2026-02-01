@@ -75,6 +75,10 @@ const PathValidation = (() => {
       return { valid: false, message: 'Contains an invalid null sequence.' }
     }
 
+    if (platform !== 'windows' && isWindowsAbsolute(str)) {
+      return { valid: false, message: 'Windows-style paths are not valid on Linux/macOS/Docker.' }
+    }
+
     if (!rule.allow_relative && !isAbsolute(str, platform)) {
       return { valid: false, message: 'Path must be absolute.' }
     }
@@ -115,7 +119,7 @@ const PathValidation = (() => {
   }
 
   function insertHintAfter (input, hintEl) {
-    let anchor = input
+    let anchor = input.closest('.input-group') || input
     while (anchor && anchor.nextElementSibling) {
       const next = anchor.nextElementSibling
       if (next.classList && next.classList.contains('form-text')) {
