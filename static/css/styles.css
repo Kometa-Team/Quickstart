@@ -1062,6 +1062,10 @@ header.fixed-top {
     padding: 6px;
 }
 
+#final-content-wrapper.is-updating {
+    display: none;
+}
+
 .overlay-config-target {
     scroll-margin-top: 6rem;
 }

@@ -75,7 +75,12 @@ $(document).ready(function () {
   const headerSelect = document.getElementById('header-style')
   const headerPreview = document.getElementById('header-style-preview')
   const headerGrid = document.getElementById('header-style-grid')
-  const headerGridToggle = document.getElementById('header-style-grid-toggle')
+  const headerGridCollapse = document.getElementById('header-style-grid-collapse')
+  const headerStyleWait = document.getElementById('header-style-wait')
+  const finalContentWrapper = document.getElementById('final-content-wrapper')
+  const headerGridStatus = document.getElementById('header-style-grid-status')
+  const headerGridProgress = document.getElementById('header-style-grid-progress')
+  const headerGridProgressBar = headerGridProgress ? headerGridProgress.querySelector('.progress-bar') : null
 
   const showYAML = plexValid && tmdbValid && libsValid && settValid && yamlValid
 
@@ -160,13 +165,34 @@ $(document).ready(function () {
     })
   }
 
+  function updateGridStatus (message) {
+    if (headerGridStatus) headerGridStatus.textContent = message || ''
+  }
+
+  function updateGridProgress (loaded, total) {
+    if (!headerGridProgress || !headerGridProgressBar) return
+    if (!total) {
+      headerGridProgress.classList.add('d-none')
+      headerGridProgressBar.style.width = '0%'
+      return
+    }
+    const pct = Math.min(100, Math.round((loaded / total) * 100))
+    headerGridProgress.classList.remove('d-none')
+    headerGridProgressBar.style.width = `${pct}%`
+  }
+
   async function loadHeaderGridSamples () {
     if (!headerGrid) return
     const fonts = JSON.parse(headerGrid.dataset.fonts || '[]')
     if (!fonts.length) {
       headerGrid.innerHTML = '<div class="text-muted small">No fonts available.</div>'
+      updateGridStatus('')
+      updateGridProgress(0, 0)
       return
     }
+
+    updateGridStatus(`Loading ${fonts.length} font previews...`)
+    updateGridProgress(0, fonts.length)
 
     headerGrid.innerHTML = ''
     fonts.forEach(font => {
@@ -191,6 +217,7 @@ $(document).ready(function () {
     setActiveGridCard(headerSelect ? headerSelect.value : '')
 
     const chunkSize = 12
+    let loadedCount = 0
     for (let i = 0; i < fonts.length; i += chunkSize) {
       const chunk = fonts.slice(i, i + chunkSize)
       try {
@@ -216,16 +243,19 @@ $(document).ready(function () {
           if (pre) pre.textContent = 'Preview unavailable.'
         })
       }
+      loadedCount += chunk.length
+      updateGridStatus(`Loaded ${Math.min(loadedCount, fonts.length)} of ${fonts.length} previews`)
+      updateGridProgress(Math.min(loadedCount, fonts.length), fonts.length)
     }
+    updateGridStatus(`Loaded ${fonts.length} previews`)
+    updateGridProgress(fonts.length, fonts.length)
+    setTimeout(() => updateGridProgress(0, 0), 800)
   }
 
-  if (headerGridToggle && headerGrid) {
+  if (headerGridCollapse && headerGrid) {
     let gridLoaded = false
-    headerGridToggle.addEventListener('click', () => {
-      const isHidden = headerGrid.classList.contains('d-none')
-      headerGrid.classList.toggle('d-none', !isHidden)
-      headerGridToggle.textContent = isHidden ? 'Hide font grid' : 'Show font grid'
-      if (isHidden && !gridLoaded) {
+    headerGridCollapse.addEventListener('show.bs.collapse', () => {
+      if (!gridLoaded) {
         gridLoaded = true
         loadHeaderGridSamples()
       }
@@ -1395,7 +1425,12 @@ $(document).ready(function () {
 
   if (document.getElementById('header-style')) {
     document.getElementById('header-style').addEventListener('change', function () {
-      document.getElementById('configForm').submit()
+      showToast('info', 'Updating header style. Please wait for the page to reload...')
+      if (headerStyleWait) headerStyleWait.classList.remove('d-none')
+      if (finalContentWrapper) finalContentWrapper.classList.add('is-updating')
+      setTimeout(() => {
+        document.getElementById('configForm').submit()
+      }, 150)
     })
   }
 
