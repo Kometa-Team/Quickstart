@@ -227,6 +227,35 @@
 <!-- Rename Modal -->
 {% include "partials/_rename_modal.html" %}
 
+<!-- Font Picker Modal -->
+<div class="modal fade" id="fontPickerModal" tabindex="-1" aria-labelledby="fontPickerModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="fontPickerModalLabel">Font Picker</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2 align-items-end mb-3">
+          <div class="col-12 col-md-6">
+            <label class="form-label small" for="font-picker-search">Search fonts</label>
+            <input type="search" class="form-control form-control-sm" id="font-picker-search" placeholder="Type to filter fonts">
+          </div>
+          <div class="col-12 col-md-6">
+            <label class="form-label small" for="font-picker-sample">Sample text</label>
+            <input type="text" class="form-control form-control-sm" id="font-picker-sample" value="AaBb123 Quickstart">
+          </div>
+        </div>
+        <div class="small text-muted mb-2" id="font-picker-status"></div>
+        <div class="font-picker-grid" id="font-picker-grid"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Mirror Library Modal -->
 <div class="modal fade" id="copyLibraryModal" tabindex="-1" aria-labelledby="copyLibraryModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">

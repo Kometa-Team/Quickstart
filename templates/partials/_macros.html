@@ -1423,17 +1423,21 @@ prefix) %}
                                                             {{ display_label }}
                                                         </span>
                                                         {% set fonts_list = overlay_fonts if overlay_fonts else ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'Roboto-Regular.ttf'] %}
-                                                          <select class="form-select template-variable-text"
-                                                              id="{{ input_id }}"
-                                                              name="{{ template_name }}[{{ var_name }}]"
-                                                              aria-describedby="{{ input_id }}_text"
-                                                              data-default="{{ var_details.default }}"
-                                                              data-font-select>
-                                                            <option value="" {% if selected_value=='' %}selected{% endif %}>Select font</option>
-                                                            {% for fnt in fonts_list %}
-                                                            <option value="{{ fnt }}" {% if selected_value==fnt %}selected{% endif %}>{{ fnt }}</option>
-                                                            {% endfor %}
-                                                          </select>
+                                                        <button type="button" class="btn btn-outline-secondary font-picker-trigger"
+                                                            data-font-picker-target="{{ input_id }}">
+                                                            {{ selected_value if selected_value else 'Select font' }}
+                                                        </button>
+                                                        <select class="form-select template-variable-text d-none"
+                                                            id="{{ input_id }}"
+                                                            name="{{ template_name }}[{{ var_name }}]"
+                                                            aria-describedby="{{ input_id }}_text"
+                                                            data-default="{{ var_details.default }}"
+                                                            data-font-select>
+                                                          <option value="" {% if selected_value=='' %}selected{% endif %}>Select font</option>
+                                                          {% for fnt in fonts_list %}
+                                                          <option value="{{ fnt }}" {% if selected_value==fnt %}selected{% endif %}>{{ fnt }}</option>
+                                                          {% endfor %}
+                                                        </select>
                                                       </div>
                                                       <div class="font-preview text-muted mb-2" data-font-preview data-preview-for="{{ input_id }}">8.0AaBb123%</div>
                                                           {% else %}

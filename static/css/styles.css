@@ -1066,6 +1066,51 @@ header.fixed-top {
     display: none;
 }
 
+.font-picker-trigger {
+    text-align: left;
+    width: 100%;
+}
+
+.font-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.font-picker-card {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: left;
+    background: rgba(10, 10, 10, 0.35);
+    color: inherit;
+}
+
+.font-picker-card:hover {
+    border-color: rgba(56, 189, 248, 0.7);
+    background: rgba(10, 10, 10, 0.55);
+}
+
+.font-picker-card.active {
+    border-color: rgba(45, 212, 191, 0.9);
+    box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.35);
+}
+
+.font-picker-card-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.font-picker-card-sample {
+    font-size: 2.6rem;
+    line-height: 1.15;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    padding: 12px;
+    min-height: 76px;
+}
+
 .overlay-config-target {
     scroll-margin-top: 6rem;
 }

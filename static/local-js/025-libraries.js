@@ -117,6 +117,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (typeof updateFontPreviewForSelect === 'function') {
           updateFontPreviewForSelect(select)
         }
+        if (typeof updateFontPickerButton === 'function') {
+          updateFontPickerButton(select)
+        }
       })
     }
 
@@ -175,6 +178,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateFontPreviewForSelect (select) {
       if (!select) return
+      if (typeof updateFontPickerButton === 'function') {
+        updateFontPickerButton(select)
+      }
       const preview = document.querySelector(`[data-preview-for="${select.id}"]`)
       if (!preview) return
       const value = select.value || select.dataset.default || ''
@@ -193,12 +199,174 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     window.updateFontPreviewForSelect = updateFontPreviewForSelect
 
+    function updateFontPickerButton (select) {
+      if (!select) return
+      const button = document.querySelector(`[data-font-picker-target="${select.id}"]`)
+      if (!button) return
+      const value = select.value || select.dataset.default || ''
+      const file = value.split(/[\\/]/).pop()
+      button.textContent = file || 'Select font'
+      button.title = file || ''
+      if (!file) {
+        button.style.fontFamily = ''
+        return
+      }
+      loadFontPreview(file).then(family => {
+        if (family) {
+          button.style.fontFamily = `"${family}", sans-serif`
+        }
+      })
+    }
+    window.updateFontPickerButton = updateFontPickerButton
+
+    const fontPickerState = {
+      activeSelect: null,
+      sampleText: 'AaBb123 Quickstart'
+    }
+
+    function getFontPickerModal () {
+      const modalEl = document.getElementById('fontPickerModal')
+      if (!modalEl || !bootstrap || !bootstrap.Modal) return null
+      return bootstrap.Modal.getOrCreateInstance(modalEl)
+    }
+
+    function getFontsFromSelect (select) {
+      const fonts = []
+      const seen = new Set()
+      if (!select) return fonts
+      select.querySelectorAll('option').forEach(option => {
+        const value = option.value || ''
+        if (!value || seen.has(value)) return
+        fonts.push(value)
+        seen.add(value)
+      })
+      return fonts
+    }
+
+    function renderFontPickerGrid (select) {
+      const modalEl = document.getElementById('fontPickerModal')
+      const grid = document.getElementById('font-picker-grid')
+      const status = document.getElementById('font-picker-status')
+      const search = document.getElementById('font-picker-search')
+      const sampleInput = document.getElementById('font-picker-sample')
+      if (!grid || !modalEl) return
+
+      const fonts = getFontsFromSelect(select)
+      const query = (search?.value || '').trim().toLowerCase()
+      const sampleText = sampleInput ? sampleInput.value : fontPickerState.sampleText
+      fontPickerState.sampleText = sampleText
+
+      const cards = []
+      cards.push({ font: '', label: 'Default (auto)' })
+      fonts.forEach(font => {
+        const label = font.split(/[\\/]/).pop()
+        cards.push({ font, label })
+      })
+
+      const filtered = cards.filter(card => {
+        if (!query) return true
+        return card.label.toLowerCase().includes(query)
+      })
+
+      grid.innerHTML = ''
+      if (status) {
+        status.textContent = `${filtered.length} font${filtered.length === 1 ? '' : 's'}`
+      }
+
+      if (!filtered.length) {
+        const empty = document.createElement('div')
+        empty.className = 'text-muted small'
+        empty.textContent = 'No fonts match your search.'
+        grid.appendChild(empty)
+        return
+      }
+
+      const selectedValue = select ? (select.value || '') : ''
+
+      filtered.forEach(card => {
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'font-picker-card'
+        button.dataset.font = card.font
+        if ((card.font || '') === selectedValue) {
+          button.classList.add('active')
+        }
+        const title = document.createElement('div')
+        title.className = 'font-picker-card-title'
+        title.textContent = card.label
+        const sample = document.createElement('div')
+        sample.className = 'font-picker-card-sample'
+        sample.textContent = sampleText || 'AaBb123 Quickstart'
+
+        if (card.font) {
+          const file = card.font.split(/[\\/]/).pop()
+          loadFontPreview(file).then(family => {
+            if (family) {
+              sample.style.fontFamily = `"${family}", sans-serif`
+            }
+          })
+        }
+
+        button.appendChild(title)
+        button.appendChild(sample)
+        button.addEventListener('click', () => {
+          if (select) {
+            select.value = card.font
+            select.dispatchEvent(new Event('change', { bubbles: true }))
+            updateFontPickerButton(select)
+            updateFontPreviewForSelect(select)
+          }
+          const modal = getFontPickerModal()
+          if (modal) modal.hide()
+        })
+
+        grid.appendChild(button)
+      })
+    }
+
+    function wireFontPickerModal () {
+      const modalEl = document.getElementById('fontPickerModal')
+      if (!modalEl) return
+      const search = document.getElementById('font-picker-search')
+      const sampleInput = document.getElementById('font-picker-sample')
+
+      modalEl.addEventListener('show.bs.modal', () => {
+        if (sampleInput) {
+          sampleInput.value = fontPickerState.sampleText
+        }
+        renderFontPickerGrid(fontPickerState.activeSelect)
+      })
+
+      if (search) {
+        search.addEventListener('input', () => renderFontPickerGrid(fontPickerState.activeSelect))
+      }
+      if (sampleInput) {
+        sampleInput.addEventListener('input', () => renderFontPickerGrid(fontPickerState.activeSelect))
+      }
+    }
+
+    function wireFontPickerButtons (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-font-picker-target]').forEach(button => {
+        if (button.dataset.fontPickerBound === 'true') return
+        button.addEventListener('click', () => {
+          const selectId = button.dataset.fontPickerTarget
+          const select = selectId ? document.getElementById(selectId) : null
+          fontPickerState.activeSelect = select
+          const modal = getFontPickerModal()
+          if (modal) modal.show()
+        })
+        button.dataset.fontPickerBound = 'true'
+      })
+    }
+
     function wireFontPreviews (scope) {
       const root = scope || document
       root.querySelectorAll('select[data-font-select]').forEach(select => {
         if (select.dataset.fontPreviewBound === 'true') return
         select.addEventListener('change', () => updateFontPreviewForSelect(select))
         updateFontPreviewForSelect(select)
+        updateFontPickerButton(select)
         select.dataset.fontPreviewBound = 'true'
       })
     }
@@ -238,6 +406,7 @@ document.addEventListener('DOMContentLoaded', function () {
               throw new Error(data.message || 'Font upload failed.')
             }
             updateFontSelects(data.fonts || [], root)
+            renderFontPickerGrid(fontPickerState.activeSelect)
             input.value = ''
             const saved = Array.isArray(data.saved) ? data.saved.length : 0
             setStatus(`Uploaded ${saved} font(s).`, false)
@@ -360,7 +529,10 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       wireFontUploads(card)
       wireFontPreviews(card)
+      wireFontPickerButtons(card)
     }
+
+    wireFontPickerModal()
 
     function buildPayloadFromCard (card) {
       const payload = {}
