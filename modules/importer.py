@@ -836,7 +836,9 @@ def prepare_import_payload(
             if section == "settings":
                 asset_directory = section_payload.get("asset_directory")
                 if isinstance(asset_directory, (str, list)):
-                    normalized = [line.strip() for line in str(asset_directory).splitlines()] if isinstance(asset_directory, str) else [str(item).strip() for item in asset_directory]
+                    normalized = (
+                        [line.strip() for line in str(asset_directory).splitlines()] if isinstance(asset_directory, str) else [str(item).strip() for item in asset_directory]
+                    )
                     normalized = [entry for entry in normalized if entry]
                     section_payload = dict(section_payload)
                     section_payload["asset_directory"] = normalized
