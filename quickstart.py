@@ -432,6 +432,7 @@ if cleanup_flag not in {"1", "true", "yes"}:
         helpers.update_env_variable("QS_CONFIG_CLEANUP_DONE", "1")
         os.environ["QS_CONFIG_CLEANUP_DONE"] = "1"
 
+
 def _load_or_create_secret_key():
     env_key = os.getenv("QS_SECRET_KEY", "").strip()
     if env_key:
