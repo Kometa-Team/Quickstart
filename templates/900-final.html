@@ -17,6 +17,13 @@
   </select>
   <label for="header-style">Header Style</label>
 </div>
+<div class="form-text mb-1">Preview</div>
+<pre id="header-style-preview" class="form-control bg-dark text-light small font-monospace" style="white-space: pre;">Loading preview...</pre>
+<div class="d-flex align-items-center justify-content-between mt-2 mb-2">
+  <button type="button" class="btn btn-sm btn-outline-secondary" id="header-style-grid-toggle">Show font grid</button>
+  <span class="small text-muted">Click a sample to select it.</span>
+</div>
+<div id="header-style-grid" class="header-style-grid d-none" data-fonts='{{ page_info.available_fonts | tojson }}'></div>
 
 <!-- Validation Error Section -->
 <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;"></div>

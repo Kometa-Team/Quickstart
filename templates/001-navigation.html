@@ -21,6 +21,8 @@
             data-current-config-history="{{ page_info.qs_config_history }}" data-current-log-keep="{{ page_info.qs_kometa_log_keep }}"
             data-current-test-libs-path="{{ page_info.qs_test_libs_path }}"
             data-current-test-libs-tmp="{{ page_info.qs_test_libs_tmp }}"
+            data-current-session-lifetime="{{ page_info.qs_session_lifetime_days }}"
+            data-current-session-dir="{{ page_info.qs_flask_session_dir }}"
             data-quickstart-root="{{ page_info.quickstart_root }}"
             title="Quickstart settings">
             <i class="bi bi-gear-fill"></i>
@@ -227,153 +229,217 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <div class="mb-3">
-              <label class="form-label" for="quickstart-settings-theme-btn">Theme</label>
-              <div class="dropdown theme-picker">
-                <button class="btn dropdown-toggle w-100 theme-picker-toggle" type="button"
-                  id="quickstart-settings-theme-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                  <span class="theme-picker-label">
-                    <span class="theme-swatch theme-swatch--kometa" data-theme-swatch></span>
-                    <span class="theme-picker-text">Kometa</span>
-                  </span>
-                </button>
-                <ul class="dropdown-menu w-100 theme-picker-menu" aria-labelledby="quickstart-settings-theme-btn">
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="kometa" data-label="Kometa">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--kometa"></span> Kometa
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="dark" data-label="Dark">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--dark"></span> Dark
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="plex" data-label="Plex">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--plex"></span> Plex
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="jellyfin" data-label="Jellyfin">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--jellyfin"></span> Jellyfin
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="emby" data-label="Emby">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--emby"></span> Emby
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="seerr" data-label="Seerr">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--seerr"></span> Seerr
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="mind" data-label="Mind Stone">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--mind"></span> Mind Stone
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="power" data-label="Power Stone">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--power"></span> Power Stone
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="reality" data-label="Reality Stone">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--reality"></span> Reality Stone
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="soul" data-label="Soul Stone">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--soul"></span> Soul Stone
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="space" data-label="Space Stone">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--space"></span> Space Stone
-                      </span>
-                    </button>
-                  </li>
-                  <li>
-                    <button class="dropdown-item theme-option" type="button" data-theme="time" data-label="Time Stone">
-                      <span class="theme-option-label">
-                        <span class="theme-swatch theme-swatch--time"></span> Time Stone
-                      </span>
-                    </button>
-                  </li>
-                </ul>
+            <div class="accordion" id="quickstart-settings-accordion">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="qs-settings-general-heading">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#qs-settings-general" aria-expanded="true" aria-controls="qs-settings-general">
+                    General
+                  </button>
+                </h2>
+                <div id="qs-settings-general" class="accordion-collapse collapse show"
+                  aria-labelledby="qs-settings-general-heading" data-bs-parent="#quickstart-settings-accordion">
+                  <div class="accordion-body">
+                    <div class="mb-3">
+                      <label class="form-label" for="quickstart-settings-theme-btn">Theme</label>
+                      <div class="dropdown theme-picker">
+                        <button class="btn dropdown-toggle w-100 theme-picker-toggle" type="button"
+                          id="quickstart-settings-theme-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                          <span class="theme-picker-label">
+                            <span class="theme-swatch theme-swatch--kometa" data-theme-swatch></span>
+                            <span class="theme-picker-text">Kometa</span>
+                          </span>
+                        </button>
+                        <ul class="dropdown-menu w-100 theme-picker-menu" aria-labelledby="quickstart-settings-theme-btn">
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="kometa" data-label="Kometa">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--kometa"></span> Kometa
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="dark" data-label="Dark">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--dark"></span> Dark
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="plex" data-label="Plex">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--plex"></span> Plex
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="jellyfin" data-label="Jellyfin">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--jellyfin"></span> Jellyfin
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="emby" data-label="Emby">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--emby"></span> Emby
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="seerr" data-label="Seerr">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--seerr"></span> Seerr
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="mind" data-label="Mind Stone">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--mind"></span> Mind Stone
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="power" data-label="Power Stone">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--power"></span> Power Stone
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="reality" data-label="Reality Stone">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--reality"></span> Reality Stone
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="soul" data-label="Soul Stone">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--soul"></span> Soul Stone
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="space" data-label="Space Stone">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--space"></span> Space Stone
+                              </span>
+                            </button>
+                          </li>
+                          <li>
+                            <button class="dropdown-item theme-option" type="button" data-theme="time" data-label="Time Stone">
+                              <span class="theme-option-label">
+                                <span class="theme-swatch theme-swatch--time"></span> Time Stone
+                              </span>
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                      <input type="hidden" id="quickstart-settings-theme" value="kometa">
+                      <div class="form-text">Theme changes apply immediately.</div>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                      <input class="form-check-input" type="checkbox" id="quickstart-settings-optimize">
+                      <label class="form-check-label" for="quickstart-settings-optimize">
+                        Optimize Template Variables
+                      </label>
+                      <div class="form-text">Omit lines from template variables in the final config output that are not necessary for Kometa to run.</div>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label" for="quickstart-settings-config-history">Config History Limit</label>
+                      <input type="number" class="form-control" id="quickstart-settings-config-history" min="0" step="1" inputmode="numeric">
+                      <div class="form-text">0 keeps all archived versions. Older configs live under <code>config/archives</code>.</div>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label" for="quickstart-settings-log-keep">Kometa Log Retention</label>
+                      <input type="number" class="form-control" id="quickstart-settings-log-keep" min="0" step="1" inputmode="numeric">
+                      <div class="form-text">0 keeps all archived <code>meta*.log</code> files.</div>
+                    </div>
+                    <div class="form-check form-switch mb-2">
+                      <input class="form-check-input" type="checkbox" id="quickstart-settings-debug">
+                      <label class="form-check-label" for="quickstart-settings-debug">Enable Debug Mode</label>
+                      <div class="form-text">Debug applies immediately.</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <input type="hidden" id="quickstart-settings-theme" value="kometa">
-              <div class="form-text">Theme changes apply immediately.</div>
-            </div>
-            <div class="form-check form-switch mb-3">
-              <input class="form-check-input" type="checkbox" id="quickstart-settings-optimize">
-              <label class="form-check-label" for="quickstart-settings-optimize">
-                Optimize Template Variables
-              </label>
-              <div class="form-text">Omit lines from template variables in the final config output that are not necessary for Kometa to run.</div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="quickstart-settings-config-history">Config History Limit</label>
-              <input type="number" class="form-control" id="quickstart-settings-config-history" min="0" step="1" inputmode="numeric">
-              <div class="form-text">0 keeps all archived versions. Older configs live under <code>config/archives</code>.</div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label" for="quickstart-settings-log-keep">Kometa Log Retention</label>
-              <input type="number" class="form-control" id="quickstart-settings-log-keep" min="0" step="1" inputmode="numeric">
-              <div class="form-text">0 keeps all archived <code>meta*.log</code> files.</div>
-            </div>
-            <div class="form-check form-switch mb-2">
-              <input class="form-check-input" type="checkbox" id="quickstart-settings-debug">
-              <label class="form-check-label" for="quickstart-settings-debug">Enable Debug Mode</label>
-              <div class="form-text">Debug applies immediately.</div>
-            </div>
-            <div class="border-top pt-3 mt-3">
-              <h6 class="text-uppercase text-muted mb-2">Test Libraries</h6>
-              <div class="mb-3">
-                <label class="form-label" for="quickstart-settings-test-libs-tmp">Temp download/extract path</label>
-                <input type="text" class="form-control" id="quickstart-settings-test-libs-tmp" data-path-rule="temp_path" placeholder="Leave blank for default">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="qs-settings-session-heading">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#qs-settings-session" aria-expanded="false" aria-controls="qs-settings-session">
+                    Session
+                  </button>
+                </h2>
+                <div id="qs-settings-session" class="accordion-collapse collapse"
+                  aria-labelledby="qs-settings-session-heading" data-bs-parent="#quickstart-settings-accordion">
+                  <div class="accordion-body">
+                    <div class="mb-3">
+                      <label class="form-label" for="quickstart-settings-session-lifetime">Session lifetime (days)</label>
+                      <input type="number" class="form-control" id="quickstart-settings-session-lifetime" min="1" step="1" inputmode="numeric">
+                      <div class="form-text">Longer sessions reduce unexpected config resets.</div>
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label" for="quickstart-settings-session-dir">Session storage directory <span class="text-muted">(advanced)</span></label>
+                      <input type="text" class="form-control" id="quickstart-settings-session-dir" data-path-rule="session_dir" placeholder="Leave blank for default">
+                      <div class="form-text">Docker: use a mounted path like <code>/config/flask_session</code>. Windows/macOS: use a local folder.</div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                      <button type="button" class="btn btn-outline-warning" id="quickstart-settings-secret-regen">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Regenerate secret key
+                      </button>
+                      <span class="small text-warning">This will invalidate all active sessions.</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="mb-3">
-                <label class="form-label" for="quickstart-settings-test-libs-path">Final test libraries path</label>
-                <input type="text" class="form-control" id="quickstart-settings-test-libs-path" data-path-rule="final_path" placeholder="Leave blank for default">
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="qs-settings-test-libs-heading">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#qs-settings-test-libs" aria-expanded="false" aria-controls="qs-settings-test-libs">
+                    Test Libraries
+                  </button>
+                </h2>
+                <div id="qs-settings-test-libs" class="accordion-collapse collapse"
+                  aria-labelledby="qs-settings-test-libs-heading" data-bs-parent="#quickstart-settings-accordion">
+                  <div class="accordion-body">
+                    <div class="mb-3">
+                      <label class="form-label" for="quickstart-settings-test-libs-tmp">Temp download/extract path</label>
+                      <input type="text" class="form-control" id="quickstart-settings-test-libs-tmp" data-path-rule="temp_path" placeholder="Leave blank for default">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label" for="quickstart-settings-test-libs-path">Final test libraries path</label>
+                      <input type="text" class="form-control" id="quickstart-settings-test-libs-path" data-path-rule="final_path" placeholder="Leave blank for default">
+                    </div>
+                  </div>
+                </div>
               </div>
+              {% if not qs_is_docker %}
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="qs-settings-server-heading">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#qs-settings-server" aria-expanded="false" aria-controls="qs-settings-server">
+                    Server
+                  </button>
+                </h2>
+                <div id="qs-settings-server" class="accordion-collapse collapse"
+                  aria-labelledby="qs-settings-server-heading" data-bs-parent="#quickstart-settings-accordion">
+                  <div class="accordion-body">
+                    <div class="mb-3">
+                      <label class="form-label" for="quickstart-settings-port">Port</label>
+                      <input type="number" class="form-control" id="quickstart-settings-port" min="1" max="65535" inputmode="numeric">
+                      <div class="form-text">Changing the port will restart Quickstart.</div>
+                    </div>
+                    <p class="small text-muted mb-2">Stop the Quickstart server running on this machine.</p>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#shutdownModal">
+                      <i class="bi bi-power me-1"></i> Shutdown Quickstart
+                    </button>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
             </div>
-            {% if not qs_is_docker %}
-            <div class="mb-3">
-              <label class="form-label" for="quickstart-settings-port">Port</label>
-              <input type="number" class="form-control" id="quickstart-settings-port" min="1" max="65535" inputmode="numeric">
-              <div class="form-text">Changing the port will restart Quickstart.</div>
-            </div>
-            <div class="border-top pt-3 mt-3">
-              <h6 class="text-uppercase text-muted mb-2">Session</h6>
-              <p class="small text-muted mb-2">Stop the Quickstart server running on this machine.</p>
-              <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#shutdownModal">
-                <i class="bi bi-power me-1"></i> Shutdown Quickstart
-              </button>
-            </div>
-            {% endif %}
             <div class="text-muted small mt-2" id="quickstart-settings-status"></div>
           </div>
           <div class="modal-footer">

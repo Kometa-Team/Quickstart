@@ -50,6 +50,8 @@
     window.QS_KOMETA_LOG_KEEP = "{{ config.get('QS_KOMETA_LOG_KEEP', 0) }}";
     window.QS_TEST_LIBS_PATH = {{ config.get('QS_TEST_LIBS_PATH', '') | tojson }};
     window.QS_TEST_LIBS_TMP = {{ config.get('QS_TEST_LIBS_TMP', '') | tojson }};
+    window.QS_SESSION_LIFETIME_DAYS = "{{ config.get('QS_SESSION_LIFETIME_DAYS', 30) }}";
+    window.QS_FLASK_SESSION_DIR = {{ config.get('QS_FLASK_SESSION_DIR', '') | tojson }};
   </script>
   <script type="text/javascript" src="{{ url_for('static', filename='local-js/000-base.js') }}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='local-js/pathValidation.js') }}"></script>

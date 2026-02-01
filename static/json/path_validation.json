@@ -41,6 +41,16 @@
       }
     },
     {
+      "id": "session_dir",
+      "label": "Session storage directory",
+      "mode": "output_dir",
+      "allow_relative": false,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use container paths like /config/..."
+      }
+    },
+    {
       "id": "asset_directory",
       "label": "Asset Directory",
       "mode": "output_dir",

@@ -72,6 +72,10 @@ $(document).ready(function () {
   const $runSparkMemKometa = $('#run-spark-mem-kometa')
   const $yamlOutput = $('#final-yaml')
   const $yamlLineCount = $('#yaml-line-count')
+  const headerSelect = document.getElementById('header-style')
+  const headerPreview = document.getElementById('header-style-preview')
+  const headerGrid = document.getElementById('header-style-grid')
+  const headerGridToggle = document.getElementById('header-style-grid-toggle')
 
   const showYAML = plexValid && tmdbValid && libsValid && settValid && yamlValid
 
@@ -122,6 +126,115 @@ $(document).ready(function () {
 
   updateYamlLineCount()
   $yamlOutput.on('input', updateYamlLineCount)
+
+  async function updateHeaderPreview (fontValue) {
+    if (!headerPreview) return
+    const font = fontValue || (headerSelect ? headerSelect.value : '')
+    headerPreview.textContent = 'Loading preview...'
+    try {
+      const res = await fetch(`/header-style-preview?font=${encodeURIComponent(font || '')}`)
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Preview unavailable.')
+      }
+      headerPreview.textContent = data.preview || ''
+    } catch (err) {
+      headerPreview.textContent = 'Preview unavailable.'
+    }
+  }
+
+  if (headerSelect && headerPreview) {
+    updateHeaderPreview(headerSelect.value)
+    headerSelect.addEventListener('change', () => updateHeaderPreview(headerSelect.value))
+  }
+
+  function normalizeFontName (value) {
+    return String(value || '').trim()
+  }
+
+  function setActiveGridCard (fontName) {
+    if (!headerGrid) return
+    const activeFont = normalizeFontName(fontName)
+    headerGrid.querySelectorAll('.header-style-card').forEach(card => {
+      card.classList.toggle('active', card.dataset.font === activeFont)
+    })
+  }
+
+  async function loadHeaderGridSamples () {
+    if (!headerGrid) return
+    const fonts = JSON.parse(headerGrid.dataset.fonts || '[]')
+    if (!fonts.length) {
+      headerGrid.innerHTML = '<div class="text-muted small">No fonts available.</div>'
+      return
+    }
+
+    headerGrid.innerHTML = ''
+    fonts.forEach(font => {
+      const card = document.createElement('button')
+      card.type = 'button'
+      card.className = 'header-style-card'
+      card.dataset.font = font
+      card.innerHTML = `
+        <div class="header-style-card-title">${font.replace(/_/g, ' ')}</div>
+        <pre class="header-style-card-preview">Loading...</pre>
+      `
+      card.addEventListener('click', () => {
+        if (headerSelect) {
+          headerSelect.value = font
+          headerSelect.dispatchEvent(new Event('change'))
+        }
+        setActiveGridCard(font)
+      })
+      headerGrid.appendChild(card)
+    })
+
+    setActiveGridCard(headerSelect ? headerSelect.value : '')
+
+    const chunkSize = 12
+    for (let i = 0; i < fonts.length; i += chunkSize) {
+      const chunk = fonts.slice(i, i + chunkSize)
+      try {
+        const res = await fetch('/header-style-previews', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fonts: chunk })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Preview unavailable.')
+        }
+        const previews = data.previews || []
+        previews.forEach(entry => {
+          const card = headerGrid.querySelector(`.header-style-card[data-font="${entry.font}"]`)
+          const pre = card ? card.querySelector('.header-style-card-preview') : null
+          if (pre) pre.textContent = entry.preview || ''
+        })
+      } catch (err) {
+        chunk.forEach(font => {
+          const card = headerGrid.querySelector(`.header-style-card[data-font="${font}"]`)
+          const pre = card ? card.querySelector('.header-style-card-preview') : null
+          if (pre) pre.textContent = 'Preview unavailable.'
+        })
+      }
+    }
+  }
+
+  if (headerGridToggle && headerGrid) {
+    let gridLoaded = false
+    headerGridToggle.addEventListener('click', () => {
+      const isHidden = headerGrid.classList.contains('d-none')
+      headerGrid.classList.toggle('d-none', !isHidden)
+      headerGridToggle.textContent = isHidden ? 'Hide font grid' : 'Show font grid'
+      if (isHidden && !gridLoaded) {
+        gridLoaded = true
+        loadHeaderGridSamples()
+      }
+    })
+  }
+
+  if (headerSelect && headerGrid) {
+    headerSelect.addEventListener('change', () => setActiveGridCard(headerSelect.value))
+  }
 
   function updateLibraryVisibility (mainOption) {
     const librarySection = $('#library-multiselect').closest('.mb-2')

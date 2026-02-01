@@ -28,6 +28,24 @@ def extract_names(raw_source):
     return source, source_name
 
 
+def ensure_session_config_name():
+    existing = session.get("config_name")
+    if existing:
+        return existing
+
+    last_used = database.get_last_used_config_name()
+    if last_used:
+        session["config_name"] = last_used
+        if app.config["QS_DEBUG"]:
+            helpers.ts_log(f"Recovered session config_name from DB: {session['config_name']}", level="DEBUG")
+        return session["config_name"]
+
+    session["config_name"] = namesgenerator.get_random_name()
+    if app.config["QS_DEBUG"]:
+        helpers.ts_log(f"Initialized missing session config_name: {session['config_name']}", level="DEBUG")
+    return session["config_name"]
+
+
 def clean_form_data(form_data):
     # Make sure form_data is MultiDict for compatibility
     if not hasattr(form_data, "getlist"):
@@ -76,11 +94,7 @@ def save_settings(raw_source, form_data):
     path = urlparse(raw_source).path
     source = os.path.basename(path)
 
-    # Ensure session config_name exists once
-    if "config_name" not in session:
-        session["config_name"] = namesgenerator.get_random_name()
-        if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Initialized missing session config_name: {session['config_name']}", level="DEBUG")
+    ensure_session_config_name()
 
     is_form = hasattr(form_data, "getlist")
 
@@ -245,9 +259,7 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
 
 
 def retrieve_settings(target):
-    # Ensure session config_name is set
-    if "config_name" not in session:
-        session["config_name"] = namesgenerator.get_random_name()
+    ensure_session_config_name()
 
     # target will be `010-plex`
     data = {}

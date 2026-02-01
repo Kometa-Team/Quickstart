@@ -1017,6 +1017,51 @@ header.fixed-top {
     line-height: 1;
 }
 
+.header-style-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    padding: 4px 0 8px;
+}
+
+.header-style-card {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: left;
+    background: rgba(10, 10, 10, 0.35);
+    color: inherit;
+}
+
+.header-style-card:hover {
+    border-color: rgba(56, 189, 248, 0.7);
+    background: rgba(10, 10, 10, 0.55);
+}
+
+.header-style-card.active {
+    border-color: rgba(45, 212, 191, 0.9);
+    box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.35);
+}
+
+.header-style-card-title {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+    text-transform: capitalize;
+}
+
+.header-style-card-preview {
+    margin: 0;
+    font-size: 0.55rem;
+    line-height: 1.1;
+    white-space: pre;
+    max-height: 120px;
+    overflow: auto;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    padding: 6px;
+}
+
 .overlay-config-target {
     scroll-margin-top: 6rem;
 }

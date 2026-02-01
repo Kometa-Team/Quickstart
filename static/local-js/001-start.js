@@ -121,8 +121,50 @@ document.addEventListener('DOMContentLoaded', function () {
     if (box) box.classList.toggle('d-none', !(isAddConfig || onlyAddConfigAvailable))
   }
 
+  function updateConfigBadge (name) {
+    const badgeBtn = document.querySelector('.config-badge-button[data-current]')
+    if (!badgeBtn || !name) return
+    badgeBtn.dataset.current = name
+    const label = badgeBtn.querySelector('span')
+    if (!label) return
+    label.textContent = `Config: ${name}`
+    const icon = document.createElement('i')
+    icon.className = 'bi bi-chevron-down ms-1'
+    label.appendChild(icon)
+  }
+
+  async function syncSelectedConfig () {
+    if (!configSelector) return
+    const selected = configSelector.value
+    if (!selected || selected === 'add_config') return
+
+    if (window.pageInfo && window.pageInfo.config_name === selected) {
+      updateConfigBadge(selected)
+      return
+    }
+
+    try {
+      const res = await fetch('/switch-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: selected })
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to switch configs.')
+      }
+      if (window.pageInfo) window.pageInfo.config_name = data.name
+      updateConfigBadge(data.name)
+    } catch (err) {
+      showToast('error', err.message || 'Failed to switch configs.')
+    }
+  }
+
   updateButtonState()
-  configSelector.addEventListener('change', updateButtonState)
+  configSelector.addEventListener('change', () => {
+    updateButtonState()
+    syncSelectedConfig()
+  })
 
   document.querySelectorAll('[data-action]').forEach(button => {
     button.addEventListener('click', function () {

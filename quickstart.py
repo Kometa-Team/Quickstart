@@ -29,7 +29,7 @@ import namesgenerator
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 from cachelib.file import FileSystemCache
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -432,10 +432,47 @@ if cleanup_flag not in {"1", "true", "yes"}:
         helpers.update_env_variable("QS_CONFIG_CLEANUP_DONE", "1")
         os.environ["QS_CONFIG_CLEANUP_DONE"] = "1"
 
+def _load_or_create_secret_key():
+    env_key = os.getenv("QS_SECRET_KEY", "").strip()
+    if env_key:
+        return env_key
+    secret_path = os.path.join(helpers.CONFIG_DIR, ".secret_key")
+    try:
+        if os.path.exists(secret_path):
+            with open(secret_path, "r", encoding="utf-8") as handle:
+                existing = handle.read().strip()
+            if existing:
+                return existing
+        new_key = secrets.token_hex(32)
+        with open(secret_path, "w", encoding="utf-8") as handle:
+            handle.write(new_key)
+        return new_key
+    except Exception:
+        return secrets.token_hex(32)
+
+
+def _get_session_lifetime_days():
+    raw_days = os.getenv("QS_SESSION_LIFETIME_DAYS", "").strip()
+    if raw_days:
+        try:
+            days = max(1, int(raw_days))
+        except (TypeError, ValueError):
+            days = 30
+    else:
+        days = 30
+    return days
+
+
+def _get_session_lifetime_seconds():
+    return int(timedelta(days=_get_session_lifetime_days()).total_seconds())
+
+
+app.config["SECRET_KEY"] = _load_or_create_secret_key()
 app.config["SESSION_TYPE"] = "cachelib"
 
 # Flask session cache dir (portable default)
 flask_cache_dir = os.environ.get("QS_FLASK_SESSION_DIR", os.path.join(helpers.CONFIG_DIR, "flask_session"))
+flask_cache_dir = os.path.abspath(os.path.expanduser(flask_cache_dir))
 os.makedirs(flask_cache_dir, exist_ok=True)
 
 logscan_reingest_lock = threading.Lock()
@@ -445,7 +482,12 @@ logscan_reingest_state = {
     "job_id": None,
 }
 
-app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir=flask_cache_dir, threshold=500)
+session_ttl = _get_session_lifetime_seconds()
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(seconds=session_ttl)
+app.config["SESSION_REFRESH_EACH_REQUEST"] = True
+app.config["QS_SESSION_LIFETIME_DAYS"] = _get_session_lifetime_days()
+app.config["QS_FLASK_SESSION_DIR"] = flask_cache_dir
+app.config["SESSION_CACHELIB"] = FileSystemCache(cache_dir=flask_cache_dir, threshold=500, default_timeout=session_ttl)
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_USE_SIGNER"] = False
 
@@ -480,6 +522,12 @@ def before_request():
         session["qs_user_agent_raw"] = request.headers.get("User-Agent", "") or ""
     except Exception:
         pass
+
+
+def _render_header_style_preview(font: str) -> str:
+    if font == "none":
+        return "No header will be added."
+    return output.section_heading("Quickstart", font=font)
 
 
 @app.route("/update-quickstart", methods=["POST"])
@@ -1944,6 +1992,7 @@ def step(name):
     page_info = {}
     header_style = "standard"  # Default to 'standard' font
     save_error = None
+    persistence.ensure_session_config_name()
 
     if request.method == "POST":
         path_errors = path_validation.validate_payload(request.form)
@@ -1972,11 +2021,6 @@ def step(name):
     available_fonts = helpers.get_pyfiglet_fonts()
 
     page_info["available_fonts"] = available_fonts
-
-    # Ensure session["config_name"] always exists
-    if "config_name" not in session:
-        session["config_name"] = namesgenerator.get_random_name()
-        helpers.ts_log(f"Assigned new config_name: {session['config_name']}")
 
     # Retrieve stored settings from DB
     saved_settings = persistence.retrieve_settings(name)  # Retrieve from DB
@@ -2015,6 +2059,8 @@ def step(name):
     page_info["qs_optimize_defaults"] = app.config.get("QS_OPTIMIZE_DEFAULTS", True)
     page_info["qs_config_history"] = app.config.get("QS_CONFIG_HISTORY", 0)
     page_info["qs_kometa_log_keep"] = app.config.get("QS_KOMETA_LOG_KEEP", 0)
+    page_info["qs_session_lifetime_days"] = app.config.get("QS_SESSION_LIFETIME_DAYS", 30)
+    page_info["qs_flask_session_dir"] = app.config.get("QS_FLASK_SESSION_DIR", "")
     _, test_libs_path, test_libs_tmp, _, _ = _resolve_test_libraries_paths(helpers.get_app_root())
     page_info["qs_test_libs_path"] = test_libs_path
     page_info["qs_test_libs_tmp"] = test_libs_tmp
@@ -4043,8 +4089,7 @@ def logscan_trends_reingest():
 
 @app.route("/logscan-trends", methods=["GET"])
 def logscan_trends_page():
-    if "config_name" not in session:
-        session["config_name"] = namesgenerator.get_random_name()
+    persistence.ensure_session_config_name()
     if "shutdown_nonce" not in session:
         session["shutdown_nonce"] = secrets.token_urlsafe(16)
 
@@ -4058,6 +4103,8 @@ def logscan_trends_page():
         "qs_optimize_defaults": app.config.get("QS_OPTIMIZE_DEFAULTS", True),
         "qs_config_history": app.config.get("QS_CONFIG_HISTORY", 0),
         "qs_kometa_log_keep": app.config.get("QS_KOMETA_LOG_KEEP", 0),
+        "qs_session_lifetime_days": app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
+        "qs_flask_session_dir": app.config.get("QS_FLASK_SESSION_DIR", ""),
         "shutdown_nonce": session["shutdown_nonce"],
         "hide_step_nav": False,
     }
@@ -4350,6 +4397,24 @@ def update_quickstart_settings():
         if log_keep_value is not None and log_keep_value < 0:
             errors.append("Kometa log retention must be a non-negative number.")
 
+    session_lifetime_raw = data.get("session_lifetime_days")
+    session_lifetime_value = None
+    if session_lifetime_raw is not None:
+        try:
+            session_lifetime_value = int(str(session_lifetime_raw).strip())
+        except (TypeError, ValueError):
+            errors.append("Session lifetime must be a positive number of days.")
+            session_lifetime_value = None
+        if session_lifetime_value is not None and session_lifetime_value < 1:
+            errors.append("Session lifetime must be at least 1 day.")
+
+    session_dir_raw = data.get("session_dir")
+    session_dir_value = None
+    if session_dir_raw is not None:
+        session_dir_value = str(session_dir_raw).strip()
+
+    regenerate_secret = data.get("regenerate_secret") is True
+
     theme_raw = data.get("theme")
     theme_value = None
     if theme_raw is not None:
@@ -4401,6 +4466,48 @@ def update_quickstart_settings():
         app.config["QS_KOMETA_LOG_KEEP"] = log_keep_value
         changes_applied = True
 
+    if session_lifetime_value is not None and session_lifetime_value != app.config.get("QS_SESSION_LIFETIME_DAYS", 30):
+        helpers.update_env_variable("QS_SESSION_LIFETIME_DAYS", str(session_lifetime_value))
+        app.config["QS_SESSION_LIFETIME_DAYS"] = session_lifetime_value
+        app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=session_lifetime_value)
+        cache_dir = app.config.get("QS_FLASK_SESSION_DIR", flask_cache_dir)
+        app.config["SESSION_CACHELIB"] = FileSystemCache(
+            cache_dir=cache_dir,
+            threshold=500,
+            default_timeout=int(timedelta(days=session_lifetime_value).total_seconds()),
+        )
+        changes_applied = True
+
+    if session_dir_value is not None:
+        default_session_dir = os.path.abspath(os.path.expanduser(os.path.join(helpers.CONFIG_DIR, "flask_session")))
+        desired_session_dir = os.path.abspath(os.path.expanduser(session_dir_value or default_session_dir))
+        current_session_dir = app.config.get("QS_FLASK_SESSION_DIR", default_session_dir)
+        if desired_session_dir != current_session_dir:
+            try:
+                os.makedirs(desired_session_dir, exist_ok=True)
+            except Exception:
+                return jsonify(success=False, message="Failed to create the session storage directory."), 500
+            helpers.update_env_variable("QS_FLASK_SESSION_DIR", desired_session_dir)
+            app.config["QS_FLASK_SESSION_DIR"] = desired_session_dir
+            app.config["SESSION_CACHELIB"] = FileSystemCache(
+                cache_dir=desired_session_dir,
+                threshold=500,
+                default_timeout=int(timedelta(days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30)).total_seconds()),
+            )
+            changes_applied = True
+
+    if regenerate_secret:
+        new_secret = secrets.token_hex(32)
+        helpers.update_env_variable("QS_SECRET_KEY", new_secret)
+        app.config["SECRET_KEY"] = new_secret
+        app.secret_key = new_secret
+        try:
+            with open(os.path.join(helpers.CONFIG_DIR, ".secret_key"), "w", encoding="utf-8") as handle:
+                handle.write(new_secret)
+        except Exception:
+            pass
+        changes_applied = True
+
     if not changes_applied:
         return jsonify(
             success=True,
@@ -4410,6 +4517,8 @@ def update_quickstart_settings():
             optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
             config_history=app.config.get("QS_CONFIG_HISTORY", 0),
             kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
+            session_lifetime_days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
+            session_dir=app.config.get("QS_FLASK_SESSION_DIR", ""),
         )
 
     if restart_required:
@@ -4423,6 +4532,8 @@ def update_quickstart_settings():
             optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
             config_history=app.config.get("QS_CONFIG_HISTORY", 0),
             kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
+            session_lifetime_days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
+            session_dir=app.config.get("QS_FLASK_SESSION_DIR", ""),
         )
 
     return jsonify(
@@ -4434,7 +4545,41 @@ def update_quickstart_settings():
         optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
         config_history=app.config.get("QS_CONFIG_HISTORY", 0),
         kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
+        session_lifetime_days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
+        session_dir=app.config.get("QS_FLASK_SESSION_DIR", ""),
     )
+
+
+@app.route("/header-style-preview", methods=["GET"])
+def header_style_preview():
+    font = str(request.args.get("font", "") or "").strip()
+    available_fonts = helpers.get_pyfiglet_fonts()
+    if not font:
+        font = "standard"
+    if font not in available_fonts:
+        return jsonify(success=False, message="Unknown header style."), 404
+
+    preview = _render_header_style_preview(font)
+
+    return jsonify(success=True, font=font, preview=preview)
+
+
+@app.route("/header-style-previews", methods=["POST"])
+def header_style_previews():
+    data = request.get_json(silent=True) or {}
+    fonts = data.get("fonts") or []
+    if not isinstance(fonts, list):
+        return jsonify(success=False, message="Fonts must be a list."), 400
+
+    available = set(helpers.get_pyfiglet_fonts())
+    previews = []
+    for font in fonts:
+        font_name = str(font or "").strip()
+        if not font_name or font_name not in available:
+            continue
+        previews.append({"font": font_name, "preview": _render_header_style_preview(font_name)})
+
+    return jsonify(success=True, previews=previews)
 
 
 @app.route("/validate-kometa-root", methods=["POST"])

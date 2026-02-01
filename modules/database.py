@@ -86,6 +86,26 @@ def get_unique_config_names():
             return [row["name"] for row in cursor.fetchall()]
 
 
+def get_last_used_config_name():
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(persisted_section_table_create())
+            row = cursor.execute("SELECT name FROM section_data ORDER BY rowid DESC LIMIT 1").fetchone()
+            if row and row.get("name"):
+                return row["name"]
+
+            cursor.execute(log_runs_table_create())
+            row = cursor.execute(
+                """SELECT config_name FROM log_runs
+                   WHERE config_name IS NOT NULL AND config_name != ''
+                   ORDER BY created_at DESC LIMIT 1"""
+            ).fetchone()
+            if row and row.get("config_name"):
+                return row["config_name"]
+    return None
+
+
 def log_runs_table_create():
     return """CREATE TABLE IF NOT EXISTS log_runs (
         run_key TEXT PRIMARY KEY,

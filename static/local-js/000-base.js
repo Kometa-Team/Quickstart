@@ -342,6 +342,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const logKeepInput = document.getElementById('quickstart-settings-log-keep')
   const testLibsTmpInput = document.getElementById('quickstart-settings-test-libs-tmp')
   const testLibsPathInput = document.getElementById('quickstart-settings-test-libs-path')
+  const sessionLifetimeInput = document.getElementById('quickstart-settings-session-lifetime')
+  const sessionDirInput = document.getElementById('quickstart-settings-session-dir')
+  const secretRegenBtn = document.getElementById('quickstart-settings-secret-regen')
   const themeText = modalEl.querySelector('.theme-picker-text')
   const themeSwatch = modalEl.querySelector('[data-theme-swatch]')
   const themeOptions = modalEl.querySelectorAll('.theme-option')
@@ -404,6 +407,19 @@ document.addEventListener('DOMContentLoaded', () => {
     return window.QS_TEST_LIBS_PATH || ''
   }
 
+  function getCurrentSessionLifetimeDays () {
+    const raw = (triggerBtn && triggerBtn.dataset.currentSessionLifetime)
+      ? triggerBtn.dataset.currentSessionLifetime
+      : window.QS_SESSION_LIFETIME_DAYS
+    const parsed = Number.parseInt(raw, 10)
+    return Number.isFinite(parsed) && parsed >= 1 ? parsed : 30
+  }
+
+  function getCurrentSessionDir () {
+    if (triggerBtn && triggerBtn.dataset.currentSessionDir) return triggerBtn.dataset.currentSessionDir
+    return window.QS_FLASK_SESSION_DIR || ''
+  }
+
   function getQuickstartRoot () {
     if (triggerBtn && triggerBtn.dataset.quickstartRoot) return triggerBtn.dataset.quickstartRoot
     return window.QS_APP_ROOT || ''
@@ -448,6 +464,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logKeepInput) logKeepInput.value = getCurrentLogKeep()
     if (testLibsTmpInput) testLibsTmpInput.value = getCurrentTestLibsTmp()
     if (testLibsPathInput) testLibsPathInput.value = getCurrentTestLibsPath()
+    if (sessionLifetimeInput) sessionLifetimeInput.value = getCurrentSessionLifetimeDays()
+    if (sessionDirInput) sessionDirInput.value = getCurrentSessionDir()
     updateThemeUi(getCurrentTheme())
     setStatus('', false)
     if (applyBtn) applyBtn.disabled = false
@@ -515,6 +533,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let desiredHistory = currentHistory
       const currentLogKeep = getCurrentLogKeep()
       let desiredLogKeep = currentLogKeep
+      const currentSessionLifetime = getCurrentSessionLifetimeDays()
+      const currentSessionDir = getCurrentSessionDir()
       if (historyInput) {
         const rawHistory = historyInput.value.trim()
         if (!/^\d+$/.test(rawHistory)) {
@@ -543,6 +563,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (desiredLogKeep !== currentLogKeep) {
           payload.kometa_log_keep = desiredLogKeep
+        }
+      }
+      if (sessionLifetimeInput) {
+        const rawSessionLifetime = sessionLifetimeInput.value.trim()
+        if (!/^\d+$/.test(rawSessionLifetime)) {
+          setStatus('Session lifetime must be a positive number of days.', true)
+          return
+        }
+        const desiredSessionLifetime = Number(rawSessionLifetime)
+        if (desiredSessionLifetime < 1) {
+          setStatus('Session lifetime must be at least 1 day.', true)
+          return
+        }
+        if (desiredSessionLifetime !== currentSessionLifetime) {
+          payload.session_lifetime_days = desiredSessionLifetime
+        }
+      }
+      if (sessionDirInput) {
+        const desiredSessionDir = sessionDirInput.value.trim()
+        if (desiredSessionDir !== currentSessionDir) {
+          payload.session_dir = desiredSessionDir
         }
       }
       if (portInput) {
@@ -647,6 +688,20 @@ document.addEventListener('DOMContentLoaded', () => {
             window.QS_KOMETA_LOG_KEEP = logKeepFlag
             if (triggerBtn) triggerBtn.dataset.currentLogKeep = String(logKeepFlag)
           }
+          if (typeof data.session_lifetime_days !== 'undefined' || typeof payload.session_lifetime_days !== 'undefined') {
+            const lifetimeFlag = Number(
+              (typeof data.session_lifetime_days !== 'undefined') ? data.session_lifetime_days : payload.session_lifetime_days
+            )
+            window.QS_SESSION_LIFETIME_DAYS = lifetimeFlag
+            if (triggerBtn) triggerBtn.dataset.currentSessionLifetime = String(lifetimeFlag)
+          }
+          if (typeof data.session_dir !== 'undefined' || typeof payload.session_dir !== 'undefined') {
+            const sessionDirFlag = String(
+              (typeof data.session_dir !== 'undefined') ? data.session_dir : (payload.session_dir || '')
+            )
+            window.QS_FLASK_SESSION_DIR = sessionDirFlag
+            if (triggerBtn) triggerBtn.dataset.currentSessionDir = sessionDirFlag
+          }
           if (hasPortChange && triggerBtn) {
             triggerBtn.dataset.currentPort = String(portNum)
           }
@@ -690,6 +745,20 @@ document.addEventListener('DOMContentLoaded', () => {
           window.QS_KOMETA_LOG_KEEP = logKeepFlag
           if (triggerBtn) triggerBtn.dataset.currentLogKeep = String(logKeepFlag)
         }
+        if (typeof data.session_lifetime_days !== 'undefined' || typeof payload.session_lifetime_days !== 'undefined') {
+          const lifetimeFlag = Number(
+            (typeof data.session_lifetime_days !== 'undefined') ? data.session_lifetime_days : payload.session_lifetime_days
+          )
+          window.QS_SESSION_LIFETIME_DAYS = lifetimeFlag
+          if (triggerBtn) triggerBtn.dataset.currentSessionLifetime = String(lifetimeFlag)
+        }
+        if (typeof data.session_dir !== 'undefined' || typeof payload.session_dir !== 'undefined') {
+          const sessionDirFlag = String(
+            (typeof data.session_dir !== 'undefined') ? data.session_dir : (payload.session_dir || '')
+          )
+          window.QS_FLASK_SESSION_DIR = sessionDirFlag
+          if (triggerBtn) triggerBtn.dataset.currentSessionDir = sessionDirFlag
+        }
         const protocol = window.location.protocol
         const host = window.location.hostname
         setTimeout(() => {
@@ -699,6 +768,33 @@ document.addEventListener('DOMContentLoaded', () => {
         setStatus(err.message || 'Failed to update settings.', true)
         showToast('error', err.message || 'Failed to update settings.')
         applyBtn.disabled = false
+      }
+    })
+  }
+
+  if (secretRegenBtn) {
+    secretRegenBtn.addEventListener('click', async () => {
+      const proceed = window.confirm('Regenerate the secret key? This will invalidate all active sessions.')
+      if (!proceed) return
+      secretRegenBtn.disabled = true
+      const originalText = secretRegenBtn.textContent
+      secretRegenBtn.textContent = 'Regenerating...'
+      try {
+        const res = await fetch('/update-quickstart-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ regenerate_secret: true })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to regenerate secret key.')
+        }
+        showToast('success', data.message || 'Secret key regenerated.')
+      } catch (err) {
+        showToast('error', err.message || 'Failed to regenerate secret key.')
+      } finally {
+        secretRegenBtn.disabled = false
+        secretRegenBtn.textContent = originalText
       }
     })
   }
