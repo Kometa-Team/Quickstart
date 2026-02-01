@@ -281,6 +281,13 @@ def retrieve_settings(target):
     if not data[source_name]:
         data[source_name] = get_dummy_data(source_name)
 
+    if source_name == "settings" and isinstance(data[source_name], dict):
+        asset_directory = data[source_name].get("asset_directory")
+        if isinstance(asset_directory, str):
+            data[source_name]["asset_directory"] = [line.strip() for line in asset_directory.splitlines() if line.strip()]
+        elif isinstance(asset_directory, list):
+            data[source_name]["asset_directory"] = [str(item).strip() for item in asset_directory if str(item).strip()]
+
     if source_name == "trakt":
         section = data[source_name]
         if isinstance(section, dict):

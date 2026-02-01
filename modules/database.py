@@ -92,14 +92,14 @@ def get_last_used_config_name():
         with closing(connection.cursor()) as cursor:
             cursor.execute(persisted_section_table_create())
             row = cursor.execute("SELECT name FROM section_data ORDER BY rowid DESC LIMIT 1").fetchone()
-            if row and row.get("name"):
+            if row and row["name"]:
                 return row["name"]
 
             cursor.execute(log_runs_table_create())
             row = cursor.execute("""SELECT config_name FROM log_runs
                    WHERE config_name IS NOT NULL AND config_name != ''
                    ORDER BY created_at DESC LIMIT 1""").fetchone()
-            if row and row.get("config_name"):
+            if row and row["config_name"]:
                 return row["config_name"]
     return None
 
