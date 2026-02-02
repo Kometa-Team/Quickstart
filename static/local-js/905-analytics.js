@@ -952,7 +952,7 @@ $(document).ready(function () {
 
   function renderTable (runs) {
     if (!runs.length) {
-      $tableBody.html('<tr><td colspan="9" class="text-muted">No runs stored yet.</td></tr>')
+      $tableBody.html('<tr><td colspan="10" class="text-muted">No runs stored yet.</td></tr>')
       return
     }
     const rows = runs.map((run, index) => {
@@ -976,6 +976,9 @@ $(document).ready(function () {
       const sectionLines = buildSectionDetails(run.section_runtimes, run.run_time_seconds)
       const sectionId = `logscan-section-${index + 1}`
       const sectionSummary = sectionLines.length ? sectionLines[0] : 'n/a'
+      const cacheLineCount = (typeof run.cache_line_count === 'number' && Number.isFinite(run.cache_line_count))
+        ? run.cache_line_count
+        : 'n/a'
       const sectionDetails = sectionLines.length > 1 ? sectionLines.slice(1) : []
       const sectionDetailsHtml = sectionDetails.map(line => `<div>${escapeHtml(line)}</div>`).join('')
       let sectionCell = `
@@ -1006,6 +1009,7 @@ $(document).ready(function () {
           <td>${escapeHtml(formatSeconds(run.run_time_seconds))}</td>
           <td>${escapeHtml(run.config_name || 'default')}</td>
           <td class="text-center">${escapeHtml(configLineCount)}</td>
+          <td class="text-center">${escapeHtml(cacheLineCount)}</td>
           <td><span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span></td>
           <td title="${escapeHtml(countsTitle)}">
             <div>${escapeHtml(counts)}</div>
@@ -1417,6 +1421,8 @@ $(document).ready(function () {
         return getCountsTotal(run)
       case 'config_line_count':
         return typeof run.config_line_count === 'number' ? run.config_line_count : 0
+      case 'cache_line_count':
+        return typeof run.cache_line_count === 'number' ? run.cache_line_count : 0
       case 'kometa_version':
         return run.kometa_version || ''
       case 'section_runtimes':
@@ -1916,7 +1922,7 @@ $(document).ready(function () {
         $counts.text('Unable to load W/E/T averages.')
         $issues.text('Unable to load issue trends.')
         $libraries.text('Unable to load library totals.')
-        $tableBody.html('<tr><td colspan="9" class="text-muted">Unable to load runs.</td></tr>')
+        $tableBody.html('<tr><td colspan="10" class="text-muted">Unable to load runs.</td></tr>')
       })
   }
 

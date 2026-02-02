@@ -129,6 +129,7 @@ def log_runs_table_create():
         library_counts TEXT,
         quickstart_run_marker INTEGER,
         config_line_count INTEGER,
+        cache_line_count INTEGER,
         created_at TEXT
     )"""
 
@@ -154,6 +155,7 @@ def _ensure_log_runs_columns(cursor):
         "library_counts": "TEXT",
         "quickstart_run_marker": "INTEGER",
         "config_line_count": "INTEGER",
+        "cache_line_count": "INTEGER",
     }
     for name, ddl in columns.items():
         if name not in existing:
@@ -183,6 +185,7 @@ def save_log_run(summary, recommendations=None):
         library_counts = json.dumps(library_counts, ensure_ascii=True)
     quickstart_run_marker = 1 if summary.get("quickstart_run_marker") else 0
     config_line_count = summary.get("config_line_count")
+    cache_line_count = summary.get("cache_line_count")
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
         connection.row_factory = sqlite3.Row
         with closing(connection.cursor()) as cursor:
@@ -212,8 +215,9 @@ def save_log_run(summary, recommendations=None):
                     library_counts,
                     quickstart_run_marker,
                     config_line_count,
+                    cache_line_count,
                     created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     run_key,
                     summary.get("finished_at"),
@@ -238,6 +242,7 @@ def save_log_run(summary, recommendations=None):
                     library_counts,
                     quickstart_run_marker,
                     config_line_count,
+                    cache_line_count,
                     summary.get("created_at"),
                 ),
             )
@@ -264,7 +269,7 @@ def get_log_runs(limit=100):
                           config_name, config_hash, run_command, command_signature, section_runtimes,
                           recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
                           error_count, critical_count, trace_count, analysis_counts, library_counts,
-                          quickstart_run_marker, config_line_count, created_at
+                          quickstart_run_marker, config_line_count, cache_line_count, created_at
                    FROM log_runs
                    ORDER BY created_at DESC
                    LIMIT ?""",

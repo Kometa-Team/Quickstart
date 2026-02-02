@@ -2590,6 +2590,7 @@ class LogscanAnalyzer:
         analysis_counts = self.extract_analyze_issue_counts(cleaned_content)
         quickstart_marker = self.extract_quickstart_marker(raw_content)
         config_line_count = self.extract_config_line_count(raw_content)
+        cache_line_count = sum(1 for line in raw_content.splitlines() if "from Cache" in line)
         library_counts = self.extract_library_counts(cleaned_content)
 
         missing_people = []
@@ -2632,6 +2633,7 @@ class LogscanAnalyzer:
             summary["quickstart_run_marker"] = bool(quickstart_marker)
             summary["library_counts"] = library_counts
             summary["config_line_count"] = config_line_count
+            summary["cache_line_count"] = cache_line_count
         if summary and not summary.get("run_complete"):
             recommendations.append(
                 {
