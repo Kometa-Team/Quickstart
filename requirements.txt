@@ -6,7 +6,7 @@ gunicorn==24.0.0
 jsonschema==4.26.0
 namesgenerator==0.3
 pillow==12.1.0
-PlexAPI==4.17.2
+PlexAPI==4.18.0
 pre-commit==4.5.1
 psutil==7.2.2
 pyfiglet==1.0.4

@@ -1317,7 +1317,6 @@ document.addEventListener('DOMContentLoaded', function () {
           if (phase === 'download') {
             const hasTotal = Number.isFinite(prog.total) && prog.total > 0
             const isEstimated = prog.estimated === true
-            const estimateNote = typeof prog.estimated_note === 'string' ? prog.estimated_note : ''
             let pct = Number.isFinite(prog.pct) ? prog.pct : null
             if (pct === null && hasTotal && Number.isFinite(prog.downloaded)) {
               pct = Math.max(0, Math.min(100, Math.floor((prog.downloaded || 0) * 100 / prog.total)))
@@ -1338,9 +1337,7 @@ document.addEventListener('DOMContentLoaded', function () {
               setProgress(40, `Downloading… ${bytes(prog.downloaded || 0)} ${speedNote} ${sizeNote}`, { indeterminate: true })
             } else {
               const totalStr = hasTotal ? ` / ${bytes(prog.total)}` : ''
-              const estimateLabel = isEstimated
-                ? ` • estimated${estimateNote ? ` (${estimateNote})` : ''}`
-                : ''
+              const estimateLabel = ''
               setProgress(pct, `Downloading… ${bytes(prog.downloaded || 0)}${totalStr} (${pct}%) ${speedStr ? `• ${speedStr}` : ''}${estimateLabel}`)
             }
           } else if (phase === 'extract') {
