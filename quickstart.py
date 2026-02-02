@@ -419,6 +419,9 @@ default_test_libs_tmp = os.path.join(helpers.CONFIG_DIR, "tmp")
 app.config["QS_TEST_LIBS_PATH"] = os.getenv("QS_TEST_LIBS_PATH", default_test_libs_path).strip() or default_test_libs_path
 app.config["QS_TEST_LIBS_TMP"] = os.getenv("QS_TEST_LIBS_TMP", default_test_libs_tmp).strip() or default_test_libs_tmp
 app.config["QUICKSTART_DOCKER"] = helpers.booler(os.getenv("QUICKSTART_DOCKER", "0"))
+restart_notice = helpers.consume_restart_notice()
+app.config["QS_RESTART_NOTICE"] = restart_notice
+app.config["QS_SKIP_AUTO_OPEN"] = bool(restart_notice and restart_notice.get("reason") == "update")
 
 cleanup_flag = os.getenv("QS_CONFIG_CLEANUP_DONE", "").strip().lower()
 if cleanup_flag not in {"1", "true", "yes"}:
@@ -5424,6 +5427,14 @@ def purge_test_libraries():
 
 @app.route("/restart", methods=["POST"])
 def restart_quickstart():
+    data = request.get_json(silent=True) or {}
+    reason = data.get("reason")
+    if reason == "update":
+        helpers.set_restart_notice(
+            "update",
+            "Update complete. Quickstart restarted without auto-opening a browser.",
+        )
+
     def restart():
         # Give time for the response to complete before restarting
         time.sleep(1)
@@ -5582,8 +5593,12 @@ if __name__ == "__main__":
                 helpers.ts_log(
                     f"Port and Debug Settings can be amended via the Settings cog in the UI, " f"right-clicking the system tray icon, or by editing your {DOTENV} file",
                     level="INFO",
-                )  # Open the browser automatically
-                webbrowser.open(f"http://localhost:{running_port}")
+                )
+                if app.config.get("QS_SKIP_AUTO_OPEN"):
+                    helpers.ts_log("Skipping auto-open after update restart.", level="INFO")
+                else:
+                    # Open the browser automatically
+                    webbrowser.open(f"http://localhost:{running_port}")
 
                 # Keep the invisible parent alive
                 self.dialog_parent.showMinimized()

@@ -191,6 +191,22 @@ function showToast (type, message) {
   toast.show()
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  const notice = window.QS_RESTART_NOTICE
+  if (!notice || notice.reason !== 'update') return
+
+  const noticeKey = `qs_restart_notice_${notice.reason}_${notice.created_at || ''}`
+  try {
+    if (window.localStorage && window.localStorage.getItem(noticeKey)) return
+    if (window.localStorage) window.localStorage.setItem(noticeKey, '1')
+  } catch (err) {
+    // Ignore localStorage failures (private mode, etc.)
+  }
+
+  const message = notice.message || 'Update complete. Quickstart restarted without auto-opening a browser.'
+  showToast('info', message)
+})
+
 // Mark all <select> elements when changed, so we can tell if a user modified them
 function trackModifiedSelects () {
   document.querySelectorAll('select').forEach(select => {
@@ -201,8 +217,14 @@ function trackModifiedSelects () {
   })
 }
 
-function restartQuickstart () {
-  fetch('/restart', { method: 'POST' })
+function restartQuickstart (reason) {
+  const payload = (typeof reason === 'string' && reason.trim()) ? { reason: reason.trim() } : null
+  const options = { method: 'POST' }
+  if (payload) {
+    options.headers = { 'Content-Type': 'application/json' }
+    options.body = JSON.stringify(payload)
+  }
+  fetch('/restart', options)
     .then(res => res.json())
     .then(data => {
       if (data.success) {
@@ -254,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <strong>✅ Update Successful!</strong><br>
             <span class="text-info">Branch: <code>${data.branch || branch}</code></span>
             <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${lines.join('\n')}</pre>
-            <button class="btn btn-sm btn-success mt-2" onclick="restartQuickstart()">Restart Quickstart</button>
+            <button class="btn btn-sm btn-success mt-2" onclick="restartQuickstart('update')">Restart Quickstart</button>
           `
         } else {
           resultBox.innerHTML = `
