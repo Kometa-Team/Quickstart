@@ -609,11 +609,16 @@ $(document).ready(function () {
       const key = getRunDateKey(run)
       if (!key) return
       const config = normalizeConfigName(run.config_name)
+      const cacheLines = (typeof run.cache_line_count === 'number' && Number.isFinite(run.cache_line_count))
+        ? run.cache_line_count
+        : 0
       if (!buckets[key]) {
-        buckets[key] = { total: 0, configs: {} }
+        buckets[key] = { total: 0, configs: {}, cache_total: 0, cache_runs: 0 }
       }
       buckets[key].total += 1
       buckets[key].configs[config] = (buckets[key].configs[config] || 0) + 1
+      buckets[key].cache_total += cacheLines
+      buckets[key].cache_runs += 1
     })
     return buckets
   }
@@ -762,11 +767,24 @@ $(document).ready(function () {
       ? runtimeValues.reduce((sum, val) => sum + val, 0) / runtimeValues.length
       : null
     const configs = new Set(runs.map(run => normalizeConfigName(run.config_name)))
+    const cacheBuckets = buildDailyBuckets(runs)
+    const cacheDays = Object.keys(cacheBuckets).filter(day => cacheBuckets[day].cache_runs > 0)
+    const cacheTotal = cacheDays.reduce((sum, day) => sum + (cacheBuckets[day].cache_total || 0), 0)
+    const avgCachePerDay = cacheDays.length ? (cacheTotal / cacheDays.length) : null
+    const formatAvgCache = (value) => {
+      if (!Number.isFinite(value)) return 'n/a'
+      const rounded = Math.round(value * 10) / 10
+      return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1)
+    }
     const lines = [
       `Runs stored: ${runs.length}`,
       `Latest run: ${getDisplayFinished(latest)}`,
       `Average runtime: ${avgRuntime ? formatSeconds(avgRuntime) : 'n/a'}`,
-      `Configs tracked: ${configs.size}`
+      `Configs tracked: ${configs.size}`,
+      {
+        text: `Avg cache lines/day: ${formatAvgCache(avgCachePerDay)}`,
+        title: 'Average number of log lines containing "from Cache" per day across the filtered runs.'
+      }
     ]
     const selectedConfig = $configFilter.val()
     if (selectedConfig) {
@@ -816,7 +834,15 @@ $(document).ready(function () {
         }
       }
     }
-    $summary.html(lines.map(line => `<div>${escapeHtml(line)}</div>`).join(''))
+    $summary.html(lines.map(line => {
+      if (typeof line === 'string') {
+        return `<div>${escapeHtml(line)}</div>`
+      }
+      const text = line && typeof line.text === 'string' ? line.text : ''
+      const title = line && typeof line.title === 'string' ? line.title : ''
+      const titleAttr = title ? ` title="${escapeHtml(title)}"` : ''
+      return `<div${titleAttr}>${escapeHtml(text)}</div>`
+    }).join(''))
   }
 
   function renderDaily (runs) {
