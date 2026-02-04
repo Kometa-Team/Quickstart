@@ -747,6 +747,47 @@ const OverlayHandler = {
       mdb: 'MDBList',
       star: 'Star'
     }
+    const RATING_TEXT_MAP = {
+      critic: '9.0',
+      audience: '85%',
+      user: '85%'
+    }
+    const RATING_SAMPLE_BASE = {
+      critic: { decimal10: 9.0, decimal5: 4.5, percent: 90, score100: 90 },
+      audience: { decimal10: 8.5, decimal5: 4.3, percent: 85, score100: 85 },
+      user: { decimal10: 7.5, decimal5: 3.3, percent: 75, score100: 75 }
+    }
+    const RATING_SAMPLE_JITTER = {
+      decimal10: 1.2,
+      decimal5: 0.6,
+      percent: 12,
+      score100: 12
+    }
+    const RATING_SAMPLE_LIMITS = {
+      decimal10: { min: 1.0, max: 9.8 },
+      decimal5: { min: 0.5, max: 4.5 },
+      percent: { min: 10, max: 95 },
+      score100: { min: 10, max: 95 }
+    }
+    const RATING_SAMPLE_OVERRIDES = {
+      rt_tomato: { min: 10, max: 95, scale: 'percent' },
+      rt_popcorn: { min: 10, max: 95, scale: 'percent' }
+    }
+    const RATING_VALUE_FORMAT_MAP = {
+      anidb: { scale: 'decimal10', decimals: 1 },
+      imdb: { scale: 'decimal10', decimals: 1 },
+      letterboxd: { scale: 'decimal5', decimals: 1 },
+      tmdb: { scale: 'decimal10', decimals: 1 },
+      metacritic: { scale: 'score100', decimals: 0 },
+      rt_popcorn: { scale: 'percent', decimals: 0 },
+      rt_tomato: { scale: 'percent', decimals: 0 },
+      trakt: { scale: 'percent', decimals: 0 },
+      mal: { scale: 'decimal10', decimals: 2 },
+      mdb: { scale: 'score100', decimals: 0 },
+      mdblist: { scale: 'score100', decimals: 0 },
+      star: { scale: 'decimal10', decimals: 1 },
+      plex_star: { scale: 'decimal10', decimals: 1 }
+    }
     const RATING_FILENAME_MAP = {
       rt_popcorn: 'RT-Aud-Fresh',
       rt_tomato: 'RT-Crit-Fresh',
@@ -756,6 +797,11 @@ const OverlayHandler = {
       'rt tomato': 'RT-Crit-Fresh',
       'rt tomatoes': 'RT-Crit-Fresh',
       myanimelist: 'MAL'
+    }
+    const RT_ROTTEN_THRESHOLD = 60
+    const RATING_RT_IMAGE_MAP = {
+      rt_tomato: { fresh: 'RT-Crit-Fresh.png', rotten: 'RT-Crit-Rotten.png' },
+      rt_popcorn: { fresh: 'RT-Aud-Fresh.png', rotten: 'RT-Aud-Rotten.png' }
     }
     const RATING_FONT_MAP = {
       anidb: 'Roboto-Medium.ttf',
@@ -772,7 +818,7 @@ const OverlayHandler = {
       mal: 'Roboto-Medium.ttf',
       mdblist: 'Inter-Medium.ttf',
       mdb: 'Inter-Medium.ttf',
-      star: 'Roboto-Medium.ttf',
+      star: 'Inter-Medium.ttf',
       plex_star: 'Roboto-Medium.ttf'
     }
     const RATING_MASS_GROUP_MAP = {
@@ -816,11 +862,11 @@ const OverlayHandler = {
       mdb_letterboxd: 'Use Letterboxd via MDBList',
       tmdb: 'Use TMDb Rating',
       mdb_metacritic: 'Use Metacritic via MDBList',
-      mdb_metacriticuser: 'Use Metacritic User via MDBList',
+      mdb_metacriticuser: 'Use Metacritic via MDBList',
       mdb_tomatoes: 'Use Rotten Tomatoes via MDBList',
       mdb_tomatoesaudience: 'Use RT Audience via MDBList',
       trakt: 'Use Trakt Rating',
-      trakt_user: 'Use Trakt User Rating',
+      trakt_user: 'Use Trakt Rating',
       mal: 'Use MyAnimeList Score',
       mdb: 'Use MDBList Score'
     }
@@ -850,6 +896,13 @@ const OverlayHandler = {
       trakt: 'Trakt',
       mal: 'MyAnimeList',
       anidb: 'AniDB'
+    }
+    const SERVICE_JUMP_MAP = {
+      tmdb: '020-tmdb',
+      mdblist: '060-mdblist',
+      anidb: '100-anidb',
+      trakt: '130-trakt',
+      mal: '140-mal'
     }
     const FLAG_PREVIEW_ITEMS = [
       {
@@ -890,6 +943,120 @@ const OverlayHandler = {
       return names.map(name => `${RATINGS_IMAGE_BASE}${encodeURIComponent(`${name}.png`)}`)
     }
 
+    const enhanceRatingImageSelects = (scope) => {
+      const root = scope || document
+      root.querySelectorAll('select[data-rating-image-select="true"]').forEach(select => {
+        if (select.dataset.ratingImageEnhanced) return
+        select.dataset.ratingImageEnhanced = 'true'
+
+        const wrapper = document.createElement('div')
+        wrapper.className = 'dropdown rating-image-dropdown'
+
+        const toggle = document.createElement('button')
+        toggle.type = 'button'
+        toggle.className = 'form-select rating-image-dropdown-toggle d-flex align-items-center justify-content-between'
+        toggle.setAttribute('data-bs-toggle', 'dropdown')
+        toggle.setAttribute('data-bs-auto-close', 'true')
+        toggle.setAttribute('aria-expanded', 'false')
+
+        const labelWrap = document.createElement('span')
+        labelWrap.className = 'rating-image-dropdown-label d-flex align-items-center gap-2'
+
+        const icon = document.createElement('img')
+        icon.className = 'rating-image-dropdown-icon'
+
+        const text = document.createElement('span')
+        text.className = 'rating-image-dropdown-text'
+
+        labelWrap.append(icon, text)
+
+        const caret = document.createElement('span')
+        caret.className = 'rating-image-dropdown-caret'
+        caret.innerHTML = '<i class="bi bi-chevron-down"></i>'
+
+        toggle.append(labelWrap, caret)
+
+        const menu = document.createElement('div')
+        menu.className = 'dropdown-menu rating-image-dropdown-menu'
+
+        const updateDisplay = () => {
+          const selected = select.selectedOptions?.[0]
+          const value = (selected?.value || '').toString()
+          const label = (selected?.textContent || '').trim() || value || 'None'
+          const iconUrl = value ? (buildRatingFilenameCandidates(value, label)[0] || '') : ''
+          if (iconUrl) {
+            icon.src = iconUrl
+            icon.alt = label
+            icon.classList.remove('is-empty')
+          } else {
+            icon.removeAttribute('src')
+            icon.removeAttribute('alt')
+            icon.classList.add('is-empty')
+          }
+          text.textContent = label
+
+          menu.querySelectorAll('.rating-image-dropdown-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.value === value)
+          })
+        }
+
+        const orderedOptions = (() => {
+          const options = Array.from(select.options).map(option => ({
+            option,
+            value: (option.value || '').toString(),
+            label: (option.textContent || '').trim() || option.value || ''
+          }))
+          const empty = options.filter(item => !item.value)
+          const rest = options.filter(item => item.value)
+          rest.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base', numeric: true }))
+          return [...empty, ...rest]
+        })()
+
+        orderedOptions.forEach(entry => {
+          const option = entry.option
+          const optionButton = document.createElement('button')
+          optionButton.type = 'button'
+          optionButton.className = 'dropdown-item d-flex align-items-center gap-2 rating-image-dropdown-item'
+          optionButton.dataset.value = (option.value || '').toString()
+          if (option.disabled) optionButton.disabled = true
+
+          const itemIcon = document.createElement('img')
+          itemIcon.className = 'rating-image-dropdown-icon'
+          const label = (option.textContent || '').trim() || option.value
+          const iconUrl = option.value ? (buildRatingFilenameCandidates(option.value, label)[0] || '') : ''
+          if (iconUrl) {
+            itemIcon.src = iconUrl
+            itemIcon.alt = label
+          } else {
+            itemIcon.classList.add('is-empty')
+          }
+
+          const itemText = document.createElement('span')
+          itemText.textContent = label || 'None'
+
+          optionButton.append(itemIcon, itemText)
+          optionButton.addEventListener('click', () => {
+            select.value = option.value
+            updateDisplay()
+            select.dispatchEvent(new Event('change', { bubbles: true }))
+          })
+
+          menu.appendChild(optionButton)
+        })
+
+        wrapper.append(toggle, menu)
+
+        select.classList.add('rating-image-select-native')
+        select.classList.add('visually-hidden')
+        select.insertAdjacentElement('afterend', wrapper)
+
+        select.addEventListener('change', updateDisplay)
+        updateDisplay()
+      })
+    }
+
+    enhanceRatingImageSelects(root)
+
     const loadImageWithFallback = async (urls) => {
       let lastErr = null
       for (const url of urls) {
@@ -915,6 +1082,123 @@ const OverlayHandler = {
       }[normalized]
       if (mapped) return mapped
       return normalized.replace(/\s+/g, '_')
+    }
+
+    const hashString = (value) => {
+      let hash = 2166136261
+      const str = String(value || '')
+      for (let i = 0; i < str.length; i += 1) {
+        hash ^= str.charCodeAt(i)
+        hash = Math.imul(hash, 16777619)
+      }
+      return hash >>> 0
+    }
+
+    const seededRandom = (seed) => {
+      let t = (seed + 0x6D2B79F5) >>> 0
+      t = Math.imul(t ^ (t >>> 15), t | 1)
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    }
+
+    const clampNumber = (value, min, max) => Math.min(Math.max(value, min), max)
+
+    const getRatingSampleValue = (ratingType, imageValue, imageLabel, variant = null) => {
+      const typeKey = String(ratingType || '').toLowerCase()
+      const imageKey = normalizeRatingImageKey(imageValue, imageLabel)
+      const format = RATING_VALUE_FORMAT_MAP[imageKey]
+      const baseMap = RATING_SAMPLE_BASE[typeKey]
+      if (!format || !baseMap) {
+        return {
+          typeKey,
+          imageKey,
+          value: null,
+          scaleKey: null,
+          decimals: null,
+          text: RATING_TEXT_MAP[typeKey] || 'NR'
+        }
+      }
+      const scale = format.scale || 'decimal10'
+      const baseValue = baseMap[scale]
+      if (!Number.isFinite(baseValue)) {
+        return {
+          typeKey,
+          imageKey,
+          value: null,
+          scaleKey: scale,
+          decimals: format.decimals,
+          text: RATING_TEXT_MAP[typeKey] || 'NR'
+        }
+      }
+      const overrides = RATING_SAMPLE_OVERRIDES[imageKey]
+      const scaleKey = (overrides && overrides.scale) ? overrides.scale : scale
+      const limits = overrides || RATING_SAMPLE_LIMITS[scaleKey]
+      const seed = hashString(`${imageKey}|${typeKey}|${variant || 'base'}`)
+      const rand = seededRandom(seed)
+      const jitter = Number.isFinite(RATING_SAMPLE_JITTER[scaleKey]) ? RATING_SAMPLE_JITTER[scaleKey] : 0
+      const offset = (rand - 0.5) * 2 * jitter
+      let value = Number(baseValue) + offset
+      if (limits) {
+        let min = limits.min
+        let max = limits.max
+        if ((imageKey === 'rt_tomato' || imageKey === 'rt_popcorn') && scaleKey === 'percent') {
+          if (variant === 'fresh') {
+            min = Math.max(RT_ROTTEN_THRESHOLD, min)
+          } else if (variant === 'rotten') {
+            max = Math.min(RT_ROTTEN_THRESHOLD - 1, max)
+          }
+        }
+        value = clampNumber(value, min, max)
+      } else if (scaleKey === 'decimal10') {
+        value = clampNumber(value, 0.1, 9.9)
+      } else if (scaleKey === 'decimal5') {
+        value = clampNumber(value, 0.1, 4.9)
+      } else {
+        value = clampNumber(value, 1, 99)
+      }
+      let text = ''
+      if (scaleKey === 'percent') {
+        text = `${Math.round(value)}%`
+      } else if (format.decimals === 0) {
+        text = `${Math.round(value)}`
+      } else {
+        text = Number(value).toFixed(Math.max(0, Number(format.decimals)))
+      }
+      return {
+        typeKey,
+        imageKey,
+        value,
+        scaleKey,
+        decimals: format.decimals,
+        text
+      }
+    }
+
+    const getRatingSampleImageUrls = (imageVal, labelVal, sample) => {
+      const imageKey = normalizeRatingImageKey(imageVal, labelVal)
+      const map = RATING_RT_IMAGE_MAP[imageKey]
+      if (map && sample && sample.scaleKey === 'percent' && Number.isFinite(sample.value)) {
+        const filename = sample.value >= RT_ROTTEN_THRESHOLD ? map.fresh : map.rotten
+        return [`${RATINGS_IMAGE_BASE}${encodeURIComponent(filename)}`]
+      }
+      return buildRatingFilenameCandidates(imageVal, labelVal)
+    }
+
+    const getRatingToggleLabel = (imageKey, source, fallbackLabel) => {
+      if (!source) return fallbackLabel
+      if (imageKey === 'rt_popcorn') {
+        return 'Use RT Audience via MDBList'
+      }
+      if (imageKey === 'rt_tomato') {
+        return 'Use Rotten Tomatoes via MDBList'
+      }
+      if (source === 'mdb_metacritic' || source === 'mdb_metacriticuser') {
+        return 'Use Metacritic via MDBList'
+      }
+      if (source === 'trakt' || source === 'trakt_user') {
+        return 'Use Trakt Rating'
+      }
+      return fallbackLabel
     }
 
     const getServiceValidation = (service) => {
@@ -966,6 +1250,442 @@ const OverlayHandler = {
       if (message) {
         setStatusTooltip(el, message)
       }
+    }
+
+    const escapeHtml = (value) => {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }
+      return String(value ?? '').replace(/[&<>"']/g, (match) => map[match])
+    }
+
+    const getCurrentMassToggleLabel = (libraryId, group) => {
+      if (!libraryId || !group) return null
+      const inputPrefix = `${libraryId}-attribute_${group}_`
+      const toggles = Array.from(document.querySelectorAll(`input.form-check-input[id^="${inputPrefix}"]`))
+      const checked = toggles.filter(input => input.checked)
+      if (!checked.length) return null
+      const labels = checked
+        .map(input => {
+          const label = document.querySelector(`label[for="${input.id}"]`)
+          return label ? label.textContent.trim() : input.id.replace(inputPrefix, '')
+        })
+        .filter(Boolean)
+      return labels.length ? labels.join(', ') : null
+    }
+
+    const captureRatingBeforeMap = (cfg) => {
+      if (!cfg?.container) return null
+      const overlayType = cfg.container.dataset.overlayType || ''
+      const libraryId = cfg.container.dataset.libraryId
+      if (!libraryId || !['movie', 'show', 'episode'].includes(overlayType)) return null
+      const groupMap = overlayType === 'episode' ? RATING_MASS_GROUP_MAP_EPISODE : RATING_MASS_GROUP_MAP
+      const before = {}
+      Object.values(groupMap).forEach(group => {
+        before[group] = getCurrentMassToggleLabel(libraryId, group) || 'None'
+      })
+      cfg.container._ratingBeforeMap = before
+      return before
+    }
+
+    const renderRatingMappingModal = (cfg) => {
+      if (!cfg?.container || cfg.id !== 'overlay_ratings') return
+      const allEl = cfg.container.querySelector('[data-rating-mapping-all]')
+      if (!allEl) return
+      const token = `${Date.now()}-${Math.random().toString(16).slice(2)}`
+      cfg.container.dataset.ratingMappingToken = token
+      const overlayType = cfg.container.dataset.overlayType || ''
+      const groupMap = overlayType === 'episode' ? RATING_MASS_GROUP_MAP_EPISODE : RATING_MASS_GROUP_MAP
+      const ratingTypes = [
+        { key: 'critic', label: 'Critic', group: groupMap.critic },
+        { key: 'audience', label: 'Audience', group: groupMap.audience },
+        { key: 'user', label: 'User', group: groupMap.user }
+      ]
+
+      const imageSelect = getTemplateInput(cfg, 'rating1_image') || getTemplateInput(cfg, 'rating2_image') || getTemplateInput(cfg, 'rating3_image')
+      const optionMap = new Map()
+      if (imageSelect && imageSelect.options) {
+        Array.from(imageSelect.options).forEach(opt => {
+          const value = (opt.value || '').toString()
+          const label = (opt.textContent || '').trim() || value
+          const key = `${value}||${label}`
+          if (!optionMap.has(key)) {
+            optionMap.set(key, { value, label })
+          }
+        })
+      }
+      const options = Array.from(optionMap.values()).filter(opt => {
+        const value = (opt.value || '').toString().trim()
+        const label = (opt.label || '').toString().trim().toLowerCase()
+        return value || (label && label !== 'none')
+      })
+      if (!options.length) {
+        allEl.innerHTML = '<div class="text-muted">No badge options found.</div>'
+      } else {
+        const rowsHtml = options.map(opt => {
+          const value = opt.value || ''
+          const label = opt.label || value
+          const imageKey = normalizeRatingImageKey(value, label)
+          const sourceMap = overlayType === 'episode'
+            ? RATING_SOURCE_MAP_EPISODE[imageKey]
+            : RATING_SOURCE_MAP[imageKey]
+          const previewUrl = buildRatingFilenameCandidates(value, label)[0] || ''
+          const previewHtml = previewUrl
+            ? `<img src="${previewUrl}" alt="${escapeHtml(label)}" class="rating-mapping-icon">`
+            : '<div class="rating-mapping-icon rating-mapping-icon--empty">?</div>'
+          const fontKey = getRatingFontKey(value, label)
+          const mappedFont = RATING_FONT_MAP[fontKey] || 'Default'
+          const isStarBadge = imageKey === 'star'
+          const typeMappings = ratingTypes.map(type => {
+            const source = sourceMap ? (sourceMap[type.key] || sourceMap.any || null) : null
+            let groupLabel = source ? (RATING_GROUP_LABEL_MAP[type.group] || type.group || '') : '—'
+            const baseToggleLabel = source
+              ? (getMassToggleLabel(cfg.container.dataset.libraryId, type.group, source) || RATING_SOURCE_LABEL_MAP[source] || source)
+              : '—'
+            let toggleLabel = getRatingToggleLabel(imageKey, source, baseToggleLabel)
+            if (isStarBadge && !source) {
+              groupLabel = RATING_GROUP_LABEL_MAP[type.group] || type.group || ''
+              toggleLabel = 'Pick a source'
+            }
+            const serviceKey = source ? (RATING_SOURCE_SERVICE_MAP[source] || null) : null
+            const serviceLabel = serviceKey ? (SERVICE_LABEL_MAP[serviceKey] || serviceKey) : 'N/A'
+            const hasMapping = toggleLabel !== '—' && groupLabel !== '—'
+            return {
+              typeKey: type.key,
+              typeLabel: type.label,
+              groupLabel,
+              toggleLabel,
+              serviceKey,
+              serviceLabel,
+              hasMapping
+            }
+          })
+          const buildMappingHtml = (entry) => {
+            const mappingLine = entry.hasMapping
+              ? `
+                <div>${escapeHtml(entry.groupLabel)}</div>
+              `
+              : `
+                <div class="text-muted">No Library Operations</div>
+              `
+            return mappingLine
+          }
+          const criticHtml = buildMappingHtml(typeMappings[0])
+          const audienceHtml = buildMappingHtml(typeMappings[1])
+          const userHtml = buildMappingHtml(typeMappings[2])
+          const ratingLabelsHtml = `
+            <div class="rating-mapping-stack rating-mapping-stack--labels">
+              <div class="rating-mapping-stack-item">Critic</div>
+              <div class="rating-mapping-stack-item">Audience</div>
+              <div class="rating-mapping-stack-item">User</div>
+            </div>
+          `
+          const attributesHtml = `
+            <div class="rating-mapping-stack rating-mapping-stack--values">
+              <div class="rating-mapping-stack-item">${criticHtml}</div>
+              <div class="rating-mapping-stack-item">${audienceHtml}</div>
+              <div class="rating-mapping-stack-item">${userHtml}</div>
+            </div>
+          `
+          const rowServiceKey = typeMappings.find(entry => entry.serviceKey)?.serviceKey || null
+          const rowServiceLabel = rowServiceKey ? (SERVICE_LABEL_MAP[rowServiceKey] || rowServiceKey) : 'N/A'
+          const rowServiceJump = rowServiceKey ? SERVICE_JUMP_MAP[rowServiceKey] : null
+          const serviceHtml = rowServiceJump
+            ? `<a class="btn btn-link btn-sm p-0" href="javascript:void(0);" onclick="jumpTo('${rowServiceJump}')">${escapeHtml(rowServiceLabel)}</a>`
+            : '<span class="text-muted">N/A</span>'
+          const sourceLabels = Array.from(new Set(
+            typeMappings
+              .map(entry => entry.toggleLabel)
+              .filter(label => label && label !== '—')
+          ))
+          let rowSourceLabel = sourceLabels.length ? sourceLabels[0] : 'Pick rating + image'
+          if (sourceLabels.length > 1) {
+            rowSourceLabel = 'Varies by rating'
+          }
+          const sourceHtml = (rowSourceLabel === 'Pick rating + image' || rowSourceLabel === 'Varies by rating')
+            ? `<span class="text-muted">${escapeHtml(rowSourceLabel)}</span>`
+            : `<span>${escapeHtml(rowSourceLabel)}</span>`
+          const fallbackEntry = typeMappings[0] || null
+          const sampleEntry = typeMappings.find(entry => entry.hasMapping) || fallbackEntry
+          const isRtBadge = imageKey === 'rt_tomato' || imageKey === 'rt_popcorn'
+          const sampleHtml = sampleEntry
+            ? (isRtBadge
+                ? `
+                <div class="rating-mapping-sample-variants">
+                  <div class="rating-mapping-sample-variant">
+                    <div class="rating-mapping-sample-label">Fresh ≥ ${RT_ROTTEN_THRESHOLD}%</div>
+                    <img class="rating-mapping-sample is-loading"
+                      data-rating-sample
+                      data-rating-type="${sampleEntry.typeKey}"
+                      data-rating-image-value="${escapeHtml(value)}"
+                      data-rating-image-label="${escapeHtml(label)}"
+                      data-rating-style-slot="rating1"
+                      data-rating-font="${escapeHtml(mappedFont)}"
+                      data-rating-variant="fresh"
+                      alt="${escapeHtml(label)} ${sampleEntry.typeLabel} fresh sample" />
+                  </div>
+                  <div class="rating-mapping-sample-variant">
+                    <div class="rating-mapping-sample-label">Rotten &lt; ${RT_ROTTEN_THRESHOLD}%</div>
+                    <img class="rating-mapping-sample is-loading"
+                      data-rating-sample
+                      data-rating-type="${sampleEntry.typeKey}"
+                      data-rating-image-value="${escapeHtml(value)}"
+                      data-rating-image-label="${escapeHtml(label)}"
+                      data-rating-style-slot="rating1"
+                      data-rating-font="${escapeHtml(mappedFont)}"
+                      data-rating-variant="rotten"
+                      alt="${escapeHtml(label)} ${sampleEntry.typeLabel} rotten sample" />
+                  </div>
+                </div>
+              `
+                : `<img class="rating-mapping-sample is-loading"
+                  data-rating-sample
+                  data-rating-type="${sampleEntry.typeKey}"
+                  data-rating-image-value="${escapeHtml(value)}"
+                  data-rating-image-label="${escapeHtml(label)}"
+                  data-rating-style-slot="rating1"
+                  data-rating-font="${escapeHtml(mappedFont)}"
+                  alt="${escapeHtml(label)} ${sampleEntry.typeLabel} sample" />`)
+            : '<div class="rating-mapping-sample rating-mapping-sample--empty">N/A</div>'
+          return `
+            <tr>
+              <td class="rating-mapping-col-rating">${ratingLabelsHtml}</td>
+              <td class="rating-mapping-col-badge">
+                <div class="d-flex align-items-center gap-2">
+                  ${previewHtml}
+                  <div>
+                    <div class="fw-semibold">${escapeHtml(label || 'None')}</div>
+                    <div class="text-muted small">${escapeHtml(value || '')}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="rating-mapping-col-font">${escapeHtml(mappedFont)}</td>
+              <td class="rating-mapping-col-service">${serviceHtml}</td>
+              <td class="rating-mapping-col-attributes">${attributesHtml}</td>
+              <td class="rating-mapping-col-source">${sourceHtml}</td>
+              <td class="rating-mapping-sample-cell">
+                ${sampleHtml}
+              </td>
+            </tr>
+          `
+        }).join('')
+        const tableHelpHtml = `
+          <div class="rating-mapping-help small text-muted mb-2">
+            Choosing your Rating Type and Rating Image, drives the Font, Service, Attributes | Library Operations
+            and Source used. Click the Service name to jump to its configuration section.
+          </div>
+        `
+        allEl.innerHTML = `
+          ${tableHelpHtml}
+          <div class="table-responsive">
+            <table class="table table-sm table-dark table-striped align-middle mb-0 rating-mapping-table">
+              <thead>
+                <tr>
+                  <th class="rating-mapping-col-rating">Rating Type</th>
+                  <th class="rating-mapping-col-badge">Rating Image</th>
+                  <th class="rating-mapping-col-font">Font</th>
+                  <th class="rating-mapping-col-service">Service</th>
+                  <th class="rating-mapping-col-attributes">Attributes | Library Operations</th>
+                  <th class="rating-mapping-col-source">Source</th>
+                  <th>Sample</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        `
+      }
+
+      hydrateRatingMappingSamples(cfg, token)
+    }
+
+    const getTemplateValue = (cfg, key, fallback) => {
+      const input = getTemplateInput(cfg, key)
+      if (!input) return fallback
+      const defaultVal = input.dataset?.default ?? fallback
+      if (input.type === 'number') {
+        const n = Number(input.value)
+        if (Number.isFinite(n)) return n
+        const fallbackNum = Number(defaultVal)
+        return Number.isFinite(fallbackNum) ? fallbackNum : fallback
+      }
+      if (input.tagName === 'SELECT') {
+        return input.value || defaultVal
+      }
+      return input.value || defaultVal
+    }
+
+    const buildRatingSampleDataUrl = async (cfg, options = {}) => {
+      if (!cfg?.container || cfg.id !== 'overlay_ratings') return null
+      const {
+        slotKey,
+        ratingType,
+        imageValue,
+        imageLabel,
+        styleSlotKey,
+        fontOverride,
+        sampleVariant
+      } = options || {}
+      const slotDefs = {
+        rating1: {
+          imageKey: 'rating1_image',
+          fontKey: 'rating1_font',
+          fontSizeKey: 'rating1_font_size',
+          fontColorKey: 'rating1_font_color',
+          strokeWidthKey: 'rating1_stroke_width',
+          strokeColorKey: 'rating1_stroke_color'
+        },
+        rating2: {
+          imageKey: 'rating2_image',
+          fontKey: 'rating2_font',
+          fontSizeKey: 'rating2_font_size',
+          fontColorKey: 'rating2_font_color',
+          strokeWidthKey: 'rating2_stroke_width',
+          strokeColorKey: 'rating2_stroke_color'
+        },
+        rating3: {
+          imageKey: 'rating3_image',
+          fontKey: 'rating3_font',
+          fontSizeKey: 'rating3_font_size',
+          fontColorKey: 'rating3_font_color',
+          strokeWidthKey: 'rating3_stroke_width',
+          strokeColorKey: 'rating3_stroke_color'
+        }
+      }
+      const slot = slotDefs[slotKey] || slotDefs.rating1
+      if (!slot) return null
+      const styleSlot = slotDefs[styleSlotKey] || slot
+      const imageVal = (imageValue || '').toString().trim() ||
+        (getTemplateInput(cfg, slot.imageKey)?.value || getTemplateInput(cfg, slot.imageKey)?.dataset?.default || '').toString().trim()
+      const labelVal = (imageLabel || '').toString().trim() ||
+        (getTemplateInput(cfg, slot.imageKey)?.selectedOptions?.[0]?.textContent || '').trim() ||
+        imageVal
+      if (!imageVal) return null
+      const imageKey = normalizeRatingImageKey(imageVal, labelVal)
+      const sample = getRatingSampleValue(ratingType, imageVal, labelVal, sampleVariant)
+      const urls = getRatingSampleImageUrls(imageVal, labelVal, sample)
+      if (!urls.length) return null
+      let img
+      let useStarFallback = false
+      try {
+        img = await loadImageWithFallback(urls)
+      } catch (err) {
+        if (imageKey === 'star' || imageKey === 'plex_star') {
+          useStarFallback = true
+        } else {
+          console.warn('[OverlayBoards] Failed to load rating image', { value: imageVal, label: labelVal, err })
+          return null
+        }
+      }
+      const overrideFont = (fontOverride || '').toString().trim()
+      const fontFile = (overrideFont && overrideFont !== 'Default')
+        ? overrideFont
+        : getTemplateValue(cfg, styleSlot.fontKey, 'Inter-Medium.ttf')
+      const fontSize = getTemplateValue(cfg, styleSlot.fontSizeKey, 55)
+      const fontColor = getTemplateValue(cfg, styleSlot.fontColorKey, '#FFFFFFFF')
+      const strokeWidth = getTemplateValue(cfg, styleSlot.strokeWidthKey, 1)
+      const strokeColor = getTemplateValue(cfg, styleSlot.strokeColorKey, '#00000000')
+      const text = sample.text || 'NR'
+      const vars = getBackdropVars(cfg)
+      const boxWidth = Math.max(1, Number(vars.back_width) || 160)
+      const boxHeight = Math.max(1, Number(vars.back_height) || 160)
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.ceil(boxWidth)
+      canvas.height = Math.ceil(boxHeight)
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return null
+      const fill = parseHexColor(vars.back_color, { r: 0, g: 0, b: 0, a: 0 })
+      const stroke = parseHexColor(vars.back_line_color, { r: 0, g: 0, b: 0, a: 0 })
+      const lineWidth = Math.max(0, Number(vars.back_line_width) || 0)
+      const radius = Math.max(0, Number(vars.back_radius) || 0)
+      const innerPad = Number.isFinite(Number(vars.back_padding))
+        ? Math.max(0, Number(vars.back_padding))
+        : Math.round(boxHeight * 0.08)
+
+      drawRoundedRect(ctx, 0, 0, boxWidth, boxHeight, radius)
+      if (fill.a > 0) {
+        ctx.fillStyle = `rgba(${fill.r}, ${fill.g}, ${fill.b}, ${fill.a})`
+        ctx.fill()
+      }
+      if (lineWidth > 0 && stroke.a > 0) {
+        const inset = lineWidth / 2
+        const strokeRadius = Math.max(0, radius - inset)
+        drawRoundedRect(ctx, inset, inset, boxWidth - (inset * 2), boxHeight - (inset * 2), strokeRadius)
+        ctx.strokeStyle = `rgba(${stroke.r}, ${stroke.g}, ${stroke.b}, ${stroke.a})`
+        ctx.lineWidth = lineWidth
+        ctx.stroke()
+      }
+
+      const family = (await ensureRuntimeFontLoaded(fontFile)) || normalizeFontFile(fontFile).family || 'Inter-Medium'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'alphabetic'
+      ctx.font = `700 ${Math.max(1, Number(fontSize) || 55)}px "${family}"`
+      const textBottom = boxHeight - innerPad
+      drawTextWithStroke(ctx, text, boxWidth / 2, textBottom, fontColor, strokeColor, strokeWidth)
+
+      const iconMaxHeight = Math.max(1, boxHeight - (Number(fontSize) || 55) - (innerPad * 2))
+      const iconMaxWidth = Math.max(1, boxWidth - (innerPad * 2))
+      if (img) {
+        const scale = Math.min(iconMaxWidth / img.width, iconMaxHeight / img.height, 1)
+        const drawW = img.width * scale
+        const drawH = img.height * scale
+        const drawX = (boxWidth - drawW) / 2
+        const drawY = innerPad + ((iconMaxHeight - drawH) / 2)
+        ctx.drawImage(img, drawX, drawY, drawW, drawH)
+      } else if (useStarFallback) {
+        const centerX = boxWidth / 2
+        const centerY = innerPad + (iconMaxHeight / 2)
+        const outerRadius = Math.min(iconMaxWidth, iconMaxHeight) * 0.45
+        const innerRadius = outerRadius * 0.5
+        drawStarShape(ctx, centerX, centerY, 5, outerRadius, innerRadius)
+      }
+
+      return canvas.toDataURL('image/png')
+    }
+
+    const hydrateRatingMappingSamples = (cfg, token) => {
+      if (!cfg?.container) return
+      const detailEl = cfg.container.querySelector('[data-rating-mapping-detail]')
+      const allEl = cfg.container.querySelector('[data-rating-mapping-all]')
+      if (!detailEl && !allEl) return
+      const placeholders = []
+      if (detailEl) placeholders.push(...Array.from(detailEl.querySelectorAll('[data-rating-sample]')))
+      if (allEl) placeholders.push(...Array.from(allEl.querySelectorAll('[data-rating-sample]')))
+      if (!placeholders.length) return
+      placeholders.forEach(async (imgEl) => {
+        const slotKey = imgEl.dataset.ratingSlot
+        const ratingType = imgEl.dataset.ratingType
+        const imageValue = imgEl.dataset.ratingImageValue
+        const imageLabel = imgEl.dataset.ratingImageLabel
+        const styleSlotKey = imgEl.dataset.ratingStyleSlot
+        const fontOverride = imgEl.dataset.ratingFont
+        const sampleVariant = imgEl.dataset.ratingVariant
+        const url = await buildRatingSampleDataUrl(cfg, {
+          slotKey,
+          ratingType,
+          imageValue,
+          imageLabel,
+          styleSlotKey,
+          fontOverride,
+          sampleVariant
+        })
+        if (cfg.container.dataset.ratingMappingToken !== token) return
+        if (url) {
+          imgEl.src = url
+          imgEl.classList.remove('is-loading')
+          return
+        }
+        imgEl.replaceWith(Object.assign(document.createElement('div'), {
+          className: 'rating-mapping-sample rating-mapping-sample--empty',
+          textContent: 'N/A'
+        }))
+      })
     }
 
     const updateRatingSyncStatus = (cfg) => {
@@ -1026,6 +1746,52 @@ const OverlayHandler = {
           setStatusIcon(statusEl, 'warn', message)
         }
       })
+    }
+
+    const enforceUniqueRatingTypes = (cfg) => {
+      if (!cfg?.container || cfg.id !== 'overlay_ratings') return
+      const selects = [
+        getTemplateInput(cfg, 'rating1'),
+        getTemplateInput(cfg, 'rating2'),
+        getTemplateInput(cfg, 'rating3')
+      ].filter(Boolean)
+      if (!selects.length) return
+      const counts = {}
+      selects.forEach((select) => {
+        const value = (select.value || select.dataset?.default || '').toString().trim().toLowerCase()
+        if (!value || value === 'none') return
+        counts[value] = (counts[value] || 0) + 1
+      })
+      selects.forEach((select) => {
+        const selectedValue = (select.value || select.dataset?.default || '').toString().trim().toLowerCase()
+        Array.from(select.options || []).forEach((option) => {
+          const optValue = (option.value || '').toString().trim().toLowerCase()
+          if (!optValue || optValue === 'none') {
+            option.disabled = false
+            return
+          }
+          if (optValue === selectedValue) {
+            option.disabled = false
+            return
+          }
+          option.disabled = (counts[optValue] || 0) > 0
+        })
+      })
+      const hasDuplicate = Object.values(counts).some(count => count > 1)
+      const existing = cfg.container.querySelector('.rating-unique-warning')
+      if (hasDuplicate) {
+        if (!existing) {
+          const anchor = selects[0].closest('.input-group') || selects[0].parentElement
+          if (anchor) {
+            const warning = document.createElement('div')
+            warning.className = 'alert alert-warning py-1 px-2 mt-2 small rating-unique-warning'
+            warning.textContent = 'Each rating type (Critic/Audience/User) can only be used once. Please choose unique values.'
+            anchor.insertAdjacentElement('afterend', warning)
+          }
+        }
+      } else if (existing) {
+        existing.remove()
+      }
     }
 
     const setMassRatingSource = (libraryId, prefix, source) => {
@@ -1153,11 +1919,6 @@ const OverlayHandler = {
 
     const buildRatingsCompositeDataUrl = async (cfg) => {
       if (cfg.id !== 'overlay_ratings') return null
-      const ratingTextMap = {
-        critic: '9.0',
-        audience: '85%',
-        user: '85%'
-      }
       const fontDefaults = {
         font: 'Inter-Medium.ttf',
         font_size: 55,
@@ -1225,11 +1986,12 @@ const OverlayHandler = {
         const imageVal = imageSelect?.value ?? imageSelect?.dataset?.default
         if (isEmpty(ratingVal) || isEmpty(imageVal)) continue
         const label = imageSelect?.selectedOptions?.[0]?.textContent?.trim()
-        const urls = buildRatingFilenameCandidates(imageVal, label)
+        const sample = getRatingSampleValue(ratingVal, imageVal, label)
+        const urls = getRatingSampleImageUrls(imageVal, label, sample)
         if (!urls.length) continue
         try {
           const img = await loadImageWithFallback(urls)
-          const text = ratingTextMap[String(ratingVal).toLowerCase()] || 'NR'
+          const text = sample.text || 'NR'
           items.push({
             img,
             text,
@@ -1383,6 +2145,29 @@ const OverlayHandler = {
       ctx.arcTo(x, y + height, x, y, safeRadius)
       ctx.arcTo(x, y, x + width, y, safeRadius)
       ctx.closePath()
+    }
+
+    const drawStarShape = (ctx, cx, cy, spikes, outerRadius, innerRadius) => {
+      let rot = Math.PI / 2 * 3
+      ctx.beginPath()
+      ctx.moveTo(cx, cy - outerRadius)
+      for (let i = 0; i < spikes; i += 1) {
+        let x = cx + Math.cos(rot) * outerRadius
+        let y = cy + Math.sin(rot) * outerRadius
+        ctx.lineTo(x, y)
+        rot += Math.PI / spikes
+        x = cx + Math.cos(rot) * innerRadius
+        y = cy + Math.sin(rot) * innerRadius
+        ctx.lineTo(x, y)
+        rot += Math.PI / spikes
+      }
+      ctx.lineTo(cx, cy - outerRadius)
+      ctx.closePath()
+      ctx.fillStyle = '#f4b400'
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)'
+      ctx.lineWidth = Math.max(1, Math.round(outerRadius * 0.08))
+      ctx.fill()
+      ctx.stroke()
     }
 
     const loadImage = (src) => {
@@ -3277,6 +4062,7 @@ const OverlayHandler = {
 
         if (cfg.id === 'overlay_ratings' && layer && cfg.container) {
           const refreshRatings = (event) => {
+            enforceUniqueRatingTypes(cfg)
             if (event && event.target && cfg.container) {
               const targetName = event.target.name || ''
               if (targetName.includes('[rating1_image]') || targetName.includes('[rating2_image]') || targetName.includes('[rating3_image]')) {
@@ -3284,8 +4070,9 @@ const OverlayHandler = {
               }
               if (
                 targetName.includes('[rating1]') || targetName.includes('[rating2]') || targetName.includes('[rating3]') ||
-                targetName.includes('[rating1_image]') || targetName.includes('[rating2_image]') || targetName.includes('[rating3_image]')
+              targetName.includes('[rating1_image]') || targetName.includes('[rating2_image]') || targetName.includes('[rating3_image]')
               ) {
+                captureRatingBeforeMap(cfg)
                 const slots = [
                   { ratingKey: 'rating1', imageKey: 'rating1_image' },
                   { ratingKey: 'rating2', imageKey: 'rating2_image' },
@@ -3296,6 +4083,7 @@ const OverlayHandler = {
             }
             applyRatingFontDefaults(cfg)
             updateRatingSyncStatus(cfg)
+            renderRatingMappingModal(cfg)
             buildBackdropDataUrl(cfg).then(dataUrl => {
               layer.src = dataUrl
               applyPosition(cfg)

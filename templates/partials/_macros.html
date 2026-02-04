@@ -860,13 +860,6 @@ prefix) %}
                 aria-controls="{{ library.id }}-{{ accordion_safe }}">
                 {{ group.accordion }}
             </button>
-            {% if library.type == 'movie' %}
-            <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay overlay-jump-button ms-2"
-                data-jump-target="{{ library.id }}-movie-overlay-board" title="Jump to movie canvas"
-                aria-label="Jump to movie canvas">
-                <i class="bi bi-arrow-up-square"></i> Canvas
-            </button>
-            {% endif %}
         </h2>
         <div id="{{ library.id }}-{{ accordion_safe }}" class="accordion-collapse collapse"
             data-bs-parent="#{{ library.id }}-{{ accordion_safe }}Accordion">
@@ -1097,6 +1090,9 @@ prefix) %}
                                         {% if overlay.media_types and (type in overlay.media_types) %}
                                         {% set base_id = library.id ~ '-' ~ type ~ '-' ~ overlay.id %}
                                         {% set template_name = library.id ~ '-' ~ type ~ '-template_' ~ overlay.id %}
+                                        {% if overlay.id == 'overlay_ratings' %}
+                                        {% set rating_modal_id = template_name ~ '-rating-mapping-modal' %}
+                                        {% endif %}
                                           {% set base_width = 1920 if type == 'episode' else 1000 %}
                                           {% set base_height = 1080 if type == 'episode' else 1500 %}
                                           {% set effective_offsets = overlay.default_offsets %}
@@ -1162,6 +1158,13 @@ prefix) %}
                                                         title="Back to canvas" aria-label="Back to canvas">
                                                         <i class="bi bi-arrow-up-square"></i>
                                                     </button>
+                                                    {% if overlay.id == 'overlay_ratings' %}
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay ms-2"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#{{ rating_modal_id }}">
+                                                        Special Info
+                                                    </button>
+                                                    {% endif %}
                                                     {% if overlay.extra_url %}
                                                     <a href="{{ overlay.extra_url }}" target="_blank"
                                                         class="text-decoration-none ms-3">
@@ -1274,7 +1277,7 @@ prefix) %}
                                                     {% if var_name == 'rating1_image' %}{% set display_label = 'Rating 1 Image' %}{% endif %}
                                                     {% if var_name == 'rating2_image' %}{% set display_label = 'Rating 2 Image' %}{% endif %}
                                                     {% if var_name == 'rating3_image' %}{% set display_label = 'Rating 3 Image' %}{% endif %}
-                                                    <div class="input-group mb-2">
+                                                    <div class="input-group mb-2{% if var_name in ['rating1_image', 'rating2_image', 'rating3_image'] %} rating-image-input-group{% endif %}">
                                                         <span class="input-group-text"
                                                             id="{{ template_name }}-{{ var_name }}_text"
                                                             style="width: 170px;">
@@ -1295,6 +1298,7 @@ prefix) %}
                                                             aria-describedby="{{ template_name }}-{{ var_name }}_text"
                                                             data-selected="{{ selected_value|string|lower }}"
                                                             data-default="{{ var_details.default }}"
+                                                            {% if var_name in ['rating1_image', 'rating2_image', 'rating3_image'] %}data-rating-image-select="true"{% endif %}
                                                             {% if
                                                             selected_value !=var_details.default %}data-user-modified="true"
                                                             {% endif %}>
@@ -1310,8 +1314,8 @@ prefix) %}
                                                                 %}selected{% endif %}>
                                                                 {{ opt_label }}
                                                             </option>
-                                                            {% endfor %}
-                                                        </select>
+                                                        {% endfor %}
+                                                    </select>
                                                         {% if var_name in ['rating1_image', 'rating2_image', 'rating3_image'] %}
                                                         <span class="input-group-text rating-sync-status text-secondary"
                                                             data-rating-slot="{{ var_name | replace('_image', '') }}"
@@ -1416,30 +1420,33 @@ prefix) %}
                                                         </div>
                                                     </div>
                                                     {% elif var_name == 'font' or var_name.endswith('_font') %}
-                                                    <div class="input-group mb-2">
-                                                        <span class="input-group-text"
-                                                            id="{{ input_id }}_text"
-                                                            style="width: 170px;">
-                                                            {{ display_label }}
-                                                        </span>
-                                                        {% set fonts_list = overlay_fonts if overlay_fonts else ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'Roboto-Regular.ttf'] %}
-                                                        <button type="button" class="btn btn-outline-secondary font-picker-trigger"
-                                                            data-font-picker-target="{{ input_id }}">
-                                                            {{ selected_value if selected_value else 'Select font' }}
-                                                        </button>
-                                                        <select class="form-select template-variable-text d-none"
-                                                            id="{{ input_id }}"
-                                                            name="{{ template_name }}[{{ var_name }}]"
-                                                            aria-describedby="{{ input_id }}_text"
-                                                            data-default="{{ var_details.default }}"
-                                                            data-font-select>
-                                                          <option value="" {% if selected_value=='' %}selected{% endif %}>Select font</option>
-                                                          {% for fnt in fonts_list %}
-                                                          <option value="{{ fnt }}" {% if selected_value==fnt %}selected{% endif %}>{{ fnt }}</option>
-                                                          {% endfor %}
-                                                        </select>
-                                                      </div>
-                                                      <div class="font-preview text-muted mb-2" data-font-preview data-preview-for="{{ input_id }}">8.0AaBb123%</div>
+                                                    <div class="font-row mb-2">
+                                                        <div class="input-group font-input-group">
+                                                            <span class="input-group-text"
+                                                                id="{{ input_id }}_text"
+                                                                style="width: 170px;">
+                                                                {{ display_label }}
+                                                            </span>
+                                                            {% set fonts_list = overlay_fonts if overlay_fonts else ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'Roboto-Regular.ttf'] %}
+                                                            <button type="button" class="btn btn-outline-secondary font-picker-trigger"
+                                                                data-font-picker-target="{{ input_id }}">
+                                                                {{ selected_value if selected_value else 'Select font' }}
+                                                            </button>
+                                                            <select class="form-select template-variable-text d-none"
+                                                                id="{{ input_id }}"
+                                                                name="{{ template_name }}[{{ var_name }}]"
+                                                                aria-describedby="{{ input_id }}_text"
+                                                                data-default="{{ var_details.default }}"
+                                                                data-font-select>
+                                                              <option value="" {% if selected_value=='' %}selected{% endif %}>Select font</option>
+                                                              {% for fnt in fonts_list %}
+                                                              <option value="{{ fnt }}" {% if selected_value==fnt %}selected{% endif %}>{{ fnt }}</option>
+                                                              {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        <span class="font-preview font-preview--pill"
+                                                            data-font-preview data-preview-for="{{ input_id }}">AaBb123</span>
+                                                    </div>
                                                           {% else %}
                                                     <div class="input-group mb-2">
                                                         <span class="input-group-text"
@@ -1558,6 +1565,43 @@ prefix) %}
                                                             {% if extra_reset_ids %}data-reset-ids="{{ extra_reset_ids|join(',') }}"{% endif %}>
                                                             Reset to Defaults
                                                         </button>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if overlay.id == 'overlay_ratings' %}
+                                                <div class="modal fade" id="{{ rating_modal_id }}" tabindex="-1"
+                                                    aria-labelledby="{{ rating_modal_id }}-label" aria-hidden="true">
+                                                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                                                        <div class="modal-content bg-dark text-light">
+                                                            <div class="modal-header">
+                                                                <h5 class="modal-title" id="{{ rating_modal_id }}-label">Ratings mapping</h5>
+                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                                                    aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                            <div class="alert alert-info small">
+                                                                The Ratings overlay is tied to Library Operations so your overlay icons match the rating
+                                                                data Kometa pulls. When you pick a rating type (Critic/Audience/User) and a rating image,
+                                                                Quickstart automatically selects the corresponding Library Operations toggle and source,
+                                                                and Quickstart also auto-selects the closest free font (Google Fonts) for the
+                                                                score text. This keeps the overlay visuals and the rating values in sync. Changing rating image updates
+                                                                the mapped Library Operations toggle for this library, and you can still adjust Library
+                                                                Operations manually (new rating selections will re-sync). Samples below use the same overlay
+                                                                rendering as the canvas. Below are the possible validation badges that you will see next to the
+                                                                Rating Image dropdown when configuring the Ratings overlay.
+                                                                <div class="d-flex flex-wrap gap-3 small mt-2">
+                                                                    <div><i class="bi bi-check-circle-fill text-success me-1"></i>Mapped + service validated</div>
+                                                                    <div><i class="bi bi-exclamation-circle-fill text-danger me-1"></i>Mapped, but service not validated</div>
+                                                                    <div><i class="bi bi-dash-circle-fill text-secondary me-1"></i>No mapping (pick rating + image)</div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="fw-semibold mt-3">All Ratings options</div>
+                                                            <div data-rating-mapping-all></div>
+                                                        </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 {% endif %}
