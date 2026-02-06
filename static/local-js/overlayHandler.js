@@ -804,21 +804,21 @@ const OverlayHandler = {
       rt_popcorn: { fresh: 'RT-Aud-Fresh.png', rotten: 'RT-Aud-Rotten.png' }
     }
     const RATING_FONT_MAP = {
-      anidb: 'Roboto-Medium.ttf',
+      anidb: 'Arimo-Medium.ttf',
       imdb: 'Roboto-Medium.ttf',
-      tmdb: 'SourceSans3-SemiBold.ttf',
-      metacritic: 'SourceSans3-SemiBold.ttf',
+      tmdb: 'Consensus-SemiBold.otf',
+      metacritic: 'Montserrat-SemiBold.ttf',
       letterboxd: 'Montserrat-Bold.ttf',
-      trakt: 'Inter-Medium.ttf',
-      rt_tomato: 'Montserrat-Bold.ttf',
-      rt_popcorn: 'Montserrat-Bold.ttf',
-      'rt tomato': 'Montserrat-Bold.ttf',
-      'rt popcorn': 'Montserrat-Bold.ttf',
-      myanimelist: 'Roboto-Medium.ttf',
-      mal: 'Roboto-Medium.ttf',
-      mdblist: 'Inter-Medium.ttf',
-      mdb: 'Inter-Medium.ttf',
-      star: 'Inter-Medium.ttf',
+      trakt: 'Figtree-Medium.ttf',
+      rt_tomato: 'LibreFranklin-Bold.ttf',
+      rt_popcorn: 'LibreFranklin-Bold.ttf',
+      'rt tomato': 'LibreFranklin-Bold.ttf',
+      'rt popcorn': 'LibreFranklin-Bold.ttf',
+      myanimelist: 'Lato-Regular.ttf',
+      mal: 'Lato-Regular.ttf',
+      mdblist: 'Lato-Regular.ttf',
+      mdb: 'Lato-Regular.ttf',
+      star: 'Roboto-Medium.ttf',
       plex_star: 'Roboto-Medium.ttf'
     }
     const RATING_MASS_GROUP_MAP = {
