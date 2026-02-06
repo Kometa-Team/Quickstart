@@ -2377,6 +2377,8 @@ def step(name):
         "trakt": helpers.booler(persistence.retrieve_settings("130-trakt").get("validated", False)),
         "mal": helpers.booler(persistence.retrieve_settings("140-mal").get("validated", False)),
         "anidb": helpers.booler(persistence.retrieve_settings("100-anidb").get("validated", False)),
+        "omdb": helpers.booler(persistence.retrieve_settings("050-omdb").get("validated", False)),
+        "plex": helpers.booler(persistence.retrieve_settings("010-plex").get("validated", False)),
     }
 
     html = render_template(

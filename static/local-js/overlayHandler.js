@@ -888,21 +888,20 @@ const OverlayHandler = {
       mdblist: 'qs-validate-mdblist',
       trakt: 'qs-validate-trakt',
       mal: 'qs-validate-mal',
-      anidb: 'qs-validate-anidb'
+      myanimelist: 'qs-validate-mal',
+      anidb: 'qs-validate-anidb',
+      omdb: 'qs-validate-omdb',
+      plex: 'qs-validate-plex'
     }
     const SERVICE_LABEL_MAP = {
       tmdb: 'TMDb',
       mdblist: 'MDBList',
       trakt: 'Trakt',
       mal: 'MyAnimeList',
-      anidb: 'AniDB'
-    }
-    const SERVICE_JUMP_MAP = {
-      tmdb: '020-tmdb',
-      mdblist: '060-mdblist',
-      anidb: '100-anidb',
-      trakt: '130-trakt',
-      mal: '140-mal'
+      myanimelist: 'MyAnimeList',
+      anidb: 'AniDB',
+      omdb: 'OMDb',
+      plex: 'Plex'
     }
     const FLAG_PREVIEW_ITEMS = [
       {
@@ -1203,11 +1202,27 @@ const OverlayHandler = {
 
     const getServiceValidation = (service) => {
       if (!service) return null
+      const readBool = (el) => {
+        if (!el) return null
+        const raw = String(el.value || el.dataset?.plexValid || el.dataset?.validated || '').toLowerCase()
+        if (!raw) return null
+        return raw === 'true'
+      }
       const inputId = SERVICE_VALIDATION_INPUTS[service]
-      if (!inputId) return null
-      const input = document.getElementById(inputId)
-      if (!input) return null
-      return String(input.value || '').toLowerCase() === 'true'
+      if (inputId) {
+        const input = document.getElementById(inputId)
+        const value = readBool(input)
+        if (value !== null) return value
+      }
+      const fallbackIds = {
+        plex: ['plex_validated', 'plex_valid'],
+        omdb: ['omdb_validated']
+      }[service] || []
+      for (const id of fallbackIds) {
+        const value = readBool(document.getElementById(id))
+        if (value !== null) return value
+      }
+      return null
     }
 
     const getMassToggleLabel = (libraryId, group, source) => {
@@ -1305,6 +1320,20 @@ const OverlayHandler = {
         { key: 'audience', label: 'Audience', group: groupMap.audience },
         { key: 'user', label: 'User', group: groupMap.user }
       ]
+      const libraryId = cfg.container?.dataset?.libraryId || ''
+      const normalizeLabel = (value) => (value || '').toString().toLowerCase().replace(/\s+/g, ' ').trim()
+      const getGroupSourceOptions = (group) => {
+        if (!libraryId || !group) return []
+        const selector = `[id^="${libraryId}-attribute_${group}_"]`
+        const labels = []
+        document.querySelectorAll(selector).forEach(input => {
+          const label = document.querySelector(`label[for="${input.id}"]`)
+          const text = (label?.textContent || '').trim()
+          if (!text || !text.startsWith('Use ')) return
+          if (!labels.includes(text)) labels.push(text)
+        })
+        return labels
+      }
 
       const imageSelect = getTemplateInput(cfg, 'rating1_image') || getTemplateInput(cfg, 'rating2_image') || getTemplateInput(cfg, 'rating3_image')
       const optionMap = new Map()
@@ -1357,6 +1386,7 @@ const OverlayHandler = {
             return {
               typeKey: type.key,
               typeLabel: type.label,
+              groupKey: type.group,
               groupLabel,
               toggleLabel,
               serviceKey,
@@ -1364,51 +1394,118 @@ const OverlayHandler = {
               hasMapping
             }
           })
-          const buildMappingHtml = (entry) => {
-            const mappingLine = entry.hasMapping
-              ? `
-                <div>${escapeHtml(entry.groupLabel)}</div>
-              `
-              : `
-                <div class="text-muted">No Library Operations</div>
-              `
-            return mappingLine
+          const sourceKeywords = {
+            anidb: ['anidb'],
+            imdb: ['imdb'],
+            letterboxd: ['letterboxd'],
+            mdb: ['mdblist score', 'mdblist average score', 'mdblist '],
+            metacritic: ['metacritic'],
+            rt_tomato: ['rotten tomatoes'],
+            rt_popcorn: ['rt audience'],
+            trakt: ['trakt'],
+            mal: ['myanimelist', 'mal'],
+            tmdb: ['tmdb']
           }
-          const criticHtml = buildMappingHtml(typeMappings[0])
-          const audienceHtml = buildMappingHtml(typeMappings[1])
-          const userHtml = buildMappingHtml(typeMappings[2])
-          const ratingLabelsHtml = `
-            <div class="rating-mapping-stack rating-mapping-stack--labels">
-              <div class="rating-mapping-stack-item">Critic</div>
-              <div class="rating-mapping-stack-item">Audience</div>
-              <div class="rating-mapping-stack-item">User</div>
-            </div>
-          `
-          const attributesHtml = `
-            <div class="rating-mapping-stack rating-mapping-stack--values">
-              <div class="rating-mapping-stack-item">${criticHtml}</div>
-              <div class="rating-mapping-stack-item">${audienceHtml}</div>
-              <div class="rating-mapping-stack-item">${userHtml}</div>
-            </div>
-          `
-          const rowServiceKey = typeMappings.find(entry => entry.serviceKey)?.serviceKey || null
-          const rowServiceLabel = rowServiceKey ? (SERVICE_LABEL_MAP[rowServiceKey] || rowServiceKey) : 'N/A'
-          const rowServiceJump = rowServiceKey ? SERVICE_JUMP_MAP[rowServiceKey] : null
-          const serviceHtml = rowServiceJump
-            ? `<a class="btn btn-link btn-sm p-0" href="javascript:void(0);" onclick="jumpTo('${rowServiceJump}')">${escapeHtml(rowServiceLabel)}</a>`
-            : '<span class="text-muted">N/A</span>'
-          const sourceLabels = Array.from(new Set(
+          const keywordFilters = sourceKeywords[imageKey] || []
+          const groupOptions = [
+            ...getGroupSourceOptions(groupMap.critic),
+            ...getGroupSourceOptions(groupMap.audience),
+            ...getGroupSourceOptions(groupMap.user)
+          ]
+          const uniqueOptions = Array.from(new Set(groupOptions))
+          let filteredOptions = uniqueOptions
+          if (imageKey === 'mdb') {
+            filteredOptions = uniqueOptions.filter(option => option.startsWith('Use MDBList'))
+          } else if (imageKey === 'rt_tomato') {
+            filteredOptions = uniqueOptions.filter(option => {
+              const normalized = normalizeLabel(option)
+              if (normalized.includes('audience')) return false
+              return normalized.includes('rotten tomatoes') || normalized.startsWith('use rt')
+            })
+          } else if (keywordFilters.length) {
+            filteredOptions = uniqueOptions.filter(option => {
+              const normalized = normalizeLabel(option)
+              return keywordFilters.some(keyword => normalized.includes(keyword))
+            })
+          }
+          const pickedLabels = new Set(
             typeMappings
               .map(entry => entry.toggleLabel)
-              .filter(label => label && label !== '—')
-          ))
-          let rowSourceLabel = sourceLabels.length ? sourceLabels[0] : 'Pick rating + image'
-          if (sourceLabels.length > 1) {
-            rowSourceLabel = 'Varies by rating'
+              .filter(label => label && label !== '—' && label !== 'Pick a source')
+              .map(normalizeLabel)
+          )
+          const pillJumpMap = {
+            tmdb: '020-tmdb',
+            mdblist: '060-mdblist',
+            anidb: '100-anidb',
+            trakt: '130-trakt',
+            myanimelist: '140-mal',
+            omdb: '050-omdb',
+            plex: '010-plex'
           }
-          const sourceHtml = (rowSourceLabel === 'Pick rating + image' || rowSourceLabel === 'Varies by rating')
-            ? `<span class="text-muted">${escapeHtml(rowSourceLabel)}</span>`
-            : `<span>${escapeHtml(rowSourceLabel)}</span>`
+          const optionHtml = filteredOptions.length
+            ? filteredOptions.map(option => {
+              const isPicked = pickedLabels.has(normalizeLabel(option))
+              const viaMatch = option.match(/\s+via\s+([A-Za-z0-9]+)/i)
+              const baseText = option
+              const normalized = normalizeLabel(option)
+              let serviceTag = ''
+              if (viaMatch) {
+                serviceTag = viaMatch[1]
+              } else if (normalized === 'use imdb rating') {
+                serviceTag = 'N/A'
+              } else if (normalized.includes('anidb')) {
+                serviceTag = 'AniDB'
+              } else if (normalized.includes('imdb')) {
+                serviceTag = 'IMDb'
+              } else if (normalized.includes('tmdb')) {
+                serviceTag = 'TMDb'
+              } else if (normalized.includes('trakt')) {
+                serviceTag = 'Trakt'
+              } else if (normalized.includes('myanimelist') || normalized.includes('mal')) {
+                serviceTag = 'MyAnimeList'
+              } else if (normalized.includes('letterboxd')) {
+                serviceTag = 'Letterboxd'
+              } else if (normalized.includes('metacritic')) {
+                serviceTag = 'Metacritic'
+              } else if (normalized.includes('rotten tomatoes') || normalized.startsWith('use rt')) {
+                serviceTag = 'RT'
+              } else if (normalized.includes('mdblist')) {
+                serviceTag = 'MDBList'
+              } else if (normalized.includes('omdb')) {
+                serviceTag = 'OMDb'
+              } else if (normalized.includes('plex')) {
+                serviceTag = 'Plex'
+              }
+              const labelText = baseText
+              const pickedHtml = isPicked
+                ? ' <img src="/static/favicon.png" alt="Picked" title="Picked" class="rating-mapping-picked-icon">'
+                : ''
+              const arrowHtml = serviceTag
+                ? ' <i class="bi bi-arrow-left-right rating-mapping-option-arrow" aria-hidden="true"></i>'
+                : ''
+              const serviceKey = serviceTag ? normalizeLabel(serviceTag) : ''
+              const jumpTarget = serviceKey ? pillJumpMap[serviceKey] : null
+              let validationStatus = 'neutral'
+              if (normalized === 'use imdb rating') {
+                validationStatus = 'validated'
+              } else if (serviceKey && serviceTag !== 'N/A') {
+                const validated = getServiceValidation(serviceKey)
+                validationStatus = validated ? 'validated' : 'unvalidated'
+              }
+              const viaHtml = serviceTag
+                ? (jumpTarget && serviceTag !== 'N/A'
+                    ? ` <a class="rating-mapping-option-via rating-mapping-option-link rating-mapping-option-via--${validationStatus}" href="javascript:void(0);" onclick="jumpTo('${jumpTarget}')">${escapeHtml(serviceTag)}</a>`
+                    : ` <span class="rating-mapping-option-via rating-mapping-option-via--${validationStatus}">${escapeHtml(serviceTag)}</span>`)
+                : ''
+              return `<div class="rating-mapping-option${isPicked ? ' is-picked' : ''}"><span class="rating-mapping-option-label">${escapeHtml(labelText)}</span>${pickedHtml}${arrowHtml}${viaHtml}</div>`
+            }).join('')
+            : '<div class="text-muted">No sources found</div>'
+          const sourceHtml = `
+            <div class="rating-mapping-option-list">
+              ${optionHtml}
+            </div>
+          `
           const fallbackEntry = typeMappings[0] || null
           const sampleEntry = typeMappings.find(entry => entry.hasMapping) || fallbackEntry
           const isRtBadge = imageKey === 'rt_tomato' || imageKey === 'rt_popcorn'
@@ -1453,7 +1550,6 @@ const OverlayHandler = {
             : '<div class="rating-mapping-sample rating-mapping-sample--empty">N/A</div>'
           return `
             <tr>
-              <td class="rating-mapping-col-rating">${ratingLabelsHtml}</td>
               <td class="rating-mapping-col-badge">
                 <div class="d-flex align-items-center gap-2">
                   ${previewHtml}
@@ -1464,8 +1560,6 @@ const OverlayHandler = {
                 </div>
               </td>
               <td class="rating-mapping-col-font">${escapeHtml(mappedFont)}</td>
-              <td class="rating-mapping-col-service">${serviceHtml}</td>
-              <td class="rating-mapping-col-attributes">${attributesHtml}</td>
               <td class="rating-mapping-col-source">${sourceHtml}</td>
               <td class="rating-mapping-sample-cell">
                 ${sampleHtml}
@@ -1473,10 +1567,38 @@ const OverlayHandler = {
             </tr>
           `
         }).join('')
+        const ratingTypeRowsHtml = ratingTypes.map(type => {
+          const groupLabel = RATING_GROUP_LABEL_MAP[type.group] || type.group || ''
+          return `
+            <tr>
+              <td>${escapeHtml(type.label)}</td>
+              <td>${escapeHtml(groupLabel)}</td>
+            </tr>
+          `
+        }).join('')
         const tableHelpHtml = `
           <div class="rating-mapping-help small text-muted mb-2">
-            Choosing your Rating Type and Rating Image, drives the Font, Service, Attributes | Library Operations
-            and Source used. Click the Service name to jump to its configuration section.
+            Rating Type maps directly to Library Operations toggles. Use this quick reference when reading the
+            badge table below.
+          </div>
+          <div class="table-responsive rating-mapping-type-map mb-3">
+            <table class="table table-sm table-dark table-striped align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Rating Type</th>
+                  <th>Attributes | Library Operations</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${ratingTypeRowsHtml}
+              </tbody>
+            </table>
+          </div>
+          <div class="small text-muted mb-2">
+            Source <i class="bi bi-arrow-left-right rating-mapping-option-arrow" aria-hidden="true"></i>
+            <span class="rating-mapping-option-via rating-mapping-option-via--header rating-mapping-option-via--neutral">Service</span>
+            pills are clickable; colors reflect validation status. Auto-selected entries are highlighted and tagged with
+            <img src="/static/favicon.png" alt="Picked" class="rating-mapping-picked-icon">.
           </div>
         `
         allEl.innerHTML = `
@@ -1485,12 +1607,13 @@ const OverlayHandler = {
             <table class="table table-sm table-dark table-striped align-middle mb-0 rating-mapping-table">
               <thead>
                 <tr>
-                  <th class="rating-mapping-col-rating">Rating Type</th>
                   <th class="rating-mapping-col-badge">Rating Image</th>
                   <th class="rating-mapping-col-font">Font</th>
-                  <th class="rating-mapping-col-service">Service</th>
-                  <th class="rating-mapping-col-attributes">Attributes | Library Operations</th>
-                  <th class="rating-mapping-col-source">Source</th>
+                  <th class="rating-mapping-col-source">
+                    Source
+                    <i class="bi bi-arrow-left-right rating-mapping-option-arrow" aria-hidden="true"></i>
+                    <span class="rating-mapping-option-via rating-mapping-option-via--header rating-mapping-option-via--neutral">Service</span>
+                  </th>
                   <th>Sample</th>
                 </tr>
               </thead>
