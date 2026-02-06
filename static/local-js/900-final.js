@@ -5,6 +5,7 @@ let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
 let KOMETA_VALIDATION_IN_PROGRESS = false
 let KOMETA_UPDATE_AVAILABLE = false
+let KOMETA_INSTALLED = false
 // Polling handles (hoist to top so all handlers see them safely)
 let kometaInterval = null
 let kometaStatusInterval = null
@@ -602,6 +603,7 @@ $(document).ready(function () {
         if (Array.isArray(res.log)) res.log.forEach(line => $logBox.append(`${line}\n`))
 
         if (res.success) {
+          KOMETA_INSTALLED = true
           $logBox.append('✅ Kometa root validated successfully.\n')
           if (res.kometa_version) $logBox.append(`📦 Local Kometa version: ${res.kometa_version}\n`)
 
@@ -662,6 +664,7 @@ $(document).ready(function () {
             $runNow.prop('disabled', true)
           }
         } else {
+          KOMETA_INSTALLED = false
           KOMETA_VALIDATED = false
           hideRunCommandSectionUntilValidated()
           $runNow.prop('disabled', true)
@@ -672,6 +675,10 @@ $(document).ready(function () {
       error: (xhr) => {
         const msg = xhr?.responseJSON?.error || 'The Kometa root path is invalid or inaccessible. Please try again.'
         $logBox.append(`❌ ${msg}\n`)
+        const lowered = String(msg || '').toLowerCase()
+        if (lowered.includes('kometa.py not found') || lowered.includes('requirements.txt not found')) {
+          KOMETA_INSTALLED = false
+        }
         KOMETA_VALIDATED = false
         hideRunCommandSectionUntilValidated()
         $runNow.prop('disabled', true)
@@ -680,6 +687,7 @@ $(document).ready(function () {
       complete: () => {
         KOMETA_VALIDATION_IN_PROGRESS = false
         updateRunNowState()
+        syncUpdateButtonLabel()
       }
     })
   }
@@ -778,8 +786,10 @@ $(document).ready(function () {
   function getUpdateButtonLabel () {
     const force = $forceUpdateToggle.is(':checked')
     const label = force
-      ? 'Force Update Kometa'
-      : (KOMETA_UPDATE_AVAILABLE ? 'Update Available' : 'Check for Kometa Updates')
+      ? (KOMETA_INSTALLED ? 'Force Update Kometa' : 'Force Install Kometa')
+      : (KOMETA_INSTALLED
+          ? (KOMETA_UPDATE_AVAILABLE ? 'Update Available' : 'Check for Kometa Updates')
+          : 'Install Kometa')
     return `<i class="bi bi-arrow-clockwise me-1"></i> ${label}`
   }
 
@@ -813,7 +823,10 @@ $(document).ready(function () {
     $runNow.prop('disabled', true).html('<i class="bi bi-hourglass me-1"></i> Updating...')
     $stopNow.prop('disabled', true)
 
-    $btn.prop('disabled', true).html(`<i class="bi bi-arrow-repeat me-1"></i> ${forceUpdate ? 'Force Updating...' : 'Checking for updates...'}`)
+    const inProgressLabel = forceUpdate
+      ? (KOMETA_INSTALLED ? 'Force Updating...' : 'Force Installing...')
+      : (KOMETA_INSTALLED ? 'Checking for updates...' : 'Installing...')
+    $btn.prop('disabled', true).html(`<i class="bi bi-arrow-repeat me-1"></i> ${inProgressLabel}`)
     $forceUpdateToggle.prop('disabled', true)
     $logBox.append('\nInitializing/Updating Kometa...\n')
     if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
