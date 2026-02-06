@@ -257,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function () {
       fontPickerState.sampleText = sampleText
 
       const cards = []
-      cards.push({ font: '', label: 'Default (auto)' })
       fonts.forEach(font => {
         const label = font.split(/[\\/]/).pop()
         cards.push({ font, label })

@@ -1648,11 +1648,14 @@ def build_config(header_style="standard", config_name=None):
 
                 lib_name_raw = helpers.extract_library_name(key)
 
-                # Normalize if overlay and builder level suffix is present
-                if normalize_overlays and "-" in lib_name_raw:
-                    lib_name = lib_name_raw.split("-")[0]
-                else:
-                    lib_name = lib_name_raw
+                # Normalize overlays by trimming builder-level suffix (movie/show/season/episode),
+                # without losing hyphenated library names.
+                lib_name = lib_name_raw
+                if normalize_overlays and isinstance(lib_name_raw, str):
+                    for suffix in ("-movie", "-show", "-season", "-episode"):
+                        if lib_name_raw.endswith(suffix):
+                            lib_name = lib_name_raw[: -len(suffix)]
+                            break
 
                 if lib_name in names:
                     grouped.setdefault(lib_name, {})[key] = value

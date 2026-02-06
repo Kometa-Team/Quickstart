@@ -4204,6 +4204,22 @@ const OverlayHandler = {
                 slots.forEach(slot => syncRatingSources(cfg, slot))
               }
             }
+            const positionInput = cfg.container.querySelector(`[name="${templateName}[horizontal_position]"]`)
+            if (positionInput) {
+              const raw = (positionInput.value || positionInput.dataset?.default || '').toString().trim().toLowerCase()
+              if (raw === 'left' || raw === 'center' || raw === 'right') {
+                const { vAlign } = parseOrigin(cfg.origin || '')
+                let nextOrigin = ''
+                if (vAlign === 'center') {
+                  nextOrigin = raw === 'center' ? 'center' : `center_${raw}`
+                } else {
+                  nextOrigin = raw === 'center' ? vAlign : `${vAlign}_${raw}`
+                }
+                if (nextOrigin && cfg.origin !== nextOrigin) {
+                  cfg.origin = nextOrigin
+                }
+              }
+            }
             applyRatingFontDefaults(cfg)
             updateRatingSyncStatus(cfg)
             renderRatingMappingModal(cfg)
@@ -4249,7 +4265,8 @@ const OverlayHandler = {
             `[name="${templateName}[rating3_font_size]"]`,
             `[name="${templateName}[rating3_font_color]"]`,
             `[name="${templateName}[rating3_stroke_width]"]`,
-            `[name="${templateName}[rating3_stroke_color]"]`
+            `[name="${templateName}[rating3_stroke_color]"]`,
+            `[name="${templateName}[horizontal_position]"]`
           ]
           const inputs = cfg.container.querySelectorAll(ratingSelectors.join(', '))
           inputs.forEach(input => {
