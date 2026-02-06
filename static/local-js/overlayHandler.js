@@ -4185,6 +4185,7 @@ const OverlayHandler = {
 
         if (cfg.id === 'overlay_ratings' && layer && cfg.container) {
           const refreshRatings = (event) => {
+            if (cfg.container?.dataset?.resetting === 'true') return
             enforceUniqueRatingTypes(cfg)
             if (event && event.target && cfg.container) {
               const targetName = event.target.name || ''

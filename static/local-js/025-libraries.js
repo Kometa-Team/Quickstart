@@ -1131,6 +1131,10 @@ function wireOffsetReset (scope) {
   root.querySelectorAll('.reset-offset-btn').forEach(btn => {
     if (btn.dataset.listenerAdded) return
     btn.addEventListener('click', () => {
+      const group = btn.closest('.template-toggle-group')
+      if (group) {
+        group.dataset.resetting = 'true'
+      }
       const changes = []
       const touched = new Set()
       const escapeHtml = (value) => String(value ?? '')
@@ -1183,7 +1187,9 @@ function wireOffsetReset (scope) {
         const to = getDefaultDisplayValue(input, defaultValue)
         if (from !== to) {
           changes.push({ label: getInputLabel(input), from, to })
+          return true
         }
+        return false
       }
 
       const hId = btn.dataset.horizontalId
@@ -1198,55 +1204,80 @@ function wireOffsetReset (scope) {
         .filter(Boolean)
 
       if (hInput && hInput.dataset.default !== undefined) {
-        recordReset(hInput, hInput.dataset.default)
-        hInput.value = hInput.dataset.default
-        hInput.dispatchEvent(new Event('change', { bubbles: true }))
+        const changed = recordReset(hInput, hInput.dataset.default)
+        if (changed) {
+          hInput.value = hInput.dataset.default
+          hInput.dispatchEvent(new Event('change', { bubbles: true }))
+        }
       }
       if (vInput && vInput.dataset.default !== undefined) {
-        recordReset(vInput, vInput.dataset.default)
-        vInput.value = vInput.dataset.default
-        vInput.dispatchEvent(new Event('change', { bubbles: true }))
+        const changed = recordReset(vInput, vInput.dataset.default)
+        if (changed) {
+          vInput.value = vInput.dataset.default
+          vInput.dispatchEvent(new Event('change', { bubbles: true }))
+        }
       }
       if (pInput && pInput.dataset.default !== undefined) {
-        recordReset(pInput, pInput.dataset.default)
-        pInput.value = pInput.dataset.default
-        pInput.dispatchEvent(new Event('change', { bubbles: true }))
+        const changed = recordReset(pInput, pInput.dataset.default)
+        if (changed) {
+          pInput.value = pInput.dataset.default
+          pInput.dispatchEvent(new Event('change', { bubbles: true }))
+        }
       }
       extraIds.forEach(id => {
         const input = document.getElementById(id)
         if (input && input.dataset.default !== undefined) {
-          recordReset(input, input.dataset.default)
           const defaultValue = input.dataset.default
           if (input.type === 'checkbox') {
             const normalizedDefault = (defaultValue || '').toString().toLowerCase()
             const normalizedValue = (input.value || '').toString().toLowerCase()
-            input.checked = normalizedDefault === 'true' || normalizedDefault === normalizedValue
-            input.dispatchEvent(new Event('change', { bubbles: true }))
+            const nextChecked = normalizedDefault === 'true' || normalizedDefault === normalizedValue
+            const changed = recordReset(input, defaultValue)
+            if (changed) {
+              input.checked = nextChecked
+              input.dispatchEvent(new Event('change', { bubbles: true }))
+            }
             return
           }
-          input.value = defaultValue
-          input.dispatchEvent(new Event('change', { bubbles: true }))
+          const changed = recordReset(input, defaultValue)
+          if (changed) {
+            input.value = defaultValue
+            input.dispatchEvent(new Event('change', { bubbles: true }))
+          }
         }
       })
 
-      const group = btn.closest('.template-toggle-group')
       if (group) {
         group.querySelectorAll('input[data-default], select[data-default], textarea[data-default]').forEach(input => {
           if (input.disabled) return
           const defaultValue = input.dataset.default
           if (defaultValue === undefined) return
 
-          recordReset(input, defaultValue)
           if (input.type === 'checkbox' || input.type === 'radio') {
             const normalizedDefault = (defaultValue || '').toString().toLowerCase()
             const normalizedValue = (input.value || '').toString().toLowerCase()
-            input.checked = normalizedDefault === 'true' || normalizedDefault === normalizedValue
+            const nextChecked = normalizedDefault === 'true' || normalizedDefault === normalizedValue
+            const changed = recordReset(input, defaultValue)
+            if (changed) input.checked = nextChecked
           } else {
-            input.value = defaultValue
+            const changed = recordReset(input, defaultValue)
+            if (changed) input.value = defaultValue
           }
-          input.dispatchEvent(new Event('input', { bubbles: true }))
-          input.dispatchEvent(new Event('change', { bubbles: true }))
+          if (changes.length && touched.has(input)) {
+            input.dispatchEvent(new Event('input', { bubbles: true }))
+            input.dispatchEvent(new Event('change', { bubbles: true }))
+          }
         })
+      }
+
+      if (group) {
+        delete group.dataset.resetting
+        if (changes.length) {
+          const trigger = group.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])')
+          if (trigger) {
+            trigger.dispatchEvent(new Event('change', { bubbles: true }))
+          }
+        }
       }
 
       if (changes.length && typeof showToast === 'function') {
@@ -1254,6 +1285,8 @@ function wireOffsetReset (scope) {
           .map(change => `${escapeHtml(change.label)}: ${escapeHtml(change.from)} → ${escapeHtml(change.to)}`)
           .join('<br>')
         showToast('info', `Reset to defaults:<br>${details}`)
+      } else if (!changes.length && typeof showToast === 'function') {
+        showToast('info', 'Already at defaults (no changes).')
       }
     })
     btn.dataset.listenerAdded = 'true'
