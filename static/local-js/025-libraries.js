@@ -1132,6 +1132,61 @@ function wireOffsetReset (scope) {
   root.querySelectorAll('.reset-offset-btn').forEach(btn => {
     if (btn.dataset.listenerAdded) return
     btn.addEventListener('click', () => {
+      const changes = []
+      const touched = new Set()
+      const escapeHtml = (value) => String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+      const getInputLabel = (input) => {
+        if (!input) return 'Field'
+        const describedBy = input.getAttribute('aria-describedby')
+        if (describedBy) {
+          const firstId = describedBy.split(' ')[0]
+          const el = document.getElementById(firstId)
+          if (el && el.textContent) return el.textContent.trim()
+        }
+        if (input.id) {
+          const label = document.querySelector(`label[for="${input.id}"]`)
+          if (label && label.textContent) return label.textContent.trim()
+        }
+        return input.name || input.id || 'Field'
+      }
+      const getDisplayValue = (input) => {
+        if (!input) return ''
+        if (input.tagName === 'SELECT') {
+          return input.selectedOptions?.[0]?.textContent?.trim() || input.value || ''
+        }
+        if (input.type === 'checkbox') return input.checked ? 'On' : 'Off'
+        if (input.type === 'radio') return input.checked ? 'Selected' : 'Not selected'
+        return input.value ?? ''
+      }
+      const getDefaultDisplayValue = (input, defaultValue) => {
+        if (!input) return ''
+        if (input.type === 'checkbox' || input.type === 'radio') {
+          const normalizedDefault = (defaultValue || '').toString().toLowerCase()
+          const normalizedValue = (input.value || '').toString().toLowerCase()
+          const checked = normalizedDefault === 'true' || normalizedDefault === normalizedValue
+          return checked ? (input.type === 'radio' ? 'Selected' : 'On') : (input.type === 'radio' ? 'Not selected' : 'Off')
+        }
+        if (input.tagName === 'SELECT') {
+          const option = Array.from(input.options).find(o => String(o.value) === String(defaultValue))
+          return option ? (option.textContent || '').trim() : (defaultValue ?? '')
+        }
+        return defaultValue ?? ''
+      }
+      const recordReset = (input, defaultValue) => {
+        if (!input || touched.has(input)) return
+        touched.add(input)
+        const from = getDisplayValue(input)
+        const to = getDefaultDisplayValue(input, defaultValue)
+        if (from !== to) {
+          changes.push({ label: getInputLabel(input), from, to })
+        }
+      }
+
       const hId = btn.dataset.horizontalId
       const vId = btn.dataset.verticalId
       const pId = btn.dataset.positionId
@@ -1144,20 +1199,24 @@ function wireOffsetReset (scope) {
         .filter(Boolean)
 
       if (hInput && hInput.dataset.default !== undefined) {
+        recordReset(hInput, hInput.dataset.default)
         hInput.value = hInput.dataset.default
         hInput.dispatchEvent(new Event('change', { bubbles: true }))
       }
       if (vInput && vInput.dataset.default !== undefined) {
+        recordReset(vInput, vInput.dataset.default)
         vInput.value = vInput.dataset.default
         vInput.dispatchEvent(new Event('change', { bubbles: true }))
       }
       if (pInput && pInput.dataset.default !== undefined) {
+        recordReset(pInput, pInput.dataset.default)
         pInput.value = pInput.dataset.default
         pInput.dispatchEvent(new Event('change', { bubbles: true }))
       }
       extraIds.forEach(id => {
         const input = document.getElementById(id)
         if (input && input.dataset.default !== undefined) {
+          recordReset(input, input.dataset.default)
           const defaultValue = input.dataset.default
           if (input.type === 'checkbox') {
             const normalizedDefault = (defaultValue || '').toString().toLowerCase()
@@ -1178,6 +1237,7 @@ function wireOffsetReset (scope) {
           const defaultValue = input.dataset.default
           if (defaultValue === undefined) return
 
+          recordReset(input, defaultValue)
           if (input.type === 'checkbox' || input.type === 'radio') {
             const normalizedDefault = (defaultValue || '').toString().toLowerCase()
             const normalizedValue = (input.value || '').toString().toLowerCase()
@@ -1188,6 +1248,13 @@ function wireOffsetReset (scope) {
           input.dispatchEvent(new Event('input', { bubbles: true }))
           input.dispatchEvent(new Event('change', { bubbles: true }))
         })
+      }
+
+      if (changes.length && typeof showToast === 'function') {
+        const details = changes
+          .map(change => `${escapeHtml(change.label)}: ${escapeHtml(change.from)} → ${escapeHtml(change.to)}`)
+          .join('<br>')
+        showToast('info', `Reset to defaults:<br>${details}`)
       }
     })
     btn.dataset.listenerAdded = 'true'
