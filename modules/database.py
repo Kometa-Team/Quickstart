@@ -88,7 +88,6 @@ def retrieve_validated_map(name, sections=None):
     return {}
 
 
-
 def reset_data(name, section=None):
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
         connection.row_factory = sqlite3.Row
