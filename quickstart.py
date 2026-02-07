@@ -2357,13 +2357,8 @@ def step(name):
         settings = persistence.retrieve_settings(section)
         service_validations[key] = helpers.booler(settings.get("validated", False))
     validation_sections = {key: key.split("-", 1)[1] for key in validation_pages}
-    validated_sections = database.retrieve_validated_map(
-        config_name, list(validation_sections.values())
-    )
-    jump_to_validations = {
-        key: validated_sections.get(section, False)
-        for key, section in validation_sections.items()
-    }
+    validated_sections = database.retrieve_validated_map(config_name, list(validation_sections.values()))
+    jump_to_validations = {key: validated_sections.get(section, False) for key, section in validation_sections.items()}
 
     if name == "900-final":
         validation_meta = []
