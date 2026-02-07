@@ -67,6 +67,27 @@ def retrieve_section_data(name, section):
     return False, False, None
 
 
+def retrieve_validated_map(name, sections=None):
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(persisted_section_table_create())
+            if sections:
+                placeholders = ",".join("?" for _ in sections)
+                cursor.execute(
+                    f"""SELECT section, validated from section_data where name == ? AND section IN ({placeholders})""",
+                    (name, *sections),
+                )
+            else:
+                cursor.execute(
+                    """SELECT section, validated from section_data where name == ?""",
+                    (name,),
+                )
+            rows = cursor.fetchall()
+            return {row["section"]: helpers.booler(row["validated"]) for row in rows}
+    return {}
+
+
 def reset_data(name, section=None):
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
         connection.row_factory = sqlite3.Row

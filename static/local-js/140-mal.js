@@ -1,12 +1,13 @@
 /* global $, showSpinner, hideSpinner */
 
+const validatedAtInput = document.getElementById('mal_validated_at')
+
 $(document).ready(function () {
   const clientSecretInput = document.getElementById('mal_client_secret')
   const toggleButton = document.getElementById('toggleClientSecretVisibility')
   const validateButton = document.getElementById('validate_mal_url')
   const isValidatedElement = document.getElementById('mal_validated')
   const isValidated = isValidatedElement ? isValidatedElement.value.toLowerCase() : 'false'
-
   console.log('Validated:', isValidated)
 
   // Ensure initial visibility based on input value
@@ -30,6 +31,7 @@ $(document).ready(function () {
     if (inputElement) {
       inputElement.addEventListener('input', function () {
         isValidatedElement.value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         validateButton.disabled = false
       })
     } else {
@@ -60,6 +62,8 @@ function updateMALTargetURL () {
   let myURL = ''
   if (mal_client_id.length === 32) {
     document.getElementById('mal_validated').value = 'false'
+    const validatedAtInput = document.getElementById('mal_validated_at')
+    if (validatedAtInput) validatedAtInput.value = ''
     myURL = 'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=' + mal_client_id + '&code_challenge=' + code_verifier
   }
   console.log('updateMALTargetURL: ' + myURL)
@@ -128,6 +132,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
       if (data.valid) {
         hideSpinner('validate')
         document.getElementById('mal_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         statusMessage.textContent = 'MyAnimeList credentials validated successfully!'
         statusMessage.style.color = '#75b798'
         document.getElementById('access_token').value = data.mal_authorization_access_token
@@ -139,6 +144,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
       } else {
         hideSpinner('validate')
         document.getElementById('mal_validated').value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -150,6 +156,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
       statusMessage.textContent = 'An error occurred while validating MAL credentials.'
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
+      if (validatedAtInput) validatedAtInput.value = ''
     })
 })
 /* eslint-enable camelcase */

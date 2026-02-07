@@ -44,6 +44,89 @@
   </div>
 </div>
 
+{% if validation_meta %}
+<div class="accordion mt-3 mb-3" id="validation-status-accordion">
+  <div class="accordion-item">
+    <h2 class="accordion-header" id="validation-status-heading">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#validation-status-collapse" aria-expanded="false" aria-controls="validation-status-collapse">
+        Validation status
+      </button>
+    </h2>
+    <div id="validation-status-collapse" class="accordion-collapse collapse" aria-labelledby="validation-status-heading"
+      data-bs-parent="#validation-status-accordion">
+      <div class="accordion-body">
+        <div class="small text-muted mb-2">
+          Status
+          <span class="rating-mapping-option-via rating-mapping-option-via--header rating-mapping-option-via--neutral">Pill</span>
+          shows the page name and is clickable; colors reflect validation status. Gray means not applicable.
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm table-dark table-striped align-middle mb-0">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Last validated</th>
+                <th>Time since</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for entry in validation_meta %}
+              <tr>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    {% if entry.has_validation %}
+                    <a class="rating-mapping-option-via rating-mapping-option-link validation-status-pill rating-mapping-option-via--{{ 'validated' if entry.validated else 'unvalidated' }}"
+                      href="javascript:void(0);" onclick="jumpTo('{{ entry.page }}')">
+                      {{ entry.label }}
+                    </a>
+                    {% else %}
+                    <a class="rating-mapping-option-via rating-mapping-option-link validation-status-pill rating-mapping-option-via--neutral"
+                      href="javascript:void(0);" onclick="jumpTo('{{ entry.page }}')">
+                      {{ entry.label }}
+                    </a>
+                    {% endif %}
+                  </div>
+                </td>
+                <td>
+                  {% if entry.has_validation %}
+                  <span class="validation-timestamp small text-muted"
+                    data-validation-iso="{{ entry.validated_at | default('', true) }}">
+                    {% if entry.validated_at %}
+                    {{ entry.validated_at | replace('T', ' ') | replace('Z', ' UTC') }}
+                    {% elif entry.validated %}
+                    Not recorded
+                    {% else %}
+                    Never
+                    {% endif %}
+                  </span>
+                  {% else %}
+                  <span class="validation-timestamp small text-muted">N/A</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if entry.has_validation %}
+                  {% if entry.validated_at %}
+                  <span class="validation-age small text-muted"
+                    data-validation-iso-age="{{ entry.validated_at | default('', true) }}">—</span>
+                  {% else %}
+                  <span class="validation-age small text-muted">—</span>
+                  {% endif %}
+                  {% else %}
+                  <span class="validation-age small text-muted">N/A</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- Validation Error Section -->
 <div id="final-content-wrapper">
 <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;"></div>

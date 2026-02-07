@@ -70,6 +70,7 @@
     <input type="text" class="form-control" id="anidb_validated" name="anidb_validated" value="{{ data['validated'] }}"
         aria-describedby="anidb_validated_text">
 </div>
+<input type="hidden" id="anidb_validated_at" name="anidb_validated_at" value="{{ data.get('validated_at', '') }}">
 
 <div id="statusMessage" class="status-message mb-2"></div>
 

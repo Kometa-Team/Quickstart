@@ -1,5 +1,7 @@
 /* global $, initialSonarrRootFolderPath, initialSonarrQualityProfile, initialSonarrLanguageProfile, showSpinner, hideSpinner, PathValidation */
 
+const validatedAtInput = document.getElementById('sonarr_validated_at')
+
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('sonarr_token')
   const toggleButton = document.getElementById('toggleApikeyVisibility')
@@ -33,11 +35,13 @@ $(document).ready(function () {
   // Attach event listeners for input changes
   document.getElementById('sonarr_token').addEventListener('input', function () {
     document.getElementById('sonarr_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
   })
 
   document.getElementById('sonarr_url').addEventListener('input', function () {
     document.getElementById('sonarr_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
   })
 
@@ -73,6 +77,7 @@ function validateSonarrApi () {
       if (data.valid) {
         hideSpinner('validate')
         document.getElementById('sonarr_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         statusMessage.textContent = 'Sonarr API key is valid.'
         statusMessage.style.color = '#75b798'
         statusMessage.style.display = 'block'
@@ -84,6 +89,7 @@ function validateSonarrApi () {
       } else {
         hideSpinner('validate')
         document.getElementById('sonarr_validated').value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         console.error('Error validating Sonarr', data.message)
         statusMessage.textContent = 'Failed to validate Sonarr server. Please check your URL and Token.'
         statusMessage.style.color = '#ea868f'
@@ -97,6 +103,7 @@ function validateSonarrApi () {
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       document.getElementById('sonarr_validated').value = 'false'
+      if (validatedAtInput) validatedAtInput.value = ''
     })
 }
 

@@ -1,6 +1,8 @@
 /* global $, PathValidation */
 
 document.addEventListener('DOMContentLoaded', function () {
+  const validatedAtInput = document.getElementById('settings_validated_at')
+  let settingsTouched = false
   const saveSyncChangesButton = document.getElementById('saveSyncChangesButton')
   const saveExcludeChangesButton = document.getElementById('saveExcludeChangesButton')
   const configForm = document.getElementById('configForm')
@@ -74,6 +76,9 @@ document.addEventListener('DOMContentLoaded', function () {
   function setSettingsValidated (isValid) {
     const settingsValidatedInput = document.getElementById('settings_validated')
     settingsValidatedInput.value = isValid ? 'true' : 'false'
+    if (validatedAtInput && settingsTouched) {
+      validatedAtInput.value = isValid ? new Date().toISOString() : ''
+    }
   }
 
   function showAccordionForField (field) {
@@ -203,6 +208,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   document.querySelectorAll('input, select, textarea').forEach((element) => {
+    const markTouched = (event) => {
+      if (event && event.isTrusted === false) return
+      settingsTouched = true
+    }
+    element.addEventListener('input', markTouched)
+    element.addEventListener('change', markTouched)
     const fieldToValidate = fieldsToValidate.find((field) => field.id === element.id)
     if (fieldToValidate) {
       // Add real-time validation

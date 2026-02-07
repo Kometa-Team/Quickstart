@@ -73,6 +73,7 @@
     value="{{ data['validated'] }}" title="">
   <label for="webhooks_validated">Webhooks Validated</label>
 </div>
+<input type="hidden" id="webhooks_validated_at" name="webhooks_validated_at" value="{{ data['validated_at'] or '' }}">
 </div>
 </form>
 {% endblock %}

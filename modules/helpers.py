@@ -349,7 +349,7 @@ def build_oauth_dict(source, form_data):
             "localhost_url",
         ]:
             data[source][final_key] = value  # Store outside authorization
-        elif final_key == "validated":
+        elif final_key in ["validated", "validated_at"]:
             data[final_key] = value
         else:
             if final_key != "url":
@@ -383,7 +383,7 @@ def build_simple_dict(source, form_data):
                         value = value.strip() if isinstance(value, str) else value
 
             # Assign the value to the appropriate key
-            if final_key == "validated":
+            if final_key in ["validated", "validated_at"]:
                 data[final_key] = value
             else:
                 data[source][final_key] = value

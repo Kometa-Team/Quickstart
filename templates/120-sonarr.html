@@ -38,6 +38,7 @@
         value="{{ data['validated'] }}" title="">
     <label for="sonarr_validated">Sonarr Validated</label>
 </div>
+<input type="hidden" id="sonarr_validated_at" name="sonarr_validated_at" value="{{ data['validated_at'] or '' }}">
 <div id="statusMessage" class="status-message mb-2"></div>
 
 <div class="input-group mb-2">

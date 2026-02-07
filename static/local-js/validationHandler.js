@@ -1,5 +1,8 @@
 /* global $, PathValidation */
 
+const librariesValidatedAtInput = document.getElementById('libraries_validated_at')
+let librariesTouched = false
+
 const ValidationHandler = {
   updateValidationState: function () {
     console.log('[DEBUG] Running validation state update.')
@@ -24,6 +27,9 @@ const ValidationHandler = {
 
     document.getElementById('libraries').value = selectedNames.join(',')
     document.getElementById('libraries_validated').value = isValid ? 'true' : 'false'
+    if (librariesTouched && librariesValidatedAtInput) {
+      librariesValidatedAtInput.value = isValid ? new Date().toISOString() : ''
+    }
 
     if (isValid) {
       console.log('[DEBUG] Validation Passed! Enabling navigation.')
@@ -293,12 +299,22 @@ ValidationHandler.restoreSelectedLibraries()
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] Adding change event listeners to library checkboxes & accordions.')
 
-  document.querySelectorAll('.include-library-toggle, .accordion input').forEach((input) => {
-    input.addEventListener('change', () => {
-      console.log(`[DEBUG] Change detected on: ${input.id || '(unknown input)'}`)
+  const onLibraryChange = (event) => {
+    if (!event || !event.target || !event.target.closest) return
+    if (event.target.id === 'libraryPicker') {
+      librariesTouched = true
+      console.log('[DEBUG] Change detected on libraryPicker')
       ValidationHandler.updateValidationState()
-    })
-  })
+      return
+    }
+    if (!event.target.closest('#library-form-container')) return
+    librariesTouched = true
+    console.log(`[DEBUG] Change detected on: ${event.target.id || '(unknown input)'}`)
+    ValidationHandler.updateValidationState()
+  }
+
+  document.addEventListener('change', onLibraryChange)
+  document.addEventListener('input', onLibraryChange)
 
   // Initial validation check on page load
   console.log('[DEBUG] Running initial validation check on page load.')

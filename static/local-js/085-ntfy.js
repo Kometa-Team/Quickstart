@@ -1,5 +1,7 @@
 /* global $, showSpinner, hideSpinner */
 
+const validatedAtInput = document.getElementById('ntfy_validated_at')
+
 $(document).ready(function () {
   const tokenInput = document.getElementById('ntfy_token')
   const toggleButton = document.getElementById('toggleTokenVisibility')
@@ -25,16 +27,19 @@ $(document).ready(function () {
 
   tokenInput.addEventListener('input', function () {
     document.getElementById('ntfy_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 
   document.getElementById('ntfy_url').addEventListener('input', function () {
     document.getElementById('ntfy_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 
   document.getElementById('ntfy_topic').addEventListener('input', function () {
     document.getElementById('ntfy_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 })
@@ -80,11 +85,13 @@ document.getElementById('validateButton').addEventListener('click', function () 
       if (data.valid) {
         hideSpinner('validate')
         document.getElementById('ntfy_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         statusMessage.textContent = 'ntfy credentials validated successfully! Ensure you are subscribed to topic to see test message.'
         statusMessage.style.color = '#75b798'
       } else {
         hideSpinner('validate')
         document.getElementById('ntfy_validated').value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -97,6 +104,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.textContent = 'An error occurred while validating ntfy credentials.'
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
+      if (validatedAtInput) validatedAtInput.value = ''
     })
 })
 /* eslint-enable camelcase */

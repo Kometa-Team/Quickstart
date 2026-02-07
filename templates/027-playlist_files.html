@@ -38,6 +38,7 @@
     value="{{ data['validated'] }}" title="" readonly>
   <label for="playlist_files_validated">Playlist Validated</label>
 </div>
+<input type="hidden" id="playlist_files_validated_at" name="playlist_files_validated_at" value="{{ data['validated_at'] or '' }}">
 <div id="statusMessage" class="status-message mb-2"></div>
 </div>
 </form>

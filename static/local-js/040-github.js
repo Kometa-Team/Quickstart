@@ -1,11 +1,12 @@
 /* global $, showSpinner, hideSpinner */
 
+const validatedAtInput = document.getElementById('github_validated_at')
+
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('github_token')
   const validateButton = document.getElementById('validateButton')
   const toggleButton = document.getElementById('toggleApikeyVisibility')
   const isValidated = document.getElementById('github_validated').value.toLowerCase() === 'true'
-
   console.log('Validated: ' + isValidated)
 
   // Set initial visibility based on API key value
@@ -23,6 +24,7 @@ $(document).ready(function () {
   // Reset validation status when user types
   apiKeyInput.addEventListener('input', function () {
     document.getElementById('github_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 })
@@ -62,9 +64,12 @@ document.getElementById('validateButton').addEventListener('click', function () 
         statusMessage.style.color = '#75b798'
         document.getElementById('validateButton').disabled = true
         document.getElementById('github_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
       } else {
         statusMessage.textContent = data.message
         statusMessage.style.color = '#ea868f'
+        document.getElementById('github_validated').value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
       }
       statusMessage.style.display = 'block'
     })
@@ -75,6 +80,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       document.getElementById('github_validated').value = 'false'
+      if (validatedAtInput) validatedAtInput.value = ''
     })
 })
 

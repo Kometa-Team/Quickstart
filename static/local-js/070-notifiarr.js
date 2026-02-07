@@ -1,5 +1,7 @@
 /* global $, validateButton, showSpinner, hideSpinner */
 
+const validatedAtInput = document.getElementById('notifiarr_validated_at')
+
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('notifiarr_apikey')
   const validateButton = document.getElementById('validateButton')
@@ -23,6 +25,7 @@ $(document).ready(function () {
   // Reset validation status when user types
   apiKeyInput.addEventListener('input', function () {
     document.getElementById('notifiarr_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 })
@@ -66,11 +69,13 @@ document.getElementById('validateButton').addEventListener('click', function () 
   validateNotifiarrApikey(apiKey).then(isValid => {
     if (isValid) {
       document.getElementById('notifiarr_validated').value = 'true'
+      if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
       statusMessage.textContent = 'Notifiarr API key is valid.'
       statusMessage.style.color = '#75b798'
       validateButton.disabled = true
     } else {
       document.getElementById('notifiarr_validated').value = 'false'
+      if (validatedAtInput) validatedAtInput.value = ''
       statusMessage.textContent = 'Notifiarr API key is invalid.'
       statusMessage.style.color = '#ea868f'
       validateButton.disabled = false

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const apiKeyInput = document.getElementById('tmdb_apikey')
   const toggleButton = document.getElementById('toggleApikeyVisibility')
   const tmdbValidatedInput = document.getElementById('tmdb_validated')
+  const tmdbValidatedAtInput = document.getElementById('tmdb_validated_at')
   const statusMessage = document.getElementById('statusMessage')
   const languageDropdown = document.getElementById('tmdb_language')
   const languageStatusMessage = document.getElementById('languageStatusMessage')
@@ -89,10 +90,12 @@ document.addEventListener('DOMContentLoaded', function () {
       .then((data) => {
         if (data.valid) {
           tmdbValidatedInput.value = 'true'
+          if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = new Date().toISOString()
           statusMessage.textContent = 'API key is valid!'
           statusMessage.style.color = '#75b798' // Green
         } else {
           tmdbValidatedInput.value = 'false'
+          if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = ''
           statusMessage.textContent = 'Failed to validate TMDb. Please check your API Key.'
           statusMessage.style.color = '#ea868f' // Red
         }
@@ -102,6 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('Error validating TMDb API:', error)
         statusMessage.textContent = 'An error occurred. Please try again.'
         statusMessage.style.color = '#ea868f' // Red
+        if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = ''
       })
       .finally(() => {
         hideSpinner('validate')
@@ -121,6 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Event listener for API key input changes
   apiKeyInput.addEventListener('input', function () {
     tmdbValidatedInput.value = 'false' // Mark API key as invalid
+    if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = ''
     validateButton.disabled = false // Re-enable the validate button
     statusMessage.style.display = 'none' // Hide validation message
     updateNavigationState() // Disable Next and JumpTo

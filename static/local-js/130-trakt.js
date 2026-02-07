@@ -1,12 +1,13 @@
 /* global $, showSpinner, hideSpinner */
 
+const validatedAtInput = document.getElementById('trakt_validated_at')
+
 $(document).ready(function () {
   const traktClientSecretInput = document.getElementById('trakt_client_secret')
   const toggleButton = document.getElementById('toggleClientSecretVisibility')
   const validateButton = document.getElementById('validate_trakt_pin')
   const isValidatedElement = document.getElementById('trakt_validated')
   const isValidated = isValidatedElement.value.toLowerCase()
-
   console.log('Validated:', isValidated)
 
   // Set initial visibility based on Client Secret value
@@ -28,6 +29,7 @@ $(document).ready(function () {
     if (inputElement) {
       inputElement.addEventListener('input', function () {
         isValidatedElement.value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         validateButton.disabled = false
       })
     } else {
@@ -49,6 +51,8 @@ function updateTraktURL () {
   let myURL = ''
   if (trakt_client_id.length === 64) {
     document.getElementById('trakt_validated').value = 'false'
+    const validatedAtInput = document.getElementById('trakt_validated_at')
+    if (validatedAtInput) validatedAtInput.value = ''
     myURL = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=' + trakt_client_id + '&redirect_uri=urn:ietf:wg:oauth:2.0:oob'
   }
   console.log('updateTraktURL: ' + myURL)
@@ -119,6 +123,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
       if (data.valid) {
         hideSpinner('validate')
         document.getElementById('trakt_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         statusMessage.textContent = 'Trakt credentials validated successfully!'
         statusMessage.style.color = '#75b798'
         document.getElementById('access_token').value = data.trakt_authorization_access_token
@@ -134,6 +139,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
       } else {
         hideSpinner('validate')
         document.getElementById('trakt_validated').value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -145,5 +151,6 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
       statusMessage.textContent = 'An error occurred while validating Trakt credentials.'
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
+      if (validatedAtInput) validatedAtInput.value = ''
     })
 })

@@ -76,20 +76,27 @@ function loading (action) {
       spinnerIcon = document.getElementById('next-spinner-icon')
       break
     case 'jump':
-      spinnerIcon = document.getElementById('next-spinner-icon') || document.getElementById('prev-spinner-icon')
+      spinnerIcon = document.getElementById('jump-spinner-icon')
       break
     default:
       console.error('Unsupported action:', action)
       return
   }
 
-  if (spinnerIcon) {
-    spinnerIcon.classList.remove('fa-arrow-left', 'fa-arrow-right')
-    // spinnerIcon.classList.add('fa-spinner', 'fa-pulse', 'fa-fw');
-    spinnerIcon.classList.add('spinner-border', 'spinner-border-sm')
-  } else {
+  if (!spinnerIcon) {
     console.error('Spinner icon not found for action:', action)
+    return
   }
+
+  if (action === 'jump') {
+    spinnerIcon.classList.remove('d-none')
+    spinnerIcon.classList.add('spinner-border', 'spinner-border-sm')
+    return
+  }
+
+  spinnerIcon.classList.remove('fa-arrow-left', 'fa-arrow-right', 'fa-list')
+  // spinnerIcon.classList.add('fa-spinner', 'fa-pulse', 'fa-fw');
+  spinnerIcon.classList.add('spinner-border', 'spinner-border-sm')
 }
 
 /* eslint-disable no-unused-vars */

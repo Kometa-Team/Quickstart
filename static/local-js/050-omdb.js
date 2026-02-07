@@ -1,11 +1,12 @@
 /* global $, showSpinner, hideSpinner */
 
+const validatedAtInput = document.getElementById('omdb_validated_at')
+
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('omdb_apikey')
   const validateButton = document.getElementById('validateButton')
   const toggleButton = document.getElementById('toggleApikeyVisibility')
   const isValidated = document.getElementById('omdb_validated').value.toLowerCase()
-
   console.log('Validated: ' + isValidated)
 
   // Set initial visibility based on API key value
@@ -23,6 +24,7 @@ $(document).ready(function () {
   // Reset validation status when user types
   apiKeyInput.addEventListener('input', function () {
     document.getElementById('omdb_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 })
@@ -59,11 +61,13 @@ document.getElementById('validateButton').addEventListener('click', function () 
       if (data.valid) {
         hideSpinner('validate')
         document.getElementById('omdb_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         statusMessage.textContent = 'OMDb API key is valid.'
         statusMessage.style.color = '#75b798'
         document.getElementById('validateButton').disabled = true
       } else {
         hideSpinner('validate')
+        if (validatedAtInput) validatedAtInput.value = ''
         statusMessage.textContent = 'OMDb API key is invalid.'
         statusMessage.style.color = '#ea868f'
       }
@@ -76,6 +80,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       document.getElementById('omdb_validated').value = 'false'
+      if (validatedAtInput) validatedAtInput.value = ''
     })
 })
 

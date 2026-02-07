@@ -1,5 +1,7 @@
 /* global $, showSpinner, hideSpinner */
 
+const validatedAtInput = document.getElementById('gotify_validated_at')
+
 $(document).ready(function () {
   const gotifyTokenInput = document.getElementById('gotify_token')
   const validateButton = document.getElementById('validateButton')
@@ -23,11 +25,13 @@ $(document).ready(function () {
   // Reset validation status when user types
   gotifyTokenInput.addEventListener('input', function () {
     document.getElementById('gotify_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 
   document.getElementById('gotify_url').addEventListener('input', function () {
     document.getElementById('gotify_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 })
@@ -71,11 +75,13 @@ document.getElementById('validateButton').addEventListener('click', function () 
       if (data.valid) {
         hideSpinner('validate')
         document.getElementById('gotify_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         statusMessage.textContent = 'Gotify credentials validated successfully!'
         statusMessage.style.color = '#75b798'
       } else {
         hideSpinner('validate')
         document.getElementById('gotify_validated').value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -88,6 +94,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.textContent = 'An error occurred while validating Gotify credentials.'
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
+      if (validatedAtInput) validatedAtInput.value = ''
     })
 })
 /* eslint-enable camelcase */

@@ -1063,6 +1063,19 @@ header.fixed-top {
     margin-left: auto;
 }
 
+.jump-to-validated-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    margin-right: 6px;
+    vertical-align: -2px;
+}
+
+.toast {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
 .rating-mapping-option-list {
     margin-top: 4px;
     display: flex;
@@ -1121,6 +1134,12 @@ header.fixed-top {
 .rating-mapping-option-link:focus {
     color: var(--theme-text);
     border-color: rgba(255, 255, 255, 0.35);
+}
+
+.validation-status-pill {
+    align-self: flex-start;
+    font-size: 0.65rem;
+    padding: 2px 8px;
 }
 
 .rating-mapping-option-via--header {
@@ -2526,8 +2545,8 @@ div#loading {
     background-color: var(--theme-border);
 }
 
-.progress-bar,
-.progress-bar.bg-success {
+.page-nav .progress-bar,
+.page-nav .progress-bar.bg-success {
     background-color: var(--theme-primary) !important;
 }
 
@@ -2537,6 +2556,28 @@ div#loading {
     line-height: 1;
     font-size: 1rem;
     /* Adjust size if needed */
+}
+
+.page-nav .jump-to-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.page-nav .jump-to-label {
+    display: inline-block;
+}
+
+.page-nav .jump-to-button {
+    position: relative;
+    padding-left: 34px;
+}
+
+.page-nav .jump-to-button .jump-to-left {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .nav-button:hover {

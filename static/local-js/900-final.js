@@ -1447,6 +1447,60 @@ $(document).ready(function () {
     })
   }
 
+  const formatLocalTimestamp = (date) => {
+    const pad2 = (value) => String(value).padStart(2, '0')
+    return [
+      date.getFullYear(),
+      pad2(date.getMonth() + 1),
+      pad2(date.getDate())
+    ].join('-') + ' ' + [
+      pad2(date.getHours()),
+      pad2(date.getMinutes()),
+      pad2(date.getSeconds())
+    ].join(':')
+  }
+
+  const formatRelativeTimestamp = (date, now) => {
+    const base = now || new Date()
+    let diffMs = base - date
+    if (!Number.isFinite(diffMs) || diffMs < 0) diffMs = 0
+    const sec = Math.floor(diffMs / 1000)
+    if (sec < 60) return 'Just now'
+    const min = Math.floor(sec / 60)
+    if (min < 60) return `${min}m ago`
+    const hr = Math.floor(min / 60)
+    const minLeft = min % 60
+    if (hr < 24) return `${hr}h ${minLeft}m ago`
+    const days = Math.floor(hr / 24)
+    const hrLeft = hr % 24
+    if (days < 7) return `${days}d ${hrLeft}h ago`
+    const weeks = Math.floor(days / 7)
+    const dayLeft = days % 7
+    if (weeks < 5) return `${weeks}w ${dayLeft}d ago`
+    const months = Math.floor(days / 30)
+    if (months < 12) return `${months}mo ago`
+    const years = Math.floor(days / 365)
+    return `${years}y ago`
+  }
+
+  const now = new Date()
+  document.querySelectorAll('[data-validation-iso]').forEach(el => {
+    const raw = el.dataset.validationIso
+    if (!raw) return
+    const parsed = new Date(raw)
+    if (!Number.isNaN(parsed.getTime())) {
+      el.textContent = formatLocalTimestamp(parsed)
+    }
+  })
+  document.querySelectorAll('[data-validation-iso-age]').forEach(el => {
+    const raw = el.dataset.validationIsoAge
+    if (!raw) return
+    const parsed = new Date(raw)
+    if (!Number.isNaN(parsed.getTime())) {
+      el.textContent = formatRelativeTimestamp(parsed, now)
+    }
+  })
+
   $('#run-now').on('click', function () {
     if (KOMETA_UPDATING) {
       showToast('warning', 'Kometa is updating. Please wait for it to finish before running.')

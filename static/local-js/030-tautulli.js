@@ -1,12 +1,13 @@
 /* global $, showSpinner, hideSpinner */
 
+const validatedAtInput = document.getElementById('tautulli_validated_at')
+
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('tautulli_apikey')
   const urlInput = document.getElementById('tautulli_url')
   const validateButton = document.getElementById('validateButton')
   const toggleButton = document.getElementById('toggleApikeyVisibility')
   const isValidated = document.getElementById('tautulli_validated').value.toLowerCase()
-
   console.log('Validated: ' + isValidated)
 
   // Set initial visibility based on API key value
@@ -24,11 +25,13 @@ $(document).ready(function () {
   // Reset validation status when user types
   apiKeyInput.addEventListener('input', function () {
     document.getElementById('tautulli_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 
   urlInput.addEventListener('input', function () {
     document.getElementById('tautulli_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
   })
 })
@@ -67,11 +70,13 @@ document.getElementById('validateButton').addEventListener('click', function () 
       if (data.valid) {
         hideSpinner('validate')
         document.getElementById('tautulli_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         statusMessage.textContent = 'Tautulli server validated successfully!'
         statusMessage.style.color = '#75b798'
         document.getElementById('validateButton').disabled = true
       } else {
         document.getElementById('tautulli_validated').value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         statusMessage.textContent = 'Failed to validate Tautulli server. Please check your URL and API Key.'
         statusMessage.style.color = '#ea868f'
       }
@@ -82,6 +87,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.textContent = 'An error occurred while validating Tautulli server.'
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
+      if (validatedAtInput) validatedAtInput.value = ''
     })
     .finally(() => {
       hideSpinner('validate')
@@ -95,6 +101,6 @@ document.getElementById('configForm').addEventListener('submit', function () {
     apiKeyInput.value = ''
   }
   if (!urlInput.value) {
-    urlInput.value = 'http://'
+    urlInput.value = ''
   }
 })

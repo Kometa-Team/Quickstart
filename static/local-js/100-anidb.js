@@ -1,5 +1,7 @@
 /* global $, showSpinner, hideSpinner */
 
+const validatedAtInput = document.getElementById('anidb_validated_at')
+
 $(document).ready(function () {
   const passwordInput = document.getElementById('anidb_password')
   const toggleButton = document.getElementById('togglePasswordVisibility')
@@ -66,6 +68,7 @@ $(document).ready(function () {
     if (inputElement) {
       inputElement.addEventListener('input', function () {
         isValidatedElement.value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         validateButton.disabled = false
       })
     } else {
@@ -109,11 +112,13 @@ document.getElementById('validateButton').addEventListener('click', function () 
       if (data.valid) {
         hideSpinner('validate')
         document.getElementById('anidb_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         statusMessage.textContent = 'AniDB credentials are valid.'
         statusMessage.style.color = '#75b798'
         validateButton.disabled = true
       } else {
         document.getElementById('anidb_validated').value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         statusMessage.textContent = `Error: ${data.error}`
         statusMessage.style.color = '#ea868f'
         validateButton.disabled = false
@@ -127,5 +132,6 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       validateButton.disabled = false
+      if (validatedAtInput) validatedAtInput.value = ''
     })
 })

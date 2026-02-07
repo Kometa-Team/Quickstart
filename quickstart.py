@@ -2323,7 +2323,64 @@ def step(name):
 
     add_offset_vars(overlay_config)
 
+    service_validation_sources = [
+        ("010-plex", "plex"),
+        ("020-tmdb", "tmdb"),
+        ("050-omdb", "omdb"),
+        ("060-mdblist", "mdblist"),
+        ("100-anidb", "anidb"),
+        ("130-trakt", "trakt"),
+        ("140-mal", "mal"),
+    ]
+    validation_pages = {
+        "010-plex",
+        "020-tmdb",
+        "025-libraries",
+        "027-playlist_files",
+        "030-tautulli",
+        "040-github",
+        "050-omdb",
+        "060-mdblist",
+        "070-notifiarr",
+        "080-gotify",
+        "085-ntfy",
+        "090-webhooks",
+        "100-anidb",
+        "110-radarr",
+        "120-sonarr",
+        "130-trakt",
+        "140-mal",
+        "150-settings",
+    }
+    service_validations = {}
+    for section, key in service_validation_sources:
+        settings = persistence.retrieve_settings(section)
+        service_validations[key] = helpers.booler(settings.get("validated", False))
+    validation_sections = {key: key.split("-", 1)[1] for key in validation_pages}
+    validated_sections = database.retrieve_validated_map(
+        config_name, list(validation_sections.values())
+    )
+    jump_to_validations = {
+        key: validated_sections.get(section, False)
+        for key, section in validation_sections.items()
+    }
+
     if name == "900-final":
+        validation_meta = []
+        for file, display_name in file_list:
+            template_key = file.rsplit(".", 1)[0]
+            settings = persistence.retrieve_settings(template_key)
+            has_validation = template_key in validation_pages
+            validation_meta.append(
+                {
+                    "key": template_key,
+                    "label": display_name,
+                    "page": template_key,
+                    "has_validation": has_validation,
+                    "validated": helpers.booler(settings.get("validated", False)) if has_validation else None,
+                    "validated_at": settings.get("validated_at", "") if has_validation else "",
+                }
+            )
         validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
         used_fonts = helpers.collect_font_references(config_data)
         saved_filename = helpers.save_to_named_config(yaml_content, config_name, used_fonts)
@@ -2354,6 +2411,9 @@ def step(name):
             show_libraries=show_libraries,
             config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
             overlay_fonts=list_overlay_fonts(),
+            service_validations=service_validations,
+            validation_meta=validation_meta,
+            jump_to_validations=jump_to_validations,
         )
 
         end_time = time.perf_counter()
@@ -2371,16 +2431,6 @@ def step(name):
         "movie": sum(1 for lib in movie_libraries if lib["id"] in configured_ids),
         "show": sum(1 for lib in show_libraries if lib["id"] in configured_ids),
     }
-    service_validations = {
-        "tmdb": helpers.booler(persistence.retrieve_settings("020-tmdb").get("validated", False)),
-        "mdblist": helpers.booler(persistence.retrieve_settings("060-mdblist").get("validated", False)),
-        "trakt": helpers.booler(persistence.retrieve_settings("130-trakt").get("validated", False)),
-        "mal": helpers.booler(persistence.retrieve_settings("140-mal").get("validated", False)),
-        "anidb": helpers.booler(persistence.retrieve_settings("100-anidb").get("validated", False)),
-        "omdb": helpers.booler(persistence.retrieve_settings("050-omdb").get("validated", False)),
-        "plex": helpers.booler(persistence.retrieve_settings("010-plex").get("validated", False)),
-    }
-
     html = render_template(
         name + ".html",
         page_info=page_info,
@@ -2396,6 +2446,7 @@ def step(name):
         available_configs=available_configs,
         overlay_fonts=list_overlay_fonts(),
         service_validations=service_validations,
+        jump_to_validations=jump_to_validations,
         image_data={
             "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
             "show": os.listdir(UPLOAD_FOLDERS["show"]),

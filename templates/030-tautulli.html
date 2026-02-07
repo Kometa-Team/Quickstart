@@ -40,6 +40,7 @@
         value="{{ data['validated'] }}" title="">
     <label for="tautulli_validated">Tautulli Validated</label>
 </div>
+<input type="hidden" id="tautulli_validated_at" name="tautulli_validated_at" value="{{ data.get('validated_at', '') }}">
 <div id="statusMessage" class="status-message mb-2"></div>
 </div>
 </form>

@@ -1,5 +1,7 @@
 /* global $ */
 
+const validatedAtInput = document.getElementById('playlist_files_validated_at')
+
 $(document).ready(function () {
   const plexValid = $('#plex_valid').length > 0 && $('#plex_valid').data('plex-valid') === 'True'
   console.log('Plex Valid:', plexValid)
@@ -37,6 +39,9 @@ $(document).ready(function () {
   // Update validation state
   function updateValidationState (isValid) {
     $('#playlist_files_validated').val(isValid ? 'true' : 'false')
+    if (validatedAtInput) {
+      validatedAtInput.value = isValid ? new Date().toISOString() : ''
+    }
     console.log('Validation State Updated:', isValid)
   }
 

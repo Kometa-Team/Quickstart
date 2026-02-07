@@ -1,5 +1,7 @@
 /* global $, initialRadarrRootFolderPath, initialRadarrQualityProfile, showSpinner, hideSpinner, PathValidation */
 
+const validatedAtInput = document.getElementById('radarr_validated_at')
+
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('radarr_token')
   const toggleButton = document.getElementById('toggleApikeyVisibility')
@@ -31,11 +33,13 @@ $(document).ready(function () {
   // Attach event listeners for input changes
   document.getElementById('radarr_token').addEventListener('input', function () {
     document.getElementById('radarr_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
   })
 
   document.getElementById('radarr_url').addEventListener('input', function () {
     document.getElementById('radarr_validated').value = 'false'
+    if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
   })
 
@@ -156,6 +160,7 @@ function validateRadarrApi () {
 
       if (data.valid) {
         document.getElementById('radarr_validated').value = 'true'
+        if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         statusMessage.textContent = 'Radarr API key is valid.'
         statusMessage.style.color = '#75b798'
         statusMessage.style.display = 'block'
@@ -165,6 +170,7 @@ function validateRadarrApi () {
         populateDropdown('radarr_quality_profile', data.quality_profiles, 'name', 'name', initialRadarrQualityProfile)
       } else {
         document.getElementById('radarr_validated').value = 'false'
+        if (validatedAtInput) validatedAtInput.value = ''
         console.log('Error validating Radarr', data.message)
         statusMessage.textContent = 'Failed to validate Radarr server. Please check your URL and Token.'
         statusMessage.style.color = '#ea868f'
@@ -178,6 +184,7 @@ function validateRadarrApi () {
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       document.getElementById('radarr_validated').value = 'false'
+      if (validatedAtInput) validatedAtInput.value = ''
     })
 }
 

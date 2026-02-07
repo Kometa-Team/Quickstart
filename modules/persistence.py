@@ -176,9 +176,12 @@ def save_settings(raw_source, form_data):
 
             data["libraries"] = merged_libraries
 
-            # Keep previous validated flag if caller didn't provide one
+            # Keep previous validated flag and timestamp if caller didn't provide them
             if "validated" not in data and existing_validated is not None:
                 data["validated"] = existing_validated
+            existing_validated_at = existing_settings.get("validated_at")
+            if "validated_at" not in data and existing_validated_at is not None:
+                data["validated_at"] = existing_validated_at
         except Exception as e:
             helpers.ts_log(f"Failed to merge libraries during save: {e}", level="ERROR")
 
@@ -231,6 +234,7 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
 
         # Preserve `validated` status
         validated_before = settings_before.get("validated", True)
+        validated_at_before = settings_before.get("validated_at")
 
         # Update library data
         settings_before["plex"]["tmp_movie_libraries"] = ",".join(movie_libraries) if movie_libraries else ""
@@ -242,6 +246,8 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
 
         # Restore `validated` before saving
         settings_formatted["validated"] = validated_before  # Prevents losing validation state
+        if validated_at_before:
+            settings_formatted["validated_at"] = validated_at_before
 
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Sending updated Plex settings to save_settings(): {settings_formatted}", level="DEBUG")
@@ -277,6 +283,10 @@ def retrieve_settings(target):
     data["validated"] = helpers.booler(db_data[0])
     data["user_entered"] = helpers.booler(db_data[1])
     data[source_name] = db_data[2].get(source_name, {}) if db_data[2] else {}
+    if db_data[2] and isinstance(db_data[2], dict):
+        data["validated_at"] = db_data[2].get("validated_at")
+    else:
+        data["validated_at"] = None
 
     if not data[source_name]:
         data[source_name] = get_dummy_data(source_name)
