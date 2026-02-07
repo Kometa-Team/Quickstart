@@ -73,6 +73,15 @@ def clean_form_data(form_data):
             clean_data[key] = None
 
         elif isinstance(value, str):
+            if url_validation.is_url_key(key):
+                raw = value.strip()
+                if raw:
+                    try:
+                        parsed = urlparse(raw)
+                        if parsed.scheme:
+                            value = parsed._replace(scheme=parsed.scheme.lower()).geturl()
+                    except Exception:
+                        value = value
             lc_value = value.lower().strip()
             if len(value) == 0 or lc_value == "none":
                 clean_data[key] = None

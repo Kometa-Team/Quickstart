@@ -4184,7 +4184,7 @@ const OverlayHandler = {
         }
 
         if (cfg.id === 'overlay_ratings' && layer && cfg.container) {
-          const refreshRatings = (event) => {
+          const refreshRatings = (event, forceSync = false) => {
             if (cfg.container?.dataset?.resetting === 'true') return
             enforceUniqueRatingTypes(cfg)
             if (event && event.target && cfg.container) {
@@ -4194,16 +4194,19 @@ const OverlayHandler = {
               }
               if (
                 targetName.includes('[rating1]') || targetName.includes('[rating2]') || targetName.includes('[rating3]') ||
-              targetName.includes('[rating1_image]') || targetName.includes('[rating2_image]') || targetName.includes('[rating3_image]')
+                targetName.includes('[rating1_image]') || targetName.includes('[rating2_image]') || targetName.includes('[rating3_image]')
               ) {
-                captureRatingBeforeMap(cfg)
-                const slots = [
-                  { ratingKey: 'rating1', imageKey: 'rating1_image' },
-                  { ratingKey: 'rating2', imageKey: 'rating2_image' },
-                  { ratingKey: 'rating3', imageKey: 'rating3_image' }
-                ]
-                slots.forEach(slot => syncRatingSources(cfg, slot))
+                forceSync = true
               }
+            }
+            if (forceSync) {
+              captureRatingBeforeMap(cfg)
+              const slots = [
+                { ratingKey: 'rating1', imageKey: 'rating1_image' },
+                { ratingKey: 'rating2', imageKey: 'rating2_image' },
+                { ratingKey: 'rating3', imageKey: 'rating3_image' }
+              ]
+              slots.forEach(slot => syncRatingSources(cfg, slot))
             }
             const positionInput = cfg.container.querySelector(`[name="${templateName}[horizontal_position]"]`)
             if (positionInput) {
@@ -4274,7 +4277,19 @@ const OverlayHandler = {
             input.addEventListener('input', refreshRatings)
             input.addEventListener('change', refreshRatings)
           })
-          refreshRatings()
+          if (cfg.toggle && cfg.toggle.dataset.ratingSyncBound !== 'true') {
+            cfg.toggle.dataset.ratingSyncBound = 'true'
+            cfg.toggle.addEventListener('change', () => {
+              if (cfg.toggle.checked) {
+                refreshRatings(null, true)
+              }
+            })
+          }
+          if (cfg.toggle && cfg.toggle.checked) {
+            refreshRatings(null, true)
+          } else {
+            refreshRatings()
+          }
         }
 
         if (isFlagsOverlay(cfg) && layer && cfg.container) {

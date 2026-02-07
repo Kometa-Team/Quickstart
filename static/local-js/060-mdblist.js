@@ -89,9 +89,7 @@ $(document).ready(function () {
 
 document.getElementById('configForm').addEventListener('submit', function () {
   const apiKeyInput = document.getElementById('mdblist_apikey')
-  const cacheExpiration = document.getElementById('mdblist_cache_expiration')
   if (!apiKeyInput.value) {
     apiKeyInput.value = ''
-    cacheExpiration.value = '1'
   }
 })

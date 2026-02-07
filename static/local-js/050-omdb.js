@@ -86,9 +86,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
 
 document.getElementById('configForm').addEventListener('submit', function (event) {
   const apiKeyInput = document.getElementById('omdb_apikey')
-  const cacheExpiration = document.getElementById('omdb_cache_expiration')
   if (!apiKeyInput.value) {
     apiKeyInput.value = ''
-    cacheExpiration.value = '1'
   }
 })

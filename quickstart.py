@@ -2154,7 +2154,8 @@ def step(name):
 
     # --- Refresh Plex data if needed ---
     if name in ["010-plex", "025-libraries", "900-final"] or config_changed:
-        refresh_plex_libraries()
+        if all_libraries.get("validated"):
+            refresh_plex_libraries()
         telemetry = persistence.retrieve_settings("plex_telemetry")
     else:
         telemetry = persistence.retrieve_settings("plex_telemetry")

@@ -30,7 +30,7 @@ def validate_plex_server(data):
 
     # Validate Plex URL and Token
     try:
-        plex = PlexServer(plex_url, plex_token)
+        plex = PlexServer(plex_url, plex_token, timeout=8)
 
         # Fetch Plex settings
         srv_settings = plex.settings

@@ -76,8 +76,14 @@ document.addEventListener('DOMContentLoaded', function () {
   function setSettingsValidated (isValid) {
     const settingsValidatedInput = document.getElementById('settings_validated')
     settingsValidatedInput.value = isValid ? 'true' : 'false'
-    if (validatedAtInput && settingsTouched) {
-      validatedAtInput.value = isValid ? new Date().toISOString() : ''
+    if (validatedAtInput) {
+      if (isValid) {
+        if (!validatedAtInput.value || settingsTouched) {
+          validatedAtInput.value = new Date().toISOString()
+        }
+      } else {
+        validatedAtInput.value = ''
+      }
     }
   }
 

@@ -3,6 +3,7 @@
 const validatedWebhooks = {}
 const validatedAtInput = document.getElementById('webhooks_validated_at')
 let webhooksTouched = false
+let initialValidated = false
 
 function setWebhookValidated (state, webhookType = null) {
   document.getElementById('webhooks_validated').value = state ? 'true' : 'false'
@@ -41,6 +42,10 @@ function showCustomInput (selectElement, isValidated) {
 function updateValidationState () {
   const allValid = Object.values(validatedWebhooks).every(state => state === true)
   console.log('Validation State Updated:', validatedWebhooks, `All Valid: ${allValid}`)
+  if (!webhooksTouched && !initialValidated) {
+    setWebhookValidated(false)
+    return
+  }
   setWebhookValidated(allValid)
   if (validatedAtInput && webhooksTouched) {
     validatedAtInput.value = allValid ? new Date().toISOString() : ''
@@ -49,6 +54,7 @@ function updateValidationState () {
 
 $(document).ready(function () {
   const isValidated = document.getElementById('webhooks_validated').value.toLowerCase() === 'true'
+  initialValidated = isValidated
   console.log('Page Load - Is Validated:', isValidated)
 
   $('select.form-select').each(function () {
@@ -62,7 +68,7 @@ $(document).ready(function () {
       validatedWebhooks[selectElement.id] = isValidated
       console.log(`Custom webhook found: ${selectElement.id}, URL: ${customUrl}`)
     } else {
-      validatedWebhooks[selectElement.id] = true
+      validatedWebhooks[selectElement.id] = isValidated
     }
   })
 
