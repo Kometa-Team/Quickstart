@@ -1137,6 +1137,7 @@ function wireOffsetReset (scope) {
       }
       const changes = []
       const touched = new Set()
+      const isRatingsOverlay = group?.dataset?.overlayId === 'overlay_ratings'
       const escapeHtml = (value) => String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -1166,6 +1167,17 @@ function wireOffsetReset (scope) {
         if (input.type === 'radio') return input.checked ? 'Selected' : 'Not selected'
         return input.value ?? ''
       }
+      const ratingFontInputs = isRatingsOverlay
+        ? new Set(
+          Array.from(group.querySelectorAll('select[id$="-rating1_font"], select[id$="-rating2_font"], select[id$="-rating3_font"]'))
+        )
+        : new Set()
+      const ratingFontBefore = new Map()
+      if (isRatingsOverlay) {
+        ratingFontInputs.forEach(input => {
+          ratingFontBefore.set(input, getDisplayValue(input))
+        })
+      }
       const getDefaultDisplayValue = (input, defaultValue) => {
         if (!input) return ''
         if (input.type === 'checkbox' || input.type === 'radio') {
@@ -1186,7 +1198,9 @@ function wireOffsetReset (scope) {
         const from = getDisplayValue(input)
         const to = getDefaultDisplayValue(input, defaultValue)
         if (from !== to) {
-          changes.push({ label: getInputLabel(input), from, to })
+          if (!(isRatingsOverlay && ratingFontInputs.has(input))) {
+            changes.push({ label: getInputLabel(input), from, to })
+          }
           return true
         }
         return false
@@ -1280,13 +1294,35 @@ function wireOffsetReset (scope) {
         }
       }
 
-      if (changes.length && typeof showToast === 'function') {
-        const details = changes
-          .map(change => `${escapeHtml(change.label)}: ${escapeHtml(change.from)} → ${escapeHtml(change.to)}`)
-          .join('<br>')
-        showToast('info', `Reset to defaults:<br>${details}`)
-      } else if (!changes.length && typeof showToast === 'function') {
-        showToast('info', 'Already at defaults (no changes).')
+      const finalizeToast = () => {
+        if (changes.length && typeof showToast === 'function') {
+          const details = changes
+            .map(change => `${escapeHtml(change.label)}: ${escapeHtml(change.from)} → ${escapeHtml(change.to)}`)
+            .join('<br>')
+          showToast('info', `Reset to defaults:<br>${details}`)
+        } else if (!changes.length && typeof showToast === 'function') {
+          showToast('info', 'Already at defaults (no changes).')
+        }
+      }
+
+      if (isRatingsOverlay && group) {
+        group.dataset.ratingFontForce = 'true'
+        const ratingImageInputs = group.querySelectorAll('[name$="[rating1_image]"], [name$="[rating2_image]"], [name$="[rating3_image]"]')
+        ratingImageInputs.forEach(input => {
+          input.dispatchEvent(new Event('change', { bubbles: true }))
+        })
+        window.setTimeout(() => {
+          ratingFontInputs.forEach(input => {
+            const from = ratingFontBefore.get(input) || ''
+            const to = getDisplayValue(input)
+            if (from !== to) {
+              changes.push({ label: getInputLabel(input), from, to })
+            }
+          })
+          finalizeToast()
+        }, 0)
+      } else {
+        finalizeToast()
       }
     })
     btn.dataset.listenerAdded = 'true'

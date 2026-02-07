@@ -76,21 +76,23 @@ function loading (action) {
       spinnerIcon = document.getElementById('next-spinner-icon')
       break
     case 'jump':
-      spinnerIcon = document.getElementById('jump-spinner-icon')
+      spinnerIcon = null
       break
     default:
       console.error('Unsupported action:', action)
       return
   }
 
-  if (!spinnerIcon) {
+  if (!spinnerIcon && action !== 'jump') {
     console.error('Spinner icon not found for action:', action)
     return
   }
 
   if (action === 'jump') {
-    spinnerIcon.classList.remove('d-none')
-    spinnerIcon.classList.add('spinner-border', 'spinner-border-sm')
+    const jumpLeft = document.querySelector('.jump-to-left')
+    if (jumpLeft) {
+      jumpLeft.classList.add('is-loading')
+    }
     return
   }
 

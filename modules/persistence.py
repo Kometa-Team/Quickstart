@@ -2,6 +2,7 @@ import namesgenerator
 import os
 import secrets
 import json
+import datetime
 
 from flask import current_app as app
 from flask import session
@@ -184,6 +185,20 @@ def save_settings(raw_source, form_data):
                 data["validated_at"] = existing_validated_at
         except Exception as e:
             helpers.ts_log(f"Failed to merge libraries during save: {e}", level="ERROR")
+
+    # Ensure a timestamp for pages that validate without explicit validation buttons
+    if source_name in ["libraries", "webhooks"]:
+        existing_validated_at = data.get("validated_at")
+        if not existing_validated_at:
+            try:
+                stored = retrieve_settings(source)
+                existing_validated_at = stored.get("validated_at") if isinstance(stored, dict) else None
+            except Exception:
+                existing_validated_at = None
+        if helpers.booler(data.get("validated")) and not existing_validated_at:
+            data["validated_at"] = datetime.datetime.utcnow().isoformat() + "Z"
+        elif existing_validated_at and "validated_at" not in data:
+            data["validated_at"] = existing_validated_at
 
     # Validation
     base_data = get_dummy_data(source_name)

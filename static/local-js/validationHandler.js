@@ -27,8 +27,12 @@ const ValidationHandler = {
 
     document.getElementById('libraries').value = selectedNames.join(',')
     document.getElementById('libraries_validated').value = isValid ? 'true' : 'false'
-    if (librariesTouched && librariesValidatedAtInput) {
-      librariesValidatedAtInput.value = isValid ? new Date().toISOString() : ''
+    if (librariesValidatedAtInput) {
+      if (librariesTouched) {
+        librariesValidatedAtInput.value = isValid ? new Date().toISOString() : ''
+      } else if (isValid && !librariesValidatedAtInput.value) {
+        librariesValidatedAtInput.value = new Date().toISOString()
+      }
     }
 
     if (isValid) {

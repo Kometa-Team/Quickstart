@@ -19,15 +19,20 @@ function setWebhookValidated (state, webhookType = null) {
 function showCustomInput (selectElement, isValidated) {
   const customInputId = selectElement.id + '_custom'
   console.log(`showCustomInput called for: ${selectElement.id}, isValidated: ${isValidated}`)
+  const customInput = document.getElementById(customInputId)
+  if (!customInput) {
+    console.warn(`Custom input container not found for: ${customInputId}`)
+    return
+  }
   if (selectElement.value === 'custom') {
-    document.getElementById(customInputId).style.display = 'block'
+    customInput.style.display = 'block'
     if (isValidated === true) {
       setWebhookValidated(true, selectElement.id)
     } else {
       setWebhookValidated(false, selectElement.id)
     }
   } else {
-    document.getElementById(customInputId).style.display = 'none'
+    customInput.style.display = 'none'
     validatedWebhooks[selectElement.id] = true
     updateValidationState()
   }
