@@ -5480,7 +5480,7 @@ def restart_quickstart():
     if reason == "update":
         helpers.set_restart_notice(
             "update",
-            "Update complete. Quickstart restarted without auto-opening a browser.",
+            "Update complete. Quickstart restarted.",
         )
 
     def restart():

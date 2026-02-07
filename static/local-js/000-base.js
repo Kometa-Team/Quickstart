@@ -262,6 +262,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (updateBtn && resultBox) {
     updateBtn.addEventListener('click', async () => {
+      if (updateBtn.dataset.state === 'ready-restart') {
+        restartQuickstart('update')
+        return
+      }
       updateBtn.disabled = true
       updateBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Updating...'
       updateBtn.dataset.originalClasses = updateBtn.className
@@ -269,6 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateBtn.classList.add('btn-secondary')
 
       const branch = updateBtn.dataset.branch || 'master'
+      let updateSucceeded = false
 
       try {
         const res = await fetch('/update-quickstart', {
@@ -284,11 +289,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const lines = Array.isArray(data.log) ? data.log.filter(Boolean).map(String) : []
 
         if (data.success) {
+          updateSucceeded = true
           resultBox.innerHTML = `
             <strong>✅ Update Successful!</strong><br>
             <span class="text-info">Branch: <code>${data.branch || branch}</code></span>
             <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${lines.join('\n')}</pre>
-            <button class="btn btn-sm btn-success mt-2" onclick="restartQuickstart('update')">Restart Quickstart</button>
           `
         } else {
           resultBox.innerHTML = `
@@ -300,11 +305,19 @@ document.addEventListener('DOMContentLoaded', () => {
         resultBox.classList.remove('d-none')
         resultBox.innerHTML = `<strong>❌ Request Failed:</strong> ${String(err)}`
       } finally {
-        updateBtn.disabled = false
-        updateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Run Update Now'
-        if (updateBtn.dataset.originalClasses) {
-          updateBtn.className = updateBtn.dataset.originalClasses
-          delete updateBtn.dataset.originalClasses
+        if (updateSucceeded) {
+          updateBtn.disabled = false
+          updateBtn.dataset.state = 'ready-restart'
+          updateBtn.classList.remove('btn-secondary')
+          updateBtn.classList.add('btn-success')
+          updateBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Restart Quickstart'
+        } else {
+          updateBtn.disabled = false
+          updateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Run Update Now'
+          if (updateBtn.dataset.originalClasses) {
+            updateBtn.className = updateBtn.dataset.originalClasses
+            delete updateBtn.dataset.originalClasses
+          }
         }
       }
     })
