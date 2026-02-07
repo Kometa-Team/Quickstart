@@ -4,6 +4,24 @@ const validatedWebhooks = {}
 const validatedAtInput = document.getElementById('webhooks_validated_at')
 let webhooksTouched = false
 let initialValidated = false
+let initialConfigured = false
+
+function isWebhookConfigured (selectElement) {
+  if (!selectElement) return false
+  const value = (selectElement.value || '').toString().trim().toLowerCase()
+  if (!value || value === 'none') return false
+  if (value === 'custom') {
+    const customInputId = selectElement.id + '_custom'
+    const customUrl = document.getElementById(customInputId)?.querySelector('input.custom-webhook-url')?.value
+    return Boolean(customUrl && customUrl.trim())
+  }
+  return true
+}
+
+function hasConfiguredWebhooks () {
+  const selects = document.querySelectorAll('select.form-select')
+  return Array.from(selects).some(selectElement => isWebhookConfigured(selectElement))
+}
 
 function setWebhookValidated (state, webhookType = null) {
   document.getElementById('webhooks_validated').value = state ? 'true' : 'false'
@@ -40,15 +58,21 @@ function showCustomInput (selectElement, isValidated) {
 }
 
 function updateValidationState () {
-  const allValid = Object.values(validatedWebhooks).every(state => state === true)
-  console.log('Validation State Updated:', validatedWebhooks, `All Valid: ${allValid}`)
-  if (!webhooksTouched && !initialValidated) {
+  const anyConfigured = hasConfiguredWebhooks()
+  console.log('Validation State Updated:', validatedWebhooks, `Any Configured: ${anyConfigured}`)
+  if (!webhooksTouched && !initialValidated && !initialConfigured) {
     setWebhookValidated(false)
     return
   }
-  setWebhookValidated(allValid)
-  if (validatedAtInput && webhooksTouched) {
-    validatedAtInput.value = allValid ? new Date().toISOString() : ''
+  setWebhookValidated(anyConfigured)
+  if (validatedAtInput) {
+    if (anyConfigured) {
+      if (!validatedAtInput.value) {
+        validatedAtInput.value = new Date().toISOString()
+      }
+    } else {
+      validatedAtInput.value = ''
+    }
   }
 }
 
@@ -71,6 +95,7 @@ $(document).ready(function () {
       validatedWebhooks[selectElement.id] = isValidated
     }
   })
+  initialConfigured = hasConfiguredWebhooks()
 
   if (isValidated === true) {
     $('.validate-button').prop('disabled', true)
@@ -87,6 +112,8 @@ $(document).ready(function () {
     element.addEventListener('change', markTouched)
     element.addEventListener('input', markTouched)
   })
+
+  updateValidationState()
 
   // Debugging for navigation actions
   document.getElementById('configForm').addEventListener('submit', function (event) {
