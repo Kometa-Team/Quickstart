@@ -212,8 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Ignore localStorage failures (private mode, etc.)
   }
 
-  const message = notice.message || 'Update complete. Quickstart restarted without auto-opening a browser.'
-  showToast('info', message)
+  const message = notice.message || 'Update complete. Quickstart restarted successfully.'
+  showToast('success', message)
 })
 
 // Mark all <select> elements when changed, so we can tell if a user modified them
@@ -264,6 +264,9 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBtn.addEventListener('click', async () => {
       updateBtn.disabled = true
       updateBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Updating...'
+      updateBtn.dataset.originalClasses = updateBtn.className
+      updateBtn.classList.remove('btn-warning')
+      updateBtn.classList.add('btn-secondary')
 
       const branch = updateBtn.dataset.branch || 'master'
 
@@ -299,6 +302,10 @@ document.addEventListener('DOMContentLoaded', () => {
       } finally {
         updateBtn.disabled = false
         updateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Run Update Now'
+        if (updateBtn.dataset.originalClasses) {
+          updateBtn.className = updateBtn.dataset.originalClasses
+          delete updateBtn.dataset.originalClasses
+        }
       }
     })
   }
