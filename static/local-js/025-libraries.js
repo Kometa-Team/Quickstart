@@ -1347,16 +1347,33 @@ function setupParentChildToggleVisibility (scope) {
 
     function updateVisibilityAndBorder () {
       const childrenToggles = childrenGroup.querySelectorAll("input[type='checkbox']")
+      childrenToggles.forEach(child => {
+        if (child.dataset.initialChecked === undefined) {
+          child.dataset.initialChecked = child.checked ? 'true' : 'false'
+        }
+      })
       const anyChildChecked = Array.from(childrenToggles).some(el => el.checked)
       const parentChecked = parentToggle.checked
+      const wasChecked = parentToggle.dataset.wasChecked === 'true'
 
       childrenGroup.style.display = parentChecked ? 'block' : 'none'
 
-      if (!parentChecked) {
+      if (!parentChecked && wasChecked) {
         childrenToggles.forEach(child => {
+          child.dataset.lastChecked = child.checked ? 'true' : 'false'
           child.checked = false
           const hidden = document.querySelector(`input[type="hidden"][name="${child.name}"]`)
           if (hidden) hidden.value = 'false'
+        })
+      } else if (parentChecked && !wasChecked) {
+        childrenToggles.forEach(child => {
+          if (child.dataset.lastChecked !== undefined) {
+            child.checked = child.dataset.lastChecked === 'true'
+          } else {
+            child.checked = child.dataset.initialChecked === 'true'
+          }
+          const hidden = document.querySelector(`input[type="hidden"][name="${child.name}"]`)
+          if (hidden) hidden.value = child.checked ? 'true' : 'false'
         })
       }
 
@@ -1368,6 +1385,7 @@ function setupParentChildToggleVisibility (scope) {
 
       EventHandler.updateAccordionHighlights()
       ValidationHandler.updateValidationState()
+      parentToggle.dataset.wasChecked = parentChecked ? 'true' : 'false'
     }
 
     parentToggle.addEventListener('change', updateVisibilityAndBorder)
