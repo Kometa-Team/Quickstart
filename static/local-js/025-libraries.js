@@ -1355,6 +1355,15 @@ function setupParentChildToggleVisibility (scope) {
 
     function updateVisibilityAndBorder () {
       const childrenToggles = childrenGroup.querySelectorAll("input[type='checkbox']")
+      const syncChildHidden = (child) => {
+        const row = child.closest('.form-check')
+        const hidden = row
+          ? row.querySelector(`input[type="hidden"][name="${child.name}"]`)
+          : document.querySelector(`input[type="hidden"][name="${child.name}"]`)
+        if (!hidden) return
+        hidden.value = child.checked ? 'true' : 'false'
+        hidden.disabled = !!child.checked
+      }
       childrenToggles.forEach(child => {
         if (child.dataset.initialChecked === undefined) {
           child.dataset.initialChecked = child.checked ? 'true' : 'false'
@@ -1367,8 +1376,7 @@ function setupParentChildToggleVisibility (scope) {
         childrenToggles.forEach(child => {
           child.dataset.lastChecked = child.checked ? 'true' : 'false'
           child.checked = false
-          const hidden = document.querySelector(`input[type="hidden"][name="${child.name}"]`)
-          if (hidden) hidden.value = 'false'
+          syncChildHidden(child)
         })
       } else if (parentChecked && !wasChecked) {
         childrenToggles.forEach(child => {
@@ -1377,9 +1385,10 @@ function setupParentChildToggleVisibility (scope) {
           } else {
             child.checked = child.dataset.initialChecked === 'true'
           }
-          const hidden = document.querySelector(`input[type="hidden"][name="${child.name}"]`)
-          if (hidden) hidden.value = child.checked ? 'true' : 'false'
+          syncChildHidden(child)
         })
+      } else {
+        childrenToggles.forEach(child => syncChildHidden(child))
       }
 
       const anyChildChecked = Array.from(childrenToggles).some(el => el.checked)
@@ -1389,6 +1398,10 @@ function setupParentChildToggleVisibility (scope) {
         parentToggle.checked = false
         parentToggle.dataset.wasChecked = 'false'
         if (parentHidden) parentHidden.value = 'false'
+      }
+      if (parentHidden) {
+        parentHidden.disabled = parentChecked
+        if (!parentChecked) parentHidden.value = 'false'
       }
 
       childrenGroup.style.display = parentChecked ? 'block' : 'none'
