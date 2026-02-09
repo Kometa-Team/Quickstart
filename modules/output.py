@@ -1895,6 +1895,10 @@ def build_config(header_style="standard", config_name=None):
 
         # Clean the data
         cleaned_data = clean_data(data)
+        if dump_name == "anidb":
+            section = cleaned_data.get("anidb")
+            if isinstance(section, dict):
+                section.pop("enable", None)
 
         # Force long/scalar strings to emit in plain style (avoid folded multi-line) for sensitive sections
         plain_scalar_sections = {

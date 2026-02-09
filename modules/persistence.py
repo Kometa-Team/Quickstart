@@ -196,7 +196,7 @@ def save_settings(raw_source, form_data):
             helpers.ts_log(f"Failed to merge libraries during save: {e}", level="ERROR")
 
     # Ensure a timestamp for pages that validate without explicit validation buttons
-    if source_name in ["libraries", "webhooks"]:
+    if source_name in ["libraries", "webhooks", "anidb"]:
         existing_validated_at = data.get("validated_at")
         if not existing_validated_at:
             try:
@@ -212,7 +212,16 @@ def save_settings(raw_source, form_data):
     # Validation
     base_data = get_dummy_data(source_name)
     user_entered = data != base_data
+    if source_name == "anidb":
+        anidb_enabled = helpers.booler(data.get("anidb", {}).get("enable"))
+        if not anidb_enabled:
+            data["validated"] = False
+            data["validated_at"] = ""
+        elif "validated" not in data:
+            data["validated"] = user_entered
     validated = data.get("validated", False)
+    if source_name == "anidb" and validated and not data.get("validated_at"):
+        data["validated_at"] = datetime.datetime.utcnow().isoformat() + "Z"
 
     # Save to DB
     database.save_section_data(

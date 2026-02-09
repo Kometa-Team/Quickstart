@@ -504,6 +504,7 @@ document.addEventListener('DOMContentLoaded', function () {
       setupMappingListHandlers('content_rating_mapper', card)
       wireOverlayDetailToggles(card)
       setupParentChildToggleVisibility(card)
+      setupAddMissingDependencies(card)
       if (typeof setupParentChildToggleSync === 'function') {
         setupParentChildToggleSync()
       }
@@ -545,8 +546,15 @@ document.addEventListener('DOMContentLoaded', function () {
           return
         }
 
-        if (el.type === 'checkbox' || el.type === 'radio') {
-          payload[el.name] = el.checked ? (el.value || 'on') : ''
+        if (el.type === 'checkbox') {
+          payload[el.name] = el.checked ? (el.value || 'true') : 'false'
+          return
+        }
+
+        if (el.type === 'radio') {
+          if (el.checked) {
+            payload[el.name] = el.value || 'on'
+          }
           return
         }
 
@@ -1352,13 +1360,10 @@ function setupParentChildToggleVisibility (scope) {
           child.dataset.initialChecked = child.checked ? 'true' : 'false'
         }
       })
-      const anyChildChecked = Array.from(childrenToggles).some(el => el.checked)
-      const parentChecked = parentToggle.checked
+      let parentChecked = parentToggle.checked
       const wasChecked = parentToggle.dataset.wasChecked === 'true'
 
-      childrenGroup.style.display = parentChecked ? 'block' : 'none'
-
-      if (!parentChecked && wasChecked) {
+      if (!parentChecked) {
         childrenToggles.forEach(child => {
           child.dataset.lastChecked = child.checked ? 'true' : 'false'
           child.checked = false
@@ -1377,6 +1382,16 @@ function setupParentChildToggleVisibility (scope) {
         })
       }
 
+      const anyChildChecked = Array.from(childrenToggles).some(el => el.checked)
+      const parentHidden = document.querySelector(`input[type="hidden"][name="${parentToggle.name}"]`)
+      if (parentChecked && !anyChildChecked) {
+        parentChecked = false
+        parentToggle.checked = false
+        parentToggle.dataset.wasChecked = 'false'
+        if (parentHidden) parentHidden.value = 'false'
+      }
+
+      childrenGroup.style.display = parentChecked ? 'block' : 'none'
       if (parentChecked && anyChildChecked) {
         wrapper.classList.add('template-toggle-group-bordered')
       } else {
@@ -1395,6 +1410,60 @@ function setupParentChildToggleVisibility (scope) {
 
     updateVisibilityAndBorder() // Initial check
     parentToggle.dataset.childVisibilityBound = 'true'
+  })
+}
+
+function setupAddMissingDependencies (scope) {
+  const root = scope || document
+  const addMissingToggles = Array.from(root.querySelectorAll('input.template-child-toggle[id*="radarr_add_missing_"], input.template-child-toggle[id*="sonarr_add_missing_"]'))
+  if (!addMissingToggles.length) return
+
+  const groupMap = new Map()
+
+  addMissingToggles.forEach(addToggle => {
+    const id = addToggle.id || ''
+    const split = id.split('-template_collection_')
+    if (split.length !== 2) return
+    const prefix = split[0]
+    const tail = split[1]
+    let useTail = null
+    const radarrMatch = tail.match(/(.+)_radarr_add_missing_(.+)$/)
+    if (radarrMatch) {
+      useTail = `${radarrMatch[1]}_use_${radarrMatch[2]}`
+    } else {
+      const sonarrMatch = tail.match(/(.+)_sonarr_add_missing_(.+)$/)
+      if (sonarrMatch) {
+        useTail = `${sonarrMatch[1]}_use_${sonarrMatch[2]}`
+      }
+    }
+    if (!useTail) return
+    const useToggle = document.getElementById(`${prefix}-template_collection_${useTail}`)
+    if (!useToggle) return
+
+    const list = groupMap.get(useToggle) || []
+    list.push(addToggle)
+    groupMap.set(useToggle, list)
+  })
+
+  const applyState = (useToggle, toggles) => {
+    const show = useToggle.checked
+    toggles.forEach(addToggle => {
+      const row = addToggle.closest('.form-check')
+      if (row) row.style.display = show ? '' : 'none'
+      addToggle.disabled = !show
+      if (!show) {
+        addToggle.checked = false
+        const hidden = document.querySelector(`input[type="hidden"][name="${addToggle.name}"]`)
+        if (hidden) hidden.value = 'false'
+      }
+    })
+  }
+
+  groupMap.forEach((toggles, useToggle) => {
+    if (useToggle.dataset.addMissingBound === 'true') return
+    useToggle.dataset.addMissingBound = 'true'
+    useToggle.addEventListener('change', () => applyState(useToggle, toggles))
+    applyState(useToggle, toggles)
   })
 }
 
