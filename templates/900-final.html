@@ -61,8 +61,11 @@
             Status
             <span class="rating-mapping-option-via rating-mapping-option-via--header rating-mapping-option-via--neutral">Pill</span>
             shows the page name and is clickable; colors reflect validation status. Gray means not applicable.
-            <div class="mt-1">
-              Bulk validate applies to: Plex, TMDb, Tautulli, GitHub, OMDb, MDBList, Notifiarr, Gotify, ntfy, Radarr, Sonarr. Skips interactive (Trakt, MyAnimeList) and non-service pages (Start, Final, Settings, Webhooks, AniDB, Libraries, Playlists, Sponsor, Analytics).
+            <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
+              Bulk legend:
+              <span class="rating-mapping-option-via rating-mapping-option-via--validated">Bulk</span>
+              <span class="rating-mapping-option-via rating-mapping-option-via--interactive">Interactive</span>
+              <span class="rating-mapping-option-via rating-mapping-option-via--neutral">N/A</span>
             </div>
           </div>
           <button id="validate-all-services" type="button" class="btn btn-outline-info btn-sm">
@@ -70,11 +73,15 @@
             <span id="validate-all-spinner" class="spinner-border spinner-border-sm ms-1 d-none" role="status" aria-hidden="true"></span>
           </button>
         </div>
+        {% set bulk_pages = ['010-plex','020-tmdb','030-tautulli','040-github','050-omdb','060-mdblist','070-notifiarr','080-gotify','085-ntfy','110-radarr','120-sonarr'] %}
+        {% set interactive_pages = ['130-trakt','140-mal'] %}
+        {% set nonservice_pages = ['001-start','900-final','150-settings','090-webhooks','100-anidb','025-libraries','027-playlist_files','910-sponsor','905-analytics'] %}
         <div class="table-responsive">
           <table class="table table-sm table-dark table-striped align-middle mb-0">
             <thead>
               <tr>
                 <th>Status</th>
+                <th>Bulk</th>
                 <th>Last validated</th>
                 <th>Time since</th>
               </tr>
@@ -96,6 +103,17 @@
                     </a>
                     {% endif %}
                   </div>
+                </td>
+                <td>
+                  {% if entry.page in bulk_pages %}
+                  <span class="rating-mapping-option-via rating-mapping-option-via--validated">Bulk</span>
+                  {% elif entry.page in interactive_pages %}
+                  <span class="rating-mapping-option-via rating-mapping-option-via--interactive">Interactive</span>
+                  {% elif entry.page in nonservice_pages or not entry.has_validation %}
+                  <span class="rating-mapping-option-via rating-mapping-option-via--neutral">N/A</span>
+                  {% else %}
+                  <span class="rating-mapping-option-via rating-mapping-option-via--neutral">N/A</span>
+                  {% endif %}
                 </td>
                 <td>
                   {% if entry.has_validation %}

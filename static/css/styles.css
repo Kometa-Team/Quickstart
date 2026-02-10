@@ -1161,6 +1161,12 @@ header.fixed-top {
     border-color: rgba(239, 68, 68, 0.5);
 }
 
+.rating-mapping-option-via--interactive {
+    color: #fff7e6;
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.55);
+}
+
 .rating-mapping-option-via--neutral {
     color: var(--theme-text-muted);
     background: rgba(148, 163, 184, 0.12);
