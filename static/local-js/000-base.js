@@ -1074,6 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadSupportInfo () {
     if (!output) return
+    if (copyBtn) copyBtn.disabled = true
     setStatus('Loading...', false)
     output.textContent = 'Loading support info...'
 
@@ -1085,9 +1086,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       output.textContent = data.text
       setStatus(data.generated_at ? `Updated ${data.generated_at}` : 'Updated', false)
+      if (copyBtn) copyBtn.disabled = !data.text.trim()
     } catch (err) {
       output.textContent = `Unable to load support info.\n${err.message || String(err)}`
       setStatus('Error loading support info', true)
+      if (copyBtn) copyBtn.disabled = true
     }
   }
 
@@ -1098,15 +1101,22 @@ document.addEventListener('DOMContentLoaded', () => {
     textarea.style.position = 'absolute'
     textarea.style.left = '-9999px'
     document.body.appendChild(textarea)
+    textarea.focus()
     textarea.select()
+    textarea.setSelectionRange(0, textarea.value.length)
     try {
-      document.execCommand('copy')
-      showToast('success', 'Support info copied to clipboard.')
+      const success = document.execCommand('copy')
+      if (success) {
+        showToast('success', 'Support info copied to clipboard.')
+        return true
+      }
+      showToast('error', 'Copy failed. Please copy manually.')
     } catch (err) {
       showToast('error', 'Copy failed. Please copy manually.')
     } finally {
       document.body.removeChild(textarea)
     }
+    return false
   }
 
   async function copySupportInfo () {
@@ -1116,16 +1126,17 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('warning', 'Nothing to copy yet.')
       return
     }
-    if (navigator.clipboard && navigator.clipboard.writeText) {
+    const canUseClipboard = window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText
+    if (canUseClipboard) {
       try {
         await navigator.clipboard.writeText(text)
         showToast('success', 'Support info copied to clipboard.')
+        return
       } catch (err) {
-        fallbackCopy(text)
+        // Fall back to execCommand below.
       }
-    } else {
-      fallbackCopy(text)
     }
+    fallbackCopy(text)
   }
 
   modalEl.addEventListener('show.bs.modal', () => {
