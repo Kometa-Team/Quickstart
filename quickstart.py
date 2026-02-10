@@ -3083,6 +3083,78 @@ def validate_notifiarr():
         return jsonify(result.get_json()), 400
 
 
+@app.route("/validate_all_services", methods=["POST"])
+def validate_all_services():
+    config_name = session.get("config_name") or persistence.ensure_session_config_name()
+
+    targets = [
+        ("010-plex", "plex", validations.validate_plex_server, lambda s: {"plex_url": s.get("plex", {}).get("url"), "plex_token": s.get("plex", {}).get("token")}),
+        ("020-tmdb", "tmdb", validations.validate_tmdb_server, lambda s: {"tmdb_apikey": s.get("tmdb", {}).get("apikey")}),
+        ("030-tautulli", "tautulli", validations.validate_tautulli_server, lambda s: {"tautulli_url": s.get("tautulli", {}).get("url"), "tautulli_apikey": s.get("tautulli", {}).get("apikey")}),
+        ("040-github", "github", validations.validate_github_server, lambda s: {"github_token": s.get("github", {}).get("token")}),
+        ("050-omdb", "omdb", validations.validate_omdb_server, lambda s: {"omdb_apikey": s.get("omdb", {}).get("apikey")}),
+        ("060-mdblist", "mdblist", validations.validate_mdblist_server, lambda s: {"mdblist_apikey": s.get("mdblist", {}).get("apikey")}),
+        ("070-notifiarr", "notifiarr", validations.validate_notifiarr_server, lambda s: {"notifiarr_apikey": s.get("notifiarr", {}).get("apikey")}),
+        ("080-gotify", "gotify", validations.validate_gotify_server, lambda s: {"gotify_url": s.get("gotify", {}).get("url"), "gotify_token": s.get("gotify", {}).get("token")}),
+        ("085-ntfy", "ntfy", validations.validate_ntfy_server, lambda s: {"ntfy_url": s.get("ntfy", {}).get("url"), "ntfy_token": s.get("ntfy", {}).get("token"), "ntfy_topic": s.get("ntfy", {}).get("topic")}),
+        ("110-radarr", "radarr", validations.validate_radarr_server, lambda s: {"radarr_url": s.get("radarr", {}).get("url"), "radarr_token": s.get("radarr", {}).get("token")}),
+        ("120-sonarr", "sonarr", validations.validate_sonarr_server, lambda s: {"sonarr_url": s.get("sonarr", {}).get("url"), "sonarr_token": s.get("sonarr", {}).get("token")}),
+    ]
+
+    results = {}
+    summary = {"validated": 0, "failed": 0, "skipped": 0}
+
+    for template_key, section, validator, payload_builder in targets:
+        settings = persistence.retrieve_settings(template_key)
+        validated_at = settings.get("validated_at")
+        if not validated_at:
+            results[template_key] = {"status": "skipped", "validated_at": validated_at or ""}
+            summary["skipped"] += 1
+            continue
+
+        payload = payload_builder(settings) or {}
+        try:
+            response = validator(payload)
+            response_data = response.get_json() if hasattr(response, "get_json") else response
+        except Exception as e:
+            response_data = {"valid": False, "error": str(e)}
+
+        is_valid = helpers.booler(response_data.get("validated", response_data.get("valid", False)))
+        stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, section)
+        if not isinstance(stored_data, dict):
+            stored_data = {}
+        existing_validated_at = stored_data.get("validated_at") or validated_at or ""
+
+        if is_valid:
+            new_validated_at = datetime.utcnow().isoformat() + "Z"
+            stored_data["validated"] = True
+            stored_data["validated_at"] = new_validated_at
+            database.save_section_data(
+                name=config_name,
+                section=section,
+                validated=True,
+                user_entered=user_entered,
+                data=stored_data,
+            )
+            results[template_key] = {"status": "validated", "validated_at": new_validated_at}
+            summary["validated"] += 1
+        else:
+            stored_data["validated"] = False
+            if existing_validated_at:
+                stored_data["validated_at"] = existing_validated_at
+            database.save_section_data(
+                name=config_name,
+                section=section,
+                validated=False,
+                user_entered=user_entered,
+                data=stored_data,
+            )
+            results[template_key] = {"status": "failed", "validated_at": existing_validated_at}
+            summary["failed"] += 1
+
+    return jsonify({"success": True, "results": results, "summary": summary})
+
+
 @app.route("/shutdown", methods=["POST"])
 def shutdown():
     if app.config.get("QUICKSTART_DOCKER"):

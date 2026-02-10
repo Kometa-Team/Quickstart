@@ -1501,6 +1501,81 @@ $(document).ready(function () {
     }
   })
 
+  function updateValidationRow (key, result) {
+    const row = document.querySelector(`[data-validation-key="${key}"]`)
+    if (!row || !result) return
+
+    const pill = row.querySelector('.validation-status-pill')
+    const timestampEl = row.querySelector('.validation-timestamp')
+    const ageEl = row.querySelector('.validation-age')
+    const status = result.status
+    const validatedAt = result.validated_at || ''
+
+    if (pill) {
+      pill.classList.remove(
+        'rating-mapping-option-via--validated',
+        'rating-mapping-option-via--unvalidated',
+        'rating-mapping-option-via--neutral'
+      )
+      if (status === 'validated') {
+        pill.classList.add('rating-mapping-option-via--validated')
+      } else if (status === 'failed') {
+        pill.classList.add('rating-mapping-option-via--unvalidated')
+      } else if (status === 'skipped') {
+        pill.classList.add('rating-mapping-option-via--neutral')
+      }
+    }
+
+    if (validatedAt && timestampEl) {
+      timestampEl.dataset.validationIso = validatedAt
+      const parsed = new Date(validatedAt)
+      if (!Number.isNaN(parsed.getTime())) {
+        timestampEl.textContent = formatLocalTimestamp(parsed)
+      }
+    }
+
+    if (validatedAt && ageEl) {
+      ageEl.dataset.validationIsoAge = validatedAt
+      const parsed = new Date(validatedAt)
+      if (!Number.isNaN(parsed.getTime())) {
+        ageEl.textContent = formatRelativeTimestamp(parsed, new Date())
+      }
+    }
+  }
+
+  const validateAllBtn = document.getElementById('validate-all-services')
+  const validateAllSpinner = document.getElementById('validate-all-spinner')
+  if (validateAllBtn) {
+    validateAllBtn.addEventListener('click', function () {
+      if (validateAllBtn.disabled) return
+      validateAllBtn.disabled = true
+      if (validateAllSpinner) validateAllSpinner.classList.remove('d-none')
+
+      fetch('/validate_all_services', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (!data || !data.success) {
+            showToast('error', 'Validate all failed. Please try again.')
+            return
+          }
+          const results = data.results || {}
+          Object.keys(results).forEach(key => updateValidationRow(key, results[key]))
+          const summary = data.summary || {}
+          const ok = summary.validated || 0
+          const failed = summary.failed || 0
+          const skipped = summary.skipped || 0
+          showToast('info', `Validate all complete. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}`)
+        })
+        .catch(() => {
+          showToast('error', 'Validate all failed. Please try again.')
+        })
+        .finally(() => {
+          validateAllBtn.disabled = false
+          if (validateAllSpinner) validateAllSpinner.classList.add('d-none')
+        })
+    })
+  }
+
   $('#run-now').on('click', function () {
     if (KOMETA_UPDATING) {
       showToast('warning', 'Kometa is updating. Please wait for it to finish before running.')

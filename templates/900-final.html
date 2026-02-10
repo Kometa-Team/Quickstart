@@ -56,10 +56,19 @@
     <div id="validation-status-collapse" class="accordion-collapse collapse" aria-labelledby="validation-status-heading"
       data-bs-parent="#validation-status-accordion">
       <div class="accordion-body">
-        <div class="small text-muted mb-2">
-          Status
-          <span class="rating-mapping-option-via rating-mapping-option-via--header rating-mapping-option-via--neutral">Pill</span>
-          shows the page name and is clickable; colors reflect validation status. Gray means not applicable.
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+          <div class="small text-muted">
+            Status
+            <span class="rating-mapping-option-via rating-mapping-option-via--header rating-mapping-option-via--neutral">Pill</span>
+            shows the page name and is clickable; colors reflect validation status. Gray means not applicable.
+            <div class="mt-1">
+              Bulk validate applies to: Plex, TMDb, Tautulli, GitHub, OMDb, MDBList, Notifiarr, Gotify, ntfy, Radarr, Sonarr. Skips interactive (Trakt, MyAnimeList) and non-service pages (Start, Final, Settings, Webhooks, AniDB, Libraries, Playlists, Sponsor, Analytics).
+            </div>
+          </div>
+          <button id="validate-all-services" type="button" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-check2-circle me-1"></i> Validate recorded services
+            <span id="validate-all-spinner" class="spinner-border spinner-border-sm ms-1 d-none" role="status" aria-hidden="true"></span>
+          </button>
         </div>
         <div class="table-responsive">
           <table class="table table-sm table-dark table-striped align-middle mb-0">
@@ -72,7 +81,7 @@
             </thead>
             <tbody>
               {% for entry in validation_meta %}
-              <tr>
+              <tr data-validation-key="{{ entry.key }}">
                 <td>
                   <div class="d-flex flex-column gap-1">
                     {% if entry.has_validation %}
