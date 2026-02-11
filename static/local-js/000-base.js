@@ -67,6 +67,10 @@ document.addEventListener('DOMContentLoaded', function () {
 function loading (action) {
   console.log('action:', action)
 
+  if (action === 'prev' || action === 'next') {
+    restoreBlankCacheExpirations()
+  }
+
   let spinnerIcon
   switch (action) {
     case 'prev':
@@ -115,6 +119,8 @@ function hideSpinner (webhookType) {
 // Function to handle jump to action
 function jumpTo (targetPage) {
   console.log('JumpTo initiated for target page:', targetPage)
+
+  restoreBlankCacheExpirations()
 
   const form = document.getElementById('configForm') || document.getElementById('final-form')
   if (!form) {
@@ -198,6 +204,64 @@ function showToast (type, message) {
 
   // Show the toast
   toast.show()
+}
+
+const CACHE_EXPIRATION_FIELDS = [
+  { id: 'tmdb_cache_expiration', label: 'TMDb cache expiration' },
+  { id: 'omdb_cache_expiration', label: 'OMDb cache expiration' },
+  { id: 'mdblist_cache_expiration', label: 'MDBList cache expiration' },
+  { id: 'anidb_cache_expiration', label: 'AniDB cache expiration' },
+  { id: 'mal_cache_expiration', label: 'MyAnimeList cache expiration' },
+  { id: 'plex_db_cache', label: 'Plex cache size' },
+  { id: 'plex_timeout', label: 'Plex timeout' }
+]
+
+function restoreBlankCacheExpirations () {
+  const restored = []
+  const isNumericValue = (value) => {
+    if (value === null || value === undefined) return false
+    const trimmed = String(value).trim()
+    if (trimmed === '') return false
+    return Number.isFinite(Number(trimmed))
+  }
+
+  CACHE_EXPIRATION_FIELDS.forEach(({ id, label }) => {
+    const input = document.getElementById(id)
+    if (!input) return
+
+    const currentValue = String(input.value || '').trim()
+    if (currentValue !== '') return
+
+    const fallbackValue = String(input.dataset.defaultValue || input.defaultValue || '').trim()
+    let restoreValue = null
+    let reason = 'default'
+
+    if (isNumericValue(fallbackValue)) {
+      restoreValue = fallbackValue
+    } else {
+      const minValue = input.getAttribute('min')
+      if (isNumericValue(minValue)) {
+        restoreValue = String(minValue).trim()
+        reason = 'minimum'
+      }
+    }
+
+    if (!restoreValue) return
+
+    input.value = restoreValue
+    restored.push({ label, value: restoreValue, reason })
+  })
+
+  if (restored.length && typeof showToast === 'function') {
+    const message = restored
+      .map(item => (
+        item.reason === 'minimum'
+          ? `${item.label} was blank. Set to minimum: ${item.value}.`
+          : `${item.label} was blank. Restored to default: ${item.value}.`
+      ))
+      .join('<br>')
+    showToast('info', message)
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

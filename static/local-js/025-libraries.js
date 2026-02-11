@@ -1392,8 +1392,9 @@ function setupParentChildToggleVisibility (scope) {
       }
 
       const anyChildChecked = Array.from(childrenToggles).some(el => el.checked)
+      const allowEmptyChildren = parentToggle.dataset.allowEmptyChildren === 'true'
       const parentHidden = document.querySelector(`input[type="hidden"][name="${parentToggle.name}"]`)
-      if (parentChecked && !anyChildChecked) {
+      if (parentChecked && !anyChildChecked && !allowEmptyChildren) {
         parentChecked = false
         parentToggle.checked = false
         parentToggle.dataset.wasChecked = 'false'
