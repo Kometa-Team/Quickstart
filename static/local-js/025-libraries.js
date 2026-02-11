@@ -1353,7 +1353,7 @@ function setupParentChildToggleVisibility (scope) {
 
     if (!childrenGroup || !wrapper) return
 
-    function updateVisibilityAndBorder () {
+    function updateVisibilityAndBorder (fromParent = false) {
       const childrenToggles = childrenGroup.querySelectorAll("input[type='checkbox']")
       const syncChildHidden = (child) => {
         const row = child.closest('.form-check')
@@ -1391,10 +1391,22 @@ function setupParentChildToggleVisibility (scope) {
         childrenToggles.forEach(child => syncChildHidden(child))
       }
 
-      const anyChildChecked = Array.from(childrenToggles).some(el => el.checked)
-      const allowEmptyChildren = parentToggle.dataset.allowEmptyChildren === 'true'
+      const isAddMissingToggle = (child) => {
+        const id = child.id || ''
+        return id.includes('_radarr_add_missing_') || id.includes('_sonarr_add_missing_')
+      }
+      let anyChildChecked = Array.from(childrenToggles).some(el => el.checked)
+      const isCollectionParent = parentToggle.id.includes('-collection_')
+      if (fromParent && parentChecked && !anyChildChecked && isCollectionParent) {
+        const candidate = Array.from(childrenToggles).find(child => !isAddMissingToggle(child)) || childrenToggles[0]
+        if (candidate) {
+          candidate.checked = true
+          syncChildHidden(candidate)
+          anyChildChecked = true
+        }
+      }
       const parentHidden = document.querySelector(`input[type="hidden"][name="${parentToggle.name}"]`)
-      if (parentChecked && !anyChildChecked && !allowEmptyChildren) {
+      if (parentChecked && !anyChildChecked) {
         parentChecked = false
         parentToggle.checked = false
         parentToggle.dataset.wasChecked = 'false'
@@ -1417,12 +1429,12 @@ function setupParentChildToggleVisibility (scope) {
       parentToggle.dataset.wasChecked = parentChecked ? 'true' : 'false'
     }
 
-    parentToggle.addEventListener('change', updateVisibilityAndBorder)
+    parentToggle.addEventListener('change', () => updateVisibilityAndBorder(true))
     childrenGroup.querySelectorAll("input[type='checkbox']").forEach(child =>
-      child.addEventListener('change', updateVisibilityAndBorder)
+      child.addEventListener('change', () => updateVisibilityAndBorder(false))
     )
 
-    updateVisibilityAndBorder() // Initial check
+    updateVisibilityAndBorder(false) // Initial check
     parentToggle.dataset.childVisibilityBound = 'true'
   })
 }
