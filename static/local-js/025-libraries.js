@@ -1395,18 +1395,30 @@ function setupParentChildToggleVisibility (scope) {
         const id = child.id || ''
         return id.includes('_radarr_add_missing_') || id.includes('_sonarr_add_missing_')
       }
-      let anyChildChecked = Array.from(childrenToggles).some(el => el.checked)
+      const isVisibleToggle = (child) => {
+        const id = child.id || ''
+        return id.includes('_visible_')
+      }
+      const isRequiredChild = (child) => {
+        const id = child.id || ''
+        if (!id.includes('-template_collection_')) return false
+        if (isAddMissingToggle(child) || isVisibleToggle(child)) return false
+        return id.includes('_use_')
+      }
+      const requiredChildren = Array.from(childrenToggles).filter(isRequiredChild)
+      const hasRequiredChildren = requiredChildren.length > 0
+      let anyRequiredChecked = requiredChildren.some(el => el.checked)
       const isCollectionParent = parentToggle.id.includes('-collection_')
-      if (fromParent && parentChecked && !anyChildChecked && isCollectionParent) {
-        const candidate = Array.from(childrenToggles).find(child => !isAddMissingToggle(child)) || childrenToggles[0]
+      if (fromParent && parentChecked && isCollectionParent && hasRequiredChildren && !anyRequiredChecked) {
+        const candidate = requiredChildren[0]
         if (candidate) {
           candidate.checked = true
           syncChildHidden(candidate)
-          anyChildChecked = true
+          anyRequiredChecked = true
         }
       }
       const parentHidden = document.querySelector(`input[type="hidden"][name="${parentToggle.name}"]`)
-      if (parentChecked && !anyChildChecked) {
+      if (parentChecked && hasRequiredChildren && !anyRequiredChecked) {
         parentChecked = false
         parentToggle.checked = false
         parentToggle.dataset.wasChecked = 'false'
@@ -1418,7 +1430,7 @@ function setupParentChildToggleVisibility (scope) {
       }
 
       childrenGroup.style.display = parentChecked ? 'block' : 'none'
-      if (parentChecked && anyChildChecked) {
+      if (parentChecked && (hasRequiredChildren ? anyRequiredChecked : true)) {
         wrapper.classList.add('template-toggle-group-bordered')
       } else {
         wrapper.classList.remove('template-toggle-group-bordered')

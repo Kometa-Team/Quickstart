@@ -1007,6 +1007,7 @@ $(document).ready(function () {
 
   function computeLogStats (text) {
     const stats = {
+      cache: 0,
       debug: 0,
       info: 0,
       warning: 0,
@@ -1018,6 +1019,7 @@ $(document).ready(function () {
     const lines = text.split(/\r?\n/)
     lines.forEach(line => {
       if (!line) return
+      if (line.toLowerCase().includes('from cache')) stats.cache += 1
       if (line.includes('[DEBUG]')) stats.debug += 1
       if (line.includes('[INFO]')) stats.info += 1
       if (line.includes('[WARNING]')) stats.warning += 1
@@ -1030,7 +1032,7 @@ $(document).ready(function () {
 
   function updateStatRow ($row, stats) {
     if (!$row || !$row.length || !stats) return
-    const keys = ['debug', 'info', 'warning', 'error', 'critical', 'trace']
+    const keys = ['cache', 'debug', 'info', 'warning', 'error', 'critical', 'trace']
     keys.forEach(key => {
       const val = typeof stats[key] === 'number' ? stats[key] : 0
       $row.find(`[data-log-stat="${key}"]`).text(val)

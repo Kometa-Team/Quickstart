@@ -3454,6 +3454,7 @@ def tail_log():
                 return cached.get("stats")
 
             counts = {
+                "cache": 0,
                 "debug": 0,
                 "info": 0,
                 "warning": 0,
@@ -3465,6 +3466,8 @@ def tail_log():
                 with path.open("r", encoding="utf-8", errors="replace") as handle:
                     for line in handle:
                         upper = line.upper()
+                        if "FROM CACHE" in upper:
+                            counts["cache"] += 1
                         if "[DEBUG]" in upper:
                             counts["debug"] += 1
                         if "[INFO]" in upper:

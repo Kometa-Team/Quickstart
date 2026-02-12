@@ -502,6 +502,7 @@
               <div class="log-level-grid">
                 <div class="log-level-row-label">Filter</div>
                 <div class="btn-group btn-group-sm log-level-buttons" role="group" aria-label="Quick filters">
+                  <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="from Cache">CACHE</button>
                   <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[DEBUG]">DEBUG</button>
                   <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[INFO]">INFO</button>
                   <button type="button" class="btn btn-outline-secondary log-level-btn" data-level="[WARNING]">WARN</button>
@@ -511,6 +512,7 @@
                 </div>
                 <div class="log-level-row-label">Totals (full log)</div>
                 <div class="log-level-counts" id="run-log-stats" aria-live="polite">
+                  <span data-log-stat="cache" data-log-scope="total">0</span>
                   <span data-log-stat="debug" data-log-scope="total">0</span>
                   <span data-log-stat="info" data-log-scope="total">0</span>
                   <span data-log-stat="warning" data-log-scope="total">0</span>
@@ -520,6 +522,7 @@
                 </div>
                 <div class="log-level-row-label">Matches (current filter)</div>
                 <div class="log-level-counts log-level-counts--filtered" id="run-log-stats-filtered" aria-live="polite">
+                  <span data-log-stat="cache" data-log-scope="filtered">0</span>
                   <span data-log-stat="debug" data-log-scope="filtered">0</span>
                   <span data-log-stat="info" data-log-scope="filtered">0</span>
                   <span data-log-stat="warning" data-log-scope="filtered">0</span>

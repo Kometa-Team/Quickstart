@@ -2923,13 +2923,23 @@ div#loading {
 }
 
 .log-level-counts {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 6px;
-    font-size: 0.75rem;
-    color: var(--theme-text-muted);
-    text-align: center;
-    font-variant-numeric: tabular-nums;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--theme-text-muted);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.log-level-buttons {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.log-level-buttons .btn {
+  width: 100%;
 }
 
 .log-level-counts--filtered {
