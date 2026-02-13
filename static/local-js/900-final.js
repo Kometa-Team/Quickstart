@@ -39,11 +39,6 @@ function formatElapsed (ms) {
 }
 
 $(document).ready(function () {
-  const plexValid = $('#plex_valid').data('plex-valid') === 'True'
-  const tmdbValid = $('#tmdb_valid').data('tmdb-valid') === 'True'
-  const libsValid = $('#libs_valid').data('libs-valid') === 'True'
-  const settValid = $('#sett_valid').data('sett-valid') === 'True'
-  const yamlValid = $('#yaml_valid').data('yaml-valid') === 'True'
   const $runLog = $('#run-output-log')
   const $tailNotice = $('#run-output-notice')
   const $tailSelect = $('#run-log-tail')
@@ -73,6 +68,7 @@ $(document).ready(function () {
   const $runSparkMemKometa = $('#run-spark-mem-kometa')
   const $yamlOutput = $('#final-yaml')
   const $yamlLineCount = $('#yaml-line-count')
+  let showYAML = false
   const headerSelect = document.getElementById('header-style')
   const headerPreview = document.getElementById('header-style-preview')
   const headerGrid = document.getElementById('header-style-grid')
@@ -83,30 +79,57 @@ $(document).ready(function () {
   const headerGridProgress = document.getElementById('header-style-grid-progress')
   const headerGridProgressBar = headerGridProgress ? headerGridProgress.querySelector('.progress-bar') : null
 
-  const showYAML = plexValid && tmdbValid && libsValid && settValid && yamlValid
+  function readMetaFlag (id, datasetKey, attrKey) {
+    const el = document.getElementById(id)
+    if (!el) return false
+    const raw = (el.dataset && el.dataset[datasetKey]) || el.getAttribute(`data-${attrKey}`) || ''
+    return String(raw).toLowerCase() === 'true'
+  }
 
-  const validationMessages = []
-  if (!plexValid) validationMessages.push('Plex settings have not been validated successfully...<br>')
-  if (!tmdbValid) validationMessages.push('TMDb settings have not been validated successfully...<br>')
-  if (!libsValid) validationMessages.push('Libraries page settings have not been validated successfully...<br>')
-  if (!settValid) validationMessages.push('Settings page values have likely been skipped...<br>')
+  function setMetaFlag (id, datasetKey, attrKey, value) {
+    const el = document.getElementById(id)
+    if (!el) return
+    const serialized = value ? 'True' : 'False'
+    if (el.dataset) el.dataset[datasetKey] = serialized
+    el.setAttribute(`data-${attrKey}`, serialized)
+  }
 
-  $('#run-now').prop('disabled', true)
-  $('#run-now-label').text('Run Now')
+  function updateValidationGate () {
+    const plexValid = readMetaFlag('plex_valid', 'plexValid', 'plex-valid')
+    const tmdbValid = readMetaFlag('tmdb_valid', 'tmdbValid', 'tmdb-valid')
+    const libsValid = readMetaFlag('libs_valid', 'libsValid', 'libs-valid')
+    const settValid = readMetaFlag('sett_valid', 'settValid', 'sett-valid')
+    const yamlValid = readMetaFlag('yaml_valid', 'yamlValid', 'yaml-valid')
 
-  if (!showYAML) {
-    $('#validation-messages').html(validationMessages.join('<br>')).show()
-    $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').removeClass('d-none')
-    $('#download-btn, #download-redacted-btn').addClass('d-none')
-    $('#run-controls-container').addClass('d-none') // Hide run section
-  } else {
-    $('#validation-messages').hide()
-    $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').addClass('d-none')
-    $('#yaml-content, #final-yaml, #download-btn, #download-redacted-btn').removeClass('d-none')
-    $('#run-controls-container').removeClass('d-none') // Show run section
+    showYAML = plexValid && tmdbValid && libsValid && settValid && yamlValid
+
+    const validationMessages = []
+    if (!plexValid) validationMessages.push('Plex settings have not been validated successfully...<br>')
+    if (!tmdbValid) validationMessages.push('TMDb settings have not been validated successfully...<br>')
+    if (!libsValid) validationMessages.push('Libraries page settings have not been validated successfully...<br>')
+    if (!settValid) validationMessages.push('Settings page values have likely been skipped...<br>')
+
     $('#run-now').prop('disabled', true)
     $('#run-now-label').text('Run Now')
+
+    if (!showYAML) {
+      $('#validation-messages').html(validationMessages.join('<br>')).show()
+      $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').removeClass('d-none')
+      $('#download-btn, #download-redacted-btn').addClass('d-none')
+      $('#run-controls-container').addClass('d-none') // Hide run section
+    } else {
+      $('#validation-messages').hide()
+      $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').addClass('d-none')
+      $('#yaml-content, #final-yaml, #download-btn, #download-redacted-btn').removeClass('d-none')
+      $('#run-controls-container').removeClass('d-none') // Show run section
+      $('#run-now').prop('disabled', true)
+      $('#run-now-label').text('Run Now')
+    }
+
+    updateRunNowState()
   }
+
+  updateValidationGate()
 
   tailSize = $tailSelect.val() || tailSize
   updateTailNotice()
@@ -1561,12 +1584,27 @@ $(document).ready(function () {
             return
           }
           const results = data.results || {}
+          const gateTargets = {
+            '010-plex': { id: 'plex_valid', datasetKey: 'plexValid', attrKey: 'plex-valid' },
+            '020-tmdb': { id: 'tmdb_valid', datasetKey: 'tmdbValid', attrKey: 'tmdb-valid' }
+          }
           Object.keys(results).forEach(key => updateValidationRow(key, results[key]))
+          Object.keys(results).forEach(key => {
+            const target = gateTargets[key]
+            const result = results[key]
+            if (!target || !result) return
+            if (result.status === 'validated') {
+              setMetaFlag(target.id, target.datasetKey, target.attrKey, true)
+            } else if (result.status === 'failed') {
+              setMetaFlag(target.id, target.datasetKey, target.attrKey, false)
+            }
+          })
           const summary = data.summary || {}
           const ok = summary.validated || 0
           const failed = summary.failed || 0
           const skipped = summary.skipped || 0
           showToast('info', `Validate all complete. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}`)
+          updateValidationGate()
         })
         .catch(() => {
           showToast('error', 'Validate all failed. Please try again.')

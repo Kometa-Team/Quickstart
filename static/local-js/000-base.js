@@ -1128,12 +1128,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const refreshBtn = modalEl.querySelector('#supportInfoRefresh')
   const copyBtn = modalEl.querySelector('#supportInfoCopy')
   const status = modalEl.querySelector('#supportInfoStatus')
+  const isSecureContext = window.isSecureContext
 
   function setStatus (text, isError) {
     if (!status) return
     status.textContent = text || ''
     status.classList.toggle('text-danger', Boolean(isError))
     status.classList.toggle('text-muted', !isError)
+  }
+
+  if (copyBtn && !isSecureContext) {
+    copyBtn.textContent = 'Select'
   }
 
   async function loadSupportInfo () {
@@ -1158,7 +1163,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function fallbackCopy (text) {
+  function fallbackCopy (text, opts = {}) {
+    const showFailureToast = opts.showFailureToast !== false
+    const showSuccessToast = opts.showSuccessToast !== false
     const textarea = document.createElement('textarea')
     textarea.value = text
     textarea.setAttribute('readonly', '')
@@ -1171,16 +1178,30 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const success = document.execCommand('copy')
       if (success) {
-        showToast('success', 'Support info copied to clipboard.')
+        if (showSuccessToast) showToast('success', 'Support info copied to clipboard.')
         return true
       }
-      showToast('error', 'Copy failed. Please copy manually.')
+      if (showFailureToast) showToast('error', 'Copy failed. Please copy manually.')
     } catch (err) {
-      showToast('error', 'Copy failed. Please copy manually.')
+      if (showFailureToast) showToast('error', 'Copy failed. Please copy manually.')
     } finally {
       document.body.removeChild(textarea)
     }
     return false
+  }
+
+  function selectSupportInfoText () {
+    if (!output) return
+    try {
+      const selection = window.getSelection()
+      const range = document.createRange()
+      range.selectNodeContents(output)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      if (typeof output.focus === 'function') output.focus()
+    } catch (err) {
+      // No-op: selection best-effort only.
+    }
   }
 
   async function copySupportInfo () {
@@ -1190,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showToast('warning', 'Nothing to copy yet.')
       return
     }
-    const canUseClipboard = window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText
+    const canUseClipboard = isSecureContext && navigator.clipboard && navigator.clipboard.writeText
     if (canUseClipboard) {
       try {
         await navigator.clipboard.writeText(text)
@@ -1200,7 +1221,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fall back to execCommand below.
       }
     }
-    fallbackCopy(text)
+    if (canUseClipboard) {
+      fallbackCopy(text, { showFailureToast: true })
+      return
+    }
+    fallbackCopy(text, { showFailureToast: false, showSuccessToast: false })
+    selectSupportInfoText()
+    showToast('warning', 'Clipboard blocked on non-HTTPS. Text selected; press Ctrl+C to copy.')
   }
 
   modalEl.addEventListener('show.bs.modal', () => {
