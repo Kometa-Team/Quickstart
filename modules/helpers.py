@@ -496,7 +496,7 @@ def get_quickstart_settings_summary():
         "QS_TEST_LIBS_TMP",
         "QS_TEST_LIBS_PATH",
     }
-    skip = {"QS_FLASK_SESSION_DIR", "QS_CONFIG_CLEANUP_DONE"}
+    skip = {"QS_FLASK_SESSION_DIR", "QS_CONFIG_CLEANUP_DONE", "QS_SKIP_AUTO_OPEN"}
 
     summary = [
         ("QS_PORT", "Quickstart Port", lambda v: v or "Unknown"),
