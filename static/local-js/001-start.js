@@ -912,6 +912,54 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       confirmImportButton.disabled = true
       confirmImportButton.textContent = 'Importing...'
+
+      function showImportRedirectOverlay (message, detail) {
+        const existing = document.getElementById('qs-import-redirect')
+        if (existing) {
+          const msgEl = existing.querySelector('.qs-import-redirect-message')
+          const detailEl = existing.querySelector('.qs-import-redirect-detail')
+          if (msgEl) msgEl.textContent = message || msgEl.textContent
+          if (detailEl) detailEl.textContent = detail || detailEl.textContent
+          return
+        }
+
+        const overlay = document.createElement('div')
+        overlay.id = 'qs-import-redirect'
+        overlay.setAttribute('role', 'dialog')
+        overlay.setAttribute('aria-modal', 'true')
+        overlay.style.cssText = [
+          'position:fixed',
+          'inset:0',
+          'z-index:2000',
+          'background:rgba(8, 10, 12, 0.78)',
+          'display:flex',
+          'align-items:center',
+          'justify-content:center',
+          'padding:24px'
+        ].join(';')
+
+        overlay.innerHTML = `
+          <div class="text-center text-light p-4 rounded" style="background:#0f1113;border:1px solid #2b2f33;max-width:520px;width:100%;">
+            <div class="spinner-border text-info mb-3" role="status" aria-hidden="true"></div>
+            <div class="fw-semibold mb-1 qs-import-redirect-message">${message || 'Import complete. Redirecting...'}</div>
+            <div class="small text-muted mb-3 qs-import-redirect-detail" style="white-space: pre-line;">${detail || 'Loading Final Validation. This can take up to 30 seconds.'}</div>
+            <button type="button" class="btn btn-sm btn-outline-info qs-import-redirect-btn d-none">Go to Final Validation</button>
+          </div>
+        `
+
+        document.body.appendChild(overlay)
+        const redirectBtn = overlay.querySelector('.qs-import-redirect-btn')
+        if (redirectBtn) {
+          redirectBtn.addEventListener('click', () => {
+            window.location = '/step/900-final'
+          })
+          setTimeout(() => {
+            if (document.getElementById('qs-import-redirect')) {
+              redirectBtn.classList.remove('d-none')
+            }
+          }, 60000)
+        }
+      }
       try {
         const libraryMapping = {}
         if (importLibraryMappingList) {
@@ -937,8 +985,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (Array.isArray(data.fonts_skipped) && data.fonts_skipped.length) {
           msg += ` Fonts skipped: ${data.fonts_skipped.length}.`
         }
-        showToast('success', msg)
-        showToast('error', 'Import complete. Go to Final Validation and click Validate Configured Services to check all services, then fix any failures (especially interactive pages).')
+        const guidance = 'Import complete. Go to Final Validation and click Validate Configured Services to check all services, then fix any failures (especially interactive pages).'
+        showImportRedirectOverlay(msg, `${guidance}\nLoading Final Validation. This can take up to 30 seconds.`)
         const modal = bootstrap.Modal.getInstance(importConfigModalEl)
         if (modal) modal.hide()
         setTimeout(() => { window.location = '/step/900-final' }, 1200)
