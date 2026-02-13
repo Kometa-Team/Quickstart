@@ -938,10 +938,10 @@ document.addEventListener('DOMContentLoaded', function () {
           msg += ` Fonts skipped: ${data.fonts_skipped.length}.`
         }
         showToast('success', msg)
-        showToast('error', 'Review each page after import and validate before generating the final config.')
+        showToast('error', 'Import complete. Go to Final Validation and click Validate Configured Services to check all services, then fix any failures (especially interactive pages).')
         const modal = bootstrap.Modal.getInstance(importConfigModalEl)
         if (modal) modal.hide()
-        setTimeout(() => window.location.reload(), 1200)
+        setTimeout(() => { window.location = '/step/900-final' }, 1200)
       } catch (err) {
         const message = err.message || 'Import failed.'
         if (/import token is invalid/i.test(message)) {
