@@ -2,7 +2,7 @@ cachelib==0.13.0
 Flask==3.1.2
 Flask-Session==0.8.0
 GitPython==3.1.46
-gunicorn==25.0.3
+gunicorn==25.1.0
 jsonschema==4.26.0
 namesgenerator==0.3
 pillow==12.1.1
