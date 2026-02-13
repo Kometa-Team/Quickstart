@@ -1,5 +1,11 @@
 /* global $, validateButton, showSpinner, hideSpinner */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('notifiarr_validated')
+  }
+}
+
 const validatedAtInput = document.getElementById('notifiarr_validated_at')
 
 $(document).ready(function () {
@@ -27,6 +33,7 @@ $(document).ready(function () {
     document.getElementById('notifiarr_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
+    refreshValidationCallout()
   })
 })
 
@@ -70,12 +77,14 @@ document.getElementById('validateButton').addEventListener('click', function () 
     if (isValid) {
       document.getElementById('notifiarr_validated').value = 'true'
       if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+      refreshValidationCallout()
       statusMessage.textContent = 'Notifiarr API key is valid.'
       statusMessage.style.color = '#75b798'
       validateButton.disabled = true
     } else {
       document.getElementById('notifiarr_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
+      refreshValidationCallout()
       statusMessage.textContent = 'Notifiarr API key is invalid.'
       statusMessage.style.color = '#ea868f'
       validateButton.disabled = false

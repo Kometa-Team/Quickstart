@@ -1,5 +1,11 @@
 /* global $, showSpinner, hideSpinner */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('mal_validated')
+  }
+}
+
 const validatedAtInput = document.getElementById('mal_validated_at')
 
 $(document).ready(function () {
@@ -33,6 +39,7 @@ $(document).ready(function () {
         isValidatedElement.value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
         validateButton.disabled = false
+        refreshValidationCallout()
       })
     } else {
       console.warn(`Warning: Element with ID '${field}' not found.`)
@@ -64,6 +71,7 @@ function updateMALTargetURL () {
     document.getElementById('mal_validated').value = 'false'
     const validatedAtInput = document.getElementById('mal_validated_at')
     if (validatedAtInput) validatedAtInput.value = ''
+    refreshValidationCallout()
     myURL = 'https://myanimelist.net/v1/oauth2/authorize?response_type=code&client_id=' + mal_client_id + '&code_challenge=' + code_verifier
   }
   console.log('updateMALTargetURL: ' + myURL)
@@ -133,6 +141,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
         hideSpinner('validate')
         document.getElementById('mal_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+        refreshValidationCallout()
         statusMessage.textContent = 'MyAnimeList credentials validated successfully!'
         statusMessage.style.color = '#75b798'
         document.getElementById('access_token').value = data.mal_authorization_access_token
@@ -145,6 +154,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
         hideSpinner('validate')
         document.getElementById('mal_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout()
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -157,6 +167,7 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       if (validatedAtInput) validatedAtInput.value = ''
+      refreshValidationCallout()
     })
 })
 /* eslint-enable camelcase */

@@ -1,5 +1,11 @@
 /* global $, validateButton, showSpinner, hideSpinner */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('plex_validated')
+  }
+}
+
 $(document).ready(function () {
   const validateButton = document.getElementById('validateButton')
   const isValidated = document.getElementById('plex_validated').value.toLowerCase()
@@ -33,12 +39,14 @@ $(document).ready(function () {
     validateButton.disabled = false
     document.getElementById('plex_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
+    refreshValidationCallout()
   })
 
   plexUrlInput.addEventListener('input', function () {
     validateButton.disabled = false
     document.getElementById('plex_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
+    refreshValidationCallout()
   })
 })
 
@@ -109,6 +117,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
 
         document.getElementById('plex_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+        refreshValidationCallout()
 
         statusMessage.textContent = 'Plex server validated successfully!'
         statusMessage.style.color = '#75b798'
@@ -131,6 +140,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
         validateButton.disabled = false
         document.getElementById('plex_validated').value = false
         if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout()
         statusMessage.textContent = 'Failed to validate Plex server. Please check your URL and Token.'
         statusMessage.style.color = '#ea868f'
       }
@@ -145,5 +155,6 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.display = 'block'
       const validatedAtInput = document.getElementById('plex_validated_at')
       if (validatedAtInput) validatedAtInput.value = ''
+      refreshValidationCallout()
     })
 })

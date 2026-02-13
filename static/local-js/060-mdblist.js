@@ -1,5 +1,11 @@
 /* global $, showSpinner, hideSpinner */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('mdblist_validated')
+  }
+}
+
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('mdblist_apikey')
   const validateButton = document.getElementById('validateButton')
@@ -26,6 +32,7 @@ $(document).ready(function () {
     document.getElementById('mdblist_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
+    refreshValidationCallout()
   })
 
   document.getElementById('validateButton').addEventListener('click', function () {
@@ -55,6 +62,7 @@ $(document).ready(function () {
           hideSpinner('validate')
           document.getElementById('mdblist_validated').value = 'true'
           if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+          refreshValidationCallout()
           statusMessage.textContent = 'API key is valid!'
           statusMessage.style.color = '#75b798'
           validateButton.disabled = true
@@ -62,6 +70,7 @@ $(document).ready(function () {
           console.log('NOT valid')
           document.getElementById('mdblist_validated').value = 'false'
           if (validatedAtInput) validatedAtInput.value = ''
+          refreshValidationCallout()
           statusMessage.textContent = 'Failed to validate MDBList server. Please check your API Key.'
           statusMessage.style.color = '#ea868f'
         }
@@ -73,6 +82,7 @@ $(document).ready(function () {
         statusMessage.style.color = '#ea868f'
         statusMessage.style.display = 'block'
         if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout()
       })
       .finally(() => {
         hideSpinner('validate')

@@ -1,5 +1,11 @@
 /* global $, showSpinner, hideSpinner */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('trakt_validated')
+  }
+}
+
 const validatedAtInput = document.getElementById('trakt_validated_at')
 
 $(document).ready(function () {
@@ -31,6 +37,7 @@ $(document).ready(function () {
         isValidatedElement.value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
         validateButton.disabled = false
+        refreshValidationCallout()
       })
     } else {
       console.warn(`Warning: Element with ID '${field}' not found.`)
@@ -53,6 +60,7 @@ function updateTraktURL () {
     document.getElementById('trakt_validated').value = 'false'
     const validatedAtInput = document.getElementById('trakt_validated_at')
     if (validatedAtInput) validatedAtInput.value = ''
+    refreshValidationCallout()
     myURL = 'https://trakt.tv/oauth/authorize?response_type=code&client_id=' + trakt_client_id + '&redirect_uri=urn:ietf:wg:oauth:2.0:oob'
   }
   console.log('updateTraktURL: ' + myURL)
@@ -124,6 +132,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
         hideSpinner('validate')
         document.getElementById('trakt_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+        refreshValidationCallout()
         statusMessage.textContent = 'Trakt credentials validated successfully!'
         statusMessage.style.color = '#75b798'
         document.getElementById('access_token').value = data.trakt_authorization_access_token
@@ -140,6 +149,7 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
         hideSpinner('validate')
         document.getElementById('trakt_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout()
         statusMessage.textContent = data.error
         statusMessage.style.color = '#ea868f'
       }
@@ -152,5 +162,6 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
       statusMessage.style.color = '#ea868f'
       statusMessage.style.display = 'block'
       if (validatedAtInput) validatedAtInput.value = ''
+      refreshValidationCallout()
     })
 })

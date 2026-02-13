@@ -1,5 +1,11 @@
 /* global $, showSpinner, hideSpinner */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('omdb_validated')
+  }
+}
+
 const validatedAtInput = document.getElementById('omdb_validated_at')
 
 $(document).ready(function () {
@@ -26,6 +32,7 @@ $(document).ready(function () {
     document.getElementById('omdb_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
+    refreshValidationCallout()
   })
 })
 
@@ -62,14 +69,17 @@ document.getElementById('validateButton').addEventListener('click', function () 
         hideSpinner('validate')
         document.getElementById('omdb_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+        refreshValidationCallout()
         statusMessage.textContent = 'OMDb API key is valid.'
         statusMessage.style.color = '#75b798'
         document.getElementById('validateButton').disabled = true
       } else {
         hideSpinner('validate')
+        document.getElementById('omdb_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
         statusMessage.textContent = 'OMDb API key is invalid.'
         statusMessage.style.color = '#ea868f'
+        refreshValidationCallout()
       }
       statusMessage.style.display = 'block'
     })
@@ -81,6 +91,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.display = 'block'
       document.getElementById('omdb_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
+      refreshValidationCallout()
     })
 })
 

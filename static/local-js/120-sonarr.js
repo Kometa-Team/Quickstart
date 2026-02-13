@@ -1,5 +1,11 @@
 /* global $, initialSonarrRootFolderPath, initialSonarrQualityProfile, initialSonarrLanguageProfile, showSpinner, hideSpinner, PathValidation */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('sonarr_validated')
+  }
+}
+
 const validatedAtInput = document.getElementById('sonarr_validated_at')
 
 $(document).ready(function () {
@@ -37,12 +43,14 @@ $(document).ready(function () {
     document.getElementById('sonarr_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
+    refreshValidationCallout()
   })
 
   document.getElementById('sonarr_url').addEventListener('input', function () {
     document.getElementById('sonarr_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
+    refreshValidationCallout()
   })
 
   // Attach event listeners for validation and toggle functionality
@@ -78,6 +86,7 @@ function validateSonarrApi () {
         hideSpinner('validate')
         document.getElementById('sonarr_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+        refreshValidationCallout()
         statusMessage.textContent = 'Sonarr API key is valid.'
         statusMessage.style.color = '#75b798'
         statusMessage.style.display = 'block'
@@ -90,6 +99,7 @@ function validateSonarrApi () {
         hideSpinner('validate')
         document.getElementById('sonarr_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout()
         console.error('Error validating Sonarr', data.message)
         statusMessage.textContent = 'Failed to validate Sonarr server. Please check your URL and Token.'
         statusMessage.style.color = '#ea868f'
@@ -104,6 +114,7 @@ function validateSonarrApi () {
       statusMessage.style.display = 'block'
       document.getElementById('sonarr_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
+      refreshValidationCallout()
     })
 }
 

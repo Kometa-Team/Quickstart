@@ -42,6 +42,9 @@ $(document).ready(function () {
     if (validatedAtInput) {
       validatedAtInput.value = isValid ? new Date().toISOString() : ''
     }
+    if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+      window.QSValidationCallouts.refresh('playlist_files_validated')
+    }
     console.log('Validation State Updated:', isValid)
   }
 

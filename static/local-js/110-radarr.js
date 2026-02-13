@@ -1,5 +1,11 @@
 /* global $, initialRadarrRootFolderPath, initialRadarrQualityProfile, showSpinner, hideSpinner, PathValidation */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('radarr_validated')
+  }
+}
+
 const validatedAtInput = document.getElementById('radarr_validated_at')
 
 $(document).ready(function () {
@@ -35,12 +41,14 @@ $(document).ready(function () {
     document.getElementById('radarr_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
+    refreshValidationCallout()
   })
 
   document.getElementById('radarr_url').addEventListener('input', function () {
     document.getElementById('radarr_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     document.getElementById('validateButton').disabled = false
+    refreshValidationCallout()
   })
 
   // Attach event listeners for validation and toggle functionality
@@ -161,6 +169,7 @@ function validateRadarrApi () {
       if (data.valid) {
         document.getElementById('radarr_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+        refreshValidationCallout()
         statusMessage.textContent = 'Radarr API key is valid.'
         statusMessage.style.color = '#75b798'
         statusMessage.style.display = 'block'
@@ -171,6 +180,7 @@ function validateRadarrApi () {
       } else {
         document.getElementById('radarr_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout()
         console.log('Error validating Radarr', data.message)
         statusMessage.textContent = 'Failed to validate Radarr server. Please check your URL and Token.'
         statusMessage.style.color = '#ea868f'
@@ -185,6 +195,7 @@ function validateRadarrApi () {
       statusMessage.style.display = 'block'
       document.getElementById('radarr_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
+      refreshValidationCallout()
     })
 }
 

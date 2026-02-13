@@ -85,6 +85,9 @@ document.addEventListener('DOMContentLoaded', function () {
         validatedAtInput.value = ''
       }
     }
+    if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+      window.QSValidationCallouts.refresh('settings_validated')
+    }
   }
 
   function showAccordionForField (field) {

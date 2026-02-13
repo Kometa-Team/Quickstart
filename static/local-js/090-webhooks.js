@@ -1,5 +1,11 @@
 /* global $ */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('webhooks_validated')
+  }
+}
+
 const validatedWebhooks = {}
 const validatedAtInput = document.getElementById('webhooks_validated_at')
 let webhooksTouched = false
@@ -25,6 +31,7 @@ function hasConfiguredWebhooks () {
 
 function setWebhookValidated (state, webhookType = null) {
   document.getElementById('webhooks_validated').value = state ? 'true' : 'false'
+  refreshValidationCallout()
 
   if (webhookType) {
     // Enable the validate button if the URL changes and validation is false

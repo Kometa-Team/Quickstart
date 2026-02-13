@@ -1,5 +1,11 @@
 /* global showSpinner, hideSpinner */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('tmdb_validated')
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   const validateButton = document.getElementById('validateButton')
   const apiKeyInput = document.getElementById('tmdb_apikey')
@@ -91,11 +97,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (data.valid) {
           tmdbValidatedInput.value = 'true'
           if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = new Date().toISOString()
+          refreshValidationCallout()
           statusMessage.textContent = 'API key is valid!'
           statusMessage.style.color = '#75b798' // Green
         } else {
           tmdbValidatedInput.value = 'false'
           if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = ''
+          refreshValidationCallout()
           statusMessage.textContent = 'Failed to validate TMDb. Please check your API Key.'
           statusMessage.style.color = '#ea868f' // Red
         }
@@ -106,6 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
         statusMessage.textContent = 'An error occurred. Please try again.'
         statusMessage.style.color = '#ea868f' // Red
         if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = ''
+        refreshValidationCallout()
       })
       .finally(() => {
         hideSpinner('validate')
@@ -126,6 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
   apiKeyInput.addEventListener('input', function () {
     tmdbValidatedInput.value = 'false' // Mark API key as invalid
     if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = ''
+    refreshValidationCallout()
     validateButton.disabled = false // Re-enable the validate button
     statusMessage.style.display = 'none' // Hide validation message
     updateNavigationState() // Disable Next and JumpTo

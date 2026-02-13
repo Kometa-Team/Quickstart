@@ -1,5 +1,11 @@
 /* global $, showSpinner, hideSpinner */
 
+function refreshValidationCallout () {
+  if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+    window.QSValidationCallouts.refresh('github_validated')
+  }
+}
+
 const validatedAtInput = document.getElementById('github_validated_at')
 
 $(document).ready(function () {
@@ -26,6 +32,7 @@ $(document).ready(function () {
     document.getElementById('github_validated').value = 'false'
     if (validatedAtInput) validatedAtInput.value = ''
     validateButton.disabled = false
+    refreshValidationCallout()
   })
 })
 
@@ -65,11 +72,13 @@ document.getElementById('validateButton').addEventListener('click', function () 
         document.getElementById('validateButton').disabled = true
         document.getElementById('github_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+        refreshValidationCallout()
       } else {
         statusMessage.textContent = data.message
         statusMessage.style.color = '#ea868f'
         document.getElementById('github_validated').value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout()
       }
       statusMessage.style.display = 'block'
     })
@@ -81,6 +90,7 @@ document.getElementById('validateButton').addEventListener('click', function () 
       statusMessage.style.display = 'block'
       document.getElementById('github_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
+      refreshValidationCallout()
     })
 })
 

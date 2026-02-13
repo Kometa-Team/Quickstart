@@ -973,6 +973,18 @@ document.addEventListener('DOMContentLoaded', function () {
   const finalPathInput = document.getElementById('test-lib-final-path')
   const savePathsBtn = document.getElementById('test-lib-paths-apply')
   const pathsStatus = document.getElementById('test-lib-paths-status')
+  const testLibAccordion = document.getElementById('test-lib-accordion-collapse')
+
+  function setTestLibAccordionExpanded (shouldExpand) {
+    if (!testLibAccordion) return
+    if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+      const instance = bootstrap.Collapse.getOrCreateInstance(testLibAccordion, { toggle: false })
+      if (shouldExpand) instance.show()
+      else instance.hide()
+    } else {
+      testLibAccordion.classList.toggle('show', Boolean(shouldExpand))
+    }
+  }
 
   // Progress block (existing or injected)
   let progWrap = document.getElementById('test-lib-progress')
@@ -1132,6 +1144,7 @@ document.addEventListener('DOMContentLoaded', function () {
     cloneBtn.classList.remove('d-none')
     purgeBtn.classList.add('d-none')
     updateRow?.classList.add('d-none')
+    setTestLibAccordionExpanded(true)
   }
 
   function setScenarioFoundZip (data, pathHtml) {
@@ -1150,6 +1163,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       updateRow?.classList.add('d-none')
     }
+    setTestLibAccordionExpanded(false)
   }
 
   async function refreshStatus () {

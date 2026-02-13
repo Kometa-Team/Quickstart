@@ -27,6 +27,9 @@ const ValidationHandler = {
 
     document.getElementById('libraries').value = selectedNames.join(',')
     document.getElementById('libraries_validated').value = isValid ? 'true' : 'false'
+    if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+      window.QSValidationCallouts.refresh('libraries_validated')
+    }
     if (librariesValidatedAtInput) {
       if (librariesTouched) {
         librariesValidatedAtInput.value = isValid ? new Date().toISOString() : ''
