@@ -3165,7 +3165,11 @@ def validate_all_services():
             continue
         try:
             response = validator(payload)
+            if isinstance(response, tuple) and response:
+                response = response[0]
             response_data = response.get_json() if hasattr(response, "get_json") else response
+            if not isinstance(response_data, dict):
+                response_data = {}
         except Exception as e:
             response_data = {"valid": False, "error": str(e)}
 

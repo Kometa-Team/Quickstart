@@ -1570,19 +1570,37 @@ $(document).ready(function () {
 
   const validateAllBtn = document.getElementById('validate-all-services')
   const validateAllSpinner = document.getElementById('validate-all-spinner')
+  const validateAllStatus = document.getElementById('validate-all-status')
   if (validateAllBtn) {
     validateAllBtn.addEventListener('click', function () {
       if (validateAllBtn.disabled) return
       validateAllBtn.disabled = true
       if (validateAllSpinner) validateAllSpinner.classList.remove('d-none')
+      if (validateAllStatus) {
+        validateAllStatus.classList.add('d-none', 'text-danger')
+        validateAllStatus.classList.remove('text-success')
+        validateAllStatus.textContent = 'Validating configured services...'
+        validateAllStatus.classList.remove('d-none')
+      }
 
       fetch('/validate_all_services', { method: 'POST' })
-        .then(res => res.json())
-        .then(data => {
-          if (!data || !data.success) {
-            showToast('error', 'Validate all failed. Please try again.')
-            return
+        .then(async (res) => {
+          let data = null
+          try {
+            data = await res.json()
+          } catch (err) {
+            data = null
           }
+
+          if (!res.ok) {
+            const message = (data && (data.message || data.error)) || `Request failed (${res.status}).`
+            throw new Error(message)
+          }
+
+          if (!data || !data.success) {
+            throw new Error((data && (data.message || data.error)) || 'Validation failed. Please try again.')
+          }
+
           const results = data.results || {}
           const gateTargets = {
             '010-plex': { id: 'plex_valid', datasetKey: 'plexValid', attrKey: 'plex-valid' },
@@ -1604,10 +1622,33 @@ $(document).ready(function () {
           const failed = summary.failed || 0
           const skipped = summary.skipped || 0
           showToast('info', `Validate all complete. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}`)
+          if (validateAllStatus) {
+            const labelForKey = (key) => {
+              const row = document.querySelector(`[data-validation-key="${key}"]`)
+              const labelEl = row ? row.querySelector('.validation-status-pill') : null
+              const label = labelEl ? labelEl.textContent.trim() : ''
+              return label || key
+            }
+            const failedKeys = Object.keys(results).filter(key => results[key]?.status === 'failed')
+            const failedLabels = failedKeys.map(labelForKey).filter(Boolean)
+            const failedDetail = failedLabels.length ? ` Failed: ${failedLabels.join(', ')}.` : ''
+            const skippedKeys = Object.keys(results).filter(key => results[key]?.status === 'skipped' && results[key]?.reason === 'missing_credentials')
+            const skippedLabels = skippedKeys.map(labelForKey).filter(Boolean)
+            const skippedDetail = skippedLabels.length ? ` Skipped (missing credentials): ${skippedLabels.join(', ')}.` : ''
+            validateAllStatus.classList.remove('d-none', 'text-danger')
+            validateAllStatus.classList.add('text-success')
+            validateAllStatus.textContent = `Completed. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}.${failedDetail}${skippedDetail}`
+          }
           updateValidationGate()
         })
-        .catch(() => {
-          showToast('error', 'Validate all failed. Please try again.')
+        .catch((err) => {
+          const message = err && err.message ? err.message : 'Validate all failed. Please try again.'
+          showToast('error', message)
+          if (validateAllStatus) {
+            validateAllStatus.classList.remove('d-none', 'text-success')
+            validateAllStatus.classList.add('text-danger')
+            validateAllStatus.textContent = message
+          }
         })
         .finally(() => {
           validateAllBtn.disabled = false
