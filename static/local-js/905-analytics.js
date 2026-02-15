@@ -81,7 +81,8 @@ $(document).ready(function () {
     if (!value) return null
     const text = String(value).trim()
     const match = text.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}:\d{2})/)
-    if (match) return `${match[1]} ${match[2]}`
+    const hasTimezone = /[zZ]|[+-]\d{2}:?\d{2}$/.test(text)
+    if (match && !hasTimezone) return `${match[1]} ${match[2]}`
     if (!/\d{4}-\d{2}-\d{2}/.test(text)) return null
     const parsed = new Date(text)
     if (Number.isNaN(parsed.getTime())) return null
