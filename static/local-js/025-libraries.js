@@ -461,16 +461,27 @@ document.addEventListener('DOMContentLoaded', function () {
       const option = libraryPicker.querySelector(`option[value="${libraryId}"]`)
       const targetInputId = toggle?.dataset.targetInput
       const targetInput = targetInputId ? document.getElementById(targetInputId) : null
+      const status = card.querySelector('[data-include-status]')
       if (!toggle || !option || toggle.dataset.listenerAdded || !targetInput) return
+
+      function syncStatus () {
+        if (!status) return
+        const included = toggle.checked
+        status.textContent = included ? 'Included in YAML' : 'Excluded from YAML'
+        status.classList.toggle('bg-success', included)
+        status.classList.toggle('bg-secondary', !included)
+      }
 
       toggle.addEventListener('change', () => {
         option.dataset.configured = toggle.checked ? 'true' : 'false'
         targetInput.value = toggle.checked ? toggle.value : ''
         refreshPickerLabels()
+        syncStatus()
         if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
           ValidationHandler.updateValidationState()
         }
       })
+      syncStatus()
       toggle.dataset.listenerAdded = 'true'
     }
 

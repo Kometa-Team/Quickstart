@@ -16,8 +16,10 @@
         <input class="form-check-input include-library-toggle" type="checkbox" id="{{ library.id }}-include"
           data-target-input="{{ library.id }}-library-value" value="{{ library.name }}"
           {% if include_checked %}checked{% endif %}>
-        <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include">Include</label>
+        <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include"
+          title="Controls whether this library is written to the YAML output and validated.">Include in YAML</label>
       </div>
+      <span class="badge include-status bg-secondary" data-include-status></span>
       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay copy-library-btn" data-library-id="{{ library.id }}"
         data-library-name="{{ library.name }}" data-library-type="{{ library.type }}">
         <i class="bi bi-clipboard-plus"></i> Mirror to...
@@ -46,8 +48,10 @@
         <input class="form-check-input include-library-toggle" type="checkbox" id="{{ library.id }}-include"
           data-target-input="{{ library.id }}-library-value" value="{{ library.name }}"
           {% if include_checked %}checked{% endif %}>
-        <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include">Include</label>
+        <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include"
+          title="Controls whether this library is written to the YAML output and validated.">Include in YAML</label>
       </div>
+      <span class="badge include-status bg-secondary" data-include-status></span>
       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay copy-library-btn" data-library-id="{{ library.id }}"
         data-library-name="{{ library.name }}" data-library-type="{{ library.type }}">
         <i class="bi bi-clipboard-plus"></i> Mirror to...

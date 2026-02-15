@@ -1534,6 +1534,29 @@ form,
     margin: auto;
 }
 
+.include-status {
+    font-size: 0.75rem;
+    letter-spacing: 0.2px;
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+    .container {
+        max-width: 100%;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .content-wrapper {
+        margin-top: 20px;
+    }
+
+    form,
+    #final-form,
+    .form-container {
+        max-width: 100%;
+    }
+}
+
 #final-yaml {
     width: 100%;
     min-height: 400px;
