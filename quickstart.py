@@ -3532,10 +3532,7 @@ def validate_all_services():
         selected_library_ids = [
             key[: -len("-library")]
             for key, value in libraries_data.items()
-            if isinstance(key, str)
-            and key.startswith(("mov-library_", "sho-library_"))
-            and key.endswith("-library")
-            and not is_blank_value(value)
+            if isinstance(key, str) and key.startswith(("mov-library_", "sho-library_")) and key.endswith("-library") and not is_blank_value(value)
         ]
 
         if not selected_library_ids:
