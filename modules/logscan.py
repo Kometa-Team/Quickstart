@@ -750,20 +750,20 @@ class LogscanAnalyzer:
 
         run_time_index = None
         run_time_is_final = False
+        fallback_index = None
         for idx in range(len(lines) - 1, -1, -1):
             line = lines[idx]
             if "Run Time:" not in line:
                 continue
+            if fallback_index is None:
+                fallback_index = idx
             if "Finished:" in line or "Start Time:" in line or (idx > 0 and "Finished " in lines[idx - 1]):
                 run_time_index = idx
                 run_time_is_final = True
                 break
 
         if run_time_index is None:
-            for idx in range(len(lines) - 1, -1, -1):
-                if "Run Time:" in lines[idx]:
-                    run_time_index = idx
-                    break
+            run_time_index = fallback_index
 
         if run_time_index is None:
             return None
