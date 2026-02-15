@@ -12,9 +12,16 @@ $(document).ready(function () {
   const traktClientSecretInput = document.getElementById('trakt_client_secret')
   const toggleButton = document.getElementById('toggleClientSecretVisibility')
   const validateButton = document.getElementById('validate_trakt_pin')
+  const checkTokenButton = document.getElementById('trakt_check_token')
   const isValidatedElement = document.getElementById('trakt_validated')
   const isValidated = isValidatedElement.value.toLowerCase()
   console.log('Validated:', isValidated)
+  const isBlankTokenValue = (value) => {
+    if (!value) return true
+    const trimmed = value.trim()
+    if (!trimmed) return true
+    return trimmed.toLowerCase() === 'none' || trimmed.toLowerCase() === 'null'
+  }
 
   // Set initial visibility based on Client Secret value
   if (traktClientSecretInput.value.trim() === '') {
@@ -27,6 +34,10 @@ $(document).ready(function () {
 
   // Disable validate button if already validated
   validateButton.disabled = isValidated === 'true'
+  if (checkTokenButton) {
+    const accessToken = document.getElementById('access_token')?.value || ''
+    checkTokenButton.disabled = isBlankTokenValue(accessToken)
+  }
 
   // Reset validation status when user types
   const inputFields = ['trakt_client_id', 'trakt_client_secret', 'trakt_pin']
@@ -37,6 +48,7 @@ $(document).ready(function () {
         isValidatedElement.value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
         validateButton.disabled = false
+        if (checkTokenButton) checkTokenButton.disabled = true
         refreshValidationCallout()
       })
     } else {
@@ -145,6 +157,8 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
         document.getElementById('trakt_url').value = ''
         document.getElementById('trakt_open_url').disabled = true
         document.getElementById('validate_trakt_pin').disabled = true
+        const tokenButton = document.getElementById('trakt_check_token')
+        if (tokenButton) tokenButton.disabled = false
       } else {
         hideSpinner('validate')
         document.getElementById('trakt_validated').value = 'false'
@@ -165,3 +179,76 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
       refreshValidationCallout()
     })
 })
+
+const traktCheckButton = document.getElementById('trakt_check_token')
+if (traktCheckButton) {
+  traktCheckButton.addEventListener('click', function () {
+    const accessToken = document.getElementById('access_token')?.value || ''
+    const clientId = document.getElementById('trakt_client_id')?.value || ''
+    const statusMessage = document.getElementById('statusMessage')
+
+    const isBlankValue = (value) => {
+      if (!value) return true
+      const trimmed = value.trim()
+      if (!trimmed) return true
+      return trimmed.toLowerCase() === 'none' || trimmed.toLowerCase() === 'null'
+    }
+
+    if (isBlankValue(accessToken) || isBlankValue(clientId)) {
+      statusMessage.textContent = 'Missing access token or client ID.'
+      statusMessage.style.color = '#ea868f'
+      statusMessage.style.display = 'block'
+      return
+    }
+
+    const clientSecret = document.getElementById('trakt_client_secret')?.value || ''
+    const refreshToken = document.getElementById('refresh_token')?.value || ''
+    showSpinner('check_trakt')
+    fetch('/validate_trakt_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        access_token: accessToken,
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        debug: true
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        hideSpinner('check_trakt')
+        if (data.valid) {
+          if (data.authorization) {
+            if (data.authorization.access_token) document.getElementById('access_token').value = data.authorization.access_token
+            if (data.authorization.token_type) document.getElementById('token_type').value = data.authorization.token_type
+            if (data.authorization.expires_in) document.getElementById('expires_in').value = data.authorization.expires_in
+            if (data.authorization.refresh_token) document.getElementById('refresh_token').value = data.authorization.refresh_token
+            if (data.authorization.scope) document.getElementById('scope').value = data.authorization.scope
+            if (data.authorization.created_at) document.getElementById('created_at').value = data.authorization.created_at
+          }
+          document.getElementById('trakt_validated').value = 'true'
+          if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+          refreshValidationCallout()
+          statusMessage.textContent = 'Trakt token is valid.'
+          statusMessage.style.color = '#75b798'
+        } else {
+          document.getElementById('trakt_validated').value = 'false'
+          if (validatedAtInput) validatedAtInput.value = ''
+          refreshValidationCallout()
+          statusMessage.textContent = data.error || 'Trakt token is invalid.'
+          statusMessage.style.color = '#ea868f'
+        }
+        statusMessage.style.display = 'block'
+      })
+      .catch(error => {
+        hideSpinner('check_trakt')
+        console.error('Error validating Trakt token:', error)
+        statusMessage.textContent = 'An error occurred while validating Trakt token.'
+        statusMessage.style.color = '#ea868f'
+        statusMessage.style.display = 'block'
+        if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout()
+      })
+  })
+}

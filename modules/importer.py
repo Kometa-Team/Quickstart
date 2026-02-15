@@ -818,15 +818,27 @@ def prepare_import_payload(
         if section == "playlist_files":
             libraries = []
             if isinstance(section_payload, list):
-                for entry in section_payload:
+                for idx, entry in enumerate(section_payload):
                     if isinstance(entry, dict):
                         tv = entry.get("template_variables", {})
                         if isinstance(tv, dict):
                             libs = tv.get("libraries")
                             if isinstance(libs, list):
-                                libraries.extend([str(lib) for lib in libs if str(lib).strip()])
+                                entry_libs = [str(lib) for lib in libs if str(lib).strip()]
+                                libraries.extend(entry_libs)
+                                report.add("imported", f"{section}[{idx}]")
+                                default_value = entry.get("default")
+                                if default_value == "playlist":
+                                    report.add("imported", f"{section}[{idx}].default")
+                                elif default_value is not None:
+                                    report.add("unmapped", f"{section}[{idx}].default", "Unsupported playlist default.")
+                                report.add("imported", f"{section}[{idx}].template_variables")
+                                report.add("imported", f"{section}[{idx}].template_variables.libraries")
+                                for lib_idx in range(len(entry_libs)):
+                                    report.add("imported", f"{section}[{idx}].template_variables.libraries[{lib_idx}]")
             if libraries:
                 payload[section] = {"playlist_files": {"libraries": ",".join(libraries)}}
+                report.add("imported", section)
                 report.add("imported", f"{section}.libraries")
             else:
                 report.add("unmapped", section, "Missing playlist library entries.")
@@ -842,6 +854,12 @@ def prepare_import_payload(
                     normalized = [entry for entry in normalized if entry]
                     section_payload = dict(section_payload)
                     section_payload["asset_directory"] = normalized
+            if section == "anidb":
+                if "enable" not in section_payload:
+                    has_values = any(value not in [None, "", [], {}] for value in section_payload.values())
+                    if has_values:
+                        section_payload = dict(section_payload)
+                        section_payload["enable"] = True
             payload[section] = {section: section_payload}
             _flatten_dict(section, section_payload, report)
         else:
@@ -892,6 +910,7 @@ def prepare_import_payload(
                     if key in template_vars or key in special_template_vars:
                         if key == "placeholder_imdb_id":
                             name = f"{lib_id}-attribute_template_variables[{key}]"
+                            libraries_data[name] = value
                         elif key == "sep_style":
                             name = f"{lib_id}-template_variables[{key}]"
                             libraries_data[name] = value

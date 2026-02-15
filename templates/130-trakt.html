@@ -58,6 +58,19 @@
   </button>
 </div>
 
+<div class="input-group mb-2">
+  <span class="input-group-text" style="width: 150px; justify-content: space-between;">
+    Token Check
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Test the saved Trakt access token without re-doing the PIN flow.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <button class="btn btn-outline-info" type="button" id="trakt_check_token">
+    Check Token <i id="spinner_check_trakt" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
+
 <div class="form-check form-switch mb-2">
   <input class="form-check-input" type="checkbox" name="trakt_force_refresh" id="trakt_force_refresh" value="true" {%
     if data['trakt']['force_refresh']|string|lower=='true' %}checked{% endif %}>

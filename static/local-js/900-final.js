@@ -1574,6 +1574,15 @@ $(document).ready(function () {
   if (validateAllBtn) {
     validateAllBtn.addEventListener('click', function () {
       if (validateAllBtn.disabled) return
+      const previouslyBlocked = !showYAML
+      const previousStatuses = {}
+      document.querySelectorAll('[data-validation-key]').forEach(row => {
+        const key = row.dataset.validationKey
+        const pill = row.querySelector('.validation-status-pill')
+        if (key && pill) {
+          previousStatuses[key] = pill.classList.contains('rating-mapping-option-via--validated')
+        }
+      })
       validateAllBtn.disabled = true
       if (validateAllSpinner) validateAllSpinner.classList.remove('d-none')
       if (validateAllStatus) {
@@ -1604,7 +1613,9 @@ $(document).ready(function () {
           const results = data.results || {}
           const gateTargets = {
             '010-plex': { id: 'plex_valid', datasetKey: 'plexValid', attrKey: 'plex-valid' },
-            '020-tmdb': { id: 'tmdb_valid', datasetKey: 'tmdbValid', attrKey: 'tmdb-valid' }
+            '020-tmdb': { id: 'tmdb_valid', datasetKey: 'tmdbValid', attrKey: 'tmdb-valid' },
+            '025-libraries': { id: 'libs_valid', datasetKey: 'libsValid', attrKey: 'libs-valid' },
+            '150-settings': { id: 'sett_valid', datasetKey: 'settValid', attrKey: 'sett-valid' }
           }
           Object.keys(results).forEach(key => updateValidationRow(key, results[key]))
           Object.keys(results).forEach(key => {
@@ -1613,7 +1624,7 @@ $(document).ready(function () {
             if (!target || !result) return
             if (result.status === 'validated') {
               setMetaFlag(target.id, target.datasetKey, target.attrKey, true)
-            } else if (result.status === 'failed') {
+            } else if (result.status === 'failed' || result.status === 'skipped') {
               setMetaFlag(target.id, target.datasetKey, target.attrKey, false)
             }
           })
@@ -1629,17 +1640,54 @@ $(document).ready(function () {
               const label = labelEl ? labelEl.textContent.trim() : ''
               return label || key
             }
+            const reasonLabels = {
+              missing_credentials: 'Missing credentials',
+              missing_plex_validation: 'Plex not validated',
+              no_libraries: 'No libraries selected',
+              invalid_paths: 'Invalid paths',
+              missing_placeholder_imdb: 'Missing placeholder IMDb ID',
+              invalid_fields: 'Invalid fields',
+              no_webhooks: 'No webhooks configured',
+              disabled: 'Disabled',
+              missing_settings: 'Settings missing',
+              missing_tokens: 'Missing tokens',
+              token_invalid: 'Invalid tokens',
+              account_locked: 'Account locked',
+              validation_error: 'Validation error'
+            }
+            const formatWithReason = (key) => {
+              const label = labelForKey(key)
+              const reason = results[key]?.reason
+              const details = results[key]?.details
+              if (!reason) return label
+              const pretty = reasonLabels[reason] || reason.replace(/_/g, ' ')
+              if (Array.isArray(details) && details.length) {
+                return `${label} (${pretty}: ${details.join(', ')})`
+              }
+              return `${label} (${pretty})`
+            }
+
             const failedKeys = Object.keys(results).filter(key => results[key]?.status === 'failed')
-            const failedLabels = failedKeys.map(labelForKey).filter(Boolean)
+            const failedLabels = failedKeys.map(formatWithReason).filter(Boolean)
             const failedDetail = failedLabels.length ? ` Failed: ${failedLabels.join(', ')}.` : ''
-            const skippedKeys = Object.keys(results).filter(key => results[key]?.status === 'skipped' && results[key]?.reason === 'missing_credentials')
-            const skippedLabels = skippedKeys.map(labelForKey).filter(Boolean)
-            const skippedDetail = skippedLabels.length ? ` Skipped (missing credentials): ${skippedLabels.join(', ')}.` : ''
+            const skippedKeys = Object.keys(results).filter(key => results[key]?.status === 'skipped')
+            const skippedLabels = skippedKeys.map(formatWithReason).filter(Boolean)
+            const skippedDetail = skippedLabels.length ? ` Skipped: ${skippedLabels.join(', ')}.` : ''
             validateAllStatus.classList.remove('d-none', 'text-danger')
             validateAllStatus.classList.add('text-success')
             validateAllStatus.textContent = `Completed. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}.${failedDetail}${skippedDetail}`
           }
           updateValidationGate()
+          const anyNewlyValidated = Object.keys(results).some(key => results[key]?.status === 'validated' && !previousStatuses[key])
+          if (previouslyBlocked && showYAML) {
+            showToast('info', 'Validation complete. Refreshing YAML output...')
+            setTimeout(() => window.location.reload(), 300)
+            return
+          }
+          if (anyNewlyValidated) {
+            showToast('info', 'Validation updated. Refreshing YAML output...')
+            setTimeout(() => window.location.reload(), 300)
+          }
         })
         .catch((err) => {
           const message = err && err.message ? err.message : 'Validate all failed. Please try again.'

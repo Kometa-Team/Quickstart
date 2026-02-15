@@ -982,7 +982,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (Array.isArray(data.fonts_copied) && data.fonts_copied.length) {
           msg += ` Fonts added: ${data.fonts_copied.length}.`
         }
-        if (Array.isArray(data.fonts_skipped) && data.fonts_skipped.length) {
+        const skippedExisting = Array.isArray(data.fonts_skipped_existing) ? data.fonts_skipped_existing : []
+        const skippedFailed = Array.isArray(data.fonts_skipped_failed) ? data.fonts_skipped_failed : []
+        if (skippedExisting.length) {
+          msg += ` Fonts skipped (already exists): ${skippedExisting.length}.`
+        }
+        if (skippedFailed.length) {
+          msg += ` Fonts skipped (copy failed): ${skippedFailed.length}.`
+        }
+        if (!skippedExisting.length && !skippedFailed.length && Array.isArray(data.fonts_skipped) && data.fonts_skipped.length) {
           msg += ` Fonts skipped: ${data.fonts_skipped.length}.`
         }
         const guidance = 'Import complete. Go to Final Validation and click Validate Configured Services to check all services, then fix any failures (especially interactive pages).'

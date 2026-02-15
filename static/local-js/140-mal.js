@@ -12,6 +12,7 @@ $(document).ready(function () {
   const clientSecretInput = document.getElementById('mal_client_secret')
   const toggleButton = document.getElementById('toggleClientSecretVisibility')
   const validateButton = document.getElementById('validate_mal_url')
+  const checkTokenButton = document.getElementById('mal_check_token')
   const isValidatedElement = document.getElementById('mal_validated')
   const isValidated = isValidatedElement ? isValidatedElement.value.toLowerCase() : 'false'
   console.log('Validated:', isValidated)
@@ -29,6 +30,10 @@ $(document).ready(function () {
   if (isValidated === 'true') {
     validateButton.disabled = true
   }
+  if (checkTokenButton) {
+    const accessToken = document.getElementById('access_token')?.value || ''
+    checkTokenButton.disabled = !accessToken.trim()
+  }
 
   // Reset validation status when user types
   const inputFields = ['mal_client_id', 'mal_client_secret', 'mal_code_verifier', 'mal_localhost_url']
@@ -39,6 +44,7 @@ $(document).ready(function () {
         isValidatedElement.value = 'false'
         if (validatedAtInput) validatedAtInput.value = ''
         validateButton.disabled = false
+        if (checkTokenButton) checkTokenButton.disabled = true
         refreshValidationCallout()
       })
     } else {
@@ -150,6 +156,8 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
         document.getElementById('refresh_token').value = data.mal_authorization_refresh_token
         document.getElementById('mal_get_localhost_url').disabled = true
         document.getElementById('validate_mal_url').disabled = true
+        const tokenButton = document.getElementById('mal_check_token')
+        if (tokenButton) tokenButton.disabled = false
       } else {
         hideSpinner('validate')
         document.getElementById('mal_validated').value = 'false'
@@ -171,3 +179,52 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
     })
 })
 /* eslint-enable camelcase */
+
+const malCheckButton = document.getElementById('mal_check_token')
+if (malCheckButton) {
+  malCheckButton.addEventListener('click', function () {
+    const accessToken = document.getElementById('access_token')?.value || ''
+    const statusMessage = document.getElementById('statusMessage')
+
+    if (!accessToken.trim()) {
+      statusMessage.textContent = 'Missing access token.'
+      statusMessage.style.color = '#ea868f'
+      statusMessage.style.display = 'block'
+      return
+    }
+
+    showSpinner('check_mal')
+    fetch('/validate_mal_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ access_token: accessToken, debug: true })
+    })
+      .then(res => res.json())
+      .then(data => {
+        hideSpinner('check_mal')
+        if (data.valid) {
+          document.getElementById('mal_validated').value = 'true'
+          if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
+          refreshValidationCallout()
+          statusMessage.textContent = 'MyAnimeList token is valid.'
+          statusMessage.style.color = '#75b798'
+        } else {
+          document.getElementById('mal_validated').value = 'false'
+          if (validatedAtInput) validatedAtInput.value = ''
+          refreshValidationCallout()
+          statusMessage.textContent = data.error || 'MyAnimeList token is invalid.'
+          statusMessage.style.color = '#ea868f'
+        }
+        statusMessage.style.display = 'block'
+      })
+      .catch(error => {
+        hideSpinner('check_mal')
+        console.error('Error validating MyAnimeList token:', error)
+        statusMessage.textContent = 'An error occurred while validating MyAnimeList token.'
+        statusMessage.style.color = '#ea868f'
+        statusMessage.style.display = 'block'
+        if (validatedAtInput) validatedAtInput.value = ''
+        refreshValidationCallout()
+      })
+  })
+}

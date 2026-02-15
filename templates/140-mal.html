@@ -66,6 +66,18 @@
     Complete Authentication <i id="spinner_validate" class="spinner-border spinner-border-sm" style="display:none;"></i>
   </button>
 </div>
+<div class="input-group mb-2">
+  <span class="input-group-text" style="width: 175px; justify-content: space-between;">
+    Token Check
+    <span class="text-info ms-3" data-bs-toggle="tooltip" data-bs-html="true" style="margin-left: 10px;"
+      title="Test the saved MyAnimeList access token without re-doing the OAuth flow.">
+      <i class="bi bi-info-circle-fill"></i>
+    </span>
+  </span>
+  <button type="button" class="btn btn-outline-info" id="mal_check_token">
+    Check Token <i id="spinner_check_mal" class="spinner-border spinner-border-sm" style="display:none;"></i>
+  </button>
+</div>
 <div class="form-floating" style="display:none;">
   <input type="text" class="form-control" id="mal_validated" name="mal_validated" value="{{ data['validated'] }}"
     title="">

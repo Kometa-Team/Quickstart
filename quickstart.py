@@ -1634,6 +1634,50 @@ def import_config_report():
     return response
 
 
+def _map_playlist_libraries(payload, library_mapping, plex_names):
+    if not isinstance(payload, dict):
+        return
+    playlist_payload = payload.get("playlist_files")
+    if not isinstance(playlist_payload, list):
+        return
+    mapped_entries = []
+    for entry in playlist_payload:
+        if not isinstance(entry, dict):
+            mapped_entries.append(entry)
+            continue
+        tv = entry.get("template_variables")
+        if isinstance(tv, dict):
+            libs = tv.get("libraries")
+            if isinstance(libs, list):
+                mapped = []
+                for lib in libs:
+                    name = str(lib).strip()
+                    if not name:
+                        continue
+                    mapped_name = library_mapping.get(name, name)
+                    if mapped_name is None:
+                        mapped_name = name
+                    mapped_name = str(mapped_name).strip()
+                    if not mapped_name or mapped_name == "__ignore__":
+                        continue
+                    mapped.append(mapped_name)
+                deduped = []
+                seen = set()
+                for lib_name in mapped:
+                    if lib_name in seen:
+                        continue
+                    seen.add(lib_name)
+                    deduped.append(lib_name)
+                if plex_names:
+                    deduped = [lib_name for lib_name in deduped if lib_name in plex_names]
+                tv = dict(tv)
+                tv["libraries"] = deduped
+                entry = dict(entry)
+                entry["template_variables"] = tv
+        mapped_entries.append(entry)
+    payload["playlist_files"] = mapped_entries
+
+
 @app.route("/import-config/preview-mapped", methods=["POST"])
 def import_config_preview_mapped():
     data = request.get_json(silent=True) or {}
@@ -1712,6 +1756,8 @@ def import_config_preview_mapped():
             config_copy.pop("libraries", None)
     else:
         config_copy = config_data
+
+    _map_playlist_libraries(config_copy, library_mapping, plex_names)
 
     payload, report = importer.prepare_import_payload(config_copy, movie_names, show_names)
     report_lines = list(report.lines)
@@ -1927,6 +1973,8 @@ def import_config_confirm():
             else:
                 config_data.pop("libraries", None)
 
+        _map_playlist_libraries(config_data, library_mapping, plex_names)
+
         payload, report = importer.prepare_import_payload(config_data, movie_names, show_names)
         if not payload:
             return jsonify(success=False, message="No importable sections found."), 400
@@ -1947,6 +1995,8 @@ def import_config_confirm():
 
     fonts_copied = []
     fonts_skipped = []
+    fonts_skipped_existing = []
+    fonts_skipped_failed = []
     if fonts_dir and fonts:
         os.makedirs(CUSTOM_FONTS_FOLDER, exist_ok=True)
         for font_name in fonts:
@@ -1954,12 +2004,14 @@ def import_config_confirm():
             dest_path = os.path.join(CUSTOM_FONTS_FOLDER, font_name)
             if os.path.exists(dest_path):
                 fonts_skipped.append(font_name)
+                fonts_skipped_existing.append(font_name)
                 continue
             try:
                 shutil.copy2(src_path, dest_path)
                 fonts_copied.append(font_name)
             except OSError:
                 fonts_skipped.append(font_name)
+                fonts_skipped_failed.append(font_name)
         if fonts_copied:
             global _FONT_CACHE
             _FONT_CACHE = []
@@ -1988,6 +2040,8 @@ def import_config_confirm():
         imported_sections=imported_sections,
         fonts_copied=fonts_copied,
         fonts_skipped=fonts_skipped,
+        fonts_skipped_existing=fonts_skipped_existing,
+        fonts_skipped_failed=fonts_skipped_failed,
     )
 
 
@@ -2988,10 +3042,207 @@ def validate_trakt():
     return validations.validate_trakt_server(data)
 
 
+@app.route("/validate_trakt_token", methods=["POST"])
+def validate_trakt_token():
+    data = request.get_json(silent=True) or {}
+    access_token = data.get("access_token")
+    client_id = data.get("client_id")
+    client_secret = data.get("client_secret")
+    refresh_token = data.get("refresh_token")
+    debug_enabled = helpers.booler(app.config.get("QS_DEBUG", False)) or helpers.booler(data.get("debug", False))
+
+    def is_blank(value):
+        if value is None:
+            return True
+        if isinstance(value, str):
+            trimmed = value.strip()
+            if trimmed == "" or trimmed.lower() in ("none", "null"):
+                return True
+        return False
+
+    if is_blank(access_token) or is_blank(client_id) or is_blank(client_secret) or is_blank(refresh_token):
+        settings = persistence.retrieve_settings("130-trakt") or {}
+        trakt_data = settings.get("trakt", {}) if isinstance(settings, dict) else {}
+        auth = trakt_data.get("authorization", {}) if isinstance(trakt_data, dict) else {}
+        if is_blank(access_token):
+            access_token = auth.get("access_token")
+        if is_blank(client_id):
+            client_id = trakt_data.get("client_id") or auth.get("client_id")
+        if is_blank(client_secret):
+            client_secret = trakt_data.get("client_secret") or auth.get("client_secret")
+        if is_blank(refresh_token):
+            refresh_token = auth.get("refresh_token")
+
+    if is_blank(access_token) or is_blank(client_id):
+        debug_payload = None
+        if debug_enabled:
+            settings = persistence.retrieve_settings("130-trakt") or {}
+            trakt_data = settings.get("trakt", {}) if isinstance(settings, dict) else {}
+            auth = trakt_data.get("authorization", {}) if isinstance(trakt_data, dict) else {}
+            debug_payload = {
+                "config_name": session.get("config_name"),
+                "request": {
+                    "access_token": not is_blank(data.get("access_token")),
+                    "client_id": not is_blank(data.get("client_id")),
+                    "client_secret": not is_blank(data.get("client_secret")),
+                    "refresh_token": not is_blank(data.get("refresh_token")),
+                },
+                "stored": {
+                    "access_token": not is_blank(auth.get("access_token")),
+                    "client_id": not is_blank(trakt_data.get("client_id") or auth.get("client_id")),
+                    "client_secret": not is_blank(trakt_data.get("client_secret") or auth.get("client_secret")),
+                    "refresh_token": not is_blank(auth.get("refresh_token")),
+                },
+            }
+        response = {"valid": False, "error": "Missing Trakt access token or client ID."}
+        if debug_payload:
+            response["debug"] = debug_payload
+        return jsonify(response), 400
+    try:
+        response = requests.get(
+            "https://api.trakt.tv/users/settings",
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {access_token}",
+                "trakt-api-version": "2",
+                "trakt-api-key": client_id,
+            },
+            timeout=10,
+        )
+        if debug_enabled:
+            helpers.ts_log(f"Trakt token check status={response.status_code}", level="DEBUG")
+        if response.status_code == 200:
+            return jsonify({"valid": True})
+        if response.status_code == 423:
+            return jsonify({"valid": False, "error": "Account is locked; please contact Trakt Support."}), 400
+        if response.status_code in (401, 403):
+            if is_blank(refresh_token) or is_blank(client_secret):
+                return jsonify({"valid": False, "error": "Access token is invalid or expired."}), 400
+
+            refresh_response = requests.post(
+                "https://api.trakt.tv/oauth/token",
+                json={
+                    "refresh_token": refresh_token,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
+                    "grant_type": "refresh_token",
+                },
+                headers={"Content-Type": "application/json"},
+                timeout=10,
+            )
+            if refresh_response.status_code != 200:
+                debug_payload = None
+                if debug_enabled:
+                    debug_payload = {
+                        "status": response.status_code,
+                        "refresh_status": refresh_response.status_code,
+                    }
+                response_body = {"valid": False, "error": "Access token is invalid or expired."}
+                if debug_payload:
+                    response_body["debug"] = debug_payload
+                return jsonify(response_body), 400
+
+            refreshed = refresh_response.json()
+            new_access = refreshed.get("access_token")
+            if is_blank(new_access):
+                return jsonify({"valid": False, "error": "Access token refresh failed."}), 400
+
+            config_name = session.get("config_name") or persistence.ensure_session_config_name()
+            stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, "trakt")
+            if not isinstance(stored_data, dict):
+                stored_data = {}
+            trakt_data = stored_data.get("trakt", {}) if isinstance(stored_data.get("trakt"), dict) else {}
+            auth = trakt_data.get("authorization", {}) if isinstance(trakt_data.get("authorization"), dict) else {}
+            auth["access_token"] = new_access
+            if refreshed.get("refresh_token"):
+                auth["refresh_token"] = refreshed.get("refresh_token")
+            if refreshed.get("token_type"):
+                auth["token_type"] = refreshed.get("token_type")
+            if refreshed.get("expires_in"):
+                auth["expires_in"] = refreshed.get("expires_in")
+            if refreshed.get("scope"):
+                auth["scope"] = refreshed.get("scope")
+            if refreshed.get("created_at"):
+                auth["created_at"] = refreshed.get("created_at")
+            trakt_data["authorization"] = auth
+            stored_data["trakt"] = trakt_data
+            stored_data["validated"] = True
+            stored_data["validated_at"] = datetime.utcnow().isoformat() + "Z"
+            database.save_section_data(
+                name=config_name,
+                section="trakt",
+                validated=True,
+                user_entered=user_entered,
+                data=stored_data,
+            )
+            return jsonify({"valid": True, "refreshed": True, "authorization": auth})
+        response_body = {"valid": False, "error": f"Trakt validation failed ({response.status_code})."}
+        if debug_enabled:
+            response_body["debug"] = {"status": response.status_code}
+        return jsonify(response_body), 400
+    except requests.exceptions.RequestException as exc:
+        response_body = {"valid": False, "error": f"Trakt validation error: {exc}"}
+        if debug_enabled:
+            response_body["debug"] = {"status": "request_exception"}
+        return jsonify(response_body), 400
+
+
 @app.route("/validate_mal", methods=["POST"])
 def validate_mal():
     data = request.json
     return validations.validate_mal_server(data)
+
+
+@app.route("/validate_mal_token", methods=["POST"])
+def validate_mal_token():
+    data = request.get_json(silent=True) or {}
+    access_token = data.get("access_token")
+    debug_enabled = helpers.booler(app.config.get("QS_DEBUG", False)) or helpers.booler(data.get("debug", False))
+
+    def is_blank(value):
+        if value is None:
+            return True
+        if isinstance(value, str):
+            trimmed = value.strip()
+            if trimmed == "" or trimmed.lower() in ("none", "null"):
+                return True
+        return False
+
+    if is_blank(access_token):
+        settings = persistence.retrieve_settings("140-mal") or {}
+        mal_data = settings.get("mal", {}) if isinstance(settings, dict) else {}
+        auth = mal_data.get("authorization", {}) if isinstance(mal_data, dict) else {}
+        access_token = auth.get("access_token")
+
+    if is_blank(access_token):
+        debug_payload = None
+        if debug_enabled:
+            settings = persistence.retrieve_settings("140-mal") or {}
+            mal_data = settings.get("mal", {}) if isinstance(settings, dict) else {}
+            auth = mal_data.get("authorization", {}) if isinstance(mal_data.get("authorization"), dict) else {}
+            debug_payload = {
+                "config_name": session.get("config_name"),
+                "request": {"access_token": not is_blank(data.get("access_token"))},
+                "stored": {"access_token": not is_blank(auth.get("access_token"))},
+            }
+        response = {"valid": False, "error": "Missing MyAnimeList access token."}
+        if debug_payload:
+            response["debug"] = debug_payload
+        return jsonify(response), 400
+    try:
+        response = requests.get(
+            "https://api.myanimelist.net/v2/users/@me",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=10,
+        )
+        if response.status_code == 200:
+            return jsonify({"valid": True})
+        if response.status_code in (401, 403):
+            return jsonify({"valid": False, "error": "Access token is invalid or expired."}), 400
+        return jsonify({"valid": False, "error": f"MyAnimeList validation failed ({response.status_code})."}), 400
+    except requests.exceptions.RequestException as exc:
+        return jsonify({"valid": False, "error": f"MyAnimeList validation error: {exc}"}), 400
 
 
 @app.route("/validate_anidb", methods=["POST"])
@@ -3086,6 +3337,17 @@ def validate_notifiarr():
 @app.route("/validate_all_services", methods=["POST"])
 def validate_all_services():
     config_name = session.get("config_name") or persistence.ensure_session_config_name()
+
+    def is_blank_value(value):
+        if value is None:
+            return True
+        if isinstance(value, str):
+            trimmed = value.strip()
+            if trimmed == "":
+                return True
+            if trimmed.lower() == "none":
+                return True
+        return False
 
     def has_required_credentials(payload, required_keys):
         for key in required_keys:
@@ -3205,6 +3467,263 @@ def validate_all_services():
             )
             results[template_key] = {"status": "failed", "validated_at": existing_validated_at}
             summary["failed"] += 1
+
+    def update_section_validation(template_key, section, is_valid, reason=None, details=None):
+        stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, section)
+        if not isinstance(stored_data, dict):
+            stored_data = {}
+        existing_validated_at = stored_data.get("validated_at") or ""
+
+        if is_valid:
+            new_validated_at = datetime.utcnow().isoformat() + "Z"
+            stored_data["validated"] = True
+            stored_data["validated_at"] = new_validated_at
+            database.save_section_data(
+                name=config_name,
+                section=section,
+                validated=True,
+                user_entered=user_entered,
+                data=stored_data,
+            )
+            results[template_key] = {"status": "validated", "validated_at": new_validated_at}
+            summary["validated"] += 1
+            return
+
+        stored_data["validated"] = False
+        if existing_validated_at:
+            stored_data["validated_at"] = existing_validated_at
+        database.save_section_data(
+            name=config_name,
+            section=section,
+            validated=False,
+            user_entered=user_entered,
+            data=stored_data,
+        )
+        result = {"status": "failed", "validated_at": existing_validated_at}
+        if reason:
+            result["reason"] = reason
+        if details:
+            result["details"] = details
+        results[template_key] = result
+        summary["failed"] += 1
+
+    def skip_section_validation(template_key, section, reason=None, details=None):
+        stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, section)
+        if not isinstance(stored_data, dict):
+            stored_data = {}
+        existing_validated_at = stored_data.get("validated_at") or ""
+        result = {"status": "skipped", "validated_at": existing_validated_at}
+        if reason:
+            result["reason"] = reason
+        if details:
+            result["details"] = details
+        results[template_key] = result
+        summary["skipped"] += 1
+
+    # Bulk validation for libraries
+    plex_settings = persistence.retrieve_settings("010-plex") or {}
+    plex_is_valid = helpers.booler(plex_settings.get("validated", False)) if isinstance(plex_settings, dict) else False
+    if not plex_is_valid:
+        skip_section_validation("025-libraries", "libraries", reason="missing_plex_validation")
+        skip_section_validation("027-playlist_files", "playlist_files", reason="missing_plex_validation")
+    else:
+        libraries_settings = persistence.retrieve_settings("025-libraries") or {}
+        libraries_data = libraries_settings.get("libraries", {}) if isinstance(libraries_settings, dict) else {}
+        selected_library_ids = [
+            key[: -len("-library")]
+            for key, value in libraries_data.items()
+            if isinstance(key, str)
+            and key.startswith(("mov-library_", "sho-library_"))
+            and key.endswith("-library")
+            and not is_blank_value(value)
+        ]
+
+        if not selected_library_ids:
+            skip_section_validation("025-libraries", "libraries", reason="no_libraries")
+        else:
+            libraries_reason = None
+            path_errors = path_validation.validate_payload(libraries_data)
+            if path_errors:
+                libraries_reason = "invalid_paths"
+            else:
+                missing_placeholders = []
+                library_names = {}
+                for lib_id in selected_library_ids:
+                    name = libraries_data.get(f"{lib_id}-library")
+                    library_names[lib_id] = name if isinstance(name, str) and name.strip() else lib_id
+
+                def find_library_value(lib_id, suffixes):
+                    for suffix in suffixes:
+                        direct = f"{lib_id}-{suffix}"
+                        if direct in libraries_data:
+                            return libraries_data.get(direct)
+                    for key, value in libraries_data.items():
+                        if not isinstance(key, str) or not key.startswith(f"{lib_id}-"):
+                            continue
+                        if any(key.endswith(suffix) for suffix in suffixes):
+                            return value
+                    return None
+
+                for lib_id in selected_library_ids:
+                    use_separator = find_library_value(lib_id, ["template_variables[use_separator]", "attribute_use_separator"])
+                    if is_blank_value(use_separator) or str(use_separator).strip().lower() == "none":
+                        continue
+                    placeholder = find_library_value(lib_id, ["attribute_template_variables[placeholder_imdb_id]", "template_variables[placeholder_imdb_id]"])
+                    if is_blank_value(placeholder):
+                        missing_placeholders.append(library_names.get(lib_id, lib_id))
+                if missing_placeholders:
+                    libraries_reason = "missing_placeholder_imdb"
+
+            update_section_validation(
+                "025-libraries",
+                "libraries",
+                libraries_reason is None,
+                reason=libraries_reason,
+                details=missing_placeholders if libraries_reason == "missing_placeholder_imdb" else None,
+            )
+
+        playlist_settings = persistence.retrieve_settings("027-playlist_files") or {}
+        playlist_payload = playlist_settings.get("playlist_files", {}) if isinstance(playlist_settings, dict) else {}
+        if isinstance(playlist_payload, dict) and isinstance(playlist_payload.get("playlist_files"), dict):
+            playlist_payload = playlist_payload.get("playlist_files", {})
+        libraries_value = ""
+        if isinstance(playlist_payload, dict):
+            libraries_value = playlist_payload.get("libraries") or ""
+        playlist_libraries = [lib.strip() for lib in str(libraries_value).split(",") if lib.strip()]
+        if playlist_libraries:
+            update_section_validation("027-playlist_files", "playlist_files", True)
+        else:
+            skip_section_validation("027-playlist_files", "playlist_files", reason="no_libraries")
+
+    # Bulk validation for settings
+    settings_settings = persistence.retrieve_settings("150-settings") or {}
+    settings_section = settings_settings.get("settings", {}) if isinstance(settings_settings, dict) else {}
+    if not isinstance(settings_section, dict) or not settings_section:
+        skip_section_validation("150-settings", "settings", reason="missing_settings")
+    else:
+        invalid_fields = []
+
+        def check_regex(key, pattern, flags=0):
+            if key not in settings_section:
+                return
+            value = settings_section.get(key)
+            if value is None:
+                return
+            if isinstance(value, str) and not value.strip():
+                invalid_fields.append(key)
+                return
+            value_text = str(value).strip()
+            if not re.match(pattern, value_text, flags):
+                invalid_fields.append(key)
+
+        check_regex("asset_depth", r"^(0|[1-9]\d*)$")
+        check_regex("overlay_artwork_quality", r"^(100|[1-9][0-9]?)$")
+        check_regex("cache_expiration", r"^[1-9]\d*$")
+        check_regex("item_refresh_delay", r"^(0|[1-9]\d*)$")
+        check_regex("minimum_items", r"^[1-9]\d*$")
+        check_regex("run_again_delay", r"^(0|[1-9]\d*)$")
+        check_regex("ignore_ids", r"^(None|\d{1,8}(,\d{1,8})*)$", flags=re.IGNORECASE)
+        check_regex("ignore_imdb_ids", r"^(None|tt\d{7,8}(,tt\d{7,8})*)$", flags=re.IGNORECASE)
+        check_regex("custom_repo", r"^(None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$", flags=re.IGNORECASE)
+
+        asset_dirs = settings_section.get("asset_directory") if isinstance(settings_section, dict) else None
+        if isinstance(asset_dirs, str):
+            asset_dirs = [line.strip() for line in asset_dirs.splitlines() if line.strip()]
+        elif isinstance(asset_dirs, list):
+            asset_dirs = [str(item).strip() for item in asset_dirs if str(item).strip()]
+        else:
+            asset_dirs = []
+
+        if asset_dirs:
+            md = MultiDict()
+            for entry in asset_dirs:
+                md.add("asset_directory", entry)
+            path_errors = path_validation.validate_payload(md)
+            if path_errors:
+                invalid_fields.append("asset_directory")
+
+        if invalid_fields:
+            update_section_validation("150-settings", "settings", False, reason="invalid_fields")
+        else:
+            update_section_validation("150-settings", "settings", True)
+
+    # Bulk validation for AniDB
+    anidb_settings = persistence.retrieve_settings("100-anidb") or {}
+    anidb_data = anidb_settings.get("anidb", {}) if isinstance(anidb_settings, dict) else {}
+    anidb_enabled = helpers.booler(anidb_data.get("enable")) if isinstance(anidb_data, dict) else False
+    if anidb_enabled:
+        update_section_validation("100-anidb", "anidb", True)
+    else:
+        skip_section_validation("100-anidb", "anidb", reason="disabled")
+
+    # Bulk validation for Webhooks
+    webhooks_settings = persistence.retrieve_settings("090-webhooks") or {}
+    webhooks_data = webhooks_settings.get("webhooks", {}) if isinstance(webhooks_settings, dict) else {}
+    configured_webhooks = False
+    if isinstance(webhooks_data, dict):
+        for value in webhooks_data.values():
+            if is_blank_value(value):
+                continue
+            configured_webhooks = True
+            break
+    if configured_webhooks:
+        update_section_validation("090-webhooks", "webhooks", True)
+    else:
+        skip_section_validation("090-webhooks", "webhooks", reason="no_webhooks")
+
+    # Bulk validation for Trakt (token check if present)
+    trakt_settings = persistence.retrieve_settings("130-trakt") or {}
+    trakt_data = trakt_settings.get("trakt", {}) if isinstance(trakt_settings, dict) else {}
+    trakt_auth = trakt_data.get("authorization", {}) if isinstance(trakt_data, dict) else {}
+    trakt_access = trakt_auth.get("access_token") if isinstance(trakt_auth, dict) else None
+    trakt_client_id = trakt_data.get("client_id") if isinstance(trakt_data, dict) else None
+    if is_blank_value(trakt_access) or is_blank_value(trakt_client_id):
+        skip_section_validation("130-trakt", "trakt", reason="missing_tokens")
+    else:
+        try:
+            response = requests.get(
+                "https://api.trakt.tv/users/settings",
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {trakt_access}",
+                    "trakt-api-version": "2",
+                    "trakt-api-key": trakt_client_id,
+                },
+                timeout=10,
+            )
+            if response.status_code == 200:
+                update_section_validation("130-trakt", "trakt", True)
+            elif response.status_code == 423:
+                update_section_validation("130-trakt", "trakt", False, reason="account_locked")
+            elif response.status_code in (401, 403):
+                update_section_validation("130-trakt", "trakt", False, reason="token_invalid")
+            else:
+                update_section_validation("130-trakt", "trakt", False, reason="validation_error")
+        except requests.exceptions.RequestException:
+            update_section_validation("130-trakt", "trakt", False, reason="validation_error")
+
+    # Bulk validation for MAL (token check if present)
+    mal_settings = persistence.retrieve_settings("140-mal") or {}
+    mal_data = mal_settings.get("mal", {}) if isinstance(mal_settings, dict) else {}
+    mal_auth = mal_data.get("authorization", {}) if isinstance(mal_data, dict) else {}
+    mal_access = mal_auth.get("access_token") if isinstance(mal_auth, dict) else None
+    if is_blank_value(mal_access):
+        skip_section_validation("140-mal", "mal", reason="missing_tokens")
+    else:
+        try:
+            response = requests.get(
+                "https://api.myanimelist.net/v2/users/@me",
+                headers={"Authorization": f"Bearer {mal_access}"},
+                timeout=10,
+            )
+            if response.status_code == 200:
+                update_section_validation("140-mal", "mal", True)
+            elif response.status_code in (401, 403):
+                update_section_validation("140-mal", "mal", False, reason="token_invalid")
+            else:
+                update_section_validation("140-mal", "mal", False, reason="validation_error")
+        except requests.exceptions.RequestException:
+            update_section_validation("140-mal", "mal", False, reason="validation_error")
 
     return jsonify({"success": True, "results": results, "summary": summary})
 
