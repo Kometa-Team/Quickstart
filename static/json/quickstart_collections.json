@@ -21979,27 +21979,32 @@
               {
                 "value": "bw",
                 "label": "BW",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
+                "image_url": "/static/images/people-styles/actor_bw.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
               },
               {
                 "value": "rainier",
                 "label": "Rainier",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
+                "image_url": "/static/images/people-styles/actor_rainier.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
               },
               {
                 "value": "signature",
                 "label": "Signature",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
+                "image_url": "/static/images/people-styles/actor_signature.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
               },
               {
                 "value": "diiivoy",
                 "label": "Diiivoy",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
+                "image_url": "/static/images/people-styles/actor_diiivoy.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
               },
               {
                 "value": "diiivoycolor",
                 "label": "Diiivoy Color",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
+                "image_url": "/static/images/people-styles/actor_diiivoycolor.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
               }
             ]
           },
@@ -22437,27 +22442,32 @@
               {
                 "value": "bw",
                 "label": "BW",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
+                "image_url": "/static/images/people-styles/actor_bw.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
               },
               {
                 "value": "rainier",
                 "label": "Rainier",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
+                "image_url": "/static/images/people-styles/actor_rainier.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
               },
               {
                 "value": "signature",
                 "label": "Signature",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
+                "image_url": "/static/images/people-styles/actor_signature.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
               },
               {
                 "value": "diiivoy",
                 "label": "Diiivoy",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
+                "image_url": "/static/images/people-styles/actor_diiivoy.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
               },
               {
                 "value": "diiivoycolor",
                 "label": "Diiivoy Color",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
+                "image_url": "/static/images/people-styles/actor_diiivoycolor.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
               }
             ]
           },
@@ -22904,27 +22914,32 @@
               {
                 "value": "bw",
                 "label": "BW",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
+                "image_url": "/static/images/people-styles/actor_bw.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
               },
               {
                 "value": "rainier",
                 "label": "Rainier",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
+                "image_url": "/static/images/people-styles/actor_rainier.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
               },
               {
                 "value": "signature",
                 "label": "Signature",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
+                "image_url": "/static/images/people-styles/actor_signature.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
               },
               {
                 "value": "diiivoy",
                 "label": "Diiivoy",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
+                "image_url": "/static/images/people-styles/actor_diiivoy.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
               },
               {
                 "value": "diiivoycolor",
                 "label": "Diiivoy Color",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
+                "image_url": "/static/images/people-styles/actor_diiivoycolor.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
               }
             ]
           },
@@ -23371,27 +23386,32 @@
               {
                 "value": "bw",
                 "label": "BW",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
+                "image_url": "/static/images/people-styles/actor_bw.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
               },
               {
                 "value": "rainier",
                 "label": "Rainier",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
+                "image_url": "/static/images/people-styles/actor_rainier.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
               },
               {
                 "value": "signature",
                 "label": "Signature",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
+                "image_url": "/static/images/people-styles/actor_signature.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
               },
               {
                 "value": "diiivoy",
                 "label": "Diiivoy",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
+                "image_url": "/static/images/people-styles/actor_diiivoy.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
               },
               {
                 "value": "diiivoycolor",
                 "label": "Diiivoy Color",
-                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
+                "image_url": "/static/images/people-styles/actor_diiivoycolor.webp",
+                "fallback_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
               }
             ]
           },

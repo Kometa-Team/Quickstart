@@ -1009,7 +1009,11 @@ prefix) %}
                             <button type="button" class="style-preview-card" data-style-value="{{ val.value }}"
                                 aria-pressed="false">
                                 <div class="style-preview-title">{{ val.label }}</div>
-                                <img src="{{ val.image_url }}" alt="{{ val.label }} style preview" loading="lazy">
+                                <img src="{{ val.image_url }}" alt="{{ val.label }} style preview" loading="lazy"
+                                    {% if val.fallback_url %}
+                                    data-fallback="{{ val.fallback_url }}"
+                                    onerror="if(this.dataset.fallback){this.src=this.dataset.fallback; this.onerror=null;}"
+                                    {% endif %}>
                             </button>
                             {% endfor %}
                         </div>
@@ -1038,6 +1042,7 @@ prefix) %}
                                 {% if is_number_input %}
                                 min="{{ item.min | default(1) }}" step="{{ item.step | default(1) }}" inputmode="numeric"
                                 data-numeric-only="true"
+                                data-default-value="{{ item.default | default('', true) }}"
                                 {% else %}
                                 minlength="1" pattern="[\x20-\x7E]+"
                                 title="Only ASCII characters allowed (no accents or emojis)"
