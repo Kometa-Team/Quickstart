@@ -155,6 +155,60 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function initNumericOnlyInputs (scope) {
+      const root = scope || document
+      root.querySelectorAll('input[data-numeric-only="true"]').forEach(input => {
+        if (input.dataset.numericOnlyBound) return
+        input.addEventListener('input', () => {
+          const raw = String(input.value || '')
+          const cleaned = raw.replace(/\D+/g, '')
+          if (raw !== cleaned) {
+            input.value = cleaned
+          }
+        })
+        input.dataset.numericOnlyBound = 'true'
+      })
+    }
+
+    function initStylePreviewGrids (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-style-preview-grid]').forEach(grid => {
+        const selectId = grid.dataset.styleSelect
+        if (!selectId) return
+        const select = document.getElementById(selectId)
+        if (!select) return
+        const cards = Array.from(grid.querySelectorAll('.style-preview-card'))
+        if (!cards.length) return
+
+        function syncActive () {
+          const value = select.value || ''
+          cards.forEach(card => {
+            const isActive = card.dataset.styleValue === value
+            card.classList.toggle('active', isActive)
+            card.setAttribute('aria-pressed', isActive ? 'true' : 'false')
+          })
+        }
+
+        if (!select.dataset.stylePreviewBound) {
+          select.addEventListener('change', syncActive)
+          select.dataset.stylePreviewBound = 'true'
+        }
+
+        cards.forEach(card => {
+          if (card.dataset.stylePreviewBound) return
+          card.addEventListener('click', () => {
+            const targetValue = card.dataset.styleValue
+            if (!targetValue || select.disabled) return
+            select.value = targetValue
+            select.dispatchEvent(new Event('change', { bubbles: true }))
+          })
+          card.dataset.stylePreviewBound = 'true'
+        })
+
+        syncActive()
+      })
+    }
+
     const fontPreviewCache = new Map()
 
     function loadFontPreview (file) {
@@ -503,6 +557,8 @@ document.addEventListener('DOMContentLoaded', function () {
       refreshPickerLabels()
       initTooltips(card)
       sortLanguageSelects(card)
+      initNumericOnlyInputs(card)
+      initStylePreviewGrids(card)
       wireOffsetReset(card)
       initSortablesInScope(card)
       setupCustomStringListHandlers('mass_genre_update', card)

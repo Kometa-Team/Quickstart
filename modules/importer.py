@@ -959,7 +959,16 @@ def prepare_import_payload(
                     if isinstance(template_values, dict):
                         allowed = _collect_template_keys(collection_by_id[collection_id].get("template_variables"))
                         clean_id = collection_id.replace("collection_", "", 1)
-                        for key, value in template_values.items():
+                        expanded_template_values = dict(template_values)
+                        data_block = expanded_template_values.get("data")
+                        if isinstance(data_block, dict):
+                            for subkey, subval in data_block.items():
+                                flat_key = f"data_{subkey}"
+                                if flat_key in allowed and flat_key not in expanded_template_values:
+                                    expanded_template_values[flat_key] = subval
+                            if "data" in expanded_template_values and "data" not in allowed:
+                                expanded_template_values.pop("data", None)
+                        for key, value in expanded_template_values.items():
                             if key in allowed:
                                 child_name = f"{lib_id}-template_collection_{clean_id}_{key}"
                                 libraries_data[child_name] = value

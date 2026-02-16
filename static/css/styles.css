@@ -1442,6 +1442,48 @@ header.fixed-top {
     padding: 6px;
 }
 
+.style-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    padding: 4px 0 8px;
+}
+
+.style-preview-card {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: left;
+    background: rgba(10, 10, 10, 0.35);
+    color: inherit;
+    cursor: pointer;
+    width: 100%;
+}
+
+.style-preview-card:hover {
+    border-color: rgba(56, 189, 248, 0.7);
+    background: rgba(10, 10, 10, 0.55);
+}
+
+.style-preview-card.active {
+    border-color: rgba(45, 212, 191, 0.9);
+    box-shadow: 0 0 0 1px rgba(45, 212, 191, 0.35);
+}
+
+.style-preview-title {
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    text-transform: capitalize;
+}
+
+.style-preview-card img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+}
+
 #final-content-wrapper.is-updating {
     display: none;
 }

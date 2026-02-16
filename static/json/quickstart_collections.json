@@ -21970,6 +21970,60 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "bw",
+            "options": [
+              {
+                "value": "bw",
+                "label": "BW",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
+              },
+              {
+                "value": "rainier",
+                "label": "Rainier",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
+              },
+              {
+                "value": "signature",
+                "label": "Signature",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
+              },
+              {
+                "value": "diiivoy",
+                "label": "Diiivoy",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
+              },
+              {
+                "value": "diiivoycolor",
+                "label": "Diiivoy Color",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
+              }
+            ]
+          },
+          {
+            "key": "data_depth",
+            "label": "Data Depth",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": "5",
+            "tooltip": "Replaces the data dynamic collection value. Controls the depth within the casting credits to search for common actors."
+          },
+          {
+            "key": "data_limit",
+            "label": "Data Limit",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": "25",
+            "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -22372,6 +22426,60 @@
             "type": "text_input",
             "default": "150",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "bw",
+            "options": [
+              {
+                "value": "bw",
+                "label": "BW",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
+              },
+              {
+                "value": "rainier",
+                "label": "Rainier",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
+              },
+              {
+                "value": "signature",
+                "label": "Signature",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
+              },
+              {
+                "value": "diiivoy",
+                "label": "Diiivoy",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
+              },
+              {
+                "value": "diiivoycolor",
+                "label": "Diiivoy Color",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
+              }
+            ]
+          },
+          {
+            "key": "data_depth",
+            "label": "Data Depth",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": "5",
+            "tooltip": "Replaces the data dynamic collection value. Controls the depth within the casting credits to search for common actors."
+          },
+          {
+            "key": "data_limit",
+            "label": "Data Limit",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": "25",
+            "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
           },
           {
             "key": "collection_mode",
@@ -22787,6 +22895,60 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "bw",
+            "options": [
+              {
+                "value": "bw",
+                "label": "BW",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
+              },
+              {
+                "value": "rainier",
+                "label": "Rainier",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
+              },
+              {
+                "value": "signature",
+                "label": "Signature",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
+              },
+              {
+                "value": "diiivoy",
+                "label": "Diiivoy",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
+              },
+              {
+                "value": "diiivoycolor",
+                "label": "Diiivoy Color",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
+              }
+            ]
+          },
+          {
+            "key": "data_depth",
+            "label": "Data Depth",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": "5",
+            "tooltip": "Replaces the data dynamic collection value. Controls the depth within the casting credits to search for common actors."
+          },
+          {
+            "key": "data_limit",
+            "label": "Data Limit",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": "25",
+            "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -23198,6 +23360,60 @@
             "type": "text_input",
             "default": "170",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "bw",
+            "options": [
+              {
+                "value": "bw",
+                "label": "BW",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_bw.png"
+              },
+              {
+                "value": "rainier",
+                "label": "Rainier",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_rainier.png"
+              },
+              {
+                "value": "signature",
+                "label": "Signature",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_signature.png"
+              },
+              {
+                "value": "diiivoy",
+                "label": "Diiivoy",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoy.png"
+              },
+              {
+                "value": "diiivoycolor",
+                "label": "Diiivoy Color",
+                "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/styles/actor_diiivoycolor.png"
+              }
+            ]
+          },
+          {
+            "key": "data_depth",
+            "label": "Data Depth",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": "5",
+            "tooltip": "Replaces the data dynamic collection value. Controls the depth within the casting credits to search for common actors."
+          },
+          {
+            "key": "data_limit",
+            "label": "Data Limit",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": "25",
+            "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
           },
           {
             "key": "collection_mode",

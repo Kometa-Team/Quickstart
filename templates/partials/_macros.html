@@ -994,7 +994,28 @@ prefix) %}
                                 {% endfor %}
                             </select>
                         </div>
+                        {% set preview_options = [] %}
+                        {% for val in item.options %}
+                        {% if val is mapping and val.image_url %}
+                        {% set show_preview = (val.media_types is not defined) or (library.type in val.media_types) %}
+                        {% if show_preview %}
+                        {% set _ = preview_options.append(val) %}
+                        {% endif %}
+                        {% endif %}
+                        {% endfor %}
+                        {% if preview_options %}
+                        <div class="style-preview-grid mb-2" data-style-preview-grid data-style-select="{{ input_name }}">
+                            {% for val in preview_options %}
+                            <button type="button" class="style-preview-card" data-style-value="{{ val.value }}"
+                                aria-pressed="false">
+                                <div class="style-preview-title">{{ val.label }}</div>
+                                <img src="{{ val.image_url }}" alt="{{ val.label }} style preview" loading="lazy">
+                            </button>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                         {% elif item.type == 'text_input' %}
+                        {% set is_number_input = item.input_type is defined and item.input_type == 'number' %}
                         <div class="input-group mb-2">
                             <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
                                 {% if item.url %}
@@ -1012,11 +1033,16 @@ prefix) %}
                                 </span>
                                 {% endif %}
                             </span>
-                            <input type="text" class="form-control" id="{{ input_name }}" name="{{ input_name }}"
+                            <input type="{{ 'number' if is_number_input else 'text' }}" class="form-control" id="{{ input_name }}" name="{{ input_name }}"
                                 value="{{ data['libraries'].get(input_name, item.default) | default('', true) }}"
+                                {% if is_number_input %}
+                                min="{{ item.min | default(1) }}" step="{{ item.step | default(1) }}" inputmode="numeric"
+                                data-numeric-only="true"
+                                {% else %}
                                 minlength="1" pattern="[\x20-\x7E]+"
-                                title="Only ASCII characters allowed (no accents or emojis)" {% if disable_toggle
-                                %}disabled{% endif %}>
+                                title="Only ASCII characters allowed (no accents or emojis)"
+                                {% endif %}
+                                {% if disable_toggle %}disabled{% endif %}>
                         </div>
                         {% endif %}
                         {% endfor %}

@@ -493,6 +493,53 @@ def optimize_template_variables(config_data, library_types=None):
     return config_data
 
 
+def _collapse_collection_data_template_vars(config_data):
+    if not isinstance(config_data, dict):
+        return config_data
+    libraries_section = config_data.get("libraries", {})
+    libraries = libraries_section.get("libraries")
+    if not isinstance(libraries, dict):
+        return config_data
+    for library_data in libraries.values():
+        if not isinstance(library_data, dict):
+            continue
+        collection_files = library_data.get("collection_files")
+        if not isinstance(collection_files, list):
+            continue
+        for entry in collection_files:
+            if not isinstance(entry, dict):
+                continue
+            template_vars = entry.get("template_variables")
+            if not isinstance(template_vars, dict):
+                continue
+            data_block = {}
+            for key in list(template_vars.keys()):
+                if not isinstance(key, str) or not key.startswith("data_"):
+                    continue
+                subkey = key[5:]
+                if not subkey:
+                    continue
+                value = template_vars.pop(key)
+                if value is None:
+                    continue
+                if isinstance(value, str):
+                    cleaned = value.strip()
+                    if not cleaned:
+                        continue
+                    if cleaned.isdigit():
+                        value = int(cleaned)
+                data_block[subkey] = value
+            if not data_block:
+                continue
+            existing = template_vars.get("data")
+            if isinstance(existing, dict):
+                existing.update(data_block)
+                template_vars["data"] = existing
+            else:
+                template_vars["data"] = data_block
+    return config_data
+
+
 def build_libraries_section(
     movie_libraries,
     show_libraries,
@@ -2010,6 +2057,7 @@ def build_config(header_style="standard", config_name=None):
     optimize_defaults = helpers.booler(app.config.get("QS_OPTIMIZE_DEFAULTS", True))
     if optimize_defaults:
         config_data = optimize_template_variables(config_data, library_types)
+    config_data = _collapse_collection_data_template_vars(config_data)
 
     # Apply enforce_string_fields to ensure proper formatting
     config_data = helpers.enforce_string_fields(config_data, helpers.STRING_FIELDS)
