@@ -27,7 +27,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -66,7 +66,7 @@
               "movie"
             ]
           },
-                    {
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -91,7 +91,6 @@
               }
             ]
           },
-
           {
             "key": "visible_home",
             "label": "Visible Home",
@@ -491,7 +490,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -937,7 +936,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -1383,7 +1382,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -1829,7 +1828,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -2276,7 +2275,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -2724,7 +2723,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -3172,7 +3171,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -3646,7 +3645,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -4092,7 +4091,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -4539,7 +4538,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -4986,7 +4985,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -5432,7 +5431,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -5878,7 +5877,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -6324,7 +6323,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -6770,7 +6769,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -7235,7 +7234,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "010",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -7700,7 +7699,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -8148,7 +8147,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -8664,7 +8663,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -9233,7 +9232,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -9800,7 +9799,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -10340,7 +10339,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -10895,7 +10894,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -11693,7 +11692,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "020",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -12266,7 +12265,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "060",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -13497,7 +13496,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "040",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -14323,7 +14322,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "085",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -15208,7 +15207,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -15610,7 +15609,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -16013,7 +16012,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -16416,7 +16415,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -16819,7 +16818,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -17222,7 +17221,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -17625,7 +17624,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -18028,7 +18027,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -18436,7 +18435,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "080",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -18838,7 +18837,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -19241,7 +19240,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "081",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -19812,7 +19811,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "082",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -20270,7 +20269,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "125",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -20729,7 +20728,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "120",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -20737,7 +20736,7 @@
           {
             "key": "style",
             "label": "Style",
-            "url":"https://kometa.wiki/en/nightly/defaults/both/resolution/#standards-style",
+            "url": "https://kometa.wiki/en/nightly/defaults/both/resolution/#standards-style",
             "type": "select",
             "tooltip": "Controls the visual theme of the collections created.",
             "default": "default",
@@ -21150,7 +21149,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "090",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -21553,7 +21552,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "095",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -21964,7 +21963,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "140",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -22027,6 +22026,13 @@
             "step": 1,
             "default": "25",
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific people from these collections.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)"
           },
           {
             "key": "collection_mode",
@@ -22427,7 +22433,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "150",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -22490,6 +22496,13 @@
             "step": 1,
             "default": "25",
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific people from these collections.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)"
           },
           {
             "key": "collection_mode",
@@ -22899,7 +22912,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "160",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -22962,6 +22975,13 @@
             "step": 1,
             "default": "25",
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific people from these collections.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)"
           },
           {
             "key": "collection_mode",
@@ -23371,7 +23391,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "170",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -23434,6 +23454,13 @@
             "step": 1,
             "default": "25",
             "tooltip": "Replaces the data dynamic collection value. Controls the maximum number of collections to create."
+          },
+          {
+            "key": "exclude",
+            "label": "Exclude",
+            "type": "string_list",
+            "tooltip": "Exclude specific people from these collections.",
+            "placeholder": "Add person name (e.g. Jeremy Kleiner)"
           },
           {
             "key": "collection_mode",
@@ -23850,7 +23877,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "030",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -24750,7 +24777,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "070",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -25154,7 +25181,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "050",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -25573,7 +25600,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "000",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -26308,7 +26335,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "105",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -26710,7 +26737,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "100",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
@@ -27112,7 +27139,7 @@
           {
             "key": "collection_section",
             "label": "Collection Section",
-            "url":"https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
             "type": "text_input",
             "default": "100",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."

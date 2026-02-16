@@ -128,6 +128,40 @@ def _to_number(value):
     return None
 
 
+def _coerce_string_list(values):
+    cleaned = []
+    seen = set()
+    for item in values:
+        if item is None:
+            continue
+        text = str(item).strip()
+        if not text or text in seen:
+            continue
+        cleaned.append(text)
+        seen.add(text)
+    return cleaned
+
+
+def _parse_string_list(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return _coerce_string_list(value)
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return []
+        if stripped.startswith("[") and stripped.endswith("]"):
+            try:
+                parsed = json.loads(stripped)
+            except Exception:
+                parsed = None
+            if isinstance(parsed, list):
+                return _coerce_string_list(parsed)
+        return _coerce_string_list([stripped])
+    return _coerce_string_list([value])
+
+
 def _values_match(default, actual):
     default = _normalize_template_value(default)
     actual = _normalize_template_value(actual)
@@ -834,10 +868,17 @@ def build_libraries_section(
                     helpers.ts_log(f"Found {len(all_children)} child template_variables: {all_children}", level="DEBUG")
 
                 if all_children:
-                    file_entry["template_variables"] = {
+                    template_vars = {
                         k: (True if isinstance(v, (bool, str)) and str(v).lower() == "true" else False if isinstance(v, (bool, str)) and str(v).lower() == "false" else v)
                         for k, v in all_children.items()
                     }
+                    if "exclude" in template_vars:
+                        exclude_values = _parse_string_list(template_vars.get("exclude"))
+                        if exclude_values:
+                            template_vars["exclude"] = exclude_values
+                        else:
+                            template_vars.pop("exclude", None)
+                    file_entry["template_variables"] = template_vars
 
                 collection_files.append(file_entry)
 

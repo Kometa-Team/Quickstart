@@ -218,6 +218,79 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function setupTemplateStringListHandlers (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-template-string-list]').forEach(wrapper => {
+        if (wrapper.dataset.listenerAdded) return
+        const hiddenId = wrapper.dataset.hiddenInput
+        const hidden = hiddenId ? document.getElementById(hiddenId) : wrapper.querySelector('input[type="hidden"]')
+        const input = wrapper.querySelector('input[type="text"]')
+        const addBtn = wrapper.querySelector('[data-template-string-add]')
+        const list = wrapper.querySelector('[data-template-string-items]')
+
+        if (!hidden || !input || !addBtn || !list) return
+
+        function parseValues () {
+          const raw = String(hidden.value || '').trim()
+          if (!raw) return []
+          try {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed)) {
+              return parsed.map(item => String(item).trim()).filter(Boolean)
+            }
+          } catch (e) {
+            // fall through to treat as single value
+          }
+          return [raw]
+        }
+
+        function renderList (values) {
+          list.innerHTML = ''
+          values.forEach(value => {
+            const li = document.createElement('li')
+            li.className = 'list-group-item d-flex justify-content-between align-items-center'
+            li.innerHTML = `
+              <span>${value}</span>
+              <button type="button" class="btn btn-sm btn-danger" aria-label="Remove">
+                <i class="bi bi-x-lg"></i>
+              </button>`
+            list.appendChild(li)
+
+            li.querySelector('button').addEventListener('click', () => {
+              const updated = values.filter(item => item !== value)
+              hidden.value = JSON.stringify(updated)
+              renderList(updated)
+            })
+          })
+        }
+
+        function addValue () {
+          const value = input.value.trim()
+          if (!value) return
+          const current = parseValues()
+          if (current.includes(value)) return
+          current.push(value)
+          hidden.value = JSON.stringify(current)
+          renderList(current)
+          input.value = ''
+        }
+
+        const initial = parseValues()
+        hidden.value = JSON.stringify(initial)
+        renderList(initial)
+
+        addBtn.addEventListener('click', addValue)
+        input.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            addValue()
+          }
+        })
+
+        wrapper.dataset.listenerAdded = 'true'
+      })
+    }
+
     const fontPreviewCache = new Map()
 
     function loadFontPreview (file) {
@@ -576,6 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
       setupCustomStringListHandlers('metadata_backup', card)
       setupCustomStringListHandlers('mass_content_rating_update', card)
       setupCustomStringListHandlers('mass_genre_mapper', card)
+      setupTemplateStringListHandlers(card)
       setupMappingListHandlers('genre_mapper', card)
       setupMappingListHandlers('content_rating_mapper', card)
       wireOverlayDetailToggles(card)

@@ -1018,6 +1018,37 @@ prefix) %}
                             {% endfor %}
                         </div>
                         {% endif %}
+                        {% elif item.type == 'string_list' %}
+                        {% set stored_list = data['libraries'].get(input_name) %}
+                        {% if stored_list is string %}
+                        {% set list_json = stored_list %}
+                        {% elif stored_list is sequence %}
+                        {% set list_json = stored_list | tojson %}
+                        {% else %}
+                        {% set list_json = '[]' %}
+                        {% endif %}
+                        <div class="mb-2" data-template-string-list data-hidden-input="{{ input_name }}">
+                            <div class="input-group">
+                                <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
+                                    {{ item.label }}
+                                    {% if item.tooltip %}
+                                    <span class="text-{{ item.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"
+                                        data-bs-html="true" title="{{ item.tooltip }}">
+                                        <i
+                                            class="bi {% if item.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                    </span>
+                                    {% endif %}
+                                </span>
+                                <input type="text" class="form-control" id="{{ input_name }}_input"
+                                    aria-describedby="{{ input_name }}_text"
+                                    placeholder="{{ item.placeholder | default('Add value') }}"
+                                    {% if disable_toggle %}disabled{% endif %}>
+                                <button class="btn nav-button" type="button" data-template-string-add
+                                    {% if disable_toggle %}disabled{% endif %}>Add</button>
+                            </div>
+                            <ul class="list-group mt-2" data-template-string-items></ul>
+                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ list_json }}">
+                        </div>
                         {% elif item.type == 'text_input' %}
                         {% set is_number_input = item.input_type is defined and item.input_type == 'number' %}
                         <div class="input-group mb-2">
