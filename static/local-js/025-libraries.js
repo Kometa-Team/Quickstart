@@ -166,6 +166,15 @@ document.addEventListener('DOMContentLoaded', function () {
             input.value = cleaned
           }
         })
+        input.addEventListener('blur', () => {
+          const raw = String(input.value || '').trim()
+          if (raw !== '') return
+          const fallback = input.dataset.defaultValue
+          if (fallback !== undefined && String(fallback).trim() !== '') {
+            input.value = fallback
+            input.dispatchEvent(new Event('change', { bubbles: true }))
+          }
+        })
         input.dataset.numericOnlyBound = 'true'
       })
     }

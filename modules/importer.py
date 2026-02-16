@@ -961,13 +961,25 @@ def prepare_import_payload(
                         clean_id = collection_id.replace("collection_", "", 1)
                         expanded_template_values = dict(template_values)
                         data_block = expanded_template_values.get("data")
+                        data_reported = set()
                         if isinstance(data_block, dict):
                             for subkey, subval in data_block.items():
                                 flat_key = f"data_{subkey}"
                                 if flat_key in allowed and flat_key not in expanded_template_values:
                                     expanded_template_values[flat_key] = subval
+                                if flat_key in allowed:
+                                    report.add(
+                                        "imported",
+                                        f"libraries.{lib_name}.collection_files[{idx}].template_variables.data.{subkey}",
+                                    )
+                                    data_reported.add(subkey)
                             if "data" in expanded_template_values and "data" not in allowed:
                                 expanded_template_values.pop("data", None)
+                            if data_reported:
+                                report.add(
+                                    "imported",
+                                    f"libraries.{lib_name}.collection_files[{idx}].template_variables.data",
+                                )
                         for key, value in expanded_template_values.items():
                             if key in allowed:
                                 child_name = f"{lib_id}-template_collection_{clean_id}_{key}"
