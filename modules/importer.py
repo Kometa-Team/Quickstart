@@ -1105,11 +1105,7 @@ def prepare_import_payload(
                         continue
 
                     overlay_meta = overlay_by_id.get(overlay_id, {})
-                    if (
-                        overlay_id == "overlay_languages"
-                        and isinstance(template_values, dict)
-                        and str(template_values.get("use_subtitles", "")).strip().lower() == "true"
-                    ):
+                    if overlay_id == "overlay_languages" and isinstance(template_values, dict) and str(template_values.get("use_subtitles", "")).strip().lower() == "true":
                         subtitles_id = overlay_by_alias.get("languages_subtitles")
                         if subtitles_id:
                             overlay_id = subtitles_id
