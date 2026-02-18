@@ -1049,6 +1049,40 @@ prefix) %}
                             <ul class="list-group mt-2" data-template-string-items></ul>
                             <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ list_json }}">
                         </div>
+                        {% elif item.type == 'relative_year' %}
+                        {% set stored_val = data['libraries'].get(input_name, item.default) | default('', true) %}
+                        <div class="input-group mb-2" data-relative-year data-hidden-input="{{ input_name }}"
+                            data-default-value="{{ item.default | default('', true) }}"
+                            data-min-year="{{ item.min | default(1) }}">
+                            <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
+                                {% if item.url %}
+                                <a href="{{ item.url }}" target="_blank">
+                                    {{ item.label }}
+                                </a>
+                                {% else %}
+                                {{ item.label }}
+                                {% endif %}
+                                {% if item.tooltip %}
+                                <span class="text-{{ item.tooltip_variant or 'info' }} ms-2" data-bs-toggle="tooltip"
+                                    data-bs-html="true" title="{{ item.tooltip }}">
+                                    <i
+                                        class="bi {% if item.tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+                                </span>
+                                {% endif %}
+                            </span>
+                            <select class="form-select" data-relative-year-mode aria-describedby="{{ input_name }}_text"
+                                {% if disable_toggle %}disabled{% endif %}>
+                                <option value="first">First</option>
+                                <option value="latest">Latest</option>
+                                <option value="relative_first">Relative First (first+#)</option>
+                                <option value="relative_latest">Relative Latest (latest-#)</option>
+                                <option value="year">Specific Year</option>
+                            </select>
+                            <input type="number" class="form-control" data-relative-year-value inputmode="numeric"
+                                min="1" step="1" data-numeric-only="true" placeholder="Year or Offset"
+                                aria-label="Year or offset" {% if disable_toggle %}disabled{% endif %}>
+                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}">
+                        </div>
                         {% elif item.type == 'text_input' %}
                         {% set is_number_input = item.input_type is defined and item.input_type == 'number' %}
                         <div class="input-group mb-2">

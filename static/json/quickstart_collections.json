@@ -33,6 +33,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "use_best_picture",
             "label": "Oscars Best Picture Winners",
             "tooltip": "Collection of Oscars Best Picture Award Winners.",
@@ -496,6 +524,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "use_golden",
             "label": "Berlinale Golden Bears",
             "tooltip": "Collection of Berlin International Film Festival Golden Bear Award Winners.",
@@ -940,6 +996,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_best",
@@ -1388,6 +1472,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "use_palm",
             "label": "Cannes Golden Palm Winners",
             "tooltip": "Collection of Cannes Golden Palm Award Winners.",
@@ -1832,6 +1944,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_best",
@@ -2279,6 +2419,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_best",
@@ -2729,6 +2897,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "use_best",
             "label": "Emmys Best in Category Winners",
             "tooltip": "Collection of Emmys Best in Category Award Winners.",
@@ -3175,6 +3371,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_best_picture",
@@ -3651,6 +3875,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "use_best",
             "label": "Independent Spirit Best Feature Winners",
             "tooltip": "Collection of Independent Spirit Best Feature Award Winners.",
@@ -4095,6 +4347,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_all_time",
@@ -4544,6 +4824,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "use_pca",
             "label": "People's Choice Award Winners",
             "tooltip": "Collection of People's Choice Award Winners.",
@@ -4989,6 +5297,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_golden",
@@ -5437,6 +5773,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "use_golden",
             "label": "Screen Actors Guild Award Winners",
             "tooltip": "Collection of Screen Actors Guild Award Winners.",
@@ -5881,6 +6245,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_grand",
@@ -6329,6 +6721,34 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
+          },
+          {
             "key": "use_best",
             "label": "Toronto People's Choice Award Winners",
             "tooltip": "Collection of Toronto International Film Festival People's Choice Award Winners.",
@@ -6773,6 +7193,34 @@
             "type": "text_input",
             "default": "130",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "latest-5",
+            "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 1,
+            "step": 1
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "latest",
+            "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
+            "min": 2,
+            "step": 1
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "default": "1",
+            "tooltip": "Determines the amount incremented from one collection to the other. Allowed values: number greater than 0.",
+            "input_type": "number",
+            "min": 1,
+            "step": 1
           },
           {
             "key": "use_golden",

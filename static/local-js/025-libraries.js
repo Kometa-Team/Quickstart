@@ -218,6 +218,99 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function initRelativeYearInputs (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-relative-year]').forEach(wrapper => {
+        if (wrapper.dataset.listenerAdded) return
+        const hiddenId = wrapper.dataset.hiddenInput
+        const hidden = hiddenId ? document.getElementById(hiddenId) : wrapper.querySelector('input[type="hidden"]')
+        const modeSelect = wrapper.querySelector('[data-relative-year-mode]')
+        const valueInput = wrapper.querySelector('[data-relative-year-value]')
+        const minYear = parseInt(wrapper.dataset.minYear || '1', 10) || 1
+        const defaultValue = String(wrapper.dataset.defaultValue || '').trim()
+
+        if (!hidden || !modeSelect || !valueInput) return
+
+        function parseValue (raw) {
+          const value = String(raw || '').trim().toLowerCase()
+          if (!value) return { valid: false }
+          if (value === 'first') return { valid: true, mode: 'first', number: '' }
+          if (value === 'latest') return { valid: true, mode: 'latest', number: '' }
+          let match = value.match(/^first\\+(\\d+)$/)
+          if (match) return { valid: true, mode: 'relative_first', number: match[1] }
+          match = value.match(/^latest-(\\d+)$/)
+          if (match) return { valid: true, mode: 'relative_latest', number: match[1] }
+          if (/^\\d+$/.test(value)) return { valid: true, mode: 'year', number: value }
+          return { valid: false }
+        }
+
+        function resolveInitial () {
+          const current = parseValue(hidden.value)
+          if (current.valid) return current
+          const fallback = parseValue(defaultValue)
+          if (fallback.valid) return fallback
+          return { mode: 'latest', number: '' }
+        }
+
+        function applyModeUI (mode) {
+          const isFixed = mode === 'first' || mode === 'latest'
+          valueInput.classList.toggle('d-none', isFixed)
+          if (mode === 'year') {
+            valueInput.placeholder = 'Year'
+            valueInput.min = String(minYear)
+          } else if (mode === 'relative_first' || mode === 'relative_latest') {
+            valueInput.placeholder = 'Offset'
+            valueInput.min = '1'
+          } else {
+            valueInput.placeholder = ''
+            valueInput.min = '1'
+          }
+        }
+
+        function updateHidden () {
+          const mode = modeSelect.value
+          const rawNum = parseInt(valueInput.value || '', 10)
+          let nextValue = ''
+
+          if (mode === 'year') {
+            let year = Number.isFinite(rawNum) ? rawNum : minYear
+            if (year < minYear) year = minYear
+            valueInput.value = String(year)
+            nextValue = String(year)
+          } else if (mode === 'relative_first') {
+            let offset = Number.isFinite(rawNum) ? rawNum : 1
+            if (offset < 1) offset = 1
+            valueInput.value = String(offset)
+            nextValue = `first+${offset}`
+          } else if (mode === 'relative_latest') {
+            let offset = Number.isFinite(rawNum) ? rawNum : 1
+            if (offset < 1) offset = 1
+            valueInput.value = String(offset)
+            nextValue = `latest-${offset}`
+          } else if (mode === 'first' || mode === 'latest') {
+            valueInput.value = ''
+            nextValue = mode
+          } else {
+            nextValue = defaultValue || 'latest'
+          }
+
+          hidden.value = nextValue
+          applyModeUI(mode)
+        }
+
+        const initial = resolveInitial()
+        modeSelect.value = initial.mode
+        valueInput.value = initial.number
+        updateHidden()
+
+        modeSelect.addEventListener('change', () => updateHidden())
+        valueInput.addEventListener('input', () => updateHidden())
+        valueInput.addEventListener('blur', () => updateHidden())
+
+        wrapper.dataset.listenerAdded = 'true'
+      })
+    }
+
     function setupTemplateStringListHandlers (scope) {
       const root = scope || document
       root.querySelectorAll('[data-template-string-list]').forEach(wrapper => {
@@ -641,6 +734,7 @@ document.addEventListener('DOMContentLoaded', function () {
       sortLanguageSelects(card)
       initNumericOnlyInputs(card)
       initStylePreviewGrids(card)
+      initRelativeYearInputs(card)
       wireOffsetReset(card)
       initSortablesInScope(card)
       setupCustomStringListHandlers('mass_genre_update', card)

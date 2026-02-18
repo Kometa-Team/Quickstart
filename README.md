@@ -42,6 +42,7 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Library Telemetry:** Pulls real Plex server data (Plex Pass status, library types, agent/scanner compatibility)
 - **Dynamic Toggles & Templates:** Rich UI for enabling collections, overlays, and builder template variables
 - **Filtered Page Search:** Find matches on Libraries and Settings pages and auto-expand matching sections
+- **Settings Cog:** Quick access to runtime controls like debug mode and port changes from anywhere
 
 ![Libraries Page](static/images/readme/libraries-page.png)
 
@@ -78,11 +79,12 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 ![Analytics Page](static/images/readme/analytics-page.png)
 
 ### Import Existing Config
-- **Import Config:** Bring an existing Kometa YAML into Quickstart to prefill settings, libraries, and templates.
-- **Preview required:** Quickstart always runs a preview before import and shows a line‑by‑line report (`mapped / partial / unmapped / skipped`).
+- **Import Config:** Launch import from the Welcome page to prefill settings, libraries, and templates.
+- **YAML or ZIP:** Zip files must contain exactly one YAML config; `.ttf`/`.otf` fonts in the zip will be imported.
+- **Preview required:** Quickstart always runs a preview before import and shows a line‑by‑line report (`imported / not imported`) with filters (All/Imported/Not Imported/Comments) and a downloadable report.
 - **Plex credentials prompt:** If the import contains libraries, Plex validation is required for mapping. Quickstart will prompt for Plex URL/token if none are present; if the credentials in the file fail validation, you’ll be prompted to correct them and re‑run Preview.
-- **Library mapping:** Imported library names must be mapped to Plex libraries (or ignored) before confirming the import.
-- **After import:** Review each page and validate services (Plex/TMDB/etc.) before generating the final config.
+- **Library mapping:** Imported library names must be mapped to Plex libraries (or ignored) before confirming the import; you can re‑preview after mapping.
+- **After import:** Quickstart redirects to Final Validation. Review each page and validate services (Plex/TMDB/etc.) before generating the final config.
 
 ![Import Config](static/images/readme/import-config.png)
 
