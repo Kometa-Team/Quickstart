@@ -2,7 +2,6 @@
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
-  console.log('Hello world from 025-libraries')
 
   const scriptsToLoad = [
     '/static/local-js/imageHandler.js',
@@ -230,7 +229,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const minYear = parseInt(wrapper.dataset.minYear || '1', 10) || 1
         const defaultValue = String(wrapper.dataset.defaultValue || '').trim()
 
-        console.log('[relative-year scan]', hiddenId, hidden?.id, hidden?.value)
         if (!hidden || !modeSelect || !valueInput) {
           console.warn('[relative-year missing]', { hiddenId, hasHidden: !!hidden, hasMode: !!modeSelect, hasValue: !!valueInput })
           return
@@ -364,22 +362,10 @@ document.addEventListener('DOMContentLoaded', function () {
           applyModeUI(mode)
         }
 
-        const shouldDebug = hidden.id && hidden.id.includes('template_collection_year')
-        if (shouldDebug) {
-          const rawOptions = Array.from(modeSelect.options).map(opt => ({
-            value: opt.value,
-            kind: opt.dataset.kind,
-            text: opt.textContent?.trim()
-          }))
-          console.log('[relative-year init]', hidden.id, 'raw:', hidden.value, 'default:', defaultValue, 'options:', options, 'rawOptions:', rawOptions)
-        }
         const initial = resolveInitial()
         modeSelect.value = initial.mode
         valueInput.value = initial.number
         updateHidden()
-        if (shouldDebug) {
-          console.log('[relative-year set]', hidden.id, 'mode:', modeSelect.value, 'input:', valueInput.value, 'hidden:', hidden.value)
-        }
 
         modeSelect.addEventListener('change', () => updateHidden())
         valueInput.addEventListener('input', () => updateHidden())
