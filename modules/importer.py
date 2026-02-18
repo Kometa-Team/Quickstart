@@ -811,6 +811,81 @@ def prepare_import_payload(
         report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "Unsupported operation format.")
         return True, False
 
+    def _handle_delete_collections_operation(
+        lib_id: str,
+        lib_name: str,
+        op_key: str,
+        op_value: Any,
+    ) -> tuple[bool, bool]:
+        if op_key != "delete_collections":
+            return False, False
+        if not isinstance(op_value, dict):
+            report.add(
+                "unmapped",
+                f"libraries.{lib_name}.operations.{op_key}",
+                "Unsupported delete_collections format.",
+            )
+            return True, False
+
+        mapping = {
+            "configured": "delete_collections_configured",
+            "managed": "delete_collections_managed",
+            "ignore_empty_smart_collections": "delete_collections_ignore_empty_smart_collections",
+            "less": "delete_collections_less",
+        }
+        imported_any = False
+
+        for raw_key, raw_value in op_value.items():
+            key = str(raw_key)
+            target = mapping.get(key)
+            if not target:
+                report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}.{key}")
+                continue
+            if key == "less":
+                try:
+                    if raw_value is None or raw_value == "":
+                        report.add(
+                            "unmapped",
+                            f"libraries.{lib_name}.operations.{op_key}.{key}",
+                            "Missing numeric value.",
+                        )
+                        continue
+                    libraries_data[f"{lib_id}-attribute_{target}"] = int(raw_value)
+                    report.add("imported", f"libraries.{lib_name}.operations.{op_key}.{key}")
+                    imported_any = True
+                except Exception:
+                    report.add(
+                        "unmapped",
+                        f"libraries.{lib_name}.operations.{op_key}.{key}",
+                        "Invalid numeric value.",
+                    )
+                continue
+            bool_value = None
+            if isinstance(raw_value, bool):
+                bool_value = raw_value
+            elif isinstance(raw_value, str):
+                lowered = raw_value.strip().lower()
+                if lowered in {"true", "yes", "1"}:
+                    bool_value = True
+                elif lowered in {"false", "no", "0"}:
+                    bool_value = False
+            if bool_value is None:
+                report.add(
+                    "unmapped",
+                    f"libraries.{lib_name}.operations.{op_key}.{key}",
+                    "Invalid boolean value.",
+                )
+                continue
+            libraries_data[f"{lib_id}-attribute_{target}"] = bool_value
+            report.add("imported", f"libraries.{lib_name}.operations.{op_key}.{key}")
+            imported_any = True
+
+        if imported_any:
+            report.add("imported", f"libraries.{lib_name}.operations.{op_key}")
+        else:
+            report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "No importable values found.")
+        return True, imported_any
+
     for section in SIMPLE_SECTIONS:
         if section not in config_data:
             continue
@@ -1030,6 +1105,21 @@ def prepare_import_payload(
                         continue
 
                     overlay_meta = overlay_by_id.get(overlay_id, {})
+                    if (
+                        overlay_id == "overlay_languages"
+                        and isinstance(template_values, dict)
+                        and str(template_values.get("use_subtitles", "")).strip().lower() == "true"
+                    ):
+                        subtitles_id = overlay_by_alias.get("languages_subtitles")
+                        if subtitles_id:
+                            overlay_id = subtitles_id
+                            overlay_meta = overlay_by_id.get(overlay_id, {})
+                            template_values = dict(template_values)
+                            template_values.pop("use_subtitles", None)
+                            report.add(
+                                "imported",
+                                f"libraries.{lib_name}.overlay_files[{idx}].template_variables.use_subtitles",
+                            )
                     media_types = overlay_meta.get("media_types") or []
                     if builder_level == "movie" and media_types and "movie" not in media_types:
                         report.add(
@@ -1083,6 +1173,11 @@ def prepare_import_payload(
                         libraries_data[f"{lib_id}-attribute_{key}"] = value
                         report.add("imported", f"libraries.{lib_name}.operations.{key}")
                         imported_ops = True
+                        continue
+
+                    handled, imported = _handle_delete_collections_operation(lib_id, str(lib_name), key, value)
+                    if handled:
+                        imported_ops = imported_ops or imported
                         continue
 
                     handled, imported = _handle_mass_update_operation(lib_id, str(lib_name), key, value)
