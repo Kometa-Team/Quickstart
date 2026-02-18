@@ -1051,6 +1051,13 @@ prefix) %}
                         </div>
                         {% elif item.type == 'relative_year' %}
                         {% set stored_val = data['libraries'].get(input_name, item.default) | default('', true) %}
+                        {% set rel_options = item.relative_options if item.relative_options is defined else [
+                            {'value': 'first', 'label': 'First', 'kind': 'fixed', 'token': 'first'},
+                            {'value': 'latest', 'label': 'Latest', 'kind': 'fixed', 'token': 'latest'},
+                            {'value': 'relative_first', 'label': 'Relative First (first+#)', 'kind': 'relative', 'prefix': 'first+'},
+                            {'value': 'relative_latest', 'label': 'Relative Latest (latest-#)', 'kind': 'relative', 'prefix': 'latest-'},
+                            {'value': 'year', 'label': 'Specific Year', 'kind': 'year'}
+                        ] %}
                         <div class="input-group mb-2" data-relative-year data-hidden-input="{{ input_name }}"
                             data-default-value="{{ item.default | default('', true) }}"
                             data-min-year="{{ item.min | default(1) }}">
@@ -1072,11 +1079,13 @@ prefix) %}
                             </span>
                             <select class="form-select" data-relative-year-mode aria-describedby="{{ input_name }}_text"
                                 {% if disable_toggle %}disabled{% endif %}>
-                                <option value="first">First</option>
-                                <option value="latest">Latest</option>
-                                <option value="relative_first">Relative First (first+#)</option>
-                                <option value="relative_latest">Relative Latest (latest-#)</option>
-                                <option value="year">Specific Year</option>
+                                {% for opt in rel_options %}
+                                <option value="{{ opt.value }}" data-kind="{{ opt.kind }}"
+                                    {% if opt.token is defined %}data-token="{{ opt.token }}"{% endif %}
+                                    {% if opt.prefix is defined %}data-prefix="{{ opt.prefix }}"{% endif %}>
+                                    {{ opt.label }}
+                                </option>
+                                {% endfor %}
                             </select>
                             <input type="number" class="form-control" data-relative-year-value inputmode="numeric"
                                 min="1" step="1" data-numeric-only="true" placeholder="Year or Offset"

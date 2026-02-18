@@ -2,6 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
+  console.log('Hello world from 025-libraries')
 
   const scriptsToLoad = [
     '/static/local-js/imageHandler.js',
@@ -229,19 +230,80 @@ document.addEventListener('DOMContentLoaded', function () {
         const minYear = parseInt(wrapper.dataset.minYear || '1', 10) || 1
         const defaultValue = String(wrapper.dataset.defaultValue || '').trim()
 
-        if (!hidden || !modeSelect || !valueInput) return
+        console.log('[relative-year scan]', hiddenId, hidden?.id, hidden?.value)
+        if (!hidden || !modeSelect || !valueInput) {
+          console.warn('[relative-year missing]', { hiddenId, hasHidden: !!hidden, hasMode: !!modeSelect, hasValue: !!valueInput })
+          return
+        }
+
+        const options = Array.from(modeSelect.options).map(option => {
+          let kind = option.dataset.kind || ''
+          if (!kind) {
+            if (option.value === 'year') {
+              kind = 'year'
+            } else if (option.value.startsWith('relative_')) {
+              kind = 'relative'
+            } else {
+              kind = 'fixed'
+            }
+          }
+          let token = option.dataset.token || ''
+          if (!token && kind === 'fixed') {
+            token = option.value
+          }
+          let prefix = option.dataset.prefix || ''
+          if (!prefix && kind === 'relative') {
+            const suffix = option.value.replace(/^relative_/, '')
+            if (suffix === 'first') {
+              prefix = 'first+'
+            } else if (suffix === 'latest') {
+              prefix = 'latest-'
+            } else if (suffix) {
+              prefix = `${suffix}-`
+            }
+          }
+          return {
+            value: option.value,
+            kind,
+            token,
+            prefix
+          }
+        })
+        const yearOption = options.find(opt => opt.kind === 'year')
 
         function parseValue (raw) {
-          const value = String(raw || '').trim().toLowerCase()
+          const value = String(raw || '').trim()
+          const lowered = value.toLowerCase()
           if (!value) return { valid: false }
-          if (value === 'first') return { valid: true, mode: 'first', number: '' }
-          if (value === 'latest') return { valid: true, mode: 'latest', number: '' }
-          let match = value.match(/^first\\+(\\d+)$/)
-          if (match) return { valid: true, mode: 'relative_first', number: match[1] }
-          match = value.match(/^latest-(\\d+)$/)
-          if (match) return { valid: true, mode: 'relative_latest', number: match[1] }
-          if (/^\\d+$/.test(value)) return { valid: true, mode: 'year', number: value }
+          for (const opt of options) {
+            if (opt.kind !== 'fixed') continue
+            if (String(opt.token || '').toLowerCase() === lowered) {
+              return { valid: true, mode: opt.value, number: '' }
+            }
+          }
+          for (const opt of options) {
+            if (opt.kind !== 'relative') continue
+            const prefix = String(opt.prefix || '').toLowerCase()
+            if (!prefix || !lowered.startsWith(prefix)) continue
+            const remainder = lowered.slice(prefix.length)
+            if (/^\d+$/.test(remainder)) {
+              return { valid: true, mode: opt.value, number: remainder }
+            }
+          }
+          if (yearOption && /^\d+$/.test(lowered)) {
+            return { valid: true, mode: yearOption.value, number: lowered }
+          }
           return { valid: false }
+        }
+
+        function resolveFallback () {
+          const fixed = options.find(opt => opt.kind === 'fixed')
+          if (fixed) return { mode: fixed.value, number: '' }
+          const relative = options.find(opt => opt.kind === 'relative')
+          if (relative) return { mode: relative.value, number: '1' }
+          if (yearOption) return { mode: yearOption.value, number: String(minYear) }
+          const first = options[0]
+          return { mode: first ? first.value : '', number: '' }
         }
 
         function resolveInitial () {
@@ -249,16 +311,22 @@ document.addEventListener('DOMContentLoaded', function () {
           if (current.valid) return current
           const fallback = parseValue(defaultValue)
           if (fallback.valid) return fallback
-          return { mode: 'latest', number: '' }
+          return resolveFallback()
+        }
+
+        function getActiveOption (mode) {
+          return options.find(opt => opt.value === mode) || null
         }
 
         function applyModeUI (mode) {
-          const isFixed = mode === 'first' || mode === 'latest'
+          const active = getActiveOption(mode)
+          const kind = active ? active.kind : 'fixed'
+          const isFixed = kind === 'fixed'
           valueInput.classList.toggle('d-none', isFixed)
-          if (mode === 'year') {
+          if (kind === 'year') {
             valueInput.placeholder = 'Year'
             valueInput.min = String(minYear)
-          } else if (mode === 'relative_first' || mode === 'relative_latest') {
+          } else if (kind === 'relative') {
             valueInput.placeholder = 'Offset'
             valueInput.min = '1'
           } else {
@@ -271,37 +339,47 @@ document.addEventListener('DOMContentLoaded', function () {
           const mode = modeSelect.value
           const rawNum = parseInt(valueInput.value || '', 10)
           let nextValue = ''
+          const active = getActiveOption(mode)
+          const kind = active ? active.kind : 'fixed'
 
-          if (mode === 'year') {
+          if (kind === 'year') {
             let year = Number.isFinite(rawNum) ? rawNum : minYear
             if (year < minYear) year = minYear
             valueInput.value = String(year)
             nextValue = String(year)
-          } else if (mode === 'relative_first') {
+          } else if (kind === 'relative') {
             let offset = Number.isFinite(rawNum) ? rawNum : 1
             if (offset < 1) offset = 1
             valueInput.value = String(offset)
-            nextValue = `first+${offset}`
-          } else if (mode === 'relative_latest') {
-            let offset = Number.isFinite(rawNum) ? rawNum : 1
-            if (offset < 1) offset = 1
-            valueInput.value = String(offset)
-            nextValue = `latest-${offset}`
-          } else if (mode === 'first' || mode === 'latest') {
+            const prefix = active ? String(active.prefix || '') : ''
+            nextValue = `${prefix}${offset}`
+          } else if (kind === 'fixed') {
             valueInput.value = ''
-            nextValue = mode
+            nextValue = active ? String(active.token || mode) : mode
           } else {
-            nextValue = defaultValue || 'latest'
+            nextValue = defaultValue || (yearOption ? String(minYear) : '')
           }
 
           hidden.value = nextValue
           applyModeUI(mode)
         }
 
+        const shouldDebug = hidden.id && hidden.id.includes('template_collection_year')
+        if (shouldDebug) {
+          const rawOptions = Array.from(modeSelect.options).map(opt => ({
+            value: opt.value,
+            kind: opt.dataset.kind,
+            text: opt.textContent?.trim()
+          }))
+          console.log('[relative-year init]', hidden.id, 'raw:', hidden.value, 'default:', defaultValue, 'options:', options, 'rawOptions:', rawOptions)
+        }
         const initial = resolveInitial()
         modeSelect.value = initial.mode
         valueInput.value = initial.number
         updateHidden()
+        if (shouldDebug) {
+          console.log('[relative-year set]', hidden.id, 'mode:', modeSelect.value, 'input:', valueInput.value, 'hidden:', hidden.value)
+        }
 
         modeSelect.addEventListener('change', () => updateHidden())
         valueInput.addEventListener('input', () => updateHidden())

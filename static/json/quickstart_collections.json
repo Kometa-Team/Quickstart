@@ -39,7 +39,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -48,7 +79,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -530,7 +592,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -539,7 +632,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -1004,7 +1128,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -1013,7 +1168,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -1478,7 +1664,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -1487,7 +1704,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -1952,7 +2200,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -1961,7 +2240,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -2427,7 +2737,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -2436,7 +2777,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -2903,7 +3275,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -2912,7 +3315,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -3379,7 +3813,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -3388,7 +3853,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -3881,7 +4377,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -3890,7 +4417,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -4355,7 +4913,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -4364,7 +4953,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -4830,7 +5450,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -4839,7 +5490,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -5305,7 +5987,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -5314,7 +6027,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -5779,7 +6523,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -5788,7 +6563,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -6253,7 +7059,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -6262,7 +7099,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -6727,7 +7595,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -6736,7 +7635,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -7201,7 +8131,38 @@
             "default": "latest-5",
             "tooltip": "Determines the starting year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 1,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_ending",
@@ -7210,7 +8171,38 @@
             "default": "latest",
             "tooltip": "Determines the ending year of the event to use to create collections. Allowed values: number greater than 0, first, latest, relative first (first+#), or relative latest (latest-#).",
             "min": 2,
-            "step": 1
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "first",
+                "label": "First",
+                "kind": "fixed",
+                "token": "first"
+              },
+              {
+                "value": "latest",
+                "label": "Latest",
+                "kind": "fixed",
+                "token": "latest"
+              },
+              {
+                "value": "relative_first",
+                "label": "Relative First (first+#)",
+                "kind": "relative",
+                "prefix": "first+"
+              },
+              {
+                "value": "relative_latest",
+                "label": "Relative Latest (latest-#)",
+                "kind": "relative",
+                "prefix": "latest-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
           },
           {
             "key": "data_increment",
@@ -26787,6 +27779,72 @@
             "type": "text_input",
             "default": "105",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "data_starting",
+            "label": "Data Starting",
+            "type": "relative_year",
+            "default": "current_year-10",
+            "tooltip": "Controls the starting year for collections. Allowed values: number greater than 0, current_year, or a relative value like current_year-5.",
+            "min": 1,
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "current_year",
+                "label": "Current Year",
+                "kind": "fixed",
+                "token": "current_year"
+              },
+              {
+                "value": "relative_current_year",
+                "label": "Relative Current Year (current_year-#)",
+                "kind": "relative",
+                "prefix": "current_year-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
+          },
+          {
+            "key": "data_ending",
+            "label": "Data Ending",
+            "type": "relative_year",
+            "default": "current_year",
+            "tooltip": "Controls the ending year for collections. Allowed values: number greater than 1, current_year, or a relative value like current_year-5.",
+            "min": 2,
+            "step": 1,
+            "relative_options": [
+              {
+                "value": "current_year",
+                "label": "Current Year",
+                "kind": "fixed",
+                "token": "current_year"
+              },
+              {
+                "value": "relative_current_year",
+                "label": "Relative Current Year (current_year-#)",
+                "kind": "relative",
+                "prefix": "current_year-"
+              },
+              {
+                "value": "year",
+                "label": "Specific Year",
+                "kind": "year"
+              }
+            ]
+          },
+          {
+            "key": "data_increment",
+            "label": "Data Increment",
+            "type": "text_input",
+            "input_type": "number",
+            "min": 1,
+            "step": 1,
+            "default": "1",
+            "tooltip": "Controls the increment (i.e. every 5th year). Allowed values: number greater than 0."
           },
           {
             "key": "collection_mode",

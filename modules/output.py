@@ -465,6 +465,8 @@ def optimize_template_variables(config_data, library_types=None):
                 if not defaults:
                     continue
                 pruned = _prune_template_variables(tv, defaults)
+                if entry.get("default") == "year" and "data_ending" in tv:
+                    pruned["data_ending"] = tv.get("data_ending")
                 if pruned:
                     entry["template_variables"] = pruned
                 else:
