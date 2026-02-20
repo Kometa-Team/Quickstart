@@ -15,4 +15,4 @@ python-dotenv==1.2.1
 requests==2.32.5
 ruamel.yaml==0.19.1
 waitress==3.0.2
-Werkzeug==3.1.5
+Werkzeug==3.1.6
