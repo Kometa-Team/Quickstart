@@ -375,6 +375,232 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
+    function initScheduleBuilders (scope) {
+      const root = scope || document
+      root.querySelectorAll('[data-schedule-builder]').forEach(builder => {
+        if (builder.dataset.listenerAdded) return
+        const hiddenId = builder.dataset.hiddenInput
+        const hidden = hiddenId ? document.getElementById(hiddenId) : builder.querySelector('input[type="hidden"]')
+        const modeSelect = builder.querySelector('[data-schedule-mode-select]')
+        const preview = builder.querySelector('[data-schedule-preview]')
+        const rawInput = builder.querySelector('[data-schedule-raw]')
+        const modeSections = Array.from(builder.querySelectorAll('[data-schedule-mode]'))
+        const rangeStart = builder.querySelector('[data-schedule-range-start]')
+        const rangeEnd = builder.querySelector('[data-schedule-range-end]')
+        const weeklyDays = Array.from(builder.querySelectorAll('[data-schedule-week-day]'))
+        const monthlyDay = builder.querySelector('[data-schedule-month-day]')
+        const yearlyInput = builder.querySelector('[data-schedule-yearly]')
+        const dateInput = builder.querySelector('[data-schedule-date]')
+        const hourStart = builder.querySelector('[data-schedule-hour-start]')
+        const hourEnd = builder.querySelector('[data-schedule-hour-end]')
+        const defaultValue = String(builder.dataset.defaultValue || '').trim()
+
+        if (!hidden || !modeSelect) return
+
+        function formatMonthDay (dateValue) {
+          if (!dateValue || typeof dateValue !== 'string') return ''
+          const parts = dateValue.split('-')
+          if (parts.length < 3) return ''
+          return `${parts[1]}/${parts[2]}`
+        }
+
+        function formatDateValue (dateValue) {
+          if (!dateValue || typeof dateValue !== 'string') return ''
+          const parts = dateValue.split('-')
+          if (parts.length < 3) return ''
+          return `${parts[1]}/${parts[2]}/${parts[0]}`
+        }
+
+        function setMonthDayInput (input, monthDay) {
+          if (!input) return
+          const md = String(monthDay || '').trim()
+          const match = md.match(/^(\d{1,2})\/(\d{1,2})$/)
+          if (!match) return
+          const month = match[1].padStart(2, '0')
+          const day = match[2].padStart(2, '0')
+          input.value = `2000-${month}-${day}`
+        }
+
+        function setDateInput (input, dateValue) {
+          if (!input) return
+          const raw = String(dateValue || '').trim()
+          const match = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+          if (!match) return
+          const month = match[1].padStart(2, '0')
+          const day = match[2].padStart(2, '0')
+          input.value = `${match[3]}-${month}-${day}`
+        }
+
+        function parseSchedule (rawValue) {
+          const raw = String(rawValue || '').trim()
+          if (!raw) return { mode: 'range', raw: '' }
+          const lower = raw.toLowerCase()
+          if (['daily', 'never', 'non_existing'].includes(lower)) {
+            return { mode: lower, raw }
+          }
+          if (lower.startsWith('hourly(') && lower.endsWith(')')) {
+            const inner = raw.slice(7, -1).trim()
+            const parts = inner.split('-').map(val => val.trim())
+            return { mode: 'hourly', hourStart: parts[0] || '', hourEnd: parts[1] || '', raw }
+          }
+          if (lower.startsWith('weekly(') && lower.endsWith(')')) {
+            const inner = raw.slice(7, -1).trim()
+            if (inner.includes('|')) {
+              return { mode: 'weekly', days: inner.split('|').map(d => d.trim().toLowerCase()).filter(Boolean), raw }
+            }
+            return { mode: 'weekly', days: [inner.toLowerCase()], raw }
+          }
+          if (lower.startsWith('monthly(') && lower.endsWith(')')) {
+            const inner = raw.slice(8, -1).trim()
+            return { mode: 'monthly', day: inner, raw }
+          }
+          if (lower.startsWith('yearly(') && lower.endsWith(')')) {
+            const inner = raw.slice(7, -1).trim()
+            return { mode: 'yearly', monthDay: inner, raw }
+          }
+          if (lower.startsWith('date(') && lower.endsWith(')')) {
+            const inner = raw.slice(5, -1).trim()
+            return { mode: 'date', date: inner, raw }
+          }
+          if (lower.startsWith('range(') && lower.endsWith(')')) {
+            const inner = raw.slice(6, -1).trim()
+            if (inner.includes('|')) {
+              return { mode: 'custom', raw }
+            }
+            const parts = inner.split('-').map(val => val.trim())
+            return { mode: 'range', start: parts[0] || '', end: parts[1] || '', raw }
+          }
+          if (lower.startsWith('all[')) {
+            return { mode: 'custom', raw }
+          }
+          return { mode: 'custom', raw }
+        }
+
+        function setMode (mode) {
+          modeSelect.value = mode
+          modeSections.forEach(section => {
+            const active = section.dataset.scheduleMode === mode
+            section.classList.toggle('is-active', active)
+          })
+        }
+
+        function buildValueFromInputs (mode) {
+          if (mode === 'range') {
+            const start = formatMonthDay(rangeStart?.value)
+            const end = formatMonthDay(rangeEnd?.value)
+            if (start && end) return `range(${start}-${end})`
+          }
+          if (mode === 'weekly') {
+            const selected = weeklyDays.filter(day => day.checked).map(day => day.value)
+            if (selected.length) return `weekly(${selected.join('|')})`
+          }
+          if (mode === 'monthly') {
+            const day = String(monthlyDay?.value || '').trim()
+            if (day) return `monthly(${day})`
+          }
+          if (mode === 'yearly') {
+            const md = formatMonthDay(yearlyInput?.value)
+            if (md) return `yearly(${md})`
+          }
+          if (mode === 'date') {
+            const dateVal = formatDateValue(dateInput?.value)
+            if (dateVal) return `date(${dateVal})`
+          }
+          if (mode === 'hourly') {
+            const start = String(hourStart?.value || '').trim()
+            const end = String(hourEnd?.value || '').trim()
+            if (start && end) return `hourly(${start}-${end})`
+            if (start) return `hourly(${start})`
+          }
+          if (mode === 'daily') return 'daily'
+          if (mode === 'never') return 'never'
+          if (mode === 'non_existing') return 'non_existing'
+          if (mode === 'custom') {
+            return String(rawInput?.value || '').trim()
+          }
+          return ''
+        }
+
+        function updatePreview (value) {
+          if (preview) preview.textContent = value || ''
+        }
+
+        function updateFromBuilder () {
+          const mode = modeSelect.value
+          setMode(mode)
+          let nextValue = ''
+          if (mode === 'custom') {
+            nextValue = String(rawInput?.value || '').trim()
+          } else {
+            nextValue = buildValueFromInputs(mode) || defaultValue || ''
+          }
+          hidden.value = nextValue
+          updatePreview(nextValue)
+          if (rawInput && mode !== 'custom') {
+            rawInput.value = nextValue
+          }
+        }
+
+        function applyParsed (parsed) {
+          const mode = parsed.mode || 'custom'
+          setMode(mode)
+          if (mode === 'range') {
+            setMonthDayInput(rangeStart, parsed.start)
+            setMonthDayInput(rangeEnd, parsed.end)
+          } else if (mode === 'weekly') {
+            const selected = new Set((parsed.days || []).map(day => day.toLowerCase()))
+            weeklyDays.forEach(day => {
+              day.checked = selected.has(day.value)
+            })
+          } else if (mode === 'monthly') {
+            if (monthlyDay) monthlyDay.value = parsed.day || ''
+          } else if (mode === 'yearly') {
+            setMonthDayInput(yearlyInput, parsed.monthDay)
+          } else if (mode === 'date') {
+            setDateInput(dateInput, parsed.date)
+          } else if (mode === 'hourly') {
+            if (hourStart) hourStart.value = parsed.hourStart || ''
+            if (hourEnd) hourEnd.value = parsed.hourEnd || ''
+          }
+          if (rawInput) rawInput.value = parsed.raw || ''
+          updatePreview(parsed.raw || '')
+        }
+
+        const initialRaw = String(hidden.value || defaultValue || '').trim()
+        const parsed = parseSchedule(initialRaw)
+        applyParsed(parsed)
+        updateFromBuilder()
+
+        modeSelect.addEventListener('change', () => updateFromBuilder())
+        if (rangeStart) rangeStart.addEventListener('change', () => updateFromBuilder())
+        if (rangeEnd) rangeEnd.addEventListener('change', () => updateFromBuilder())
+        weeklyDays.forEach(day => {
+          day.addEventListener('change', () => updateFromBuilder())
+        })
+        if (monthlyDay) monthlyDay.addEventListener('input', () => updateFromBuilder())
+        if (yearlyInput) yearlyInput.addEventListener('change', () => updateFromBuilder())
+        if (dateInput) dateInput.addEventListener('change', () => updateFromBuilder())
+        if (hourStart) hourStart.addEventListener('input', () => updateFromBuilder())
+        if (hourEnd) hourEnd.addEventListener('input', () => updateFromBuilder())
+
+        if (rawInput) {
+          rawInput.addEventListener('change', () => {
+            const raw = String(rawInput.value || '').trim()
+            const parsedRaw = parseSchedule(raw)
+            applyParsed(parsedRaw)
+            if (parsedRaw.mode === 'custom') {
+              hidden.value = raw
+              updatePreview(raw)
+            } else {
+              updateFromBuilder()
+            }
+          })
+        }
+
+        builder.dataset.listenerAdded = 'true'
+      })
+    }
+
     function setupTemplateStringListHandlers (scope) {
       const root = scope || document
       root.querySelectorAll('[data-template-string-list]').forEach(wrapper => {
@@ -799,6 +1025,7 @@ document.addEventListener('DOMContentLoaded', function () {
       initNumericOnlyInputs(card)
       initStylePreviewGrids(card)
       initRelativeYearInputs(card)
+      initScheduleBuilders(card)
       wireOffsetReset(card)
       initSortablesInScope(card)
       setupCustomStringListHandlers('mass_genre_update', card)

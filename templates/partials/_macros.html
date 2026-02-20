@@ -933,13 +933,23 @@ prefix) %}
                     </div>
 
                     {% if collection.template_variables %}
+                    {% set is_seasonal = collection.id == 'collection_seasonal' %}
+                    {% set season = namespace(open=false) %}
                     <div class="child-toggle-wrapper ms-4 mt-2"
                         data-toggle-parent="{{ library.id }}-{{ collection.id }}" style="display: none;">
                         {% for item in collection.template_variables
                         if (not item.media_types or library.type in item.media_types)
                         and (not item.key.startswith('visible_') or telemetry.plex_pass) %}
                         {% set clean_id = collection.id.replace('collection_', '') %}
-                        {% set input_name = library.id ~ '-template_collection_' ~ clean_id ~ '_' ~ item.key %}
+                        {% set input_name = (library.id ~ '-template_collection_' ~ clean_id ~ '_' ~ item.key) if item.key is defined else '' %}
+
+                        {% if is_seasonal and item.key is defined and item.key.startswith('use_') %}
+                        {% if season.open %}
+                    </div>
+                        {% endif %}
+                    <div class="qs-season-group">
+                        {% set season.open = true %}
+                        {% endif %}
 
                         {% if item.type == 'toggle' %}
                         {% set stored_val = data['libraries'].get(input_name) %}
@@ -1058,10 +1068,11 @@ prefix) %}
                             {'value': 'relative_latest', 'label': 'Relative Latest (latest-#)', 'kind': 'relative', 'prefix': 'latest-'},
                             {'value': 'year', 'label': 'Specific Year', 'kind': 'year'}
                         ] %}
+                        {% set label_width = item.label_width if item.label_width is defined else 170 %}
                         <div class="input-group mb-2" data-relative-year data-hidden-input="{{ input_name }}"
                             data-default-value="{{ item.default | default('', true) }}"
                             data-min-year="{{ item.min | default(1) }}">
-                            <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
+                            <span class="input-group-text" id="{{ input_name }}_text" style="width: {{ label_width }}px;">
                                 {% if item.url %}
                                 <a href="{{ item.url }}" target="_blank">
                                     {{ item.label }}
@@ -1092,10 +1103,108 @@ prefix) %}
                                 aria-label="Year or offset" {% if disable_toggle %}disabled{% endif %}>
                             <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}">
                         </div>
+                        {% elif item.key is defined and item.key.startswith('schedule_') %}
+                        {% set schedule_label = 'Schedule' %}
+                        {% set schedule_tooltip = "Configure when this collection updates." %}
+                        {% set label_width = 140 %}
+                        {% set stored_val = data['libraries'].get(input_name, item.default) | default('', true) %}
+                        <div class="schedule-builder mb-2"
+                            data-schedule-builder
+                            data-hidden-input="{{ input_name }}"
+                            data-default-value="{{ item.default | default('', true) }}">
+                            <div class="input-group mb-2 schedule-builder-header">
+                                <span class="input-group-text" id="{{ input_name }}_text" style="width: {{ label_width }}px;">
+                                    {{ schedule_label }}
+                                    <span class="text-info ms-2" data-bs-toggle="tooltip" data-bs-html="true"
+                                        title="{{ schedule_tooltip }}">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                    </span>
+                                </span>
+                                <select class="form-select" data-schedule-mode-select {% if disable_toggle %}disabled{% endif %}>
+                                    <option value="range">Range</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                    <option value="date">Date</option>
+                                    <option value="hourly">Hourly</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="never">Never</option>
+                                    <option value="non_existing">Only If Missing</option>
+                                    <option value="custom">Custom (Advanced)</option>
+                                </select>
+                            </div>
+                            <div class="schedule-builder-body">
+                                <div class="schedule-mode" data-schedule-mode="range">
+                                    <div class="schedule-grid">
+                                        <input type="date" class="form-control" data-schedule-range-start
+                                            aria-label="Range start" {% if disable_toggle %}disabled{% endif %}>
+                                        <span class="schedule-range-sep">to</span>
+                                        <input type="date" class="form-control" data-schedule-range-end
+                                            aria-label="Range end" {% if disable_toggle %}disabled{% endif %}>
+                                    </div>
+                                    <div class="form-text">Month/day are used; year is ignored.</div>
+                                </div>
+                                <div class="schedule-mode" data-schedule-mode="weekly">
+                                    <div class="schedule-weekly">
+                                        {% for day in ['sun','mon','tue','wed','thu','fri','sat'] %}
+                                        <label class="schedule-day">
+                                            <input type="checkbox" value="{{ day }}" data-schedule-week-day {% if disable_toggle %}disabled{% endif %}>
+                                            <span>{{ day|capitalize }}</span>
+                                        </label>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="schedule-mode" data-schedule-mode="monthly">
+                                    <input type="number" class="form-control" min="1" max="31" step="1"
+                                        data-schedule-month-day placeholder="Day of month" {% if disable_toggle %}disabled{% endif %}>
+                                </div>
+                                <div class="schedule-mode" data-schedule-mode="yearly">
+                                    <input type="date" class="form-control" data-schedule-yearly
+                                        aria-label="Yearly date" {% if disable_toggle %}disabled{% endif %}>
+                                    <div class="form-text">Month/day are used; year is ignored.</div>
+                                </div>
+                                <div class="schedule-mode" data-schedule-mode="date">
+                                    <input type="date" class="form-control" data-schedule-date
+                                        aria-label="Exact date" {% if disable_toggle %}disabled{% endif %}>
+                                </div>
+                                <div class="schedule-mode" data-schedule-mode="hourly">
+                                    <div class="schedule-grid">
+                                        <input type="number" class="form-control" min="0" max="23" step="1"
+                                            data-schedule-hour-start placeholder="Start hour" {% if disable_toggle %}disabled{% endif %}>
+                                        <span class="schedule-range-sep">to</span>
+                                        <input type="number" class="form-control" min="0" max="23" step="1"
+                                            data-schedule-hour-end placeholder="End hour (optional)" {% if disable_toggle %}disabled{% endif %}>
+                                    </div>
+                                </div>
+                                <div class="schedule-mode" data-schedule-mode="daily">
+                                    <div class="form-text">Runs once per day.</div>
+                                </div>
+                                <div class="schedule-mode" data-schedule-mode="never">
+                                    <div class="form-text">Never updates automatically.</div>
+                                </div>
+                                <div class="schedule-mode" data-schedule-mode="non_existing">
+                                    <div class="form-text">Runs only if the collection does not exist.</div>
+                                </div>
+                                <div class="schedule-mode" data-schedule-mode="custom">
+                                    <div class="form-text">Use Advanced to enter a raw schedule string.</div>
+                                </div>
+                            </div>
+                            <div class="schedule-preview small text-muted mt-2">
+                                Preview: <code data-schedule-preview></code>
+                            </div>
+                            <details class="schedule-advanced mt-2">
+                                <summary>Advanced (use with caution)</summary>
+                                <div class="form-text mb-2">Only use this if you know Kometa schedule syntax.</div>
+                                <input type="text" class="form-control" data-schedule-raw
+                                    value="{{ stored_val }}" {% if disable_toggle %}disabled{% endif %}>
+                            </details>
+                            <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}">
+                        </div>
                         {% elif item.type == 'text_input' %}
                         {% set is_number_input = item.input_type is defined and item.input_type == 'number' %}
+                        {% set label_width = item.label_width if item.label_width is defined else 170 %}
                         <div class="input-group mb-2">
-                            <span class="input-group-text" id="{{ input_name }}_text" style="width: 170px;">
+                            <span class="input-group-text" id="{{ input_name }}_text" style="width: {{ label_width }}px;">
                                 {% if item.url %}
                                 <a href="{{ item.url }}" target="_blank">
                                     {{ item.label }}
@@ -1124,7 +1233,15 @@ prefix) %}
                                 {% if disable_toggle %}disabled{% endif %}>
                         </div>
                         {% endif %}
+
+                        {% if is_seasonal and item.key is defined and item.key.startswith('schedule_') and season.open %}
+                    </div>
+                        {% set season.open = false %}
+                        {% endif %}
                         {% endfor %}
+                        {% if is_seasonal and season.open %}
+                    </div>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>

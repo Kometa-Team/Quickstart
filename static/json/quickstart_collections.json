@@ -27063,6 +27063,14 @@
             ]
           },
           {
+            "key": "schedule_aapi",
+            "label": "Schedule - Asian American Pacific Islander Month",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(04/30-05/31)",
+            "label_width": 240
+          },
+          {
             "key": "use_black_history",
             "label": "Black History Month Movies",
             "tooltip": "Movies related to Black History Month",
@@ -27078,6 +27086,14 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "schedule_black_history",
+            "label": "Schedule - Black History Month",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(02/01-03/01)",
+            "label_width": 240
           },
           {
             "key": "use_christmas",
@@ -27097,6 +27113,14 @@
             ]
           },
           {
+            "key": "schedule_christmas",
+            "label": "Schedule - Christmas",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(12/01-12/31)",
+            "label_width": 240
+          },
+          {
             "key": "use_disabilities",
             "label": "Disability Month Movies",
             "tooltip": "Movies related to Disability Awareness Month",
@@ -27112,6 +27136,14 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "schedule_disabilities",
+            "label": "Schedule - Disability Awareness Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(12/02-12/04)",
+            "label_width": 240
           },
           {
             "key": "use_easter",
@@ -27131,6 +27163,14 @@
             ]
           },
           {
+            "key": "schedule_easter",
+            "label": "Schedule - Easter",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(03/20-04/30)",
+            "label_width": 240
+          },
+          {
             "key": "use_father",
             "label": "Father's Day Movies",
             "tooltip": "Movies related to Father's Day",
@@ -27146,6 +27186,14 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "schedule_father",
+            "label": "Schedule - Father's Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(06/15-06/20)",
+            "label_width": 240
           },
           {
             "key": "use_halloween",
@@ -27165,6 +27213,14 @@
             ]
           },
           {
+            "key": "schedule_halloween",
+            "label": "Schedule - Halloween",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(10/01-10/31)",
+            "label_width": 240
+          },
+          {
             "key": "use_independence",
             "label": "Independence Day Movies",
             "tooltip": "Movies related to Independence Day",
@@ -27180,6 +27236,14 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "schedule_independence",
+            "label": "Schedule - Independence Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(06/23-07/11)",
+            "label_width": 240
           },
           {
             "key": "use_labor",
@@ -27199,6 +27263,14 @@
             ]
           },
           {
+            "key": "schedule_labor",
+            "label": "Schedule - Labor Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(09/01-09/10)",
+            "label_width": 240
+          },
+          {
             "key": "use_lgbtq",
             "label": "LGBTQ Month Movies",
             "tooltip": "Movies related to LGBTQ Pride Month",
@@ -27214,6 +27286,14 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "schedule_lgbtq",
+            "label": "Schedule - LGBTQ+ Pride Month",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(05/31-06/30)",
+            "label_width": 240
           },
           {
             "key": "use_memorial",
@@ -27233,6 +27313,14 @@
             ]
           },
           {
+            "key": "schedule_memorial",
+            "label": "Schedule - Memorial Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(5/18-6/7)",
+            "label_width": 240
+          },
+          {
             "key": "use_mother",
             "label": "Mother's Day Movies",
             "tooltip": "Movies related to Mother's Day",
@@ -27248,6 +27336,14 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "schedule_mother",
+            "label": "Schedule - Mother's Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(05/05-05/10)",
+            "label_width": 240
           },
           {
             "key": "use_latinx",
@@ -27267,6 +27363,14 @@
             ]
           },
           {
+            "key": "schedule_latinx",
+            "label": "Schedule - National Hispanic Heritage Month",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(09/15-10/15)",
+            "label_width": 240
+          },
+          {
             "key": "use_years",
             "label": "New Year's Day Movies",
             "tooltip": "Movies related to New Year's Day",
@@ -27282,6 +27386,14 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "schedule_years",
+            "label": "Schedule - New Year's Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(12/26-01/04)",
+            "label_width": 240
           },
           {
             "key": "use_patrick",
@@ -27301,6 +27413,14 @@
             ]
           },
           {
+            "key": "schedule_patrick",
+            "label": "Schedule - St. Patrick's Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(03/01-03/18)",
+            "label_width": 240
+          },
+          {
             "key": "use_thanksgiving",
             "label": "Thanksgiving Movies",
             "tooltip": "Movies related to Thanksgiving",
@@ -27316,6 +27436,14 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "schedule_thanksgiving",
+            "label": "Schedule - Thanksgiving",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(11/01-11/30)",
+            "label_width": 240
           },
           {
             "key": "use_valentine",
@@ -27335,6 +27463,14 @@
             ]
           },
           {
+            "key": "schedule_valentine",
+            "label": "Schedule - Valentine's Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(02/01-02/29)",
+            "label_width": 240
+          },
+          {
             "key": "use_veteran",
             "label": "Veteran's Day Movies",
             "tooltip": "Movies related to Veteran's Day",
@@ -27352,6 +27488,14 @@
             ]
           },
           {
+            "key": "schedule_veteran",
+            "label": "Schedule - Veteran's Day",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(11/01-11/30)",
+            "label_width": 240
+          },
+          {
             "key": "use_women",
             "label": "Women's History Month Movies",
             "tooltip": "Movies related to Women's History Month",
@@ -27367,6 +27511,14 @@
             "media_types": [
               "movie"
             ]
+          },
+          {
+            "key": "schedule_women",
+            "label": "Schedule - Women's History Month",
+            "tooltip": "Override this collection's schedule. Examples: hourly(17) or hourly(17-04), daily, weekly(sunday|tuesday), monthly(1), yearly(01/30), date(01/30/2025), range(12/01-12/31) or range(8/01-8/15|9/01-9/15), never, non_existing, all[weekly(sunday), hourly(17)].",
+            "type": "text_input",
+            "default": "range(02/28-03/31)",
+            "label_width": 240
           },
           {
             "key": "collection_mode",
