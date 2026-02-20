@@ -371,6 +371,26 @@
             "default": "#00000099",
             "label": "Backdrop Color"
           },
+          "back_color_airing": {
+            "input_type": "text",
+            "default": "#016920",
+            "label": "Backdrop Color (Airing)"
+          },
+          "back_color_returning": {
+            "input_type": "text",
+            "default": "#81007F",
+            "label": "Backdrop Color (Returning)"
+          },
+          "back_color_canceled": {
+            "input_type": "text",
+            "default": "#B52222",
+            "label": "Backdrop Color (Canceled)"
+          },
+          "back_color_ended": {
+            "input_type": "text",
+            "default": "#000847",
+            "label": "Backdrop Color (Ended)"
+          },
           "back_height": {
             "input_type": "number",
             "default": 105,
@@ -2600,6 +2620,18 @@
             "key": "back_radius",
             "label": "Backdrop Radius",
             "default": 30
+          },
+          {
+            "input_type": "number",
+            "key": "horizontal_offset",
+            "label": "Horizontal Offset",
+            "default": 15
+          },
+          {
+            "input_type": "number",
+            "key": "vertical_offset",
+            "label": "Vertical Offset",
+            "default": 15
           },
           {
             "type": "toggle",

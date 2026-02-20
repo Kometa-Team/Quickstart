@@ -1165,7 +1165,10 @@ def build_libraries_section(
                         use_edition_val = tv.get("use_edition")
                         if isinstance(use_edition_val, str):
                             use_edition_val = use_edition_val.lower() == "true"
-                        if use_edition_val is None or use_edition_val is False:
+                        if use_edition_val is None:
+                            tv["use_edition"] = True
+                            use_edition_val = True
+                        elif use_edition_val is False:
                             tv["use_edition"] = False
                             use_edition_val = False
                         if use_edition_val is True:
