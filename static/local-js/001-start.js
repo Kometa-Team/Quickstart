@@ -77,6 +77,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const importPlexUrl = document.getElementById('importPlexUrl')
   const importPlexToken = document.getElementById('importPlexToken')
   const importPlexTokenToggle = document.getElementById('importPlexTokenToggle')
+  const importTmdbCredentials = document.getElementById('importTmdbCredentials')
+  const importTmdbApiKey = document.getElementById('importTmdbApiKey')
+  const importTmdbApiKeyToggle = document.getElementById('importTmdbApiKeyToggle')
   const importConfigError = document.getElementById('importConfigError')
   const previewImportButton = document.getElementById('previewImportButton')
   const confirmImportButton = document.getElementById('confirmImportButton')
@@ -96,6 +99,8 @@ document.addEventListener('DOMContentLoaded', function () {
   let importReportHeader = ''
   let importReportBody = ''
   let importReportFilter = 'all'
+  let importNeedsPlexCredentials = false
+  let importNeedsTmdbCredentials = false
 
   if (importPlexTokenToggle && importPlexToken) {
     if (!importPlexToken.value.trim()) {
@@ -106,6 +111,18 @@ document.addEventListener('DOMContentLoaded', function () {
       const isPassword = importPlexToken.getAttribute('type') === 'password'
       importPlexToken.setAttribute('type', isPassword ? 'text' : 'password')
       importPlexTokenToggle.innerHTML = isPassword ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>'
+    })
+  }
+
+  if (importTmdbApiKeyToggle && importTmdbApiKey) {
+    if (!importTmdbApiKey.value.trim()) {
+      importTmdbApiKey.setAttribute('type', 'text')
+      importTmdbApiKeyToggle.innerHTML = '<i class="bi bi-eye-slash"></i>'
+    }
+    importTmdbApiKeyToggle.addEventListener('click', () => {
+      const isPassword = importTmdbApiKey.getAttribute('type') === 'password'
+      importTmdbApiKey.setAttribute('type', isPassword ? 'text' : 'password')
+      importTmdbApiKeyToggle.innerHTML = isPassword ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>'
     })
   }
 
@@ -483,14 +500,24 @@ document.addEventListener('DOMContentLoaded', function () {
       importConfigError.classList.add('d-none')
       importConfigError.textContent = ''
       if (importPlexCredentials) importPlexCredentials.classList.add('d-none')
+      if (importTmdbCredentials) importTmdbCredentials.classList.add('d-none')
       return
     }
     importConfigError.classList.remove('d-none')
     importConfigError.textContent = message
     if (importPlexCredentials) {
-      const needsPlex = /plex/i.test(message)
+      const needsPlex = importNeedsPlexCredentials || /plex/i.test(message)
       importPlexCredentials.classList.toggle('d-none', !needsPlex)
     }
+    if (importTmdbCredentials) {
+      const needsTmdb = importNeedsTmdbCredentials || /tmdb/i.test(message)
+      importTmdbCredentials.classList.toggle('d-none', !needsTmdb)
+    }
+  }
+
+  function setImportCredentialFlags (options) {
+    importNeedsPlexCredentials = Boolean(options && options.needsPlex)
+    importNeedsTmdbCredentials = Boolean(options && options.needsTmdb)
   }
 
   function updateImportConfirmState () {
@@ -671,6 +698,7 @@ document.addEventListener('DOMContentLoaded', function () {
     importReportHeader = ''
     importReportBody = ''
     importReportFilter = 'all'
+    setImportCredentialFlags({ needsPlex: false, needsTmdb: false })
     if (importConfigFile) importConfigFile.value = ''
     if (importConfigName) {
       importConfigName.value = ''
@@ -679,6 +707,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (importPlexCredentials) importPlexCredentials.classList.add('d-none')
     if (importPlexUrl) importPlexUrl.value = ''
     if (importPlexToken) importPlexToken.value = ''
+    if (importTmdbCredentials) importTmdbCredentials.classList.add('d-none')
+    if (importTmdbApiKey) importTmdbApiKey.value = ''
     if (importPreviewSection) importPreviewSection.classList.add('d-none')
     if (importReport) importReport.textContent = ''
     if (importSummary) {
@@ -703,10 +733,13 @@ document.addEventListener('DOMContentLoaded', function () {
     setImportError('')
   }
 
-  function clearImportPreviewState () {
+  function clearImportPreviewState (options = {}) {
     importToken = null
     importReportHeader = ''
     importReportBody = ''
+    if (!options.keepCredentials) {
+      setImportCredentialFlags({ needsPlex: false, needsTmdb: false })
+    }
     if (importPreviewSection) importPreviewSection.classList.add('d-none')
     if (importReport) importReport.textContent = ''
     if (importSummary) {
@@ -714,6 +747,7 @@ document.addEventListener('DOMContentLoaded', function () {
       importSummary.classList.add('d-none')
     }
     if (confirmImportButton) confirmImportButton.classList.add('d-none')
+    if (importTmdbCredentials) importTmdbCredentials.classList.add('d-none')
     if (importReportFilters) {
       importReportFilters.querySelectorAll('button[data-filter]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.filter === 'all')
@@ -727,14 +761,16 @@ document.addEventListener('DOMContentLoaded', function () {
       importReport.textContent = ''
       return
     }
+    const importedPattern = /(?:#|\|) imported(?:\s*-.*)?$/
+    const notImportedPattern = /(?:#|\|) not imported(?:\s*-.*)?$/
     const lines = importReportBody.split('\n')
     const filtered = lines.filter(line => {
       const trimmed = line.trimEnd()
       if (importReportFilter === 'imported') {
-        return trimmed.endsWith('# imported') || trimmed.endsWith('| imported')
+        return importedPattern.test(trimmed)
       }
       if (importReportFilter === 'not_imported') {
-        return trimmed.endsWith('# not imported') || trimmed.endsWith('| not imported')
+        return notImportedPattern.test(trimmed)
       }
       if (importReportFilter === 'comments') {
         return line.trimStart().startsWith('#')
@@ -771,7 +807,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ? counts.diff
       : (total - (imported + notImported + blank + comments))
     const name = data.config_name || importConfigName?.value || 'import'
-    return [
+    const header = [
       `# Import Report for ${name}`,
       `# Imported: ${imported}`,
       `# Not Imported: ${notImported}`,
@@ -780,7 +816,21 @@ document.addEventListener('DOMContentLoaded', function () {
       `# Total: ${total}`,
       `# Diff: ${diff}`,
       ''
-    ].join('\n')
+    ]
+    const mapping = data.mapping_summary || {}
+    if (mapping && Object.keys(mapping).length) {
+      const mapped = mapping.mapped || 0
+      const ignored = mapping.ignored || 0
+      const missing = mapping.missing || 0
+      const invalid = mapping.invalid || 0
+      const duplicate = mapping.duplicate || 0
+      header.splice(
+        header.length - 1,
+        0,
+        `# Mapping Applied: mapped ${mapped}, ignored ${ignored}, missing ${missing}, invalid ${invalid}, duplicate ${duplicate}`
+      )
+    }
+    return header.join('\n')
   }
 
   if (importConfigModalEl) {
@@ -826,6 +876,17 @@ document.addEventListener('DOMContentLoaded', function () {
   if (previewImportButton) {
     previewImportButton.addEventListener('click', async () => {
       setImportError('')
+      if (importToken && importPreviewSection && !importPreviewSection.classList.contains('d-none')) {
+        previewImportButton.disabled = true
+        previewImportButton.textContent = 'Refreshing Preview...'
+        try {
+          await refreshMappedPreview()
+        } finally {
+          previewImportButton.disabled = false
+          previewImportButton.textContent = 'Refresh Preview'
+        }
+        return
+      }
       if (downloadImportReport) {
         downloadImportReport.classList.add('d-none')
         downloadImportReport.removeAttribute('href')
@@ -856,12 +917,19 @@ document.addEventListener('DOMContentLoaded', function () {
         if (importPlexToken && importPlexToken.value.trim()) {
           formData.append('plex_token', importPlexToken.value.trim())
         }
+        if (importTmdbApiKey && importTmdbApiKey.value.trim()) {
+          formData.append('tmdb_apikey', importTmdbApiKey.value.trim())
+        }
         const res = await fetch('/import-config/preview', {
           method: 'POST',
           body: formData
         })
         const data = await res.json()
         if (!res.ok || !data.success) {
+          setImportCredentialFlags({
+            needsPlex: Boolean(data && data.needs_plex_credentials),
+            needsTmdb: Boolean(data && data.needs_tmdb_credentials)
+          })
           if (data && data.needs_plex_credentials && importPlexCredentials) {
             importPlexCredentials.classList.remove('d-none')
             if (importPlexUrl && data.plex_url && !importPlexUrl.value.trim()) {
@@ -871,11 +939,19 @@ document.addEventListener('DOMContentLoaded', function () {
               importPlexToken.value = data.plex_token
             }
           }
-          clearImportPreviewState()
+          if (data && data.needs_tmdb_credentials && importTmdbCredentials) {
+            importTmdbCredentials.classList.remove('d-none')
+            if (importTmdbApiKey && data.tmdb_apikey && !importTmdbApiKey.value.trim()) {
+              importTmdbApiKey.value = data.tmdb_apikey
+            }
+          }
+          clearImportPreviewState({ keepCredentials: true })
           setImportError(data.message || 'Preview failed.')
           return
         }
+        setImportCredentialFlags({ needsPlex: false, needsTmdb: false })
         if (importPlexCredentials) importPlexCredentials.classList.add('d-none')
+        if (importTmdbCredentials) importTmdbCredentials.classList.add('d-none')
         importToken = data.token
         if (importPreviewSection) importPreviewSection.classList.remove('d-none')
         if (importReport) {
@@ -899,7 +975,7 @@ document.addEventListener('DOMContentLoaded', function () {
         setImportError(err.message || 'Preview failed.')
       } finally {
         previewImportButton.disabled = false
-        previewImportButton.textContent = 'Preview Import'
+        previewImportButton.textContent = (importToken ? 'Refresh Preview' : 'Preview Import')
       }
     })
   }

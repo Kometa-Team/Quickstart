@@ -1229,6 +1229,22 @@ def rename_config():
     return jsonify(success=True, old_name=old_name, new_name=new_name, files=file_result)
 
 
+def count_annotated_lines(text: str) -> dict:
+    imported = 0
+    not_imported = 0
+    if not isinstance(text, str):
+        return {"imported": 0, "not_imported": 0}
+    imported_pattern = re.compile(r"(?:#|\|) imported(?:\s*-.*)?$")
+    not_imported_pattern = re.compile(r"(?:#|\|) not imported(?:\s*-.*)?$")
+    for line in text.splitlines():
+        trimmed = line.rstrip()
+        if imported_pattern.search(trimmed):
+            imported += 1
+        elif not_imported_pattern.search(trimmed):
+            not_imported += 1
+    return {"imported": imported, "not_imported": not_imported}
+
+
 @app.route("/import-config/preview", methods=["POST"])
 def import_config_preview():
     def count_comment_lines(text: str) -> int:
@@ -1246,11 +1262,13 @@ def import_config_preview():
         not_imported = 0
         if not isinstance(text, str):
             return {"imported": 0, "not_imported": 0}
+        imported_pattern = re.compile(r"(?:#|\|) imported(?:\s*-.*)?$")
+        not_imported_pattern = re.compile(r"(?:#|\|) not imported(?:\s*-.*)?$")
         for line in text.splitlines():
             trimmed = line.rstrip()
-            if trimmed.endswith("| imported") or trimmed.endswith("# imported"):
+            if imported_pattern.search(trimmed):
                 imported += 1
-            elif trimmed.endswith("| not imported") or trimmed.endswith("# not imported"):
+            elif not_imported_pattern.search(trimmed):
                 not_imported += 1
         return {"imported": imported, "not_imported": not_imported}
 
@@ -1352,7 +1370,27 @@ def import_config_preview():
         token = form_data.get("plex_token", "") or ""
         return str(url).strip(), str(token).strip()
 
+    def parse_tmdb_credentials(config_data):
+        tmdb_block = config_data.get("tmdb", {}) if isinstance(config_data, dict) else {}
+        if not isinstance(tmdb_block, dict):
+            return ""
+        api_key = (
+            tmdb_block.get("apikey")
+            or tmdb_block.get("api_key")
+            or tmdb_block.get("tmdb_apikey")
+            or tmdb_block.get("token")
+            or ""
+        )
+        return str(api_key).strip()
+
+    def parse_form_tmdb_credentials(form_data):
+        api_key = form_data.get("tmdb_apikey", "") or ""
+        return str(api_key).strip()
+
     needs_plex = isinstance(parsed.get("libraries"), dict) and bool(parsed.get("libraries"))
+    needs_tmdb = isinstance(parsed, dict) and bool(
+        parsed.get("tmdb") or parsed.get("libraries") or parsed.get("collections") or parsed.get("overlays")
+    )
     plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
     movie_names = parse_list(plex_data.get("tmp_movie_libraries", ""))
     show_names = parse_list(plex_data.get("tmp_show_libraries", ""))
@@ -1456,6 +1494,81 @@ def import_config_preview():
                 ),
                 400,
             )
+
+    if needs_tmdb:
+        form_tmdb_key = parse_form_tmdb_credentials(request.form or {})
+        imported_tmdb_key = parse_tmdb_credentials(parsed)
+        has_form = bool(form_tmdb_key)
+        has_imported = bool(imported_tmdb_key)
+        used_tmdb_key = ""
+
+        if not has_form and not has_imported:
+            if extracted_dir:
+                try:
+                    shutil.rmtree(extracted_dir)
+                except OSError:
+                    pass
+            return (
+                jsonify(
+                    success=False,
+                    needs_tmdb_credentials=True,
+                    message="TMDb API key is required to import metadata settings. Enter a valid TMDb API key to continue.",
+                    tmdb_apikey="",
+                ),
+                400,
+            )
+
+        tmdb_result = None
+        last_error = None
+        if has_form:
+            used_tmdb_key = form_tmdb_key
+            tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": form_tmdb_key})
+            tmdb_result = tmdb_response.get_json() if isinstance(tmdb_response, Flask.response_class) else tmdb_response
+            if not tmdb_result or not tmdb_result.get("valid"):
+                if isinstance(tmdb_result, dict):
+                    last_error = tmdb_result.get("message")
+                if extracted_dir:
+                    try:
+                        shutil.rmtree(extracted_dir)
+                    except OSError:
+                        pass
+                return (
+                    jsonify(
+                        success=False,
+                        needs_tmdb_credentials=True,
+                        message=last_error or "TMDb validation failed. Please enter a valid API key.",
+                        tmdb_apikey=form_tmdb_key or "",
+                    ),
+                    400,
+                )
+        else:
+            used_tmdb_key = imported_tmdb_key
+            tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": imported_tmdb_key})
+            tmdb_result = tmdb_response.get_json() if isinstance(tmdb_response, Flask.response_class) else tmdb_response
+            if not tmdb_result or not tmdb_result.get("valid"):
+                if isinstance(tmdb_result, dict):
+                    last_error = tmdb_result.get("message")
+                if extracted_dir:
+                    try:
+                        shutil.rmtree(extracted_dir)
+                    except OSError:
+                        pass
+                return (
+                    jsonify(
+                        success=False,
+                        needs_tmdb_credentials=True,
+                        message="TMDb API key in the import file could not be validated. Please enter a valid key.",
+                        tmdb_apikey=imported_tmdb_key or "",
+                    ),
+                    400,
+                )
+        session["import_preview_tmdb_apikey"] = used_tmdb_key
+        if used_tmdb_key:
+            tmdb_block = parsed.get("tmdb")
+            if not isinstance(tmdb_block, dict):
+                tmdb_block = {}
+                parsed["tmdb"] = tmdb_block
+            tmdb_block["apikey"] = used_tmdb_key
 
     _library_types, library_inference, _ = importer.build_library_type_plan(parsed, movie_names, show_names)
     payload, report = importer.prepare_import_payload(
@@ -1726,6 +1839,8 @@ def import_config_preview_mapped():
 
     plex_names = set(movie_names) | set(show_names)
 
+    mapping_skip_reasons = {}
+    mapping_stats = {"mapped": 0, "ignored": 0, "missing": 0, "invalid": 0, "duplicate": 0}
     if isinstance(config_data.get("libraries"), dict):
         mapped_libraries = {}
         used_targets = set()
@@ -1736,18 +1851,29 @@ def import_config_preview_mapped():
             else:
                 mapped = library_mapping.get(name)
                 if mapped is None or str(mapped).strip() == "":
+                    mapping_skip_reasons[name] = "Library mapping not provided."
+                    mapping_stats["missing"] += 1
                     continue
                 mapped = str(mapped).strip()
                 if mapped == "__ignore__":
+                    mapping_skip_reasons[name] = "Mapping set to ignore library."
+                    mapping_stats["ignored"] += 1
                     continue
                 if mapped not in plex_names:
+                    mapping_skip_reasons[name] = "Mapped library not found in Plex."
+                    mapping_stats["invalid"] += 1
                     continue
                 target = mapped
 
             if target in used_targets:
+                mapping_skip_reasons[name] = "Mapped library already assigned to another entry."
+                if name not in plex_names:
+                    mapping_stats["duplicate"] += 1
                 continue
             used_targets.add(target)
             mapped_libraries[target] = lib_cfg
+            if name not in plex_names:
+                mapping_stats["mapped"] += 1
 
         config_copy = json.loads(json.dumps(config_data))
         if mapped_libraries:
@@ -1761,20 +1887,55 @@ def import_config_preview_mapped():
 
     payload, report = importer.prepare_import_payload(config_copy, movie_names, show_names)
     report_lines = list(report.lines)
+    if mapping_skip_reasons:
+        seen = set(report_lines)
+        for lib_name, reason in mapping_skip_reasons.items():
+            if not lib_name:
+                continue
+            line = f"skipped: libraries.{lib_name} - {reason}"
+            if line not in seen:
+                report_lines.append(line)
+                seen.add(line)
+    if library_mapping and isinstance(config_data.get("libraries"), dict):
+        alias_lines = []
+        seen = set(report_lines)
+        for original_name, mapped_name in library_mapping.items():
+            if not original_name:
+                continue
+            mapped_name = str(mapped_name).strip()
+            if not mapped_name or mapped_name == "__ignore__":
+                continue
+            if mapped_name == original_name:
+                continue
+            prefix = f"libraries.{mapped_name}"
+            for line in report_lines:
+                if not isinstance(line, str) or ":" not in line:
+                    continue
+                status, rest = line.split(":", 1)
+                status = status.strip()
+                path = rest.strip()
+                suffix = ""
+                if " - " in path:
+                    path, reason = path.split(" - ", 1)
+                    path = path.strip()
+                    suffix = f" - {reason}"
+                if path == prefix or path.startswith(prefix + "."):
+                    alias_path = f"libraries.{original_name}{path[len(prefix):]}"
+                    alias_line = f"{status}: {alias_path}{suffix}"
+                    if alias_line not in seen:
+                        alias_lines.append(alias_line)
+                        seen.add(alias_line)
+        if alias_lines:
+            report_lines.extend(alias_lines)
     annotated_report = importer.annotate_yaml_with_report(config_text, report_lines, binary=True)
     comments_count = cached.get("comments_count")
     if not isinstance(comments_count, int):
         comments_count = sum(1 for line in str(config_text).splitlines() if line.lstrip().startswith("#"))
     blank_count = sum(1 for line in str(config_text).splitlines() if not line.strip())
     total_lines = len(str(config_text).splitlines())
-    imported_lines = 0
-    not_imported_lines = 0
-    for line in str(annotated_report).splitlines():
-        trimmed = line.rstrip()
-        if trimmed.endswith("| imported") or trimmed.endswith("# imported"):
-            imported_lines += 1
-        elif trimmed.endswith("| not imported") or trimmed.endswith("# not imported"):
-            not_imported_lines += 1
+    annotated_counts = count_annotated_lines(str(annotated_report))
+    imported_lines = annotated_counts.get("imported", 0)
+    not_imported_lines = annotated_counts.get("not_imported", 0)
     diff_count = total_lines - (imported_lines + not_imported_lines + blank_count + comments_count)
     line_counts = {
         "imported_lines": imported_lines,
@@ -1803,6 +1964,9 @@ def import_config_preview_mapped():
         truncated = len(lines) - max_lines
         lines = lines[:max_lines] + [f"skipped: report truncated ({truncated} more lines)"]
 
+    mapping_total = sum(mapping_stats.values())
+    mapping_summary = mapping_stats if mapping_total else {}
+
     return jsonify(
         success=True,
         config_name=cached.get("config_name") or "",
@@ -1811,6 +1975,7 @@ def import_config_preview_mapped():
         line_counts=line_counts,
         report_lines=lines,
         annotated_report=annotated_report,
+        mapping_summary=mapping_summary,
         report_url=f"/import-config/report?token={token}",
     )
 
@@ -1859,6 +2024,9 @@ def import_config_confirm():
     if config_data:
         libraries_payload = config_data.get("libraries")
         needs_plex = isinstance(libraries_payload, dict) and bool(libraries_payload)
+        needs_tmdb = isinstance(config_data, dict) and bool(
+            config_data.get("tmdb") or config_data.get("libraries") or config_data.get("collections") or config_data.get("overlays")
+        )
         if needs_plex:
             plex_url = session.get("import_preview_plex_url") or ""
             plex_token = session.get("import_preview_plex_token") or ""
@@ -1896,6 +2064,28 @@ def import_config_confirm():
             plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
             movie_names = parse_list(plex_data.get("tmp_movie_libraries", ""))
             show_names = parse_list(plex_data.get("tmp_show_libraries", ""))
+
+        if needs_tmdb:
+            tmdb_apikey = session.get("import_preview_tmdb_apikey") or ""
+            if not tmdb_apikey:
+                return (
+                    jsonify(
+                        success=False,
+                        message="TMDb API key is required to confirm the import. Re-run Preview Import.",
+                    ),
+                    400,
+                )
+            tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": tmdb_apikey})
+            tmdb_result = tmdb_response.get_json() if isinstance(tmdb_response, Flask.response_class) else tmdb_response
+            if not tmdb_result or not tmdb_result.get("valid"):
+                error_message = tmdb_result.get("message") if isinstance(tmdb_result, dict) else None
+                return (
+                    jsonify(
+                        success=False,
+                        message=error_message or "TMDb validation failed. Re-run Preview Import.",
+                    ),
+                    400,
+                )
 
         plex_names = set(movie_names) | set(show_names)
 
@@ -2032,6 +2222,7 @@ def import_config_confirm():
     session.pop("import_preview_fonts_dir", None)
     session.pop("import_preview_plex_url", None)
     session.pop("import_preview_plex_token", None)
+    session.pop("import_preview_tmdb_apikey", None)
     session["config_name"] = config_name
 
     return jsonify(

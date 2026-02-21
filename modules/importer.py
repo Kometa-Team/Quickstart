@@ -55,10 +55,11 @@ class ImportReport:
         return dict(self.counts)
 
 
-def _parse_report_statuses(report_lines: list[str]) -> dict[str, str]:
+def _parse_report_details(report_lines: list[str]) -> tuple[dict[str, str], dict[str, str]]:
     status_map: dict[str, str] = {}
+    reason_map: dict[str, str] = {}
     if not report_lines:
-        return status_map
+        return status_map, reason_map
     for line in report_lines:
         if not isinstance(line, str) or ":" not in line:
             continue
@@ -67,13 +68,52 @@ def _parse_report_statuses(report_lines: list[str]) -> dict[str, str]:
         if status not in {"imported", "unmapped", "skipped"}:
             continue
         path = rest.strip()
+        reason = ""
         if " - " in path:
-            path = path.split(" - ", 1)[0].strip()
+            path, reason = path.split(" - ", 1)
+            path = path.strip()
+            reason = reason.strip()
         if not path:
             continue
         mapped = "mapped" if status == "imported" else status
         status_map[path] = mapped
+        if reason:
+            reason_map[path] = reason
+    return status_map, reason_map
+
+
+def _parse_report_statuses(report_lines: list[str]) -> dict[str, str]:
+    status_map, _ = _parse_report_details(report_lines)
     return status_map
+
+
+def _lookup_report_reason(reason_map: dict[str, str], status_path: str | None) -> str | None:
+    if not status_path:
+        return None
+    if status_path in reason_map:
+        return reason_map[status_path]
+    if "[" in status_path:
+        normalized = re.sub(r"\[\d+\]", "", status_path)
+        if normalized in reason_map:
+            return reason_map[normalized]
+    if status_path.endswith(".default"):
+        alt = status_path[: -len(".default")]
+        if alt in reason_map:
+            return reason_map[alt]
+    parts = status_path.split(".")
+    for idx in range(len(parts) - 1, 0, -1):
+        prefix = ".".join(parts[:idx])
+        if prefix in reason_map:
+            return reason_map[prefix]
+    return None
+
+
+def _format_report_status(status: str | None, reason: str | None) -> str | None:
+    if not status:
+        return None
+    if reason:
+        return f"{status} - {reason}"
+    return status
 
 
 def _build_prefix_flags(status_map: dict[str, str]) -> dict[str, dict[str, bool]]:
@@ -151,7 +191,7 @@ def _append_status_annotation(line: str, status: str | None) -> str:
 def annotate_yaml_with_report(raw_text: str, report_lines: list[str], binary: bool = False) -> str:
     if not raw_text:
         return ""
-    status_map = _parse_report_statuses(report_lines)
+    status_map, reason_map = _parse_report_details(report_lines)
     if binary:
         imported_only = {path: status for path, status in status_map.items() if status == "mapped"}
         prefix_map = _build_prefix_flags(imported_only)
@@ -253,9 +293,13 @@ def annotate_yaml_with_report(raw_text: str, report_lines: list[str], binary: bo
             flags = prefix_map.get(normalized_path)
         if binary and status_path:
             status = "imported" if flags and flags.get("mapped") else "not imported"
+            reason = _lookup_report_reason(reason_map, status_path) if status == "not imported" else None
+            status_text = _format_report_status(status, reason)
         else:
             status = _status_from_flags(flags)
-        annotated.append(_append_status_annotation(line, status))
+            reason = _lookup_report_reason(reason_map, status_path) if status and status != "imported" else None
+            status_text = _format_report_status(status, reason)
+        annotated.append(_append_status_annotation(line, status_text))
 
     return "\n".join(annotated)
 

@@ -305,6 +305,20 @@
             </button>
           </div>
         </div>
+        <div id="importTmdbCredentials" class="d-none mt-3">
+          <div class="alert alert-warning py-2 small mb-3" role="alert">
+            TMDb API key is required to validate metadata settings from the import.
+          </div>
+          <div class="input-group mb-2">
+            <span class="input-group-text" style="width: 150px; justify-content: space-between;">
+              TMDb API Key
+            </span>
+            <input type="password" class="form-control" id="importTmdbApiKey" placeholder="TMDb API Key">
+            <button class="btn btn-outline-secondary" type="button" id="importTmdbApiKeyToggle" aria-label="Show or hide TMDb API key">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
         <div id="importConfigError" class="text-danger small mt-2 d-none"></div>
 
         <div id="importPreviewSection" class="d-none mt-3">
