@@ -65,6 +65,107 @@ LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
 KOMETA_CPU_CACHE = {}
 SYSTEM_CPU_CACHE = {"total": None, "idle": None}
 
+VALIDATION_DOC_BASE = "/step/"
+VALIDATION_DOC_FALLBACK = "/step/900-final"
+VALIDATION_DOCS = {
+    "settings": f"{VALIDATION_DOC_BASE}150-settings",
+    "libraries": f"{VALIDATION_DOC_BASE}025-libraries",
+    "plex": f"{VALIDATION_DOC_BASE}010-plex",
+    "tmdb": f"{VALIDATION_DOC_BASE}020-tmdb",
+    "trakt": f"{VALIDATION_DOC_BASE}130-trakt",
+    "radarr": f"{VALIDATION_DOC_BASE}110-radarr",
+    "sonarr": f"{VALIDATION_DOC_BASE}120-sonarr",
+    "tautulli": f"{VALIDATION_DOC_BASE}030-tautulli",
+    "omdb": f"{VALIDATION_DOC_BASE}050-omdb",
+    "mdblist": f"{VALIDATION_DOC_BASE}060-mdblist",
+    "notifiarr": f"{VALIDATION_DOC_BASE}070-notifiarr",
+    "github": f"{VALIDATION_DOC_BASE}040-github",
+    "gotify": f"{VALIDATION_DOC_BASE}080-gotify",
+    "ntfy": f"{VALIDATION_DOC_BASE}085-ntfy",
+    "mal": f"{VALIDATION_DOC_BASE}140-mal",
+    "anidb": f"{VALIDATION_DOC_BASE}100-anidb",
+    "webhooks": f"{VALIDATION_DOC_BASE}090-webhooks",
+    "collections": f"{VALIDATION_DOC_BASE}025-libraries",
+    "overlays": f"{VALIDATION_DOC_BASE}025-libraries",
+    "playlist_files": f"{VALIDATION_DOC_BASE}027-playlist_files",
+}
+VALIDATION_REASON_LABELS = {
+    "missing_credentials": "Missing credentials",
+    "missing_plex_validation": "Plex not validated",
+    "no_libraries": "No libraries selected",
+    "invalid_paths": "Invalid paths",
+    "missing_placeholder_imdb": "Missing placeholder IMDb ID",
+    "invalid_fields": "Invalid fields",
+    "no_webhooks": "No webhooks configured",
+    "disabled": "Disabled",
+    "missing_settings": "Settings missing",
+    "missing_tokens": "Missing tokens",
+    "token_invalid": "Invalid tokens",
+    "account_locked": "Account locked",
+    "validation_error": "Validation error",
+}
+VALIDATION_KEY_SUGGESTIONS = {
+    "settings": {
+        "playlist_sync_to_user": "playlist_sync_to_users",
+    }
+}
+
+
+def utc_now_iso():
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def build_validation_summary(errors):
+    summary = []
+    if not errors:
+        return summary
+    for err in errors[:20]:
+        path_parts = [str(p) for p in err.path]
+        section = path_parts[0] if path_parts else ""
+        path_display = ".".join(path_parts) if path_parts else (section or "config")
+        doc_url = VALIDATION_DOCS.get(section, VALIDATION_DOC_FALLBACK)
+        title = f"{path_display}: {err.message}"
+        details = ""
+        suggestions = []
+
+        if err.validator == "additionalProperties":
+            extras = []
+            try:
+                extras = list(err.params.get("additionalProperties") or [])
+            except Exception:
+                extras = []
+            if extras:
+                title = f"{section or 'config'}: Unexpected key(s)"
+                details = f"Unknown keys: {', '.join(extras)}."
+                for key in extras:
+                    suggestion = VALIDATION_KEY_SUGGESTIONS.get(section, {}).get(key)
+                    if suggestion:
+                        suggestions.append(f"{key} → {suggestion}")
+        elif err.validator == "type":
+            expected = err.validator_value
+            details = f"Expected type: {expected}."
+        elif err.validator == "enum":
+            values = err.validator_value or []
+            details = f"Expected one of: {', '.join(map(str, values))}."
+        elif err.validator == "minimum":
+            details = f"Minimum allowed: {err.validator_value}."
+        elif err.validator == "maximum":
+            details = f"Maximum allowed: {err.validator_value}."
+        elif err.validator == "pattern":
+            details = "Value does not match the expected format."
+
+        summary.append(
+            {
+                "title": title,
+                "details": details,
+                "doc_url": doc_url,
+                "section": section or "config",
+                "suggestions": suggestions,
+            }
+        )
+
+    return summary
+
 
 def _calculate_process_cpu_percent(proc):
     try:
@@ -2604,6 +2705,40 @@ def step(name):
             template_key = file.rsplit(".", 1)[0]
             settings = persistence.retrieve_settings(template_key)
             has_validation = template_key in validation_pages
+            validation_status = None
+            validation_reason = None
+            validation_details = None
+            if has_validation:
+                section_name = template_key.split("-", 1)[1]
+                stored_section = database.retrieve_section_data(config_name, section_name)
+                stored_payload = stored_section[2] if stored_section else None
+                if isinstance(stored_payload, dict):
+                    validation_status = stored_payload.get("validation_status")
+                    validation_reason = stored_payload.get("validation_reason")
+                    validation_details = stored_payload.get("validation_details")
+            if not validation_status and has_validation:
+                if helpers.booler(settings.get("validated", False)):
+                    validation_status = "validated"
+                elif settings.get("validated_at"):
+                    validation_status = "failed"
+
+            validation_result = ""
+            if validation_status:
+                label = validation_status.capitalize()
+                if validation_reason:
+                    pretty = VALIDATION_REASON_LABELS.get(validation_reason, validation_reason.replace("_", " "))
+                    detail_text = ""
+                    if isinstance(validation_details, (list, tuple)):
+                        detail_text = ", ".join(str(item) for item in validation_details if str(item))
+                    elif validation_details is not None:
+                        detail_text = str(validation_details)
+                    if detail_text:
+                        validation_result = f"{label}: {pretty}: {detail_text}"
+                    else:
+                        validation_result = f"{label}: {pretty}"
+                else:
+                    validation_result = label
+
             validation_meta.append(
                 {
                     "key": template_key,
@@ -2612,9 +2747,24 @@ def step(name):
                     "has_validation": has_validation,
                     "validated": helpers.booler(settings.get("validated", False)) if has_validation else None,
                     "validated_at": settings.get("validated_at", "") if has_validation else "",
+                    "validation_result": validation_result,
                 }
             )
-        validated, validation_error, config_data, yaml_content = output.build_config(header_style, config_name=config_name)
+        validated, validation_error, config_data, yaml_content, validation_errors = output.build_config(
+            header_style, config_name=config_name
+        )
+        validation_summary = build_validation_summary(validation_errors)
+        validation_rollup = None
+        validation_rollup_at = None
+        try:
+            stored_validation = database.retrieve_section_data(config_name, "validation_summary")
+            stored_payload = stored_validation[2] if stored_validation else None
+            if isinstance(stored_payload, dict):
+                validation_rollup = stored_payload.get("summary_text")
+                validation_rollup_at = stored_payload.get("updated_at")
+        except Exception:
+            validation_rollup = None
+            validation_rollup_at = None
         used_fonts = helpers.collect_font_references(config_data)
         saved_filename = helpers.save_to_named_config(yaml_content, config_name, used_fonts)
         page_info["saved_filename"] = saved_filename
@@ -2638,6 +2788,9 @@ def step(name):
             data=data,
             yaml_content=yaml_content,
             validation_error=validation_error,
+            validation_summary=validation_summary,
+            validation_rollup=validation_rollup,
+            validation_rollup_at=validation_rollup_at,
             template_list=file_list,
             available_configs=available_configs,
             movie_libraries=movie_libraries,
@@ -3351,7 +3504,7 @@ def validate_trakt_token():
             trakt_data["authorization"] = auth
             stored_data["trakt"] = trakt_data
             stored_data["validated"] = True
-            stored_data["validated_at"] = datetime.utcnow().isoformat() + "Z"
+            stored_data["validated_at"] = utc_now_iso()
             database.save_section_data(
                 name=config_name,
                 section="trakt",
@@ -3543,6 +3696,29 @@ def validate_all_services():
                 return False
         return True
 
+    def apply_validation_metadata(stored_data, status, reason=None, details=None, updated_at=None):
+        if not isinstance(stored_data, dict):
+            stored_data = {}
+        stored_data["validation_status"] = status
+        if reason is not None:
+            stored_data["validation_reason"] = reason
+        if details is not None:
+            stored_data["validation_details"] = details
+        stored_data["validation_updated_at"] = updated_at or utc_now_iso()
+        return stored_data
+
+    def persist_validation_metadata(section, status, reason=None, details=None, validated_override=None):
+        stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, section)
+        stored_data = apply_validation_metadata(stored_data, status, reason=reason, details=details)
+        validated_value = stored_validated if validated_override is None else validated_override
+        database.save_section_data(
+            name=config_name,
+            section=section,
+            validated=validated_value,
+            user_entered=user_entered,
+            data=stored_data,
+        )
+
     targets = [
         (
             "010-plex",
@@ -3606,6 +3782,7 @@ def validate_all_services():
                 "validated_at": validated_at or "",
                 "reason": "missing_credentials",
             }
+            persist_validation_metadata(section, "skipped", reason="missing_credentials")
             summary["skipped"] += 1
             continue
         try:
@@ -3625,9 +3802,10 @@ def validate_all_services():
         existing_validated_at = stored_data.get("validated_at") or validated_at or ""
 
         if is_valid:
-            new_validated_at = datetime.utcnow().isoformat() + "Z"
+            new_validated_at = utc_now_iso()
             stored_data["validated"] = True
             stored_data["validated_at"] = new_validated_at
+            stored_data = apply_validation_metadata(stored_data, "validated")
             database.save_section_data(
                 name=config_name,
                 section=section,
@@ -3641,6 +3819,13 @@ def validate_all_services():
             stored_data["validated"] = False
             if existing_validated_at:
                 stored_data["validated_at"] = existing_validated_at
+            message = response_data.get("message") or response_data.get("error")
+            fail_reason = None
+            if isinstance(message, str) and "invalid" in message.lower():
+                fail_reason = "token_invalid"
+            else:
+                fail_reason = "validation_error"
+            stored_data = apply_validation_metadata(stored_data, "failed", reason=fail_reason, details=message)
             database.save_section_data(
                 name=config_name,
                 section=section,
@@ -3648,7 +3833,9 @@ def validate_all_services():
                 user_entered=user_entered,
                 data=stored_data,
             )
-            results[template_key] = {"status": "failed", "validated_at": existing_validated_at}
+            results[template_key] = {"status": "failed", "validated_at": existing_validated_at, "reason": fail_reason}
+            if message:
+                results[template_key]["details"] = message
             summary["failed"] += 1
 
     def update_section_validation(template_key, section, is_valid, reason=None, details=None):
@@ -3658,9 +3845,10 @@ def validate_all_services():
         existing_validated_at = stored_data.get("validated_at") or ""
 
         if is_valid:
-            new_validated_at = datetime.utcnow().isoformat() + "Z"
+            new_validated_at = utc_now_iso()
             stored_data["validated"] = True
             stored_data["validated_at"] = new_validated_at
+            stored_data = apply_validation_metadata(stored_data, "validated")
             database.save_section_data(
                 name=config_name,
                 section=section,
@@ -3675,6 +3863,7 @@ def validate_all_services():
         stored_data["validated"] = False
         if existing_validated_at:
             stored_data["validated_at"] = existing_validated_at
+        stored_data = apply_validation_metadata(stored_data, "failed", reason=reason, details=details)
         database.save_section_data(
             name=config_name,
             section=section,
@@ -3695,6 +3884,14 @@ def validate_all_services():
         if not isinstance(stored_data, dict):
             stored_data = {}
         existing_validated_at = stored_data.get("validated_at") or ""
+        stored_data = apply_validation_metadata(stored_data, "skipped", reason=reason, details=details)
+        database.save_section_data(
+            name=config_name,
+            section=section,
+            validated=stored_validated,
+            user_entered=user_entered,
+            data=stored_data,
+        )
         result = {"status": "skipped", "validated_at": existing_validated_at}
         if reason:
             result["reason"] = reason
@@ -3905,7 +4102,73 @@ def validate_all_services():
         except requests.exceptions.RequestException:
             update_section_validation("140-mal", "mal", False, reason="validation_error")
 
-    return jsonify({"success": True, "results": results, "summary": summary})
+    reason_labels = {
+        "missing_credentials": "Missing credentials",
+        "missing_plex_validation": "Plex not validated",
+        "no_libraries": "No libraries selected",
+        "invalid_paths": "Invalid paths",
+        "missing_placeholder_imdb": "Missing placeholder IMDb ID",
+        "invalid_fields": "Invalid fields",
+        "no_webhooks": "No webhooks configured",
+        "disabled": "Disabled",
+        "missing_settings": "Settings missing",
+        "missing_tokens": "Missing tokens",
+        "token_invalid": "Invalid tokens",
+        "account_locked": "Account locked",
+        "validation_error": "Validation error",
+    }
+    label_map = {}
+    try:
+        for file, display_name in helpers.get_menu_list():
+            label_map[file.rsplit(".", 1)[0]] = display_name
+    except Exception:
+        label_map = {}
+
+    def label_for_key(key):
+        return label_map.get(key, key)
+
+    def format_with_reason(key, result):
+        label = label_for_key(key)
+        reason = result.get("reason")
+        details = result.get("details")
+        if not reason:
+            return label
+        pretty = reason_labels.get(reason, reason.replace("_", " "))
+        detail_text = ""
+        if isinstance(details, (list, tuple)):
+            detail_text = ", ".join(str(item) for item in details if str(item))
+        elif details is not None:
+            detail_text = str(details)
+        if detail_text:
+            return f"{label} ({pretty}: {detail_text})"
+        return f"{label} ({pretty})"
+
+    failed_keys = [key for key, result in results.items() if result.get("status") == "failed"]
+    failed_labels = [format_with_reason(key, results[key]) for key in failed_keys]
+    failed_detail = f" Failed: {', '.join(failed_labels)}." if failed_labels else ""
+    skipped_keys = [key for key, result in results.items() if result.get("status") == "skipped"]
+    skipped_labels = [format_with_reason(key, results[key]) for key in skipped_keys]
+    skipped_detail = f" Skipped: {', '.join(skipped_labels)}." if skipped_labels else ""
+    ok = summary.get("validated", 0)
+    failed = summary.get("failed", 0)
+    skipped = summary.get("skipped", 0)
+    separator = "\u2022"
+    summary_text = f"Completed. Validated: {ok} {separator} Failed: {failed} {separator} Skipped: {skipped}."
+    summary_updated_at = utc_now_iso()
+    summary_payload = {
+        "summary_text": summary_text,
+        "summary": summary,
+        "results": results,
+        "updated_at": summary_updated_at,
+    }
+    database.save_section_data(
+        name=config_name,
+        section="validation_summary",
+        validated=True,
+        user_entered=True,
+        data=summary_payload,
+    )
+    return jsonify({"success": True, "results": results, "summary": summary, "summary_text": summary_text, "summary_updated_at": summary_updated_at})
 
 
 @app.route("/shutdown", methods=["POST"])

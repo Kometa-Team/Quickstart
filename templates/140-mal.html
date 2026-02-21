@@ -46,7 +46,8 @@
     </span>
   </span>
   <input type="number" class="form-control" id="mal_cache_expiration" name="mal_cache_expiration"
-    value="{{ data['mal']['cache_expiration'] }}" min="0" aria-describedby="mal_cache_expiration_text">
+    value="{{ data['mal']['cache_expiration'] }}" min="0" data-default-value="60"
+    aria-describedby="mal_cache_expiration_text">
 </div>
 
 <input type="hidden" class="form-control" id="mal_url" name="mal_url" readonly oninput="enableLocalURLButton(this)">

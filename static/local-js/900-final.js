@@ -1526,6 +1526,36 @@ $(document).ready(function () {
     }
   })
 
+  const validationReasonLabels = {
+    missing_credentials: 'Missing credentials',
+    missing_plex_validation: 'Plex not validated',
+    no_libraries: 'No libraries selected',
+    invalid_paths: 'Invalid paths',
+    missing_placeholder_imdb: 'Missing placeholder IMDb ID',
+    invalid_fields: 'Invalid fields',
+    no_webhooks: 'No webhooks configured',
+    disabled: 'Disabled',
+    missing_settings: 'Settings missing',
+    missing_tokens: 'Missing tokens',
+    token_invalid: 'Invalid tokens',
+    account_locked: 'Account locked',
+    validation_error: 'Validation error'
+  }
+
+  function formatValidationResult (status, reason, details) {
+    if (!status) return ''
+    const label = status.charAt(0).toUpperCase() + status.slice(1)
+    if (!reason) return label
+    const pretty = validationReasonLabels[reason] || reason.replace(/_/g, ' ')
+    if (Array.isArray(details) && details.length) {
+      return `${label}: ${pretty}: ${details.join(', ')}`
+    }
+    if (details) {
+      return `${label}: ${pretty}: ${details}`
+    }
+    return `${label}: ${pretty}`
+  }
+
   function updateValidationRow (key, result) {
     const row = document.querySelector(`[data-validation-key="${key}"]`)
     if (!row || !result) return
@@ -1566,11 +1596,18 @@ $(document).ready(function () {
         ageEl.textContent = formatRelativeTimestamp(parsed, new Date())
       }
     }
+
+    const resultEl = row.querySelector('.validation-result')
+    if (resultEl) {
+      const resultText = formatValidationResult(status, result.reason, result.details)
+      resultEl.textContent = resultText || (status ? status.charAt(0).toUpperCase() + status.slice(1) : '—')
+    }
   }
 
   const validateAllBtn = document.getElementById('validate-all-services')
   const validateAllSpinner = document.getElementById('validate-all-spinner')
   const validateAllStatus = document.getElementById('validate-all-status')
+  const validateAllStatusTime = document.getElementById('validate-all-status-time')
   if (validateAllBtn) {
     validateAllBtn.addEventListener('click', function () {
       if (validateAllBtn.disabled) return
@@ -1634,48 +1671,19 @@ $(document).ready(function () {
           const skipped = summary.skipped || 0
           showToast('info', `Validate all complete. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}`)
           if (validateAllStatus) {
-            const labelForKey = (key) => {
-              const row = document.querySelector(`[data-validation-key="${key}"]`)
-              const labelEl = row ? row.querySelector('.validation-status-pill') : null
-              const label = labelEl ? labelEl.textContent.trim() : ''
-              return label || key
-            }
-            const reasonLabels = {
-              missing_credentials: 'Missing credentials',
-              missing_plex_validation: 'Plex not validated',
-              no_libraries: 'No libraries selected',
-              invalid_paths: 'Invalid paths',
-              missing_placeholder_imdb: 'Missing placeholder IMDb ID',
-              invalid_fields: 'Invalid fields',
-              no_webhooks: 'No webhooks configured',
-              disabled: 'Disabled',
-              missing_settings: 'Settings missing',
-              missing_tokens: 'Missing tokens',
-              token_invalid: 'Invalid tokens',
-              account_locked: 'Account locked',
-              validation_error: 'Validation error'
-            }
-            const formatWithReason = (key) => {
-              const label = labelForKey(key)
-              const reason = results[key]?.reason
-              const details = results[key]?.details
-              if (!reason) return label
-              const pretty = reasonLabels[reason] || reason.replace(/_/g, ' ')
-              if (Array.isArray(details) && details.length) {
-                return `${label} (${pretty}: ${details.join(', ')})`
-              }
-              return `${label} (${pretty})`
-            }
-
-            const failedKeys = Object.keys(results).filter(key => results[key]?.status === 'failed')
-            const failedLabels = failedKeys.map(formatWithReason).filter(Boolean)
-            const failedDetail = failedLabels.length ? ` Failed: ${failedLabels.join(', ')}.` : ''
-            const skippedKeys = Object.keys(results).filter(key => results[key]?.status === 'skipped')
-            const skippedLabels = skippedKeys.map(formatWithReason).filter(Boolean)
-            const skippedDetail = skippedLabels.length ? ` Skipped: ${skippedLabels.join(', ')}.` : ''
+            // Per-row Validation Results show details; no per-summary label mapping needed.
+            // Note: summary details are shown per-row in the Validation Results column.
             validateAllStatus.classList.remove('d-none', 'text-danger')
             validateAllStatus.classList.add('text-success')
-            validateAllStatus.textContent = `Completed. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}.${failedDetail}${skippedDetail}`
+            const summaryText = data.summary_text || `Completed. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}.`
+            validateAllStatus.textContent = summaryText
+            if (validateAllStatusTime && data.summary_updated_at) {
+              validateAllStatusTime.dataset.validationIso = data.summary_updated_at
+              const parsed = new Date(data.summary_updated_at)
+              if (!Number.isNaN(parsed.getTime())) {
+                validateAllStatusTime.textContent = formatLocalTimestamp(parsed)
+              }
+            }
           }
           updateValidationGate()
           const anyNewlyValidated = Object.keys(results).some(key => results[key]?.status === 'validated' && !previousStatuses[key])

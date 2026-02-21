@@ -2117,11 +2117,13 @@ def build_config(header_style="standard", config_name=None):
 
     validated = False
     validation_error = None
-
-    try:
-        jsonschema.validate(yaml.load(yaml_content), schema)
+    validation_errors = []
+    parsed_yaml = yaml.load(yaml_content)
+    validator = jsonschema.Draft7Validator(schema)
+    validation_errors = sorted(validator.iter_errors(parsed_yaml), key=lambda err: list(err.path))
+    if validation_errors:
+        validation_error = validation_errors[0]
+    else:
         validated = True
-    except jsonschema.exceptions.ValidationError as e:
-        validation_error = e
 
-    return validated, validation_error, config_data, yaml_content
+    return validated, validation_error, config_data, yaml_content, validation_errors

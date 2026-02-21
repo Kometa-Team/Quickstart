@@ -16653,6 +16653,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -17053,6 +17060,13 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "collection_mode",
@@ -17458,6 +17472,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -17859,6 +17880,13 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "collection_mode",
@@ -18264,6 +18292,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -18665,6 +18700,13 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "collection_mode",
@@ -19070,6 +19112,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -19471,6 +19520,13 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "collection_mode",
@@ -19881,6 +19937,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -20281,6 +20344,13 @@
             "type": "text_input",
             "default": "110",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "collection_mode",
@@ -22595,6 +22665,13 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
+          },
+          {
             "key": "collection_mode",
             "label": "Collection Mode",
             "type": "select",
@@ -22996,6 +23073,13 @@
             "type": "text_input",
             "default": "095",
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "use_other",
+            "label": "Other",
+            "tooltip": "Include an \"Other\" collection for items that do not match the listed values.",
+            "type": "toggle",
+            "default": true
           },
           {
             "key": "collection_mode",

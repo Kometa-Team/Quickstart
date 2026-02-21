@@ -107,6 +107,39 @@ function loading (action) {
   spinnerIcon.classList.add('spinner-border', 'spinner-border-sm')
 }
 
+function resetNavigationSpinners () {
+  const prevIcon = document.getElementById('prev-spinner-icon')
+  if (prevIcon) {
+    prevIcon.classList.remove('spinner-border', 'spinner-border-sm')
+    if (!prevIcon.classList.contains('fa-arrow-left')) {
+      prevIcon.classList.add('fa-arrow-left')
+    }
+  }
+  const nextIcon = document.getElementById('next-spinner-icon')
+  if (nextIcon) {
+    nextIcon.classList.remove('spinner-border', 'spinner-border-sm')
+    if (!nextIcon.classList.contains('fa-arrow-right')) {
+      nextIcon.classList.add('fa-arrow-right')
+    }
+  }
+  const jumpLeft = document.querySelector('.jump-to-left')
+  if (jumpLeft) {
+    jumpLeft.classList.remove('is-loading')
+  }
+}
+
+document.addEventListener('invalid', function () {
+  resetNavigationSpinners()
+}, true)
+
+document.addEventListener('submit', function (event) {
+  setTimeout(() => {
+    if (event.defaultPrevented) {
+      resetNavigationSpinners()
+    }
+  }, 0)
+})
+
 /* eslint-disable no-unused-vars */
 // Function to show the spinner on validate
 function showSpinner (webhookType) {
@@ -295,6 +328,7 @@ const CACHE_EXPIRATION_FIELDS = [
   { id: 'mdblist_cache_expiration', label: 'MDBList cache expiration' },
   { id: 'anidb_cache_expiration', label: 'AniDB cache expiration' },
   { id: 'mal_cache_expiration', label: 'MyAnimeList cache expiration' },
+  { id: 'cache_expiration', label: 'Cache expiration' },
   { id: 'plex_db_cache', label: 'Plex cache size' },
   { id: 'plex_timeout', label: 'Plex timeout' }
 ]

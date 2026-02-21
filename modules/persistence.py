@@ -95,6 +95,23 @@ def clean_form_data(form_data):
         else:
             clean_data[key] = value
 
+    cache_defaults = {
+        "cache_expiration": "60",
+        "tmdb_cache_expiration": "60",
+        "omdb_cache_expiration": "60",
+        "mdblist_cache_expiration": "60",
+        "anidb_cache_expiration": "60",
+        "mal_cache_expiration": "60",
+    }
+    for key, default_value in cache_defaults.items():
+        if key not in clean_data:
+            continue
+        value = clean_data[key]
+        if value is None:
+            clean_data[key] = default_value
+        elif isinstance(value, str) and value.strip() == "":
+            clean_data[key] = default_value
+
     return clean_data
 
 

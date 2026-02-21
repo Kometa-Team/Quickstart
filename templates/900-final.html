@@ -72,7 +72,12 @@
             <i class="bi bi-check2-circle me-1"></i> Validate Configured Services
             <span id="validate-all-spinner" class="spinner-border spinner-border-sm ms-1 d-none" role="status" aria-hidden="true"></span>
           </button>
-          <div id="validate-all-status" class="small text-muted mt-2 d-none"></div>
+        </div>
+        <div class="small text-muted text-uppercase">Last validation summary</div>
+        <div id="validate-all-status" class="small text-muted">{{ validation_rollup if validation_rollup else 'No validation run yet.' }}</div>
+        <div class="small text-muted mb-2">
+          Last updated:
+          <span id="validate-all-status-time" data-validation-iso="{{ validation_rollup_at | default('', true) }}">—</span>
         </div>
         {% set bulk_pages = ['010-plex','020-tmdb','025-libraries','027-playlist_files','030-tautulli','040-github','050-omdb','060-mdblist','070-notifiarr','080-gotify','085-ntfy','090-webhooks','100-anidb','110-radarr','120-sonarr','150-settings','130-trakt','140-mal'] %}
         {% set interactive_pages = [] %}
@@ -85,6 +90,7 @@
                 <th>Bulk</th>
                 <th>Last validated</th>
                 <th>Time since</th>
+                <th>Validation Results</th>
               </tr>
             </thead>
             <tbody>
@@ -144,6 +150,17 @@
                   <span class="validation-age small text-muted">N/A</span>
                   {% endif %}
                 </td>
+                <td>
+                  {% if entry.has_validation %}
+                  {% if entry.validation_result %}
+                  <span class="validation-result small text-muted">{{ entry.validation_result }}</span>
+                  {% else %}
+                  <span class="validation-result small text-muted">—</span>
+                  {% endif %}
+                  {% else %}
+                  <span class="validation-result small text-muted">N/A</span>
+                  {% endif %}
+                </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -161,6 +178,28 @@
 <div class="alert alert-danger" role="alert" id="yaml-warning-msg">
   The inputs you entered <b>did not</b> pass validation, a valid config <b>could not</b> be generated. Please try again.
 </div>
+{% if validation_summary %}
+<div class="alert alert-warning" role="alert" id="validation-summary">
+  <h5>Validation Summary</h5>
+  {% for item in validation_summary %}
+  <div class="mb-2">
+    <div>
+      <strong>{{ item.title }}</strong>
+      <a href="{{ item.doc_url }}" class="ms-2 text-decoration-none">
+        Open page
+        <i class="bi bi-box-arrow-up-right"></i>
+      </a>
+    </div>
+    {% if item.details %}
+    <div class="small text-muted">{{ item.details }}</div>
+    {% endif %}
+    {% if item.suggestions %}
+    <div class="small text-info">Suggestion: {{ item.suggestions | join(', ') }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
 <div class="form-floating mb-2">
   <div class="form-text" id="yaml-warnings">
     <h5>These error(s) occurred while validating your config:</h5><br>
