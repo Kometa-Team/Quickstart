@@ -2750,9 +2750,7 @@ def step(name):
                     "validation_result": validation_result,
                 }
             )
-        validated, validation_error, config_data, yaml_content, validation_errors = output.build_config(
-            header_style, config_name=config_name
-        )
+        validated, validation_error, config_data, yaml_content, validation_errors = output.build_config(header_style, config_name=config_name)
         validation_summary = build_validation_summary(validation_errors)
         validation_rollup = None
         validation_rollup_at = None
