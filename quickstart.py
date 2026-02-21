@@ -1374,13 +1374,7 @@ def import_config_preview():
         tmdb_block = config_data.get("tmdb", {}) if isinstance(config_data, dict) else {}
         if not isinstance(tmdb_block, dict):
             return ""
-        api_key = (
-            tmdb_block.get("apikey")
-            or tmdb_block.get("api_key")
-            or tmdb_block.get("tmdb_apikey")
-            or tmdb_block.get("token")
-            or ""
-        )
+        api_key = tmdb_block.get("apikey") or tmdb_block.get("api_key") or tmdb_block.get("tmdb_apikey") or tmdb_block.get("token") or ""
         return str(api_key).strip()
 
     def parse_form_tmdb_credentials(form_data):
@@ -1388,9 +1382,7 @@ def import_config_preview():
         return str(api_key).strip()
 
     needs_plex = isinstance(parsed.get("libraries"), dict) and bool(parsed.get("libraries"))
-    needs_tmdb = isinstance(parsed, dict) and bool(
-        parsed.get("tmdb") or parsed.get("libraries") or parsed.get("collections") or parsed.get("overlays")
-    )
+    needs_tmdb = isinstance(parsed, dict) and bool(parsed.get("tmdb") or parsed.get("libraries") or parsed.get("collections") or parsed.get("overlays"))
     plex_data = persistence.retrieve_settings("010-plex").get("plex", {})
     movie_names = parse_list(plex_data.get("tmp_movie_libraries", ""))
     show_names = parse_list(plex_data.get("tmp_show_libraries", ""))
