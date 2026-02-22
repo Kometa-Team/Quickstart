@@ -4,7 +4,7 @@ import json
 import re
 import shutil
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 import platform
 import psutil
 
@@ -15,7 +15,7 @@ from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import PlainScalarString
 from ruamel.yaml.comments import CommentedSeq
 
-from modules import helpers, persistence
+from modules import helpers, persistence, database
 
 
 def add_border_to_ascii_art(art):
@@ -1600,6 +1600,9 @@ def build_config(header_style="standard", config_name=None):
     Build the final configuration, including all sections and headers,
     ensuring the libraries section is properly processed.
     """
+    if not config_name and has_request_context():
+        config_name = session.get("config_name")
+
     sections = helpers.get_template_list()
     config_data = {}
     header_art = {}
@@ -2072,7 +2075,52 @@ def build_config(header_style="standard", config_name=None):
             section_output = stream.getvalue().strip()
             if header_style != "none":
                 section_output = inject_section_headers(section_output, header_style)
-            return f"{title}\n{section_output}\n\n"
+
+            validation_comment = build_validation_comment(dump_name)
+            blocks = []
+            if title:
+                blocks.append(title)
+            if validation_comment:
+                blocks.append(validation_comment)
+            blocks.append(section_output)
+            return "\n".join(blocks) + "\n\n"
+
+    def format_validation_timestamp(raw):
+        if not raw:
+            return ""
+        try:
+            normalized = raw.replace("Z", "+00:00")
+            parsed = datetime.fromisoformat(normalized)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            local = parsed.astimezone()
+            return local.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception:
+            return raw
+
+    def build_validation_comment(section_key):
+        if not config_name:
+            return ""
+        stored = database.retrieve_section_data(config_name, section_key)
+        if not stored or not isinstance(stored[2], dict):
+            return ""
+        stored_validated = helpers.booler(stored[0])
+        payload = stored[2]
+        status = payload.get("validation_status")
+        if not status:
+            if stored_validated:
+                status = "validated"
+            else:
+                fallback_timestamp = payload.get("validated_at")
+                status = "failed" if fallback_timestamp else ""
+        if not status:
+            return ""
+        updated_at = payload.get("validation_updated_at") or payload.get("validated_at")
+        last_validated = format_validation_timestamp(updated_at)
+        lines = [f"# validation: {status}"]
+        if last_validated:
+            lines.append(f"# last_validated: {last_validated}")
+        return "\n".join(lines)
 
     ordered_sections = [
         ("libraries", "025-libraries"),
