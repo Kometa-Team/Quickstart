@@ -108,7 +108,10 @@ $(document).ready(function () {
       return `
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <span>${label}</span>
-          <a href="${href}" class="text-decoration-none">Open page</a>
+          <a href="${href}" class="ms-2 text-decoration-none">
+            Open page
+            <i class="bi bi-box-arrow-up-right"></i>
+          </a>
         </div>
       `
     }
