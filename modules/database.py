@@ -67,6 +67,33 @@ def retrieve_section_data(name, section):
     return False, False, None
 
 
+def retrieve_config_sections(name):
+    sections = []
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(persisted_section_table_create())
+            cursor.execute(
+                """SELECT section, validated, user_entered, data from section_data where name == ?""",
+                (name,),
+            )
+            rows = cursor.fetchall()
+            for row in rows:
+                try:
+                    data_blob = pickle.loads(row["data"]) if row["data"] is not None else None
+                except Exception:
+                    data_blob = None
+                sections.append(
+                    {
+                        "section": row["section"],
+                        "validated": helpers.booler(row["validated"]),
+                        "user_entered": helpers.booler(row["user_entered"]),
+                        "data": data_blob,
+                    }
+                )
+    return sections
+
+
 def retrieve_validated_map(name, sections=None):
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
         connection.row_factory = sqlite3.Row

@@ -1376,6 +1376,8 @@ def import_config_preview():
     upload = request.files.get("file")
     raw_name = request.form.get("config_name")
     config_name = importer.sanitize_config_name(raw_name)
+    merge_mode = str(request.form.get("merge_mode") or "").strip().lower() in {"1", "true", "yes", "merge"}
+    base_config = (request.form.get("base_config") or "").strip()
 
     if not upload or not upload.filename:
         return jsonify(success=False, message="No config file uploaded."), 400
@@ -1388,6 +1390,11 @@ def import_config_preview():
     available = database.get_unique_config_names() or []
     if any(name.lower() == config_name.lower() for name in available):
         return jsonify(success=False, message="Config name already exists."), 400
+    if merge_mode:
+        base_match = next((name for name in available if name.lower() == base_config.lower()), "")
+        if not base_match:
+            return jsonify(success=False, message="Base config not found. Select an existing config to merge."), 400
+        base_config = base_match
 
     raw_text = upload.read()
     config_text = ""
@@ -1466,6 +1473,21 @@ def import_config_preview():
         token = plex_block.get("token") or plex_block.get("plex_token") or ""
         return str(url).strip(), str(token).strip()
 
+    def parse_base_plex_credentials(base_name: str):
+        if not base_name:
+            return "", ""
+        try:
+            _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
+        except Exception:
+            return "", ""
+        if not isinstance(stored, dict):
+            return "", ""
+        if "plex" in stored:
+            return parse_plex_credentials(stored)
+        url = stored.get("url") or stored.get("plex_url") or ""
+        token = stored.get("token") or stored.get("plex_token") or ""
+        return str(url).strip(), str(token).strip()
+
     def parse_form_plex_credentials(form_data):
         url = form_data.get("plex_url", "") or ""
         token = form_data.get("plex_token", "") or ""
@@ -1476,6 +1498,20 @@ def import_config_preview():
         if not isinstance(tmdb_block, dict):
             return ""
         api_key = tmdb_block.get("apikey") or tmdb_block.get("api_key") or tmdb_block.get("tmdb_apikey") or tmdb_block.get("token") or ""
+        return str(api_key).strip()
+
+    def parse_base_tmdb_credentials(base_name: str):
+        if not base_name:
+            return ""
+        try:
+            _validated, _user_entered, stored = database.retrieve_section_data(base_name, "tmdb")
+        except Exception:
+            return ""
+        if not isinstance(stored, dict):
+            return ""
+        if "tmdb" in stored:
+            return parse_tmdb_credentials(stored)
+        api_key = stored.get("apikey") or stored.get("api_key") or stored.get("tmdb_apikey") or stored.get("token") or ""
         return str(api_key).strip()
 
     def parse_form_tmdb_credentials(form_data):
@@ -1492,12 +1528,14 @@ def import_config_preview():
     if needs_plex:
         form_plex_url, form_plex_token = parse_form_plex_credentials(request.form or {})
         imported_plex_url, imported_plex_token = parse_plex_credentials(parsed)
+        base_plex_url, base_plex_token = parse_base_plex_credentials(base_config) if merge_mode else ("", "")
         has_form = bool(form_plex_url and form_plex_token)
         has_imported = bool(imported_plex_url and imported_plex_token)
+        has_base = bool(base_plex_url and base_plex_token)
         used_plex_url = ""
         used_plex_token = ""
 
-        if not has_form and not has_imported:
+        if not has_form and not has_imported and not has_base:
             if extracted_dir:
                 try:
                     shutil.rmtree(extracted_dir)
@@ -1540,13 +1578,24 @@ def import_config_preview():
                     400,
                 )
         else:
-            used_plex_url = imported_plex_url
-            used_plex_token = imported_plex_token
-            plex_response = validations.validate_plex_server({"plex_url": imported_plex_url, "plex_token": imported_plex_token})
-            plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
-            if not plex_result or not plex_result.get("validated"):
+            candidates = []
+            if merge_mode and has_base:
+                candidates.append((base_plex_url, base_plex_token))
+            if has_imported:
+                candidates.append((imported_plex_url, imported_plex_token))
+            if not candidates:
+                candidates.append((imported_plex_url or base_plex_url, imported_plex_token or base_plex_token))
+            for candidate_url, candidate_token in candidates:
+                used_plex_url = candidate_url
+                used_plex_token = candidate_token
+                plex_response = validations.validate_plex_server({"plex_url": used_plex_url, "plex_token": used_plex_token})
+                plex_result = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+                if plex_result and plex_result.get("validated"):
+                    last_error = None
+                    break
                 if isinstance(plex_result, dict):
                     last_error = plex_result.get("error")
+            if not plex_result or not plex_result.get("validated"):
                 if extracted_dir:
                     try:
                         shutil.rmtree(extracted_dir)
@@ -1556,9 +1605,9 @@ def import_config_preview():
                     jsonify(
                         success=False,
                         needs_plex_credentials=True,
-                        message=("Plex credentials in the import file could not be validated. " "Please enter a valid Plex URL and token."),
-                        plex_url=imported_plex_url or "",
-                        plex_token=imported_plex_token or "",
+                        message=("Plex credentials from the import/base config could not be validated. " "Please enter a valid Plex URL and token."),
+                        plex_url=imported_plex_url or base_plex_url or "",
+                        plex_token=imported_plex_token or base_plex_token or "",
                     ),
                     400,
                 )
@@ -1591,11 +1640,13 @@ def import_config_preview():
     if needs_tmdb:
         form_tmdb_key = parse_form_tmdb_credentials(request.form or {})
         imported_tmdb_key = parse_tmdb_credentials(parsed)
+        base_tmdb_key = parse_base_tmdb_credentials(base_config) if merge_mode else ""
         has_form = bool(form_tmdb_key)
         has_imported = bool(imported_tmdb_key)
+        has_base = bool(base_tmdb_key)
         used_tmdb_key = ""
 
-        if not has_form and not has_imported:
+        if not has_form and not has_imported and not has_base:
             if extracted_dir:
                 try:
                     shutil.rmtree(extracted_dir)
@@ -1635,12 +1686,23 @@ def import_config_preview():
                     400,
                 )
         else:
-            used_tmdb_key = imported_tmdb_key
-            tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": imported_tmdb_key})
-            tmdb_result = tmdb_response.get_json() if isinstance(tmdb_response, Flask.response_class) else tmdb_response
-            if not tmdb_result or not tmdb_result.get("valid"):
+            candidates = []
+            if merge_mode and has_base:
+                candidates.append(base_tmdb_key)
+            if has_imported:
+                candidates.append(imported_tmdb_key)
+            if not candidates:
+                candidates.append(imported_tmdb_key or base_tmdb_key)
+            for candidate_key in candidates:
+                used_tmdb_key = candidate_key
+                tmdb_response = validations.validate_tmdb_server({"tmdb_apikey": used_tmdb_key})
+                tmdb_result = tmdb_response.get_json() if isinstance(tmdb_response, Flask.response_class) else tmdb_response
+                if tmdb_result and tmdb_result.get("valid"):
+                    last_error = None
+                    break
                 if isinstance(tmdb_result, dict):
                     last_error = tmdb_result.get("message")
+            if not tmdb_result or not tmdb_result.get("valid"):
                 if extracted_dir:
                     try:
                         shutil.rmtree(extracted_dir)
@@ -1650,8 +1712,8 @@ def import_config_preview():
                     jsonify(
                         success=False,
                         needs_tmdb_credentials=True,
-                        message="TMDb API key in the import file could not be validated. Please enter a valid key.",
-                        tmdb_apikey=imported_tmdb_key or "",
+                        message="TMDb API key from the import/base config could not be validated. Please enter a valid key.",
+                        tmdb_apikey=imported_tmdb_key or base_tmdb_key or "",
                     ),
                     400,
                 )
@@ -1676,6 +1738,7 @@ def import_config_preview():
             except OSError:
                 pass
         return jsonify(success=False, message="No importable sections found."), 400
+    importable_sections = sorted(payload.keys())
 
     report_lines = list(report.lines)
     if extracted_fonts:
@@ -1729,6 +1792,9 @@ def import_config_preview():
                 "line_counts": line_counts,
                 "plex_movie_names": sorted(movie_names) if isinstance(movie_names, (set, list)) else [],
                 "plex_show_names": sorted(show_names) if isinstance(show_names, (set, list)) else [],
+                "merge_mode": merge_mode,
+                "base_config": base_config,
+                "importable_sections": importable_sections,
             },
             handle,
             ensure_ascii=True,
@@ -1774,6 +1840,9 @@ def import_config_preview():
         report_url=f"/import-config/report?token={token}",
         library_mapping=library_mapping,
         plex_libraries=plex_libraries,
+        merge_mode=merge_mode,
+        base_config=base_config,
+        importable_sections=importable_sections,
     )
 
 
@@ -1979,6 +2048,7 @@ def import_config_preview_mapped():
     _map_playlist_libraries(config_copy, library_mapping, plex_names)
 
     payload, report = importer.prepare_import_payload(config_copy, movie_names, show_names)
+    importable_sections = sorted(payload.keys()) if isinstance(payload, dict) else []
     report_lines = list(report.lines)
     if mapping_skip_reasons:
         seen = set(report_lines)
@@ -2047,6 +2117,7 @@ def import_config_preview_mapped():
     cached["line_counts"] = line_counts
     cached["plex_movie_names"] = sorted(movie_names)
     cached["plex_show_names"] = sorted(show_names)
+    cached["importable_sections"] = importable_sections
 
     with open(cache_path, "w", encoding="utf-8") as handle:
         json.dump(cached, handle, ensure_ascii=True)
@@ -2070,6 +2141,7 @@ def import_config_preview_mapped():
         annotated_report=annotated_report,
         mapping_summary=mapping_summary,
         report_url=f"/import-config/report?token={token}",
+        importable_sections=importable_sections,
     )
 
 
@@ -2078,10 +2150,22 @@ def import_config_confirm():
     data = request.get_json(silent=True) or {}
     token = data.get("token")
     library_mapping = data.get("library_mapping") or {}
+    raw_merge_mode = data.get("merge_mode")
+    base_config = (data.get("base_config") or "").strip()
+    merge_sections = data.get("merge_sections")
     if not token or token != session.get("import_preview_token"):
         return jsonify(success=False, message="Import token is invalid."), 400
     if library_mapping and not isinstance(library_mapping, dict):
         return jsonify(success=False, message="Invalid library mapping."), 400
+
+    def _boolish(value):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            return value.strip().lower() in {"1", "true", "yes", "merge", "on"}
+        return False
+
+    merge_mode = _boolish(raw_merge_mode)
 
     cache_path = session.get("import_preview_path")
     if not cache_path:
@@ -2098,6 +2182,37 @@ def import_config_confirm():
     config_data = cached.get("config_data") or {}
     fonts_dir = cached.get("fonts_dir")
     fonts = cached.get("fonts") or []
+    cached_merge_mode = helpers.booler(cached.get("merge_mode"))
+    if not merge_mode:
+        merge_mode = cached_merge_mode
+    if not base_config:
+        base_config = cached.get("base_config") or ""
+    if merge_sections is None:
+        merge_sections = cached.get("merge_sections")
+    if isinstance(merge_sections, str):
+        merge_sections = [entry.strip() for entry in merge_sections.split(",") if entry.strip()]
+    elif not isinstance(merge_sections, list):
+        merge_sections = []
+    merge_sections = [str(entry).strip() for entry in merge_sections if str(entry).strip()]
+    if not isinstance(config_data, dict):
+        config_data = {}
+    importable_sections = set(cached.get("importable_sections") or payload.keys())
+    selected_sections = set()
+    if merge_mode:
+        if not base_config:
+            return jsonify(success=False, message="Base config is required for merge."), 400
+        available = database.get_unique_config_names() or []
+        base_match = next((name for name in available if name.lower() == base_config.lower()), "")
+        if not base_match:
+            return jsonify(success=False, message="Base config not found. Select an existing config to merge."), 400
+        base_config = base_match
+        if merge_sections:
+            selected_sections = {section for section in merge_sections if section in importable_sections}
+        else:
+            selected_sections = set(importable_sections)
+        if not selected_sections:
+            return jsonify(success=False, message="Select at least one section to merge."), 400
+        config_data = {key: value for key, value in config_data.items() if key in selected_sections}
     if not config_name:
         return jsonify(success=False, message="Import payload is invalid."), 400
 
@@ -2259,13 +2374,33 @@ def import_config_confirm():
         _map_playlist_libraries(config_data, library_mapping, plex_names)
 
         payload, report = importer.prepare_import_payload(config_data, movie_names, show_names)
+        if merge_mode and selected_sections:
+            payload = {section: data_blob for section, data_blob in payload.items() if section in selected_sections}
         if not payload:
             return jsonify(success=False, message="No importable sections found."), 400
 
+    if merge_mode and selected_sections:
+        payload = {section: data_blob for section, data_blob in payload.items() if section in selected_sections}
     if not payload:
         return jsonify(success=False, message="No importable sections found."), 400
 
     imported_sections = []
+    if merge_mode:
+        base_sections = database.retrieve_config_sections(base_config)
+        if not base_sections:
+            return jsonify(success=False, message="Base config has no saved data to merge."), 400
+        for entry in base_sections:
+            section = entry.get("section")
+            data_blob = entry.get("data")
+            if not section or data_blob is None:
+                continue
+            database.save_section_data(
+                name=config_name,
+                section=section,
+                validated=helpers.booler(entry.get("validated")),
+                user_entered=helpers.booler(entry.get("user_entered")),
+                data=data_blob,
+            )
     for section, data_blob in payload.items():
         database.save_section_data(
             name=config_name,

@@ -285,6 +285,34 @@
           <label for="importConfigName">Config Name</label>
         </div>
         <div class="form-text">Name must be unique and use lowercase letters, numbers, and underscore only.</div>
+        {% set can_merge = available_configs | length > 0 %}
+        <div class="border rounded p-2 mt-3" id="importModeSection">
+          <div class="small text-muted mb-1">Import Mode</div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="importMode" id="importModeNew" value="new" checked>
+            <label class="form-check-label" for="importModeNew">Create a new config from this file</label>
+          </div>
+          <div class="form-check mt-1">
+            <input class="form-check-input" type="radio" name="importMode" id="importModeMerge" value="merge" {% if not can_merge %}disabled{% endif %}>
+            <label class="form-check-label" for="importModeMerge">
+              Merge into a base config (creates a new config)
+              {% if not can_merge %}<span class="text-muted">No configs available</span>{% endif %}
+            </label>
+          </div>
+          <div class="small text-muted mt-1">Merge keeps the base config unchanged and overwrites only the sections you choose.</div>
+        </div>
+        <div id="importMergeBaseSection" class="d-none mt-3">
+          <div class="form-floating mb-2">
+            <select class="form-select" id="importMergeBaseConfig">
+              <option value="">Select a base config</option>
+              {% for name in available_configs %}
+              <option value="{{ name }}" {% if name==page_info['config_name'] %}selected{% endif %}>{{ name }}</option>
+              {% endfor %}
+            </select>
+            <label for="importMergeBaseConfig">Base Config</label>
+          </div>
+          <div class="small text-muted">A new config will be created using this base. The base config is not modified.</div>
+        </div>
         <div id="importPlexCredentials" class="d-none mt-3">
           <div class="alert alert-warning py-2 small mb-3" role="alert">
             Plex credentials are required to map libraries from the import.
@@ -340,6 +368,17 @@
           </div>
           <pre class="mt-2 p-2 border rounded small bg-dark text-light" id="importReport"
             style="max-height: 260px; overflow: auto;"></pre>
+        </div>
+        <div id="importMergeSection" class="d-none mt-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+            <h6 class="mb-0">Merge Sections</h6>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Select merge sections">
+              <button type="button" class="btn btn-outline-light" id="importMergeSelectAll">Select All</button>
+              <button type="button" class="btn btn-outline-light" id="importMergeSelectNone">Select None</button>
+            </div>
+          </div>
+          <div class="small text-muted mb-2">Choose which sections from the import should overwrite the base config.</div>
+          <div id="importMergeSectionList" class="d-flex flex-wrap gap-2"></div>
         </div>
         <div id="importLibraryMappingSection" class="d-none mt-3">
           <h6 class="mb-1">Map Libraries to Plex</h6>

@@ -73,6 +73,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const importConfigModalEl = document.getElementById('importConfigModal')
   const importConfigFile = document.getElementById('importConfigFile')
   const importConfigName = document.getElementById('importConfigName')
+  const importModeNew = document.getElementById('importModeNew')
+  const importModeMerge = document.getElementById('importModeMerge')
+  const importMergeBaseSection = document.getElementById('importMergeBaseSection')
+  const importMergeBaseConfig = document.getElementById('importMergeBaseConfig')
   const importPlexCredentials = document.getElementById('importPlexCredentials')
   const importPlexUrl = document.getElementById('importPlexUrl')
   const importPlexToken = document.getElementById('importPlexToken')
@@ -87,6 +91,10 @@ document.addEventListener('DOMContentLoaded', function () {
   const importSummary = document.getElementById('importSummary')
   const importReport = document.getElementById('importReport')
   const downloadImportReport = document.getElementById('downloadImportReport')
+  const importMergeSection = document.getElementById('importMergeSection')
+  const importMergeSectionList = document.getElementById('importMergeSectionList')
+  const importMergeSelectAll = document.getElementById('importMergeSelectAll')
+  const importMergeSelectNone = document.getElementById('importMergeSelectNone')
   const importLibraryMappingSection = document.getElementById('importLibraryMappingSection')
   const importLibraryMappingList = document.getElementById('importLibraryMappingList')
   const importMappingNote = document.getElementById('importMappingNote')
@@ -520,9 +528,161 @@ document.addEventListener('DOMContentLoaded', function () {
     importNeedsTmdbCredentials = Boolean(options && options.needsTmdb)
   }
 
+  function getImportMode () {
+    if (importModeMerge && importModeMerge.checked) return 'merge'
+    return 'new'
+  }
+
+  function getMergeBaseConfig () {
+    if (!importMergeBaseConfig) return ''
+    return importMergeBaseConfig.value.trim()
+  }
+
+  function clearMergeSections () {
+    if (importMergeSectionList) importMergeSectionList.innerHTML = ''
+    if (importMergeSection) importMergeSection.classList.add('d-none')
+  }
+
+  function toggleImportModeUI () {
+    const isMerge = getImportMode() === 'merge'
+    if (importMergeBaseSection) importMergeBaseSection.classList.toggle('d-none', !isMerge)
+    if (!isMerge) clearMergeSections()
+  }
+
+  function titleCase (value) {
+    return String(value || '')
+      .split('_')
+      .map(part => (part ? part[0].toUpperCase() + part.slice(1) : ''))
+      .join(' ')
+  }
+
+  const mergeSectionLabels = {
+    plex: 'Plex',
+    tmdb: 'TMDb',
+    omdb: 'OMDb',
+    mdblist: 'MDBList',
+    tautulli: 'Tautulli',
+    notifiarr: 'Notifiarr',
+    gotify: 'Gotify',
+    ntfy: 'ntfy',
+    github: 'GitHub',
+    radarr: 'Radarr',
+    sonarr: 'Sonarr',
+    trakt: 'Trakt',
+    mal: 'MyAnimeList',
+    anidb: 'AniDB',
+    webhooks: 'Webhooks',
+    settings: 'Settings',
+    playlist_files: 'Playlists',
+    libraries: 'Libraries'
+  }
+
+  const mergeSectionOrder = [
+    'plex',
+    'tmdb',
+    'libraries',
+    'playlist_files',
+    'tautulli',
+    'github',
+    'omdb',
+    'mdblist',
+    'notifiarr',
+    'gotify',
+    'ntfy',
+    'webhooks',
+    'anidb',
+    'radarr',
+    'sonarr',
+    'trakt',
+    'mal',
+    'settings'
+  ]
+
+  const mergeDefaultSelected = new Set(['libraries', 'playlist_files', 'settings'])
+
+  function renderMergeSections (sections) {
+    if (!importMergeSection || !importMergeSectionList) return
+    importMergeSectionList.innerHTML = ''
+    if (getImportMode() !== 'merge') {
+      importMergeSection.classList.add('d-none')
+      return
+    }
+    const list = Array.isArray(sections) ? sections.filter(Boolean) : []
+    if (!list.length) {
+      importMergeSection.classList.add('d-none')
+      return
+    }
+    const ordered = []
+    const remaining = new Set(list)
+    mergeSectionOrder.forEach(section => {
+      if (remaining.has(section)) {
+        ordered.push(section)
+        remaining.delete(section)
+      }
+    })
+    Array.from(remaining).sort().forEach(section => ordered.push(section))
+
+    const shouldUseDefaults = ordered.some(section => mergeDefaultSelected.has(section))
+
+    ordered.forEach((section, idx) => {
+      const id = `import-merge-${idx}-${String(section).replace(/[^a-zA-Z0-9_-]/g, '_')}`
+      const wrapper = document.createElement('div')
+      wrapper.className = 'form-check form-check-inline'
+
+      const input = document.createElement('input')
+      input.type = 'checkbox'
+      input.className = 'form-check-input import-merge-section'
+      input.id = id
+      input.value = section
+      input.checked = shouldUseDefaults ? mergeDefaultSelected.has(section) : true
+      input.addEventListener('change', updateImportConfirmState)
+
+      const label = document.createElement('label')
+      label.className = 'form-check-label small'
+      label.setAttribute('for', id)
+      label.textContent = mergeSectionLabels[section] || titleCase(section)
+
+      wrapper.appendChild(input)
+      wrapper.appendChild(label)
+      importMergeSectionList.appendChild(wrapper)
+    })
+    importMergeSection.classList.remove('d-none')
+  }
+
+  function collectMergeSections () {
+    if (!importMergeSectionList) return []
+    return Array.from(importMergeSectionList.querySelectorAll('.import-merge-section:checked'))
+      .map(input => input.value)
+  }
+
+  function setMergeSelection (checked) {
+    if (!importMergeSectionList) return
+    importMergeSectionList.querySelectorAll('.import-merge-section').forEach(input => {
+      input.checked = checked
+    })
+    updateImportConfirmState()
+  }
+
+  if (importMergeSelectAll) {
+    importMergeSelectAll.addEventListener('click', () => {
+      setMergeSelection(true)
+    })
+  }
+  if (importMergeSelectNone) {
+    importMergeSelectNone.addEventListener('click', () => {
+      setMergeSelection(false)
+    })
+  }
+
   function updateImportConfirmState () {
     if (!confirmImportButton) return
     if (confirmImportButton.classList.contains('d-none')) return
+    const isMerge = getImportMode() === 'merge'
+    if (isMerge && !getMergeBaseConfig()) {
+      confirmImportButton.disabled = true
+      setImportError('Select a base config to merge into.')
+      return
+    }
     if (importLibraryMappingSection && !importLibraryMappingSection.classList.contains('d-none')) {
       const selects = importLibraryMappingList
         ? Array.from(importLibraryMappingList.querySelectorAll('.import-library-map'))
@@ -536,7 +696,13 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       return
     }
+    if (isMerge && !collectMergeSections().length) {
+      confirmImportButton.disabled = true
+      setImportError('Select at least one section to merge.')
+      return
+    }
     confirmImportButton.disabled = false
+    setImportError('')
   }
 
   let mappingRefreshTimer = null
@@ -578,6 +744,7 @@ document.addEventListener('DOMContentLoaded', function () {
         downloadImportReport.download = `import_report_${importConfigName?.value || 'import'}.txt`
         downloadImportReport.classList.remove('d-none')
       }
+      renderMergeSections(data.importable_sections)
     } catch (err) {
       setImportError(err.message || 'Preview refresh failed.')
     }
@@ -704,6 +871,20 @@ document.addEventListener('DOMContentLoaded', function () {
       importConfigName.value = ''
       removeValidationMessages(importConfigName)
     }
+    if (importModeNew) importModeNew.checked = true
+    if (importModeMerge) importModeMerge.checked = false
+    if (importMergeBaseConfig) {
+      const current = configSelector?.value && configSelector.value !== 'add_config'
+        ? configSelector.value
+        : ''
+      if (current) {
+        importMergeBaseConfig.value = current
+      } else if (importMergeBaseConfig.options.length) {
+        importMergeBaseConfig.selectedIndex = 0
+      }
+    }
+    if (importMergeBaseSection) importMergeBaseSection.classList.add('d-none')
+    clearMergeSections()
     if (importPlexCredentials) importPlexCredentials.classList.add('d-none')
     if (importPlexUrl) importPlexUrl.value = ''
     if (importPlexToken) importPlexToken.value = ''
@@ -748,6 +929,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     if (confirmImportButton) confirmImportButton.classList.add('d-none')
     if (importTmdbCredentials) importTmdbCredentials.classList.add('d-none')
+    clearMergeSections()
     if (importReportFilters) {
       importReportFilters.querySelectorAll('button[data-filter]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.filter === 'all')
@@ -839,6 +1021,17 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!importConfigName) return
       removeValidationMessages(importConfigName)
       setImportError('')
+      if (importModeNew) importModeNew.checked = true
+      if (importModeMerge) importModeMerge.checked = false
+      if (importMergeBaseConfig) {
+        const current = configSelector?.value && configSelector.value !== 'add_config'
+          ? configSelector.value
+          : ''
+        if (current) {
+          importMergeBaseConfig.value = current
+        }
+      }
+      toggleImportModeUI()
       let suggested = ''
       const selectorValue = configSelector?.value || ''
       if (selectorValue === 'add_config') {
@@ -873,6 +1066,23 @@ document.addEventListener('DOMContentLoaded', function () {
     })
   }
 
+  function handleImportMergeSettingsChange () {
+    toggleImportModeUI()
+    clearImportPreviewState({ keepCredentials: true })
+    if (previewImportButton) previewImportButton.textContent = 'Preview Import'
+    updateImportConfirmState()
+  }
+
+  if (importModeNew) {
+    importModeNew.addEventListener('change', handleImportMergeSettingsChange)
+  }
+  if (importModeMerge) {
+    importModeMerge.addEventListener('change', handleImportMergeSettingsChange)
+  }
+  if (importMergeBaseConfig) {
+    importMergeBaseConfig.addEventListener('change', handleImportMergeSettingsChange)
+  }
+
   if (previewImportButton) {
     previewImportButton.addEventListener('click', async () => {
       setImportError('')
@@ -903,6 +1113,10 @@ document.addEventListener('DOMContentLoaded', function () {
         setImportError('That config name already exists.')
         return
       }
+      if (getImportMode() === 'merge' && !getMergeBaseConfig()) {
+        setImportError('Select a base config to merge into.')
+        return
+      }
 
       previewImportButton.disabled = true
       previewImportButton.textContent = 'Previewing...'
@@ -911,6 +1125,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const formData = new FormData()
         formData.append('file', importConfigFile.files[0])
         formData.append('config_name', importConfigName.value)
+        if (getImportMode() === 'merge') {
+          formData.append('merge_mode', 'merge')
+          const baseConfig = getMergeBaseConfig()
+          if (baseConfig) formData.append('base_config', baseConfig)
+        }
         if (importPlexUrl && importPlexUrl.value.trim()) {
           formData.append('plex_url', importPlexUrl.value.trim())
         }
@@ -968,6 +1187,7 @@ document.addEventListener('DOMContentLoaded', function () {
           downloadImportReport.download = `import_report_${importConfigName.value}.txt`
           downloadImportReport.classList.remove('d-none')
         }
+        renderMergeSections(data.importable_sections)
         renderLibraryMapping(data.library_mapping || [], data.plex_libraries || {})
         if (confirmImportButton) confirmImportButton.classList.remove('d-none')
         updateImportConfirmState()
@@ -1045,10 +1265,20 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           })
         }
+        const isMerge = getImportMode() === 'merge'
+        const mergePayload = {
+          merge_mode: isMerge,
+          base_config: isMerge ? getMergeBaseConfig() : '',
+          merge_sections: isMerge ? collectMergeSections() : []
+        }
         const res = await fetch('/import-config/confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: importToken, library_mapping: libraryMapping })
+          body: JSON.stringify({
+            token: importToken,
+            library_mapping: libraryMapping,
+            ...mergePayload
+          })
         })
         const data = await res.json()
         if (!res.ok || !data.success) {
