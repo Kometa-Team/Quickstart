@@ -2117,10 +2117,9 @@ def build_config(header_style="standard", config_name=None):
             return ""
         updated_at = payload.get("validation_updated_at") or payload.get("validated_at")
         last_validated = format_validation_timestamp(updated_at)
-        lines = [f"# validation: {status}"]
         if last_validated:
-            lines.append(f"# last_validated: {last_validated}")
-        return "\n".join(lines)
+            return f"# validation: {status} (last_validated: {last_validated})"
+        return f"# validation: {status}"
 
     ordered_sections = [
         ("libraries", "025-libraries"),
