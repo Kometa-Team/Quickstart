@@ -1516,20 +1516,6 @@ def import_config_preview():
         token = stored.get("token") or stored.get("plex_token") or ""
         return str(url).strip(), str(token).strip()
 
-    def parse_base_plex_libraries(base_name: str):
-        if not base_name:
-            return set(), set()
-        try:
-            _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
-        except Exception:
-            return set(), set()
-        if not isinstance(stored, dict):
-            return set(), set()
-        plex_block = stored.get("plex") if isinstance(stored.get("plex"), dict) else stored
-        if not isinstance(plex_block, dict):
-            return set(), set()
-        return parse_list(plex_block.get("tmp_movie_libraries", "")), parse_list(plex_block.get("tmp_show_libraries", ""))
-
     def parse_form_plex_credentials(form_data):
         url = form_data.get("plex_url", "") or ""
         token = form_data.get("plex_token", "") or ""
@@ -2281,6 +2267,20 @@ def import_config_confirm():
         if isinstance(value, list):
             return {str(v).strip() for v in value if str(v).strip()}
         return set()
+
+    def parse_base_plex_libraries(base_name: str):
+        if not base_name:
+            return set(), set()
+        try:
+            _validated, _user_entered, stored = database.retrieve_section_data(base_name, "plex")
+        except Exception:
+            return set(), set()
+        if not isinstance(stored, dict):
+            return set(), set()
+        plex_block = stored.get("plex") if isinstance(stored.get("plex"), dict) else stored
+        if not isinstance(plex_block, dict):
+            return set(), set()
+        return parse_list(plex_block.get("tmp_movie_libraries", "")), parse_list(plex_block.get("tmp_show_libraries", ""))
 
     movie_names = set()
     show_names = set()
