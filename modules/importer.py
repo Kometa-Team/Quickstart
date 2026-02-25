@@ -294,6 +294,8 @@ def annotate_yaml_with_report(raw_text: str, report_lines: list[str], binary: bo
         if binary and status_path:
             status = "imported" if flags and flags.get("mapped") else "not imported"
             reason = _lookup_report_reason(reason_map, status_path) if status == "not imported" else None
+            if status == "not imported" and not reason:
+                reason = "No matching Quickstart mapping"
             status_text = _format_report_status(status, reason)
         else:
             status = _status_from_flags(flags)
