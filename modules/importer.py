@@ -47,7 +47,7 @@ class ImportReport:
     def add(self, status: str, path: str, reason: str | None = None) -> None:
         if status not in self.counts:
             status = "skipped"
-        suffix = f" - {reason}" if reason else ""
+        suffix = f" :: {reason}" if reason else ""
         self.lines.append(f"{status}: {path}{suffix}")
         self.counts[status] += 1
 
@@ -69,10 +69,15 @@ def _parse_report_details(report_lines: list[str]) -> tuple[dict[str, str], dict
             continue
         path = rest.strip()
         reason = ""
-        if " - " in path:
-            path, reason = path.split(" - ", 1)
+        if " :: " in path:
+            path, reason = path.rsplit(" :: ", 1)
             path = path.strip()
             reason = reason.strip()
+        elif " - " in path and status != "imported":
+            candidate_path, candidate_reason = path.rsplit(" - ", 1)
+            if " - " not in candidate_path:
+                path = candidate_path.strip()
+                reason = candidate_reason.strip()
         if not path:
             continue
         mapped = "mapped" if status == "imported" else status
@@ -600,7 +605,6 @@ def build_library_type_plan(
     detail_map = {d.get("name"): d for d in details}
     library_types: dict[str, str] = {}
     inference_list: list[dict] = []
-
     libraries_payload = config_data.get("libraries")
     if not isinstance(libraries_payload, dict):
         return library_types, inference_list, False
@@ -669,6 +673,7 @@ def prepare_import_payload(
     collection_config = helpers.load_quickstart_config("quickstart_collections.json") or []
     overlay_config = helpers.load_quickstart_config("quickstart_overlays.json") or []
     attribute_config = helpers.load_quickstart_config("quickstart_attributes.json") or {}
+    inferred_types, _ = infer_library_types(config_data)
 
     collection_by_id, collection_by_alias = _build_collection_index(collection_config)
     overlay_by_id, overlay_by_alias, overlay_radio = _build_overlay_index(overlay_config)
@@ -1001,21 +1006,31 @@ def prepare_import_payload(
                 override = library_type_overrides.get(str(lib_name))
             override_prefix, override_default = _normalize_library_type(override)
 
-            if lib_name in plex_movie_names:
+            name = str(lib_name)
+            resolved_name = name
+            if name in plex_movie_names:
                 lib_type = "mov"
                 builder_default = "movie"
-            elif lib_name in plex_show_names:
+            elif name in plex_show_names:
                 lib_type = "sho"
                 builder_default = "show"
             elif override_prefix and override_default:
                 lib_type = override_prefix
                 builder_default = override_default
             else:
-                report.add("unmapped", f"libraries.{lib_name}", "Library type could not be determined.")
-                continue
+                inferred = inferred_types.get(name)
+                if inferred == "movie":
+                    lib_type = "mov"
+                    builder_default = "movie"
+                elif inferred == "show":
+                    lib_type = "sho"
+                    builder_default = "show"
+                else:
+                    report.add("unmapped", f"libraries.{lib_name}", "Library type could not be determined.")
+                    continue
 
-            lib_id = f"{lib_type}-library_{helpers.normalize_id(str(lib_name), existing_ids)}"
-            libraries_data[f"{lib_id}-library"] = lib_name
+            lib_id = f"{lib_type}-library_{helpers.normalize_id(name, existing_ids)}"
+            libraries_data[f"{lib_id}-library"] = resolved_name
             report.add("imported", f"libraries.{lib_name}.library")
 
             # Top-level values

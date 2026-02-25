@@ -1856,7 +1856,8 @@ def import_config_preview():
     if needs_plex and isinstance(parsed.get("libraries"), dict):
         inference_map = {item.get("name"): item for item in library_inference}
         for lib_name in parsed.get("libraries", {}).keys():
-            if lib_name in movie_names or lib_name in show_names:
+            name = str(lib_name)
+            if name in movie_names or name in show_names:
                 continue
             info = inference_map.get(lib_name, {})
             library_mapping.append(
@@ -2040,17 +2041,20 @@ def import_config_preview_mapped():
                 movie_names = parse_list(plex_result.get("movie_libraries", []))
                 show_names = parse_list(plex_result.get("show_libraries", []))
 
-    plex_names = set(movie_names) | set(show_names)
+    plex_lookup = {name: name for name in movie_names}
+    plex_lookup.update({name: name for name in show_names})
+    plex_names = set(plex_lookup.values())
 
     mapping_skip_reasons = {}
+    alias_map = {}
     mapping_stats = {"mapped": 0, "ignored": 0, "missing": 0, "invalid": 0, "duplicate": 0}
     if isinstance(config_data.get("libraries"), dict):
         mapped_libraries = {}
         used_targets = set()
         for lib_name, lib_cfg in config_data.get("libraries", {}).items():
             name = str(lib_name)
-            if name in plex_names:
-                target = name
+            if name in plex_lookup:
+                target = plex_lookup[name]
             else:
                 mapped = library_mapping.get(name)
                 if mapped is None or str(mapped).strip() == "":
@@ -2062,11 +2066,14 @@ def import_config_preview_mapped():
                     mapping_skip_reasons[name] = "Mapping set to ignore library."
                     mapping_stats["ignored"] += 1
                     continue
-                if mapped not in plex_names:
+                if mapped not in plex_lookup:
                     mapping_skip_reasons[name] = "Mapped library not found in Plex."
                     mapping_stats["invalid"] += 1
                     continue
-                target = mapped
+                target = plex_lookup[mapped]
+
+            if target != name:
+                alias_map[name] = target
 
             if target in used_targets:
                 mapping_skip_reasons[name] = "Mapped library already assigned to another entry."
@@ -2096,14 +2103,14 @@ def import_config_preview_mapped():
         for lib_name, reason in mapping_skip_reasons.items():
             if not lib_name:
                 continue
-            line = f"skipped: libraries.{lib_name} - {reason}"
+            line = f"skipped: libraries.{lib_name} :: {reason}"
             if line not in seen:
                 report_lines.append(line)
                 seen.add(line)
-    if library_mapping and isinstance(config_data.get("libraries"), dict):
+    if alias_map and isinstance(config_data.get("libraries"), dict):
         alias_lines = []
         seen = set(report_lines)
-        for original_name, mapped_name in library_mapping.items():
+        for original_name, mapped_name in alias_map.items():
             if not original_name:
                 continue
             mapped_name = str(mapped_name).strip()
@@ -2119,7 +2126,11 @@ def import_config_preview_mapped():
                 status = status.strip()
                 path = rest.strip()
                 suffix = ""
-                if " - " in path:
+                if " :: " in path:
+                    path, reason = path.split(" :: ", 1)
+                    path = path.strip()
+                    suffix = f" :: {reason}"
+                elif status != "imported" and " - " in path:
                     path, reason = path.split(" - ", 1)
                     path = path.strip()
                     suffix = f" - {reason}"
@@ -2366,7 +2377,9 @@ def import_config_confirm():
                     400,
                 )
 
-        plex_names = set(movie_names) | set(show_names)
+        plex_lookup = {name: name for name in movie_names}
+        plex_lookup.update({name: name for name in show_names})
+        plex_names = set(plex_lookup.values())
 
         if isinstance(libraries_payload, dict):
             if needs_plex and not plex_names:
@@ -2386,8 +2399,8 @@ def import_config_confirm():
 
             for lib_name, lib_cfg in libraries_payload.items():
                 name = str(lib_name)
-                if name in plex_names:
-                    target = name
+                if name in plex_lookup:
+                    target = plex_lookup[name]
                 else:
                     mapped = library_mapping.get(name)
                     if mapped is None:
@@ -2399,10 +2412,10 @@ def import_config_confirm():
                         continue
                     if mapped == "__ignore__":
                         continue
-                    if mapped not in plex_names:
+                    if mapped not in plex_lookup:
                         invalid_targets.append(mapped)
                         continue
-                    target = mapped
+                    target = plex_lookup[mapped]
 
                 if target in used_targets:
                     duplicates.append(target)
