@@ -2551,7 +2551,7 @@ def import_config_confirm():
 @app.route("/step/<name>", methods=["GET", "POST"])
 def step(name):
     page_info = {}
-    header_style = "standard"  # Default to 'standard' font
+    header_style = "single_line"  # Default to 'single_line' font
     save_error = None
     persistence.ensure_session_config_name()
 
@@ -2563,7 +2563,7 @@ def step(name):
             save_error = "Invalid values: " + " ".join(validation_errors)
         else:
             persistence.save_settings(request.referrer, request.form)
-            header_style = request.form.get("header_style", "standard")
+            header_style = request.form.get("header_style", "single_line")
 
     # --- Detect config change ---
     previous_config = session.get("config_name")
@@ -2591,11 +2591,11 @@ def step(name):
         header_style = saved_settings["final"]["header_style"]
 
     if header_style is None:
-        header_style = "none"
+        header_style = "single_line" if "single_line" in available_fonts else "standard"
 
     # Ensure the selected font is valid
     if header_style not in available_fonts:
-        header_style = "standard"
+        header_style = "single_line" if "single_line" in available_fonts else "standard"
 
     page_info["header_style"] = header_style  # Now properly restored
 

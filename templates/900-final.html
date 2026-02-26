@@ -6,26 +6,14 @@
 <div id="plex-maintenance-window" data-window="{{ page_info.telemetry.maintenance_window }}"></div>
 <div id="qs-env" data-running-on="{{ version_info.running_on | default('') }}"></div>
 
-<!-- Header Style Dropdown -->
-<div class="form-floating mb-2">
-  <select id="header-style" name="header_style" class="form-select">
-    {% for font in page_info.available_fonts %}
-    <option value="{{ font }}" {% if font==page_info.header_style %}selected{% endif %}>
-      {{ font.replace('_', ' ')|capitalize }}
-    </option>
-    {% endfor %}
-  </select>
-  <label for="header-style">Header Style</label>
-</div>
-<div class="form-text mb-1">Preview</div>
-<pre id="header-style-preview" class="form-control bg-dark text-light small font-monospace" style="white-space: pre;">Loading preview...</pre>
+<input type="hidden" id="header-style" name="header_style" value="{{ page_info.header_style }}">
 <div id="header-style-wait" class="form-text text-info mt-2 d-none">Updating header style... please wait.</div>
 <div class="accordion mt-2 mb-2" id="header-style-grid-accordion">
   <div class="accordion-item">
     <h2 class="accordion-header" id="header-style-grid-heading">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
         data-bs-target="#header-style-grid-collapse" aria-expanded="false" aria-controls="header-style-grid-collapse">
-        Font preview cards
+        Section Style: <span id="header-style-label">{{ page_info.header_style.replace('_', ' ')|capitalize }}</span>
       </button>
     </h2>
     <div id="header-style-grid-collapse" class="accordion-collapse collapse"
@@ -51,6 +39,10 @@
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
         data-bs-target="#validation-status-collapse" aria-expanded="false" aria-controls="validation-status-collapse">
         Validation status
+        <span class="small text-muted ms-2">
+          Last run:
+          <span id="validation-status-last-run" data-validation-iso="{{ validation_rollup_at | default('', true) }}">Never</span>
+        </span>
       </button>
     </h2>
     <div id="validation-status-collapse" class="accordion-collapse collapse" aria-labelledby="validation-status-heading"

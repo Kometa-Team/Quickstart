@@ -70,7 +70,6 @@ $(document).ready(function () {
   const $yamlLineCount = $('#yaml-line-count')
   let showYAML = false
   const headerSelect = document.getElementById('header-style')
-  const headerPreview = document.getElementById('header-style-preview')
   const headerGrid = document.getElementById('header-style-grid')
   const headerGridCollapse = document.getElementById('header-style-grid-collapse')
   const headerStyleWait = document.getElementById('header-style-wait')
@@ -78,6 +77,7 @@ $(document).ready(function () {
   const headerGridStatus = document.getElementById('header-style-grid-status')
   const headerGridProgress = document.getElementById('header-style-grid-progress')
   const headerGridProgressBar = headerGridProgress ? headerGridProgress.querySelector('.progress-bar') : null
+  const headerStyleLabel = document.getElementById('header-style-label')
 
   function readMetaFlag (id, datasetKey, attrKey) {
     const el = document.getElementById(id)
@@ -167,29 +167,19 @@ $(document).ready(function () {
   updateYamlLineCount()
   $yamlOutput.on('input', updateYamlLineCount)
 
-  async function updateHeaderPreview (fontValue) {
-    if (!headerPreview) return
-    const font = fontValue || (headerSelect ? headerSelect.value : '')
-    headerPreview.textContent = 'Loading preview...'
-    try {
-      const res = await fetch(`/header-style-preview?font=${encodeURIComponent(font || '')}`)
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Preview unavailable.')
-      }
-      headerPreview.textContent = data.preview || ''
-    } catch (err) {
-      headerPreview.textContent = 'Preview unavailable.'
-    }
-  }
-
-  if (headerSelect && headerPreview) {
-    updateHeaderPreview(headerSelect.value)
-    headerSelect.addEventListener('change', () => updateHeaderPreview(headerSelect.value))
-  }
-
   function normalizeFontName (value) {
     return String(value || '').trim()
+  }
+
+  function formatHeaderStyleLabel (value) {
+    const text = normalizeFontName(value)
+    if (!text) return 'Single line'
+    return text.replace(/_/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase())
+  }
+
+  function updateHeaderStyleLabel (value) {
+    if (!headerStyleLabel) return
+    headerStyleLabel.textContent = formatHeaderStyleLabel(value)
   }
 
   function setActiveGridCard (fontName) {
@@ -244,6 +234,7 @@ $(document).ready(function () {
           headerSelect.value = font
           headerSelect.dispatchEvent(new Event('change'))
         }
+        updateHeaderStyleLabel(font)
         setActiveGridCard(font)
       })
       headerGrid.appendChild(card)
@@ -300,6 +291,7 @@ $(document).ready(function () {
   if (headerSelect && headerGrid) {
     headerSelect.addEventListener('change', () => setActiveGridCard(headerSelect.value))
   }
+  updateHeaderStyleLabel(headerSelect ? headerSelect.value : '')
 
   function updateLibraryVisibility (mainOption) {
     const librarySection = $('#library-multiselect').closest('.mb-2')
@@ -1619,6 +1611,7 @@ $(document).ready(function () {
   const validateAllSpinner = document.getElementById('validate-all-spinner')
   const validateAllStatus = document.getElementById('validate-all-status')
   const validateAllStatusTime = document.getElementById('validate-all-status-time')
+  const validationStatusLastRun = document.getElementById('validation-status-last-run')
   if (validateAllBtn) {
     validateAllBtn.addEventListener('click', function () {
       if (validateAllBtn.disabled) return
@@ -1688,11 +1681,19 @@ $(document).ready(function () {
             validateAllStatus.classList.add('text-success')
             const summaryText = data.summary_text || `Completed. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}.`
             validateAllStatus.textContent = summaryText
-            if (validateAllStatusTime && data.summary_updated_at) {
-              validateAllStatusTime.dataset.validationIso = data.summary_updated_at
-              const parsed = new Date(data.summary_updated_at)
+            const summaryUpdatedAt = data.summary_updated_at || new Date().toISOString()
+            if (validateAllStatusTime) {
+              validateAllStatusTime.dataset.validationIso = summaryUpdatedAt
+              const parsed = new Date(summaryUpdatedAt)
               if (!Number.isNaN(parsed.getTime())) {
                 validateAllStatusTime.textContent = formatLocalTimestamp(parsed)
+              }
+            }
+            if (validationStatusLastRun) {
+              validationStatusLastRun.dataset.validationIso = summaryUpdatedAt
+              const parsed = new Date(summaryUpdatedAt)
+              if (!Number.isNaN(parsed.getTime())) {
+                validationStatusLastRun.textContent = formatLocalTimestamp(parsed)
               }
             }
           }
