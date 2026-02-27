@@ -288,7 +288,7 @@ jobs:
           mv dist/Quickstart${{ matrix.ext }} dist/${filename}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         id: artifact-upload-step
         with:
           name: ${{ steps.build-executable.outputs.filename }}
