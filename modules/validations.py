@@ -204,8 +204,7 @@ def validate_gotify_server(data):
         status = response.status_code
         content_type = response.headers.get("Content-Type")
         helpers.ts_log(
-            f"Gotify validation returned non-JSON response "
-            f"(status={status}, content-type={content_type})",
+            f"Gotify validation returned non-JSON response " f"(status={status}, content-type={content_type})",
             level="ERROR",
         )
         return jsonify(

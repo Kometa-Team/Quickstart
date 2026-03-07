@@ -393,8 +393,6 @@ def _resolve_user_dir(raw_path: str | None) -> Path | None:
         return None
 
 
-
-
 def _rename_config_files(old_name: str, new_name: str, dry_run: bool = False) -> dict:
     result = {"success": False, "renamed": [], "skipped": [], "errors": [], "rollback_errors": []}
     old_norm = _normalize_config_filename(old_name)
