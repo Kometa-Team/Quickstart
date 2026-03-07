@@ -201,7 +201,19 @@ def validate_gotify_server(data):
     try:
         response_json = response.json()
     except JSONDecodeError as e:
-        return jsonify({"valid": False, "error": f"Validation error: {str(e)}"})
+        status = response.status_code
+        content_type = response.headers.get("Content-Type")
+        helpers.ts_log(
+            f"Gotify validation returned non-JSON response "
+            f"(status={status}, content-type={content_type})",
+            level="ERROR",
+        )
+        return jsonify(
+            {
+                "valid": False,
+                "error": f"Gotify returned a non-JSON response (status {status}). Check the base URL.",
+            }
+        )
 
     if response.status_code >= 400:
         return jsonify({"valid": False, "error": f"({response.status_code} [{response.reason}]) {response_json['errorDescription']}"})
