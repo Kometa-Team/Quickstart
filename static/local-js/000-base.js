@@ -189,10 +189,20 @@ function jumpTo (targetPage) {
   form.action = originalAction // optional restore
 }
 
+function escapeHtml (value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 // Function to show toast messages
 function showToast (type, message) {
   const toastId = `toast-${Date.now()}` // Unique ID for each toast
   const toastContainer = document.querySelector('.toast-container')
+  const safeMessage = escapeHtml(message)
 
   // Define Bootstrap colors, icons, and progress bar styles per type
   const toastConfig = {
@@ -211,7 +221,7 @@ function showToast (type, message) {
     <div id="${toastId}" class="toast align-items-center ${toastTypeClass} border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="10000">
       <div class="d-flex">
         <div class="toast-body">
-          <i class="bi ${icon} me-2"></i> ${message}
+          <i class="bi ${icon} me-2"></i> ${safeMessage}
         </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
       </div>
@@ -305,7 +315,7 @@ function setupValidationCallouts () {
           <button class="accordion-button ${isValidated ? 'collapsed' : ''}" type="button"
             data-bs-toggle="collapse" data-bs-target="#${collapseId}"
             aria-expanded="${isValidated ? 'false' : 'true'}" aria-controls="${collapseId}">
-            ${title}
+            ${escapeHtml(title)}
           </button>
         </h2>
         <div id="${collapseId}" class="accordion-collapse collapse ${isValidated ? '' : 'show'}"
@@ -431,10 +441,14 @@ function restartQuickstart (reason) {
         const restartBtn = document.querySelector('#updateResult button')
         if (restartBtn) restartBtn.disabled = true
 
-        document.getElementById('updateResult').innerHTML = `
-          <strong>🚀 ${data.message}</strong><br>
+        const updateResult = document.getElementById('updateResult')
+        if (updateResult) {
+          const safeMessage = escapeHtml(data.message || 'Update complete. Quickstart restarted successfully.')
+          updateResult.innerHTML = `
+          <strong>🚀 ${safeMessage}</strong><br>
           Please wait while Quickstart restarts... this page will auto-reload shortly.
         `
+        }
         setTimeout(() => location.reload(), 6000)
       } else {
         showToast('error', data.message || 'Restart failed.')
@@ -480,20 +494,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           updateSucceeded = true
+          const safeBranch = escapeHtml(data.branch || branch)
+          const safeLines = escapeHtml(lines.join('\n'))
           resultBox.innerHTML = `
             <strong>✅ Update Successful!</strong><br>
-            <span class="text-info">Branch: <code>${data.branch || branch}</code></span>
-            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${lines.join('\n')}</pre>
+            <span class="text-info">Branch: <code>${safeBranch}</code></span>
+            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${safeLines}</pre>
           `
         } else {
+          const safeError = escapeHtml(data.error || 'Update failed')
+          const safeLines = escapeHtml(lines.join('\n'))
           resultBox.innerHTML = `
-            <strong>❌ Error:</strong> ${data.error || 'Update failed'}<br>
-            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${lines.join('\n')}</pre>
+            <strong>❌ Error:</strong> ${safeError}<br>
+            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${safeLines}</pre>
           `
         }
       } catch (err) {
         resultBox.classList.remove('d-none')
-        resultBox.innerHTML = `<strong>❌ Request Failed:</strong> ${String(err)}`
+        resultBox.innerHTML = `<strong>❌ Request Failed:</strong> ${escapeHtml(String(err))}`
       } finally {
         if (updateSucceeded) {
           updateBtn.disabled = false
@@ -558,8 +576,7 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(data.message || 'Failed to switch configs.')
         }
         showToast('success', `Switched to config "${data.name}".`)
-        const nextUrl = window.location.pathname + window.location.search
-        setTimeout(() => window.location.assign(nextUrl), 150)
+        setTimeout(() => window.location.reload(), 150)
       } catch (err) {
         window.QS_SWITCHING_CONFIG = false
         confirmBtn.disabled = false
@@ -969,7 +986,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('info', 'Restarting Quickstart...')
         await fetch('/restart', { method: 'POST' })
 
-        const newPort = data.new_port || portNum || getCurrentPort()
         if (data.theme) {
           document.documentElement.setAttribute('data-theme', data.theme)
           window.QS_THEME = data.theme
@@ -1000,10 +1016,17 @@ document.addEventListener('DOMContentLoaded', () => {
           window.QS_FLASK_SESSION_DIR = sessionDirFlag
           if (triggerBtn) triggerBtn.dataset.currentSessionDir = sessionDirFlag
         }
-        const protocol = window.location.protocol
-        const host = window.location.hostname
+        const rawPort = data.new_port ?? portNum ?? getCurrentPort()
+        const parsedPort = Number(rawPort)
+        const safePort = Number.isInteger(parsedPort) && parsedPort >= 1 && parsedPort <= 65535
+          ? parsedPort
+          : null
         setTimeout(() => {
-          window.location.href = `${protocol}//${host}:${newPort}`
+          if (safePort) {
+            window.location.port = String(safePort)
+          } else {
+            window.location.reload()
+          }
         }, 4000)
       } catch (err) {
         setStatus(err.message || 'Failed to update settings.', true)

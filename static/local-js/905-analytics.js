@@ -51,11 +51,11 @@ $(document).ready(function () {
 
   function escapeHtml (value) {
     return String(value || '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;')
+      .replaceAll(/&/g, '&amp;')
+      .replaceAll(/</g, '&lt;')
+      .replaceAll(/>/g, '&gt;')
+      .replaceAll(/"/g, '&quot;')
+      .replaceAll(/'/g, '&#39;')
   }
 
   function formatSeconds (seconds) {
@@ -1528,7 +1528,7 @@ $(document).ready(function () {
     })
     const options = ['<option value="">All commands</option>']
     commands.forEach(([command]) => {
-      const cleaned = command.replace(/\s+/g, ' ').trim()
+      const cleaned = command.replaceAll(/\s+/g, ' ').trim()
       const label = cleaned.length > 90 ? `${cleaned.slice(0, 87)}...` : cleaned
       options.push(
         `<option value="${escapeHtml(command)}" title="${escapeHtml(command)}">${escapeHtml(label)}</option>`
@@ -1861,7 +1861,7 @@ $(document).ready(function () {
 
   function formatRecommendationMessage (message) {
     if (!message) return ''
-    return escapeHtml(message).replace(/\n/g, '<br>')
+    return escapeHtml(message).replaceAll('\n', '<br>')
   }
 
   function showRunDetails (runKey) {

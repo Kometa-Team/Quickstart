@@ -3592,19 +3592,28 @@ def download_redacted():
 
 @app.route("/validate_gotify", methods=["POST"])
 def validate_gotify():
-    data = request.json
+    data = request.get_json(silent=True) or {}
+    valid, message = url_validation.validate_url(data.get("gotify_url"), allow_local=True)
+    if not valid:
+        return jsonify({"valid": False, "error": f"Gotify URL: {message}"}), 400
     return validations.validate_gotify_server(data)
 
 
 @app.route("/validate_ntfy", methods=["POST"])
 def validate_ntfy():
-    data = request.json
+    data = request.get_json(silent=True) or {}
+    valid, message = url_validation.validate_url(data.get("ntfy_url"), allow_local=True)
+    if not valid:
+        return jsonify({"valid": False, "error": f"ntfy URL: {message}"}), 400
     return validations.validate_ntfy_server(data)
 
 
 @app.route("/validate_plex", methods=["POST"])
 def validate_plex():
-    data = request.json
+    data = request.get_json(silent=True) or {}
+    valid, message = url_validation.validate_url(data.get("plex_url"), allow_local=True)
+    if not valid:
+        return jsonify({"valid": False, "error": f"Plex URL: {message}"}), 400
     return validations.validate_plex_server(data)
 
 
@@ -3889,12 +3898,6 @@ def validate_mal_token():
     except requests.exceptions.RequestException as exc:
         helpers.ts_log(f"MyAnimeList validation error: {exc}", level="ERROR")
         return jsonify({"valid": False, "error": "MyAnimeList validation error."}), 400
-
-
-@app.route("/validate_anidb", methods=["POST"])
-def validate_anidb():
-    data = request.json
-    return validations.validate_anidb_server(data)
 
 
 @app.route("/validate_webhook", methods=["POST"])
