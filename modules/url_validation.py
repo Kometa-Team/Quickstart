@@ -28,7 +28,27 @@ def is_boolean_value(value):
     return text in BOOLEAN_TEXT_VALUES
 
 
-def validate_url(value):
+def _is_local_address(hostname):
+    host = str(hostname or "").strip().lower()
+    if not host:
+        return False
+    if host in {"localhost", "localhost.localdomain"}:
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+        or ip.is_unspecified
+    )
+
+
+def validate_url(value, allow_local=True):
     if value is None:
         return True, None
     text = str(value).strip()
@@ -54,6 +74,8 @@ def validate_url(value):
         return False, "URL is missing a hostname."
     if not is_valid_hostname(hostname):
         return False, "URL hostname is invalid."
+    if not allow_local and _is_local_address(hostname):
+        return False, "URL hostname must be a public address."
     return True, None
 
 

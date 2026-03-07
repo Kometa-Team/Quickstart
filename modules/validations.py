@@ -7,7 +7,7 @@ from flask import current_app as app
 from flask import jsonify, flash
 from plexapi.server import PlexServer
 
-from modules import iso, helpers
+from modules import iso, helpers, url_validation
 
 
 def validate_iso3166_1(code):
@@ -24,9 +24,22 @@ def validate_iso639_1(code):
         return None
 
 
+def _validate_service_url(raw_url, label, allow_local=True):
+    if not raw_url:
+        return False, f"{label} URL is required."
+    valid, message = url_validation.validate_url(raw_url, allow_local=allow_local)
+    if not valid:
+        return False, f"{label} URL: {message}"
+    return True, None
+
+
 def validate_plex_server(data):
     plex_url = data.get("plex_url")
     plex_token = data.get("plex_token")
+
+    ok, msg = _validate_service_url(plex_url, "Plex", allow_local=True)
+    if not ok:
+        return jsonify({"valid": False, "error": msg}), 400
 
     # Validate Plex URL and Token
     try:
@@ -86,6 +99,10 @@ def validate_plex_server(data):
 def validate_tautulli_server(data):
     tautulli_url = data.get("tautulli_url")
     tautulli_apikey = data.get("tautulli_apikey")
+
+    ok, msg = _validate_service_url(tautulli_url, "Tautulli", allow_local=True)
+    if not ok:
+        return jsonify({"valid": False, "error": msg}), 400
 
     api_url = f"{tautulli_url}/api/v2"
     params = {"apikey": tautulli_apikey, "cmd": "get_tautulli_info"}
@@ -166,13 +183,16 @@ def validate_trakt_server(data):
 
     except requests.exceptions.RequestException as e:
         helpers.ts_log(f"Error validating Trakt connection: {e}", level="ERROR")
-        flash(f"Invalid Trakt ID, Secret, or PIN: {e}", "error")
-        return jsonify({"valid": False, "error": f"Invalid Trakt ID, Secret, or PIN: {e}"})
+        flash("Invalid Trakt ID, Secret, or PIN.", "error")
+        return jsonify({"valid": False, "error": "Invalid Trakt ID, Secret, or PIN."})
 
 
 def validate_gotify_server(data):
     gotify_url = data.get("gotify_url")
     gotify_token = data.get("gotify_token")
+    ok, msg = _validate_service_url(gotify_url, "Gotify", allow_local=True)
+    if not ok:
+        return jsonify({"valid": False, "error": msg}), 400
     gotify_url = gotify_url.rstrip("#")
     gotify_url = gotify_url.rstrip("/")
 
@@ -200,6 +220,10 @@ def validate_ntfy_server(data):
     ntfy_url = data.get("ntfy_url")
     ntfy_token = data.get("ntfy_token")
     ntfy_topic = data.get("ntfy_topic")
+
+    ok, msg = _validate_service_url(ntfy_url, "ntfy", allow_local=True)
+    if not ok:
+        return jsonify({"valid": False, "error": msg}), 400
 
     # Ensure the URL is formatted correctly
     ntfy_url = ntfy_url.rstrip("#").rstrip("/")
@@ -323,6 +347,10 @@ def validate_webhook_server(data):
     if not webhook_url:
         return jsonify({"error": "Webhook URL is required"}), 400
 
+    ok, msg = _validate_service_url(webhook_url, "Webhook", allow_local=True)
+    if not ok:
+        return jsonify({"error": msg}), 400
+
     message_data = {"content": message}
 
     response = requests.post(webhook_url, json=message_data)
@@ -336,6 +364,10 @@ def validate_webhook_server(data):
 def validate_radarr_server(data):
     radarr_url = data.get("radarr_url")
     radarr_apikey = data.get("radarr_token")
+
+    ok, msg = _validate_service_url(radarr_url, "Radarr", allow_local=True)
+    if not ok:
+        return jsonify({"valid": False, "error": msg}), 400
 
     status_api_url = f"{radarr_url}/api/v3/system/status?apikey={radarr_apikey}"
     root_folder_api_url = f"{radarr_url}/api/v3/rootfolder?apikey={radarr_apikey}"
@@ -380,6 +412,10 @@ def validate_radarr_server(data):
 def validate_sonarr_server(data):
     sonarr_url = data.get("sonarr_url")
     sonarr_apikey = data.get("sonarr_token")
+
+    ok, msg = _validate_service_url(sonarr_url, "Sonarr", allow_local=True)
+    if not ok:
+        return jsonify({"valid": False, "error": msg}), 400
 
     status_api_url = f"{sonarr_url}/api/v3/system/status?apikey={sonarr_apikey}"
     root_folder_api_url = f"{sonarr_url}/api/v3/rootfolder?apikey={sonarr_apikey}"

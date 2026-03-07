@@ -332,6 +332,69 @@ def _normalize_config_filename(config_name: str | None) -> str:
     return name or "default"
 
 
+def _safe_rel_path(raw_path: str | None, allow_subdirs: bool = False) -> str | None:
+    if not isinstance(raw_path, str):
+        return None
+    raw_path = raw_path.strip()
+    if not raw_path:
+        return None
+    if "\x00" in raw_path:
+        return None
+
+    drive, _ = os.path.splitdrive(raw_path)
+    if drive:
+        return None
+    if os.path.isabs(raw_path):
+        return None
+
+    normalized = os.path.normpath(raw_path)
+    if normalized in (".", ""):
+        return None
+    if normalized.startswith("..") or normalized.startswith("../") or normalized.startswith("..\\"):
+        return None
+    if not allow_subdirs and ("/" in normalized or "\\" in normalized):
+        return None
+
+    return normalized
+
+
+def _safe_join(base_dir: str | Path, raw_path: str | None, allow_subdirs: bool = False) -> Path | None:
+    rel = _safe_rel_path(raw_path, allow_subdirs=allow_subdirs)
+    if not rel:
+        return None
+    try:
+        base = Path(base_dir).resolve()
+        candidate = (base / rel).resolve()
+        candidate.relative_to(base)
+        return candidate
+    except Exception:
+        return None
+
+
+def _resolve_user_dir(raw_path: str | None) -> Path | None:
+    if not isinstance(raw_path, str):
+        return None
+    raw_path = raw_path.strip()
+    if not raw_path:
+        return None
+    if "\x00" in raw_path:
+        return None
+    try:
+        path = Path(raw_path)
+    except Exception:
+        return None
+    if not path.is_absolute():
+        return None
+    if any(part == ".." for part in path.parts):
+        return None
+    try:
+        return path.resolve()
+    except Exception:
+        return None
+
+
+
+
 def _rename_config_files(old_name: str, new_name: str, dry_run: bool = False) -> dict:
     result = {"success": False, "renamed": [], "skipped": [], "errors": [], "rollback_errors": []}
     old_norm = _normalize_config_filename(old_name)
@@ -659,7 +722,8 @@ def update_quickstart():
         )
 
     except Exception as e:
-        logs.append(f"Exception during Quickstart update: {e}")
+        helpers.ts_log(f"Quickstart update failed: {e}", level="ERROR")
+        logs.append("Exception during Quickstart update.")
         return jsonify({"success": False, "log": logs}), 500
 
 
@@ -811,6 +875,13 @@ def fetch_library_image():
             400,
         )
 
+    valid_url, url_message = url_validation.validate_url(image_url, allow_local=False)
+    if not valid_url:
+        return (
+            jsonify({"status": "error", "message": f"Invalid image URL: {url_message}"}),
+            400,
+        )
+
     try:
         response = requests.get(image_url, stream=True, timeout=5)
         response.raise_for_status()
@@ -886,19 +957,27 @@ def rename_library_image():
         return jsonify({"status": "error", "message": "Invalid parameters"}), 400
 
     save_folder = UPLOAD_FOLDERS[image_type]
-    old_path = os.path.join(save_folder, old_name)
+    old_path = _safe_join(save_folder, old_name)
+    if not old_path:
+        return jsonify({"status": "error", "message": "Invalid file name"}), 400
 
-    if not os.path.exists(old_path):
+    if not old_path.exists():
         return jsonify({"status": "error", "message": "File not found"}), 404
 
-    old_ext = os.path.splitext(old_name)[1]
-    if "." not in new_name:
-        new_name += old_ext
-    elif not new_name.endswith(old_ext):
-        new_name += old_ext
+    old_ext = old_path.suffix
+    safe_new_name = str(new_name).strip()
+    if not safe_new_name:
+        return jsonify({"status": "error", "message": "Invalid parameters"}), 400
+    if old_ext:
+        if "." not in safe_new_name:
+            safe_new_name += old_ext
+        elif not safe_new_name.endswith(old_ext):
+            safe_new_name += old_ext
 
-    new_path = os.path.join(save_folder, new_name)
-    if os.path.exists(new_path):
+    new_path = _safe_join(save_folder, safe_new_name)
+    if not new_path:
+        return jsonify({"status": "error", "message": "Invalid file name"}), 400
+    if new_path.exists():
         return (
             jsonify({"status": "error", "message": "File with new name already exists"}),
             400,
@@ -954,7 +1033,7 @@ def generate_preview():
                 ext = os.path.splitext(urlparse(url).path)[1].lower()
                 if ext not in [".png", ".jpg", ".jpeg", ".webp"]:
                     ext = ".png"
-                cache_key = hashlib.sha1(url.encode("utf-8")).hexdigest()
+                cache_key = hashlib.sha256(url.encode("utf-8")).hexdigest()
                 cache_path = os.path.join(OVERLAY_CACHE_FOLDER, f"{cache_key}{ext}")
                 if os.path.exists(cache_path):
                     age = time.time() - os.path.getmtime(cache_path)
@@ -1173,9 +1252,9 @@ def get_preview_image(img_type):
 
 @app.route("/config/previews/<filename>")
 def serve_preview_image(filename):
-    path = os.path.join(PREVIEW_FOLDER, filename)
-    if os.path.exists(path):
-        return send_file(path, mimetype="image/png")
+    safe_path = _safe_join(PREVIEW_FOLDER, filename)
+    if safe_path and safe_path.exists():
+        return send_file(safe_path, mimetype="image/png")
     return send_file(os.path.join(IMAGES_FOLDER, "default.png"), mimetype="image/png")
     try:
         data = request.get_json()
@@ -1194,9 +1273,11 @@ def delete_library_image(filename):
         return jsonify({"status": "error", "message": "Invalid image type"}), 400
 
     uploads_dir = UPLOAD_FOLDERS[image_type]
-    file_path = os.path.join(uploads_dir, filename)
+    file_path = _safe_join(uploads_dir, filename)
+    if not file_path:
+        return jsonify({"status": "error", "message": "Invalid file name"}), 400
 
-    if not os.path.exists(file_path):
+    if not file_path.exists():
         return jsonify({"status": "error", "message": "File not found"}), 404
 
     try:
@@ -1317,12 +1398,19 @@ def rename_config():
     try:
         update_result = database.rename_config(old_name, new_name)
     except Exception as exc:
+        helpers.ts_log(f"Failed to update database during rename: {exc}", level="ERROR")
         rollback = _rename_config_files(new_name, old_name)
-        return jsonify(success=False, message=f"Failed to update database: {exc}", details=rollback), 500
+        response = {"success": False, "message": "Failed to update database."}
+        if app.config["QS_DEBUG"]:
+            response["details"] = rollback
+        return jsonify(response), 500
 
     if not update_result.get("success"):
         rollback = _rename_config_files(new_name, old_name)
-        return jsonify(success=False, message="Failed to update database.", details=rollback), 500
+        response = {"success": False, "message": "Failed to update database."}
+        if app.config["QS_DEBUG"]:
+            response["details"] = rollback
+        return jsonify(response), 500
 
     if session.get("config_name") == old_name:
         session["config_name"] = new_name
@@ -2655,7 +2743,9 @@ def step(name):
     try:
         item = template_list[num]
     except (ValueError, IndexError, KeyError):
-        return f"ERROR WITH NAME {name}; stem, num, b: {stem}, {num}, {b}"
+        if app.config["QS_DEBUG"]:
+            helpers.ts_log(f"Invalid step name '{name}' (stem={stem}, num={num}, b={b}).", level="ERROR")
+        return abort(404)
 
     if num in progress_keys and total_steps:
         progress_index = progress_keys.index(num)
@@ -3461,7 +3551,7 @@ def download():
             download_name="config.yml",
         )
     flash("No configuration to download", "danger")
-    return redirect(request.referrer or url_for("step", page="900-final"))
+    return redirect(url_for("step", page="900-final"))
 
 
 @app.route("/download_redacted")
@@ -3497,7 +3587,7 @@ def download_redacted():
             download_name="config_redacted.yml",
         )
     flash("No configuration to download", "danger")
-    return redirect(request.referrer or url_for("step", page="900-final"))
+    return redirect(url_for("step", page="900-final"))
 
 
 @app.route("/validate_gotify", methods=["POST"])
@@ -3580,7 +3670,8 @@ def refresh_plex_libraries():
         return jsonify(merged_response)
 
     except Exception as e:
-        return jsonify({"valid": False, "error": f"Server error: {str(e)}"}), 500
+        helpers.ts_log(f"Plex validation failed: {e}", level="ERROR")
+        return jsonify({"valid": False, "error": "Server error."}), 500
 
 
 @app.route("/validate_tautulli", methods=["POST"])
@@ -3735,7 +3826,8 @@ def validate_trakt_token():
             response_body["debug"] = {"status": response.status_code}
         return jsonify(response_body), 400
     except requests.exceptions.RequestException as exc:
-        response_body = {"valid": False, "error": f"Trakt validation error: {exc}"}
+        helpers.ts_log(f"Trakt validation error: {exc}", level="ERROR")
+        response_body = {"valid": False, "error": "Trakt validation error."}
         if debug_enabled:
             response_body["debug"] = {"status": "request_exception"}
         return jsonify(response_body), 400
@@ -3795,7 +3887,8 @@ def validate_mal_token():
             return jsonify({"valid": False, "error": "Access token is invalid or expired."}), 400
         return jsonify({"valid": False, "error": f"MyAnimeList validation failed ({response.status_code})."}), 400
     except requests.exceptions.RequestException as exc:
-        return jsonify({"valid": False, "error": f"MyAnimeList validation error: {exc}"}), 400
+        helpers.ts_log(f"MyAnimeList validation error: {exc}", level="ERROR")
+        return jsonify({"valid": False, "error": "MyAnimeList validation error."}), 400
 
 
 @app.route("/validate_anidb", methods=["POST"])
@@ -5945,7 +6038,8 @@ def header_style_previews():
 
 @app.route("/validate-kometa-root", methods=["POST"])
 def validate_kometa_root():
-    root_path = request.json.get("path", "").strip()
+    payload = request.get_json(silent=True) or {}
+    root_path = str(payload.get("path", "")).strip()
     logs = []
 
     def log(msg):
@@ -5956,7 +6050,10 @@ def validate_kometa_root():
         log("❌ No path provided.")
         return jsonify(success=False, error="No path provided.", log=logs), 400
 
-    p = Path(root_path).resolve()
+    p = _resolve_user_dir(root_path)
+    if not p:
+        log("❌ Invalid path provided.")
+        return jsonify(success=False, error="Invalid path provided.", log=logs), 400
 
     session["kometa_root"] = p.as_posix()
     app.config["KOMETA_ROOT"] = str(p)
@@ -6079,13 +6176,20 @@ def validate_kometa_root():
         return jsonify(success=False, error="Failed pip install.", log=logs), 500
 
     # Copy generated YAML into <root>/config/<file>
-    config_name = request.json.get("config_name", "kometa")
-    src_yaml = Path("config") / f"{config_name}"
-    if not src_yaml.exists():
+    config_name = _safe_rel_path(payload.get("config_name", "kometa"))
+    if not config_name:
+        log("❌ Invalid config filename.")
+        return jsonify(success=False, error="Invalid config filename.", log=logs), 400
+
+    src_yaml = _safe_join(Path("config"), config_name)
+    if not src_yaml or not src_yaml.exists():
         log(f"❌ Source YAML does not exist: {src_yaml}")
         return jsonify(success=False, error="Generated YAML not found.", log=logs), 500
 
-    dest_yaml = p / "config" / f"{config_name}"
+    dest_yaml = _safe_join(p / "config", config_name)
+    if not dest_yaml:
+        log("❌ Invalid config destination.")
+        return jsonify(success=False, error="Invalid config destination.", log=logs), 400
     try:
         shutil.copy2(src_yaml, dest_yaml)
         log(f"✅ YAML copied to Kometa config folder at: {dest_yaml}")
@@ -6179,7 +6283,8 @@ def update_kometa():
         )
 
     except Exception as e:
-        logs.append(f"Exception during Kometa update: {e}")
+        helpers.ts_log(f"Kometa update failed: {e}", level="ERROR")
+        logs.append("Exception during Kometa update.")
         return jsonify({"success": False, "log": logs}), 500
 
 
@@ -6234,14 +6339,16 @@ def _ensure_rw_dir(path):
     try:
         os.makedirs(path, exist_ok=True)
     except Exception as e:
-        return False, f"Unable to create folder: {path} ({e})"
+        helpers.ts_log(f"Unable to create folder '{path}': {e}", level="ERROR")
+        return False, "Unable to create folder."
     test_file = os.path.join(path, f".qs_write_test_{uuid.uuid4().hex}")
     try:
         with open(test_file, "w", encoding="utf-8") as f:
             f.write("test")
         os.remove(test_file)
     except Exception as e:
-        return False, f"Unable to write to folder: {path} ({e})"
+        helpers.ts_log(f"Unable to write to folder '{path}': {e}", level="ERROR")
+        return False, "Unable to write to folder."
     return True, ""
 
 
@@ -6351,8 +6458,7 @@ def update_test_libraries_settings():
             jsonify(
                 success=False,
                 needs_confirm=True,
-                message=f"Test libraries exist at the previous path: {old_final}. Quickstart will not move them.",
-                old_path=old_final,
+                message="Test libraries exist at the previous configured path. Quickstart will not move them.",
             ),
             409,
         )
@@ -6369,8 +6475,7 @@ def update_test_libraries_settings():
             jsonify(
                 success=False,
                 needs_confirm=True,
-                message=f"The final path is not empty and does not look like test libraries: {final_path}. Quickstart will replace this folder during install/update.",
-                final_path=final_path,
+                message="The final path is not empty and does not look like test libraries. Quickstart will replace this folder during install/update.",
             ),
             409,
         )
@@ -6751,7 +6856,8 @@ def clone_test_libraries():
         return jsonify(success=True, message="Test libraries installed successfully.", target_path=resolved_path)
 
     except Exception as e:
-        return jsonify(success=False, message=f"Unexpected error: {str(e)}")
+        helpers.ts_log(f"Test library install failed: {e}", level="ERROR")
+        return jsonify(success=False, message="Unexpected error.")
 
 
 @app.route("/purge-test-libraries", methods=["POST"])
