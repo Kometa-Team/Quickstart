@@ -282,6 +282,7 @@ def validate_ntfy_server(data):
 
         def fetch_ntfy_version(base_url, token=None):
             try:
+
                 def extract_version_from_text(text):
                     if not text:
                         return None
