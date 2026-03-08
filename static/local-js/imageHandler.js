@@ -17,7 +17,7 @@ const ImageHandler = {
           return
         }
 
-        dropdown.innerHTML = ''
+        dropdown.replaceChildren()
 
         const defaultOption = document.createElement('option')
         defaultOption.value = 'default'

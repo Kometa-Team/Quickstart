@@ -267,7 +267,7 @@ const ValidationHandler = {
 
     console.log(`[DEBUG] Showing validation message: "${message}" (${type})`)
 
-    validationBox.innerHTML = message
+    validationBox.textContent = message
     validationBox.classList.remove('alert-danger', 'alert-success')
     validationBox.classList.add(`alert-${type}`)
     validationBox.style.display = 'block'

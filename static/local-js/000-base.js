@@ -198,6 +198,13 @@ function escapeHtml (value) {
     .replace(/'/g, '&#39;')
 }
 
+function setButtonIconAndText (button, iconClasses, text) {
+  if (!button) return
+  const icon = document.createElement('i')
+  icon.className = iconClasses
+  button.replaceChildren(icon, document.createTextNode(` ${text}`))
+}
+
 // Function to show toast messages
 function showToast (type, message) {
   const toastId = `toast-${Date.now()}` // Unique ID for each toast
@@ -309,25 +316,40 @@ function setupValidationCallouts () {
     const wrapper = document.createElement('div')
     wrapper.className = 'accordion qs-validation-accordion mb-2'
     wrapper.dataset.qsValidatedInput = validatedInput.id
-    wrapper.innerHTML = `
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="${headingId}">
-          <button class="accordion-button ${isValidated ? 'collapsed' : ''}" type="button"
-            data-bs-toggle="collapse" data-bs-target="#${collapseId}"
-            aria-expanded="${isValidated ? 'false' : 'true'}" aria-controls="${collapseId}">
-            ${escapeHtml(title)}
-          </button>
-        </h2>
-        <div id="${collapseId}" class="accordion-collapse collapse ${isValidated ? '' : 'show'}"
-          aria-labelledby="${headingId}">
-          <div class="accordion-body p-0"></div>
-        </div>
-      </div>
-    `
+    const accordionItem = document.createElement('div')
+    accordionItem.className = 'accordion-item'
+
+    const header = document.createElement('h2')
+    header.className = 'accordion-header'
+    header.id = headingId
+
+    const button = document.createElement('button')
+    button.className = `accordion-button ${isValidated ? 'collapsed' : ''}`
+    button.type = 'button'
+    button.setAttribute('data-bs-toggle', 'collapse')
+    button.setAttribute('data-bs-target', `#${collapseId}`)
+    button.setAttribute('aria-expanded', isValidated ? 'false' : 'true')
+    button.setAttribute('aria-controls', collapseId)
+    button.textContent = title
+
+    header.appendChild(button)
+
+    const collapse = document.createElement('div')
+    collapse.id = collapseId
+    collapse.className = `accordion-collapse collapse ${isValidated ? '' : 'show'}`
+    collapse.setAttribute('aria-labelledby', headingId)
+
+    const body = document.createElement('div')
+    body.className = 'accordion-body p-0'
+
+    collapse.appendChild(body)
+    accordionItem.appendChild(header)
+    accordionItem.appendChild(collapse)
+    wrapper.appendChild(accordionItem)
 
     const parent = alert.parentNode
     parent.insertBefore(wrapper, alert)
-    wrapper.querySelector('.accordion-body').appendChild(alert)
+    body.appendChild(alert)
     alert.classList.add('mb-0')
   })
 }
@@ -443,11 +465,14 @@ function restartQuickstart (reason) {
 
         const updateResult = document.getElementById('updateResult')
         if (updateResult) {
-          const safeMessage = escapeHtml(data.message || 'Update complete. Quickstart restarted successfully.')
-          updateResult.innerHTML = `
-          <strong>🚀 ${safeMessage}</strong><br>
-          Please wait while Quickstart restarts... this page will auto-reload shortly.
-        `
+          const message = data.message || 'Update complete. Quickstart restarted successfully.'
+          const strong = document.createElement('strong')
+          strong.textContent = `🚀 ${message}`
+          updateResult.replaceChildren(
+            strong,
+            document.createElement('br'),
+            document.createTextNode('Please wait while Quickstart restarts... this page will auto-reload shortly.')
+          )
         }
         setTimeout(() => location.reload(), 6000)
       } else {
@@ -471,7 +496,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return
       }
       updateBtn.disabled = true
-      updateBtn.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Updating...'
+      setButtonIconAndText(updateBtn, 'bi bi-arrow-repeat spin', 'Updating...')
       updateBtn.dataset.originalClasses = updateBtn.className
       updateBtn.classList.remove('btn-warning')
       updateBtn.classList.add('btn-secondary')
@@ -494,34 +519,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           updateSucceeded = true
-          const safeBranch = escapeHtml(data.branch || branch)
-          const safeLines = escapeHtml(lines.join('\n'))
-          resultBox.innerHTML = `
-            <strong>✅ Update Successful!</strong><br>
-            <span class="text-info">Branch: <code>${safeBranch}</code></span>
-            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${safeLines}</pre>
-          `
+          const branchLabel = data.branch || branch
+          const successStrong = document.createElement('strong')
+          successStrong.textContent = '✅ Update Successful!'
+          const branchSpan = document.createElement('span')
+          branchSpan.className = 'text-info'
+          const branchCode = document.createElement('code')
+          branchCode.textContent = branchLabel
+          branchSpan.append('Branch: ', branchCode)
+          const successPre = document.createElement('pre')
+          successPre.className = 'form-control bg-dark text-light'
+          successPre.style.height = '300px'
+          successPre.style.overflowY = 'auto'
+          successPre.style.overflowX = 'auto'
+          successPre.style.whiteSpace = 'pre'
+          successPre.textContent = lines.join('\n')
+          resultBox.replaceChildren(successStrong, document.createElement('br'), branchSpan, successPre)
         } else {
-          const safeError = escapeHtml(data.error || 'Update failed')
-          const safeLines = escapeHtml(lines.join('\n'))
-          resultBox.innerHTML = `
-            <strong>❌ Error:</strong> ${safeError}<br>
-            <pre class="form-control bg-dark text-light" style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;">${safeLines}</pre>
-          `
+          const errorMessage = data.error || 'Update failed'
+          const errorStrong = document.createElement('strong')
+          errorStrong.textContent = '❌ Error:'
+          const errorPre = document.createElement('pre')
+          errorPre.className = 'form-control bg-dark text-light'
+          errorPre.style.height = '300px'
+          errorPre.style.overflowY = 'auto'
+          errorPre.style.overflowX = 'auto'
+          errorPre.style.whiteSpace = 'pre'
+          errorPre.textContent = lines.join('\n')
+          resultBox.replaceChildren(
+            errorStrong,
+            document.createTextNode(` ${errorMessage}`),
+            document.createElement('br'),
+            errorPre
+          )
         }
       } catch (err) {
         resultBox.classList.remove('d-none')
-        resultBox.innerHTML = `<strong>❌ Request Failed:</strong> ${escapeHtml(String(err))}`
+        const errorStrong = document.createElement('strong')
+        errorStrong.textContent = '❌ Request Failed:'
+        resultBox.replaceChildren(errorStrong, document.createTextNode(` ${String(err)}`))
       } finally {
         if (updateSucceeded) {
           updateBtn.disabled = false
           updateBtn.dataset.state = 'ready-restart'
           updateBtn.classList.remove('btn-secondary')
           updateBtn.classList.add('btn-success')
-          updateBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Restart Quickstart'
+          setButtonIconAndText(updateBtn, 'bi bi-arrow-repeat', 'Restart Quickstart')
         } else {
           updateBtn.disabled = false
-          updateBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Run Update Now'
+          setButtonIconAndText(updateBtn, 'bi bi-arrow-clockwise', 'Run Update Now')
           if (updateBtn.dataset.originalClasses) {
             updateBtn.className = updateBtn.dataset.originalClasses
             delete updateBtn.dataset.originalClasses
@@ -1444,7 +1490,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Optional: Rotate icon spinner style
 const style = document.createElement('style')
-style.innerHTML = `
+style.textContent = `
   .spin {
     animation: spin 1s linear infinite;
   }

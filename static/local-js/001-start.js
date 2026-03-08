@@ -48,6 +48,29 @@ function sanitizeConfigName (value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9_]/g, '')
 }
 
+function setIconOnlyButton (button, iconClasses) {
+  if (!button) return
+  const icon = document.createElement('i')
+  icon.className = iconClasses
+  button.replaceChildren(icon)
+}
+
+function setButtonIconAndText (button, iconClasses, text) {
+  if (!button) return
+  const icon = document.createElement('i')
+  icon.className = iconClasses
+  button.replaceChildren(icon, document.createTextNode(` ${text}`))
+}
+
+function setButtonSpinner (button, text) {
+  if (!button) return
+  const spinner = document.createElement('span')
+  spinner.className = 'spinner-border spinner-border-sm me-2'
+  spinner.setAttribute('role', 'status')
+  spinner.setAttribute('aria-hidden', 'true')
+  button.replaceChildren(spinner, document.createTextNode(` ${text}`))
+}
+
 /* ============================== */
 /* Main page logic                */
 /* ============================== */
@@ -113,24 +136,24 @@ document.addEventListener('DOMContentLoaded', function () {
   if (importPlexTokenToggle && importPlexToken) {
     if (!importPlexToken.value.trim()) {
       importPlexToken.setAttribute('type', 'text')
-      importPlexTokenToggle.innerHTML = '<i class="bi bi-eye-slash"></i>'
+      setIconOnlyButton(importPlexTokenToggle, 'bi bi-eye-slash')
     }
     importPlexTokenToggle.addEventListener('click', () => {
       const isPassword = importPlexToken.getAttribute('type') === 'password'
       importPlexToken.setAttribute('type', isPassword ? 'text' : 'password')
-      importPlexTokenToggle.innerHTML = isPassword ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>'
+      setIconOnlyButton(importPlexTokenToggle, isPassword ? 'bi bi-eye-slash' : 'bi bi-eye')
     })
   }
 
   if (importTmdbApiKeyToggle && importTmdbApiKey) {
     if (!importTmdbApiKey.value.trim()) {
       importTmdbApiKey.setAttribute('type', 'text')
-      importTmdbApiKeyToggle.innerHTML = '<i class="bi bi-eye-slash"></i>'
+      setIconOnlyButton(importTmdbApiKeyToggle, 'bi bi-eye-slash')
     }
     importTmdbApiKeyToggle.addEventListener('click', () => {
       const isPassword = importTmdbApiKey.getAttribute('type') === 'password'
       importTmdbApiKey.setAttribute('type', isPassword ? 'text' : 'password')
-      importTmdbApiKeyToggle.innerHTML = isPassword ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>'
+      setIconOnlyButton(importTmdbApiKeyToggle, isPassword ? 'bi bi-eye-slash' : 'bi bi-eye')
     })
   }
 
@@ -264,7 +287,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderBulkDeleteList () {
     if (!bulkDeleteList) return
-    bulkDeleteList.innerHTML = ''
+    bulkDeleteList.replaceChildren()
 
     const configs = getAvailableConfigs()
     if (!configs.length) {
@@ -539,7 +562,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function clearMergeSections () {
-    if (importMergeSectionList) importMergeSectionList.innerHTML = ''
+    if (importMergeSectionList) importMergeSectionList.replaceChildren()
     if (importMergeSection) importMergeSection.classList.add('d-none')
   }
 
@@ -602,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderMergeSections (sections) {
     if (!importMergeSection || !importMergeSectionList) return
-    importMergeSectionList.innerHTML = ''
+    importMergeSectionList.replaceChildren()
     if (getImportMode() !== 'merge') {
       importMergeSection.classList.add('d-none')
       return
@@ -758,7 +781,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function renderLibraryMapping (items, plexLibraries) {
     if (!importLibraryMappingSection || !importLibraryMappingList) return
-    importLibraryMappingList.innerHTML = ''
+    importLibraryMappingList.replaceChildren()
     const pending = Array.isArray(items) ? items : []
     if (!pending.length) {
       importLibraryMappingSection.classList.add('d-none')
@@ -791,7 +814,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const left = document.createElement('div')
       left.className = 'd-flex flex-column'
       const title = document.createElement('div')
-      title.innerHTML = `<strong>${item.name}</strong>`
+      const titleStrong = document.createElement('strong')
+      titleStrong.textContent = item.name
+      title.replaceChildren(titleStrong)
       const meta = document.createElement('div')
       meta.className = 'small text-muted'
       const confidence = item.confidence || 'unknown'
@@ -907,7 +932,7 @@ document.addEventListener('DOMContentLoaded', function () {
       downloadImportReport.removeAttribute('href')
     }
     if (importLibraryMappingSection) importLibraryMappingSection.classList.add('d-none')
-    if (importLibraryMappingList) importLibraryMappingList.innerHTML = ''
+    if (importLibraryMappingList) importLibraryMappingList.replaceChildren()
     if (importMappingNote) importMappingNote.classList.add('d-none')
     if (confirmImportButton) confirmImportButton.classList.add('d-none')
     if (previewImportButton) previewImportButton.disabled = false
@@ -1234,14 +1259,31 @@ document.addEventListener('DOMContentLoaded', function () {
           'padding:24px'
         ].join(';')
 
-        overlay.innerHTML = `
-          <div class="text-center text-light p-4 rounded" style="background:#0f1113;border:1px solid #2b2f33;max-width:520px;width:100%;">
-            <div class="spinner-border text-info mb-3" role="status" aria-hidden="true"></div>
-            <div class="fw-semibold mb-1 qs-import-redirect-message">${message || 'Import complete. Redirecting...'}</div>
-            <div class="small text-muted mb-3 qs-import-redirect-detail" style="white-space: pre-line;">${detail || 'Loading Final Validation. This can take up to 30 seconds.'}</div>
-            <button type="button" class="btn btn-sm btn-outline-info qs-import-redirect-btn d-none">Go to Final Validation</button>
-          </div>
-        `
+        const card = document.createElement('div')
+        card.className = 'text-center text-light p-4 rounded'
+        card.style.cssText = 'background:#0f1113;border:1px solid #2b2f33;max-width:520px;width:100%;'
+
+        const spinner = document.createElement('div')
+        spinner.className = 'spinner-border text-info mb-3'
+        spinner.setAttribute('role', 'status')
+        spinner.setAttribute('aria-hidden', 'true')
+
+        const messageEl = document.createElement('div')
+        messageEl.className = 'fw-semibold mb-1 qs-import-redirect-message'
+        messageEl.textContent = message || 'Import complete. Redirecting...'
+
+        const detailEl = document.createElement('div')
+        detailEl.className = 'small text-muted mb-3 qs-import-redirect-detail'
+        detailEl.style.whiteSpace = 'pre-line'
+        detailEl.textContent = detail || 'Loading Final Validation. This can take up to 30 seconds.'
+
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'btn btn-sm btn-outline-info qs-import-redirect-btn d-none'
+        button.textContent = 'Go to Final Validation'
+
+        card.append(spinner, messageEl, detailEl, button)
+        overlay.appendChild(card)
 
         document.body.appendChild(overlay)
         const redirectBtn = overlay.querySelector('.qs-import-redirect-btn')
@@ -1369,14 +1411,24 @@ document.addEventListener('DOMContentLoaded', function () {
   // --- Spinner button helpers (prevents flicker) -------------------
   // Structure: <button id="clone-test-lib-btn"><span class="spin"></span><span class="btn-label"></span></button>
   function ensureBusyButtonSkeleton () {
-    if (!cloneBtn.querySelector('.btn-label')) {
-      cloneBtn.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-        <span class="btn-label"></span>
-      `
-    } else if (!cloneBtn.querySelector('.spinner-border')) {
-      cloneBtn.insertAdjacentHTML('afterbegin',
-        '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>')
+    const label = cloneBtn.querySelector('.btn-label')
+    const spinner = cloneBtn.querySelector('.spinner-border')
+    if (!label) {
+      const spinnerEl = document.createElement('span')
+      spinnerEl.className = 'spinner-border spinner-border-sm me-2'
+      spinnerEl.setAttribute('role', 'status')
+      spinnerEl.setAttribute('aria-hidden', 'true')
+      const labelEl = document.createElement('span')
+      labelEl.className = 'btn-label'
+      cloneBtn.replaceChildren(spinnerEl, labelEl)
+      return
+    }
+    if (!spinner) {
+      const spinnerEl = document.createElement('span')
+      spinnerEl.className = 'spinner-border spinner-border-sm me-2'
+      spinnerEl.setAttribute('role', 'status')
+      spinnerEl.setAttribute('aria-hidden', 'true')
+      cloneBtn.insertBefore(spinnerEl, label)
     }
   }
   function setButtonBusy (text) {
@@ -1491,31 +1543,55 @@ document.addEventListener('DOMContentLoaded', function () {
     progTxt.textContent = ''
   }
 
-  function setScenarioNotFound (pathHtml, opts = {}) {
-    const unrecognizedNote = opts.unrecognized
-      ? '<div class="small text-danger mt-1">Target path exists but does not look like test libraries.</div>'
-      : ''
+  function setScenarioNotFound (pathValue, opts = {}) {
+    const showUnrecognized = Boolean(opts.unrecognized)
     testLibStatus.classList.remove('d-none', 'alert-success', 'alert-danger')
     testLibStatus.classList.add('alert-warning')
-    statusMsg.innerHTML = `
-      <strong>Test media libraries not found.</strong>
-      <span class="ms-1">We recommend setting them up for testing with Kometa. Be patient as the repository is about 7GB.</span>
-      ${pathHtml || ''}
-      ${unrecognizedNote}
-    `
+    statusMsg.replaceChildren()
+    const strong = document.createElement('strong')
+    strong.textContent = 'Test media libraries not found.'
+    const note = document.createElement('span')
+    note.className = 'ms-1'
+    note.textContent = 'We recommend setting them up for testing with Kometa. Be patient as the repository is about 7GB.'
+    statusMsg.append(strong, document.createTextNode(' '), note)
+    if (pathValue) {
+      const code = document.createElement('code')
+      code.textContent = pathValue
+      statusMsg.append(document.createElement('br'), code)
+    }
+    if (showUnrecognized) {
+      const warn = document.createElement('div')
+      warn.className = 'small text-danger mt-1'
+      warn.textContent = 'Target path exists but does not look like test libraries.'
+      statusMsg.appendChild(warn)
+    }
     cloneBtn.classList.remove('d-none')
     purgeBtn.classList.add('d-none')
     updateRow?.classList.add('d-none')
     setTestLibAccordionExpanded(true)
   }
 
-  function setScenarioFoundZip (data, pathHtml) {
+  function setScenarioFoundZip (data, pathValue) {
     testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
     testLibStatus.classList.add('alert-success')
-    const shaNotice = (data.local_sha && data.remote_sha)
-      ? `<br><small>Installed version: <code>${data.local_sha}</code> • Latest: <code>${data.remote_sha}</code></small>`
-      : ''
-    statusMsg.innerHTML = `<strong>✅ Test libraries already set up (ZIP install).</strong>${pathHtml || ''}${shaNotice}`
+    statusMsg.replaceChildren()
+    const strong = document.createElement('strong')
+    strong.textContent = '✅ Test libraries already set up (ZIP install).'
+    statusMsg.appendChild(strong)
+    if (pathValue) {
+      const code = document.createElement('code')
+      code.textContent = pathValue
+      statusMsg.append(document.createElement('br'), code)
+    }
+    if (data.local_sha && data.remote_sha) {
+      const small = document.createElement('small')
+      const localCode = document.createElement('code')
+      const remoteCode = document.createElement('code')
+      localCode.textContent = data.local_sha
+      remoteCode.textContent = data.remote_sha
+      small.append('Installed version: ', localCode, ' • Latest: ', remoteCode)
+      statusMsg.append(document.createElement('br'), small)
+    }
     cloneBtn.classList.add('d-none')
     purgeBtn.classList.remove('d-none')
     if (data.is_outdated) {
@@ -1538,9 +1614,9 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     })
     const data = await res.json()
-    const pathHtml = data.target_path ? `<br><code>${data.target_path}</code>` : ''
-    if (!data.found) setScenarioNotFound(pathHtml, { unrecognized: data.unrecognized })
-    else setScenarioFoundZip(data, pathHtml)
+    const pathValue = data.target_path || ''
+    if (!data.found) setScenarioNotFound(pathValue, { unrecognized: data.unrecognized })
+    else setScenarioFoundZip(data, pathValue)
   }
 
   if (isManagedInstall && testLibStatus && statusMsg && cloneBtn && purgeBtn) {
@@ -1559,7 +1635,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const prevText = cloneBtn.textContent
       purgeBtn.disabled = true
-      purgeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Purging...'
+      setButtonSpinner(purgeBtn, 'Purging...')
 
       try {
         const res = await fetch('/purge-test-libraries', {
@@ -1572,7 +1648,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }).then(r => r.json())
 
         purgeBtn.disabled = false
-        purgeBtn.innerHTML = '<i class="bi bi-trash3 me-1"></i> Delete Test Libraries'
+        setButtonIconAndText(purgeBtn, 'bi bi-trash3 me-1', 'Delete Test Libraries')
 
         if (res.success) {
           showToast('success', res.message)
@@ -1584,7 +1660,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       } catch (err) {
         purgeBtn.disabled = false
-        purgeBtn.innerHTML = '<i class="bi bi-trash3 me-1"></i> Delete Test Libraries'
+        setButtonIconAndText(purgeBtn, 'bi bi-trash3 me-1', 'Delete Test Libraries')
         showToast('error', `Failed to purge: ${err.message}`)
       }
     })
@@ -1738,7 +1814,9 @@ document.addEventListener('DOMContentLoaded', function () {
       } catch (err) {
         testLibStatus.classList.remove('alert-success', 'alert-warning')
         testLibStatus.classList.add('alert-danger')
-        statusMsg.innerHTML = `<strong>❌ ${String(err.message || err)}</strong>`
+        const errorStrong = document.createElement('strong')
+        errorStrong.textContent = `❌ ${String(err.message || err)}`
+        statusMsg.replaceChildren(errorStrong)
         showToast('error', String(err.message || err))
       } finally {
         running = false

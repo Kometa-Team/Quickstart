@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation */
+/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, DOMParser */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (currentValue && !seen.has(currentValue)) {
           merged.push(currentValue)
         }
-        select.innerHTML = ''
+        select.replaceChildren()
         const placeholder = document.createElement('option')
         placeholder.value = ''
         placeholder.textContent = 'Select font'
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }
         })
         sortable.sort((a, b) => a.textContent.trim().localeCompare(b.textContent.trim()))
-        select.innerHTML = ''
+        select.replaceChildren()
         keep.forEach(option => select.appendChild(option))
         sortable.forEach(option => select.appendChild(option))
         select.value = currentValue
@@ -628,18 +628,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         function renderList (values) {
-          list.innerHTML = ''
+          list.replaceChildren()
           values.forEach(value => {
             const li = document.createElement('li')
             li.className = 'list-group-item d-flex justify-content-between align-items-center'
-            li.innerHTML = `
-              <span>${value}</span>
-              <button type="button" class="btn btn-sm btn-danger" aria-label="Remove">
-                <i class="bi bi-x-lg"></i>
-              </button>`
+            const textSpan = document.createElement('span')
+            textSpan.textContent = value
+            const button = document.createElement('button')
+            button.type = 'button'
+            button.className = 'btn btn-sm btn-danger'
+            button.setAttribute('aria-label', 'Remove')
+            const icon = document.createElement('i')
+            icon.className = 'bi bi-x-lg'
+            button.appendChild(icon)
+            li.append(textSpan, button)
             list.appendChild(li)
 
-            li.querySelector('button').addEventListener('click', () => {
+            button.addEventListener('click', () => {
               const updated = values.filter(item => item !== value)
               hidden.value = JSON.stringify(updated)
               renderList(updated)
@@ -786,7 +791,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return card.label.toLowerCase().includes(query)
       })
 
-      grid.innerHTML = ''
+      grid.replaceChildren()
       if (status) {
         status.textContent = `${filtered.length} font${filtered.length === 1 ? '' : 's'}`
       }
@@ -1013,7 +1018,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function mountCard (card, libraryId) {
-      libraryContainer.innerHTML = ''
+      libraryContainer.replaceChildren()
       card.style.display = ''
       libraryContainer.appendChild(card)
       activeLibraryId = libraryId
@@ -1146,14 +1151,17 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!copyModal) return
       copyWarning.style.display = 'none'
       copySubtitle.textContent = `Mirror settings from "${sourceName}" to other ${sourceType === 'movie' ? 'movie' : 'show'} libraries`
-      copyTargetsContainer.innerHTML = ''
+      copyTargetsContainer.replaceChildren()
 
       const options = Array.from(libraryPicker.querySelectorAll('option[value]')).filter(opt =>
         opt.dataset.libraryType === sourceType && opt.value !== sourceId
       )
 
       if (!options.length) {
-        copyTargetsContainer.innerHTML = '<div class="text-muted">No other libraries of this type available.</div>'
+        const empty = document.createElement('div')
+        empty.className = 'text-muted'
+        empty.textContent = 'No other libraries of this type available.'
+        copyTargetsContainer.appendChild(empty)
       } else {
         options.forEach(opt => {
           const id = opt.value
@@ -1161,10 +1169,15 @@ document.addEventListener('DOMContentLoaded', function () {
           const inputId = `copy-target-${id}`
           const item = document.createElement('label')
           item.className = 'list-group-item d-flex align-items-center gap-2'
-          item.innerHTML = `
-            <input id="${inputId}" name="copy_target" class="form-check-input me-2 copy-target-checkbox" type="checkbox" value="${id}">
-            <span>${label}</span>
-          `
+          const input = document.createElement('input')
+          input.id = inputId
+          input.name = 'copy_target'
+          input.className = 'form-check-input me-2 copy-target-checkbox'
+          input.type = 'checkbox'
+          input.value = id
+          const span = document.createElement('span')
+          span.textContent = label
+          item.append(input, span)
           copyTargetsContainer.appendChild(item)
         })
       }
@@ -1229,7 +1242,7 @@ document.addEventListener('DOMContentLoaded', function () {
           })
           .then((data) => {
             // Clear all cached cards to avoid stale data
-            libraryCache.innerHTML = ''
+            libraryCache.replaceChildren()
 
             filtered.forEach(id => {
               const cached = libraryCache.querySelector(`[data-library-id="${id}"]`)
@@ -1291,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', function () {
           if (requestId !== loadRequestId) return
 
           if (!libraryId) {
-            libraryContainer.innerHTML = ''
+            libraryContainer.replaceChildren()
             activeLibraryId = null
             setLoading(false)
             return
@@ -1315,9 +1328,10 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(html => {
               if (requestId !== loadRequestId) return
-              const wrapper = document.createElement('div')
-              wrapper.innerHTML = html
-              const card = wrapper.firstElementChild
+              const parser = new DOMParser()
+              const doc = parser.parseFromString(html, 'text/html')
+              const parsedCard = doc.body.firstElementChild
+              const card = parsedCard ? document.importNode(parsedCard, true) : null
               if (!card) throw new Error('Empty fragment response')
               mountCard(card, libraryId)
               setLoading(false)
@@ -1445,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderSortableList (libraryId, prefix, list, hiddenInput, values) {
-      list.innerHTML = ''
+      list.replaceChildren()
 
       values.forEach(item => {
         const toggle = document.getElementById(`${libraryId}-attribute_${prefix}_${item}`)
@@ -1459,7 +1473,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const friendlyText = labelElement?.dataset.label || item
 
         const span = document.createElement('span')
-        span.innerHTML = `<i class="bi bi-grip-vertical me-2 drag-handle"></i>${friendlyText}`
+        const icon = document.createElement('i')
+        icon.className = 'bi bi-grip-vertical me-2 drag-handle'
+        span.append(icon, document.createTextNode(friendlyText))
 
         li.appendChild(span)
         list.appendChild(li)
@@ -1561,19 +1577,24 @@ function setupCustomStringListHandlers (prefix, scope) {
     if (!input || !list || !button) return
 
     function renderCustomList (values) {
-      list.innerHTML = ''
+      list.replaceChildren()
 
       values.forEach(value => {
         const li = document.createElement('li')
         li.className = 'list-group-item d-flex justify-content-between align-items-center'
-        li.innerHTML = `
-          <span>${value}</span>
-          <button type="button" class="btn btn-sm btn-danger" aria-label="Remove">
-            <i class="bi bi-x-lg"></i>
-          </button>`
+        const textSpan = document.createElement('span')
+        textSpan.textContent = value
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'btn btn-sm btn-danger'
+        button.setAttribute('aria-label', 'Remove')
+        const icon = document.createElement('i')
+        icon.className = 'bi bi-x-lg'
+        button.appendChild(icon)
+        li.append(textSpan, button)
         list.appendChild(li)
 
-        li.querySelector('button').addEventListener('click', function () {
+        button.addEventListener('click', function () {
           const updated = values.filter(item => item !== value)
           hidden.value = JSON.stringify(updated)
           renderCustomList(updated) // 🔁 Rerender the new list and update the array
@@ -1626,18 +1647,23 @@ function setupMappingListHandlers (prefix, scope) {
     if (!inputField || !outputField || !list || !addBtn) return
 
     function renderList (data) {
-      list.innerHTML = ''
+      list.replaceChildren()
       Object.entries(data).forEach(([key, value]) => {
         const li = document.createElement('li')
         li.className = 'list-group-item d-flex justify-content-between align-items-center'
         const display = value ? `${key} -> ${value}` : `${key} (remove)`
-        li.innerHTML = `
-          <span>${display}</span>
-          <button type="button" class="btn btn-sm btn-danger" aria-label="Remove">
-            <i class="bi bi-x-lg"></i>
-          </button>`
+        const textSpan = document.createElement('span')
+        textSpan.textContent = display
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'btn btn-sm btn-danger'
+        button.setAttribute('aria-label', 'Remove')
+        const icon = document.createElement('i')
+        icon.className = 'bi bi-x-lg'
+        button.appendChild(icon)
+        li.append(textSpan, button)
         list.appendChild(li)
-        li.querySelector('button').addEventListener('click', () => {
+        button.addEventListener('click', () => {
           delete data[key]
           hidden.value = JSON.stringify(data)
           renderList(data)

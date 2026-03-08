@@ -241,10 +241,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const newFieldGroup = document.createElement('div')
     newFieldGroup.className = 'input-group mb-2'
 
-    newFieldGroup.innerHTML = `
-        <input type="text" class="form-control" name="asset_directory" placeholder="Add Asset Directory">
-        <button class="btn btn-danger remove-asset-directory" type="button">Remove</button>
-    `
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.className = 'form-control'
+    input.name = 'asset_directory'
+    input.placeholder = 'Add Asset Directory'
+
+    const removeButton = document.createElement('button')
+    removeButton.className = 'btn btn-danger remove-asset-directory'
+    removeButton.type = 'button'
+    removeButton.textContent = 'Remove'
+
+    newFieldGroup.append(input, removeButton)
     assetDirectoryContainer.appendChild(newFieldGroup)
     const newField = newFieldGroup.querySelector('input[name="asset_directory"]')
     if (newField && typeof PathValidation !== 'undefined' && PathValidation.attach) {

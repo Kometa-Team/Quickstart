@@ -6,6 +6,13 @@ function refreshValidationCallout () {
   }
 }
 
+function setToggleButtonIcon (button, showPlainText) {
+  if (!button) return
+  const icon = document.createElement('i')
+  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
+  button.replaceChildren(icon)
+}
+
 const validatedAtInput = document.getElementById('mal_validated_at')
 
 $(document).ready(function () {
@@ -20,10 +27,10 @@ $(document).ready(function () {
   // Ensure initial visibility based on input value
   if (clientSecretInput.value.trim() === '') {
     clientSecretInput.setAttribute('type', 'text') // Show placeholder text
-    toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Show eye-slash
+    setToggleButtonIcon(toggleButton, true)
   } else {
     clientSecretInput.setAttribute('type', 'password') // Hide actual key
-    toggleButton.innerHTML = '<i class="fas fa-eye"></i>' // Show eye
+    setToggleButtonIcon(toggleButton, false)
   }
 
   // Disable validate button if already validated
@@ -57,7 +64,7 @@ document.getElementById('toggleClientSecretVisibility').addEventListener('click'
   const clientSecretInput = document.getElementById('mal_client_secret')
   const currentType = clientSecretInput.getAttribute('type')
   clientSecretInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
-  this.innerHTML = currentType === 'password' ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>'
+  setToggleButtonIcon(this, currentType === 'password')
 })
 
 document.getElementById('mal_get_localhost_url').addEventListener('click', function () {

@@ -1,4 +1,4 @@
-/* global EventHandler, toggleOverlayTemplateSection, FontFace, Image, requestAnimationFrame, boardState, ResizeObserver */
+/* global EventHandler, toggleOverlayTemplateSection, FontFace, Image, requestAnimationFrame, boardState, ResizeObserver, DOMParser */
 
 const OverlayHandler = {
   baseDimensions: {
@@ -177,7 +177,7 @@ const OverlayHandler = {
       .then(data => {
         if (data.status === 'success') {
           // Clear existing options
-          dropdown.innerHTML = ''
+          dropdown.replaceChildren()
 
           // Add "None" option
           const noneOption = document.createElement('option')
@@ -971,7 +971,9 @@ const OverlayHandler = {
 
         const caret = document.createElement('span')
         caret.className = 'rating-image-dropdown-caret'
-        caret.innerHTML = '<i class="bi bi-chevron-down"></i>'
+        const caretIcon = document.createElement('i')
+        caretIcon.className = 'bi bi-chevron-down'
+        caret.appendChild(caretIcon)
 
         toggle.append(labelWrap, caret)
 
@@ -1353,7 +1355,11 @@ const OverlayHandler = {
         return value || (label && label !== 'none')
       })
       if (!options.length) {
-        allEl.innerHTML = '<div class="text-muted">No badge options found.</div>'
+        allEl.replaceChildren()
+        const empty = document.createElement('div')
+        empty.className = 'text-muted'
+        empty.textContent = 'No badge options found.'
+        allEl.appendChild(empty)
       } else {
         const rowsHtml = options.map(opt => {
           const value = opt.value || ''
@@ -1601,7 +1607,7 @@ const OverlayHandler = {
             <img src="/static/favicon.png" alt="Picked" class="rating-mapping-picked-icon">.
           </div>
         `
-        allEl.innerHTML = `
+        const tableHtml = `
           ${tableHelpHtml}
           <div class="table-responsive">
             <table class="table table-sm table-dark table-striped align-middle mb-0 rating-mapping-table">
@@ -1623,6 +1629,15 @@ const OverlayHandler = {
             </table>
           </div>
         `
+        allEl.replaceChildren()
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(`<div>${tableHtml}</div>`, 'text/html')
+        const container = doc.body.firstElementChild
+        if (container) {
+          Array.from(container.childNodes).forEach(node => {
+            allEl.appendChild(document.importNode(node, true))
+          })
+        }
       }
 
       hydrateRatingMappingSamples(cfg, token)
@@ -1969,7 +1984,7 @@ const OverlayHandler = {
         const bText = (b.textContent || '').trim().toLowerCase()
         return aText.localeCompare(bText)
       })
-      input.innerHTML = ''
+      input.replaceChildren()
       if (noneOption) input.appendChild(noneOption)
       rest.forEach(opt => input.appendChild(opt))
       if (selectedValue) input.value = selectedValue
@@ -4493,7 +4508,7 @@ const OverlayHandler = {
             modalLayout.appendChild(toolbar)
           }
           modalLayout.appendChild(board)
-          modalHost.innerHTML = ''
+          modalHost.replaceChildren()
           modalHost.appendChild(modalLayout)
           board._overlayModalLayout = modalLayout
           board.classList.add('overlay-board--modal')

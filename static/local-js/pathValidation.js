@@ -202,7 +202,7 @@ const PathValidation = (() => {
     const windowsResult = validateValue(input.value, rule, 'windows')
     const posixResult = validateValue(input.value, rule, 'linux')
 
-    el.innerHTML = ''
+    el.replaceChildren()
     el.appendChild(buildPlatformLine('Windows', windowsResult))
     el.appendChild(buildPlatformLine('Linux/macOS/Docker', posixResult))
   }

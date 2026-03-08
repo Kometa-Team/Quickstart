@@ -6,6 +6,13 @@ function refreshValidationCallout () {
   }
 }
 
+function setToggleButtonIcon (button, showPlainText) {
+  if (!button) return
+  const icon = document.createElement('i')
+  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
+  button.replaceChildren(icon)
+}
+
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('mdblist_apikey')
   const validateButton = document.getElementById('validateButton')
@@ -18,10 +25,10 @@ $(document).ready(function () {
   // Set initial visibility based on API key value
   if (apiKeyInput.value.trim() === '') {
     apiKeyInput.setAttribute('type', 'text') // Show placeholder text
-    toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Ensure eye-slash icon
+    setToggleButtonIcon(toggleButton, true)
   } else {
     apiKeyInput.setAttribute('type', 'password') // Hide actual key
-    toggleButton.innerHTML = '<i class="fas fa-eye"></i>' // Ensure eye icon
+    setToggleButtonIcon(toggleButton, false)
   }
 
   // Disable validate button if already validated
@@ -93,7 +100,7 @@ $(document).ready(function () {
   document.getElementById('toggleApikeyVisibility').addEventListener('click', function () {
     const currentType = apiKeyInput.getAttribute('type')
     apiKeyInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
-    this.innerHTML = currentType === 'password' ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>'
+    setToggleButtonIcon(this, currentType === 'password')
   })
 })
 

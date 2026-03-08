@@ -210,7 +210,11 @@ $(document).ready(function () {
     if (!headerGrid) return
     const fonts = JSON.parse(headerGrid.dataset.fonts || '[]')
     if (!fonts.length) {
-      headerGrid.innerHTML = '<div class="text-muted small">No fonts available.</div>'
+      headerGrid.replaceChildren()
+      const empty = document.createElement('div')
+      empty.className = 'text-muted small'
+      empty.textContent = 'No fonts available.'
+      headerGrid.appendChild(empty)
       updateGridStatus('')
       updateGridProgress(0, 0)
       return
@@ -219,16 +223,19 @@ $(document).ready(function () {
     updateGridStatus(`Loading ${fonts.length} font previews...`)
     updateGridProgress(0, fonts.length)
 
-    headerGrid.innerHTML = ''
+    headerGrid.replaceChildren()
     fonts.forEach(font => {
       const card = document.createElement('button')
       card.type = 'button'
       card.className = 'header-style-card'
       card.dataset.font = font
-      card.innerHTML = `
-        <div class="header-style-card-title">${font.replace(/_/g, ' ')}</div>
-        <pre class="header-style-card-preview">Loading...</pre>
-      `
+      const title = document.createElement('div')
+      title.className = 'header-style-card-title'
+      title.textContent = font.replace(/_/g, ' ')
+      const preview = document.createElement('pre')
+      preview.className = 'header-style-card-preview'
+      preview.textContent = 'Loading...'
+      card.append(title, preview)
       card.addEventListener('click', () => {
         if (headerSelect) {
           headerSelect.value = font

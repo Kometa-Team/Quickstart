@@ -6,6 +6,13 @@ function refreshValidationCallout () {
   }
 }
 
+function setToggleButtonIcon (button, showPlainText) {
+  if (!button) return
+  const icon = document.createElement('i')
+  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
+  button.replaceChildren(icon)
+}
+
 const validatedAtInput = document.getElementById('trakt_validated_at')
 
 $(document).ready(function () {
@@ -26,10 +33,10 @@ $(document).ready(function () {
   // Set initial visibility based on Client Secret value
   if (traktClientSecretInput.value.trim() === '') {
     traktClientSecretInput.setAttribute('type', 'text') // Show placeholder text
-    toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Show eye-slash
+    setToggleButtonIcon(toggleButton, true)
   } else {
     traktClientSecretInput.setAttribute('type', 'password') // Hide actual secret
-    toggleButton.innerHTML = '<i class="fas fa-eye"></i>' // Show eye
+    setToggleButtonIcon(toggleButton, false)
   }
 
   // Disable validate button if already validated
@@ -61,7 +68,7 @@ document.getElementById('toggleClientSecretVisibility').addEventListener('click'
   const traktClientSecretInput = document.getElementById('trakt_client_secret')
   const currentType = traktClientSecretInput.getAttribute('type')
   traktClientSecretInput.setAttribute('type', currentType === 'password' ? 'text' : 'password')
-  this.innerHTML = currentType === 'password' ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>'
+  setToggleButtonIcon(this, currentType === 'password')
 })
 
 /* eslint-disable no-unused-vars, camelcase */

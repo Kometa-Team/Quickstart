@@ -244,7 +244,9 @@ const EventHandler = {
                 const removeBtn = document.createElement('button')
                 removeBtn.type = 'button'
                 removeBtn.className = 'btn btn-sm btn-danger'
-                removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>'
+                const removeIcon = document.createElement('i')
+                removeIcon.className = 'bi bi-x-lg'
+                removeBtn.appendChild(removeIcon)
                 removeBtn.addEventListener('click', function () {
                   li.remove()
                   updateHiddenInput(customList, hiddenCustomInput)
@@ -283,7 +285,9 @@ const EventHandler = {
             const removeBtn = document.createElement('button')
             removeBtn.type = 'button'
             removeBtn.className = 'btn btn-sm btn-danger'
-            removeBtn.innerHTML = '<i class="bi bi-x-lg"></i>'
+            const removeIcon = document.createElement('i')
+            removeIcon.className = 'bi bi-x-lg'
+            removeBtn.appendChild(removeIcon)
             removeBtn.addEventListener('click', function () {
               li.remove()
               updateHiddenInput(list, hidden)
@@ -629,25 +633,28 @@ mappingPrefixes.forEach(prefix => {
     if (!inputField || !outputField || !addButton || !list) return
 
     function renderMappingList (mapping) {
-      list.innerHTML = ''
+      list.replaceChildren()
       Object.entries(mapping).forEach(([key, value]) => {
         const li = document.createElement('li')
         li.className = 'list-group-item d-flex justify-content-between align-items-center'
 
         const display = value ? `${key} → ${value}` : `${key} → (remove)`
-        li.innerHTML = `
-          <span>${display}</span>
-          <button type="button" class="btn btn-sm btn-danger" aria-label="Remove">
-            <i class="bi bi-x-lg"></i>
-          </button>
-        `
-
-        li.querySelector('button').addEventListener('click', function () {
+        const textSpan = document.createElement('span')
+        textSpan.textContent = display
+        const button = document.createElement('button')
+        button.type = 'button'
+        button.className = 'btn btn-sm btn-danger'
+        button.setAttribute('aria-label', 'Remove')
+        const icon = document.createElement('i')
+        icon.className = 'bi bi-x-lg'
+        button.appendChild(icon)
+        button.addEventListener('click', function () {
           delete mapping[key]
           hiddenInput.value = JSON.stringify(mapping)
           renderMappingList(mapping)
         })
 
+        li.append(textSpan, button)
         list.appendChild(li)
       })
     }
