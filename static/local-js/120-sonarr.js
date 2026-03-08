@@ -8,6 +8,30 @@ function refreshValidationCallout () {
 
 const validatedAtInput = document.getElementById('sonarr_validated_at')
 
+function setToggleButtonIcon (button, showPlainText) {
+  if (!button) return
+  const icon = document.createElement('i')
+  icon.className = showPlainText ? 'fas fa-eye-slash' : 'fas fa-eye'
+  button.replaceChildren(icon)
+}
+
+function setStatusMessageLines (element, messages) {
+  if (!element) return
+  element.textContent = ''
+  messages.forEach((message, index) => {
+    if (index > 0) element.appendChild(document.createElement('br'))
+    element.appendChild(document.createTextNode(message))
+  })
+}
+
+function resetDropdown (dropdown, placeholderText) {
+  if (!dropdown) return
+  const option = document.createElement('option')
+  option.value = ''
+  option.textContent = placeholderText
+  dropdown.replaceChildren(option)
+}
+
 $(document).ready(function () {
   const apiKeyInput = document.getElementById('sonarr_token')
   const toggleButton = document.getElementById('toggleApikeyVisibility')
@@ -20,10 +44,10 @@ $(document).ready(function () {
   // Set initial visibility based on API key value
   if (apiKeyInput.value.trim() === '') {
     apiKeyInput.setAttribute('type', 'text') // Show placeholder text
-    toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>' // Show eye-slash
+    setToggleButtonIcon(toggleButton, true)
   } else {
     apiKeyInput.setAttribute('type', 'password') // Hide actual key
-    toggleButton.innerHTML = '<i class="fas fa-eye"></i>' // Show eye
+    setToggleButtonIcon(toggleButton, false)
   }
 
   // Disable validate button if already validated
@@ -143,7 +167,7 @@ function fetchDropdownData () {
 /* eslint-enable camelcase */
 function populateDropdown (elementId, data, valueField, textField, selectedValue = '') {
   const dropdown = document.getElementById(elementId)
-  dropdown.innerHTML = '<option value="">Select an option</option>'
+  resetDropdown(dropdown, 'Select an option')
 
   data.forEach(item => {
     const option = document.createElement('option')
@@ -193,7 +217,7 @@ function validateSonarrPage () {
   }
 
   if (!isValid) {
-    statusMessage.innerHTML = validationMessages.join('<br>')
+    setStatusMessageLines(statusMessage, validationMessages)
     statusMessage.style.color = '#ea868f'
     statusMessage.style.display = 'block'
   } else {
@@ -209,10 +233,10 @@ function toggleApiKeyVisibility () {
   if (apiKeyInput && toggleButton) {
     if (apiKeyInput.type === 'password') {
       apiKeyInput.type = 'text'
-      toggleButton.innerHTML = '<i class="fas fa-eye-slash"></i>'
+      setToggleButtonIcon(toggleButton, true)
     } else {
       apiKeyInput.type = 'password'
-      toggleButton.innerHTML = '<i class="fas fa-eye"></i>'
+      setToggleButtonIcon(toggleButton, false)
     }
   }
 }
