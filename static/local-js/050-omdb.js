@@ -70,7 +70,11 @@ document.getElementById('validateButton').addEventListener('click', function () 
         document.getElementById('omdb_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         refreshValidationCallout()
-        statusMessage.textContent = 'OMDb API key is valid.'
+        let successMessage = 'OMDb API key is valid.'
+        if (data.omdb_version) {
+          successMessage += ` Version: ${data.omdb_version}`
+        }
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
         document.getElementById('validateButton').disabled = true
       } else {

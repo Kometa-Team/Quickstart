@@ -85,7 +85,11 @@ document.getElementById('validateButton').addEventListener('click', function () 
         document.getElementById('gotify_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         refreshValidationCallout()
-        statusMessage.textContent = 'Gotify credentials validated successfully!'
+        let successMessage = 'Gotify credentials validated successfully!'
+        if (data.gotify_version) {
+          successMessage += ` Version: ${data.gotify_version}`
+        }
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
       } else {
         hideSpinner('validate')

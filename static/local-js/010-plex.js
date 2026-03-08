@@ -119,7 +119,11 @@ document.getElementById('validateButton').addEventListener('click', function () 
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         refreshValidationCallout()
 
-        statusMessage.textContent = 'Plex server validated successfully!'
+        let successMessage = 'Plex server validated successfully!'
+        if (data.plex_version) {
+          successMessage += ` Version: ${data.plex_version}`
+        }
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
         const hiddenSection = document.getElementById('hidden')
         hiddenSection.style.display = 'block'

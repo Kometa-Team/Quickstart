@@ -170,7 +170,11 @@ function validateRadarrApi () {
         document.getElementById('radarr_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         refreshValidationCallout()
-        statusMessage.textContent = 'Radarr API key is valid.'
+        let successMessage = 'Radarr API key is valid.'
+        if (data.radarr_version) {
+          successMessage += ` Version: ${data.radarr_version}`
+        }
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
         statusMessage.style.display = 'block'
         document.getElementById('validateButton').disabled = true

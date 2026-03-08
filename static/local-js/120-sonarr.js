@@ -87,7 +87,11 @@ function validateSonarrApi () {
         document.getElementById('sonarr_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         refreshValidationCallout()
-        statusMessage.textContent = 'Sonarr API key is valid.'
+        let successMessage = 'Sonarr API key is valid.'
+        if (data.sonarr_version) {
+          successMessage += ` Version: ${data.sonarr_version}`
+        }
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
         statusMessage.style.display = 'block'
         document.getElementById('validateButton').disabled = true

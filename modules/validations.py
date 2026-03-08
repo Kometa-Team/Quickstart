@@ -1,5 +1,6 @@
 import re
 import urllib.parse
+import re
 from json import JSONDecodeError
 
 import requests
@@ -8,6 +9,9 @@ from flask import jsonify, flash
 from plexapi.server import PlexServer
 
 from modules import iso, helpers, url_validation
+
+GITHUB_API = "https://api.github.com"
+GITHUB_API_VERSION = "2022-11-28"
 
 
 def validate_iso3166_1(code):
@@ -77,6 +81,8 @@ def validate_plex_server(data):
         helpers.ts_log(f"Movie libraries: {movie_libraries}", level="INFO")
         helpers.ts_log(f"Show libraries: {show_libraries}", level="INFO")
 
+        plex_version = getattr(plex, "version", None)
+
     except Exception as e:
         helpers.ts_log(f"Error validating Plex server: {str(e)}", level="ERROR")
         flash(f"Invalid Plex URL or Token: {str(e)}", "error")
@@ -92,6 +98,7 @@ def validate_plex_server(data):
             "movie_libraries": movie_libraries,
             "show_libraries": show_libraries,
             "has_plex_pass": has_plex_pass,
+            "plex_version": plex_version,
         }
     )
 
@@ -128,7 +135,13 @@ def validate_tautulli_server(data):
         return jsonify({"valid": False, "error": f"Invalid Tautulli URL or Apikey: {str(e)}"})
 
     # return success response
-    return jsonify({"valid": is_valid})
+    tautulli_version = None
+    if isinstance(data, dict):
+        info = data.get("response", {}).get("data", {})
+        if isinstance(info, dict):
+            tautulli_version = info.get("tautulli_version") or info.get("version")
+
+    return jsonify({"valid": is_valid, "tautulli_version": tautulli_version})
 
 
 def validate_trakt_server(data):
@@ -178,6 +191,7 @@ def validate_trakt_server(data):
                 "trakt_authorization_refresh_token": response.json()["refresh_token"],
                 "trakt_authorization_scope": response.json()["scope"],
                 "trakt_authorization_created_at": response.json()["created_at"],
+                "trakt_version": "v2",
             }
         )
 
@@ -217,6 +231,10 @@ def validate_gotify_server(data):
     if response.status_code >= 400:
         return jsonify({"valid": False, "error": f"({response.status_code} [{response.reason}]) {response_json['errorDescription']}"})
 
+    gotify_version = None
+    if isinstance(response_json, dict):
+        gotify_version = response_json.get("version") or response_json.get("tag") or response_json.get("Version")
+
     json = {"message": "Kometa Quickstart Test Gotify Message", "title": "Kometa Quickstart Gotify Test"}
 
     response = requests.post(f"{gotify_url}/message", headers={"X-Gotify-Key": gotify_token}, json=json)
@@ -224,7 +242,7 @@ def validate_gotify_server(data):
     if response.status_code != 200:
         return jsonify({"valid": False, "error": f"({response.status_code} [{response.reason}]) {response_json['errorDescription']}"})
 
-    return jsonify({"valid": True})
+    return jsonify({"valid": True, "gotify_version": gotify_version})
 
 
 def validate_ntfy_server(data):
@@ -251,6 +269,10 @@ def validate_ntfy_server(data):
 
         if response.status_code != 200:
             return jsonify({"valid": False, "error": f"Failed to send test message ({response.status_code} [{response.reason}])."})
+        helpers.ts_log(
+            f"ntfy publish server-header={response.headers.get('Server')}",
+            level="DEBUG",
+        )
 
         # Step 2: Auto-subscribe the sender to the topic
         sub_headers = headers.copy()
@@ -258,8 +280,90 @@ def validate_ntfy_server(data):
 
         sub_response = requests.put(f"{ntfy_url}/{ntfy_topic}", headers=sub_headers)
 
+        def fetch_ntfy_version(base_url, token=None):
+            try:
+                def extract_version_from_text(text):
+                    if not text:
+                        return None
+                    match = re.search(r'"version"\s*:\s*"([^"]+)"', text)
+                    if match:
+                        return match.group(1).strip()
+                    return None
+
+                def extract_version(info_response):
+                    if info_response.status_code != 200:
+                        return None
+                    try:
+                        info_json = info_response.json()
+                    except Exception:
+                        info_json = None
+                    if isinstance(info_json, dict):
+                        version = info_json.get("version")
+                        if isinstance(version, str) and version.strip():
+                            return version.strip()
+                    return extract_version_from_text(getattr(info_response, "text", ""))
+                    return None
+
+                def build_headers(with_token):
+                    merged = {"Accept": "application/json"}
+                    if with_token and token:
+                        merged["Authorization"] = f"Bearer {token}"
+                    return merged
+
+                info_url = f"{base_url}/v1/info"
+                info_response = requests.get(
+                    f"{base_url}/v1/info",
+                    headers=build_headers(with_token=True),
+                    timeout=10,
+                )
+                helpers.ts_log(
+                    f"ntfy /v1/info url={info_url} status={info_response.status_code} content-type={info_response.headers.get('Content-Type')} "
+                    f"body={str(getattr(info_response, 'text', '')).strip()[:500]}",
+                    level="DEBUG",
+                )
+                version = extract_version(info_response)
+                if version:
+                    return version
+                if token:
+                    fallback_response = requests.get(
+                        info_url,
+                        headers=build_headers(with_token=False),
+                        timeout=10,
+                    )
+                    helpers.ts_log(
+                        f"ntfy /v1/info fallback url={info_url} status={fallback_response.status_code} content-type={fallback_response.headers.get('Content-Type')} "
+                        f"body={str(getattr(fallback_response, 'text', '')).strip()[:500]}",
+                        level="DEBUG",
+                    )
+                    return extract_version(fallback_response)
+            except Exception:
+                pass
+            return None
+
+        def extract_ntfy_version(*responses):
+            for resp in responses:
+                if not resp:
+                    continue
+                server_header = resp.headers.get("Server") or resp.headers.get("server")
+                if not server_header:
+                    server_header = ""
+                for token in server_header.replace(";", " ").split():
+                    if token.lower().startswith("ntfy/"):
+                        return token.split("/", 1)[1]
+                for header_value in resp.headers.values():
+                    if not header_value or not isinstance(header_value, str):
+                        continue
+                    for token in header_value.replace(";", " ").split():
+                        if token.lower().startswith("ntfy/"):
+                            return token.split("/", 1)[1]
+            return None
+
+        ntfy_version = fetch_ntfy_version(ntfy_url, token=ntfy_token) or extract_ntfy_version(response, sub_response)
+        if not ntfy_version:
+            ntfy_version = "N/A"
+
         if sub_response.status_code == 200:
-            return jsonify({"valid": True})
+            return jsonify({"valid": True, "ntfy_version": ntfy_version})
         else:
             return jsonify({"valid": False, "error": f"Failed to auto-subscribe ({sub_response.status_code} [{sub_response.reason}])."})
 
@@ -300,6 +404,7 @@ def validate_mal_server(data):
             "mal_authorization_token_type": new_authorization["token_type"],
             "mal_authorization_expires_in": new_authorization["expires_in"],
             "mal_authorization_refresh_token": new_authorization["refresh_token"],
+            "mal_version": "v2",
         }
     )
 
@@ -347,6 +452,8 @@ def validate_radarr_server(data):
             helpers.ts_log("Radarr connection failed. Invalid response data.")
             return jsonify({"valid": False, "error": "Invalid Radarr URL or Apikey"})
 
+        radarr_version = status_data.get("version")
+
         # Fetch root folders
         response = requests.get(root_folder_api_url)
         response.raise_for_status()
@@ -364,6 +471,7 @@ def validate_radarr_server(data):
                 "valid": True,
                 "root_folders": root_folders,
                 "quality_profiles": quality_profiles,
+                "radarr_version": radarr_version,
             }
         )
 
@@ -396,6 +504,8 @@ def validate_sonarr_server(data):
             helpers.ts_log("Sonarr connection failed. Invalid response data.")
             return jsonify({"valid": False, "error": "Invalid Sonarr URL or Apikey"})
 
+        sonarr_version = status_data.get("version")
+
         # Fetch root folders
         response = requests.get(root_folder_api_url)
         response.raise_for_status()
@@ -419,6 +529,7 @@ def validate_sonarr_server(data):
                 "root_folders": root_folders,
                 "quality_profiles": quality_profiles,
                 "language_profiles": language_profiles,
+                "sonarr_version": sonarr_version,
             }
         )
 
@@ -436,7 +547,10 @@ def validate_omdb_server(data):
         response = requests.get(api_url)
         data = response.json()
         if data.get("Response") == "True" or data.get("Error") == "Movie not found!":
-            return jsonify({"valid": True, "message": "OMDb API key is valid"})
+            omdb_version = data.get("Version") or data.get("version") or response.headers.get("X-API-Version") or response.headers.get("X-Api-Version")
+            if not omdb_version:
+                omdb_version = "N/A"
+            return jsonify({"valid": True, "message": "OMDb API key is valid", "omdb_version": omdb_version})
         else:
             return jsonify({"valid": False, "message": data.get("Error", "Invalid API key")})
     except Exception as e:
@@ -449,16 +563,42 @@ def validate_github_server(data):
     github_token = data.get("github_token")
 
     try:
+        version_headers = {
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": GITHUB_API_VERSION,
+        }
+        github_version = None
+        try:
+            versions_response = requests.get(f"{GITHUB_API}/versions", headers=version_headers, timeout=10)
+            if versions_response.status_code == 200:
+                github_version = versions_response.headers.get("X-GitHub-Api-Version")
+        except requests.RequestException:
+            github_version = None
+
         response = requests.get(
-            "https://api.github.com/user",
+            f"{GITHUB_API}/user",
             headers={
-                "Authorization": f"token {github_token}",
-                "Accept": "application/vnd.github.v3+json",
+                "Authorization": f"Bearer {github_token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": GITHUB_API_VERSION,
             },
+            timeout=10,
         )
         if response.status_code == 200:
             user_data = response.json()
-            return jsonify({"valid": True, "message": f"GitHub token is valid. User: {user_data.get('login')}"})
+            if not github_version:
+                github_version = response.headers.get("X-GitHub-Api-Version") or response.headers.get("X-API-Version-Selected")
+            if not github_version:
+                github_version = GITHUB_API_VERSION
+            if not github_version:
+                github_version = "N/A"
+            return jsonify(
+                {
+                    "valid": True,
+                    "message": f"GitHub token is valid. User: {user_data.get('login')}",
+                    "github_version": github_version,
+                }
+            )
         else:
             return jsonify({"valid": False, "message": "Invalid GitHub token"}), 400
     except Exception as e:
@@ -471,7 +611,7 @@ def validate_tmdb_server(data):
     # Validate the API key
     movie_response = requests.get(f"https://api.themoviedb.org/3/movie/550?api_key={api_key}")
     if movie_response.status_code == 200:
-        return jsonify({"valid": True, "message": "API key is valid!"})
+        return jsonify({"valid": True, "message": "API key is valid!", "tmdb_version": "v3"})
     else:
         return jsonify({"valid": False, "message": "Invalid API key"})
 
@@ -480,8 +620,16 @@ def validate_mdblist_server(data):
     api_key = data.get("mdblist_apikey")
 
     response = requests.get(f"https://mdblist.com/api/?apikey={api_key}&s=test")
-    if response.status_code == 200 and response.json().get("response") is True:
-        return jsonify({"valid": True, "message": "API key is valid!"})
+    response_data = {}
+    try:
+        response_data = response.json()
+    except ValueError:
+        response_data = {}
+    if response.status_code == 200 and response_data.get("response") is True:
+        mdblist_version = response_data.get("version") or response_data.get("api_version")
+        if not mdblist_version:
+            mdblist_version = "N/A"
+        return jsonify({"valid": True, "message": "API key is valid!", "mdblist_version": mdblist_version})
     else:
         return jsonify({"valid": False, "message": "Invalid API key"})
 
@@ -490,7 +638,18 @@ def validate_notifiarr_server(data):
     api_key = data.get("notifiarr_apikey")
 
     response = requests.get(f"https://notifiarr.com/api/v1/user/validate/{api_key}")
-    if response.status_code == 200 and response.json().get("result") == "success":
-        return jsonify({"valid": True, "message": "API key is valid!"})
+    response_data = {}
+    if response.status_code == 200:
+        try:
+            response_data = response.json()
+        except ValueError:
+            response_data = {}
+    if response.status_code == 200 and response_data.get("result") == "success":
+        notifiarr_version = None
+        if isinstance(response_data, dict):
+            notifiarr_version = response_data.get("version") or response_data.get("build") or response_data.get("serverVersion")
+        if not notifiarr_version:
+            notifiarr_version = "N/A"
+        return jsonify({"valid": True, "message": "API key is valid!", "notifiarr_version": notifiarr_version})
     else:
         return jsonify({"valid": False, "message": "Invalid API key"})

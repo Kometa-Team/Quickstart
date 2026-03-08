@@ -1548,7 +1548,15 @@ $(document).ready(function () {
   function formatValidationResult (status, reason, details) {
     if (!status) return ''
     const label = status.charAt(0).toUpperCase() + status.slice(1)
-    if (!reason) return label
+    if (!reason) {
+      if (Array.isArray(details) && details.length) {
+        return `${label}: ${details.join(', ')}`
+      }
+      if (details) {
+        return `${label}: ${details}`
+      }
+      return label
+    }
     const pretty = validationReasonLabels[reason] || reason.replace(/_/g, ' ')
     if (Array.isArray(details) && details.length) {
       return `${label}: ${pretty}: ${details.join(', ')}`

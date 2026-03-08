@@ -96,7 +96,10 @@ document.getElementById('validateButton').addEventListener('click', function () 
         document.getElementById('ntfy_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         refreshValidationCallout()
-        statusMessage.textContent = 'ntfy credentials validated successfully! Ensure you are subscribed to topic to see test message.'
+        let successMessage = 'ntfy credentials validated successfully! Ensure you are subscribed to topic to see test message.'
+        const versionLabel = (data.ntfy_version && String(data.ntfy_version).trim()) || 'N/A'
+        successMessage += ` Version: ${versionLabel}`
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
       } else {
         hideSpinner('validate')

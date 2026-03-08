@@ -67,7 +67,11 @@ document.getElementById('validateButton').addEventListener('click', function () 
     .then(data => {
       if (data.valid) {
         hideSpinner('validate')
-        statusMessage.textContent = data.message
+        let successMessage = data.message || 'GitHub token is valid.'
+        if (data.github_version) {
+          successMessage += ` Version: ${data.github_version}`
+        }
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
         document.getElementById('validateButton').disabled = true
         document.getElementById('github_validated').value = 'true'

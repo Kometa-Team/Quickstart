@@ -48,16 +48,20 @@ async function validateNotifiarrApikey (apikey) {
     body: JSON.stringify({ notifiarr_apikey: apikey })
   })
 
-  if (response.ok) {
-    hideSpinner('validate')
-    const data = await response.json()
-    return data.valid
-  } else {
-    hideSpinner('validate')
-    const errorData = await response.json()
-    console.error('Error validating Notifiarr apikey:', errorData.message)
-    return false
+  hideSpinner('validate')
+  let data = {}
+  try {
+    data = await response.json()
+  } catch (err) {
+    data = {}
   }
+
+  if (!response.ok) {
+    console.error('Error validating Notifiarr apikey:', data.message)
+    return { valid: false, error: data.message || 'Invalid Notifiarr API key.' }
+  }
+
+  return data
 }
 
 document.getElementById('validateButton').addEventListener('click', function () {
@@ -73,19 +77,23 @@ document.getElementById('validateButton').addEventListener('click', function () 
 
   validateButton.disabled = true
 
-  validateNotifiarrApikey(apiKey).then(isValid => {
+  validateNotifiarrApikey(apiKey).then((data) => {
+    const isValid = data && data.valid
     if (isValid) {
       document.getElementById('notifiarr_validated').value = 'true'
       if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
       refreshValidationCallout()
-      statusMessage.textContent = 'Notifiarr API key is valid.'
+      let successMessage = 'Notifiarr API key is valid.'
+      const versionLabel = (data.notifiarr_version && String(data.notifiarr_version).trim()) || 'N/A'
+      successMessage += ` Version: ${versionLabel}`
+      statusMessage.textContent = successMessage
       statusMessage.style.color = '#75b798'
       validateButton.disabled = true
     } else {
       document.getElementById('notifiarr_validated').value = 'false'
       if (validatedAtInput) validatedAtInput.value = ''
       refreshValidationCallout()
-      statusMessage.textContent = 'Notifiarr API key is invalid.'
+      statusMessage.textContent = data.error || 'Notifiarr API key is invalid.'
       statusMessage.style.color = '#ea868f'
       validateButton.disabled = false
     }

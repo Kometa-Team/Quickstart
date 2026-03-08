@@ -148,7 +148,11 @@ document.getElementById('validate_mal_url').addEventListener('click', function (
         document.getElementById('mal_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         refreshValidationCallout()
-        statusMessage.textContent = 'MyAnimeList credentials validated successfully!'
+        let successMessage = 'MyAnimeList credentials validated successfully!'
+        if (data.mal_version) {
+          successMessage += ` Version: ${data.mal_version}`
+        }
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
         document.getElementById('access_token').value = data.mal_authorization_access_token
         document.getElementById('token_type').value = data.mal_authorization_token_type
@@ -206,7 +210,11 @@ if (malCheckButton) {
           document.getElementById('mal_validated').value = 'true'
           if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
           refreshValidationCallout()
-          statusMessage.textContent = 'MyAnimeList token is valid.'
+          let successMessage = 'MyAnimeList token is valid.'
+          if (data.mal_version) {
+            successMessage += ` Version: ${data.mal_version}`
+          }
+          statusMessage.textContent = successMessage
           statusMessage.style.color = '#75b798'
         } else {
           document.getElementById('mal_validated').value = 'false'

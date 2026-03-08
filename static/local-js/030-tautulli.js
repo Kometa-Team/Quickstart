@@ -80,7 +80,11 @@ document.getElementById('validateButton').addEventListener('click', function () 
         document.getElementById('tautulli_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         refreshValidationCallout()
-        statusMessage.textContent = 'Tautulli server validated successfully!'
+        let successMessage = 'Tautulli server validated successfully!'
+        if (data.tautulli_version) {
+          successMessage += ` Version: ${data.tautulli_version}`
+        }
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
         document.getElementById('validateButton').disabled = true
       } else {

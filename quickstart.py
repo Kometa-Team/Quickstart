@@ -115,6 +115,72 @@ def utc_now_iso():
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def apply_validation_metadata(stored_data, status, reason=None, details=None, updated_at=None):
+    if not isinstance(stored_data, dict):
+        stored_data = {}
+    stored_data["validation_status"] = status
+    if reason is not None:
+        stored_data["validation_reason"] = reason
+    if details is not None:
+        stored_data["validation_details"] = details
+    stored_data["validation_updated_at"] = updated_at or utc_now_iso()
+    return stored_data
+
+
+def persist_validation_metadata(section, status, reason=None, details=None, validated_override=None):
+    config_name = session.get("config_name") or persistence.ensure_session_config_name()
+    stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, section)
+    stored_data = apply_validation_metadata(stored_data, status, reason=reason, details=details)
+    validated_value = stored_validated if validated_override is None else validated_override
+    database.save_section_data(
+        name=config_name,
+        section=section,
+        validated=validated_value,
+        user_entered=user_entered,
+        data=stored_data,
+    )
+
+
+def persist_validation_from_response(section, response_data, version_key=None):
+    if not isinstance(response_data, dict):
+        return
+    is_valid = helpers.booler(response_data.get("validated", response_data.get("valid", False)))
+    if is_valid:
+        version_value = None
+        if version_key:
+            raw_version = response_data.get(version_key)
+            if raw_version is not None:
+                raw_text = str(raw_version).strip()
+                if raw_text:
+                    version_value = raw_text
+            if version_value is None:
+                version_value = "N/A"
+        detail_value = f"Version {version_value}" if version_value else None
+        persist_validation_metadata(section, "validated", details=detail_value, validated_override=True)
+        return
+    message = response_data.get("message") or response_data.get("error")
+    fail_reason = None
+    if isinstance(message, str) and "invalid" in message.lower():
+        fail_reason = "token_invalid"
+    else:
+        fail_reason = "validation_error"
+    persist_validation_metadata(section, "failed", reason=fail_reason, details=message, validated_override=False)
+
+
+def _response_json(payload):
+    if isinstance(payload, tuple) and payload:
+        payload = payload[0]
+    if hasattr(payload, "get_json"):
+        return payload.get_json()
+    return payload
+
+
+def _persist_and_return(section, response, version_key=None):
+    response_data = _response_json(response)
+    persist_validation_from_response(section, response_data, version_key=version_key)
+    return response
+
+
 def build_validation_summary(errors):
     summary = []
     if not errors:
@@ -3023,6 +3089,15 @@ def step(name):
                     validation_status = stored_payload.get("validation_status")
                     validation_reason = stored_payload.get("validation_reason")
                     validation_details = stored_payload.get("validation_details")
+                if section_name == "plex" and not validation_details:
+                    telemetry_section = database.retrieve_section_data(config_name, "plex_telemetry")
+                    telemetry_payload = telemetry_section[2] if telemetry_section else None
+                    if isinstance(telemetry_payload, dict):
+                        plex_telemetry = telemetry_payload.get("plex_telemetry", {})
+                        if isinstance(plex_telemetry, dict):
+                            plex_version = plex_telemetry.get("version")
+                            if isinstance(plex_version, str) and plex_version.strip():
+                                validation_details = f"Version {plex_version.strip()}"
             if not validation_status and has_validation:
                 if helpers.booler(settings.get("validated", False)):
                     validation_status = "validated"
@@ -3032,19 +3107,19 @@ def step(name):
             validation_result = ""
             if validation_status:
                 label = validation_status.capitalize()
+                detail_text = ""
+                if isinstance(validation_details, (list, tuple)):
+                    detail_text = ", ".join(str(item) for item in validation_details if str(item))
+                elif validation_details is not None:
+                    detail_text = str(validation_details)
                 if validation_reason:
                     pretty = VALIDATION_REASON_LABELS.get(validation_reason, validation_reason.replace("_", " "))
-                    detail_text = ""
-                    if isinstance(validation_details, (list, tuple)):
-                        detail_text = ", ".join(str(item) for item in validation_details if str(item))
-                    elif validation_details is not None:
-                        detail_text = str(validation_details)
                     if detail_text:
                         validation_result = f"{label}: {pretty}: {detail_text}"
                     else:
                         validation_result = f"{label}: {pretty}"
                 else:
-                    validation_result = label
+                    validation_result = f"{label}: {detail_text}" if detail_text else label
 
             validation_meta.append(
                 {
@@ -3594,7 +3669,8 @@ def validate_gotify():
     valid, message = url_validation.validate_url(data.get("gotify_url"), allow_local=True)
     if not valid:
         return jsonify({"valid": False, "error": f"Gotify URL: {message}"}), 400
-    return validations.validate_gotify_server(data)
+    response = validations.validate_gotify_server(data)
+    return _persist_and_return("gotify", response, version_key="gotify_version")
 
 
 @app.route("/validate_ntfy", methods=["POST"])
@@ -3603,7 +3679,8 @@ def validate_ntfy():
     valid, message = url_validation.validate_url(data.get("ntfy_url"), allow_local=True)
     if not valid:
         return jsonify({"valid": False, "error": f"ntfy URL: {message}"}), 400
-    return validations.validate_ntfy_server(data)
+    response = validations.validate_ntfy_server(data)
+    return _persist_and_return("ntfy", response, version_key="ntfy_version")
 
 
 @app.route("/validate_plex", methods=["POST"])
@@ -3612,7 +3689,8 @@ def validate_plex():
     valid, message = url_validation.validate_url(data.get("plex_url"), allow_local=True)
     if not valid:
         return jsonify({"valid": False, "error": f"Plex URL: {message}"}), 400
-    return validations.validate_plex_server(data)
+    response = validations.validate_plex_server(data)
+    return _persist_and_return("plex", response, version_key="plex_version")
 
 
 @app.route("/path-validation-rules", methods=["GET"])
@@ -3684,13 +3762,15 @@ def refresh_plex_libraries():
 @app.route("/validate_tautulli", methods=["POST"])
 def validate_tautulli():
     data = request.json
-    return validations.validate_tautulli_server(data)
+    response = validations.validate_tautulli_server(data)
+    return _persist_and_return("tautulli", response, version_key="tautulli_version")
 
 
 @app.route("/validate_trakt", methods=["POST"])
 def validate_trakt():
     data = request.json
-    return validations.validate_trakt_server(data)
+    response = validations.validate_trakt_server(data)
+    return _persist_and_return("trakt", response, version_key="trakt_version")
 
 
 @app.route("/validate_trakt_token", methods=["POST"])
@@ -3701,6 +3781,12 @@ def validate_trakt_token():
     client_secret = data.get("client_secret")
     refresh_token = data.get("refresh_token")
     debug_enabled = helpers.booler(app.config.get("QS_DEBUG", False)) or helpers.booler(data.get("debug", False))
+
+    def respond(payload, status=None):
+        persist_validation_from_response("trakt", payload, version_key="trakt_version")
+        if status is None:
+            return jsonify(payload)
+        return jsonify(payload), status
 
     def is_blank(value):
         if value is None:
@@ -3748,7 +3834,7 @@ def validate_trakt_token():
         response = {"valid": False, "error": "Missing Trakt access token or client ID."}
         if debug_payload:
             response["debug"] = debug_payload
-        return jsonify(response), 400
+        return respond(response, 400)
     try:
         response = requests.get(
             "https://api.trakt.tv/users/settings",
@@ -3763,12 +3849,12 @@ def validate_trakt_token():
         if debug_enabled:
             helpers.ts_log(f"Trakt token check status={response.status_code}", level="DEBUG")
         if response.status_code == 200:
-            return jsonify({"valid": True})
+            return respond({"valid": True, "trakt_version": "v2"})
         if response.status_code == 423:
-            return jsonify({"valid": False, "error": "Account is locked; please contact Trakt Support."}), 400
+            return respond({"valid": False, "error": "Account is locked; please contact Trakt Support."}, 400)
         if response.status_code in (401, 403):
             if is_blank(refresh_token) or is_blank(client_secret):
-                return jsonify({"valid": False, "error": "Access token is invalid or expired."}), 400
+                return respond({"valid": False, "error": "Access token is invalid or expired."}, 400)
 
             refresh_response = requests.post(
                 "https://api.trakt.tv/oauth/token",
@@ -3792,12 +3878,12 @@ def validate_trakt_token():
                 response_body = {"valid": False, "error": "Access token is invalid or expired."}
                 if debug_payload:
                     response_body["debug"] = debug_payload
-                return jsonify(response_body), 400
+                return respond(response_body, 400)
 
             refreshed = refresh_response.json()
             new_access = refreshed.get("access_token")
             if is_blank(new_access):
-                return jsonify({"valid": False, "error": "Access token refresh failed."}), 400
+                return respond({"valid": False, "error": "Access token refresh failed."}, 400)
 
             config_name = session.get("config_name") or persistence.ensure_session_config_name()
             stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, "trakt")
@@ -3827,23 +3913,24 @@ def validate_trakt_token():
                 user_entered=user_entered,
                 data=stored_data,
             )
-            return jsonify({"valid": True, "refreshed": True, "authorization": auth})
+            return respond({"valid": True, "refreshed": True, "authorization": auth, "trakt_version": "v2"})
         response_body = {"valid": False, "error": f"Trakt validation failed ({response.status_code})."}
         if debug_enabled:
             response_body["debug"] = {"status": response.status_code}
-        return jsonify(response_body), 400
+        return respond(response_body, 400)
     except requests.exceptions.RequestException as exc:
         helpers.ts_log(f"Trakt validation error: {exc}", level="ERROR")
         response_body = {"valid": False, "error": "Trakt validation error."}
         if debug_enabled:
             response_body["debug"] = {"status": "request_exception"}
-        return jsonify(response_body), 400
+        return respond(response_body, 400)
 
 
 @app.route("/validate_mal", methods=["POST"])
 def validate_mal():
     data = request.json
-    return validations.validate_mal_server(data)
+    response = validations.validate_mal_server(data)
+    return _persist_and_return("mal", response, version_key="mal_version")
 
 
 @app.route("/validate_mal_token", methods=["POST"])
@@ -3851,6 +3938,12 @@ def validate_mal_token():
     data = request.get_json(silent=True) or {}
     access_token = data.get("access_token")
     debug_enabled = helpers.booler(app.config.get("QS_DEBUG", False)) or helpers.booler(data.get("debug", False))
+
+    def respond(payload, status=None):
+        persist_validation_from_response("mal", payload, version_key="mal_version")
+        if status is None:
+            return jsonify(payload)
+        return jsonify(payload), status
 
     def is_blank(value):
         if value is None:
@@ -3881,7 +3974,7 @@ def validate_mal_token():
         response = {"valid": False, "error": "Missing MyAnimeList access token."}
         if debug_payload:
             response["debug"] = debug_payload
-        return jsonify(response), 400
+        return respond(response, 400)
     try:
         response = requests.get(
             "https://api.myanimelist.net/v2/users/@me",
@@ -3889,13 +3982,13 @@ def validate_mal_token():
             timeout=10,
         )
         if response.status_code == 200:
-            return jsonify({"valid": True})
+            return respond({"valid": True, "mal_version": "v2"})
         if response.status_code in (401, 403):
-            return jsonify({"valid": False, "error": "Access token is invalid or expired."}), 400
-        return jsonify({"valid": False, "error": f"MyAnimeList validation failed ({response.status_code})."}), 400
+            return respond({"valid": False, "error": "Access token is invalid or expired."}, 400)
+        return respond({"valid": False, "error": f"MyAnimeList validation failed ({response.status_code})."}, 400)
     except requests.exceptions.RequestException as exc:
         helpers.ts_log(f"MyAnimeList validation error: {exc}", level="ERROR")
-        return jsonify({"valid": False, "error": "MyAnimeList validation error."}), 400
+        return respond({"valid": False, "error": "MyAnimeList validation error."}, 400)
 
 
 @app.route("/validate_webhook", methods=["POST"])
@@ -3908,77 +4001,77 @@ def validate_webhook():
 def validate_radarr():
     data = request.json
     result = validations.validate_radarr_server(data)
-
-    if result.get_json().get("valid"):
-        return jsonify(result.get_json())
-    else:
-        return jsonify(result.get_json()), 400
+    payload = _response_json(result) or {}
+    persist_validation_from_response("radarr", payload, version_key="radarr_version")
+    if helpers.booler(payload.get("valid", payload.get("validated", False))):
+        return jsonify(payload)
+    return jsonify(payload), 400
 
 
 @app.route("/validate_sonarr", methods=["POST"])
 def validate_sonarr():
     data = request.json
     result = validations.validate_sonarr_server(data)
-
-    if result.get_json().get("valid"):
-        return jsonify(result.get_json())
-    else:
-        return jsonify(result.get_json()), 400
+    payload = _response_json(result) or {}
+    persist_validation_from_response("sonarr", payload, version_key="sonarr_version")
+    if helpers.booler(payload.get("valid", payload.get("validated", False))):
+        return jsonify(payload)
+    return jsonify(payload), 400
 
 
 @app.route("/validate_omdb", methods=["POST"])
 def validate_omdb():
     data = request.json
     result = validations.validate_omdb_server(data)
-
-    if result.get_json().get("valid"):
-        return jsonify(result.get_json())
-    else:
-        return jsonify(result.get_json()), 400
+    payload = _response_json(result) or {}
+    persist_validation_from_response("omdb", payload, version_key="omdb_version")
+    if helpers.booler(payload.get("valid", payload.get("validated", False))):
+        return jsonify(payload)
+    return jsonify(payload), 400
 
 
 @app.route("/validate_github", methods=["POST"])
 def validate_github():
     data = request.json
     result = validations.validate_github_server(data)
-
-    if result.get_json().get("valid"):
-        return jsonify(result.get_json())
-    else:
-        return jsonify(result.get_json()), 400
+    payload = _response_json(result) or {}
+    persist_validation_from_response("github", payload, version_key="github_version")
+    if helpers.booler(payload.get("valid", payload.get("validated", False))):
+        return jsonify(payload)
+    return jsonify(payload), 400
 
 
 @app.route("/validate_tmdb", methods=["POST"])
 def validate_tmdb():
     data = request.json
     result = validations.validate_tmdb_server(data)
-
-    if result.get_json().get("valid"):
-        return jsonify(result.get_json())
-    else:
-        return jsonify(result.get_json()), 400
+    payload = _response_json(result) or {}
+    persist_validation_from_response("tmdb", payload, version_key="tmdb_version")
+    if helpers.booler(payload.get("valid", payload.get("validated", False))):
+        return jsonify(payload)
+    return jsonify(payload), 400
 
 
 @app.route("/validate_mdblist", methods=["POST"])
 def validate_mdblist():
     data = request.json
     result = validations.validate_mdblist_server(data)
-
-    if result.get_json().get("valid"):
-        return jsonify(result.get_json())
-    else:
-        return jsonify(result.get_json()), 400
+    payload = _response_json(result) or {}
+    persist_validation_from_response("mdblist", payload, version_key="mdblist_version")
+    if helpers.booler(payload.get("valid", payload.get("validated", False))):
+        return jsonify(payload)
+    return jsonify(payload), 400
 
 
 @app.route("/validate_notifiarr", methods=["POST"])
 def validate_notifiarr():
     data = request.json
     result = validations.validate_notifiarr_server(data)
-
-    if result.get_json().get("valid"):
-        return jsonify(result.get_json())
-    else:
-        return jsonify(result.get_json()), 400
+    payload = _response_json(result) or {}
+    persist_validation_from_response("notifiarr", payload, version_key="notifiarr_version")
+    if helpers.booler(payload.get("valid", payload.get("validated", False))):
+        return jsonify(payload)
+    return jsonify(payload), 400
 
 
 @app.route("/validate_all_services", methods=["POST"])
@@ -4006,29 +4099,6 @@ def validate_all_services():
             if isinstance(value, str) and value.strip().lower() == "none":
                 return False
         return True
-
-    def apply_validation_metadata(stored_data, status, reason=None, details=None, updated_at=None):
-        if not isinstance(stored_data, dict):
-            stored_data = {}
-        stored_data["validation_status"] = status
-        if reason is not None:
-            stored_data["validation_reason"] = reason
-        if details is not None:
-            stored_data["validation_details"] = details
-        stored_data["validation_updated_at"] = updated_at or utc_now_iso()
-        return stored_data
-
-    def persist_validation_metadata(section, status, reason=None, details=None, validated_override=None):
-        stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, section)
-        stored_data = apply_validation_metadata(stored_data, status, reason=reason, details=details)
-        validated_value = stored_validated if validated_override is None else validated_override
-        database.save_section_data(
-            name=config_name,
-            section=section,
-            validated=validated_value,
-            user_entered=user_entered,
-            data=stored_data,
-        )
 
     targets = [
         (
@@ -4082,6 +4152,19 @@ def validate_all_services():
 
     results = {}
     summary = {"validated": 0, "failed": 0, "skipped": 0}
+    version_fields = {
+        "010-plex": "plex_version",
+        "020-tmdb": "tmdb_version",
+        "030-tautulli": "tautulli_version",
+        "040-github": "github_version",
+        "050-omdb": "omdb_version",
+        "060-mdblist": "mdblist_version",
+        "070-notifiarr": "notifiarr_version",
+        "080-gotify": "gotify_version",
+        "085-ntfy": "ntfy_version",
+        "110-radarr": "radarr_version",
+        "120-sonarr": "sonarr_version",
+    }
 
     for template_key, section, validator, payload_builder, required_keys in targets:
         settings = persistence.retrieve_settings(template_key)
@@ -4106,6 +4189,17 @@ def validate_all_services():
         except Exception as e:
             response_data = {"valid": False, "error": str(e)}
 
+        version_value = None
+        version_key = version_fields.get(template_key)
+        if version_key and isinstance(response_data, dict):
+            raw_version = response_data.get(version_key)
+            if raw_version is not None:
+                raw_text = str(raw_version).strip()
+                if raw_text:
+                    version_value = raw_text
+            if version_value is None:
+                version_value = "N/A"
+
         is_valid = helpers.booler(response_data.get("validated", response_data.get("valid", False)))
         stored_validated, user_entered, stored_data = database.retrieve_section_data(config_name, section)
         if not isinstance(stored_data, dict):
@@ -4116,7 +4210,8 @@ def validate_all_services():
             new_validated_at = utc_now_iso()
             stored_data["validated"] = True
             stored_data["validated_at"] = new_validated_at
-            stored_data = apply_validation_metadata(stored_data, "validated")
+            detail_value = f"Version {version_value}" if version_value else None
+            stored_data = apply_validation_metadata(stored_data, "validated", details=detail_value)
             database.save_section_data(
                 name=config_name,
                 section=section,
@@ -4125,6 +4220,8 @@ def validate_all_services():
                 data=stored_data,
             )
             results[template_key] = {"status": "validated", "validated_at": new_validated_at}
+            if detail_value:
+                results[template_key]["details"] = detail_value
             summary["validated"] += 1
         else:
             stored_data["validated"] = False
@@ -4159,7 +4256,7 @@ def validate_all_services():
             new_validated_at = utc_now_iso()
             stored_data["validated"] = True
             stored_data["validated_at"] = new_validated_at
-            stored_data = apply_validation_metadata(stored_data, "validated")
+            stored_data = apply_validation_metadata(stored_data, "validated", details=details)
             database.save_section_data(
                 name=config_name,
                 section=section,
@@ -4167,7 +4264,10 @@ def validate_all_services():
                 user_entered=user_entered,
                 data=stored_data,
             )
-            results[template_key] = {"status": "validated", "validated_at": new_validated_at}
+            result = {"status": "validated", "validated_at": new_validated_at}
+            if details:
+                result["details"] = details
+            results[template_key] = result
             summary["validated"] += 1
             return
 
@@ -4340,7 +4440,7 @@ def validate_all_services():
     anidb_data = anidb_settings.get("anidb", {}) if isinstance(anidb_settings, dict) else {}
     anidb_enabled = helpers.booler(anidb_data.get("enable")) if isinstance(anidb_data, dict) else False
     if anidb_enabled:
-        update_section_validation("100-anidb", "anidb", True)
+        update_section_validation("100-anidb", "anidb", True, details="Version N/A")
     else:
         skip_section_validation("100-anidb", "anidb", reason="disabled")
 
@@ -4380,7 +4480,7 @@ def validate_all_services():
                 timeout=10,
             )
             if response.status_code == 200:
-                update_section_validation("130-trakt", "trakt", True)
+                update_section_validation("130-trakt", "trakt", True, details="Version v2")
             elif response.status_code == 423:
                 update_section_validation("130-trakt", "trakt", False, reason="account_locked")
             elif response.status_code in (401, 403):
@@ -4405,7 +4505,7 @@ def validate_all_services():
                 timeout=10,
             )
             if response.status_code == 200:
-                update_section_validation("140-mal", "mal", True)
+                update_section_validation("140-mal", "mal", True, details="Version v2")
             elif response.status_code in (401, 403):
                 update_section_validation("140-mal", "mal", False, reason="token_invalid")
             else:

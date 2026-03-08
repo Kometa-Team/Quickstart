@@ -63,7 +63,11 @@ $(document).ready(function () {
           document.getElementById('mdblist_validated').value = 'true'
           if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
           refreshValidationCallout()
-          statusMessage.textContent = 'API key is valid!'
+          let successMessage = 'API key is valid!'
+          if (data.mdblist_version) {
+            successMessage += ` Version: ${data.mdblist_version}`
+          }
+          statusMessage.textContent = successMessage
           statusMessage.style.color = '#75b798'
           validateButton.disabled = true
         } else {

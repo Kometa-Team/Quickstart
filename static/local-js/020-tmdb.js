@@ -98,7 +98,11 @@ document.addEventListener('DOMContentLoaded', function () {
           tmdbValidatedInput.value = 'true'
           if (tmdbValidatedAtInput) tmdbValidatedAtInput.value = new Date().toISOString()
           refreshValidationCallout()
-          statusMessage.textContent = 'API key is valid!'
+          let successMessage = 'API key is valid!'
+          if (data.tmdb_version) {
+            successMessage += ` Version: ${data.tmdb_version}`
+          }
+          statusMessage.textContent = successMessage
           statusMessage.style.color = '#75b798' // Green
         } else {
           tmdbValidatedInput.value = 'false'

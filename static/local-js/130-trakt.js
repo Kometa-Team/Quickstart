@@ -145,7 +145,11 @@ document.getElementById('validate_trakt_pin').addEventListener('click', function
         document.getElementById('trakt_validated').value = 'true'
         if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
         refreshValidationCallout()
-        statusMessage.textContent = 'Trakt credentials validated successfully!'
+        let successMessage = 'Trakt credentials validated successfully!'
+        if (data.trakt_version) {
+          successMessage += ` Version: ${data.trakt_version}`
+        }
+        statusMessage.textContent = successMessage
         statusMessage.style.color = '#75b798'
         document.getElementById('access_token').value = data.trakt_authorization_access_token
         document.getElementById('token_type').value = data.trakt_authorization_token_type
@@ -230,7 +234,11 @@ if (traktCheckButton) {
           document.getElementById('trakt_validated').value = 'true'
           if (validatedAtInput) validatedAtInput.value = new Date().toISOString()
           refreshValidationCallout()
-          statusMessage.textContent = 'Trakt token is valid.'
+          let successMessage = 'Trakt token is valid.'
+          if (data.trakt_version) {
+            successMessage += ` Version: ${data.trakt_version}`
+          }
+          statusMessage.textContent = successMessage
           statusMessage.style.color = '#75b798'
         } else {
           document.getElementById('trakt_validated').value = 'false'
