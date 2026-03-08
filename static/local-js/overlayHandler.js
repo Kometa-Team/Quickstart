@@ -204,11 +204,11 @@ const OverlayHandler = {
           // Restore previous selection
           dropdown.value = placeholderId || ''
         } else {
-          console.warn(`Failed to load IMDb titles for ${libraryName}:`, data.message)
+          console.warn('Failed to load IMDb titles for', libraryName, data.message)
         }
       })
       .catch(err => {
-        console.error(`IMDb fetch failed for ${libraryName}:`, err)
+        console.error('IMDb fetch failed for', libraryName, err)
       })
   },
 

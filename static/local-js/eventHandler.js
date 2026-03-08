@@ -257,7 +257,7 @@ const EventHandler = {
               })
               hiddenCustomInput.value = JSON.stringify(savedItems)
             } catch (e) {
-              console.warn(`[WARN] Could not parse saved custom list for ${prefix} in ${libraryId}:`, e)
+              console.warn('[WARN] Could not parse saved custom list for', prefix, 'in', libraryId, e)
               hiddenCustomInput.value = '[]'
             }
           }
@@ -664,7 +664,7 @@ mappingPrefixes.forEach(prefix => {
     try {
       mapping = JSON.parse(hiddenInput.value || '{}')
     } catch (e) {
-      console.warn(`[WARN] Could not parse JSON for ${prefix}:`, e)
+      console.warn('[WARN] Could not parse JSON for', prefix, e)
     }
 
     renderMappingList(mapping)

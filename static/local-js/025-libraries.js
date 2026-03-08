@@ -1406,16 +1406,16 @@ document.addEventListener('DOMContentLoaded', function () {
       const hiddenInput = document.getElementById(`${libraryId}-attribute_${prefix}_order`)
 
       if (!list || !hiddenInput) {
-        console.warn(`[WARN] Missing sortable list or hidden input for ${libraryId}-${prefix}`)
+        console.warn('[WARN] Missing sortable list or hidden input for', `${libraryId}-${prefix}`)
         return
       }
 
       let values = []
       try {
         values = JSON.parse(hiddenInput.value || '[]')
-        console.log(`[DEBUG] Parsed hidden input from #${hiddenInput.id}:`, values)
+        console.log('[DEBUG] Parsed hidden input from', hiddenInput.id, values)
       } catch (e) {
-        console.warn(`[WARN] Could not parse JSON from hidden input #${hiddenInput.id}:`, hiddenInput.value)
+        console.warn('[WARN] Could not parse JSON from hidden input', hiddenInput.id, hiddenInput.value)
       }
 
       // If no order is saved yet, default to currently checked toggles (in DOM order)
@@ -1438,7 +1438,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const libraryId = match[1]
         const prefix = match[2]
 
-        console.log(`[DEBUG] Initializing sortable for ${libraryId} with prefix ${prefix} (scoped)`)
+        console.log('[DEBUG] Initializing sortable for', libraryId, 'with prefix', prefix, '(scoped)')
 
         initializeSortableList(libraryId, prefix)
         bindToggleToList(libraryId, prefix)
@@ -1450,7 +1450,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const hiddenInput = document.getElementById(`${libraryId}-attribute_${prefix}_order`)
             const selected = [...list.querySelectorAll('li')].map(li => li.dataset.value)
             hiddenInput.value = JSON.stringify(selected)
-            console.log(`[DEBUG] Updated order for #${hiddenInput.id}:`, selected)
+            console.log('[DEBUG] Updated order for', hiddenInput.id, selected)
           }
         })
 
@@ -1607,7 +1607,7 @@ function setupCustomStringListHandlers (prefix, scope) {
     try {
       current = JSON.parse(hidden.value || '[]')
     } catch (e) {
-      console.warn(`[WARN] Could not parse hidden input for ${prefix}:`, hidden.value)
+      console.warn('[WARN] Could not parse hidden input for', prefix, hidden.value)
     }
     renderCustomList(current)
 
@@ -1617,7 +1617,7 @@ function setupCustomStringListHandlers (prefix, scope) {
       try {
         current = JSON.parse(hidden.value || '[]')
       } catch (e) {
-        console.warn(`[WARN] Could not parse hidden input for ${prefix}:`, hidden.value)
+        console.warn('[WARN] Could not parse hidden input for', prefix, hidden.value)
       }
 
       const value = input.value.trim()
@@ -1675,7 +1675,7 @@ function setupMappingListHandlers (prefix, scope) {
     try {
       current = JSON.parse(hidden.value || '{}') || {}
     } catch (e) {
-      console.warn(`[WARN] Could not parse hidden input for ${prefix}:`, hidden.value)
+      console.warn('[WARN] Could not parse hidden input for', prefix, hidden.value)
       current = {}
     }
     renderList(current)

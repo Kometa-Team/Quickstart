@@ -88,7 +88,7 @@ const ImageHandler = {
           if (img) img.src = previewUrl
         }
       })
-      .catch(error => console.error(`[ERROR] Generating preview for ${type}:`, error))
+      .catch(error => console.error('[ERROR] Generating preview for', type, error))
   },
 
   updateOverlayBoardBackground: function (libraryId, type, selectedImage) {
@@ -237,12 +237,12 @@ const ImageHandler = {
       overlays.push({ id: overlayId, template_variables })
     }
 
-    console.debug(`[DEBUG] Overlays found for ${libraryId}, type: ${type}:`, overlays)
+    console.debug('[DEBUG] Overlays found for', libraryId, 'type:', type, overlays)
     return overlays
   },
 
   uploadLibraryImage: function (libraryId, type) {
-    console.log(`[DEBUG] Uploading image for Library: ${libraryId}, Type: ${type}`)
+    console.log('[DEBUG] Uploading image for Library:', libraryId, 'Type:', type)
 
     const fileInput = document.getElementById(`${libraryId}-${type}-upload-image`)
     if (!fileInput || !fileInput.files.length) {

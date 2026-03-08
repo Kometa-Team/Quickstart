@@ -225,7 +225,7 @@ const ValidationHandler = {
       .filter(input => input.value && input.value.trim() !== '')
       .map(input => input.id.replace('-library-value', ''))
 
-    console.log(`[DEBUG] Selected ${type} Library IDs:`, selected)
+    console.log('[DEBUG] Selected', type, 'Library IDs:', selected)
     return selected
   },
 
@@ -234,7 +234,7 @@ const ValidationHandler = {
       .filter(input => input.value && input.value.trim() !== '')
       .map(input => input.value.trim())
 
-    console.log(`[DEBUG] Selected ${type} Library Names:`, names)
+    console.log('[DEBUG] Selected', type, 'Library Names:', names)
     return names
   },
 
