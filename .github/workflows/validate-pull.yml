@@ -37,7 +37,7 @@ jobs:
           fi
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -100,7 +100,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -193,7 +193,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
@@ -309,7 +309,7 @@ jobs:
     steps:
 
       - name: Create App Token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         id: app-token
         with:
           app-id: ${{ vars.APP_ID }}
