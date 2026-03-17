@@ -989,7 +989,7 @@ def build_libraries_section(
                         continue
                     slot_payload = {}
                     for key in [k for k in list(cleaned.keys()) if k == rating_key or k.startswith(f"{rating_key}_")]:
-                        suffix = "" if key == rating_key else key[len(rating_key):]
+                        suffix = "" if key == rating_key else key[len(rating_key) :]
                         slot_payload[suffix] = cleaned.pop(key)
                     if slot_payload:
                         slot_payloads.append(slot_payload)
@@ -1019,10 +1019,7 @@ def build_libraries_section(
                 # If all explicit per-slot vertical offsets are identical, they
                 # still represent a single shared anchor from Quickstart's composite preview.
                 # Re-expand them to match the preview stack used on the canvas.
-                vertical_values = [
-                    _offset_number(slot_payload.get("_vertical_offset"), None)
-                    for slot_payload in slot_payloads
-                ]
+                vertical_values = [_offset_number(slot_payload.get("_vertical_offset"), None) for slot_payload in slot_payloads]
                 if len(slot_payloads) > 1 and all(value is not None for value in vertical_values):
                     if len(set(vertical_values)) == 1:
                         base_vertical = vertical_values[0]
