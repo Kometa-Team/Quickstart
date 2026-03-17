@@ -1088,7 +1088,10 @@ prefix) %}
                                 </span>
                                 {% endif %}
                             </span>
-                            <select class="form-select" data-relative-year-mode aria-describedby="{{ input_name }}_text"
+                            <select class="form-select"
+                                id="{{ input_name }}_relative_year_mode"
+                                data-relative-year-mode
+                                aria-describedby="{{ input_name }}_text"
                                 {% if disable_toggle %}disabled{% endif %}>
                                 {% for opt in rel_options %}
                                 <option value="{{ opt.value }}" data-kind="{{ opt.kind }}"
@@ -1098,7 +1101,9 @@ prefix) %}
                                 </option>
                                 {% endfor %}
                             </select>
-                            <input type="number" class="form-control" data-relative-year-value inputmode="numeric"
+                            <input type="number" class="form-control"
+                                id="{{ input_name }}_relative_year_value"
+                                data-relative-year-value inputmode="numeric"
                                 min="1" step="1" data-numeric-only="true" placeholder="Year or Offset"
                                 aria-label="Year or offset" {% if disable_toggle %}disabled{% endif %}>
                             <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}">
@@ -1120,7 +1125,9 @@ prefix) %}
                                         <i class="bi bi-info-circle-fill"></i>
                                     </span>
                                 </span>
-                                <select class="form-select" data-schedule-mode-select {% if disable_toggle %}disabled{% endif %}>
+                                <select class="form-select"
+                                    id="{{ input_name }}_schedule_mode"
+                                    data-schedule-mode-select {% if disable_toggle %}disabled{% endif %}>
                                     <option value="range">Range</option>
                                     <option value="weekly">Weekly</option>
                                     <option value="monthly">Monthly</option>
@@ -1136,10 +1143,14 @@ prefix) %}
                             <div class="schedule-builder-body">
                                 <div class="schedule-mode" data-schedule-mode="range">
                                     <div class="schedule-grid">
-                                        <input type="date" class="form-control" data-schedule-range-start
+                                        <input type="date" class="form-control"
+                                            id="{{ input_name }}_schedule_range_start"
+                                            data-schedule-range-start
                                             aria-label="Range start" {% if disable_toggle %}disabled{% endif %}>
                                         <span class="schedule-range-sep">to</span>
-                                        <input type="date" class="form-control" data-schedule-range-end
+                                        <input type="date" class="form-control"
+                                            id="{{ input_name }}_schedule_range_end"
+                                            data-schedule-range-end
                                             aria-label="Range end" {% if disable_toggle %}disabled{% endif %}>
                                     </div>
                                     <div class="form-text">Month/day are used; year is ignored.</div>
@@ -1148,31 +1159,43 @@ prefix) %}
                                     <div class="schedule-weekly">
                                         {% for day in ['sun','mon','tue','wed','thu','fri','sat'] %}
                                         <label class="schedule-day">
-                                            <input type="checkbox" value="{{ day }}" data-schedule-week-day {% if disable_toggle %}disabled{% endif %}>
+                                            <input type="checkbox"
+                                                id="{{ input_name }}_schedule_week_{{ day }}"
+                                                value="{{ day }}" data-schedule-week-day {% if disable_toggle %}disabled{% endif %}>
                                             <span>{{ day|capitalize }}</span>
                                         </label>
                                         {% endfor %}
                                     </div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="monthly">
-                                    <input type="number" class="form-control" min="1" max="31" step="1"
+                                    <input type="number" class="form-control"
+                                        id="{{ input_name }}_schedule_month_day"
+                                        min="1" max="31" step="1"
                                         data-schedule-month-day placeholder="Day of month" {% if disable_toggle %}disabled{% endif %}>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="yearly">
-                                    <input type="date" class="form-control" data-schedule-yearly
+                                    <input type="date" class="form-control"
+                                        id="{{ input_name }}_schedule_yearly"
+                                        data-schedule-yearly
                                         aria-label="Yearly date" {% if disable_toggle %}disabled{% endif %}>
                                     <div class="form-text">Month/day are used; year is ignored.</div>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="date">
-                                    <input type="date" class="form-control" data-schedule-date
+                                    <input type="date" class="form-control"
+                                        id="{{ input_name }}_schedule_date"
+                                        data-schedule-date
                                         aria-label="Exact date" {% if disable_toggle %}disabled{% endif %}>
                                 </div>
                                 <div class="schedule-mode" data-schedule-mode="hourly">
                                     <div class="schedule-grid">
-                                        <input type="number" class="form-control" min="0" max="23" step="1"
+                                        <input type="number" class="form-control"
+                                            id="{{ input_name }}_schedule_hour_start"
+                                            min="0" max="23" step="1"
                                             data-schedule-hour-start placeholder="Start hour" {% if disable_toggle %}disabled{% endif %}>
                                         <span class="schedule-range-sep">to</span>
-                                        <input type="number" class="form-control" min="0" max="23" step="1"
+                                        <input type="number" class="form-control"
+                                            id="{{ input_name }}_schedule_hour_end"
+                                            min="0" max="23" step="1"
                                             data-schedule-hour-end placeholder="End hour (optional)" {% if disable_toggle %}disabled{% endif %}>
                                     </div>
                                 </div>
@@ -1195,7 +1218,9 @@ prefix) %}
                             <details class="schedule-advanced mt-2">
                                 <summary>Advanced (use with caution)</summary>
                                 <div class="form-text mb-2">Only use this if you know Kometa schedule syntax.</div>
-                                <input type="text" class="form-control" data-schedule-raw
+                                <input type="text" class="form-control"
+                                    id="{{ input_name }}_schedule_raw"
+                                    data-schedule-raw
                                     value="{{ stored_val }}" {% if disable_toggle %}disabled{% endif %}>
                             </details>
                             <input type="hidden" id="{{ input_name }}" name="{{ input_name }}" value="{{ stored_val }}">

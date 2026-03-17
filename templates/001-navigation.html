@@ -174,7 +174,9 @@
         <span class="input-group-text">
           <i class="bi bi-search"></i>
         </span>
-        <input type="search" class="form-control" placeholder="Search this page" aria-label="Search this page"
+        <input type="search" class="form-control"
+          id="{{ page_info['template_name'] }}-page-search"
+          placeholder="Search this page" aria-label="Search this page"
           data-qs-search-input>
         <button type="button" class="btn btn-outline-secondary d-none" data-qs-search-clear>Clear</button>
       </div>

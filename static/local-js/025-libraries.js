@@ -2054,10 +2054,8 @@ function wireRatingsOffsetSync (scope) {
       const value = normalizeValue(input.value)
       return value !== '' && value !== 'none'
     }
-    const getActiveSlots = () => {
-      const active = slotDefs.filter(slot => hasMeaningfulValue(slot.ratingInput) || hasMeaningfulValue(slot.imageInput))
-      return active.length ? active : slotDefs
-    }
+    const isConfiguredSlot = (slot) => hasMeaningfulValue(slot.ratingInput) && hasMeaningfulValue(slot.imageInput)
+    const getActiveSlots = () => slotDefs.filter(isConfiguredSlot)
     const getVerticalStep = () => {
       const backHeight = toNumber(metricInputs.backHeight?.value, 160)
       const backPadding = Math.max(0, toNumber(metricInputs.backPadding?.value, 15))

@@ -940,28 +940,25 @@ def build_libraries_section(
                             continue
                     cleaned[k] = v
 
-                # Enforce ratingN <-> ratingN_image dependency; if either side is empty, drop both
+                def _is_empty(val):
+                    if val is None or val is False:
+                        return True
+                    if isinstance(val, str):
+                        return val.strip() == "" or val.strip().lower() == "none"
+                    return False
+
+                # Enforce ratingN <-> ratingN_image dependency; if either side is empty, drop the slot entirely,
+                # including any stale slot-specific style or offset fields left behind from a previous count.
                 for idx in ["1", "2", "3"]:
                     r_key = f"rating{idx}"
                     i_key = f"{r_key}_image"
                     r_val = cleaned.get(r_key)
                     i_val = cleaned.get(i_key)
                     if r_key in cleaned or i_key in cleaned:
-
-                        def _is_empty(val):
-                            if val is None or val is False:
-                                return True
-                            if isinstance(val, str):
-                                return val.strip() == "" or val.strip().lower() == "none"
-                            return False
-
-                        if _is_empty(r_val):
-                            cleaned.pop(r_key, None)
-                            cleaned.pop(i_key, None)
+                        if _is_empty(r_val) or _is_empty(i_val):
+                            for key in [k for k in list(cleaned.keys()) if k == r_key or k.startswith(f"{r_key}_")]:
+                                cleaned.pop(key, None)
                             continue
-                        if _is_empty(i_val):
-                            cleaned.pop(r_key, None)
-                            cleaned.pop(i_key, None)
 
                 def _offset_number(value, fallback):
                     if isinstance(value, bool):
@@ -981,48 +978,63 @@ def build_libraries_section(
                                 return fallback
                     return fallback
 
-                # Kometa expects per-rating offset keys on the ratings overlay.
-                # Preserve existing group-offset UI by fanning shared offsets out
-                # to each configured rating slot during YAML generation.
-                active_slots = [
-                    idx
-                    for idx in ["1", "2", "3"]
-                    if f"rating{idx}" in cleaned or f"rating{idx}_image" in cleaned
-                ]
+                # Compact the configured rating slots so the emitted YAML always matches the
+                # contiguous stack shown on the Quickstart canvas, even after reducing the
+                # rating count or clearing a middle slot.
+                slot_payloads = []
+                for idx in ["1", "2", "3"]:
+                    rating_key = f"rating{idx}"
+                    image_key = f"{rating_key}_image"
+                    if rating_key not in cleaned or image_key not in cleaned:
+                        continue
+                    slot_payload = {}
+                    for key in [k for k in list(cleaned.keys()) if k == rating_key or k.startswith(f"{rating_key}_")]:
+                        suffix = "" if key == rating_key else key[len(rating_key):]
+                        slot_payload[suffix] = cleaned.pop(key)
+                    if slot_payload:
+                        slot_payloads.append(slot_payload)
+
                 back_height = _offset_number(cleaned.get("back_height"), 160)
                 back_padding = _offset_number(cleaned.get("back_padding"), 15)
                 gap = max(0, back_padding)
                 vertical_step = back_height + gap
-                center_index = (len(active_slots) - 1) / 2 if active_slots else 0
+                center_index = (len(slot_payloads) - 1) / 2 if slot_payloads else 0
                 for axis in ["horizontal", "vertical"]:
                     shared_key = f"{axis}_offset"
                     if shared_key not in cleaned:
                         continue
                     shared_val = cleaned.get(shared_key)
                     shared_number = _offset_number(shared_val, 0)
-                    for slot_position, idx in enumerate(active_slots):
-                        r_key = f"rating{idx}"
-                        slot_key = f"{r_key}_{axis}_offset"
-                        if slot_key in cleaned:
+                    for slot_position, slot_payload in enumerate(slot_payloads):
+                        slot_key = f"_{axis}_offset"
+                        if slot_key in slot_payload:
                             continue
                         if axis == "horizontal":
-                            cleaned[slot_key] = shared_val
+                            slot_payload[slot_key] = shared_val
                         else:
                             relative_index = slot_position - center_index
-                            cleaned[slot_key] = int(round(shared_number + (vertical_step * relative_index)))
+                            slot_payload[slot_key] = int(round(shared_number + (vertical_step * relative_index)))
                     cleaned.pop(shared_key, None)
 
                 # If all explicit per-slot vertical offsets are identical, they
-                # still represent the top of Quickstart's composite preview block.
+                # still represent a single shared anchor from Quickstart's composite preview.
                 # Re-expand them to match the preview stack used on the canvas.
-                vertical_slot_keys = [f"rating{idx}_vertical_offset" for idx in active_slots]
-                if len(vertical_slot_keys) > 1 and all(key in cleaned for key in vertical_slot_keys):
-                    vertical_values = [_offset_number(cleaned.get(key), 0) for key in vertical_slot_keys]
+                vertical_values = [
+                    _offset_number(slot_payload.get("_vertical_offset"), None)
+                    for slot_payload in slot_payloads
+                ]
+                if len(slot_payloads) > 1 and all(value is not None for value in vertical_values):
                     if len(set(vertical_values)) == 1:
                         base_vertical = vertical_values[0]
-                        for slot_position, key in enumerate(vertical_slot_keys):
+                        for slot_position, slot_payload in enumerate(slot_payloads):
                             relative_index = slot_position - center_index
-                            cleaned[key] = int(round(base_vertical + (vertical_step * relative_index)))
+                            slot_payload["_vertical_offset"] = int(round(base_vertical + (vertical_step * relative_index)))
+
+                for slot_position, slot_payload in enumerate(slot_payloads, start=1):
+                    rating_key = f"rating{slot_position}"
+                    for suffix, value in slot_payload.items():
+                        target_key = rating_key if suffix == "" else f"{rating_key}{suffix}"
+                        cleaned[target_key] = value
 
                 if cleaned:
                     overlay_entry["template_variables"] = cleaned
