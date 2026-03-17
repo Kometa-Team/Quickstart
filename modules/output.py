@@ -387,6 +387,8 @@ def optimize_template_variables(config_data, library_types=None):
             "rating1_font_color",
             "rating1_stroke_width",
             "rating1_stroke_color",
+            "rating1_horizontal_offset",
+            "rating1_vertical_offset",
             "rating2",
             "rating2_image",
             "rating2_font",
@@ -394,6 +396,8 @@ def optimize_template_variables(config_data, library_types=None):
             "rating2_font_color",
             "rating2_stroke_width",
             "rating2_stroke_color",
+            "rating2_horizontal_offset",
+            "rating2_vertical_offset",
             "rating3",
             "rating3_image",
             "rating3_font",
@@ -401,6 +405,8 @@ def optimize_template_variables(config_data, library_types=None):
             "rating3_font_color",
             "rating3_stroke_width",
             "rating3_stroke_color",
+            "rating3_horizontal_offset",
+            "rating3_vertical_offset",
             "horizontal_position",
             "horizontal_offset",
             "vertical_offset",
@@ -957,6 +963,67 @@ def build_libraries_section(
                             cleaned.pop(r_key, None)
                             cleaned.pop(i_key, None)
 
+                def _offset_number(value, fallback):
+                    if isinstance(value, bool):
+                        return fallback
+                    if isinstance(value, (int, float)):
+                        return value
+                    if isinstance(value, str):
+                        stripped = value.strip()
+                        if not stripped:
+                            return fallback
+                        try:
+                            return int(stripped)
+                        except ValueError:
+                            try:
+                                return float(stripped)
+                            except ValueError:
+                                return fallback
+                    return fallback
+
+                # Kometa expects per-rating offset keys on the ratings overlay.
+                # Preserve existing group-offset UI by fanning shared offsets out
+                # to each configured rating slot during YAML generation.
+                active_slots = [
+                    idx
+                    for idx in ["1", "2", "3"]
+                    if f"rating{idx}" in cleaned or f"rating{idx}_image" in cleaned
+                ]
+                back_height = _offset_number(cleaned.get("back_height"), 160)
+                back_padding = _offset_number(cleaned.get("back_padding"), 15)
+                gap = max(0, back_padding)
+                vertical_step = back_height + gap
+                center_index = (len(active_slots) - 1) / 2 if active_slots else 0
+                for axis in ["horizontal", "vertical"]:
+                    shared_key = f"{axis}_offset"
+                    if shared_key not in cleaned:
+                        continue
+                    shared_val = cleaned.get(shared_key)
+                    shared_number = _offset_number(shared_val, 0)
+                    for slot_position, idx in enumerate(active_slots):
+                        r_key = f"rating{idx}"
+                        slot_key = f"{r_key}_{axis}_offset"
+                        if slot_key in cleaned:
+                            continue
+                        if axis == "horizontal":
+                            cleaned[slot_key] = shared_val
+                        else:
+                            relative_index = slot_position - center_index
+                            cleaned[slot_key] = int(round(shared_number + (vertical_step * relative_index)))
+                    cleaned.pop(shared_key, None)
+
+                # If all explicit per-slot vertical offsets are identical, they
+                # still represent the top of Quickstart's composite preview block.
+                # Re-expand them to match the preview stack used on the canvas.
+                vertical_slot_keys = [f"rating{idx}_vertical_offset" for idx in active_slots]
+                if len(vertical_slot_keys) > 1 and all(key in cleaned for key in vertical_slot_keys):
+                    vertical_values = [_offset_number(cleaned.get(key), 0) for key in vertical_slot_keys]
+                    if len(set(vertical_values)) == 1:
+                        base_vertical = vertical_values[0]
+                        for slot_position, key in enumerate(vertical_slot_keys):
+                            relative_index = slot_position - center_index
+                            cleaned[key] = int(round(base_vertical + (vertical_step * relative_index)))
+
                 if cleaned:
                     overlay_entry["template_variables"] = cleaned
                 else:
@@ -987,6 +1054,8 @@ def build_libraries_section(
                     "rating1_font_color",
                     "rating1_stroke_width",
                     "rating1_stroke_color",
+                    "rating1_horizontal_offset",
+                    "rating1_vertical_offset",
                     "rating2",
                     "rating2_image",
                     "rating2_font",
@@ -994,6 +1063,8 @@ def build_libraries_section(
                     "rating2_font_color",
                     "rating2_stroke_width",
                     "rating2_stroke_color",
+                    "rating2_horizontal_offset",
+                    "rating2_vertical_offset",
                     "rating3",
                     "rating3_image",
                     "rating3_font",
@@ -1001,6 +1072,8 @@ def build_libraries_section(
                     "rating3_font_color",
                     "rating3_stroke_width",
                     "rating3_stroke_color",
+                    "rating3_horizontal_offset",
+                    "rating3_vertical_offset",
                     "horizontal_position",
                     "horizontal_offset",
                     "vertical_offset",

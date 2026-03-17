@@ -1032,6 +1032,7 @@ document.addEventListener('DOMContentLoaded', function () {
       initRelativeYearInputs(card)
       initScheduleBuilders(card)
       wireOffsetReset(card)
+      wireRatingsOffsetSync(card)
       initSortablesInScope(card)
       setupCustomStringListHandlers('mass_genre_update', card)
       setupCustomStringListHandlers('radarr_remove_by_tag', card)
@@ -1391,6 +1392,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     wireOverlayDetailToggles()
     wireOverlayTemplateSections()
+    wireRatingsOffsetSync()
 
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('.copy-library-btn')
@@ -2009,6 +2011,168 @@ function setupParentChildToggleVisibility (scope) {
 
     updateVisibilityAndBorder(false) // Initial check
     parentToggle.dataset.childVisibilityBound = 'true'
+  })
+}
+
+function wireRatingsOffsetSync (scope) {
+  const root = scope || document
+  root.querySelectorAll('.template-toggle-group[data-overlay-id="overlay_ratings"]').forEach(group => {
+    if (group.dataset.ratingsOffsetSyncBound === 'true') return
+
+    const templateName = group.dataset.overlayTemplate
+    if (!templateName) return
+
+    const sharedInputs = {
+      horizontal: group.querySelector(`[name="${templateName}[horizontal_offset]"]`),
+      vertical: group.querySelector(`[name="${templateName}[vertical_offset]"]`)
+    }
+    if (!sharedInputs.horizontal || !sharedInputs.vertical) return
+
+    const metricInputs = {
+      backHeight: group.querySelector(`[name="${templateName}[back_height]"]`),
+      backPadding: group.querySelector(`[name="${templateName}[back_padding]"]`)
+    }
+    const slotDefs = ['rating1', 'rating2', 'rating3'].map(slot => ({
+      slot,
+      ratingInput: group.querySelector(`[name="${templateName}[${slot}]"]`),
+      imageInput: group.querySelector(`[name="${templateName}[${slot}_image]"]`),
+      horizontalInput: group.querySelector(`[name="${templateName}[${slot}_horizontal_offset]"]`),
+      verticalInput: group.querySelector(`[name="${templateName}[${slot}_vertical_offset]"]`)
+    })).filter(slot => slot.horizontalInput || slot.verticalInput || slot.ratingInput || slot.imageInput)
+    const slotInputs = {
+      horizontal: slotDefs.map(slot => slot.horizontalInput).filter(Boolean),
+      vertical: slotDefs.map(slot => slot.verticalInput).filter(Boolean)
+    }
+
+    const toNumber = (value, fallback = 0) => {
+      const n = Number(value)
+      return Number.isFinite(n) ? n : fallback
+    }
+    const normalizeValue = (value) => String(value ?? '').trim().toLowerCase()
+    const hasMeaningfulValue = (input) => {
+      if (!input) return false
+      const value = normalizeValue(input.value)
+      return value !== '' && value !== 'none'
+    }
+    const getActiveSlots = () => {
+      const active = slotDefs.filter(slot => hasMeaningfulValue(slot.ratingInput) || hasMeaningfulValue(slot.imageInput))
+      return active.length ? active : slotDefs
+    }
+    const getVerticalStep = () => {
+      const backHeight = toNumber(metricInputs.backHeight?.value, 160)
+      const backPadding = Math.max(0, toNumber(metricInputs.backPadding?.value, 15))
+      return backHeight + backPadding
+    }
+    const updateInputValue = (input, nextValue) => {
+      if (!input) return
+      const normalized = String(Math.round(nextValue))
+      if (String(input.value ?? '') === normalized) return
+      input.value = normalized
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+
+    const valuesDiffer = (input) => {
+      if (!input) return false
+      return String(input.value ?? '') !== String(input.dataset.default ?? '')
+    }
+    const hasExplicitSlotOffsets = (axis = null) => {
+      const activeSlots = getActiveSlots()
+      const inputs = axis
+        ? activeSlots.map(slot => slot[`${axis}Input`]).filter(Boolean)
+        : activeSlots.flatMap(slot => [slot.horizontalInput, slot.verticalInput]).filter(Boolean)
+      return inputs.some(valuesDiffer)
+    }
+
+    const withSyncGuard = (callback) => {
+      group.dataset.syncingRatingOffsets = 'true'
+      try {
+        callback()
+      } finally {
+        delete group.dataset.syncingRatingOffsets
+      }
+    }
+
+    const syncSharedFromSlots = (axis) => {
+      const sharedInput = sharedInputs[axis]
+      const inputs = getActiveSlots().map(slot => slot[`${axis}Input`]).filter(Boolean)
+      if (!sharedInput || !inputs.length) return
+      if (group.dataset.syncingRatingOffsets === 'true' || group.dataset.resetting === 'true') {
+        sharedInput.dataset.prevValue = String(sharedInput.value ?? '')
+        return
+      }
+      const average = Math.round(
+        inputs.reduce((sum, input) => sum + toNumber(input.value, toNumber(input.dataset.default, 0)), 0) / inputs.length
+      )
+      withSyncGuard(() => {
+        sharedInput.value = String(average)
+        sharedInput.dataset.prevValue = String(average)
+        sharedInput.dispatchEvent(new Event('input', { bubbles: true }))
+        sharedInput.dispatchEvent(new Event('change', { bubbles: true }))
+      })
+    }
+
+    const syncSlotsFromShared = (axis) => {
+      const sharedInput = sharedInputs[axis]
+      const activeSlots = getActiveSlots()
+      if (!sharedInput || !activeSlots.length) return
+      if (group.dataset.syncingRatingOffsets === 'true' || group.dataset.resetting === 'true') {
+        sharedInput.dataset.prevValue = String(sharedInput.value ?? '')
+        return
+      }
+      const current = toNumber(sharedInput.value, toNumber(sharedInput.dataset.default, 0))
+      sharedInput.dataset.prevValue = String(current)
+      withSyncGuard(() => {
+        if (axis === 'horizontal') {
+          activeSlots.forEach(slot => updateInputValue(slot.horizontalInput, current))
+          return
+        }
+        const verticalStep = getVerticalStep()
+        const centerIndex = (activeSlots.length - 1) / 2
+        activeSlots.forEach((slot, index) => {
+          updateInputValue(slot.verticalInput, current + ((index - centerIndex) * verticalStep))
+        })
+      })
+    }
+
+    const seedSharedFromSlots = () => {
+      const sharedAtDefaults = Object.values(sharedInputs).every(input => !valuesDiffer(input))
+      if (!hasExplicitSlotOffsets() || !sharedAtDefaults) return
+      syncSharedFromSlots('horizontal')
+      syncSharedFromSlots('vertical')
+    }
+
+    seedSharedFromSlots()
+
+    Object.entries(sharedInputs).forEach(([axis, input]) => {
+      input.dataset.prevValue = String(input.value ?? '')
+      const syncFromShared = () => syncSlotsFromShared(axis)
+      input.addEventListener('input', syncFromShared)
+      input.addEventListener('change', syncFromShared)
+    })
+
+    Object.entries(slotInputs).forEach(([axis, inputs]) => {
+      inputs.forEach(input => {
+        input.addEventListener('change', () => syncSharedFromSlots(axis))
+      })
+    })
+
+    const refreshDerivedOffsets = () => {
+      if (!valuesDiffer(sharedInputs.horizontal) && !valuesDiffer(sharedInputs.vertical) && !hasExplicitSlotOffsets()) {
+        return
+      }
+      syncSlotsFromShared('horizontal')
+      syncSlotsFromShared('vertical')
+    }
+
+    slotDefs.forEach(slot => {
+      if (slot.ratingInput) slot.ratingInput.addEventListener('change', refreshDerivedOffsets)
+      if (slot.imageInput) slot.imageInput.addEventListener('change', refreshDerivedOffsets)
+    })
+    if (metricInputs.backHeight) metricInputs.backHeight.addEventListener('change', refreshDerivedOffsets)
+    if (metricInputs.backPadding) metricInputs.backPadding.addEventListener('change', refreshDerivedOffsets)
+
+    group.dataset.ratingsOffsetSyncBound = 'true'
   })
 }
 

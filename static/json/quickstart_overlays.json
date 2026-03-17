@@ -551,6 +551,16 @@
             "default": "#00000000",
             "tooltip": "Font Stroke Color for the Overlay. Hex format: #RRGGBBAA."
           },
+          "rating1_horizontal_offset": {
+            "input_type": "number",
+            "label": "Rating 1 Horizontal Offset",
+            "default": 15
+          },
+          "rating1_vertical_offset": {
+            "input_type": "number",
+            "label": "Rating 1 Vertical Offset",
+            "default": 0
+          },
           "rating2": {
             "input_type": "select",
             "default": "critic",
@@ -654,6 +664,16 @@
             "default": "#00000000",
             "tooltip": "Font Stroke Color for the Overlay. Hex format: #RRGGBBAA."
           },
+          "rating2_horizontal_offset": {
+            "input_type": "number",
+            "label": "Rating 2 Horizontal Offset",
+            "default": 15
+          },
+          "rating2_vertical_offset": {
+            "input_type": "number",
+            "label": "Rating 2 Vertical Offset",
+            "default": 0
+          },
           "rating3": {
             "input_type": "select",
             "default": "audience",
@@ -756,6 +776,16 @@
             "label": "Rating 3 Stroke Color",
             "default": "#00000000",
             "tooltip": "Font Stroke Color for the Overlay. Hex format: #RRGGBBAA."
+          },
+          "rating3_horizontal_offset": {
+            "input_type": "number",
+            "label": "Rating 3 Horizontal Offset",
+            "default": 15
+          },
+          "rating3_vertical_offset": {
+            "input_type": "number",
+            "label": "Rating 3 Vertical Offset",
+            "default": 0
           },
           "back_align": {
             "input_type": "select",
@@ -911,6 +941,16 @@
             "default": "#00000000",
             "tooltip": "Font Stroke Color for the Overlay. Hex format: #RRGGBBAA."
           },
+          "rating1_horizontal_offset": {
+            "input_type": "number",
+            "label": "Rating 1 Horizontal Offset",
+            "default": 15
+          },
+          "rating1_vertical_offset": {
+            "input_type": "number",
+            "label": "Rating 1 Vertical Offset",
+            "default": 0
+          },
           "rating2": {
             "input_type": "select",
             "default": "audience",
@@ -981,6 +1021,16 @@
             "label": "Rating 2 Stroke Color",
             "default": "#00000000",
             "tooltip": "Font Stroke Color for the Overlay. Hex format: #RRGGBBAA."
+          },
+          "rating2_horizontal_offset": {
+            "input_type": "number",
+            "label": "Rating 2 Horizontal Offset",
+            "default": 15
+          },
+          "rating2_vertical_offset": {
+            "input_type": "number",
+            "label": "Rating 2 Vertical Offset",
+            "default": 0
           },
           "back_align": {
             "input_type": "select",

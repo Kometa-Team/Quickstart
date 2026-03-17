@@ -2167,7 +2167,9 @@ const OverlayHandler = {
       const vars = getBackdropVars(cfg)
       const boxWidth = Math.max(1, Number(vars.back_width) || 160)
       const boxHeight = Math.max(1, Number(vars.back_height) || 160)
-      const gap = Math.max(6, Math.round(boxHeight * 0.08))
+      const gap = Number.isFinite(Number(vars.back_padding))
+        ? Math.max(0, Number(vars.back_padding))
+        : 15
       const canvas = document.createElement('canvas')
       canvas.width = Math.ceil(boxWidth)
       canvas.height = Math.ceil((boxHeight * items.length) + (gap * Math.max(0, items.length - 1)))

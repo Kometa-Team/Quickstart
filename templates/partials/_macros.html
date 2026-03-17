@@ -1553,6 +1553,7 @@ prefix) %}
                                                     {% if var_name == 'horizontal_position' %}{% set ns.position_id = template_name ~ '-' ~ var_name %}{% endif %}
                                                     {% set display_label = var_details.label or var_name.replace('_', ' ') %}
                                                     {% set display_value = selected_value %}
+                                                    {% set is_hidden_rating_anchor = overlay.id == 'overlay_ratings' and var_name in ['horizontal_offset', 'vertical_offset'] %}
                                                     {% if var_name in ['back_line_width', 'back_padding', 'back_radius', 'back_width', 'back_height'] %}
                                                         {% set min_value = 1 %}
                                                         {% set selected_num = (selected_value if selected_value is not none else var_details.default) | int %}
@@ -1562,7 +1563,7 @@ prefix) %}
                                                             {% set display_value = selected_num %}
                                                         {% endif %}
                                                     {% endif %}
-                                                    <div class="input-group mb-2">
+                                                    <div class="input-group mb-2{% if is_hidden_rating_anchor %} d-none{% endif %}">
                                                         <span class="input-group-text"
                                                             id="{{ template_name }}-{{ var_name }}_text"
                                                             style="width: 170px;">
