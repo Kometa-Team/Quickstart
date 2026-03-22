@@ -338,40 +338,76 @@
                 </span>
               </span>
               <select class="form-select" id="default_collection_order" name="default_collection_order">
-                <option value="release.asc" {% if data['settings']['default_collection_order']=='release.asc'
-                  %}selected{% endif %}>Release Date (Ascending)</option>
-                <option value="release.desc" {% if data['settings']['default_collection_order']=='release.desc'
-                  %}selected{% endif %}>Release Date (Descending)</option>
-                <option value="added.asc" {% if data['settings']['default_collection_order']=='added.asc' %}selected{%
-                  endif %}>Added to Library (Ascending)</option>
-                <option value="added.desc" {% if data['settings']['default_collection_order']=='added.desc' %}selected{%
-                  endif %}>Added to Library (Descending)</option>
+                <option value="added.asc" {% if data['settings']['default_collection_order']=='added.asc'
+                  %}selected{% endif %}>Date Added (Ascending)</option>
+                <option value="added.desc" {% if data['settings']['default_collection_order']=='added.desc'
+                  %}selected{% endif %}>Date Added (Descending)</option>
                 <option value="alpha" {% if data['settings']['default_collection_order']=='alpha' %}selected{% endif %}>
                   Alphabetical</option>
+                <option value="audience_rating.asc" {% if data['settings']['default_collection_order']=='audience_rating.asc'
+                  %}selected{% endif %}>Audience Rating (Ascending)</option>
+                <option value="audience_rating.desc" {% if data['settings']['default_collection_order']=='audience_rating.desc'
+                  %}selected{% endif %}>Audience Rating (Descending)</option>
+                <option value="bitrate.asc" {% if data['settings']['default_collection_order']=='bitrate.asc'
+                  %}selected{% endif %}>Bitrate (Ascending)</option>
+                <option value="bitrate.desc" {% if data['settings']['default_collection_order']=='bitrate.desc'
+                  %}selected{% endif %}>Bitrate (Descending)</option>
+                <option value="content_rating.asc" {% if data['settings']['default_collection_order']=='content_rating.asc'
+                  %}selected{% endif %}>Content Rating (Ascending)</option>
+                <option value="content_rating.desc" {% if data['settings']['default_collection_order']=='content_rating.desc'
+                  %}selected{% endif %}>Content Rating (Descending)</option>
+                <option value="critic_rating.asc" {% if data['settings']['default_collection_order']=='critic_rating.asc'
+                  %}selected{% endif %}>Critic Rating (Ascending)</option>
+                <option value="critic_rating.desc" {% if data['settings']['default_collection_order']=='critic_rating.desc'
+                  %}selected{% endif %}>Critic Rating (Descending)</option>
+                <option value="custom" {% if data['settings']['default_collection_order']=='custom' %}selected{% endif %}>
+                  Custom Order</option>
+                <option value="duration.asc" {% if data['settings']['default_collection_order']=='duration.asc'
+                  %}selected{% endif %}>Duration (Ascending)</option>
+                <option value="duration.desc" {% if data['settings']['default_collection_order']=='duration.desc'
+                  %}selected{% endif %}>Duration (Descending)</option>
                 <option value="originally_available.asc" {% if
                   data['settings']['default_collection_order']=='originally_available.asc' %}selected{% endif %}>
                   Originally Available (Ascending)</option>
                 <option value="originally_available.desc" {% if
                   data['settings']['default_collection_order']=='originally_available.desc' %}selected{% endif %}>
                   Originally Available (Descending)</option>
-                <option value="random" {% if data['settings']['default_collection_order']=='random' %}selected{% endif
-                  %}>Random</option>
-                <option value="rating.desc" {% if data['settings']['default_collection_order']=='rating.desc'
-                  %}selected{% endif %}>Rating (Descending)</option>
-                <option value="rating.asc" {% if data['settings']['default_collection_order']=='rating.asc' %}selected{%
-                  endif %}>Rating (Ascending)</option>
-                <option value="duration.desc" {% if data['settings']['default_collection_order']=='duration.desc'
-                  %}selected{% endif %}>Duration (Descending)</option>
-                <option value="duration.asc" {% if data['settings']['default_collection_order']=='duration.asc'
-                  %}selected{% endif %}>Duration (Ascending)</option>
-                <option value="plays.desc" {% if data['settings']['default_collection_order']=='plays.desc' %}selected{%
-                  endif %}>Plays (Descending)</option>
-                <option value="plays.asc" {% if data['settings']['default_collection_order']=='plays.asc' %}selected{%
-                  endif %}>Plays (Ascending)</option>
-                <option value="last_played.desc" {% if data['settings']['default_collection_order']=='last_played.desc'
-                  %}selected{% endif %}>Last Played (Descending)</option>
-                <option value="last_played.asc" {% if data['settings']['default_collection_order']=='last_played.asc'
-                  %}selected{% endif %}>Last Played (Ascending)</option>
+                <option value="plays.asc" {% if data['settings']['default_collection_order']=='plays.asc'
+                  %}selected{% endif %}>Plays (Ascending)</option>
+                <option value="plays.desc" {% if data['settings']['default_collection_order']=='plays.desc'
+                  %}selected{% endif %}>Plays (Descending)</option>
+                <option value="progress.asc" {% if data['settings']['default_collection_order']=='progress.asc'
+                  %}selected{% endif %}>Progress (Ascending)</option>
+                <option value="progress.desc" {% if data['settings']['default_collection_order']=='progress.desc'
+                  %}selected{% endif %}>Progress (Descending)</option>
+                <option value="random" {% if data['settings']['default_collection_order']=='random' %}selected{% endif %}>
+                  Random</option>
+                <option value="release" {% if data['settings']['default_collection_order']=='release' %}selected{% endif %}>
+                  Release Date</option>
+                <option value="title.asc" {% if data['settings']['default_collection_order']=='title.asc'
+                  %}selected{% endif %}>Title (Ascending)</option>
+                <option value="title.desc" {% if data['settings']['default_collection_order']=='title.desc'
+                  %}selected{% endif %}>Title (Descending)</option>
+                <option value="year.asc" {% if data['settings']['default_collection_order']=='year.asc'
+                  %}selected{% endif %}>Year (Ascending)</option>
+                <option value="year.desc" {% if data['settings']['default_collection_order']=='year.desc'
+                  %}selected{% endif %}>Year (Descending)</option>
+                <option value="release.asc" {% if data['settings']['default_collection_order']=='release.asc'
+                  %}selected{% endif %}>Release Date (Ascending)</option>
+                <option value="release.desc" {% if data['settings']['default_collection_order']=='release.desc'
+                  %}selected{% endif %}>Release Date (Descending)</option>
+                <option value="resolution.asc" {% if data['settings']['default_collection_order']=='resolution.asc'
+                  %}selected{% endif %}>Resolution (Ascending)</option>
+                <option value="resolution.desc" {% if data['settings']['default_collection_order']=='resolution.desc'
+                  %}selected{% endif %}>Resolution (Descending)</option>
+                <option value="user_rating.asc" {% if data['settings']['default_collection_order']=='user_rating.asc'
+                  %}selected{% endif %}>User Rating (Ascending)</option>
+                <option value="user_rating.desc" {% if data['settings']['default_collection_order']=='user_rating.desc'
+                  %}selected{% endif %}>User Rating (Descending)</option>
+                <option value="viewed.asc" {% if data['settings']['default_collection_order']=='viewed.asc' %}selected{%
+                  endif %}>Date Last Viewed (Ascending)</option>
+                <option value="viewed.desc" {% if data['settings']['default_collection_order']=='viewed.desc' %}selected{%
+                  endif %}>Date Last Viewed (Descending)</option>
               </select>
             </div>
           </div>
