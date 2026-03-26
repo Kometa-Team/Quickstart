@@ -56,8 +56,11 @@ def clean_form_data(form_data):
 
     for key, value in form_data.items():
         # Handle asset_directory as a list
-        if key == "asset_directory":
-            value_list = form_data.getlist(key)
+        if key == "asset_directory" or key.endswith("-attribute_asset_directory"):
+            if isinstance(value, list):
+                value_list = value
+            else:
+                value_list = form_data.getlist(key)
             clean_data[key] = [v.strip() for v in value_list if v.strip()]
 
         elif key.endswith("use_separator"):
@@ -73,6 +76,9 @@ def clean_form_data(form_data):
             clean_data[key] = None
 
         elif isinstance(value, str):
+            if key.endswith("template_overlay_runtimes[text]") and value == "":
+                clean_data[key] = ""
+                continue
             if url_validation.is_url_key(key):
                 raw = value.strip()
                 if raw:

@@ -262,6 +262,37 @@
       "yml_location": "attribute"
     },
     {
+      "prefix": "asset_directory",
+      "type": "text_input",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Asset Directory",
+      "wiki": "https://kometa.wiki/en/nightly/kometa/guides/assets/",
+      "description": "Specify the library-level asset directory Kometa should search for posters and backgrounds in this library. Enter one path per line if you want to provide multiple asset directories.",
+      "tooltip_variant": "info",
+      "placeholder": "e.g. C:\\\\Users\\\\bullmoose20\\\\ppm\\\\assets5\\\\test_tv_lib",
+      "multiline": true,
+      "rows": 2,
+      "yml_location": "library_settings"
+    },
+    {
+      "prefix": "prioritize_assets",
+      "type": "boolean_toggle",
+      "accordion": "library",
+      "media_types": [
+        "movie",
+        "show"
+      ],
+      "title": "Prioritize Assets",
+      "wiki": "https://kometa.wiki/en/nightly/config/settings/#prioritize-assets",
+      "description": "When determining which image to use on an item in this library, prioritize the asset_directory over all other image sources.",
+      "tooltip_variant": "info",
+      "yml_location": "library_settings"
+    },
+    {
       "prefix": "assets_for_all_collections",
       "type": "boolean_toggle",
       "accordion": "library",

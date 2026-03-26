@@ -1,5 +1,6 @@
 import io
 import os
+import ast
 import json
 import re
 import shutil
@@ -135,6 +136,8 @@ def _coerce_string_list(values):
         if item is None:
             continue
         text = str(item).strip()
+        if text in {"[", "]"}:
+            continue
         if not text or text in seen:
             continue
         cleaned.append(text)
@@ -158,8 +161,54 @@ def _parse_string_list(value):
                 parsed = None
             if isinstance(parsed, list):
                 return _coerce_string_list(parsed)
+            try:
+                parsed = ast.literal_eval(stripped)
+            except Exception:
+                parsed = None
+            if isinstance(parsed, list):
+                return _coerce_string_list(parsed)
         return _coerce_string_list([stripped])
     return _coerce_string_list([value])
+
+
+def _normalize_asset_directory_entry(value):
+    if value is None:
+        return None
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    # Convert YAML-style escaped Windows paths back to plain paths while preserving UNC prefixes.
+    if re.match(r"^[A-Za-z]:\\\\", text):
+        while "\\\\" in text:
+            text = text.replace("\\\\", "\\")
+        return text
+
+    if text.startswith("\\\\"):
+        prefix = "\\\\"
+        remainder = text[2:]
+        while "\\\\" in remainder:
+            remainder = remainder.replace("\\\\", "\\")
+        return prefix + remainder
+
+    return text
+
+
+def _normalize_asset_directory_values(value):
+    normalized = []
+    if isinstance(value, str):
+        items = value.splitlines()
+    elif isinstance(value, list):
+        items = value
+    else:
+        items = []
+
+    for item in items:
+        cleaned = _normalize_asset_directory_entry(item)
+        if cleaned:
+            normalized.append(cleaned)
+    return normalized
 
 
 def _values_match(default, actual):
@@ -616,7 +665,11 @@ def build_libraries_section(
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Processing Library: {library_key} -> {library_name}", level="DEBUG")
 
-        # Process Operations Attributes
+        # Process Library Settings and Operations Attributes
+        library_settings_fields = [
+            "asset_directory",
+            "prioritize_assets",
+        ]
         operations_fields = [
             "assets_for_all",
             "assets_for_all_collections",
@@ -628,6 +681,7 @@ def build_libraries_section(
             "radarr_add_all",
             "sonarr_add_all",
         ]
+        library_settings = {}
         operations = {}
         attr_group = attributes.get(lib_id, {})
         # Begin: Mass Genre Update Section
@@ -785,6 +839,31 @@ def build_libraries_section(
             motu_list.fa.set_block_style()
             operations["mass_original_title_update"] = motu_list
 
+        for field in library_settings_fields:
+            attr_key = f"{library_type}-library_{lib_id}-attribute_{field}"
+            value = attr_group.get(attr_key, None)
+            if value in [None, ""] and field == "asset_directory":
+                legacy_attr_key = f"{library_type}-library_{lib_id}-{field}"
+                value = attr_group.get(legacy_attr_key, None)
+
+            if field == "asset_directory":
+                normalized = _normalize_asset_directory_values(value)
+
+                if normalized:
+                    asset_dirs = CommentedSeq(normalized)
+                    asset_dirs.fa.set_block_style()
+                    library_settings[field] = asset_dirs
+                continue
+
+            if field == "prioritize_assets":
+                bool_value = _coerce_bool(value)
+                if bool_value is not None:
+                    library_settings[field] = bool_value
+                continue
+
+            if value not in [None, "", False]:
+                library_settings[field] = value
+
         for field in operations_fields:
             attr_key = f"{library_type}-library_{lib_id}-attribute_{field}"
             value = attr_group.get(attr_key, None)
@@ -828,6 +907,9 @@ def build_libraries_section(
 
         if delete_collections:
             operations["delete_collections"] = delete_collections
+
+        if library_settings:
+            entry["settings"] = library_settings
 
         if operations:
             entry["operations"] = operations
@@ -1238,6 +1320,9 @@ def build_libraries_section(
                     tv = ov.get("template_variables")
                     if not isinstance(tv, dict):
                         continue
+                    for key, value in list(tv.items()):
+                        if value is None:
+                            tv.pop(key, None)
                     if tv.get("builder_level") == "show":
                         tv.pop("builder_level", None)
                         if not tv:
@@ -1605,6 +1690,7 @@ def reorder_library_section(library_data):
     - `report_path` appears first.
     - `remove_overlays` and `reset_overlays` come next.
     - `template_variables` next.
+    - `settings` appears before `operations`.
     - Keys inside `operations` are ordered as per Kometa Wiki.
     - Other keys retain their natural order.
     """
@@ -1624,7 +1710,11 @@ def reorder_library_section(library_data):
     if "template_variables" in library_data:
         reordered_data["template_variables"] = library_data["template_variables"]
 
-    # 4. Reorder operations
+    # 4. Then library settings
+    if "settings" in library_data:
+        reordered_data["settings"] = library_data["settings"]
+
+    # 5. Reorder operations
     operations_order = [
         "assets_for_all",
         "assets_for_all_collections",
@@ -1669,7 +1759,7 @@ def reorder_library_section(library_data):
                 ordered_ops[k] = v
         reordered_data["operations"] = ordered_ops
 
-    # 5. Finally add any other keys that weren't handled
+    # 6. Finally add any other keys that weren't handled
     for key, value in library_data.items():
         if key not in reordered_data:
             reordered_data[key] = value
@@ -2146,10 +2236,10 @@ def build_config(header_style="standard", config_name=None):
         if dump_name == "settings" and "asset_directory" in cleaned_data.get("settings", {}):
             if isinstance(cleaned_data["settings"]["asset_directory"], str):
                 # Convert multi-line string into a list
-                cleaned_data["settings"]["asset_directory"] = [line.strip() for line in cleaned_data["settings"]["asset_directory"].splitlines() if line.strip()]
+                cleaned_data["settings"]["asset_directory"] = _normalize_asset_directory_values(cleaned_data["settings"]["asset_directory"])
             elif isinstance(cleaned_data["settings"]["asset_directory"], list):
                 # Ensure all list items are strings
-                cleaned_data["settings"]["asset_directory"] = [str(i).strip() for i in cleaned_data["settings"]["asset_directory"]]
+                cleaned_data["settings"]["asset_directory"] = _normalize_asset_directory_values(cleaned_data["settings"]["asset_directory"])
 
         # Dump the cleaned data to YAML
         with io.StringIO() as stream:

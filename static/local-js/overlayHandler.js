@@ -502,7 +502,9 @@ const OverlayHandler = {
         const el = container.querySelector(`[name="${templateName}[${key}]"]`)
         if (!el) return defaultVal
         if (el.tagName === 'SELECT') return el.value || defaultVal
-        return el.type === 'number' ? Number(el.value) || defaultVal : el.value || defaultVal
+        if (el.type === 'number') return Number(el.value) || defaultVal
+        if (key === 'text') return el.value ?? ''
+        return el.value || defaultVal
       }
       return {
         text: getVal('text', 'Runtime: '),

@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (!Array.isArray(fonts)) return
       const root = scope || document
       root.querySelectorAll('select[data-font-select]').forEach(select => {
-        const currentValue = select.value || ''
+        const currentValue = select.value || select.dataset.default || ''
         const seen = new Set()
         const merged = []
         fonts.forEach(font => {
@@ -1031,6 +1031,7 @@ document.addEventListener('DOMContentLoaded', function () {
       initStylePreviewGrids(card)
       initRelativeYearInputs(card)
       initScheduleBuilders(card)
+      initLibraryAssetDirectoryInputs(card)
       wireOffsetReset(card)
       wireRatingsOffsetSync(card)
       initSortablesInScope(card)
@@ -1099,9 +1100,73 @@ document.addEventListener('DOMContentLoaded', function () {
           return
         }
 
+        if (el.name.endsWith('-attribute_asset_directory')) {
+          if (!Array.isArray(payload[el.name])) payload[el.name] = []
+          payload[el.name].push(el.value ?? '')
+          return
+        }
+
         payload[el.name] = el.value ?? ''
       })
       return payload
+    }
+
+    function initLibraryAssetDirectoryInputs (card) {
+      card.querySelectorAll('[data-library-asset-directory-container]').forEach(container => {
+        if (container.dataset.assetDirectoryBound === 'true') return
+        container.dataset.assetDirectoryBound = 'true'
+
+        const inputName = container.dataset.inputName
+        const addBtnSelector = `[data-add-asset-directory="${container.id}"]`
+        const addBtn = card.querySelector(addBtnSelector)
+        let counter = container.querySelectorAll(`input[name="${inputName}"]`).length
+
+        const buildRow = (value = '') => {
+          counter += 1
+          const row = document.createElement('div')
+          row.className = 'input-group mb-2'
+
+          const input = document.createElement('input')
+          input.type = 'text'
+          input.className = 'form-control'
+          input.name = inputName
+          input.id = `${container.id}_${counter}`
+          input.placeholder = 'Add Asset Directory'
+          input.dataset.pathRule = 'asset_directory'
+          input.value = value
+
+          const removeBtn = document.createElement('button')
+          removeBtn.className = 'btn btn-danger library-remove-asset-directory'
+          removeBtn.type = 'button'
+          removeBtn.textContent = 'Remove'
+
+          row.append(input, removeBtn)
+          return row
+        }
+
+        if (addBtn) {
+          addBtn.addEventListener('click', () => {
+            const row = buildRow('')
+            container.appendChild(row)
+            if (typeof PathValidation !== 'undefined' && PathValidation.attach) {
+              PathValidation.attach(row)
+            }
+          })
+        }
+
+        container.addEventListener('click', event => {
+          if (!event.target.classList.contains('library-remove-asset-directory')) return
+          const fieldGroup = event.target.closest('.input-group')
+          if (!fieldGroup) return
+          let next = fieldGroup.nextElementSibling
+          while (next && next.dataset && next.dataset.pathHint) {
+            const toRemove = next
+            next = next.nextElementSibling
+            toRemove.remove()
+          }
+          container.removeChild(fieldGroup)
+        })
+      })
     }
 
     function autosaveActiveLibrary () {

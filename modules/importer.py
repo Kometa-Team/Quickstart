@@ -1119,7 +1119,10 @@ def prepare_import_payload(
                         for key, value in expanded_template_values.items():
                             if key in allowed:
                                 child_name = f"{lib_id}-template_collection_{clean_id}_{key}"
-                                libraries_data[child_name] = value
+                                if isinstance(value, list):
+                                    libraries_data[child_name] = json.dumps(value, ensure_ascii=True)
+                                else:
+                                    libraries_data[child_name] = value
                                 report.add(
                                     "imported",
                                     f"libraries.{lib_name}.collection_files[{idx}].template_variables.{key}",
@@ -1221,6 +1224,65 @@ def prepare_import_payload(
             elif overlay_files is not None:
                 report.add("unmapped", f"libraries.{lib_name}.overlay_files", "Unsupported overlay_files format.")
 
+            # Library settings
+            settings_section = lib_cfg.get("settings")
+            if isinstance(settings_section, dict):
+                imported_settings = False
+                for key, value in settings_section.items():
+                    if key == "asset_directory":
+                        if isinstance(value, list):
+                            normalized = [str(item).strip() for item in value if str(item).strip()]
+                        elif isinstance(value, str):
+                            normalized = [line.strip() for line in value.splitlines() if line.strip()]
+                        else:
+                            normalized = []
+
+                        if normalized:
+                            libraries_data[f"{lib_id}-attribute_{key}"] = normalized
+                            report.add("imported", f"libraries.{lib_name}.settings.{key}")
+                            imported_settings = True
+                        else:
+                            report.add(
+                                "unmapped",
+                                f"libraries.{lib_name}.settings.{key}",
+                                "No importable asset directory entries found.",
+                            )
+                        continue
+
+                    if key == "prioritize_assets" and not isinstance(value, (dict, list)):
+                        bool_value = None
+                        if isinstance(value, bool):
+                            bool_value = value
+                        elif isinstance(value, str):
+                            lowered = value.strip().lower()
+                            if lowered in {"true", "yes", "1"}:
+                                bool_value = True
+                            elif lowered in {"false", "no", "0"}:
+                                bool_value = False
+
+                        if bool_value is None:
+                            report.add(
+                                "unmapped",
+                                f"libraries.{lib_name}.settings.{key}",
+                                "Invalid boolean value.",
+                            )
+                        else:
+                            libraries_data[f"{lib_id}-attribute_{key}"] = bool_value
+                            report.add("imported", f"libraries.{lib_name}.settings.{key}")
+                            imported_settings = True
+                        continue
+
+                    report.add(
+                        "unmapped",
+                        f"libraries.{lib_name}.settings.{key}",
+                        "Library setting not supported for import.",
+                    )
+
+                if imported_settings:
+                    report.add("imported", f"libraries.{lib_name}.settings")
+            elif settings_section is not None:
+                report.add("unmapped", f"libraries.{lib_name}.settings", "Unsupported settings format.")
+
             # Operations
             operations = lib_cfg.get("operations")
             if isinstance(operations, dict):
@@ -1256,7 +1318,7 @@ def prepare_import_payload(
             elif operations is not None:
                 report.add("unmapped", f"libraries.{lib_name}.operations", "Unsupported operations format.")
 
-            handled_keys = {"collection_files", "overlay_files", "template_variables", "operations"}
+            handled_keys = {"collection_files", "overlay_files", "template_variables", "settings", "operations"}
             handled_keys.update(top_level_map.keys())
             for key in lib_cfg.keys():
                 if key in handled_keys:

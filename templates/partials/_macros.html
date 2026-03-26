@@ -826,12 +826,14 @@ select_input.key if yml_location == "top_level" else
 {% endmacro %}
 
 {% macro text_input_section(library, data, prefix, title, description, wiki, placeholder="", tooltip_variant="info",
-container_class="border rounded p-3 mb-2", yml_location="attribute") %}
+container_class="border rounded p-3 mb-2", yml_location="attribute", multiline=false, rows=3) %}
 {% set field_prefix = "template_variables" if yml_location == "template_variables" else "" if yml_location ==
 "top_level" else "attribute" %}
 {% set full_id = library.id ~ "-" ~ (field_prefix ~ "_" if field_prefix) ~ prefix %}
 {% set full_name = library.id ~ "-" ~ (field_prefix ~ "[" ~ prefix ~ "]" if field_prefix=="template_variables" else
-prefix) %}
+field_prefix ~ "_" ~ prefix if field_prefix else prefix) %}
+{% set legacy_name = library.id ~ "-" ~ prefix %}
+{% set field_value = data.libraries.get(full_name, data.libraries.get(legacy_name, '')) %}
 <div class="{{ container_class }}">
     <div class="input-group mb-2">
         <span class="input-group-text" id="{{ full_id }}_text">
@@ -842,9 +844,56 @@ prefix) %}
                     class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
             </span>
         </span>
+        {% if multiline %}
+        <textarea class="form-control" id="{{ full_id }}" name="{{ full_name }}"
+            placeholder="{{ placeholder }}" rows="{{ rows }}">{{ field_value }}</textarea>
+        {% else %}
         <input type="text" class="form-control" id="{{ full_id }}" name="{{ full_name }}"
-            placeholder="{{ placeholder }}" value="{{ data.libraries.get(full_name, '') }}">
+            placeholder="{{ placeholder }}" value="{{ field_value }}">
+        {% endif %}
     </div>
+</div>
+{% endmacro %}
+
+{% macro asset_directory_list_section(library, data, prefix, title, description, wiki, placeholder="Add Asset Directory",
+tooltip_variant="info", container_class="border rounded p-3 mb-2") %}
+{% set full_id = library.id ~ "-attribute_" ~ prefix %}
+{% set full_name = library.id ~ "-attribute_" ~ prefix %}
+{% set legacy_name = library.id ~ "-" ~ prefix %}
+{% set raw_value = data.libraries.get(full_name, data.libraries.get(legacy_name, [])) %}
+{% if raw_value is string %}
+{% set field_values = [raw_value] if raw_value.strip() else [] %}
+{% elif raw_value is sequence and raw_value is not string %}
+{% set field_values = raw_value %}
+{% else %}
+{% set field_values = [] %}
+{% endif %}
+<div class="{{ container_class }}">
+    <label class="form-label d-flex align-items-center gap-2 flex-wrap" for="{{ full_id }}_1">
+        <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer">{{ title }}</a>
+        <span class="text-{{ tooltip_variant }}" data-bs-toggle="tooltip" data-bs-html="true" title="{{ description }}">
+            <i class="bi {% if tooltip_variant == 'danger' %}bi-exclamation-circle-fill{% else %}bi-info-circle-fill{% endif %}"></i>
+        </span>
+        <a href="{{ wiki }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none" data-bs-toggle="tooltip"
+            title="Open Kometa Asset Guide">
+            <i class="bi bi-box-arrow-up-right"></i>
+        </a>
+    </label>
+    <div id="{{ full_id }}_container" data-library-asset-directory-container data-input-name="{{ full_name }}">
+        {% for directory in field_values %}
+        <div class="input-group mb-2">
+            <input type="text" class="form-control" name="{{ full_name }}" id="{{ full_id }}_{{ loop.index }}"
+                data-path-rule="asset_directory" placeholder="{{ placeholder }}" value="{{ directory }}">
+            <button class="btn btn-danger library-remove-asset-directory" type="button">Remove</button>
+        </div>
+        {% endfor %}
+        <div class="input-group mb-2">
+            <input type="text" class="form-control" name="{{ full_name }}" id="{{ full_id }}_blank"
+                data-path-rule="asset_directory" placeholder="{{ placeholder }}">
+            <button class="btn btn-danger library-remove-asset-directory" type="button">Remove</button>
+        </div>
+    </div>
+    <button class="btn btn-primary" data-add-asset-directory="{{ full_id }}_container" type="button">Add Directory</button>
 </div>
 {% endmacro %}
 
@@ -1668,6 +1717,7 @@ prefix) %}
                                                         </div>
                                                     </div>
                                                     {% elif var_name == 'font' or var_name.endswith('_font') %}
+                                                    {% set safe_font_value = var_details.default if selected_value in [none, 'None', ''] else selected_value %}
                                                     <div class="font-row mb-2">
                                                         <div class="input-group font-input-group">
                                                             <span class="input-group-text"
@@ -1678,7 +1728,7 @@ prefix) %}
                                                             {% set fonts_list = overlay_fonts if overlay_fonts else ['Inter-Regular.ttf', 'Inter-Medium.ttf', 'Roboto-Regular.ttf'] %}
                                                             <button type="button" class="btn btn-outline-secondary font-picker-trigger"
                                                                 data-font-picker-target="{{ input_id }}">
-                                                                {{ selected_value if selected_value else 'Select font' }}
+                                                                {{ safe_font_value if safe_font_value else 'Select font' }}
                                                             </button>
                                                             <select class="form-select template-variable-text d-none"
                                                                 id="{{ input_id }}"
@@ -1686,9 +1736,9 @@ prefix) %}
                                                                 aria-describedby="{{ input_id }}_text"
                                                                 data-default="{{ var_details.default }}"
                                                                 data-font-select>
-                                                              <option value="" {% if selected_value=='' %}selected{% endif %}>Select font</option>
+                                                              <option value="" {% if safe_font_value=='' %}selected{% endif %}>Select font</option>
                                                               {% for fnt in fonts_list %}
-                                                              <option value="{{ fnt }}" {% if selected_value==fnt %}selected{% endif %}>{{ fnt }}</option>
+                                                              <option value="{{ fnt }}" {% if safe_font_value==fnt %}selected{% endif %}>{{ fnt }}</option>
                                                               {% endfor %}
                                                             </select>
                                                         </div>
@@ -1696,6 +1746,7 @@ prefix) %}
                                                             data-font-preview data-preview-for="{{ input_id }}">AaBb123</span>
                                                     </div>
                                                           {% else %}
+                                                    {% set safe_text_value = '' if selected_value in [none, 'None'] else selected_value %}
                                                     <div class="input-group mb-2">
                                                         <span class="input-group-text"
                                                             id="{{ input_id }}_text"
@@ -1706,7 +1757,7 @@ prefix) %}
                                                             id="{{ input_id }}"
                                                             name="{{ template_name }}[{{ var_name }}]"
                                                             aria-describedby="{{ input_id }}_text"
-                                                            value="{{ selected_value }}"
+                                                            value="{{ safe_text_value }}"
                                                             data-default="{{ var_details.default }}"
                                                             {% if var_name == 'text' and overlay.id in ['overlay_aspect', 'overlay_video_format'] %}data-skip-yaml="true"{% endif %}>
                                                     </div>

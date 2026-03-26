@@ -197,6 +197,34 @@
         yml_location=section.yml_location
         ) }}
 
+        {% elif section.type == 'text_input' and section.prefix == 'asset_directory' %}
+        {{ macros.asset_directory_list_section(
+        library,
+        data,
+        section.prefix,
+        section.title,
+        section.description,
+        section.wiki,
+        section.placeholder | default('Add Asset Directory'),
+        section.tooltip_variant | default('info')
+        ) }}
+
+        {% elif section.type == 'text_input' %}
+        {{ macros.text_input_section(
+        library,
+        data,
+        section.prefix,
+        section.title,
+        section.description,
+        section.wiki,
+        tooltip_variant=section.tooltip_variant,
+        container_class=section.container_class,
+        yml_location=section.yml_location,
+        placeholder=section.placeholder,
+        multiline=section.multiline | default(false),
+        rows=section.rows | default(3)
+        ) }}
+
         {% elif section.type == "mapping_list" %}
         {{ macros.mapping_list_section(library, data, section) }}
 
@@ -234,6 +262,17 @@
               container_class=section.container_class,
               yml_location=section.yml_location
             ) }}
+          {% elif section.type == 'text_input' and section.prefix == 'asset_directory' %}
+            {{ macros.asset_directory_list_section(
+              library,
+              data,
+              section.prefix,
+              section.title,
+              section.description,
+              section.wiki,
+              section.placeholder | default('Add Asset Directory'),
+              section.tooltip_variant | default('info')
+            ) }}
           {% elif section.type == 'text_input' %}
             {{ macros.text_input_section(
               library,
@@ -245,7 +284,9 @@
               tooltip_variant=section.tooltip_variant,
               container_class=section.container_class,
               yml_location=section.yml_location,
-              placeholder=section.placeholder
+              placeholder=section.placeholder,
+              multiline=section.multiline | default(false),
+              rows=section.rows | default(3)
             ) }}
           {% endif %}
         {% endfor %}
