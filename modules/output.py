@@ -418,11 +418,77 @@ def _prune_template_variables(template_vars, defaults):
 
 
 def optimize_template_variables(config_data, library_types=None):
+    def _to_offset_number(value, fallback):
+        if isinstance(value, bool):
+            return fallback
+        if isinstance(value, (int, float)):
+            return value
+        if isinstance(value, str):
+            stripped = value.strip()
+            if not stripped:
+                return fallback
+            try:
+                return int(stripped)
+            except ValueError:
+                try:
+                    return float(stripped)
+                except ValueError:
+                    return fallback
+        return fallback
+
+    def _is_ratings_entry(default_name):
+        return isinstance(default_name, str) and (
+            default_name == "ratings" or default_name.startswith("overlay_ratings")
+        )
+
+    def _ensure_explicit_ratings_offsets(tv, defaults):
+        if not isinstance(tv, dict):
+            return
+        slot_ids = []
+        for idx in ("1", "2", "3"):
+            rating_key = f"rating{idx}"
+            image_key = f"{rating_key}_image"
+            if rating_key in tv and image_key in tv:
+                slot_ids.append(idx)
+        if not slot_ids:
+            return
+
+        defaults = defaults or {}
+        back_height = _to_offset_number(tv.get("back_height", defaults.get("back_height")), 160)
+        back_padding = max(0, _to_offset_number(tv.get("back_padding", defaults.get("back_padding")), 15))
+        vertical_step = back_height + back_padding
+        center_index = (len(slot_ids) - 1) / 2
+
+        shared_horizontal = tv.get("horizontal_offset", defaults.get("horizontal_offset", 15))
+        shared_vertical = tv.get("vertical_offset", defaults.get("vertical_offset", 0))
+        shared_horizontal_num = _to_offset_number(shared_horizontal, 15)
+        shared_vertical_num = _to_offset_number(shared_vertical, 0)
+
+        explicit_verticals = []
+        all_explicit_verticals_present = True
+        for idx in slot_ids:
+            key = f"rating{idx}_vertical_offset"
+            if key not in tv:
+                all_explicit_verticals_present = False
+                break
+            explicit_verticals.append(_to_offset_number(tv.get(key), None))
+        if any(value is None for value in explicit_verticals):
+            all_explicit_verticals_present = False
+
+        for slot_position, idx in enumerate(slot_ids):
+            h_key = f"rating{idx}_horizontal_offset"
+            v_key = f"rating{idx}_vertical_offset"
+            if h_key not in tv:
+                tv[h_key] = int(round(shared_horizontal_num))
+            if v_key not in tv or not all_explicit_verticals_present:
+                relative_index = slot_position - center_index
+                tv[v_key] = int(round(shared_vertical_num + (vertical_step * relative_index)))
+
     def _reorder_ratings_template_vars(entry):
         if not isinstance(entry, dict):
             return
         default_name = entry.get("default", "")
-        if not (isinstance(default_name, str) and (default_name == "ratings" or default_name.startswith("overlay_ratings"))):
+        if not _is_ratings_entry(default_name):
             return
         tv = entry.get("template_variables")
         if not isinstance(tv, dict) or not tv:
@@ -554,18 +620,27 @@ def optimize_template_variables(config_data, library_types=None):
                     if offsets:
                         defaults.update(offsets)
 
+                if _is_ratings_entry(entry.get("default")):
+                    _ensure_explicit_ratings_offsets(tv, defaults)
+
                 pruned = _prune_template_variables(tv, defaults)
                 always_keep = set()
-                if entry.get("default") in {"ratings", "overlay_ratings"}:
+                if _is_ratings_entry(entry.get("default")):
                     always_keep.update(
                         {
                             "builder_level",
                             "rating1",
                             "rating1_image",
+                            "rating1_horizontal_offset",
+                            "rating1_vertical_offset",
                             "rating2",
                             "rating2_image",
+                            "rating2_horizontal_offset",
+                            "rating2_vertical_offset",
                             "rating3",
                             "rating3_image",
+                            "rating3_horizontal_offset",
+                            "rating3_vertical_offset",
                             "horizontal_position",
                         }
                     )

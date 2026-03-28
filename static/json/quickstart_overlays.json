@@ -1859,6 +1859,18 @@
             "default": 30
           },
           {
+            "input_type": "number",
+            "key": "horizontal_offset",
+            "label": "Horizontal Offset",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "vertical_offset",
+            "label": "Vertical Offset",
+            "default": 150
+          },
+          {
             "type": "toggle",
             "key": "builder_level",
             "label": "Apply to Show",
@@ -2008,6 +2020,18 @@
             "key": "back_radius",
             "label": "Backdrop Radius",
             "default": 30
+          },
+          {
+            "input_type": "number",
+            "key": "horizontal_offset",
+            "label": "Horizontal Offset",
+            "default": 0
+          },
+          {
+            "input_type": "number",
+            "key": "vertical_offset",
+            "label": "Vertical Offset",
+            "default": 150
           },
           {
             "type": "toggle",
