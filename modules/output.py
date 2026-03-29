@@ -437,9 +437,7 @@ def optimize_template_variables(config_data, library_types=None):
         return fallback
 
     def _is_ratings_entry(default_name):
-        return isinstance(default_name, str) and (
-            default_name == "ratings" or default_name.startswith("overlay_ratings")
-        )
+        return isinstance(default_name, str) and (default_name == "ratings" or default_name.startswith("overlay_ratings"))
 
     def _ensure_explicit_ratings_offsets(tv, defaults):
         if not isinstance(tv, dict):
