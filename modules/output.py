@@ -1467,7 +1467,7 @@ def build_libraries_section(
                             tv["use_edition"] = False
                             use_edition_val = False
                         if use_edition_val is True:
-                            keep_keys = {"use_edition", "horizontal_offset", "vertical_offset"}
+                            keep_keys = {"builder_level", "use_edition", "horizontal_offset", "vertical_offset"}
                             for key in list(tv.keys()):
                                 if key not in keep_keys:
                                     tv.pop(key, None)
