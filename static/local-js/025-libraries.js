@@ -1923,6 +1923,19 @@ function wireOffsetReset (scope) {
       if (group) {
         delete group.dataset.resetting
         if (changes.length) {
+          if (isRatingsOverlay) {
+            if (hInput) {
+              hInput.dispatchEvent(new Event('input', { bubbles: true }))
+              hInput.dispatchEvent(new Event('change', { bubbles: true }))
+            }
+            if (vInput) {
+              vInput.dispatchEvent(new Event('input', { bubbles: true }))
+              vInput.dispatchEvent(new Event('change', { bubbles: true }))
+            }
+            if (pInput) {
+              pInput.dispatchEvent(new Event('change', { bubbles: true }))
+            }
+          }
           const trigger = group.querySelector('input:not([disabled]), select:not([disabled]), textarea:not([disabled])')
           if (trigger) {
             trigger.dispatchEvent(new Event('change', { bubbles: true }))
@@ -2097,6 +2110,7 @@ function wireRatingsOffsetSync (scope) {
       backHeight: group.querySelector(`[name="${templateName}[back_height]"]`),
       backPadding: group.querySelector(`[name="${templateName}[back_padding]"]`)
     }
+    const positionInput = group.querySelector(`[name="${templateName}[horizontal_position]"]`)
     const slotDefs = ['rating1', 'rating2', 'rating3'].map(slot => ({
       slot,
       ratingInput: group.querySelector(`[name="${templateName}[${slot}]"]`),
@@ -2121,10 +2135,14 @@ function wireRatingsOffsetSync (scope) {
     }
     const isConfiguredSlot = (slot) => hasMeaningfulValue(slot.ratingInput) && hasMeaningfulValue(slot.imageInput)
     const getActiveSlots = () => slotDefs.filter(isConfiguredSlot)
+    const getBackPadding = () => Math.max(0, toNumber(metricInputs.backPadding?.value, 15))
     const getVerticalStep = () => {
       const backHeight = toNumber(metricInputs.backHeight?.value, 160)
-      const backPadding = Math.max(0, toNumber(metricInputs.backPadding?.value, 15))
-      return backHeight + backPadding
+      const backPadding = getBackPadding()
+      return backHeight + (backPadding * 3)
+    }
+    const getHorizontalSlotOffset = (sharedValue) => {
+      return toNumber(sharedValue, 15) + getBackPadding()
     }
     const updateInputValue = (input, nextValue) => {
       if (!input) return
@@ -2168,8 +2186,11 @@ function wireRatingsOffsetSync (scope) {
         inputs.reduce((sum, input) => sum + toNumber(input.value, toNumber(input.dataset.default, 0)), 0) / inputs.length
       )
       withSyncGuard(() => {
-        sharedInput.value = String(average)
-        sharedInput.dataset.prevValue = String(average)
+        const sharedValue = axis === 'horizontal'
+          ? average - getBackPadding()
+          : average
+        sharedInput.value = String(sharedValue)
+        sharedInput.dataset.prevValue = String(sharedValue)
         sharedInput.dispatchEvent(new Event('input', { bubbles: true }))
         sharedInput.dispatchEvent(new Event('change', { bubbles: true }))
       })
@@ -2187,7 +2208,8 @@ function wireRatingsOffsetSync (scope) {
       sharedInput.dataset.prevValue = String(current)
       withSyncGuard(() => {
         if (axis === 'horizontal') {
-          activeSlots.forEach(slot => updateInputValue(slot.horizontalInput, current))
+          const slotOffset = getHorizontalSlotOffset(current)
+          activeSlots.forEach(slot => updateInputValue(slot.horizontalInput, slotOffset))
           return
         }
         const verticalStep = getVerticalStep()
@@ -2201,8 +2223,8 @@ function wireRatingsOffsetSync (scope) {
     const seedSharedFromSlots = () => {
       const sharedAtDefaults = Object.values(sharedInputs).every(input => !valuesDiffer(input))
       if (!hasExplicitSlotOffsets() || !sharedAtDefaults) return
-      syncSharedFromSlots('horizontal')
-      syncSharedFromSlots('vertical')
+      if (hasExplicitSlotOffsets('horizontal')) syncSharedFromSlots('horizontal')
+      if (hasExplicitSlotOffsets('vertical')) syncSharedFromSlots('vertical')
     }
 
     seedSharedFromSlots()
@@ -2213,6 +2235,16 @@ function wireRatingsOffsetSync (scope) {
       input.addEventListener('input', syncFromShared)
       input.addEventListener('change', syncFromShared)
     })
+
+    if (positionInput && positionInput.dataset.ratingsPositionBound !== 'true') {
+      const refreshFromPosition = () => {
+        if (group.dataset.resetting === 'true') return
+        sharedInputs.horizontal?.dispatchEvent(new Event('change', { bubbles: true }))
+        sharedInputs.vertical?.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+      positionInput.addEventListener('change', refreshFromPosition)
+      positionInput.dataset.ratingsPositionBound = 'true'
+    }
 
     Object.entries(slotInputs).forEach(([axis, inputs]) => {
       inputs.forEach(input => {

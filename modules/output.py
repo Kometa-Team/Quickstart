@@ -456,12 +456,12 @@ def optimize_template_variables(config_data, library_types=None):
         defaults = defaults or {}
         back_height = _to_offset_number(tv.get("back_height", defaults.get("back_height")), 160)
         back_padding = max(0, _to_offset_number(tv.get("back_padding", defaults.get("back_padding")), 15))
-        vertical_step = back_height + back_padding
+        vertical_step = back_height + (back_padding * 3)
         center_index = (len(slot_ids) - 1) / 2
 
         shared_horizontal = tv.get("horizontal_offset", defaults.get("horizontal_offset", 15))
         shared_vertical = tv.get("vertical_offset", defaults.get("vertical_offset", 0))
-        shared_horizontal_num = _to_offset_number(shared_horizontal, 15)
+        shared_horizontal_num = _to_offset_number(shared_horizontal, 15) + back_padding
         shared_vertical_num = _to_offset_number(shared_vertical, 0)
 
         explicit_verticals = []
@@ -475,6 +475,19 @@ def optimize_template_variables(config_data, library_types=None):
         if any(value is None for value in explicit_verticals):
             all_explicit_verticals_present = False
 
+        explicit_horizontals = []
+        all_explicit_horizontals_present = True
+        for idx in slot_ids:
+            key = f"rating{idx}_horizontal_offset"
+            if key not in tv:
+                all_explicit_horizontals_present = False
+                break
+            explicit_horizontals.append(_to_offset_number(tv.get(key), None))
+        if any(value is None for value in explicit_horizontals):
+            all_explicit_horizontals_present = False
+
+        old_vertical_step = back_height + back_padding
+
         for slot_position, idx in enumerate(slot_ids):
             h_key = f"rating{idx}_horizontal_offset"
             v_key = f"rating{idx}_vertical_offset"
@@ -483,6 +496,26 @@ def optimize_template_variables(config_data, library_types=None):
             if v_key not in tv or not all_explicit_verticals_present:
                 relative_index = slot_position - center_index
                 tv[v_key] = int(round(shared_vertical_num + (vertical_step * relative_index)))
+
+        if all_explicit_horizontals_present and explicit_horizontals and len(set(explicit_horizontals)) == 1:
+            explicit_horizontal = explicit_horizontals[0]
+            legacy_horizontal = _to_offset_number(shared_horizontal, 15)
+            if explicit_horizontal == legacy_horizontal:
+                for idx in slot_ids:
+                    tv[f"rating{idx}_horizontal_offset"] = int(round(shared_horizontal_num))
+
+        if all_explicit_verticals_present and explicit_verticals:
+            legacy_matches = True
+            for slot_position, explicit_vertical in enumerate(explicit_verticals):
+                relative_index = slot_position - center_index
+                expected_legacy = int(round(shared_vertical_num + (old_vertical_step * relative_index)))
+                if explicit_vertical != expected_legacy:
+                    legacy_matches = False
+                    break
+            if legacy_matches:
+                for slot_position, idx in enumerate(slot_ids):
+                    relative_index = slot_position - center_index
+                    tv[f"rating{idx}_vertical_offset"] = int(round(shared_vertical_num + (vertical_step * relative_index)))
 
     def _reorder_ratings_template_vars(entry):
         if not isinstance(entry, dict):
@@ -1152,22 +1185,22 @@ def build_libraries_section(
                         slot_payloads.append(slot_payload)
 
                 back_height = _offset_number(cleaned.get("back_height"), 160)
-                back_padding = _offset_number(cleaned.get("back_padding"), 15)
-                gap = max(0, back_padding)
-                vertical_step = back_height + gap
+                back_padding = max(0, _offset_number(cleaned.get("back_padding"), 15))
+                vertical_step = back_height + (back_padding * 3)
                 center_index = (len(slot_payloads) - 1) / 2 if slot_payloads else 0
+                shared_horizontal_base = _offset_number(cleaned.get("horizontal_offset"), 15)
+                shared_vertical_base = _offset_number(cleaned.get("vertical_offset"), 0)
                 for axis in ["horizontal", "vertical"]:
                     shared_key = f"{axis}_offset"
-                    if shared_key not in cleaned:
-                        continue
-                    shared_val = cleaned.get(shared_key)
-                    shared_number = _offset_number(shared_val, 0)
+                    axis_default = 15 if axis == "horizontal" else 0
+                    shared_val = cleaned.get(shared_key, axis_default)
+                    shared_number = _offset_number(shared_val, axis_default)
                     for slot_position, slot_payload in enumerate(slot_payloads):
                         slot_key = f"_{axis}_offset"
                         if slot_key in slot_payload:
                             continue
                         if axis == "horizontal":
-                            slot_payload[slot_key] = shared_val
+                            slot_payload[slot_key] = int(round(shared_number + back_padding))
                         else:
                             relative_index = slot_position - center_index
                             slot_payload[slot_key] = int(round(shared_number + (vertical_step * relative_index)))
@@ -1177,12 +1210,34 @@ def build_libraries_section(
                 # still represent a single shared anchor from Quickstart's composite preview.
                 # Re-expand them to match the preview stack used on the canvas.
                 vertical_values = [_offset_number(slot_payload.get("_vertical_offset"), None) for slot_payload in slot_payloads]
+                horizontal_values = [_offset_number(slot_payload.get("_horizontal_offset"), None) for slot_payload in slot_payloads]
                 if len(slot_payloads) > 1 and all(value is not None for value in vertical_values):
                     if len(set(vertical_values)) == 1:
                         base_vertical = vertical_values[0]
                         for slot_position, slot_payload in enumerate(slot_payloads):
                             relative_index = slot_position - center_index
                             slot_payload["_vertical_offset"] = int(round(base_vertical + (vertical_step * relative_index)))
+
+                if slot_payloads and all(value is not None for value in horizontal_values):
+                    if len(set(horizontal_values)) == 1:
+                        base_horizontal = horizontal_values[0]
+                        if base_horizontal == shared_horizontal_base:
+                            for slot_payload in slot_payloads:
+                                slot_payload["_horizontal_offset"] = int(round(base_horizontal + back_padding))
+
+                if len(slot_payloads) > 1 and all(value is not None for value in vertical_values):
+                    old_vertical_step = back_height + back_padding
+                    legacy_matches = True
+                    for slot_position, explicit_vertical in enumerate(vertical_values):
+                        relative_index = slot_position - center_index
+                        expected_legacy = int(round(shared_vertical_base + (old_vertical_step * relative_index)))
+                        if explicit_vertical != expected_legacy:
+                            legacy_matches = False
+                            break
+                    if legacy_matches:
+                        for slot_position, slot_payload in enumerate(slot_payloads):
+                            relative_index = slot_position - center_index
+                            slot_payload["_vertical_offset"] = int(round(shared_vertical_base + (vertical_step * relative_index)))
 
                 for slot_position, slot_payload in enumerate(slot_payloads, start=1):
                     rating_key = f"rating{slot_position}"

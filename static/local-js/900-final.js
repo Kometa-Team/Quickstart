@@ -1269,6 +1269,10 @@ $(document).ready(function () {
     }
     const ageText = formatRunSeconds(data.log_age_seconds) || 'n/a'
     let logText = `meta.log updated ${ageText} ago`
+    const totalLines = data?.stats?.total_lines ?? lastLogStatsTotal?.total_lines
+    if (typeof totalLines === 'number' && Number.isFinite(totalLines)) {
+      logText += ` • ${totalLines.toLocaleString()} lines`
+    }
     if (data.log_is_stale && KOMETA_STATUS === 'running') {
       logText += ' • waiting for new meta.log entries from this run'
       $runStatusLog.addClass('text-warning').removeClass('text-muted')

@@ -1733,8 +1733,13 @@ const OverlayHandler = {
       const strokeColor = getTemplateValue(cfg, styleSlot.strokeColorKey, '#00000000')
       const text = sample.text || 'NR'
       const vars = getBackdropVars(cfg)
-      const boxWidth = Math.max(1, Number(vars.back_width) || 160)
-      const boxHeight = Math.max(1, Number(vars.back_height) || 160)
+      const contentWidth = Math.max(1, Number(vars.back_width) || 160)
+      const contentHeight = Math.max(1, Number(vars.back_height) || 160)
+      const innerPad = Number.isFinite(Number(vars.back_padding))
+        ? Math.max(0, Number(vars.back_padding))
+        : Math.round(contentHeight * 0.08)
+      const boxWidth = contentWidth + (innerPad * 2)
+      const boxHeight = contentHeight + (innerPad * 2)
       const canvas = document.createElement('canvas')
       canvas.width = Math.ceil(boxWidth)
       canvas.height = Math.ceil(boxHeight)
@@ -1744,9 +1749,6 @@ const OverlayHandler = {
       const stroke = parseHexColor(vars.back_line_color, { r: 0, g: 0, b: 0, a: 0 })
       const lineWidth = Math.max(0, Number(vars.back_line_width) || 0)
       const radius = Math.max(0, Number(vars.back_radius) || 0)
-      const innerPad = Number.isFinite(Number(vars.back_padding))
-        ? Math.max(0, Number(vars.back_padding))
-        : Math.round(boxHeight * 0.08)
 
       drawRoundedRect(ctx, 0, 0, boxWidth, boxHeight, radius)
       if (fill.a > 0) {
@@ -2167,11 +2169,14 @@ const OverlayHandler = {
       }
 
       const vars = getBackdropVars(cfg)
-      const boxWidth = Math.max(1, Number(vars.back_width) || 160)
-      const boxHeight = Math.max(1, Number(vars.back_height) || 160)
-      const gap = Number.isFinite(Number(vars.back_padding))
+      const contentWidth = Math.max(1, Number(vars.back_width) || 160)
+      const contentHeight = Math.max(1, Number(vars.back_height) || 160)
+      const innerPad = Number.isFinite(Number(vars.back_padding))
         ? Math.max(0, Number(vars.back_padding))
-        : 15
+        : Math.round(contentHeight * 0.08)
+      const boxWidth = contentWidth + (innerPad * 2)
+      const boxHeight = contentHeight + (innerPad * 2)
+      const gap = innerPad
       const canvas = document.createElement('canvas')
       canvas.width = Math.ceil(boxWidth)
       canvas.height = Math.ceil((boxHeight * items.length) + (gap * Math.max(0, items.length - 1)))
@@ -2182,9 +2187,6 @@ const OverlayHandler = {
       const stroke = parseHexColor(vars.back_line_color, { r: 0, g: 0, b: 0, a: 0 })
       const lineWidth = Math.max(0, Number(vars.back_line_width) || 0)
       const radius = Math.max(0, Number(vars.back_radius) || 0)
-      const innerPad = Number.isFinite(Number(vars.back_padding))
-        ? Math.max(0, Number(vars.back_padding))
-        : Math.round(boxHeight * 0.08)
 
       ctx.textAlign = 'center'
       ctx.textBaseline = 'alphabetic'
@@ -2795,7 +2797,12 @@ const OverlayHandler = {
       }
 
       const getActiveLayer = () => boardState.activeLayer || boardState.selectedLayers.values().next().value || null
-      const getJumpTargetId = (overlayId) => (overlayId ? `${libId}-${overlayType}-${overlayId}-overlay-config` : '')
+      const getJumpTargetId = (overlayId) => {
+        if (!overlayId) return ''
+        const cfg = configsById.get(overlayId)
+        if (cfg?.container?.id) return cfg.container.id
+        return `${libId}-${overlayType}-${overlayId}-overlay-config`
+      }
 
       const updateJumpButton = () => {
         if (!jumpToSettingsBtn) return
@@ -3288,6 +3295,8 @@ const OverlayHandler = {
         return { hInput, vInput }
       }
 
+      const getInstanceId = (cfg) => cfg?.instanceId || cfg?.id
+
       const applyVisibility = (cfg, layer) => {
         const toggle = cfg.toggle
         const visible = !toggle || toggle.checked
@@ -3559,7 +3568,7 @@ const OverlayHandler = {
       }
 
       const applyPosition = (cfg) => {
-        const layer = layers.get(cfg.id)
+        const layer = layers.get(getInstanceId(cfg))
         if (!layer) return
         const { hInput, vInput } = getInputs(cfg)
         if (!hInput || !vInput) return
@@ -3603,7 +3612,7 @@ const OverlayHandler = {
 
       const applyEditionPosition = (cfg) => {
         if (!cfg.edition || !cfg.edition.layer) return
-        const baseLayer = layers.get(cfg.id)
+        const baseLayer = layers.get(getInstanceId(cfg))
         if (!baseLayer) return
 
         const { hInput, vInput } = getInputs(cfg)
@@ -3845,12 +3854,14 @@ const OverlayHandler = {
       }
 
       const addOverlayLayer = (cfg) => {
-        if (layers.has(cfg.id)) return layers.get(cfg.id)
+        const instanceId = getInstanceId(cfg)
+        if (layers.has(instanceId)) return layers.get(instanceId)
         const layer = document.createElement('img')
         layer.className = 'overlay-board-layer'
-        layer.alt = cfg.id
-        layer.dataset.overlayId = cfg.id
-        layers.set(cfg.id, layer)
+        layer.alt = instanceId
+        layer.dataset.overlayId = instanceId
+        layer.dataset.overlayType = cfg.id
+        layers.set(instanceId, layer)
         canvas.appendChild(layer)
 
         const handleLoad = () => {
@@ -4049,6 +4060,7 @@ const OverlayHandler = {
       overlayContainers.forEach(container => {
         const cfg = {
           id: container.dataset.overlayId,
+          instanceId: container.dataset.overlayTemplate || container.dataset.overlayId,
           image: container.dataset.overlayImage,
           hId: container.dataset.horizontalId,
           vId: container.dataset.verticalId,
@@ -4074,7 +4086,7 @@ const OverlayHandler = {
             ? container.querySelector(`input[name="${templateName}[use_edition]"]`)
             : null
           cfg.edition = {
-            id: `${cfg.id}__edition`,
+            id: `${cfg.instanceId}__edition`,
             image: editionImage,
             toggle: editionToggle,
             naturalWidth: null,
@@ -4087,7 +4099,7 @@ const OverlayHandler = {
         syncResolutionBackdropHeight(cfg, false)
         syncResolutionEditionVisibility(cfg, false)
         configs.push(cfg)
-        configsById.set(cfg.id, cfg)
+        configsById.set(cfg.instanceId, cfg)
         const layer = addOverlayLayer(cfg)
 
         if (cfg.id === 'overlay_runtimes' && layer) {
@@ -4570,8 +4582,9 @@ const OverlayHandler = {
         openAccordionAncestors(target)
         window.setTimeout(() => {
           target.scrollIntoView({ behavior: 'smooth', block: 'center' })
-          const overlayId = button.dataset.overlayId
-          const overlayToggle = button.closest('.template-toggle-group')?.querySelector('.overlay-toggle')
+          const overlayGroup = button.closest('.template-toggle-group')
+          const overlayId = overlayGroup?.dataset?.overlayTemplate || button.dataset.overlayId
+          const overlayToggle = overlayGroup?.querySelector('.overlay-toggle')
           if (overlayId && overlayToggle) {
             if (!overlayToggle.checked) {
               overlayToggle.checked = true
