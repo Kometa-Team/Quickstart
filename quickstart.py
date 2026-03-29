@@ -3346,6 +3346,7 @@ def copy_library_settings():
                 incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
 
                 merged = libraries_data.copy()
+
                 def _library_prefix(key):
                     if not isinstance(key, str) or not key.startswith(("mov-library_", "sho-library_")):
                         return None
