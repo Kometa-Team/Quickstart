@@ -179,13 +179,29 @@ def save_settings(raw_source, form_data):
             merged_libraries = existing_libraries.copy() if isinstance(existing_libraries, dict) else {}
             incoming_libraries = incoming_libraries if isinstance(incoming_libraries, dict) else {}
 
+            def _library_prefix(key):
+                if not isinstance(key, str) or not key.startswith(("mov-library_", "sho-library_")):
+                    return None
+                if "-template_" in key:
+                    return key.split("-template_", 1)[0]
+                if "-attribute_" in key:
+                    return key.split("-attribute_", 1)[0]
+                if "-collection_" in key:
+                    return key.split("-collection_", 1)[0]
+                if "-overlay_" in key:
+                    return key.split("-overlay_", 1)[0]
+                if "-top_level_" in key:
+                    return key.split("-top_level_", 1)[0]
+                if key.endswith("-library"):
+                    return key[: -len("-library")]
+                return None
+
             # Identify library prefixes present in this payload (e.g., mov-library_xxx, sho-library_yyy)
             prefixes = set()
             for key in incoming_libraries:
-                if key.startswith(("mov-library_", "sho-library_")):
-                    parts = key.split("-", 2)
-                    if len(parts) >= 2:
-                        prefixes.add("-".join(parts[:2]))
+                prefix = _library_prefix(key)
+                if prefix:
+                    prefixes.add(prefix)
 
             # Remove existing entries for the affected prefixes so we can replace them cleanly
             for prefix in prefixes:

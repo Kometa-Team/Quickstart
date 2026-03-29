@@ -3346,12 +3346,28 @@ def copy_library_settings():
                 incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
 
                 merged = libraries_data.copy()
+                def _library_prefix(key):
+                    if not isinstance(key, str) or not key.startswith(("mov-library_", "sho-library_")):
+                        return None
+                    if "-template_" in key:
+                        return key.split("-template_", 1)[0]
+                    if "-attribute_" in key:
+                        return key.split("-attribute_", 1)[0]
+                    if "-collection_" in key:
+                        return key.split("-collection_", 1)[0]
+                    if "-overlay_" in key:
+                        return key.split("-overlay_", 1)[0]
+                    if "-top_level_" in key:
+                        return key.split("-top_level_", 1)[0]
+                    if key.endswith("-library"):
+                        return key[: -len("-library")]
+                    return None
+
                 prefixes = set()
                 for key in incoming_dict:
-                    if key.startswith(("mov-library_", "sho-library_")):
-                        parts = key.split("-", 2)
-                        if len(parts) >= 2:
-                            prefixes.add("-".join(parts[:2]))
+                    prefix = _library_prefix(key)
+                    if prefix:
+                        prefixes.add(prefix)
 
                 for prefix in prefixes:
                     for existing_key in list(merged.keys()):
