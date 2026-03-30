@@ -258,6 +258,101 @@ function showToast (type, message) {
   toast.show()
 }
 
+// --- Plex maintenance toasts (global) ---
+const QS_MAINTENANCE_TOAST_INTERVAL_MS = 45000
+let qsLastMaintenanceToastAt = 0
+let qsLastMaintenancePaused = false
+let qsLastQueuedStartedAt = null
+
+function qsFormatLocalTime () {
+  return new Date().toLocaleString()
+}
+
+function qsHandleMaintenanceStatus (data) {
+  if (typeof showToast !== 'function' || !data) return
+  const paused = Boolean(data.maintenance_paused)
+  const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
+  const nowLabel = qsFormatLocalTime()
+  const now = Date.now()
+  const badge = document.getElementById('qs-maintenance-badge')
+  const runningBadge = document.getElementById('qs-running-badge')
+  const queuedBadge = document.getElementById('qs-queued-badge')
+
+  if (runningBadge) {
+    if (data.status === 'running') {
+      const elapsed = typeof data.elapsed_seconds === 'number' ? data.elapsed_seconds : null
+      const elapsedLabel = elapsed !== null ? ` (${Math.floor(elapsed / 60)}m ${String(elapsed % 60).padStart(2, '0')}s)` : ''
+      runningBadge.classList.remove('d-none')
+      const label = runningBadge.querySelector('span')
+      if (label) {
+        label.innerHTML = `<i class="bi bi-play-circle me-1"></i> Kometa running${elapsedLabel}`
+      }
+    } else {
+      runningBadge.classList.add('d-none')
+    }
+  }
+
+  if (paused) {
+    if (badge) {
+      badge.classList.remove('d-none')
+      const label = badge.querySelector('span')
+      if (label) {
+        label.innerHTML = `<i class="bi bi-pause-circle me-1"></i> Kometa paused for Plex maintenance${windowLabel}`
+      }
+    }
+    if (!qsLastMaintenanceToastAt || (now - qsLastMaintenanceToastAt) >= QS_MAINTENANCE_TOAST_INTERVAL_MS) {
+      showToast('warning', `Kometa paused for Plex maintenance${windowLabel} at ${nowLabel}. It will resume automatically when maintenance ends.`)
+      qsLastMaintenanceToastAt = now
+    }
+  } else if (qsLastMaintenancePaused) {
+    if (badge) {
+      badge.classList.add('d-none')
+    }
+    showToast('success', `Plex maintenance ended at ${nowLabel}. Kometa resumed.`)
+    qsLastMaintenanceToastAt = 0
+  } else if (badge) {
+    badge.classList.add('d-none')
+  }
+
+  if (queuedBadge) {
+    if (data.pending_start) {
+      const requestedAt = data.pending_requested_at ? new Date(data.pending_requested_at).toLocaleString() : null
+      const label = queuedBadge.querySelector('span')
+      const requestedLabel = requestedAt ? ` (requested ${requestedAt})` : ''
+      queuedBadge.classList.remove('d-none')
+      if (label) {
+        label.innerHTML = `<i class="bi bi-hourglass-split me-1"></i> Kometa start queued${windowLabel}${requestedLabel}`
+      }
+    } else {
+      queuedBadge.classList.add('d-none')
+    }
+  }
+
+  if (data.queued_started_at) {
+    if (!qsLastQueuedStartedAt || qsLastQueuedStartedAt !== data.queued_started_at) {
+      const startedLabel = new Date(data.queued_started_at).toLocaleString()
+      showToast('success', `Kometa started from queued request at ${startedLabel}.`)
+      qsLastQueuedStartedAt = data.queued_started_at
+    }
+  }
+
+  qsLastMaintenancePaused = paused
+}
+
+window.QS_handleMaintenanceStatus = qsHandleMaintenanceStatus
+
+;(function qsMaintenancePoll () {
+  const poll = () => {
+    fetch('/kometa-status')
+      .then(res => res.json())
+      .then(data => qsHandleMaintenanceStatus(data))
+      .catch(() => {})
+  }
+  // Slight delay to avoid racing early page initialization
+  setTimeout(poll, 1200)
+  setInterval(poll, QS_MAINTENANCE_TOAST_INTERVAL_MS)
+})()
+
 function getValidatedInput () {
   const form = document.getElementById('configForm') || document.getElementById('final-form') || document
   if (!form) return null
