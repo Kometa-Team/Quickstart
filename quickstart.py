@@ -324,14 +324,13 @@ def _clear_pending_kometa_start():
         PENDING_KOMETA_START["requested_at"] = None
 
 
-def _find_running_kometa_process():
+def _find_running_kometa_processes():
     kometa_root = None
     try:
         kometa_root = str(helpers.get_kometa_root_path())
     except Exception:
         kometa_root = None
-    best = None
-    best_key = None
+    matches = []
     for proc in psutil.process_iter(["pid", "cmdline", "create_time"]):
         try:
             cmdline = proc.info.get("cmdline") or []
@@ -342,11 +341,45 @@ def _find_running_kometa_process():
             continue
         has_root = bool(kometa_root and kometa_root in joined)
         create_time = proc.info.get("create_time") or 0
-        key = (1 if has_root else 0, create_time)
-        if not best_key or key > best_key:
-            best = proc
-            best_key = key
-    return best
+        matches.append((has_root, create_time, proc))
+    matches.sort(key=lambda item: (1 if item[0] else 0, item[1]), reverse=True)
+    return [entry[2] for entry in matches]
+
+
+def _find_running_kometa_process():
+    procs = _find_running_kometa_processes()
+    return procs[0] if procs else None
+
+
+def _stop_process_tree(proc):
+    try:
+        children = proc.children(recursive=True)
+    except Exception:
+        children = []
+    # Ensure suspended processes can receive signals
+    for target in [proc] + children:
+        try:
+            target.resume()
+        except Exception:
+            pass
+    for child in children:
+        try:
+            child.terminate()
+        except Exception:
+            pass
+    try:
+        proc.terminate()
+    except Exception:
+        pass
+    gone, alive = psutil.wait_procs([proc] + children, timeout=5)
+    if alive:
+        for target in alive:
+            try:
+                target.kill()
+            except Exception:
+                pass
+        _, alive = psutil.wait_procs(alive, timeout=3)
+    return alive
 
 
 def _launch_kometa_command(command, config_name=None):
@@ -4873,49 +4906,40 @@ def stop_kometa():
     pid_file = helpers.get_kometa_pid_file()
 
     if not pid:
-        proc = _find_running_kometa_process()
-        if not proc:
+        procs = _find_running_kometa_processes()
+        if not procs:
             return jsonify({"warning": "No active Kometa PID"}), 200
-        pid = proc.pid
+    else:
+        procs = [_find_running_kometa_process()]
+        procs = [p for p in procs if p is not None]
 
     try:
-        proc = psutil.Process(pid)
+        if not procs:
+            return jsonify({"warning": "No active Kometa process found."}), 200
 
-        # Ensure this really looks like a Kometa run before killing
-        cmdline = " ".join(proc.cmdline() or [])
-        if "kometa.py" not in cmdline:
-            try:
-                os.remove(pid_file)
-            except Exception:
-                pass
-            return jsonify({"warning": f"PID {pid} is not a Kometa process. Cleaned PID file."}), 200
-
-        # First try graceful termination
-        try:
-            proc.terminate()  # POSIX: SIGTERM, Windows: TerminateProcess
-        except psutil.NoSuchProcess:
-            pass
-
-        gone, alive = psutil.wait_procs([proc], timeout=3)
-        if alive:
-            # Kill children then parent as a fallback
-            for child in proc.children(recursive=True):
-                try:
-                    child.kill()
-                except (psutil.NoSuchProcess, psutil.AccessDenied):
-                    continue
-            try:
-                proc.kill()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
+        not_kometa = []
+        alive_after = []
+        for proc in procs:
+            # Ensure this really looks like a Kometa run before killing
+            cmdline = " ".join(proc.cmdline() or [])
+            if "kometa.py" not in cmdline:
+                not_kometa.append(proc.pid)
+                continue
+            alive_after.extend(_stop_process_tree(proc))
 
         # Cleanup PID file regardless
         try:
             os.remove(pid_file)
         except Exception:
             pass
+        KOMETA_CPU_CACHE.pop(pid, None)
 
-        return jsonify({"success": True, "message": "Kometa stopped (or was not running)."}), 200
+        if alive_after:
+            alive_pids = ", ".join(str(p.pid) for p in alive_after if p is not None)
+            return jsonify({"warning": f"Kometa stop requested, but some processes are still running: {alive_pids}"}), 200
+        if not_kometa:
+            return jsonify({"warning": f"Cleaned PID file. Non-Kometa PIDs detected: {', '.join(map(str, not_kometa))}"}), 200
+        return jsonify({"success": True, "message": "Kometa stopped and cleaned up."}), 200
 
     except psutil.NoSuchProcess:
         # Process already gone; just clean up PID file

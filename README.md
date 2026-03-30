@@ -50,6 +50,7 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **One-Click Execution:** The final page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
 - **Run Command Builder:** Dynamically builds and previews CLI commands with flags like `--run`, `--operations-only`, `--times`, etc.
 - **Process Management:** Start, stop, and monitor Kometa runs directly from the web interface
+- **Maintenance-Aware Runs:** Detects Plex maintenance windows, pauses active runs, and queues new runs until maintenance ends (with global UI badges and toasts)
 
 ![Final Validation Runner](static/images/readme/final-validation-runner.png)
 

@@ -265,7 +265,25 @@ let qsLastMaintenancePaused = false
 let qsLastQueuedStartedAt = null
 
 function qsFormatLocalTime () {
-  return new Date().toLocaleString()
+  const now = new Date()
+  const yyyy = now.getFullYear()
+  const MM = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const hh = String(now.getHours()).padStart(2, '0')
+  const mm = String(now.getMinutes()).padStart(2, '0')
+  const ss = String(now.getSeconds()).padStart(2, '0')
+  return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`
+}
+
+function qsFormatTimestamp (value) {
+  const d = value ? new Date(value) : new Date()
+  const yyyy = d.getFullYear()
+  const MM = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  const ss = String(d.getSeconds()).padStart(2, '0')
+  return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`
 }
 
 function qsHandleMaintenanceStatus (data) {
@@ -316,7 +334,7 @@ function qsHandleMaintenanceStatus (data) {
 
   if (queuedBadge) {
     if (data.pending_start) {
-      const requestedAt = data.pending_requested_at ? new Date(data.pending_requested_at).toLocaleString() : null
+      const requestedAt = data.pending_requested_at ? qsFormatTimestamp(data.pending_requested_at) : null
       const label = queuedBadge.querySelector('span')
       const requestedLabel = requestedAt ? ` (requested ${requestedAt})` : ''
       queuedBadge.classList.remove('d-none')
@@ -330,7 +348,7 @@ function qsHandleMaintenanceStatus (data) {
 
   if (data.queued_started_at) {
     if (!qsLastQueuedStartedAt || qsLastQueuedStartedAt !== data.queued_started_at) {
-      const startedLabel = new Date(data.queued_started_at).toLocaleString()
+      const startedLabel = qsFormatTimestamp(data.queued_started_at)
       showToast('success', `Kometa started from queued request at ${startedLabel}.`)
       qsLastQueuedStartedAt = data.queued_started_at
     }
@@ -340,6 +358,7 @@ function qsHandleMaintenanceStatus (data) {
 }
 
 window.QS_handleMaintenanceStatus = qsHandleMaintenanceStatus
+window.QS_formatTimestamp = qsFormatTimestamp
 
 ;(function qsMaintenancePoll () {
   const poll = () => {

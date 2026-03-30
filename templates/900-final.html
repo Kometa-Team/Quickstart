@@ -6,6 +6,24 @@
 <div id="plex-maintenance-window" data-window="{{ page_info.telemetry.maintenance_window }}"></div>
 <div id="qs-env" data-running-on="{{ version_info.running_on | default('') }}"></div>
 
+<div class="modal fade" id="stop-kometa-modal" tabindex="-1" aria-labelledby="stop-kometa-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light">
+      <div class="modal-header">
+        <h5 class="modal-title" id="stop-kometa-modal-label">Stop Kometa?</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to stop the current Kometa run? This will terminate the process and clear the PID.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirm-stop-kometa">Stop Kometa</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <input type="hidden" id="header-style" name="header_style" value="{{ page_info.header_style }}">
 <div id="header-style-wait" class="form-text text-info mt-2 d-none">Updating header style... please wait.</div>
 <div class="accordion mt-2 mb-2" id="header-style-grid-accordion">

@@ -69,6 +69,9 @@ $(document).ready(function () {
   const $yamlOutput = $('#final-yaml')
   const $yamlLineCount = $('#yaml-line-count')
   let showYAML = false
+  const stopModalEl = document.getElementById('stop-kometa-modal')
+  const stopModal = (stopModalEl && typeof bootstrap !== 'undefined') ? new bootstrap.Modal(stopModalEl) : null
+  const $confirmStopBtn = $('#confirm-stop-kometa')
   const headerSelect = document.getElementById('header-style')
   const headerGrid = document.getElementById('header-style-grid')
   const headerGridCollapse = document.getElementById('header-style-grid-collapse')
@@ -1781,7 +1784,7 @@ $(document).ready(function () {
 
         if (data.status === 'queued') {
           const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
-          const nowLabel = new Date().toLocaleString()
+          const nowLabel = (typeof window.QS_formatTimestamp === 'function') ? window.QS_formatTimestamp() : new Date().toLocaleString()
           const message = `Plex maintenance active${windowLabel} at ${nowLabel}. Kometa will start automatically when it ends.`
           showToast('warning', message)
           $('#run-output-log').text(`${message}\n`)
@@ -1802,9 +1805,20 @@ $(document).ready(function () {
 
   // Stop button click handler
   $('#stop-now').on('click', function () {
-    const confirmed = window.confirm('Are you sure you want to stop Kometa?')
-    if (!confirmed) return
+    if (stopModal) {
+      stopModal.show()
+      return
+    }
+    performStopKometa()
+  })
 
+  $confirmStopBtn.on('click', function () {
+    if (stopModal) stopModal.hide()
+    performStopKometa()
+  })
+
+  function performStopKometa () {
+    $confirmStopBtn.prop('disabled', true)
     fetch('/stop-kometa', { method: 'POST' })
       .then(res => res.json())
       .then(data => {
@@ -1831,7 +1845,10 @@ $(document).ready(function () {
         $('#run-output-log').append('\n⚠️ Error stopping process.')
         showToast('error', 'Error stopping Kometa process.')
       })
-  })
+      .finally(() => {
+        $confirmStopBtn.prop('disabled', false)
+      })
+  }
 
   function fetchKometaLog () {
     if (logPollingPaused) return
@@ -1904,7 +1921,7 @@ $(document).ready(function () {
 
         if (data.pending_start && data.status !== 'running') {
           const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
-          const nowLabel = new Date().toLocaleString()
+          const nowLabel = (typeof window.QS_formatTimestamp === 'function') ? window.QS_formatTimestamp() : new Date().toLocaleString()
           const message = `Plex maintenance active${windowLabel} at ${nowLabel}. Kometa will start automatically when it ends.`
           $runNow.prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Waiting...')
           $stopNow.addClass('d-none')
