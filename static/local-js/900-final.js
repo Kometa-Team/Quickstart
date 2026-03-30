@@ -20,6 +20,9 @@ let lastLogStatsTotal = null
 let logStatsPollCounter = 0
 let lastLogscanPayload = null
 let logscanPollCounter = 0
+let lastMaintenanceToastAt = 0
+let lastMaintenancePaused = false
+const MAINTENANCE_TOAST_INTERVAL_MS = 45000
 
 const _qsEnvEl = document.getElementById('qs-env')
 const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
@@ -1779,6 +1782,18 @@ $(document).ready(function () {
           return
         }
 
+        if (data.status === 'queued') {
+          const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
+          const message = `Plex maintenance active${windowLabel}. Kometa will start automatically when it ends.`
+          showToast('warning', message)
+          $('#run-output-log').text(`${message}\n`)
+          $('#run-now').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Waiting...')
+          $('#stop-now').addClass('d-none')
+          if (kometaStatusInterval) clearInterval(kometaStatusInterval)
+          kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+          return
+        }
+
         // ✅ Delay polling slightly to allow Kometa to start
         setTimeout(() => {
           kometaPollingStarted = false
@@ -1874,6 +1889,21 @@ $(document).ready(function () {
         }
 
         updateRunStatus(data)
+        handleMaintenanceToasts(data)
+
+        if (data.pending_start && data.status !== 'running') {
+          const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
+          const message = `Plex maintenance active${windowLabel}. Kometa will start automatically when it ends.`
+          $runNow.prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Waiting...')
+          $stopNow.addClass('d-none')
+          $('#run-output').removeClass('d-none')
+          if (!$('#run-output-log').text().includes('Plex maintenance')) {
+            $('#run-output-log').append(`\n${message}`)
+          }
+          if (kometaStatusInterval) clearInterval(kometaStatusInterval)
+          kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+          return
+        }
 
         // Lock the Run UI while updating
         if (KOMETA_UPDATING) {
@@ -1940,6 +1970,24 @@ $(document).ready(function () {
 
     const [start, end] = windowStr.split('–').map(t => t.trim())
     return { start, end } // Strings in "HH:MM" format
+  }
+
+  function handleMaintenanceToasts (data) {
+    if (typeof showToast !== 'function') return
+    if (!data) return
+    const paused = Boolean(data.maintenance_paused)
+    const now = Date.now()
+    const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
+    if (paused) {
+      if (!lastMaintenanceToastAt || (now - lastMaintenanceToastAt) >= MAINTENANCE_TOAST_INTERVAL_MS) {
+        showToast('warning', `Kometa paused for Plex maintenance${windowLabel}. It will resume automatically when maintenance ends.`)
+        lastMaintenanceToastAt = now
+      }
+    } else if (lastMaintenancePaused) {
+      showToast('success', 'Plex maintenance ended. Kometa resumed.')
+      lastMaintenanceToastAt = 0
+    }
+    lastMaintenancePaused = paused
   }
 
   function isTimeWithinRange (time, rangeStart, rangeEnd) {

@@ -827,6 +827,19 @@ def get_plex_summary():
         return f"Plex summary unavailable due to error: {e}"
 
 
+def get_plex_maintenance_hours(plex_url, plex_token):
+    if not plex_url or not plex_token:
+        return None, None
+    try:
+        plex = PlexServer(plex_url, plex_token)
+        settings = plex.settings
+        start_hour = int(settings.get("butlerStartHour").value)
+        end_hour = int(settings.get("butlerEndHour").value)
+        return start_hour, end_hour
+    except Exception:
+        return None, None
+
+
 def get_library_summaries(configured_library_names):
     try:
         metadata = get_plex_metadata()
