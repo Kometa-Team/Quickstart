@@ -108,7 +108,7 @@ def validate_tautulli_server(data):
     params = {"apikey": tautulli_apikey, "cmd": "get_tautulli_info"}
 
     try:
-        response = requests.get(api_url, params=params)
+        response = requests.get(api_url, params=params, timeout=10)
 
         # Raise an exception for HTTP errors
         response.raise_for_status()
@@ -150,6 +150,7 @@ def validate_trakt_server(data):
                 "grant_type": "authorization_code",
             },
             headers={"Content-Type": "application/json"},
+            timeout=10,
         )
 
         if response.status_code != 200:
@@ -163,6 +164,7 @@ def validate_trakt_server(data):
                 "trakt-api-version": "2",
                 "trakt-api-key": trakt_client_id,
             },
+            timeout=10,
         )
 
         if validation_response.status_code == 423:
@@ -196,7 +198,7 @@ def validate_gotify_server(data):
     gotify_url = gotify_url.rstrip("#")
     gotify_url = gotify_url.rstrip("/")
 
-    response = requests.get(f"{gotify_url}/version")
+    response = requests.get(f"{gotify_url}/version", timeout=10)
 
     try:
         response_json = response.json()
@@ -219,7 +221,7 @@ def validate_gotify_server(data):
 
     json = {"message": "Kometa Quickstart Test Gotify Message", "title": "Kometa Quickstart Gotify Test"}
 
-    response = requests.post(f"{gotify_url}/message", headers={"X-Gotify-Key": gotify_token}, json=json)
+    response = requests.post(f"{gotify_url}/message", headers={"X-Gotify-Key": gotify_token}, json=json, timeout=10)
 
     if response.status_code != 200:
         return jsonify({"valid": False, "error": f"({response.status_code} [{response.reason}]) {response_json['errorDescription']}"})
@@ -247,7 +249,7 @@ def validate_ntfy_server(data):
 
     try:
         # Step 1: Send test notification
-        response = requests.post(f"{ntfy_url}/{ntfy_topic}", headers=headers, data=test_message)
+        response = requests.post(f"{ntfy_url}/{ntfy_topic}", headers=headers, data=test_message, timeout=10)
 
         if response.status_code != 200:
             return jsonify({"valid": False, "error": f"Failed to send test message ({response.status_code} [{response.reason}])."})
@@ -256,7 +258,7 @@ def validate_ntfy_server(data):
         sub_headers = headers.copy()
         sub_headers["X-Subscriber"] = "true"  # Tell ntfy.sh to subscribe this client
 
-        sub_response = requests.put(f"{ntfy_url}/{ntfy_topic}", headers=sub_headers)
+        sub_response = requests.put(f"{ntfy_url}/{ntfy_topic}", headers=sub_headers, timeout=10)
 
         if sub_response.status_code == 200:
             return jsonify({"valid": True})
@@ -287,6 +289,7 @@ def validate_mal_server(data):
             "code_verifier": mal_code_verifier,
             "grant_type": "authorization_code",
         },
+        timeout=10,
     ).json()
 
     if "error" in new_authorization:
@@ -317,7 +320,7 @@ def validate_webhook_server(data):
 
     message_data = {"content": message}
 
-    response = requests.post(webhook_url, json=message_data)
+    response = requests.post(webhook_url, json=message_data, timeout=10)
 
     if response.status_code == 204:
         return jsonify({"success": "Test message sent successfully! Go and ensure that you see the message on the server side."}), 200
@@ -339,7 +342,7 @@ def validate_radarr_server(data):
 
     try:
         # Validate API key by checking system status
-        response = requests.get(status_api_url)
+        response = requests.get(status_api_url, timeout=10)
         response.raise_for_status()
         status_data = response.json()
 
@@ -348,12 +351,12 @@ def validate_radarr_server(data):
             return jsonify({"valid": False, "error": "Invalid Radarr URL or Apikey"})
 
         # Fetch root folders
-        response = requests.get(root_folder_api_url)
+        response = requests.get(root_folder_api_url, timeout=10)
         response.raise_for_status()
         root_folders = response.json()
 
         # Fetch quality profiles
-        response = requests.get(quality_profile_api_url)
+        response = requests.get(quality_profile_api_url, timeout=10)
         response.raise_for_status()
         quality_profiles = response.json()
 
@@ -388,7 +391,7 @@ def validate_sonarr_server(data):
 
     try:
         # Validate API key by checking system status
-        response = requests.get(status_api_url)
+        response = requests.get(status_api_url, timeout=10)
         response.raise_for_status()
         status_data = response.json()
 
@@ -397,17 +400,17 @@ def validate_sonarr_server(data):
             return jsonify({"valid": False, "error": "Invalid Sonarr URL or Apikey"})
 
         # Fetch root folders
-        response = requests.get(root_folder_api_url)
+        response = requests.get(root_folder_api_url, timeout=10)
         response.raise_for_status()
         root_folders = response.json()
 
         # Fetch quality profiles
-        response = requests.get(quality_profile_api_url)
+        response = requests.get(quality_profile_api_url, timeout=10)
         response.raise_for_status()
         quality_profiles = response.json()
 
         # Fetch quality profiles
-        response = requests.get(language_profile_api_url)
+        response = requests.get(language_profile_api_url, timeout=10)
         response.raise_for_status()
         language_profiles = response.json()
 
@@ -433,7 +436,7 @@ def validate_omdb_server(data):
 
     api_url = f"https://www.omdbapi.com/?apikey={omdb_apikey}&s=test"
     try:
-        response = requests.get(api_url)
+        response = requests.get(api_url, timeout=10)
         data = response.json()
         if data.get("Response") == "True" or data.get("Error") == "Movie not found!":
             return jsonify({"valid": True, "message": "OMDb API key is valid"})
@@ -455,6 +458,7 @@ def validate_github_server(data):
                 "Authorization": f"token {github_token}",
                 "Accept": "application/vnd.github.v3+json",
             },
+            timeout=10,
         )
         if response.status_code == 200:
             user_data = response.json()
@@ -469,7 +473,7 @@ def validate_tmdb_server(data):
     api_key = data.get("tmdb_apikey")
 
     # Validate the API key
-    movie_response = requests.get(f"https://api.themoviedb.org/3/movie/550?api_key={api_key}")
+    movie_response = requests.get(f"https://api.themoviedb.org/3/movie/550?api_key={api_key}", timeout=10)
     if movie_response.status_code == 200:
         return jsonify({"valid": True, "message": "API key is valid!"})
     else:
@@ -479,7 +483,7 @@ def validate_tmdb_server(data):
 def validate_mdblist_server(data):
     api_key = data.get("mdblist_apikey")
 
-    response = requests.get(f"https://mdblist.com/api/?apikey={api_key}&s=test")
+    response = requests.get(f"https://mdblist.com/api/?apikey={api_key}&s=test", timeout=10)
     if response.status_code == 200 and response.json().get("response") is True:
         return jsonify({"valid": True, "message": "API key is valid!"})
     else:
@@ -489,7 +493,7 @@ def validate_mdblist_server(data):
 def validate_notifiarr_server(data):
     api_key = data.get("notifiarr_apikey")
 
-    response = requests.get(f"https://notifiarr.com/api/v1/user/validate/{api_key}")
+    response = requests.get(f"https://notifiarr.com/api/v1/user/validate/{api_key}", timeout=10)
     if response.status_code == 200 and response.json().get("result") == "success":
         return jsonify({"valid": True, "message": "API key is valid!"})
     else:

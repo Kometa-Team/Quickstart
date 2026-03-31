@@ -52,6 +52,8 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Process Management:** Start, stop, and monitor Kometa runs directly from the web interface
 - **Maintenance-Aware Runs:** Detects Plex maintenance windows, pauses active runs, and queues new runs until maintenance ends (with global UI badges and toasts)
 
+This reduces the chance of Plex background maintenance colliding with long Kometa runs, keeps Plex more responsive during the window, and avoids wasting time starting a run that would immediately pause.
+
 ![Final Validation Runner](static/images/readme/final-validation-runner.png)
 
 ### Live Previews & Assets

@@ -64,7 +64,15 @@ LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
 KOMETA_CPU_CACHE = {}
 SYSTEM_CPU_CACHE = {"total": None, "idle": None}
-MAINTENANCE_STATE = {"paused": False, "paused_since": None, "active": False, "window": None, "queued_started_at": None}
+MAINTENANCE_STATE = {
+    "paused": False,
+    "paused_since": None,
+    "active": False,
+    "window": None,
+    "queued_started_at": None,
+    "window_unavailable": False,
+    "window_unavailable_since": None,
+}
 MAINTENANCE_STATE_LOCK = threading.Lock()
 MAINTENANCE_GUARD_INTERVAL = 45
 PENDING_KOMETA_START = {"command": None, "config_name": None, "requested_at": None}
@@ -470,11 +478,28 @@ def _maintenance_guard_loop(app_in):
             start_min, end_min, window_str = _get_maintenance_window_live()
             if start_min is None or end_min is None:
                 start_min, end_min, window_str = _get_maintenance_window_from_db()
+            window_unavailable = start_min is None or end_min is None
+            kometa_running = pid and helpers.is_kometa_running()
+            has_pending = bool(_peek_pending_kometa_start())
+            if window_unavailable and (kometa_running or has_pending):
+                with MAINTENANCE_STATE_LOCK:
+                    if not MAINTENANCE_STATE.get("window_unavailable"):
+                        MAINTENANCE_STATE["window_unavailable"] = True
+                        MAINTENANCE_STATE["window_unavailable_since"] = datetime.now(timezone.utc).isoformat()
+                        helpers.ts_log(
+                            "Plex maintenance window unavailable; keeping Kometa paused/queued until Plex is reachable.",
+                            level="WARNING",
+                        )
+            else:
+                with MAINTENANCE_STATE_LOCK:
+                    if MAINTENANCE_STATE.get("window_unavailable"):
+                        MAINTENANCE_STATE["window_unavailable"] = False
+                        MAINTENANCE_STATE["window_unavailable_since"] = None
+                        helpers.ts_log("Plex maintenance window available again.", level="INFO")
             active = _is_within_maintenance_window(datetime.now(), start_min, end_min)
             with MAINTENANCE_STATE_LOCK:
                 MAINTENANCE_STATE["active"] = active
                 MAINTENANCE_STATE["window"] = window_str
-            kometa_running = pid and helpers.is_kometa_running()
 
             if not kometa_running:
                 with MAINTENANCE_STATE_LOCK:
@@ -511,7 +536,8 @@ def _maintenance_guard_loop(app_in):
                     already_paused = MAINTENANCE_STATE["paused"]
                 if not already_paused:
                     if _suspend_process_tree(proc):
-                        helpers.ts_log("Kometa paused due to Plex maintenance window.", level="INFO")
+                        window_label = f" ({window_str})" if window_str else ""
+                        helpers.ts_log(f"Kometa paused due to Plex maintenance window{window_label}.", level="INFO")
                         with MAINTENANCE_STATE_LOCK:
                             MAINTENANCE_STATE["paused"] = True
                             MAINTENANCE_STATE["paused_since"] = datetime.now(timezone.utc).isoformat()
@@ -521,7 +547,8 @@ def _maintenance_guard_loop(app_in):
                 was_paused = MAINTENANCE_STATE["paused"]
             if was_paused:
                 if _resume_process_tree(proc):
-                    helpers.ts_log("Plex maintenance ended. Kometa resumed.", level="INFO")
+                    window_label = f" ({window_str})" if window_str else ""
+                    helpers.ts_log(f"Plex maintenance ended{window_label}. Kometa resumed.", level="INFO")
                     with MAINTENANCE_STATE_LOCK:
                         MAINTENANCE_STATE["paused"] = False
                         MAINTENANCE_STATE["paused_since"] = None
@@ -4974,6 +5001,8 @@ def kometa_status():
             maintenance_window = MAINTENANCE_STATE["window"]
             maintenance_paused_since = MAINTENANCE_STATE["paused_since"]
             queued_started_at = MAINTENANCE_STATE["queued_started_at"]
+            window_unavailable = MAINTENANCE_STATE["window_unavailable"]
+            window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
         return jsonify(
             status="not started",
             maintenance_active=maintenance_active,
@@ -4981,6 +5010,8 @@ def kometa_status():
             maintenance_window=maintenance_window,
             maintenance_paused_since=maintenance_paused_since,
             queued_started_at=queued_started_at,
+            window_unavailable=window_unavailable,
+            window_unavailable_since=window_unavailable_since,
             pending_start=pending_start,
             pending_requested_at=pending_requested_at,
         )
@@ -5017,6 +5048,8 @@ def kometa_status():
                     maintenance_window = MAINTENANCE_STATE["window"]
                     maintenance_paused_since = MAINTENANCE_STATE["paused_since"]
                     queued_started_at = MAINTENANCE_STATE["queued_started_at"]
+                    window_unavailable = MAINTENANCE_STATE["window_unavailable"]
+                    window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
                 return jsonify(
                     status="running",
                     pid=pid,
@@ -5035,6 +5068,8 @@ def kometa_status():
                     maintenance_window=maintenance_window,
                     maintenance_paused_since=maintenance_paused_since,
                     queued_started_at=queued_started_at,
+                    window_unavailable=window_unavailable,
+                    window_unavailable_since=window_unavailable_since,
                     pending_start=pending_start,
                     pending_requested_at=pending_requested_at,
                 )
@@ -5056,6 +5091,8 @@ def kometa_status():
             maintenance_window = MAINTENANCE_STATE["window"]
             maintenance_paused_since = MAINTENANCE_STATE["paused_since"]
             queued_started_at = MAINTENANCE_STATE["queued_started_at"]
+            window_unavailable = MAINTENANCE_STATE["window_unavailable"]
+            window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
         return jsonify(
             status="done",
             return_code=rc if rc is not None else -1,
@@ -5064,6 +5101,8 @@ def kometa_status():
             maintenance_window=maintenance_window,
             maintenance_paused_since=maintenance_paused_since,
             queued_started_at=queued_started_at,
+            window_unavailable=window_unavailable,
+            window_unavailable_since=window_unavailable_since,
             pending_start=pending_start,
             pending_requested_at=pending_requested_at,
         )
@@ -5079,6 +5118,8 @@ def kometa_status():
             maintenance_window = MAINTENANCE_STATE["window"]
             maintenance_paused_since = MAINTENANCE_STATE["paused_since"]
             queued_started_at = MAINTENANCE_STATE["queued_started_at"]
+            window_unavailable = MAINTENANCE_STATE["window_unavailable"]
+            window_unavailable_since = MAINTENANCE_STATE["window_unavailable_since"]
         return jsonify(
             status="not started",
             maintenance_active=maintenance_active,
@@ -5086,6 +5127,8 @@ def kometa_status():
             maintenance_window=maintenance_window,
             maintenance_paused_since=maintenance_paused_since,
             queued_started_at=queued_started_at,
+            window_unavailable=window_unavailable,
+            window_unavailable_since=window_unavailable_since,
             pending_start=pending_start,
             pending_requested_at=pending_requested_at,
         )
@@ -7013,7 +7056,7 @@ def clone_test_libraries_start():
                 # Stream download with throttled progress updates
                 downloaded = 0
                 last_push = 0.0
-                with requests.get(zip_url, stream=True, timeout=30) as r:
+                with requests.get(zip_url, stream=True, timeout=(30, 300)) as r:
                     r.raise_for_status()
 
                     # If HEAD failed, try to get size from GET
@@ -7201,11 +7244,13 @@ def clone_test_libraries():
         with tempfile.TemporaryDirectory(prefix="qs_test_libs_", dir=tmp_root) as tmpdir:
             zip_path = os.path.join(tmpdir, "main.zip")
 
-            r = requests.get(zip_url)
-            if r.status_code != 200:
-                return jsonify(success=False, message="Failed to download ZIP fallback from GitHub.")
-            with open(zip_path, "wb") as f:
-                f.write(r.content)
+            with requests.get(zip_url, stream=True, timeout=(30, 300)) as r:
+                if r.status_code != 200:
+                    return jsonify(success=False, message="Failed to download ZIP fallback from GitHub.")
+                with open(zip_path, "wb") as f:
+                    for chunk in r.iter_content(chunk_size=1024 * 1024):
+                        if chunk:
+                            f.write(chunk)
 
             with zipfile.ZipFile(zip_path, "r") as zip_ref:
                 zip_ref.extractall(tmpdir)

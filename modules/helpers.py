@@ -831,7 +831,7 @@ def get_plex_maintenance_hours(plex_url, plex_token):
     if not plex_url or not plex_token:
         return None, None
     try:
-        plex = PlexServer(plex_url, plex_token)
+        plex = PlexServer(plex_url, plex_token, timeout=8)
         settings = plex.settings
         start_hour = int(settings.get("butlerStartHour").value)
         end_hour = int(settings.get("butlerEndHour").value)

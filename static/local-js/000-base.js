@@ -294,12 +294,23 @@ function qsHandleMaintenanceStatus (data) {
   const now = Date.now()
   const badge = document.getElementById('qs-maintenance-badge')
   const runningBadge = document.getElementById('qs-running-badge')
+  const unavailableBadge = document.getElementById('qs-maintenance-unavailable-badge')
   const queuedBadge = document.getElementById('qs-queued-badge')
 
   if (runningBadge) {
     if (data.status === 'running') {
       const elapsed = typeof data.elapsed_seconds === 'number' ? data.elapsed_seconds : null
-      const elapsedLabel = elapsed !== null ? ` (${Math.floor(elapsed / 60)}m ${String(elapsed % 60).padStart(2, '0')}s)` : ''
+      let elapsedLabel = ''
+      if (elapsed !== null) {
+        const hours = Math.floor(elapsed / 3600)
+        const minutes = Math.floor((elapsed % 3600) / 60)
+        const seconds = Math.floor(elapsed % 60)
+        const parts = []
+        if (hours) parts.push(`${hours}h`)
+        parts.push(`${minutes}m`)
+        parts.push(`${String(seconds).padStart(2, '0')}s`)
+        elapsedLabel = ` (${parts.join(' ')})`
+      }
       runningBadge.classList.remove('d-none')
       const label = runningBadge.querySelector('span')
       if (label) {
@@ -343,6 +354,19 @@ function qsHandleMaintenanceStatus (data) {
       }
     } else {
       queuedBadge.classList.add('d-none')
+    }
+  }
+
+  if (unavailableBadge) {
+    if (data.window_unavailable) {
+      const sinceLabel = data.window_unavailable_since ? ` (since ${qsFormatTimestamp(data.window_unavailable_since)})` : ''
+      const label = unavailableBadge.querySelector('span')
+      unavailableBadge.classList.remove('d-none')
+      if (label) {
+        label.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> Plex maintenance window unavailable${sinceLabel}`
+      }
+    } else {
+      unavailableBadge.classList.add('d-none')
     }
   }
 
