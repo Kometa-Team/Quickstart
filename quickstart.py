@@ -1071,7 +1071,11 @@ helpers.ensure_json_schema()
 parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
 parser.add_argument("--port", type=int, help="Specify the port number to run the server")
 parser.add_argument("--debug", action="store_true", help="Enable debug mode")
-args = parser.parse_args()
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+else:
+    args = argparse.Namespace(port=None, debug=False)
 
 port = args.port if args.port else int(os.getenv("QS_PORT", "7171"))
 running_port = port

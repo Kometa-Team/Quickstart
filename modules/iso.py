@@ -9,9 +9,13 @@ _tag_url = "https://raw.githubusercontent.com/datasets/language-codes/refs/heads
 
 
 def _read_csv(url):
-    response = requests.get(url, timeout=10)
-    csv_file = io.StringIO(response.text)
-    return list(csv.reader(csv_file))
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        csv_file = io.StringIO(response.text)
+        return list(csv.reader(csv_file))
+    except Exception:
+        return []
 
 
 _tag_dict = {}
