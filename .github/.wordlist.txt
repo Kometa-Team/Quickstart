@@ -23,6 +23,7 @@ MacOS
 meisnate
 Personalization
 Plex
+PowerShell
 Precompiled
 prefill
 py
