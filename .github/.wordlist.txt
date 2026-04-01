@@ -28,6 +28,7 @@ Precompiled
 prefill
 py
 PyQt
+pytest
 quickstart
 Reingest
 repo
