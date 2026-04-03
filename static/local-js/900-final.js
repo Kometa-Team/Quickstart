@@ -9,6 +9,7 @@ let KOMETA_INSTALLED = false
 // Polling handles (hoist to top so all handlers see them safely)
 let kometaInterval = null
 let kometaStatusInterval = null
+let kometaProgressInterval = null
 let kometaPollingStarted = false
 let autoScrollEnabled = true
 let tailSize = '2000'
@@ -20,6 +21,7 @@ let lastLogStatsTotal = null
 let logStatsPollCounter = 0
 let lastLogscanPayload = null
 let logscanPollCounter = 0
+let lastRunProgressPayload = null
 
 const _qsEnvEl = document.getElementById('qs-env')
 const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
@@ -329,6 +331,10 @@ $(document).ready(function () {
       label: 'Operations Only',
       description: 'Only perform operations (e.g., rating/poster updates).'
     },
+    '--metadata-only': {
+      label: 'Metadata Only',
+      description: 'Only run metadata files.'
+    },
     '--collections-only': {
       label: 'Collections Only',
       description: 'Only build collections.'
@@ -413,7 +419,7 @@ $(document).ready(function () {
 
   function updateFlagLabels (showCli) {
     const runOptions = ['--run', '--run-libraries', '--times']
-    const modeFlags = ['--operations-only', '--collections-only', '--playlists-only', '--overlays-only']
+    const modeFlags = ['--operations-only', '--metadata-only', '--collections-only', '--overlays-only', '--playlists-only']
     const logFlags = ['--debug', '--trace', '--log-requests']
     const otherFlags = [
       '--delete-collections', '--delete-labels', '--read-only-config', '--low-priority',
@@ -792,14 +798,18 @@ $(document).ready(function () {
   })
 
   function hideRunCommandSectionUntilValidated () {
+    const accordion = $('#run-command-output-accordion')
     const box = $('#run-command-box')
+    accordion.addClass('d-none')
     box.removeClass('fade-in').addClass('d-none') // Hide instantly
     $('#run-now').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Waiting...')
   }
 
   function showRunCommandSectionAfterValidated () {
+    const accordion = $('#run-command-output-accordion')
     const box = $('#run-command-box')
 
+    accordion.removeClass('d-none')
     box.removeClass('d-none') // Reveal element (opacity still 0)
     setTimeout(() => {
       box.addClass('fade-in') // Let browser register change, then fade in
@@ -814,9 +824,222 @@ $(document).ready(function () {
     kometaPollingStarted = true
     if (kometaInterval) clearInterval(kometaInterval)
     if (kometaStatusInterval) clearInterval(kometaStatusInterval)
+    if (kometaProgressInterval) clearInterval(kometaProgressInterval)
     fetchKometaLog()
+    fetchRunProgress()
     kometaInterval = setInterval(fetchKometaLog, 3000)
     kometaStatusInterval = setInterval(checkKometaStatus, 5000)
+    kometaProgressInterval = setInterval(fetchRunProgress, 5000)
+  }
+
+  function stopProgressPolling () {
+    if (kometaProgressInterval) {
+      clearInterval(kometaProgressInterval)
+      kometaProgressInterval = null
+    }
+  }
+
+  const runPhaseOrder = [
+    { key: 'operations', label: 'Operations' },
+    { key: 'metadata', label: 'Metadata' },
+    { key: 'collections', label: 'Collections' },
+    { key: 'overlays', label: 'Overlays' },
+    { key: 'playlists', label: 'Playlists' }
+  ]
+
+  function renderRunProgress (payload) {
+    const container = document.getElementById('run-progress')
+    if (!container) return
+
+    if (!payload || !Array.isArray(payload.libraries)) {
+      container.classList.add('d-none')
+      return
+    }
+
+    lastRunProgressPayload = payload
+    const libraries = payload.libraries
+    const total = payload.total_count || libraries.length
+    const completed = payload.completed_count != null
+      ? payload.completed_count
+      : libraries.filter(entry => entry.status === 'Done').length
+
+    const phaseOrderKeys = Array.isArray(payload.phase_order) && payload.phase_order.length
+      ? payload.phase_order
+      : runPhaseOrder.map(phase => phase.key)
+    const phaseCount = phaseOrderKeys.length || 1
+    const currentPhaseIndex = payload.phase_current
+      ? Math.max(0, phaseOrderKeys.indexOf(payload.phase_current))
+      : 0
+    const totalSteps = total * phaseCount
+    let completedSteps = completed * phaseCount
+    if (payload.current_library && total > 0) {
+      completedSteps = Math.min(totalSteps, completedSteps + currentPhaseIndex)
+    }
+    const percent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0
+    const bar = document.getElementById('run-progress-bar')
+    if (bar) {
+      bar.style.width = `${percent}%`
+      bar.setAttribute('aria-valuenow', String(percent))
+    }
+
+    const summary = document.getElementById('run-progress-summary')
+    if (summary) {
+      const current = payload.current_library ? ` | Current: ${payload.current_library}` : ''
+      const stepLabel = totalSteps > 0 ? ` | Step ${completedSteps}/${totalSteps}` : ''
+      let lastUpdated = ''
+      if (payload.last_log_at) {
+        const formatter = typeof window.QS_formatTimestamp === 'function' ? window.QS_formatTimestamp : null
+        const label = formatter ? formatter(payload.last_log_at) : new Date(payload.last_log_at).toLocaleString()
+        lastUpdated = ` | Last updated: ${label}`
+      }
+      summary.textContent = `${completed}/${total} libraries complete${current}${stepLabel}${lastUpdated}`
+    }
+
+    const prepRow = document.getElementById('run-prep-row')
+    if (prepRow) {
+      const hasLockedPrep = typeof payload.preparation_seconds === 'number'
+      const prepSeconds = hasLockedPrep
+        ? payload.preparation_seconds
+        : (typeof payload.preparation_elapsed_seconds === 'number' ? payload.preparation_elapsed_seconds : null)
+      if (prepSeconds != null) {
+        const prepLabel = formatRunSeconds(prepSeconds) || '0s'
+        const prepClass = hasLockedPrep ? 'text-bg-success' : 'text-bg-primary'
+        prepRow.innerHTML = `
+          <span class="me-2 fw-semibold">Preparation</span>
+          <span class="badge ${prepClass}">${prepLabel}</span>
+        `
+        prepRow.classList.remove('d-none')
+      } else {
+        prepRow.classList.add('d-none')
+      }
+    }
+
+    const allowed = Array.isArray(payload.allowed_phases) && payload.allowed_phases.length
+      ? new Set(payload.allowed_phases)
+      : null
+    const phaseLookup = new Map(runPhaseOrder.map(phase => [phase.key, phase.label]))
+    const phasesToShow = (Array.isArray(phaseOrderKeys) ? phaseOrderKeys : runPhaseOrder.map(phase => phase.key))
+      .filter(key => !allowed || allowed.has(key))
+      .map(key => ({ key, label: phaseLookup.get(key) || key }))
+    const phaseIndexLookup = new Map(phasesToShow.map((phase, idx) => [phase.key, idx]))
+
+    const headerRow = document.getElementById('run-library-header')
+    if (headerRow) {
+      const phaseHeaders = phasesToShow.map(phase => `<th class="text-end">${phase.label}</th>`).join('')
+      headerRow.innerHTML = `<th>Library</th><th>Type</th><th>Status</th>${phaseHeaders}`
+    }
+
+    const rows = document.getElementById('run-library-rows')
+    if (rows) {
+      const visibleLibraries = libraries.filter(entry => entry.status !== 'Skipped')
+      rows.innerHTML = visibleLibraries.map(entry => {
+        let klass = 'text-bg-secondary'
+        if (entry.status === 'Done') klass = 'text-bg-success'
+        else if (entry.status === 'In progress') klass = 'text-bg-primary'
+        else if (entry.status === 'Stopped') klass = 'text-bg-danger'
+        else if (entry.status === 'Skipped') klass = 'text-bg-dark'
+        const typeLabel = entry.type ? entry.type : '—'
+        const durations = entry.durations || {}
+        const currentPhaseForRow = payload.current_library === entry.name ? payload.phase_current : null
+        const explicitPhases = new Set(Object.keys(durations))
+        let lastSeenIndex = -1
+        explicitPhases.forEach(key => {
+          const idx = phaseIndexLookup.get(key)
+          if (idx != null && idx > lastSeenIndex) lastSeenIndex = idx
+        })
+        if (currentPhaseForRow) {
+          const idx = phaseIndexLookup.get(currentPhaseForRow)
+          if (idx != null && idx > lastSeenIndex) lastSeenIndex = idx
+        }
+        const inferredPhases = new Set()
+        if (entry.status !== 'Skipped' && lastSeenIndex >= 0) {
+          phasesToShow.forEach(phase => {
+            const idx = phaseIndexLookup.get(phase.key)
+            if (idx != null && idx < lastSeenIndex && !explicitPhases.has(phase.key)) {
+              inferredPhases.add(phase.key)
+            }
+          })
+        }
+
+        const durationCells = phasesToShow.map(phase => {
+          if (phase.key === 'playlists') {
+            const total = typeof payload.playlist_total_seconds === 'number' ? payload.playlist_total_seconds : null
+            const running = Boolean(payload.playlist_running)
+            const elapsed = typeof payload.playlist_elapsed_seconds === 'number' ? payload.playlist_elapsed_seconds : null
+            if (running) {
+              const label = elapsed != null ? formatRunSeconds(elapsed) : 'Running'
+              return `<td class="text-end"><span class="badge text-bg-primary">${label || 'Running'}</span></td>`
+            }
+            if (total != null && total > 0) {
+              return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(total)}</span></td>`
+            }
+            if (payload.run_finished) {
+              return '<td class="text-end"><span class="badge text-bg-secondary">Not Configured</span></td>'
+            }
+            return '<td class="text-end text-muted small">—</td>'
+          }
+          const seconds = durations[phase.key]
+          const hasSeconds = typeof seconds === 'number' && Number.isFinite(seconds)
+          const isRunning = currentPhaseForRow === phase.key
+          const isExplicit = explicitPhases.has(phase.key)
+          const isInferred = inferredPhases.has(phase.key)
+          if (entry.status === 'Skipped') {
+            return '<td class="text-end text-muted small">—</td>'
+          }
+          if (isRunning) {
+            const elapsed = typeof payload.current_phase_elapsed_seconds === 'number'
+              ? formatRunSeconds(payload.current_phase_elapsed_seconds)
+              : (hasSeconds ? formatRunSeconds(seconds) : 'Running')
+            return `<td class="text-end"><span class="badge text-bg-primary">${elapsed || 'Running'}</span></td>`
+          }
+          if (isExplicit && hasSeconds) {
+            return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(seconds)}</span></td>`
+          }
+          if (isInferred) {
+            return '<td class="text-end"><span class="badge text-bg-secondary">Not Configured</span></td>'
+          }
+          return '<td class="text-end text-muted small">—</td>'
+        }).join('')
+        return `
+          <tr>
+            <td>${entry.name}</td>
+            <td>${typeLabel}</td>
+            <td><span class="badge ${klass}">${entry.status}</span></td>
+            ${durationCells}
+          </tr>
+        `
+      }).join('')
+    }
+
+    container.classList.remove('d-none')
+  }
+
+  function fetchRunProgress () {
+    return fetch('/logscan/progress')
+      .then(res => {
+        if (!res.ok) return null
+        return res.json()
+      })
+      .then(data => {
+        if (!data) {
+          if (lastRunProgressPayload) {
+            renderRunProgress(lastRunProgressPayload)
+          } else {
+            const container = document.getElementById('run-progress')
+            if (container) container.classList.add('d-none')
+          }
+          return
+        }
+        renderRunProgress(data)
+      })
+      .catch(() => {
+        if (lastRunProgressPayload) {
+          renderRunProgress(lastRunProgressPayload)
+        } else {
+          const container = document.getElementById('run-progress')
+          if (container) container.classList.add('d-none')
+        }
+      })
   }
 
   function getUpdateButtonLabel () {
@@ -1836,9 +2059,31 @@ $(document).ready(function () {
         }
         clearInterval(kometaInterval)
         clearInterval(kometaStatusInterval)
+        stopProgressPolling()
+        if (lastRunProgressPayload) {
+          const stoppedPayload = JSON.parse(JSON.stringify(lastRunProgressPayload))
+          const stoppedLibrary = stoppedPayload.current_library
+          stoppedPayload.current_library = null
+          stoppedPayload.phase_current = null
+          if (Array.isArray(stoppedPayload.libraries)) {
+            stoppedPayload.libraries = stoppedPayload.libraries.map(entry => {
+              if (entry.status === 'In progress') {
+                return { ...entry, status: 'Stopped' }
+              }
+              if (stoppedLibrary && entry.name === stoppedLibrary && !['Done', 'Skipped'].includes(entry.status)) {
+                return { ...entry, status: 'Stopped' }
+              }
+              return entry
+            })
+          }
+          lastRunProgressPayload = stoppedPayload
+          renderRunProgress(stoppedPayload)
+        }
+        KOMETA_STATUS = 'not started'
         $('#run-now').prop('disabled', false)
         $('#run-now-label').text('Run Now')
         $('#stop-now').addClass('d-none') // hide stop again
+        updateRunNowState()
       })
       .catch(err => {
         console.error('Error stopping Kometa process:', err) // Optional for debugging
@@ -1955,6 +2200,10 @@ $(document).ready(function () {
         // If we reach here, it's either "done" or "not started"
         if (typeof kometaInterval !== 'undefined' && kometaInterval) clearInterval(kometaInterval)
         if (typeof kometaStatusInterval !== 'undefined' && kometaStatusInterval) clearInterval(kometaStatusInterval)
+        stopProgressPolling()
+        if (lastRunProgressPayload) {
+          renderRunProgress(lastRunProgressPayload)
+        }
 
         $runNow.html('<i class="bi bi-play-fill me-1"></i> Run Now')
         $stopNow.addClass('d-none').prop('disabled', false)

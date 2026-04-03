@@ -21,7 +21,7 @@ const ImageHandler = {
 
         const defaultOption = document.createElement('option')
         defaultOption.value = 'default'
-        defaultOption.textContent = `Select ${type} image`
+        defaultOption.textContent = 'Select Uploaded Image'
         dropdown.appendChild(defaultOption)
 
         data.images.forEach(image => {

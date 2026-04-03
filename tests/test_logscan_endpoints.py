@@ -82,3 +82,41 @@ def test_logscan_trends_empty(client, isolated_config_dir):
     payload = resp.get_json()
     assert payload["total_runs"] == 0
     assert payload["runs"] == []
+
+
+def test_logscan_progress_tracks_libraries(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text(
+        "\n".join(
+            [
+                "[2026-04-01 01:13:24,670] [kometa.py:730] [INFO]     |================================== Mapping Movies Library ===================================|",
+                "[2026-04-01 01:13:25,670] [kometa.py:730] [INFO]     |================================== Mapping TV Shows Library ===================================|",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+
+    def fake_retrieve_settings(section):
+        if section == "025-libraries":
+            return {
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                    "sho-library_tv_shows-library": "TV Shows",
+                }
+            }
+        return {}
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    resp = client.get("/logscan/progress")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["total_count"] == 2
+    statuses = {entry["name"]: entry["status"] for entry in payload["libraries"]}
+    assert statuses["Movies"] == "Done"
+    assert statuses["TV Shows"] == "In progress"

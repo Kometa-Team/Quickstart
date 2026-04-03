@@ -62,6 +62,7 @@ CLONE_PROGRESS: Dict[str, Dict[str, Any]] = {}
 ACTIVE_TEST_LIB_JOB: Dict[str, Any] = {}
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
+LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "data": None}
 KOMETA_CPU_CACHE = {}
 SYSTEM_CPU_CACHE = {"total": None, "idle": None}
 MAINTENANCE_STATE = {
@@ -436,6 +437,69 @@ def _launch_kometa_command(command, config_name=None):
     return True, proc.pid
 
 
+def _extract_selected_libraries(command):
+    if not command:
+        return None, None
+    is_win = sys.platform.startswith("win")
+    try:
+        parts = shlex.split(command, posix=not is_win)
+    except Exception:
+        parts = command.split()
+
+    run_option = None
+    selected = None
+    for idx, part in enumerate(parts):
+        if part in ("--run", "--run-libraries", "--times"):
+            run_option = part
+        if part.startswith("--run-libraries="):
+            value = part.split("=", 1)[1].strip().strip('"').strip("'")
+            selected = [v for v in value.split("|") if v.strip()]
+            break
+        if part == "--run-libraries" and idx + 1 < len(parts):
+            value = parts[idx + 1].strip().strip('"').strip("'")
+            selected = [v for v in value.split("|") if v.strip()]
+            run_option = "--run-libraries"
+            break
+    return run_option, selected
+
+
+def _update_run_context(command):
+    run_option, selected = _extract_selected_libraries(command)
+    config_path = None
+    run_mode = "all"
+    if command:
+        is_win = sys.platform.startswith("win")
+        try:
+            parts = shlex.split(command, posix=not is_win)
+        except Exception:
+            parts = command.split()
+        if "--metadata-only" in parts:
+            run_mode = "metadata"
+        elif "--operations-only" in parts:
+            run_mode = "operations"
+        elif "--playlists-only" in parts:
+            run_mode = "playlists"
+        elif "--overlays-only" in parts:
+            run_mode = "overlays"
+        elif "--collections-only" in parts:
+            run_mode = "collections"
+        kometa_root = helpers.get_kometa_root_path()
+        config_path = _extract_kometa_config_path(parts, kometa_root)
+    with RUN_CONTEXT_LOCK:
+        RUN_CONTEXT["run_option"] = run_option
+        RUN_CONTEXT["selected_libraries"] = selected
+        RUN_CONTEXT["run_mode"] = run_mode
+        RUN_CONTEXT["config_path"] = str(config_path) if config_path else None
+        RUN_CONTEXT["started_at"] = datetime.now()
+        RUN_CONTEXT["updated_at"] = datetime.now(timezone.utc).isoformat()
+        RUN_CONTEXT["stop_requested_at"] = None
+
+
+def _get_run_context():
+    with RUN_CONTEXT_LOCK:
+        return dict(RUN_CONTEXT)
+
+
 def _suspend_process_tree(proc):
     try:
         for child in proc.children(recursive=True):
@@ -511,6 +575,7 @@ def _maintenance_guard_loop(app_in):
                 if pending and not active and start_min is not None and end_min is not None:
                     pending = _pop_pending_kometa_start()
                     if pending:
+                        _update_run_context(pending.get("command"))
                         ok, result = _launch_kometa_command(pending.get("command"), pending.get("config_name"))
                         if ok:
                             helpers.ts_log("Kometa started after Plex maintenance window ended.", level="INFO")
@@ -1064,6 +1129,18 @@ def update_quickstart():
 server_session = Session(app)
 server_thread = None
 shutdown_event = threading.Event()
+
+# Track current run context for progress UI.
+RUN_CONTEXT_LOCK = threading.Lock()
+RUN_CONTEXT = {
+    "selected_libraries": None,
+    "run_option": None,
+    "run_mode": "all",
+    "config_path": None,
+    "started_at": None,
+    "updated_at": None,
+    "stop_requested_at": None,
+}
 
 # Ensure json-schema files are up to date at startup
 helpers.ensure_json_schema()
@@ -3418,6 +3495,7 @@ def step(name):
         library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
         movie_libraries = []
         show_libraries = []
+        library_dropdown = []
         existing_ids = set()
 
         for key, value in library_settings.items():
@@ -3425,6 +3503,16 @@ def step(name):
                 movie_libraries.append({"id": key.split("-library")[0], "name": value, "type": "movie"})
             elif key.startswith("sho-library_") and key.endswith("-library"):
                 show_libraries.append({"id": key.split("-library")[0], "name": value, "type": "show"})
+
+        if saved_filename:
+            try:
+                config_path = Path(helpers.CONFIG_DIR) / saved_filename
+                config_for_dropdown = _load_progress_config(config_path)
+                library_dropdown = _get_progress_library_list(config_data=config_for_dropdown)
+            except Exception:
+                library_dropdown = []
+        if not library_dropdown:
+            library_dropdown = movie_libraries + show_libraries
 
         html = render_template(
             "900-final.html",
@@ -3439,6 +3527,7 @@ def step(name):
             available_configs=available_configs,
             movie_libraries=movie_libraries,
             show_libraries=show_libraries,
+            library_dropdown=library_dropdown,
             config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
             overlay_fonts=list_overlay_fonts(),
             service_validations=service_validations,
@@ -4914,6 +5003,8 @@ def start_kometa():
                 payload["started_at"] = started_at
             return jsonify(payload), 400
 
+    _update_run_context(command)
+
     start_min, end_min, window_str = _get_maintenance_window_live()
     if start_min is None or end_min is None:
         start_min, end_min, window_str = _get_maintenance_window_from_db()
@@ -4947,6 +5038,9 @@ def stop_kometa():
     try:
         if not procs:
             return jsonify({"warning": "No active Kometa process found."}), 200
+
+        with RUN_CONTEXT_LOCK:
+            RUN_CONTEXT["stop_requested_at"] = datetime.now(timezone.utc).isoformat()
 
         not_kometa = []
         alive_after = []
@@ -5325,6 +5419,184 @@ def logscan_analyze():
     LOGSCAN_ANALYSIS_CACHE.update({"mtime": stats.st_mtime, "size": stats.st_size, "data": result})
     result["cached"] = False
     return jsonify(result)
+
+
+def _load_progress_config(config_path=None):
+    if not config_path:
+        return None
+    try:
+        yaml_parser = YAML(typ="safe", pure=True)
+        with Path(config_path).open("r", encoding="utf-8", errors="ignore") as handle:
+            return yaml_parser.load(handle) or {}
+    except Exception:
+        return None
+
+
+def _normalize_run_order_value(value):
+    lowered = str(value or "").strip().lower()
+    if not lowered:
+        return None
+    if lowered.startswith("operation"):
+        return "operations"
+    if lowered.startswith("overlay"):
+        return "overlays"
+    if lowered.startswith("collection"):
+        return "collections"
+    if lowered.startswith("metadata"):
+        return "metadata"
+    return None
+
+
+def _get_progress_run_order(config_data=None):
+    if not isinstance(config_data, dict):
+        return []
+    settings = config_data.get("settings") if isinstance(config_data.get("settings"), dict) else {}
+    run_order = settings.get("run_order") if isinstance(settings, dict) else None
+    if not isinstance(run_order, list):
+        return []
+    normalized = []
+    for item in run_order:
+        key = _normalize_run_order_value(item)
+        if key and key not in normalized:
+            normalized.append(key)
+    return normalized
+
+
+def _get_progress_library_list(selected_libraries=None, config_path=None, config_data=None):
+    settings = persistence.retrieve_settings("025-libraries")
+    library_settings = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+    libraries = []
+    type_by_name = {}
+    if isinstance(library_settings, dict):
+        for key, value in library_settings.items():
+            if not value:
+                continue
+            if key.startswith("mov-library_") and key.endswith("-library"):
+                type_by_name[value] = "movie"
+            elif key.startswith("sho-library_") and key.endswith("-library"):
+                type_by_name[value] = "show"
+    parsed = config_data if isinstance(config_data, dict) else _load_progress_config(config_path)
+    if isinstance(parsed, dict):
+        lib_section = parsed.get("libraries")
+        if isinstance(lib_section, dict):
+            for lib_name in lib_section.keys():
+                if lib_name:
+                    libraries.append({"name": lib_name, "type": type_by_name.get(lib_name)})
+    if not libraries:
+        for name, lib_type in type_by_name.items():
+            libraries.append({"name": name, "type": lib_type})
+    if selected_libraries:
+        existing = {lib["name"] for lib in libraries}
+        for name in selected_libraries:
+            if name and name not in existing:
+                libraries.append({"name": name, "type": None})
+                existing.add(name)
+    return libraries
+
+
+@app.route("/logscan/progress", methods=["GET"])
+def logscan_progress():
+    kometa_root = helpers.get_kometa_root_path()
+    log_path = kometa_root / "config" / "logs" / "meta.log"
+
+    if not log_path.exists():
+        return jsonify({"error": f"Log file not found at: {log_path}"}), 404
+
+    try:
+        from collections import deque
+        from copy import deepcopy
+
+        size_param = request.args.get("size", "4000")
+        max_lines = None
+        if size_param.lower() not in ("all", "full"):
+            try:
+                max_lines = max(1, min(int(size_param), 20000))
+            except Exception:
+                max_lines = 4000
+
+        log_stats = None
+        try:
+            log_stats = log_path.stat()
+        except Exception:
+            log_stats = None
+
+        cached = LOGSCAN_PROGRESS_CACHE
+        def normalize_progress_for_stopped(data, running, stopped_requested):
+            if not isinstance(data, dict) or running:
+                return data
+            data = deepcopy(data)
+            stopped_library = data.get("current_library")
+            data["current_library"] = None
+            data["phase_current"] = None
+            libraries = data.get("libraries")
+            if isinstance(libraries, list):
+                for entry in libraries:
+                    status = entry.get("status")
+                    name = entry.get("name")
+                    if status == "In progress":
+                        if stopped_requested:
+                            entry["status"] = "Stopped"
+                    elif stopped_library and name == stopped_library and status not in ("Done", "Skipped"):
+                        if stopped_requested:
+                            entry["status"] = "Stopped"
+            return data
+
+        if max_lines:
+            with log_path.open("r", encoding="utf-8", errors="replace") as f:
+                lines = deque(f, maxlen=max_lines)
+            log_content = "".join(lines)
+        else:
+            log_content = log_path.read_text(encoding="utf-8", errors="replace")
+
+        ctx = _get_run_context()
+        selected = ctx.get("selected_libraries")
+        started_at = ctx.get("started_at")
+        config_path = ctx.get("config_path")
+        run_mode = ctx.get("run_mode") or "all"
+        running = helpers.is_kometa_running()
+        stopped_requested = bool(ctx.get("stop_requested_at"))
+
+        if log_stats and cached.get("mtime") == log_stats.st_mtime and cached.get("size") == log_stats.st_size:
+            data = cached.get("data") or {}
+            data = normalize_progress_for_stopped(data, running, stopped_requested)
+            return jsonify(data)
+
+        cached_data = LOGSCAN_PROGRESS_CACHE.get("data")
+        if cached_data and cached_data.get("run_started_at") != started_at:
+            LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "data": None})
+        analyzer = logscan.LogscanAnalyzer()
+        config_data = _load_progress_config(config_path)
+        progress = analyzer.extract_progress(
+            log_content,
+            library_list=_get_progress_library_list(
+                selected_libraries=selected,
+                config_path=config_path,
+                config_data=config_data,
+            ),
+            selected_libraries=selected,
+            previous=LOGSCAN_PROGRESS_CACHE.get("data"),
+            run_started_at=started_at,
+        )
+        phase_order = _get_progress_run_order(config_data=config_data)
+        allowed_phases = phase_order or ["operations", "metadata", "collections", "overlays"]
+        playlists_configured = bool(config_data.get("playlists")) if isinstance(config_data, dict) else False
+        if run_mode in ("collections", "overlays", "operations", "metadata", "playlists"):
+            allowed_phases = [run_mode]
+            progress["phase_current"] = run_mode
+            progress["phases_completed"] = []
+        elif "playlists" not in allowed_phases:
+            allowed_phases = allowed_phases + ["playlists"]
+        progress["allowed_phases"] = allowed_phases
+        progress["phase_order"] = allowed_phases
+        progress["playlists_configured"] = playlists_configured
+        progress = normalize_progress_for_stopped(progress, running, stopped_requested)
+        if log_stats:
+            progress["last_log_at"] = datetime.fromtimestamp(log_stats.st_mtime, tz=timezone.utc).isoformat()
+            progress["run_started_at"] = started_at
+            LOGSCAN_PROGRESS_CACHE.update({"mtime": log_stats.st_mtime, "size": log_stats.st_size, "data": progress})
+        return jsonify(progress)
+    except Exception as e:
+        return jsonify({"error": f"Failed to analyze log progress: {str(e)}"}), 500
 
 
 @app.route("/logscan/trends", methods=["GET"])
