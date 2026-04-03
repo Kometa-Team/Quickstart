@@ -2,6 +2,7 @@ import os
 import time
 from pathlib import Path
 
+
 class _FakeAnalyzer:
     def analyze_log_file(self, *args, **kwargs):
         return {

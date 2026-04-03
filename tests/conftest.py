@@ -4,7 +4,6 @@ import sys
 
 import pytest
 
-
 _LOADED = {}
 
 
@@ -43,6 +42,7 @@ def qs_module(app):
     import sys
 
     return sys.modules.get("quickstart") or _LOADED.get("module")
+
 
 @pytest.fixture()
 def client(app):

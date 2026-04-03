@@ -3,6 +3,7 @@ import re
 import pytest
 from playwright.sync_api import expect
 
+
 def _stub_validate_root(route):
     route.fulfill(
         status=200,
@@ -164,8 +165,7 @@ def test_reconnect_after_refresh_shows_running(page, live_server, monkeypatch, q
 def test_maintenance_pause_resume_toasts(page, live_server):
     page.goto(f"{live_server}/step/001-start", wait_until="domcontentloaded")
 
-    page.evaluate(
-        """() => {
+    page.evaluate("""() => {
           window.QS_handleMaintenanceStatus({
             status: 'running',
             maintenance_paused: true,
@@ -175,13 +175,11 @@ def test_maintenance_pause_resume_toasts(page, live_server):
             queued_started_at: null,
             window_unavailable: false
           })
-        }"""
-    )
+        }""")
     toast1 = page.locator(".toast .toast-body").filter(has_text="Kometa paused for Plex maintenance")
     expect(toast1).to_be_visible()
 
-    page.evaluate(
-        """() => {
+    page.evaluate("""() => {
           window.QS_handleMaintenanceStatus({
             status: 'running',
             maintenance_paused: false,
@@ -191,8 +189,7 @@ def test_maintenance_pause_resume_toasts(page, live_server):
             queued_started_at: null,
             window_unavailable: false
           })
-        }"""
-    )
+        }""")
     toast2 = page.locator(".toast .toast-body").filter(has_text="Plex maintenance ended")
     expect(toast2).to_be_visible()
 
@@ -270,8 +267,7 @@ def test_queued_run_auto_start_toast(page, live_server, monkeypatch, qs_module):
     run_now.click()
 
     page.wait_for_function("() => typeof window.QS_handleMaintenanceStatus === 'function'")
-    page.evaluate(
-        """() => {
+    page.evaluate("""() => {
           window.QS_handleMaintenanceStatus({
             status: 'running',
             maintenance_active: false,
@@ -284,8 +280,7 @@ def test_queued_run_auto_start_toast(page, live_server, monkeypatch, qs_module):
             pending_start: false,
             pending_requested_at: null
           })
-        }"""
-    )
+        }""")
 
     toast = page.locator(".toast .toast-body").filter(has_text="Kometa started from queued request")
     expect(toast).to_be_visible()

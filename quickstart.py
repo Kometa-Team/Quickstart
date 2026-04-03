@@ -5521,6 +5521,7 @@ def logscan_progress():
             log_stats = None
 
         cached = LOGSCAN_PROGRESS_CACHE
+
         def normalize_progress_for_stopped(data, running, stopped_requested):
             if not isinstance(data, dict) or running:
                 return data

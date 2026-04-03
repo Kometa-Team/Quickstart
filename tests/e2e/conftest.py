@@ -46,8 +46,7 @@ def _configure_page(page):
     page.set_default_timeout(45000)
     page.set_default_navigation_timeout(45000)
 
-    page.add_init_script(
-        """
+    page.add_init_script("""
 (() => {
   if (!window.bootstrap) {
     window.bootstrap = {
@@ -67,8 +66,7 @@ def _configure_page(page):
   attachTooltip();
   window.addEventListener('DOMContentLoaded', attachTooltip);
 })();
-"""
-    )
+""")
 
     def _block_external(route):
         parsed = urlparse(route.request.url)
