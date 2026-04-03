@@ -897,10 +897,10 @@ $(document).ready(function () {
 
     const prepRow = document.getElementById('run-prep-row')
     if (prepRow) {
-      const hasLockedPrep = typeof payload.preparation_seconds === 'number'
-      const prepSeconds = hasLockedPrep
-        ? payload.preparation_seconds
-        : (typeof payload.preparation_elapsed_seconds === 'number' ? payload.preparation_elapsed_seconds : null)
+      const prepLockedValue = coerceRunSeconds(payload.preparation_seconds)
+      const prepLiveValue = coerceRunSeconds(payload.preparation_elapsed_seconds)
+      const hasLockedPrep = typeof prepLockedValue === 'number'
+      const prepSeconds = hasLockedPrep ? prepLockedValue : prepLiveValue
       if (prepSeconds != null) {
         const prepLabel = formatRunSeconds(prepSeconds) || '0s'
         const prepClass = hasLockedPrep ? 'text-bg-success' : 'text-bg-primary'
@@ -929,9 +929,9 @@ $(document).ready(function () {
       headerRow.innerHTML = `<th>Library</th><th>Type</th><th>Status</th>${phaseHeaders}`
     }
 
+    const visibleLibraries = libraries.filter(entry => entry.status !== 'Skipped')
     const rows = document.getElementById('run-library-rows')
     if (rows) {
-      const visibleLibraries = libraries.filter(entry => entry.status !== 'Skipped')
       rows.innerHTML = visibleLibraries.map(entry => {
         let klass = 'text-bg-secondary'
         if (entry.status === 'Done') klass = 'text-bg-success'
@@ -1009,6 +1009,57 @@ $(document).ready(function () {
           </tr>
         `
       }).join('')
+    }
+
+    const footer = document.getElementById('run-library-footer')
+    const totalRow = document.getElementById('run-library-total-row')
+    if (footer && totalRow) {
+      if (!libraries.length || !phasesToShow.length) {
+        footer.classList.add('d-none')
+      } else {
+        const totals = new Map(phasesToShow.map(phase => [phase.key, 0]))
+        visibleLibraries.forEach(entry => {
+          if (entry.status === 'Skipped') return
+          const durations = entry.durations || {}
+          phasesToShow.forEach(phase => {
+            if (phase.key === 'playlists') {
+              return
+            }
+            const seconds = durations[phase.key]
+            if (typeof seconds === 'number' && Number.isFinite(seconds)) {
+              totals.set(phase.key, (totals.get(phase.key) || 0) + seconds)
+            }
+          })
+        })
+        if (phasesToShow.some(phase => phase.key === 'playlists')) {
+          const playlistTotal = typeof payload.playlist_total_seconds === 'number' ? payload.playlist_total_seconds : null
+          if (playlistTotal != null) {
+            totals.set('playlists', playlistTotal)
+          }
+        }
+        const prepSeconds = (() => {
+          const locked = coerceRunSeconds(payload.preparation_seconds)
+          if (typeof locked === 'number' && Number.isFinite(locked)) return locked
+          const live = coerceRunSeconds(payload.preparation_elapsed_seconds)
+          return typeof live === 'number' && Number.isFinite(live) ? live : 0
+        })()
+        let grandTotal = prepSeconds
+        totals.forEach((value) => {
+          if (typeof value === 'number' && Number.isFinite(value)) {
+            grandTotal += value
+          }
+        })
+        const totalCells = phasesToShow.map(phase => {
+          const totalSeconds = totals.get(phase.key)
+          if (typeof totalSeconds === 'number' && totalSeconds > 0) {
+            return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(totalSeconds)}</span></td>`
+          }
+          return '<td class="text-end text-muted small">—</td>'
+        }).join('')
+        const totalLabel = grandTotal > 0 ? `<span class="badge text-bg-success">${formatRunSeconds(grandTotal)}</span>` : '—'
+        totalRow.innerHTML = `<td class="fw-semibold">Total</td><td>—</td><td>${totalLabel}</td>${totalCells}`
+        footer.classList.remove('d-none')
+      }
     }
 
     container.classList.remove('d-none')
@@ -1318,6 +1369,42 @@ $(document).ready(function () {
     if (mins || hrs) parts.push(`${mins}m`)
     parts.push(`${secs}s`)
     return parts.join(' ')
+  }
+
+  function coerceRunSeconds (value) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value !== 'string') return null
+    const trimmed = value.trim()
+    if (!trimmed) return null
+    if (/^\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed)
+    const clockMatch = trimmed.match(/^(\d+):(\d{2}):(\d{2})$/)
+    if (clockMatch) {
+      const hrs = Number(clockMatch[1])
+      const mins = Number(clockMatch[2])
+      const secs = Number(clockMatch[3])
+      if ([hrs, mins, secs].every(num => Number.isFinite(num))) {
+        return (hrs * 3600) + (mins * 60) + secs
+      }
+    }
+    let total = 0
+    let matched = false
+    const hoursMatch = trimmed.match(/(\d+)\s*h\b/i)
+    if (hoursMatch) {
+      total += Number(hoursMatch[1]) * 3600
+      matched = true
+    }
+    const minsMatch = trimmed.match(/(\d+)\s*m\b/i)
+    if (minsMatch) {
+      total += Number(minsMatch[1]) * 60
+      matched = true
+    }
+    const secsMatch = trimmed.match(/(\d+)\s*s\b/i)
+    if (secsMatch) {
+      total += Number(secsMatch[1])
+      matched = true
+    }
+    if (matched && Number.isFinite(total)) return total
+    return null
   }
 
   function escapeHtml (value) {
