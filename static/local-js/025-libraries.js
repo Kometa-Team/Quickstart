@@ -1922,6 +1922,12 @@ function wireOffsetReset (scope) {
 
       if (group) {
         delete group.dataset.resetting
+        if (isRatingsOverlay) {
+          const alignmentInput = group.querySelector('[name$="[rating_alignment]"]')
+          if (alignmentInput) {
+            alignmentInput.dispatchEvent(new Event('change', { bubbles: true }))
+          }
+        }
         if (changes.length) {
           if (isRatingsOverlay) {
             if (hInput) {
@@ -2108,8 +2114,11 @@ function wireRatingsOffsetSync (scope) {
 
     const metricInputs = {
       backHeight: group.querySelector(`[name="${templateName}[back_height]"]`),
+      backWidth: group.querySelector(`[name="${templateName}[back_width]"]`),
       backPadding: group.querySelector(`[name="${templateName}[back_padding]"]`)
     }
+    const alignmentInput = group.querySelector(`[name="${templateName}[rating_alignment]"]`)
+    const addonPositionInput = group.querySelector(`[name="${templateName}[addon_position]"]`)
     const positionInput = group.querySelector(`[name="${templateName}[horizontal_position]"]`)
     const slotDefs = ['rating1', 'rating2', 'rating3'].map(slot => ({
       slot,
@@ -2136,10 +2145,171 @@ function wireRatingsOffsetSync (scope) {
     const isConfiguredSlot = (slot) => hasMeaningfulValue(slot.ratingInput) && hasMeaningfulValue(slot.imageInput)
     const getActiveSlots = () => slotDefs.filter(isConfiguredSlot)
     const getBackPadding = () => Math.max(0, toNumber(metricInputs.backPadding?.value, 15))
+    const getAlignment = () => {
+      const raw = normalizeValue(alignmentInput?.value || alignmentInput?.dataset?.default || 'vertical')
+      return raw === 'horizontal' ? 'horizontal' : 'vertical'
+    }
+    const getHorizontalPosition = () => {
+      const raw = normalizeValue(positionInput?.value || positionInput?.dataset?.default || 'left')
+      return (raw === 'center' || raw === 'right') ? raw : 'left'
+    }
+    const getVerticalPosition = () => {
+      const verticalInput = group.querySelector(`[name="${templateName}[vertical_position]"]`)
+      const raw = normalizeValue(verticalInput?.value || verticalInput?.dataset?.default || 'center')
+      return (raw === 'top' || raw === 'bottom') ? raw : 'center'
+    }
+    const setDefaultValue = (input, nextValue, force = false) => {
+      if (!input || nextValue === undefined || nextValue === null) return
+      const prevDefault = input.dataset.default
+      const prevValue = String(input.value ?? '')
+      const prevDefaultValue = String(prevDefault ?? '')
+      const shouldUpdate = force || prevValue === prevDefaultValue || prevValue === ''
+      input.dataset.default = String(nextValue)
+      if (shouldUpdate) {
+        input.value = String(nextValue)
+        if (group.dataset.ratingsBulkUpdate !== 'true') {
+          input.dispatchEvent(new Event('input', { bubbles: true }))
+          input.dispatchEvent(new Event('change', { bubbles: true }))
+        }
+      }
+    }
+    const applyAlignmentDefaults = (force = false) => {
+      if (!alignmentInput) return
+      const alignment = getAlignment()
+      const defaults = alignment === 'horizontal'
+        ? { backWidth: 270, backHeight: 80, addonPosition: 'left' }
+        : { backWidth: 160, backHeight: 160, addonPosition: 'top' }
+      setDefaultValue(metricInputs.backWidth, defaults.backWidth, force)
+      setDefaultValue(metricInputs.backHeight, defaults.backHeight, force)
+      setDefaultValue(addonPositionInput, defaults.addonPosition, force)
+    }
     const getVerticalStep = () => {
       const backHeight = toNumber(metricInputs.backHeight?.value, 160)
       const backPadding = getBackPadding()
       return backHeight + (backPadding * 3)
+    }
+    const getHorizontalStep = () => {
+      const backWidth = toNumber(metricInputs.backWidth?.value, 160)
+      const backPadding = getBackPadding()
+      return backWidth + (backPadding * 3)
+    }
+    const ratingConstants = {
+      standard: 30,
+      center: 0,
+      v2: 235,
+      v3: 440,
+      cv2: 105,
+      cv3: 205,
+      h2: 345,
+      h3: 660,
+      ch2: 160,
+      ch3: 335
+    }
+    const computeRatingOffsets = () => {
+      const alignment = getAlignment()
+      const hPos = getHorizontalPosition()
+      const vPos = getVerticalPosition()
+      const slotStates = {
+        rating1: slotDefs[0] ? isConfiguredSlot(slotDefs[0]) : false,
+        rating2: slotDefs[1] ? isConfiguredSlot(slotDefs[1]) : false,
+        rating3: slotDefs[2] ? isConfiguredSlot(slotDefs[2]) : false
+      }
+      const none1 = !slotStates.rating1
+      const none2 = !slotStates.rating2
+      const none3 = !slotStates.rating3
+
+      const r1h = (() => {
+        if (alignment === 'vertical' && hPos === 'center') return ratingConstants.center
+        if (alignment === 'horizontal' && hPos === 'center' && none2 && none3) return ratingConstants.center
+        if (alignment === 'horizontal' && hPos === 'center' && none2) return -ratingConstants.ch2
+        if (alignment === 'horizontal' && hPos === 'center' && none3) return -ratingConstants.ch2
+        if (alignment === 'horizontal' && hPos === 'center') return -ratingConstants.ch3
+        if (alignment === 'horizontal' && hPos === 'right' && none2 && none3) return ratingConstants.standard
+        if (alignment === 'horizontal' && hPos === 'right' && none2) return ratingConstants.h2
+        if (alignment === 'horizontal' && hPos === 'right' && none3) return ratingConstants.h2
+        if (alignment === 'horizontal' && hPos === 'right') return ratingConstants.h3
+        return ratingConstants.standard
+      })()
+      const r1v = (() => {
+        if (alignment === 'horizontal' && vPos === 'center') return ratingConstants.center
+        if (alignment === 'vertical' && vPos === 'center' && none2 && none3) return ratingConstants.center
+        if (alignment === 'vertical' && vPos === 'center' && none2) return -ratingConstants.cv2
+        if (alignment === 'vertical' && vPos === 'center' && none3) return -ratingConstants.cv2
+        if (alignment === 'vertical' && vPos === 'center') return -ratingConstants.cv3
+        if (alignment === 'vertical' && vPos === 'bottom' && none2 && none3) return ratingConstants.standard
+        if (alignment === 'vertical' && vPos === 'bottom' && none2) return ratingConstants.v2
+        if (alignment === 'vertical' && vPos === 'bottom' && none3) return ratingConstants.v2
+        if (alignment === 'vertical' && vPos === 'bottom') return ratingConstants.v3
+        return ratingConstants.standard
+      })()
+      const r2h = (() => {
+        if (alignment === 'vertical' && hPos === 'center') return ratingConstants.center
+        if (alignment === 'horizontal' && hPos === 'center' && none1 && none3) return ratingConstants.center
+        if (alignment === 'horizontal' && hPos === 'center' && none1) return -ratingConstants.ch2
+        if (alignment === 'horizontal' && hPos === 'center' && none3) return ratingConstants.ch2
+        if (alignment === 'horizontal' && hPos === 'center') return ratingConstants.center
+        if (alignment === 'horizontal' && hPos === 'right' && none1 && none3) return ratingConstants.standard
+        if (alignment === 'horizontal' && hPos === 'right' && none3) return ratingConstants.standard
+        if (alignment === 'horizontal' && hPos === 'right') return ratingConstants.h2
+        if (alignment === 'horizontal' && hPos === 'left' && none1) return ratingConstants.standard
+        if (alignment === 'horizontal' && hPos === 'left') return ratingConstants.h2
+        return ratingConstants.standard
+      })()
+      const r2v = (() => {
+        if (alignment === 'horizontal' && vPos === 'center') return ratingConstants.center
+        if (alignment === 'vertical' && vPos === 'center' && none1 && none3) return ratingConstants.center
+        if (alignment === 'vertical' && vPos === 'center' && none1) return -ratingConstants.cv2
+        if (alignment === 'vertical' && vPos === 'center' && none3) return ratingConstants.cv2
+        if (alignment === 'vertical' && vPos === 'center') return ratingConstants.center
+        if (alignment === 'vertical' && vPos === 'bottom' && none1 && none3) return ratingConstants.standard
+        if (alignment === 'vertical' && vPos === 'bottom' && none1) return ratingConstants.v2
+        if (alignment === 'vertical' && vPos === 'bottom' && none3) return ratingConstants.standard
+        if (alignment === 'vertical' && vPos === 'bottom') return ratingConstants.v2
+        if (alignment === 'vertical' && vPos === 'top' && none1) return ratingConstants.standard
+        if (alignment === 'vertical' && vPos === 'top') return ratingConstants.v2
+        return ratingConstants.standard
+      })()
+      const r3h = (() => {
+        if (alignment === 'vertical' && hPos === 'center') return ratingConstants.center
+        if (alignment === 'horizontal' && hPos === 'center' && none1 && none2) return ratingConstants.center
+        if (alignment === 'horizontal' && hPos === 'center' && none1) return ratingConstants.ch2
+        if (alignment === 'horizontal' && hPos === 'center' && none2) return ratingConstants.ch2
+        if (alignment === 'horizontal' && hPos === 'center') return ratingConstants.ch3
+        if (alignment === 'horizontal' && hPos === 'left' && none1 && none2) return ratingConstants.standard
+        if (alignment === 'horizontal' && hPos === 'left' && none1) return ratingConstants.h2
+        if (alignment === 'horizontal' && hPos === 'left' && none2) return ratingConstants.h2
+        if (alignment === 'horizontal' && hPos === 'left') return ratingConstants.h3
+        return ratingConstants.standard
+      })()
+      const r3v = (() => {
+        if (alignment === 'horizontal' && vPos === 'center') return ratingConstants.center
+        if (alignment === 'vertical' && vPos === 'center' && none1 && none2) return ratingConstants.center
+        if (alignment === 'vertical' && vPos === 'center' && none1) return ratingConstants.cv2
+        if (alignment === 'vertical' && vPos === 'center' && none2) return ratingConstants.cv2
+        if (alignment === 'vertical' && vPos === 'center') return ratingConstants.cv3
+        if (alignment === 'vertical' && vPos === 'top' && none1 && none2) return ratingConstants.standard
+        if (alignment === 'vertical' && vPos === 'top' && none1) return ratingConstants.v2
+        if (alignment === 'vertical' && vPos === 'top' && none2) return ratingConstants.v2
+        if (alignment === 'vertical' && vPos === 'top') return ratingConstants.v3
+        return ratingConstants.standard
+      })()
+      return {
+        rating1: { horizontal: r1h, vertical: r1v },
+        rating2: { horizontal: r2h, vertical: r2v },
+        rating3: { horizontal: r3h, vertical: r3v }
+      }
+    }
+    const applyComputedOffsets = (force = false) => {
+      const offsets = computeRatingOffsets()
+      const targetSlots = slotDefs.filter(slot => slot.horizontalInput || slot.verticalInput)
+      group.dataset.ratingsBulkUpdate = 'true'
+      targetSlots.forEach(slot => {
+        const computed = offsets[slot.slot]
+        if (!computed) return
+        setDefaultValue(slot.horizontalInput, computed.horizontal, force)
+        setDefaultValue(slot.verticalInput, computed.vertical, force)
+      })
+      delete group.dataset.ratingsBulkUpdate
     }
     const getHorizontalSlotOffset = (sharedValue) => {
       return toNumber(sharedValue, 15) + getBackPadding()
@@ -2175,6 +2345,7 @@ function wireRatingsOffsetSync (scope) {
     }
 
     const syncSharedFromSlots = (axis) => {
+      const alignment = getAlignment()
       const sharedInput = sharedInputs[axis]
       const inputs = getActiveSlots().map(slot => slot[`${axis}Input`]).filter(Boolean)
       if (!sharedInput || !inputs.length) return
@@ -2186,7 +2357,7 @@ function wireRatingsOffsetSync (scope) {
         inputs.reduce((sum, input) => sum + toNumber(input.value, toNumber(input.dataset.default, 0)), 0) / inputs.length
       )
       withSyncGuard(() => {
-        const sharedValue = axis === 'horizontal'
+        const sharedValue = axis === 'horizontal' && alignment !== 'horizontal'
           ? average - getBackPadding()
           : average
         sharedInput.value = String(sharedValue)
@@ -2197,6 +2368,7 @@ function wireRatingsOffsetSync (scope) {
     }
 
     const syncSlotsFromShared = (axis) => {
+      const alignment = getAlignment()
       const sharedInput = sharedInputs[axis]
       const activeSlots = getActiveSlots()
       if (!sharedInput || !activeSlots.length) return
@@ -2208,8 +2380,20 @@ function wireRatingsOffsetSync (scope) {
       sharedInput.dataset.prevValue = String(current)
       withSyncGuard(() => {
         if (axis === 'horizontal') {
+          if (alignment === 'horizontal') {
+            const horizontalStep = getHorizontalStep()
+            const centerIndex = (activeSlots.length - 1) / 2
+            activeSlots.forEach((slot, index) => {
+              updateInputValue(slot.horizontalInput, current + ((index - centerIndex) * horizontalStep))
+            })
+            return
+          }
           const slotOffset = getHorizontalSlotOffset(current)
           activeSlots.forEach(slot => updateInputValue(slot.horizontalInput, slotOffset))
+          return
+        }
+        if (alignment === 'horizontal') {
+          activeSlots.forEach(slot => updateInputValue(slot.verticalInput, current))
           return
         }
         const verticalStep = getVerticalStep()
@@ -2227,6 +2411,8 @@ function wireRatingsOffsetSync (scope) {
       if (hasExplicitSlotOffsets('vertical')) syncSharedFromSlots('vertical')
     }
 
+    applyAlignmentDefaults()
+    applyComputedOffsets()
     seedSharedFromSlots()
 
     Object.entries(sharedInputs).forEach(([axis, input]) => {
@@ -2236,11 +2422,24 @@ function wireRatingsOffsetSync (scope) {
       input.addEventListener('change', syncFromShared)
     })
 
+    if (alignmentInput && alignmentInput.dataset.ratingsAlignmentBound !== 'true') {
+      const handleAlignmentChange = () => {
+        if (group.dataset.resetting === 'true') return
+        group.dataset.ratingsBulkUpdate = 'true'
+        applyAlignmentDefaults(true)
+        applyComputedOffsets(true)
+        delete group.dataset.ratingsBulkUpdate
+        refreshDerivedOffsets()
+      }
+      alignmentInput.addEventListener('input', handleAlignmentChange)
+      alignmentInput.addEventListener('change', handleAlignmentChange)
+      alignmentInput.dataset.ratingsAlignmentBound = 'true'
+    }
+
     if (positionInput && positionInput.dataset.ratingsPositionBound !== 'true') {
       const refreshFromPosition = () => {
         if (group.dataset.resetting === 'true') return
-        sharedInputs.horizontal?.dispatchEvent(new Event('change', { bubbles: true }))
-        sharedInputs.vertical?.dispatchEvent(new Event('change', { bubbles: true }))
+        refreshDerivedOffsets()
       }
       positionInput.addEventListener('change', refreshFromPosition)
       positionInput.dataset.ratingsPositionBound = 'true'
@@ -2253,11 +2452,16 @@ function wireRatingsOffsetSync (scope) {
     })
 
     const refreshDerivedOffsets = () => {
-      if (!valuesDiffer(sharedInputs.horizontal) && !valuesDiffer(sharedInputs.vertical) && !hasExplicitSlotOffsets()) {
+      if (group.dataset.resetting === 'true') return
+      const sharedChanged = valuesDiffer(sharedInputs.horizontal) || valuesDiffer(sharedInputs.vertical)
+      if (sharedChanged) {
+        syncSlotsFromShared('horizontal')
+        syncSlotsFromShared('vertical')
         return
       }
-      syncSlotsFromShared('horizontal')
-      syncSlotsFromShared('vertical')
+      if (!hasExplicitSlotOffsets()) {
+        applyComputedOffsets()
+      }
     }
 
     slotDefs.forEach(slot => {
@@ -2265,6 +2469,7 @@ function wireRatingsOffsetSync (scope) {
       if (slot.imageInput) slot.imageInput.addEventListener('change', refreshDerivedOffsets)
     })
     if (metricInputs.backHeight) metricInputs.backHeight.addEventListener('change', refreshDerivedOffsets)
+    if (metricInputs.backWidth) metricInputs.backWidth.addEventListener('change', refreshDerivedOffsets)
     if (metricInputs.backPadding) metricInputs.backPadding.addEventListener('change', refreshDerivedOffsets)
 
     group.dataset.ratingsOffsetSyncBound = 'true'

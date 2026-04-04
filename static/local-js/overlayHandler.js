@@ -2063,7 +2063,7 @@ const OverlayHandler = {
       if (cfg.id !== 'overlay_ratings') return null
       const fontDefaults = {
         font: 'Inter-Medium.ttf',
-        font_size: 55,
+        font_size: 63,
         font_color: '#FFFFFFFF',
         stroke_width: 1,
         stroke_color: '#00000000'
@@ -2177,9 +2177,19 @@ const OverlayHandler = {
       const boxWidth = contentWidth + (innerPad * 2)
       const boxHeight = contentHeight + (innerPad * 2)
       const gap = innerPad
+      const alignmentRaw = String(getSlotValue('rating_alignment', 'vertical') || '').toLowerCase()
+      const alignment = alignmentRaw === 'horizontal' ? 'horizontal' : 'vertical'
+      const addonRaw = String(getSlotValue('addon_position', alignment === 'horizontal' ? 'left' : 'top') || '').toLowerCase()
+      const addonPosition = addonRaw === 'left' ? 'left' : 'top'
+      const addonOffset = Math.max(0, Number(getSlotValue('addon_offset', 15)) || 0)
       const canvas = document.createElement('canvas')
-      canvas.width = Math.ceil(boxWidth)
-      canvas.height = Math.ceil((boxHeight * items.length) + (gap * Math.max(0, items.length - 1)))
+      if (alignment === 'horizontal') {
+        canvas.width = Math.ceil((boxWidth * items.length) + (gap * Math.max(0, items.length - 1)))
+        canvas.height = Math.ceil(boxHeight)
+      } else {
+        canvas.width = Math.ceil(boxWidth)
+        canvas.height = Math.ceil((boxHeight * items.length) + (gap * Math.max(0, items.length - 1)))
+      }
       const ctx = canvas.getContext('2d')
       if (!ctx) return resolveOverlayImage(cfg)
 
@@ -2192,8 +2202,9 @@ const OverlayHandler = {
       ctx.textBaseline = 'alphabetic'
 
       items.forEach((item, idx) => {
-        const boxTop = (boxHeight + gap) * idx
-        drawRoundedRect(ctx, 0, boxTop, boxWidth, boxHeight, radius)
+        const boxLeft = alignment === 'horizontal' ? (boxWidth + gap) * idx : 0
+        const boxTop = alignment === 'horizontal' ? 0 : (boxHeight + gap) * idx
+        drawRoundedRect(ctx, boxLeft, boxTop, boxWidth, boxHeight, radius)
         if (fill.a > 0) {
           ctx.fillStyle = `rgba(${fill.r}, ${fill.g}, ${fill.b}, ${fill.a})`
           ctx.fill()
@@ -2201,7 +2212,7 @@ const OverlayHandler = {
         if (lineWidth > 0 && stroke.a > 0) {
           const inset = lineWidth / 2
           const strokeRadius = Math.max(0, radius - inset)
-          drawRoundedRect(ctx, inset, boxTop + inset, boxWidth - (inset * 2), boxHeight - (inset * 2), strokeRadius)
+          drawRoundedRect(ctx, boxLeft + inset, boxTop + inset, boxWidth - (inset * 2), boxHeight - (inset * 2), strokeRadius)
           ctx.strokeStyle = `rgba(${stroke.r}, ${stroke.g}, ${stroke.b}, ${stroke.a})`
           ctx.lineWidth = lineWidth
           ctx.stroke()
@@ -2215,18 +2226,40 @@ const OverlayHandler = {
         const strokeWidth = Math.max(0, Number(item.strokeWidth) || 0)
         const strokeColor = item.strokeColor || fontDefaults.stroke_color
 
-        const textBottom = boxTop + boxHeight - innerPad
         ctx.font = `700 ${fontSize}px "${fontFamily}"`
-        drawTextWithStroke(ctx, item.text, boxWidth / 2, textBottom, fontColor, strokeColor, strokeWidth)
+        if (addonPosition === 'left') {
+          const contentX = boxLeft + innerPad
+          const contentY = boxTop + innerPad
+          const contentW = boxWidth - (innerPad * 2)
+          const contentH = boxHeight - (innerPad * 2)
+          const iconMaxHeight = Math.max(1, contentH)
+          const scale = Math.min(iconMaxHeight / item.img.height, 1)
+          const drawW = item.img.width * scale
+          const drawH = item.img.height * scale
+          const drawX = contentX
+          const drawY = contentY + ((contentH - drawH) / 2)
+          ctx.drawImage(item.img, drawX, drawY, drawW, drawH)
 
-        const iconMaxHeight = Math.max(1, boxHeight - fontSize - (innerPad * 2))
-        const iconMaxWidth = Math.max(1, boxWidth - (innerPad * 2))
-        const scale = Math.min(iconMaxWidth / item.img.width, iconMaxHeight / item.img.height, 1)
-        const drawW = item.img.width * scale
-        const drawH = item.img.height * scale
-        const drawX = (boxWidth - drawW) / 2
-        const drawY = boxTop + innerPad + ((iconMaxHeight - drawH) / 2)
-        ctx.drawImage(item.img, drawX, drawY, drawW, drawH)
+          const textRegionX = contentX + drawW + addonOffset
+          const textRegionW = Math.max(1, (contentX + contentW) - textRegionX)
+          const textX = textRegionX + (textRegionW / 2)
+          const textY = contentY + (contentH / 2) + (fontSize * 0.35)
+          ctx.textAlign = 'center'
+          drawTextWithStroke(ctx, item.text, textX, textY, fontColor, strokeColor, strokeWidth)
+          ctx.textAlign = 'center'
+        } else {
+          const textBottom = boxTop + boxHeight - innerPad
+          drawTextWithStroke(ctx, item.text, boxLeft + (boxWidth / 2), textBottom, fontColor, strokeColor, strokeWidth)
+
+          const iconMaxHeight = Math.max(1, boxHeight - fontSize - (innerPad * 2))
+          const iconMaxWidth = Math.max(1, boxWidth - (innerPad * 2))
+          const scale = Math.min(iconMaxWidth / item.img.width, iconMaxHeight / item.img.height, 1)
+          const drawW = item.img.width * scale
+          const drawH = item.img.height * scale
+          const drawX = boxLeft + (boxWidth - drawW) / 2
+          const drawY = boxTop + innerPad + ((iconMaxHeight - drawH) / 2)
+          ctx.drawImage(item.img, drawX, drawY, drawW, drawH)
+        }
       })
 
       cfg.naturalWidth = canvas.width
@@ -4215,7 +4248,7 @@ const OverlayHandler = {
         }
 
         if (cfg.id === 'overlay_ratings' && layer && cfg.container) {
-          const refreshRatings = (event, forceSync = false) => {
+          const runRatingsUpdate = (event, forceSync = false) => {
             if (cfg.container?.dataset?.resetting === 'true') return
             enforceUniqueRatingTypes(cfg)
             if (event && event.target && cfg.container) {
@@ -4263,6 +4296,23 @@ const OverlayHandler = {
               applyPosition(cfg)
             })
           }
+          const scheduleRatingsUpdate = (event, forceSync = false) => {
+            if (!cfg.container) return
+            if (cfg.container.dataset.ratingRefreshScheduled === 'true') {
+              if (forceSync) cfg.container.dataset.ratingRefreshForce = 'true'
+              return
+            }
+            cfg.container.dataset.ratingRefreshScheduled = 'true'
+            if (forceSync) cfg.container.dataset.ratingRefreshForce = 'true'
+            requestAnimationFrame(() => {
+              const doForce = cfg.container?.dataset?.ratingRefreshForce === 'true'
+              if (cfg.container) {
+                delete cfg.container.dataset.ratingRefreshScheduled
+                delete cfg.container.dataset.ratingRefreshForce
+              }
+              runRatingsUpdate(null, doForce)
+            })
+          }
           const templateName = cfg.container.dataset.overlayTemplate
           const ratingFontInputs = [
             getTemplateInput(cfg, 'rating1_font'),
@@ -4301,25 +4351,32 @@ const OverlayHandler = {
             `[name="${templateName}[rating3_font_color]"]`,
             `[name="${templateName}[rating3_stroke_width]"]`,
             `[name="${templateName}[rating3_stroke_color]"]`,
-            `[name="${templateName}[horizontal_position]"]`
+            `[name="${templateName}[horizontal_position]"]`,
+            `[name="${templateName}[vertical_position]"]`,
+            `[name="${templateName}[rating_alignment]"]`,
+            `[name="${templateName}[back_width]"]`,
+            `[name="${templateName}[back_height]"]`,
+            `[name="${templateName}[back_padding]"]`,
+            `[name="${templateName}[addon_position]"]`,
+            `[name="${templateName}[addon_offset]"]`
           ]
           const inputs = cfg.container.querySelectorAll(ratingSelectors.join(', '))
           inputs.forEach(input => {
-            input.addEventListener('input', refreshRatings)
-            input.addEventListener('change', refreshRatings)
+            input.addEventListener('input', scheduleRatingsUpdate)
+            input.addEventListener('change', scheduleRatingsUpdate)
           })
           if (cfg.toggle && cfg.toggle.dataset.ratingSyncBound !== 'true') {
             cfg.toggle.dataset.ratingSyncBound = 'true'
             cfg.toggle.addEventListener('change', () => {
               if (cfg.toggle.checked) {
-                refreshRatings(null, true)
+                scheduleRatingsUpdate(null, true)
               }
             })
           }
           if (cfg.toggle && cfg.toggle.checked) {
-            refreshRatings(null, true)
+            scheduleRatingsUpdate(null, true)
           } else {
-            refreshRatings()
+            scheduleRatingsUpdate()
           }
         }
 

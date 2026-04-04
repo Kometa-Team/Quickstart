@@ -532,7 +532,7 @@
           "rating1_font_size": {
             "input_type": "number",
             "label": "Rating 1 Font Size",
-            "default": 55
+            "default": 63
           },
           "rating1_font_color": {
             "input_type": "text",
@@ -645,7 +645,7 @@
           "rating2_font_size": {
             "input_type": "number",
             "label": "Rating 2 Font Size",
-            "default": 55
+            "default": 63
           },
           "rating2_font_color": {
             "input_type": "text",
@@ -758,7 +758,7 @@
           "rating3_font_size": {
             "input_type": "number",
             "label": "Rating 3 Font Size",
-            "default": 55
+            "default": 63
           },
           "rating3_font_color": {
             "input_type": "text",
@@ -834,6 +834,20 @@
             "default": 30,
             "label": "Backdrop Radius"
           },
+          "addon_position": {
+            "input_type": "select",
+            "default": "top",
+            "options": [
+              "top",
+              "left"
+            ],
+            "label": "Addon Position"
+          },
+          "addon_offset": {
+            "input_type": "number",
+            "default": 15,
+            "label": "Addon Offset"
+          },
           "horizontal_position": {
             "input_type": "select",
             "default": "left",
@@ -843,6 +857,25 @@
               "right"
             ],
             "label": "Horizontal Position"
+          },
+          "vertical_position": {
+            "input_type": "select",
+            "default": "center",
+            "options": [
+              "top",
+              "center",
+              "bottom"
+            ],
+            "label": "Vertical Position"
+          },
+          "rating_alignment": {
+            "input_type": "select",
+            "default": "vertical",
+            "options": [
+              "vertical",
+              "horizontal"
+            ],
+            "label": "Rating Alignment"
           },
           "horizontal_offset": {
             "input_type": "number",
@@ -922,7 +955,7 @@
           "rating1_font_size": {
             "input_type": "number",
             "label": "Rating 1 Font Size",
-            "default": 55
+            "default": 63
           },
           "rating1_font_color": {
             "input_type": "text",
@@ -1003,7 +1036,7 @@
           "rating2_font_size": {
             "input_type": "number",
             "label": "Rating 2 Font Size",
-            "default": 55
+            "default": 63
           },
           "rating2_font_color": {
             "input_type": "text",
@@ -1079,6 +1112,20 @@
             "default": 30,
             "label": "Backdrop Radius"
           },
+          "addon_position": {
+            "input_type": "select",
+            "default": "top",
+            "options": [
+              "top",
+              "left"
+            ],
+            "label": "Addon Position"
+          },
+          "addon_offset": {
+            "input_type": "number",
+            "default": 15,
+            "label": "Addon Offset"
+          },
           "builder_level": {
             "input_type": "select",
             "default": "episode",
@@ -1095,6 +1142,25 @@
               "right"
             ],
             "label": "Horizontal Position"
+          },
+          "vertical_position": {
+            "input_type": "select",
+            "default": "center",
+            "options": [
+              "top",
+              "center",
+              "bottom"
+            ],
+            "label": "Vertical Position"
+          },
+          "rating_alignment": {
+            "input_type": "select",
+            "default": "vertical",
+            "options": [
+              "vertical",
+              "horizontal"
+            ],
+            "label": "Rating Alignment"
           },
           "horizontal_offset": {
             "input_type": "number",
@@ -2877,33 +2943,33 @@
         "url": "https://kometa.wiki/en/nightly/defaults/overlays/versions/",
         "image_url": "https://kometa.wiki/en/nightly/assets/images/defaults/overlays/versions.png",
         "overlay_url": "https://raw.githubusercontent.com/Kometa-Team/Kometa/refs/heads/nightly/defaults/overlays/images/versions.png",
-          "default_offsets": {
+        "default_offsets": {
+          "horizontal": 15,
+          "vertical": 335,
+          "origin": "bottom_right"
+        },
+        "default_offsets_by_type": {
+          "movie": {
             "horizontal": 15,
             "vertical": 335,
             "origin": "bottom_right"
           },
-          "default_offsets_by_type": {
-            "movie": {
-              "horizontal": 15,
-              "vertical": 335,
-              "origin": "bottom_right"
-            },
-            "show": {
-              "horizontal": 15,
-              "vertical": 335,
-              "origin": "bottom_right"
-            },
-            "season": {
-              "horizontal": 15,
-              "vertical": 335,
-              "origin": "bottom_right"
-            },
-            "episode": {
-              "horizontal": 15,
-              "vertical": 260,
-              "origin": "bottom_right"
-            }
+          "show": {
+            "horizontal": 15,
+            "vertical": 335,
+            "origin": "bottom_right"
           },
+          "season": {
+            "horizontal": 15,
+            "vertical": 335,
+            "origin": "bottom_right"
+          },
+          "episode": {
+            "horizontal": 15,
+            "vertical": 260,
+            "origin": "bottom_right"
+          }
+        },
         "media_types": [
           "movie",
           "show",
