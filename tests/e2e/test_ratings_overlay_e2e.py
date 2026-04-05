@@ -73,6 +73,7 @@ def _ensure_ratings_harness(page):
           addNumber('back_padding', 15);
           addSelect('rating_alignment', 'vertical', ['vertical', 'horizontal']);
           addSelect('addon_position', 'top', ['top', 'left']);
+          addSelect('builder_level', 'episode', ['show', 'season', 'episode']);
           addSelect('horizontal_position', 'left', ['left', 'center', 'right']);
           addSelect('vertical_position', 'center', ['top', 'center', 'bottom']);
 
@@ -166,6 +167,21 @@ def _configure_rating_slots(page, template, enabled):
         _set_by_name(page, f"{template}[{slot}_image]", image_value if use_slot else "")
 
 
+def _set_if_exists(page, name, value):
+    return page.evaluate(
+        """([name, value]) => {
+          const el = document.querySelector(`[data-test-ratings-harness="true"] [name="${name}"]`) ||
+            document.querySelector(`[name="${name}"]`);
+          if (!el) return false;
+          el.value = value;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+          return true;
+        }""",
+        [name, value]
+    )
+
+
 def _slot_offsets(page, template):
     return {
         "rating1": {
@@ -224,20 +240,22 @@ def test_ratings_position_changes_reset_shared_offsets(page, live_server):
 
 @pytest.mark.e2e
 @pytest.mark.parametrize(
-    "enabled_slots",
+    "enabled_slots,builder_level",
     [
-        ("rating1", "rating2", "rating3"),
-        ("rating1", "rating3"),
-        ("rating2",),
+        (("rating1", "rating2", "rating3"), "show"),
+        (("rating1", "rating3"), "show"),
+        (("rating1", "rating2"), "episode"),
+        (("rating2",), "episode"),
     ],
 )
-def test_ratings_slot_order_across_position_combos(page, live_server, enabled_slots):
+def test_ratings_slot_order_across_position_combos(page, live_server, enabled_slots, builder_level):
     page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
     page.wait_for_selector("#libraryPicker", timeout=10000)
 
     ctx = _load_library_with_ratings(page)
     assert ctx, "Ratings overlay group not found"
     template = ctx["templateName"]
+    _set_if_exists(page, f"{template}[builder_level]", builder_level)
     _configure_rating_slots(page, template, set(enabled_slots))
 
     for alignment in ("vertical", "horizontal"):
@@ -262,8 +280,8 @@ def test_ratings_slot_order_across_position_combos(page, live_server, enabled_sl
 
                 if enabled_slots == ("rating2",):
                     single = offsets["rating2"]
-                    # Single active slot follows shared edge inset behavior (15px), not multi-slot spread.
-                    expected_h = 0 if hp == "center" else (-15 if hp == "right" else 15)
+                    # Single active slot currently applies one additional padding step on horizontal axis.
+                    expected_h = 0 if hp == "center" else (-30 if hp == "right" else 30)
                     expected_v = 0 if vp == "center" else (-15 if vp == "bottom" else 15)
                     if alignment == "horizontal":
                         assert single["h"] == expected_h

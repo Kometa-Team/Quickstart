@@ -23,13 +23,17 @@ def _ordered_stems():
     return included
 
 
+def _goto_step(page, live_server, stem):
+    page.goto(f"{live_server}/step/{stem}", wait_until="commit")
+
+
 @pytest.mark.e2e
 def test_wizard_happy_path_all_steps(page, live_server):
     stems = _ordered_stems()
     assert stems
 
     for stem in stems:
-        page.goto(f"{live_server}/step/{stem}", wait_until="domcontentloaded")
+        _goto_step(page, live_server, stem)
         heading = page.locator("h2").first
         expect(heading).to_be_visible()
 
@@ -40,8 +44,8 @@ def test_back_forward_navigation(page, live_server):
     assert len(stems) >= 2
 
     first, second = stems[0], stems[1]
-    page.goto(f"{live_server}/step/{first}", wait_until="domcontentloaded")
-    page.goto(f"{live_server}/step/{second}", wait_until="domcontentloaded")
+    _goto_step(page, live_server, first)
+    _goto_step(page, live_server, second)
 
     page.go_back()
     expect(page).to_have_url(re.compile(f"/step/{re.escape(first)}$"))

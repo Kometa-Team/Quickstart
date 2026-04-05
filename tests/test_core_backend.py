@@ -120,3 +120,14 @@ def test_yaml_generation_missing_sections_shows_error(client, isolated_config_di
     resp = client.get("/step/900-final")
     assert resp.status_code == 200
     assert b"Missing sections" in resp.data
+
+
+def test_list_uploaded_images_includes_builtin_guides(client):
+    expected = {"overlay_alignment_guide.png", "overlay_alignment_guide_episodes.png"}
+
+    for image_type in ("movie", "show", "season", "episode"):
+        resp = client.get(f"/list_uploaded_images?type={image_type}")
+        assert resp.status_code == 200
+        payload = resp.get_json()
+        assert payload["status"] == "success"
+        assert expected.issubset(set(payload["images"]))

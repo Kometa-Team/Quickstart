@@ -1,6 +1,15 @@
 /* global showToast , bootstrap, updateFormData */
 
 const ImageHandler = {
+  BUILTIN_PREVIEW_IMAGES: new Set([
+    'overlay_alignment_guide.png',
+    'overlay_alignment_guide_episodes.png'
+  ]),
+
+  isBuiltinPreviewImage: function (imageName) {
+    return ImageHandler.BUILTIN_PREVIEW_IMAGES.has(imageName)
+  },
+
   loadAvailableImages: function (libraryId, type = 'movie', callback = null) {
     const dropdownId = `${libraryId}-${type}-image-dropdown`
     const hiddenInputId = `${libraryId}-${type}_selected_image` // FIXED to match stored key
@@ -42,6 +51,8 @@ const ImageHandler = {
           console.warn(`[DEBUG] Hidden input image not found in dropdown for ${libraryId} - ${type}.`)
           ImageHandler.updateOverlayBoardBackground(libraryId, type, 'default')
         }
+
+        ImageHandler.toggleDeleteButton(libraryId, type)
 
         if (callback) callback()
       })
@@ -102,7 +113,11 @@ const ImageHandler = {
     const baseWidth = Number(board.dataset.baseWidth) || (type === 'episode' ? 1920 : 1000)
     const baseHeight = Number(board.dataset.baseHeight) || (type === 'episode' ? 1080 : 1500)
     const normalized = selectedImage && selectedImage !== 'default'
-      ? `/config/uploads/${type}s/${encodeURIComponent(selectedImage)}`
+      ? (
+          ImageHandler.isBuiltinPreviewImage(selectedImage)
+            ? `/static/images/${encodeURIComponent(selectedImage)}`
+            : `/config/uploads/${type}s/${encodeURIComponent(selectedImage)}`
+        )
       : `/static/images/default-${baseWidth}x${baseHeight}.png`
     canvas.style.backgroundImage = `url("${normalized}")`
   },
@@ -350,7 +365,7 @@ const ImageHandler = {
       return
     }
 
-    const isDefaultSelected = dropdown.value === 'default'
+    const isDefaultSelected = dropdown.value === 'default' || ImageHandler.isBuiltinPreviewImage(dropdown.value)
     const onlyDefaultExists = dropdown.options.length === 1 && isDefaultSelected
 
     const show = !(isDefaultSelected || onlyDefaultExists)
@@ -363,7 +378,7 @@ const ImageHandler = {
   deleteCustomImage: function (libraryId, type = 'movie') {
     const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`)
     const selectedImage = dropdown?.value
-    if (!selectedImage || selectedImage === 'default') {
+    if (!selectedImage || selectedImage === 'default' || ImageHandler.isBuiltinPreviewImage(selectedImage)) {
       showToast('warning', 'Please select an image to delete.')
       return
     }
@@ -412,7 +427,7 @@ const ImageHandler = {
     }
 
     const selectedImage = dropdown.value
-    if (!selectedImage || selectedImage === 'default') {
+    if (!selectedImage || selectedImage === 'default' || ImageHandler.isBuiltinPreviewImage(selectedImage)) {
       showToast('warning', 'Please select a custom image first.')
       return
     }

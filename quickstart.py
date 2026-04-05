@@ -892,12 +892,52 @@ DEFAULT_IMAGE_MAP = {
     "season": os.path.join(IMAGES_FOLDER, "default-season_preview.png"),
     "episode": os.path.join(IMAGES_FOLDER, "default-episode_preview.png"),
 }
+BUILTIN_PREVIEW_IMAGES = (
+    "overlay_alignment_guide.png",
+    "overlay_alignment_guide_episodes.png",
+)
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 OVERLAY_CACHE_FOLDER = os.path.join(helpers.CONFIG_DIR, "cache", "overlays")
 os.makedirs(OVERLAY_CACHE_FOLDER, exist_ok=True)
 OVERLAY_CACHE_TTL_SECONDS = 60 * 60 * 24 * 30
 _FONT_CACHE: list[str] = []
+
+
+def _list_preview_images_for_type(image_type: str) -> list[str]:
+    """Return built-in guide images plus uploaded images for a preview image type."""
+    builtins = [name for name in BUILTIN_PREVIEW_IMAGES if os.path.exists(os.path.join(IMAGES_FOLDER, name))]
+    uploads_dir = UPLOAD_FOLDERS.get(image_type)
+    uploads: list[str] = []
+    if uploads_dir and os.path.exists(uploads_dir):
+        uploads = sorted(
+            [
+                img
+                for img in os.listdir(uploads_dir)
+                if any(img.lower().endswith(f".{ext}") for ext in helpers.ALLOWED_EXTENSIONS)
+            ],
+            key=str.casefold,
+        )
+    return builtins + [img for img in uploads if img not in builtins]
+
+
+def _build_preview_image_data() -> dict[str, list[str]]:
+    return {img_type: _list_preview_images_for_type(img_type) for img_type in UPLOAD_FOLDERS}
+
+
+def _resolve_preview_base_image_path(img_type: str, selected_image: str) -> str:
+    if not selected_image or selected_image == "default":
+        return DEFAULT_IMAGE_MAP.get(img_type, DEFAULT_IMAGE_MAP["movie"])
+
+    static_candidate = _safe_join(IMAGES_FOLDER, selected_image)
+    if static_candidate and static_candidate.exists():
+        return str(static_candidate)
+
+    upload_candidate = _safe_join(UPLOAD_FOLDERS[img_type], selected_image)
+    if upload_candidate and upload_candidate.exists():
+        return str(upload_candidate)
+
+    return DEFAULT_IMAGE_MAP.get(img_type, DEFAULT_IMAGE_MAP["movie"])
 
 
 # Font discovery (TTF/OTF) across common static dirs
@@ -1410,13 +1450,7 @@ def list_uploaded_images():
     if image_type not in UPLOAD_FOLDERS:
         return jsonify({"status": "error", "message": "Invalid image type"}), 400
 
-    uploads_dir = UPLOAD_FOLDERS[image_type]
-    if not os.path.exists(uploads_dir):
-        return jsonify({"images": []})
-
-    images = [img for img in os.listdir(uploads_dir) if any(img.lower().endswith(f".{ext}") for ext in helpers.ALLOWED_EXTENSIONS)]
-
-    return jsonify({"status": "success", "images": images})
+    return jsonify({"status": "success", "images": _list_preview_images_for_type(image_type)})
 
 
 @app.route("/generate_preview", methods=["POST"])
@@ -1490,14 +1524,11 @@ def generate_preview():
     preview_filepath = os.path.join(PREVIEW_FOLDER, preview_filename)
 
     # Resolve base image
-    if not selected_image or selected_image == "default":
-        base_image_path = DEFAULT_IMAGE_MAP.get(img_type, DEFAULT_IMAGE_MAP["movie"])
-        if not os.path.exists(base_image_path):
-            fallback_size = (1920, 1080) if img_type == "episode" else (1000, 1500)
-            base_img = Image.new("RGBA", fallback_size, (128, 128, 128, 255))
-            base_img.save(base_image_path)
-    else:
-        base_image_path = os.path.join(UPLOAD_FOLDERS[img_type], selected_image)
+    base_image_path = _resolve_preview_base_image_path(img_type, selected_image)
+    if not os.path.exists(base_image_path):
+        fallback_size = (1920, 1080) if img_type == "episode" else (1000, 1500)
+        base_img = Image.new("RGBA", fallback_size, (128, 128, 128, 255))
+        base_img.save(base_image_path)
 
     if not os.path.exists(base_image_path):
         return jsonify({"status": "error", "message": "Selected image not found."}), 400
@@ -3566,12 +3597,7 @@ def step(name):
         overlay_fonts=list_overlay_fonts(),
         service_validations=service_validations,
         jump_to_validations=jump_to_validations,
-        image_data={
-            "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
-            "show": os.listdir(UPLOAD_FOLDERS["show"]),
-            "season": os.listdir(UPLOAD_FOLDERS["season"]),
-            "episode": os.listdir(UPLOAD_FOLDERS["episode"]),
-        },
+        image_data=_build_preview_image_data(),
         config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
         configured_ids=configured_ids,
         configured_counts=configured_counts,
@@ -3673,12 +3699,7 @@ def library_fragment(library_id):
     data = persistence.retrieve_settings("025-libraries")
     configured_ids = _configured_library_ids(data.get("libraries", {}))
 
-    image_data = {
-        "movie": os.listdir(UPLOAD_FOLDERS["movie"]),
-        "show": os.listdir(UPLOAD_FOLDERS["show"]),
-        "season": os.listdir(UPLOAD_FOLDERS["season"]),
-        "episode": os.listdir(UPLOAD_FOLDERS["episode"]),
-    }
+    image_data = _build_preview_image_data()
 
     page_info = {"telemetry": telemetry_data}
 
