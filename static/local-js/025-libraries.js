@@ -2120,6 +2120,7 @@ function wireRatingsOffsetSync (scope) {
     const alignmentInput = group.querySelector(`[name="${templateName}[rating_alignment]"]`)
     const addonPositionInput = group.querySelector(`[name="${templateName}[addon_position]"]`)
     const positionInput = group.querySelector(`[name="${templateName}[horizontal_position]"]`)
+    const verticalPositionInput = group.querySelector(`[name="${templateName}[vertical_position]"]`)
     const slotDefs = ['rating1', 'rating2', 'rating3'].map(slot => ({
       slot,
       ratingInput: group.querySelector(`[name="${templateName}[${slot}]"]`),
@@ -2183,6 +2184,14 @@ function wireRatingsOffsetSync (scope) {
       setDefaultValue(metricInputs.backHeight, defaults.backHeight, force)
       setDefaultValue(addonPositionInput, defaults.addonPosition, force)
     }
+    const applyPlacementDefaults = (force = false) => {
+      const hPos = getHorizontalPosition()
+      const vPos = getVerticalPosition()
+      const horizontalDefault = hPos === 'center' ? 0 : (hPos === 'right' ? -15 : 15)
+      const verticalDefault = vPos === 'center' ? 0 : (vPos === 'bottom' ? -15 : 15)
+      setDefaultValue(sharedInputs.horizontal, horizontalDefault, force)
+      setDefaultValue(sharedInputs.vertical, verticalDefault, force)
+    }
     const getVerticalStep = () => {
       const backHeight = toNumber(metricInputs.backHeight?.value, 160)
       const backPadding = getBackPadding()
@@ -2194,7 +2203,7 @@ function wireRatingsOffsetSync (scope) {
       return backWidth + (backPadding * 3)
     }
     const ratingConstants = {
-      standard: 30,
+      edgeInset: 30,
       center: 0,
       v2: 235,
       v3: 440,
@@ -2205,99 +2214,68 @@ function wireRatingsOffsetSync (scope) {
       ch2: 160,
       ch3: 335
     }
+    const buildAxisPositions = (axis, position, count) => {
+      const safeCount = Math.max(1, Math.min(3, Number(count) || 1))
+      if (axis === 'horizontal') {
+        if (position === 'center') {
+          if (safeCount === 1) return [ratingConstants.center]
+          if (safeCount === 2) return [-ratingConstants.ch2, ratingConstants.ch2]
+          return [-ratingConstants.ch3, ratingConstants.center, ratingConstants.ch3]
+        }
+        if (position === 'right') {
+          if (safeCount === 1) return [-ratingConstants.edgeInset]
+          if (safeCount === 2) return [-ratingConstants.h2, -ratingConstants.edgeInset]
+          return [-ratingConstants.h3, -ratingConstants.h2, -ratingConstants.edgeInset]
+        }
+        if (safeCount === 1) return [ratingConstants.edgeInset]
+        if (safeCount === 2) return [ratingConstants.edgeInset, ratingConstants.h2]
+        return [ratingConstants.edgeInset, ratingConstants.h2, ratingConstants.h3]
+      }
+
+      if (position === 'center') {
+        if (safeCount === 1) return [ratingConstants.center]
+        if (safeCount === 2) return [-ratingConstants.cv2, ratingConstants.cv2]
+        return [-ratingConstants.cv3, ratingConstants.center, ratingConstants.cv3]
+      }
+      if (position === 'bottom') {
+        if (safeCount === 1) return [-ratingConstants.edgeInset]
+        if (safeCount === 2) return [-ratingConstants.v2, -ratingConstants.edgeInset]
+        return [-ratingConstants.v3, -ratingConstants.v2, -ratingConstants.edgeInset]
+      }
+      if (safeCount === 1) return [ratingConstants.edgeInset]
+      if (safeCount === 2) return [ratingConstants.edgeInset, ratingConstants.v2]
+      return [ratingConstants.edgeInset, ratingConstants.v2, ratingConstants.v3]
+    }
     const computeRatingOffsets = () => {
       const alignment = getAlignment()
       const hPos = getHorizontalPosition()
       const vPos = getVerticalPosition()
-      const slotStates = {
-        rating1: slotDefs[0] ? isConfiguredSlot(slotDefs[0]) : false,
-        rating2: slotDefs[1] ? isConfiguredSlot(slotDefs[1]) : false,
-        rating3: slotDefs[2] ? isConfiguredSlot(slotDefs[2]) : false
+      const activeSlots = getActiveSlots()
+      const activeCount = activeSlots.length
+      const offsets = {
+        rating1: { horizontal: ratingConstants.edgeInset, vertical: ratingConstants.edgeInset },
+        rating2: { horizontal: ratingConstants.edgeInset, vertical: ratingConstants.edgeInset },
+        rating3: { horizontal: ratingConstants.edgeInset, vertical: ratingConstants.edgeInset }
       }
-      const none1 = !slotStates.rating1
-      const none2 = !slotStates.rating2
-      const none3 = !slotStates.rating3
+      if (!activeCount) return offsets
 
-      const r1h = (() => {
-        if (alignment === 'vertical' && hPos === 'center') return ratingConstants.center
-        if (alignment === 'horizontal' && hPos === 'center' && none2 && none3) return ratingConstants.center
-        if (alignment === 'horizontal' && hPos === 'center' && none2) return -ratingConstants.ch2
-        if (alignment === 'horizontal' && hPos === 'center' && none3) return -ratingConstants.ch2
-        if (alignment === 'horizontal' && hPos === 'center') return -ratingConstants.ch3
-        if (alignment === 'horizontal' && hPos === 'right' && none2 && none3) return ratingConstants.standard
-        if (alignment === 'horizontal' && hPos === 'right' && none2) return ratingConstants.h2
-        if (alignment === 'horizontal' && hPos === 'right' && none3) return ratingConstants.h2
-        if (alignment === 'horizontal' && hPos === 'right') return ratingConstants.h3
-        return ratingConstants.standard
-      })()
-      const r1v = (() => {
-        if (alignment === 'horizontal' && vPos === 'center') return ratingConstants.center
-        if (alignment === 'vertical' && vPos === 'center' && none2 && none3) return ratingConstants.center
-        if (alignment === 'vertical' && vPos === 'center' && none2) return -ratingConstants.cv2
-        if (alignment === 'vertical' && vPos === 'center' && none3) return -ratingConstants.cv2
-        if (alignment === 'vertical' && vPos === 'center') return -ratingConstants.cv3
-        if (alignment === 'vertical' && vPos === 'bottom' && none2 && none3) return ratingConstants.standard
-        if (alignment === 'vertical' && vPos === 'bottom' && none2) return ratingConstants.v2
-        if (alignment === 'vertical' && vPos === 'bottom' && none3) return ratingConstants.v2
-        if (alignment === 'vertical' && vPos === 'bottom') return ratingConstants.v3
-        return ratingConstants.standard
-      })()
-      const r2h = (() => {
-        if (alignment === 'vertical' && hPos === 'center') return ratingConstants.center
-        if (alignment === 'horizontal' && hPos === 'center' && none1 && none3) return ratingConstants.center
-        if (alignment === 'horizontal' && hPos === 'center' && none1) return -ratingConstants.ch2
-        if (alignment === 'horizontal' && hPos === 'center' && none3) return ratingConstants.ch2
-        if (alignment === 'horizontal' && hPos === 'center') return ratingConstants.center
-        if (alignment === 'horizontal' && hPos === 'right' && none1 && none3) return ratingConstants.standard
-        if (alignment === 'horizontal' && hPos === 'right' && none3) return ratingConstants.standard
-        if (alignment === 'horizontal' && hPos === 'right') return ratingConstants.h2
-        if (alignment === 'horizontal' && hPos === 'left' && none1) return ratingConstants.standard
-        if (alignment === 'horizontal' && hPos === 'left') return ratingConstants.h2
-        return ratingConstants.standard
-      })()
-      const r2v = (() => {
-        if (alignment === 'horizontal' && vPos === 'center') return ratingConstants.center
-        if (alignment === 'vertical' && vPos === 'center' && none1 && none3) return ratingConstants.center
-        if (alignment === 'vertical' && vPos === 'center' && none1) return -ratingConstants.cv2
-        if (alignment === 'vertical' && vPos === 'center' && none3) return ratingConstants.cv2
-        if (alignment === 'vertical' && vPos === 'center') return ratingConstants.center
-        if (alignment === 'vertical' && vPos === 'bottom' && none1 && none3) return ratingConstants.standard
-        if (alignment === 'vertical' && vPos === 'bottom' && none1) return ratingConstants.v2
-        if (alignment === 'vertical' && vPos === 'bottom' && none3) return ratingConstants.standard
-        if (alignment === 'vertical' && vPos === 'bottom') return ratingConstants.v2
-        if (alignment === 'vertical' && vPos === 'top' && none1) return ratingConstants.standard
-        if (alignment === 'vertical' && vPos === 'top') return ratingConstants.v2
-        return ratingConstants.standard
-      })()
-      const r3h = (() => {
-        if (alignment === 'vertical' && hPos === 'center') return ratingConstants.center
-        if (alignment === 'horizontal' && hPos === 'center' && none1 && none2) return ratingConstants.center
-        if (alignment === 'horizontal' && hPos === 'center' && none1) return ratingConstants.ch2
-        if (alignment === 'horizontal' && hPos === 'center' && none2) return ratingConstants.ch2
-        if (alignment === 'horizontal' && hPos === 'center') return ratingConstants.ch3
-        if (alignment === 'horizontal' && hPos === 'left' && none1 && none2) return ratingConstants.standard
-        if (alignment === 'horizontal' && hPos === 'left' && none1) return ratingConstants.h2
-        if (alignment === 'horizontal' && hPos === 'left' && none2) return ratingConstants.h2
-        if (alignment === 'horizontal' && hPos === 'left') return ratingConstants.h3
-        return ratingConstants.standard
-      })()
-      const r3v = (() => {
-        if (alignment === 'horizontal' && vPos === 'center') return ratingConstants.center
-        if (alignment === 'vertical' && vPos === 'center' && none1 && none2) return ratingConstants.center
-        if (alignment === 'vertical' && vPos === 'center' && none1) return ratingConstants.cv2
-        if (alignment === 'vertical' && vPos === 'center' && none2) return ratingConstants.cv2
-        if (alignment === 'vertical' && vPos === 'center') return ratingConstants.cv3
-        if (alignment === 'vertical' && vPos === 'top' && none1 && none2) return ratingConstants.standard
-        if (alignment === 'vertical' && vPos === 'top' && none1) return ratingConstants.v2
-        if (alignment === 'vertical' && vPos === 'top' && none2) return ratingConstants.v2
-        if (alignment === 'vertical' && vPos === 'top') return ratingConstants.v3
-        return ratingConstants.standard
-      })()
-      return {
-        rating1: { horizontal: r1h, vertical: r1v },
-        rating2: { horizontal: r2h, vertical: r2v },
-        rating3: { horizontal: r3h, vertical: r3v }
+      if (alignment === 'horizontal') {
+        const xPositions = buildAxisPositions('horizontal', hPos, activeCount)
+        const yShared = vPos === 'center' ? 0 : (vPos === 'bottom' ? -ratingConstants.edgeInset : ratingConstants.edgeInset)
+        activeSlots.forEach((slot, idx) => {
+          offsets[slot.slot].horizontal = xPositions[idx]
+          offsets[slot.slot].vertical = yShared
+        })
+        return offsets
       }
+
+      const yPositions = buildAxisPositions('vertical', vPos, activeCount)
+      const xShared = hPos === 'center' ? 0 : (hPos === 'right' ? -ratingConstants.edgeInset : ratingConstants.edgeInset)
+      activeSlots.forEach((slot, idx) => {
+        offsets[slot.slot].horizontal = xShared
+        offsets[slot.slot].vertical = yPositions[idx]
+      })
+      return offsets
     }
     const applyComputedOffsets = (force = false) => {
       const offsets = computeRatingOffsets()
@@ -2412,6 +2390,7 @@ function wireRatingsOffsetSync (scope) {
     }
 
     applyAlignmentDefaults()
+    applyPlacementDefaults()
     applyComputedOffsets()
     seedSharedFromSlots()
 
@@ -2427,6 +2406,7 @@ function wireRatingsOffsetSync (scope) {
         if (group.dataset.resetting === 'true') return
         group.dataset.ratingsBulkUpdate = 'true'
         applyAlignmentDefaults(true)
+        applyPlacementDefaults(true)
         applyComputedOffsets(true)
         delete group.dataset.ratingsBulkUpdate
         refreshDerivedOffsets()
@@ -2439,10 +2419,21 @@ function wireRatingsOffsetSync (scope) {
     if (positionInput && positionInput.dataset.ratingsPositionBound !== 'true') {
       const refreshFromPosition = () => {
         if (group.dataset.resetting === 'true') return
+        applyPlacementDefaults(true)
         refreshDerivedOffsets()
       }
       positionInput.addEventListener('change', refreshFromPosition)
       positionInput.dataset.ratingsPositionBound = 'true'
+    }
+
+    if (verticalPositionInput && verticalPositionInput.dataset.ratingsPositionBound !== 'true') {
+      const refreshFromVertical = () => {
+        if (group.dataset.resetting === 'true') return
+        applyPlacementDefaults(true)
+        refreshDerivedOffsets()
+      }
+      verticalPositionInput.addEventListener('change', refreshFromVertical)
+      verticalPositionInput.dataset.ratingsPositionBound = 'true'
     }
 
     Object.entries(slotInputs).forEach(([axis, inputs]) => {
