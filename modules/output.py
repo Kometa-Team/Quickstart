@@ -473,6 +473,13 @@ def optimize_template_variables(config_data, library_types=None):
         if v_pos not in ("top", "center", "bottom"):
             v_pos = "center"
 
+        if isinstance(defaults, dict):
+            defaults["back_width"] = 270 if alignment == "horizontal" else 160
+            defaults["back_height"] = 80 if alignment == "horizontal" else 160
+            defaults["addon_position"] = "left" if alignment == "horizontal" else "top"
+            defaults["horizontal_offset"] = 0 if h_pos == "center" else 15
+            defaults["vertical_offset"] = 0 if v_pos == "center" else 15
+
         rating_constants = {
             "standard": 30,
             "center": 0,
@@ -631,6 +638,9 @@ def optimize_template_variables(config_data, library_types=None):
         for idx in slot_ids:
             h_key = f"rating{idx}_horizontal_offset"
             v_key = f"rating{idx}_vertical_offset"
+            if isinstance(defaults, dict):
+                defaults[h_key] = int(round(computed[idx]["h"]))
+                defaults[v_key] = int(round(computed[idx]["v"]))
             if h_key not in tv:
                 tv[h_key] = int(round(computed[idx]["h"]))
             if v_key not in tv:
@@ -784,16 +794,10 @@ def optimize_template_variables(config_data, library_types=None):
                             "builder_level",
                             "rating1",
                             "rating1_image",
-                            "rating1_horizontal_offset",
-                            "rating1_vertical_offset",
                             "rating2",
                             "rating2_image",
-                            "rating2_horizontal_offset",
-                            "rating2_vertical_offset",
                             "rating3",
                             "rating3_image",
-                            "rating3_horizontal_offset",
-                            "rating3_vertical_offset",
                             "horizontal_position",
                             "vertical_position",
                         }
@@ -1309,6 +1313,10 @@ def build_libraries_section(
                 back_padding = max(0, _offset_number(cleaned.get("back_padding"), 15))
                 alignment_raw = str(cleaned.get("rating_alignment", "vertical")).strip().lower()
                 alignment = "horizontal" if alignment_raw == "horizontal" else "vertical"
+                h_pos_raw = str(cleaned.get("horizontal_position", "left")).strip().lower()
+                h_pos = h_pos_raw if h_pos_raw in {"left", "center", "right"} else "left"
+                v_pos_raw = str(cleaned.get("vertical_position", "center")).strip().lower()
+                v_pos = v_pos_raw if v_pos_raw in {"top", "center", "bottom"} else "center"
                 vertical_step = back_height + (back_padding * 3)
                 center_index = (len(slot_payloads) - 1) / 2 if slot_payloads else 0
                 shared_horizontal_base = _offset_number(cleaned.get("horizontal_offset"), 15)
@@ -1361,6 +1369,19 @@ def build_libraries_section(
                         for slot_position, slot_payload in enumerate(slot_payloads):
                             relative_index = slot_position - center_index
                             slot_payload["_vertical_offset"] = int(round(shared_vertical_base + (vertical_step * relative_index)))
+
+                # Edge anchors use distance-from-edge semantics in Kometa.
+                # Negative offsets at top/bottom/left/right produce invalid YAML/runtime errors.
+                if h_pos in {"left", "right"}:
+                    for slot_payload in slot_payloads:
+                        value = _offset_number(slot_payload.get("_horizontal_offset"), None)
+                        if value is not None and value < 0:
+                            slot_payload["_horizontal_offset"] = int(round(abs(value)))
+                if v_pos in {"top", "bottom"}:
+                    for slot_payload in slot_payloads:
+                        value = _offset_number(slot_payload.get("_vertical_offset"), None)
+                        if value is not None and value < 0:
+                            slot_payload["_vertical_offset"] = int(round(abs(value)))
 
                 for slot_position, slot_payload in enumerate(slot_payloads, start=1):
                     rating_key = f"rating{slot_position}"

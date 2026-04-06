@@ -87,9 +87,9 @@ def test_ratings_yaml_contract_keeps_three_slot_horizontal_order(monkeypatch, qs
     assert template_vars["rating1"] == "user"
     assert template_vars["rating2"] == "critic"
     assert template_vars["rating3"] == "audience"
-    assert template_vars["rating1_horizontal_offset"] == 30
-    assert template_vars["rating2_horizontal_offset"] == 345
-    assert template_vars["rating3_horizontal_offset"] == 660
+    assert "rating1_horizontal_offset" not in template_vars
+    assert "rating2_horizontal_offset" not in template_vars
+    assert "rating3_horizontal_offset" not in template_vars
 
 
 def test_ratings_yaml_contract_compacts_two_slots(monkeypatch, qs_module):
@@ -143,4 +143,42 @@ def test_ratings_yaml_contract_compacts_single_slot(monkeypatch, qs_module):
     assert "rating3" not in template_vars
     # Single-slot normalization currently applies back_padding to horizontal offset.
     assert template_vars["rating1_horizontal_offset"] == 30
-    assert template_vars["rating1_vertical_offset"] == 30
+    assert "rating1_vertical_offset" not in template_vars
+
+
+def test_ratings_yaml_contract_bottom_horizontal_prunes_default_offsets(monkeypatch, qs_module):
+    payload = _build_library_payload(
+        {
+            "rating_alignment": "horizontal",
+            "horizontal_position": "center",
+            "vertical_position": "bottom",
+            "back_height": 80,
+            "back_width": 270,
+            "back_padding": 15,
+            "rating1": "user",
+            "rating1_image": "rt_tomato",
+            "rating1_horizontal_offset": -335,
+            "rating1_vertical_offset": -30,
+            "rating2": "critic",
+            "rating2_image": "imdb",
+            "rating2_horizontal_offset": 0,
+            "rating2_vertical_offset": -30,
+            "rating3": "audience",
+            "rating3_image": "tmdb",
+            "rating3_horizontal_offset": 335,
+            "rating3_vertical_offset": -30,
+        }
+    )
+    template_vars = _template_vars_from_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
+    assert template_vars["rating_alignment"] == "horizontal"
+    assert template_vars["horizontal_position"] == "center"
+    assert template_vars["vertical_position"] == "bottom"
+    assert "rating1_horizontal_offset" not in template_vars
+    assert "rating2_horizontal_offset" not in template_vars
+    assert "rating3_horizontal_offset" not in template_vars
+    assert "rating1_vertical_offset" not in template_vars
+    assert "rating2_vertical_offset" not in template_vars
+    assert "rating3_vertical_offset" not in template_vars
+    assert "back_height" not in template_vars
+    assert "back_width" not in template_vars
+    assert "addon_position" not in template_vars

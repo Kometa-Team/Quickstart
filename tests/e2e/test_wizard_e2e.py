@@ -24,7 +24,11 @@ def _ordered_stems():
 
 
 def _goto_step(page, live_server, stem):
-    page.goto(f"{live_server}/step/{stem}", wait_until="commit")
+    page.goto(f"{live_server}/step/{stem}", wait_until="domcontentloaded")
+
+
+def _step_shell(page):
+    return page.locator("#configForm").first
 
 
 @pytest.mark.e2e
@@ -34,8 +38,7 @@ def test_wizard_happy_path_all_steps(page, live_server):
 
     for stem in stems:
         _goto_step(page, live_server, stem)
-        heading = page.locator("h2").first
-        expect(heading).to_be_visible()
+        expect(_step_shell(page)).to_be_visible()
 
 
 @pytest.mark.e2e
@@ -49,11 +52,11 @@ def test_back_forward_navigation(page, live_server):
 
     page.go_back()
     expect(page).to_have_url(re.compile(f"/step/{re.escape(first)}$"))
-    expect(page.locator("h2").first).to_be_visible()
+    expect(_step_shell(page)).to_be_visible()
 
     page.go_forward()
     expect(page).to_have_url(re.compile(f"/step/{re.escape(second)}$"))
-    expect(page.locator("h2").first).to_be_visible()
+    expect(_step_shell(page)).to_be_visible()
 
 
 @pytest.mark.e2e
