@@ -50,3 +50,7 @@ json-schema/
 build/
 dist/
 favicon.ico
+
+# Local test artifacts and machine-specific test config
+artifacts/
+scripts/run-tests.config.json

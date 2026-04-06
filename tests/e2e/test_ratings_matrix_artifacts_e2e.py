@@ -305,6 +305,84 @@ def _force_visible_for_screenshot(page, selector):
     )
 
 
+def _mock_remote_rating_assets(page):
+    fallback = (Path(__file__).resolve().parents[2] / "static" / "favicon.png").resolve()
+    fallback_path = str(fallback)
+
+    def _fulfill(route):
+        route.fulfill(path=fallback_path, content_type="image/png")
+
+    page.route("**://raw.githubusercontent.com/Kometa-Team/Kometa/**/overlays/images/rating/*.png", _fulfill)
+    page.route("**://kometa.wiki/**/assets/images/defaults/overlays/ratings.png", _fulfill)
+
+
+def _set_board_alignment_guide(page, library_id, board_type):
+    image_name = "overlay_alignment_guide_episodes.png" if board_type == "episode" else "overlay_alignment_guide.png"
+    page.evaluate(
+        """([libraryId, type, imageName]) => {
+          const dropdown = document.getElementById(`${libraryId}-${type}-image-dropdown`);
+          const hidden = document.getElementById(`${libraryId}-${type}_selected_image`);
+          if (dropdown) {
+            const options = Array.from(dropdown.options || []);
+            if (!options.some(opt => opt.value === imageName)) {
+              const opt = document.createElement('option');
+              opt.value = imageName;
+              opt.textContent = imageName;
+              dropdown.appendChild(opt);
+            }
+            dropdown.value = imageName;
+            dropdown.dispatchEvent(new Event('change', { bubbles: true }));
+          }
+          if (hidden) hidden.value = imageName;
+          if (window.ImageHandler?.updateOverlayBoardBackground) {
+            window.ImageHandler.updateOverlayBoardBackground(libraryId, type, imageName);
+          }
+        }""",
+        [library_id, board_type, image_name],
+    )
+
+
+def _wait_for_rating_layer_ready(page, board_selector):
+    return page.wait_for_function(
+        """(selector) => {
+          const canvas = document.querySelector(selector);
+          if (!canvas) return false;
+          const layers = Array.from(canvas.querySelectorAll('.overlay-board-layer'));
+          if (!layers.length) return false;
+          return layers.every(layer => {
+            const style = window.getComputedStyle(layer);
+            return (
+              style.display !== 'none' &&
+              style.visibility !== 'hidden' &&
+              layer.complete === true &&
+              Number(layer.naturalWidth || 0) > 0 &&
+              Number(layer.naturalHeight || 0) > 0
+            );
+          });
+        }""",
+        arg=board_selector,
+        timeout=8000,
+    )
+
+
+def _hide_global_nav_for_capture(page):
+    page.evaluate(
+        """() => {
+          const selectors = [
+            '.page-nav',
+            '.navbar.page-nav',
+            '.jump-to-button',
+            '.overlay-jump-button'
+          ];
+          selectors.forEach(sel => {
+            document.querySelectorAll(sel).forEach(node => {
+              node.style.setProperty('visibility', 'hidden', 'important');
+            });
+          });
+        }"""
+    )
+
+
 def _build_case_payload(case, ui_offsets):
     movie_name = _movie_library_name()
     show_name = _show_library_name()
@@ -480,6 +558,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
     failures = []
 
     _seed_library_settings_for_artifacts(monkeypatch, qs_module)
+    _mock_remote_rating_assets(page)
 
     page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
     page.wait_for_selector("#libraryPicker", timeout=10000)
@@ -528,6 +607,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             _set_by_name(page, f"{template}[horizontal_position]", case["horizontal_position"])
             _set_by_name(page, f"{template}[vertical_position]", case["vertical_position"])
             _set_if_exists(page, f"{template}[builder_level]", case["builder_level"])
+            _set_board_alignment_guide(page, library_id, case["board_type"])
             page.wait_for_timeout(220)
 
             board_selector = (
@@ -549,6 +629,8 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                     notes.append(f"Canvas not visible for screenshot: {board_selector}")
                 else:
                     try:
+                        _wait_for_rating_layer_ready(page, board_selector)
+                        _hide_global_nav_for_capture(page)
                         board.screenshot(path=str(png_path), timeout=8000)
                     except Exception as e:
                         status = "FAIL"
