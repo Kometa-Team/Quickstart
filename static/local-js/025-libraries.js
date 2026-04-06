@@ -2159,6 +2159,43 @@ function wireRatingsOffsetSync (scope) {
       const raw = normalizeValue(verticalInput?.value || verticalInput?.dataset?.default || 'center')
       return (raw === 'top' || raw === 'bottom') ? raw : 'center'
     }
+    const getPlacementDefaults = () => {
+      const hPos = getHorizontalPosition()
+      const vPos = getVerticalPosition()
+      return {
+        // Offsets are distance from the selected origin edge.
+        // Left/Right (and Top/Bottom) edge anchors both use +15 for inset margin.
+        horizontal: hPos === 'center' ? 0 : 15,
+        vertical: vPos === 'center' ? 0 : 15
+      }
+    }
+    const ensureAdjustedIndicator = (input, axisLabel) => {
+      if (!input) return null
+      const wrapper = input.closest('.input-group')
+      if (!wrapper) return null
+      let indicator = wrapper.querySelector(`.ratings-position-adjusted[data-axis="${axisLabel}"]`)
+      if (indicator) return indicator
+      indicator = document.createElement('span')
+      indicator.className = 'input-group-text ratings-position-adjusted d-none'
+      indicator.dataset.axis = axisLabel
+      indicator.textContent = 'Adjusted'
+      indicator.title = `${axisLabel} anchor has manual offset adjustments.`
+      wrapper.appendChild(indicator)
+      return indicator
+    }
+    const horizontalAdjustedIndicator = ensureAdjustedIndicator(positionInput, 'horizontal')
+    const verticalAdjustedIndicator = ensureAdjustedIndicator(verticalPositionInput, 'vertical')
+    const updateAdjustedIndicators = () => {
+      const defaults = getPlacementDefaults()
+      const hCurrent = Math.round(toNumber(sharedInputs.horizontal?.value, defaults.horizontal))
+      const vCurrent = Math.round(toNumber(sharedInputs.vertical?.value, defaults.vertical))
+      if (horizontalAdjustedIndicator) {
+        horizontalAdjustedIndicator.classList.toggle('d-none', hCurrent === defaults.horizontal)
+      }
+      if (verticalAdjustedIndicator) {
+        verticalAdjustedIndicator.classList.toggle('d-none', vCurrent === defaults.vertical)
+      }
+    }
     const setDefaultValue = (input, nextValue, force = false) => {
       if (!input || nextValue === undefined || nextValue === null) return
       const prevDefault = input.dataset.default
@@ -2185,12 +2222,9 @@ function wireRatingsOffsetSync (scope) {
       setDefaultValue(addonPositionInput, defaults.addonPosition, force)
     }
     const applyPlacementDefaults = (force = false) => {
-      const hPos = getHorizontalPosition()
-      const vPos = getVerticalPosition()
-      const horizontalDefault = hPos === 'center' ? 0 : (hPos === 'right' ? -15 : 15)
-      const verticalDefault = vPos === 'center' ? 0 : (vPos === 'bottom' ? -15 : 15)
-      setDefaultValue(sharedInputs.horizontal, horizontalDefault, force)
-      setDefaultValue(sharedInputs.vertical, verticalDefault, force)
+      const defaults = getPlacementDefaults()
+      setDefaultValue(sharedInputs.horizontal, defaults.horizontal, force)
+      setDefaultValue(sharedInputs.vertical, defaults.vertical, force)
     }
     const getVerticalStep = () => {
       const backHeight = toNumber(metricInputs.backHeight?.value, 160)
@@ -2290,7 +2324,9 @@ function wireRatingsOffsetSync (scope) {
       delete group.dataset.ratingsBulkUpdate
     }
     const getHorizontalSlotOffset = (sharedValue) => {
-      return toNumber(sharedValue, 15) + getBackPadding()
+      const shared = toNumber(sharedValue, 15)
+      if (shared === 0) return 0
+      return shared + (shared > 0 ? 1 : -1) * getBackPadding()
     }
     const updateInputValue = (input, nextValue) => {
       if (!input) return
@@ -2343,6 +2379,7 @@ function wireRatingsOffsetSync (scope) {
         sharedInput.dispatchEvent(new Event('input', { bubbles: true }))
         sharedInput.dispatchEvent(new Event('change', { bubbles: true }))
       })
+      updateAdjustedIndicators()
     }
 
     const syncSlotsFromShared = (axis) => {
@@ -2380,6 +2417,7 @@ function wireRatingsOffsetSync (scope) {
           updateInputValue(slot.verticalInput, current + ((index - centerIndex) * verticalStep))
         })
       })
+      updateAdjustedIndicators()
     }
 
     const seedSharedFromSlots = () => {
@@ -2419,8 +2457,12 @@ function wireRatingsOffsetSync (scope) {
     if (positionInput && positionInput.dataset.ratingsPositionBound !== 'true') {
       const refreshFromPosition = () => {
         if (group.dataset.resetting === 'true') return
+        group.dataset.ratingsBulkUpdate = 'true'
         applyPlacementDefaults(true)
+        applyComputedOffsets(true)
+        delete group.dataset.ratingsBulkUpdate
         refreshDerivedOffsets()
+        updateAdjustedIndicators()
       }
       positionInput.addEventListener('change', refreshFromPosition)
       positionInput.dataset.ratingsPositionBound = 'true'
@@ -2429,8 +2471,12 @@ function wireRatingsOffsetSync (scope) {
     if (verticalPositionInput && verticalPositionInput.dataset.ratingsPositionBound !== 'true') {
       const refreshFromVertical = () => {
         if (group.dataset.resetting === 'true') return
+        group.dataset.ratingsBulkUpdate = 'true'
         applyPlacementDefaults(true)
+        applyComputedOffsets(true)
+        delete group.dataset.ratingsBulkUpdate
         refreshDerivedOffsets()
+        updateAdjustedIndicators()
       }
       verticalPositionInput.addEventListener('change', refreshFromVertical)
       verticalPositionInput.dataset.ratingsPositionBound = 'true'
@@ -2448,11 +2494,13 @@ function wireRatingsOffsetSync (scope) {
       if (sharedChanged) {
         syncSlotsFromShared('horizontal')
         syncSlotsFromShared('vertical')
+        updateAdjustedIndicators()
         return
       }
       if (!hasExplicitSlotOffsets()) {
         applyComputedOffsets()
       }
+      updateAdjustedIndicators()
     }
 
     slotDefs.forEach(slot => {
@@ -2463,6 +2511,7 @@ function wireRatingsOffsetSync (scope) {
     if (metricInputs.backWidth) metricInputs.backWidth.addEventListener('change', refreshDerivedOffsets)
     if (metricInputs.backPadding) metricInputs.backPadding.addEventListener('change', refreshDerivedOffsets)
 
+    updateAdjustedIndicators()
     group.dataset.ratingsOffsetSyncBound = 'true'
   })
 }
