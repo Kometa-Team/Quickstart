@@ -128,7 +128,7 @@ def _load_library_with_ratings(page, builder_level=None):
               const card = document.querySelector('#library-form-container .library-settings-card');
               return !!card && card.dataset.libraryId === libraryId;
             }""",
-            library_id,
+            arg=library_id,
             timeout=10000,
         )
         page.wait_for_timeout(300)
