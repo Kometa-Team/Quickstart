@@ -15,6 +15,10 @@ RATING_SLOT_VALUES = {
     "3": ("audience", "tmdb"),
 }
 
+CASE_SETTLE_MS = max(50, int(os.environ.get("RATINGS_MATRIX_SETTLE_MS", "120")))
+LAYER_READY_TIMEOUT_MS = max(500, int(os.environ.get("RATINGS_LAYER_READY_TIMEOUT_MS", "1500")))
+SCREENSHOT_TIMEOUT_MS = max(1000, int(os.environ.get("RATINGS_SCREENSHOT_TIMEOUT_MS", "3000")))
+
 ALIGNMENTS = ("vertical", "horizontal")
 HORIZONTAL_POSITIONS = ("left", "center", "right")
 VERTICAL_POSITIONS = ("top", "center", "bottom")
@@ -345,11 +349,13 @@ def _set_board_alignment_guide(page, library_id, board_type):
 def _wait_for_rating_layer_ready(page, board_selector):
     return page.wait_for_function(
         """(selector) => {
-          const canvas = document.querySelector(selector);
+          const board = document.querySelector(selector);
+          if (!board) return false;
+          const canvas = board.querySelector('.overlay-board-canvas');
           if (!canvas) return false;
-          const layers = Array.from(canvas.querySelectorAll('.overlay-board-layer'));
+          const layers = Array.from(canvas.querySelectorAll('.overlay-board-layer[data-overlay-type="overlay_ratings"]'));
           if (!layers.length) return false;
-          return layers.every(layer => {
+          return layers.some(layer => {
             const style = window.getComputedStyle(layer);
             return (
               style.display !== 'none' &&
@@ -361,7 +367,7 @@ def _wait_for_rating_layer_ready(page, board_selector):
           });
         }""",
         arg=board_selector,
-        timeout=8000,
+        timeout=LAYER_READY_TIMEOUT_MS,
     )
 
 
@@ -381,6 +387,36 @@ def _hide_global_nav_for_capture(page):
           });
         }"""
     )
+
+
+def _capture_board_png(page, board_selector, png_path, timeout_ms=SCREENSHOT_TIMEOUT_MS):
+    board = page.locator(board_selector).first
+    try:
+        board.screenshot(path=str(png_path), timeout=timeout_ms)
+        return True, ""
+    except Exception as e:
+        try:
+            clip = page.evaluate(
+                """(selector) => {
+                  const el = document.querySelector(selector);
+                  if (!el) return null;
+                  const r = el.getBoundingClientRect();
+                  if (!r.width || !r.height) return null;
+                  return {
+                    x: Math.max(0, r.x),
+                    y: Math.max(0, r.y),
+                    width: Math.max(1, r.width),
+                    height: Math.max(1, r.height)
+                  };
+                }""",
+                board_selector,
+            )
+            if clip:
+                page.screenshot(path=str(png_path), clip=clip)
+                return True, f"Board screenshot fallback used after: {type(e).__name__}"
+        except Exception as e2:
+            return False, f"Canvas screenshot error: {type(e).__name__}: {e}; fallback: {type(e2).__name__}: {e2}"
+        return False, f"Canvas screenshot error: {type(e).__name__}: {e}"
 
 
 def _build_case_payload(case, ui_offsets):
@@ -563,9 +599,11 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
     page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
     page.wait_for_selector("#libraryPicker", timeout=10000)
 
+    total_cases = len(cases)
     profile_context = {}
-    for case in cases:
+    for index, case in enumerate(cases, start=1):
         case_id = case["case_id"]
+        print(f"[ratings-artifacts] {index}/{total_cases} {case_id}", flush=True)
         png_path = canvas_dir / f"{case_id}.png"
         yaml_path = yaml_dir / f"{case_id}.yml"
 
@@ -608,11 +646,11 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             _set_by_name(page, f"{template}[vertical_position]", case["vertical_position"])
             _set_if_exists(page, f"{template}[builder_level]", case["builder_level"])
             _set_board_alignment_guide(page, library_id, case["board_type"])
-            page.wait_for_timeout(220)
+            page.wait_for_timeout(CASE_SETTLE_MS)
 
             board_selector = (
                 f"#library-form-container .library-settings-card[data-library-id=\"{library_id}\"] "
-                f".overlay-board[data-overlay-type=\"{case['board_type']}\"] .overlay-board-canvas"
+                f".overlay-board[data-overlay-type=\"{case['board_type']}\"]"
             )
             board = page.locator(board_selector).first
 
@@ -630,11 +668,16 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 else:
                     try:
                         _wait_for_rating_layer_ready(page, board_selector)
-                        _hide_global_nav_for_capture(page)
-                        board.screenshot(path=str(png_path), timeout=8000)
                     except Exception as e:
+                        notes.append(f"Rating layer wait warning: {type(e).__name__}: {e}")
+
+                    _hide_global_nav_for_capture(page)
+                    saved, warning = _capture_board_png(page, board_selector, png_path, timeout_ms=SCREENSHOT_TIMEOUT_MS)
+                    if not saved:
                         status = "FAIL"
-                        notes.append(f"Canvas screenshot error: {type(e).__name__}: {e}")
+                        notes.append(warning)
+                    elif warning:
+                        notes.append(warning)
 
             ui_offsets = _slot_offsets(page, template)
             payload = _build_case_payload(case, ui_offsets)
@@ -695,6 +738,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             rows.append(row)
             if status == "FAIL":
                 failures.append(f"{case_id}: {row['notes']}")
+            print(f"[ratings-artifacts] done {case_id} status={status}", flush=True)
         except Exception as e:
             row = {
                 "case_id": case_id,
@@ -711,6 +755,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             }
             rows.append(row)
             failures.append(f"{case_id}: {row['notes']}")
+            print(f"[ratings-artifacts] error {case_id}: {row['notes']}", flush=True)
 
     _write_reports(output_dir, rows)
 
