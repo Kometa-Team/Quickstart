@@ -4,8 +4,14 @@
   "ratings_artifact_dir": "artifacts/ratings-matrix/local",
   "ratings_profile_order": "show,episode,movie",
   "ratings_with_kometa": true,
-  "ratings_fail_on_diff": false,
+  "ratings_fail_on_diff": true,
   "ratings_diff_threshold_percent": 0.0,
+  "ratings_execution_mode": "batch",
+  "ratings_chunk_size": 12,
+  "ratings_show_layer_ready_timeout_ms": 3000,
+  "ratings_show_library_load_timeout_ms": 40000,
+  "ratings_random_count": 0,
+  "ratings_random_seed": "",
   "ratings_case_offset": 0,
   "ratings_case_limit": 0
 }

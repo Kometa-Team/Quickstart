@@ -245,11 +245,28 @@ def _resolve_icon_path(repo_root, image_key):
 
 
 def _base_image_path(repo_root, board_type):
+    board_type = _str(board_type, "movie").strip().lower()
     if board_type == "episode":
-        return repo_root / "config" / "uploads" / "episodes" / "overlay_alignment_guide_episodes.png"
-    if board_type == "show":
-        return repo_root / "config" / "uploads" / "shows" / "overlay_alignment_guide.png"
-    return repo_root / "config" / "uploads" / "movies" / "overlay_alignment_guide.png"
+        preferred = [
+            repo_root / "static" / "images" / "overlay_alignment_guide_episodes.png",
+            repo_root / "config" / "uploads" / "episodes" / "overlay_alignment_guide_episodes.png",
+        ]
+    elif board_type == "show":
+        preferred = [
+            repo_root / "static" / "images" / "overlay_alignment_guide.png",
+            repo_root / "config" / "uploads" / "shows" / "overlay_alignment_guide.png",
+            repo_root / "config" / "uploads" / "movies" / "overlay_alignment_guide.png",
+        ]
+    else:
+        preferred = [
+            repo_root / "static" / "images" / "overlay_alignment_guide.png",
+            repo_root / "config" / "uploads" / "movies" / "overlay_alignment_guide.png",
+            repo_root / "config" / "uploads" / "shows" / "overlay_alignment_guide.png",
+        ]
+    for candidate in preferred:
+        if candidate.exists():
+            return candidate
+    return preferred[0]
 
 
 def _sample_text(slot, image_key):

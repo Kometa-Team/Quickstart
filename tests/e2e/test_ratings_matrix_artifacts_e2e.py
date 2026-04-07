@@ -1,12 +1,15 @@
 import base64
 import csv
 import json
+import math
 import os
+import random
 import subprocess
 import sys
 from datetime import datetime
 from itertools import product
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 import pytest
 import modules.helpers as helpers
@@ -21,9 +24,21 @@ RATING_SLOT_VALUES = {
 
 CASE_SETTLE_MS = max(50, int(os.environ.get("RATINGS_MATRIX_SETTLE_MS", "120")))
 LAYER_READY_TIMEOUT_MS = max(500, int(os.environ.get("RATINGS_LAYER_READY_TIMEOUT_MS", "1500")))
+SHOW_LAYER_READY_TIMEOUT_MS = max(
+    LAYER_READY_TIMEOUT_MS,
+    int(os.environ.get("RATINGS_SHOW_LAYER_READY_TIMEOUT_MS", str(LAYER_READY_TIMEOUT_MS * 2))),
+)
 LIBRARY_LOAD_TIMEOUT_MS = max(2000, int(os.environ.get("RATINGS_LIBRARY_LOAD_TIMEOUT_MS", "20000")))
+SHOW_LIBRARY_LOAD_TIMEOUT_MS = max(
+    LIBRARY_LOAD_TIMEOUT_MS,
+    int(os.environ.get("RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS", str(LIBRARY_LOAD_TIMEOUT_MS * 2))),
+)
 CASE_OFFSET = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_OFFSET", "0")))
 CASE_LIMIT = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_LIMIT", "0")))
+RANDOM_COUNT = max(0, int(os.environ.get("RATINGS_MATRIX_RANDOM_COUNT", "0")))
+RANDOM_SEED_RAW = (os.environ.get("RATINGS_MATRIX_RANDOM_SEED", "") or "").strip()
+EXECUTION_MODE = (os.environ.get("RATINGS_MATRIX_EXECUTION_MODE", "batch") or "batch").strip().lower()
+CHUNK_SIZE = max(1, int(os.environ.get("RATINGS_MATRIX_CHUNK_SIZE", "12")))
 WITH_KOMETA_RENDER = str(os.environ.get("RATINGS_MATRIX_WITH_KOMETA", "1")).strip().lower() not in {"0", "false", "no"}
 FAIL_ON_DIFF = str(os.environ.get("RATINGS_MATRIX_FAIL_ON_DIFF", "0")).strip().lower() in {"1", "true", "yes"}
 DIFF_THRESHOLD_PERCENT = max(0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT", "0.0")))
@@ -130,6 +145,67 @@ def _all_matrix_cases():
     return cases
 
 
+def _execution_mode():
+    if EXECUTION_MODE in {"stream", "chunked"}:
+        return EXECUTION_MODE
+    return "batch"
+
+
+def _random_sample_cases(cases):
+    if RANDOM_COUNT <= 0:
+        return list(cases)
+    if not cases:
+        return []
+
+    families = ("movie", "show", "episode")
+    by_family = {family: [c for c in cases if c.get("board_type") == family] for family in families}
+    required_families = [family for family in families if by_family[family]]
+    min_required = len(required_families)
+    target_count = min(max(RANDOM_COUNT, min_required), len(cases))
+
+    seed_value = None
+    if RANDOM_SEED_RAW:
+        try:
+            seed_value = int(RANDOM_SEED_RAW)
+        except ValueError:
+            seed_value = sum(ord(ch) for ch in RANDOM_SEED_RAW)
+    else:
+        seed_value = random.SystemRandom().randint(1, 2**31 - 1)
+
+    rng = random.Random(seed_value)
+    selected = []
+    used_ids = set()
+
+    for family in required_families:
+        pick = rng.choice(by_family[family])
+        selected.append(pick)
+        used_ids.add(pick["case_id"])
+
+    remaining = [c for c in cases if c["case_id"] not in used_ids]
+    needed = target_count - len(selected)
+    if needed > 0:
+        selected.extend(rng.sample(remaining, needed))
+
+    rng.shuffle(selected)
+    print(
+        f"[ratings-artifacts] random mode enabled count={target_count} seed={seed_value} "
+        f"required_families={','.join(required_families)}",
+        flush=True,
+    )
+    return selected
+
+
+def _select_matrix_cases():
+    all_cases = _all_matrix_cases()
+    if CASE_LIMIT > 0:
+        sliced = all_cases[CASE_OFFSET : CASE_OFFSET + CASE_LIMIT]
+    elif CASE_OFFSET > 0:
+        sliced = all_cases[CASE_OFFSET:]
+    else:
+        sliced = all_cases
+    return _random_sample_cases(sliced)
+
+
 def _seed_library_settings_for_artifacts(monkeypatch, qs_module):
     movie_name = _movie_library_name()
     show_name = _show_library_name()
@@ -226,6 +302,7 @@ def _load_library_with_ratings(page, builder_level=None, library_type=None):
           .map(opt => opt.value)""",
         library_type,
     )
+    timeout_ms = SHOW_LIBRARY_LOAD_TIMEOUT_MS if str(library_type or "").lower() == "show" else LIBRARY_LOAD_TIMEOUT_MS
     for library_id in library_ids:
         page.select_option("#libraryPicker", library_id)
         page.wait_for_function(
@@ -235,7 +312,7 @@ def _load_library_with_ratings(page, builder_level=None, library_type=None):
               );
             }""",
             arg=library_id,
-            timeout=LIBRARY_LOAD_TIMEOUT_MS,
+            timeout=timeout_ms,
         )
         page.wait_for_timeout(200)
         ctx = _ratings_context(page, library_id, builder_level)
@@ -365,11 +442,56 @@ def _force_visible_for_screenshot(page, selector):
 
 
 def _mock_remote_rating_assets(page):
-    fallback = (Path(__file__).resolve().parents[2] / "static" / "favicon.png").resolve()
-    fallback_path = str(fallback)
+    repo_root = Path(__file__).resolve().parents[2]
+    rating_dir = repo_root / "config" / "kometa" / "defaults" / "overlays" / "images" / "rating"
+    fallback_path = str((repo_root / "static" / "favicon.png").resolve())
+
+    file_map = {}
+    if rating_dir.exists():
+        for fp in rating_dir.glob("*.png"):
+            file_map[fp.name.lower()] = str(fp.resolve())
+
+    alias_map = {
+        "imdb.png": "imdb.png",
+        "tmdb.png": "tmdb.png",
+        "mdblist.png": "mdblist.png",
+        "mal.png": "mal.png",
+        "anidb.png": "anidb.png",
+        "metacritic.png": "metacritic.png",
+        "letterboxd.png": "letterboxd.png",
+        "trakt.png": "trakt.png",
+        "star.png": "star.png",
+        "rt-crit-fresh.png": "rt-crit-fresh.png",
+        "rt-crit-rotten.png": "rt-crit-rotten.png",
+        "rt-aud-fresh.png": "rt-aud-fresh.png",
+        "rt-aud-rotten.png": "rt-aud-rotten.png",
+    }
+
+    def _resolve_local_rating_path(url):
+        parsed = urlparse(url)
+        basename = unquote(Path(parsed.path).name).strip()
+        if not basename:
+            return fallback_path
+        key = basename.lower()
+        direct = file_map.get(key)
+        if direct:
+            return direct
+        alias = alias_map.get(key)
+        if alias:
+            return file_map.get(alias, fallback_path)
+        compact = key.replace(" ", "").replace("_", "").replace("-", "")
+        for fname, full_path in file_map.items():
+            normalized = fname.replace(" ", "").replace("_", "").replace("-", "")
+            if normalized == compact:
+                return full_path
+        return fallback_path
 
     def _fulfill(route):
-        route.fulfill(path=fallback_path, content_type="image/png")
+        try:
+            target = _resolve_local_rating_path(route.request.url)
+            route.fulfill(path=target, content_type="image/png")
+        except Exception:
+            route.fulfill(path=fallback_path, content_type="image/png")
 
     page.route("**://raw.githubusercontent.com/Kometa-Team/Kometa/**/overlays/images/rating/*.png", _fulfill)
     page.route("**://kometa.wiki/**/assets/images/defaults/overlays/ratings.png", _fulfill)
@@ -412,7 +534,8 @@ def _set_board_alignment_guide(page, library_id, board_type):
     )
 
 
-def _wait_for_rating_layer_ready(page, board_selector):
+def _wait_for_rating_layer_ready(page, board_selector, board_type=None):
+    timeout_ms = SHOW_LAYER_READY_TIMEOUT_MS if str(board_type or "").lower() == "show" else LAYER_READY_TIMEOUT_MS
     return page.wait_for_function(
         """(selector) => {
           const board = document.querySelector(selector);
@@ -433,7 +556,27 @@ def _wait_for_rating_layer_ready(page, board_selector):
           });
         }""",
         arg=board_selector,
-        timeout=LAYER_READY_TIMEOUT_MS,
+        timeout=timeout_ms,
+    )
+
+
+def _find_default_ratings_layer_sources(page, board_selector):
+    return page.evaluate(
+        """(selector) => {
+          const board = document.querySelector(selector);
+          if (!board) return [];
+          const canvas = board.querySelector('.overlay-board-canvas');
+          if (!canvas) return [];
+          const layers = Array.from(canvas.querySelectorAll('.overlay-board-layer[data-overlay-type="overlay_ratings"]'));
+          const defaults = [];
+          for (const layer of layers) {
+            const src = String(layer.currentSrc || layer.src || '');
+            if (!src) continue;
+            if (src.includes('/defaults/overlays/ratings.png')) defaults.push(src);
+          }
+          return defaults;
+        }""",
+        board_selector,
     )
 
 
@@ -726,6 +869,61 @@ def _image_diff_stats(canvas_path, kometa_path, diff_path):
         return changed_pixels, diff_percent
 
 
+def _apply_kometa_result_to_row(row, result, diff_dir, failures):
+    case_id = row.get("case_id", "")
+    if not result:
+        row["status"] = "FAIL"
+        row["notes"] = f"{row.get('notes', '')}; Kometa render failed: missing result".strip("; ").strip()
+        failures.append(f"{case_id}: Kometa render failed: missing result")
+        return
+
+    if result.get("ok"):
+        kometa_png = result.get("output_path", "")
+        if kometa_png:
+            row["kometa_png"] = str(kometa_png).replace("\\", "/")
+        canvas_png = row.get("canvas_png")
+        if canvas_png and kometa_png and Path(canvas_png).exists() and Path(kometa_png).exists():
+            diff_png = diff_dir / f"{case_id}.png"
+            changed_pixels, diff_percent = _image_diff_stats(Path(canvas_png), Path(kometa_png), diff_png)
+            row["diff_pixels"] = int(changed_pixels)
+            row["diff_percent"] = round(diff_percent, 6)
+            if changed_pixels > 0 and diff_png.exists():
+                row["diff_png"] = str(diff_png).replace("\\", "/")
+            if FAIL_ON_DIFF and diff_percent > DIFF_THRESHOLD_PERCENT:
+                row["status"] = "FAIL"
+                extra = f"Diff {diff_percent:.4f}% exceeds threshold {DIFF_THRESHOLD_PERCENT:.4f}%"
+                row["notes"] = f"{row.get('notes', '')}; {extra}".strip("; ").strip()
+                failures.append(f"{case_id}: {extra}")
+        return
+
+    error = result.get("error", "Unknown kometa render error")
+    row["status"] = "FAIL"
+    row["notes"] = f"{row.get('notes', '')}; Kometa render failed: {error}".strip("; ").strip()
+    failures.append(f"{case_id}: Kometa render failed: {error}")
+
+
+def _flush_chunked_kometa_jobs(output_dir, pending_jobs, row_by_case_id, diff_dir, failures, kometa_dir):
+    if not pending_jobs:
+        return {"case_ids": [], "passed": 0, "failed": 0}
+    chunk_ids = [job["case_id"] for job in pending_jobs]
+    print(f"[ratings-artifacts] chunk render start size={len(pending_jobs)} first={chunk_ids[0]} last={chunk_ids[-1]}", flush=True)
+    results = _run_kometa_render_batch(output_dir, pending_jobs, kometa_dir)
+    passed = 0
+    failed = 0
+    for case_id in chunk_ids:
+        row = row_by_case_id.get(case_id)
+        if not row:
+            continue
+        _apply_kometa_result_to_row(row, results.get(case_id), diff_dir, failures)
+        if row.get("status") == "FAIL":
+            failed += 1
+        else:
+            passed += 1
+    pending_jobs.clear()
+    print(f"[ratings-artifacts] chunk render done size={len(chunk_ids)}", flush=True)
+    return {"case_ids": chunk_ids, "passed": passed, "failed": failed}
+
+
 def _write_reports(output_dir, rows):
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -800,16 +998,18 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
     diff_dir.mkdir(parents=True, exist_ok=True)
     yaml_dir.mkdir(parents=True, exist_ok=True)
 
-    all_cases = _all_matrix_cases()
-    if CASE_LIMIT > 0:
-        cases = all_cases[CASE_OFFSET : CASE_OFFSET + CASE_LIMIT]
-    elif CASE_OFFSET > 0:
-        cases = all_cases[CASE_OFFSET:]
-    else:
-        cases = all_cases
+    cases = _select_matrix_cases()
     rows = []
+    row_by_case_id = {}
     failures = []
     kometa_jobs = []
+    chunk_jobs = []
+    mode = _execution_mode()
+    chunk_index = 0
+    if mode == "chunked":
+        print(f"[ratings-artifacts] execution_mode=chunked chunk_size={CHUNK_SIZE}", flush=True)
+    else:
+        print(f"[ratings-artifacts] execution_mode={mode}", flush=True)
 
     _seed_library_settings_for_artifacts(monkeypatch, qs_module)
     _mock_remote_rating_assets(page)
@@ -819,6 +1019,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
     page.wait_for_selector("#libraryPicker", timeout=10000)
 
     total_cases = len(cases)
+    total_chunk_target = math.ceil(total_cases / CHUNK_SIZE) if (WITH_KOMETA_RENDER and mode == "chunked" and total_cases > 0) else 0
     profile_context = {}
     for index, case in enumerate(cases, start=1):
         case_id = case["case_id"]
@@ -908,9 +1109,16 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                     notes.append(f"Canvas not visible for screenshot: {board_selector}")
                 else:
                     try:
-                        _wait_for_rating_layer_ready(page, board_selector)
+                        _wait_for_rating_layer_ready(page, board_selector, case["board_type"])
                     except Exception as e:
                         notes.append(f"Rating layer wait warning: {type(e).__name__}: {e}")
+
+                    default_layer_srcs = _find_default_ratings_layer_sources(page, board_selector)
+                    if default_layer_srcs:
+                        status = "FAIL"
+                        notes.append(
+                            f"Ratings layer used default ratings.png instead of slot icons ({len(default_layer_srcs)} layer(s))"
+                        )
 
                     _hide_global_nav_for_capture(page)
                     saved, warning = _capture_board_png(page, board_selector, png_path)
@@ -981,19 +1189,44 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 "notes": "; ".join(notes),
             }
             rows.append(row)
-            kometa_jobs.append(
-                {
-                    "case_id": case_id,
-                    "builder_level": case["builder_level"],
-                    "library_type": case["library_type"],
-                    "board_type": case["board_type"],
-                    "template_vars": tv,
-                    "canvas_png": str(png_path),
-                }
-            )
+            row_by_case_id[case_id] = row
+            job = {
+                "case_id": case_id,
+                "builder_level": case["builder_level"],
+                "library_type": case["library_type"],
+                "board_type": case["board_type"],
+                "template_vars": tv,
+                "canvas_png": str(png_path),
+            }
+            if WITH_KOMETA_RENDER:
+                if mode == "stream":
+                    stream_results = _run_kometa_render_batch(output_dir, [job], kometa_dir)
+                    _apply_kometa_result_to_row(row, stream_results.get(case_id), diff_dir, failures)
+                elif mode == "chunked":
+                    chunk_jobs.append(job)
+                    if len(chunk_jobs) >= CHUNK_SIZE:
+                        result = _flush_chunked_kometa_jobs(
+                            output_dir=output_dir,
+                            pending_jobs=chunk_jobs,
+                            row_by_case_id=row_by_case_id,
+                            diff_dir=diff_dir,
+                            failures=failures,
+                            kometa_dir=kometa_dir,
+                        )
+                        chunk_index += 1
+                        cum_pass = sum(1 for r in rows if r.get("status") == "PASS")
+                        cum_fail = sum(1 for r in rows if r.get("status") == "FAIL")
+                        print(
+                            f"[ratings-artifacts] chunk {chunk_index}/{total_chunk_target} "
+                            f"pass={result['passed']} fail={result['failed']} "
+                            f"cumulative_pass={cum_pass} cumulative_fail={cum_fail}",
+                            flush=True,
+                        )
+                else:
+                    kometa_jobs.append(job)
             if status == "FAIL":
                 failures.append(f"{case_id}: {row['notes']}")
-            print(f"[ratings-artifacts] done {case_id} status={status}", flush=True)
+            print(f"[ratings-artifacts] done {case_id} status={row['status']}", flush=True)
         except Exception as e:
             if "profile_key" in locals() and "context" in locals() and context is None:
                 profile_context[profile_key] = FAILED_PROFILE
@@ -1015,40 +1248,36 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 "notes": f"Unhandled case exception: {type(e).__name__}: {e}",
             }
             rows.append(row)
+            row_by_case_id[case_id] = row
             failures.append(f"{case_id}: {row['notes']}")
             print(f"[ratings-artifacts] error {case_id}: {row['notes']}", flush=True)
 
-    if WITH_KOMETA_RENDER and kometa_jobs:
+    if WITH_KOMETA_RENDER and mode == "chunked" and chunk_jobs:
+        result = _flush_chunked_kometa_jobs(
+            output_dir=output_dir,
+            pending_jobs=chunk_jobs,
+            row_by_case_id=row_by_case_id,
+            diff_dir=diff_dir,
+            failures=failures,
+            kometa_dir=kometa_dir,
+        )
+        chunk_index += 1
+        cum_pass = sum(1 for r in rows if r.get("status") == "PASS")
+        cum_fail = sum(1 for r in rows if r.get("status") == "FAIL")
+        print(
+            f"[ratings-artifacts] chunk {chunk_index}/{total_chunk_target} "
+            f"pass={result['passed']} fail={result['failed']} "
+            f"cumulative_pass={cum_pass} cumulative_fail={cum_fail}",
+            flush=True,
+        )
+
+    if WITH_KOMETA_RENDER and mode == "batch" and kometa_jobs:
         kometa_results = _run_kometa_render_batch(output_dir, kometa_jobs, kometa_dir)
         for row in rows:
             case_id = row.get("case_id")
             if not case_id:
                 continue
-            result = kometa_results.get(case_id)
-            if not result:
-                continue
-            if result.get("ok"):
-                kometa_png = result.get("output_path", "")
-                if kometa_png:
-                    row["kometa_png"] = str(kometa_png).replace("\\", "/")
-                canvas_png = row.get("canvas_png")
-                if canvas_png and kometa_png and Path(canvas_png).exists() and Path(kometa_png).exists():
-                    diff_png = diff_dir / f"{case_id}.png"
-                    changed_pixels, diff_percent = _image_diff_stats(Path(canvas_png), Path(kometa_png), diff_png)
-                    row["diff_pixels"] = int(changed_pixels)
-                    row["diff_percent"] = round(diff_percent, 6)
-                    if changed_pixels > 0 and diff_png.exists():
-                        row["diff_png"] = str(diff_png).replace("\\", "/")
-                    if FAIL_ON_DIFF and diff_percent > DIFF_THRESHOLD_PERCENT:
-                        row["status"] = "FAIL"
-                        extra = f"Diff {diff_percent:.4f}% exceeds threshold {DIFF_THRESHOLD_PERCENT:.4f}%"
-                        row["notes"] = f"{row.get('notes', '')}; {extra}".strip("; ").strip()
-                        failures.append(f"{case_id}: {extra}")
-            else:
-                error = result.get("error", "Unknown kometa render error")
-                row["status"] = "FAIL"
-                row["notes"] = f"{row.get('notes', '')}; Kometa render failed: {error}".strip("; ").strip()
-                failures.append(f"{case_id}: Kometa render failed: {error}")
+            _apply_kometa_result_to_row(row, kometa_results.get(case_id), diff_dir, failures)
 
     _write_reports(output_dir, rows)
 
