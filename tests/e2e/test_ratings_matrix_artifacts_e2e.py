@@ -21,7 +21,6 @@ RATING_SLOT_VALUES = {
 
 CASE_SETTLE_MS = max(50, int(os.environ.get("RATINGS_MATRIX_SETTLE_MS", "120")))
 LAYER_READY_TIMEOUT_MS = max(500, int(os.environ.get("RATINGS_LAYER_READY_TIMEOUT_MS", "1500")))
-SCREENSHOT_TIMEOUT_MS = max(1000, int(os.environ.get("RATINGS_SCREENSHOT_TIMEOUT_MS", "3000")))
 LIBRARY_LOAD_TIMEOUT_MS = max(2000, int(os.environ.get("RATINGS_LIBRARY_LOAD_TIMEOUT_MS", "20000")))
 CASE_OFFSET = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_OFFSET", "0")))
 CASE_LIMIT = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_LIMIT", "0")))
@@ -376,6 +375,17 @@ def _mock_remote_rating_assets(page):
     page.route("**://kometa.wiki/**/assets/images/defaults/overlays/ratings.png", _fulfill)
 
 
+def _mock_generate_preview_requests(page):
+    page.route(
+        "**/generate_preview",
+        lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body='{"status":"success","message":"mocked by ratings artifact test"}',
+        ),
+    )
+
+
 def _set_board_alignment_guide(page, library_id, board_type):
     image_name = "overlay_alignment_guide_episodes.png" if board_type == "episode" else "overlay_alignment_guide.png"
     page.evaluate(
@@ -445,7 +455,7 @@ def _hide_global_nav_for_capture(page):
     )
 
 
-def _capture_board_png(page, board_selector, png_path, timeout_ms=SCREENSHOT_TIMEOUT_MS):
+def _capture_board_png(page, board_selector, png_path):
     try:
         exported = page.evaluate(
             """async (selector) => {
@@ -512,7 +522,12 @@ def _capture_board_png(page, board_selector, png_path, timeout_ms=SCREENSHOT_TIM
                 ctx.drawImage(img, x, y, w, h);
               }
 
-              return { ok: true, dataUrl: out.toDataURL('image/png') };
+              return {
+                ok: true,
+                dataUrl: out.toDataURL('image/png'),
+                width: out.width,
+                height: out.height
+              };
             }""",
             board_selector,
         )
@@ -521,42 +536,23 @@ def _capture_board_png(page, board_selector, png_path, timeout_ms=SCREENSHOT_TIM
             if data_url.startswith("data:image/png;base64,"):
                 raw = data_url.split(",", 1)[1]
                 png_path.write_bytes(base64.b64decode(raw))
+                width = int(exported.get("width") or 0)
+                height = int(exported.get("height") or 0)
+                if width > 0 and height > 0:
+                    with Image.open(png_path) as img:
+                        if img.size != (width, height):
+                            return (
+                                False,
+                                f"Exported image size mismatch: expected {width}x{height}, got {img.size[0]}x{img.size[1]}",
+                            )
                 return True, ""
             return False, "Canvas export returned unexpected data URL format"
         if exported and exported.get("error"):
-            warning = f"Canvas export warning: {exported['error']}"
+            return False, f"Canvas export error: {exported['error']}"
         else:
-            warning = "Canvas export warning: unknown export failure"
+            return False, "Canvas export error: unknown export failure"
     except Exception as e:
-        warning = f"Canvas export warning: {type(e).__name__}: {e}"
-
-    board = page.locator(board_selector).first
-    try:
-        board.screenshot(path=str(png_path), timeout=timeout_ms)
-        return True, f"{warning}; element screenshot fallback used"
-    except Exception as e:
-        try:
-            clip = page.evaluate(
-                """(selector) => {
-                  const el = document.querySelector(selector);
-                  if (!el) return null;
-                  const r = el.getBoundingClientRect();
-                  if (!r.width || !r.height) return null;
-                  return {
-                    x: Math.max(0, r.x),
-                    y: Math.max(0, r.y),
-                    width: Math.max(1, r.width),
-                    height: Math.max(1, r.height)
-                  };
-                }""",
-                board_selector,
-            )
-            if clip:
-                page.screenshot(path=str(png_path), clip=clip)
-                return True, f"{warning}; page clip fallback used after: {type(e).__name__}"
-        except Exception as e2:
-            return False, f"{warning}; canvas screenshot error: {type(e).__name__}: {e}; fallback: {type(e2).__name__}: {e2}"
-        return False, f"{warning}; canvas screenshot error: {type(e).__name__}: {e}"
+        return False, f"Canvas export error: {type(e).__name__}: {e}"
 
 
 def _build_case_payload(case, ui_offsets):
@@ -817,6 +813,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
 
     _seed_library_settings_for_artifacts(monkeypatch, qs_module)
     _mock_remote_rating_assets(page)
+    _mock_generate_preview_requests(page)
 
     page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
     page.wait_for_selector("#libraryPicker", timeout=10000)
@@ -916,7 +913,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                         notes.append(f"Rating layer wait warning: {type(e).__name__}: {e}")
 
                     _hide_global_nav_for_capture(page)
-                    saved, warning = _capture_board_png(page, board_selector, png_path, timeout_ms=SCREENSHOT_TIMEOUT_MS)
+                    saved, warning = _capture_board_png(page, board_selector, png_path)
                     if not saved:
                         status = "FAIL"
                         notes.append(warning)
