@@ -4,7 +4,7 @@ import logging
 import os
 import re
 import shlex
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -461,7 +461,7 @@ class LogscanAnalyzer:
                     "url": url,
                     "etag": response.headers.get("ETag"),
                     "last_modified": response.headers.get("Last-Modified"),
-                    "fetched_at": datetime.utcnow().isoformat(),
+                    "fetched_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
                     "content": response.text,
                 }
                 self._save_people_cache(cache_path, payload)
@@ -3226,7 +3226,7 @@ class LogscanAnalyzer:
             "log_mtime": log_mtime,
             "log_size": log_size,
             "log_counts": counts,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         }
 
     def analyze_content(self, content, log_path=None, config_name=None, config_path=None, include_people_scan=True):

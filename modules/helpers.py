@@ -656,7 +656,7 @@ def set_restart_notice(reason, message=None):
     payload = {
         "reason": reason.strip(),
         "message": message.strip() if isinstance(message, str) and message.strip() else None,
-        "created_at": datetime.datetime.utcnow().isoformat() + "Z",
+        "created_at": datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z"),
     }
     try:
         with open(RESTART_NOTICE_FILE, "w", encoding="utf-8") as handle:
@@ -1569,7 +1569,7 @@ def _backup_kometa_runtime_assets(kometa_dir: Path, logs: list[str]) -> Path | N
 
     backup_root = Path(CONFIG_DIR) / "kometa-backup"
     backup_root.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    stamp = datetime.datetime.now(datetime.UTC).strftime("%Y%m%d-%H%M%S")
     backup_dir = backup_root / f"kometa-config-{stamp}"
     backup_dir.mkdir(parents=True, exist_ok=True)
 
