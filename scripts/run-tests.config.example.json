@@ -1,5 +1,11 @@
 {
   "ratings_movie_library": "TestMovies-4k",
   "ratings_show_library": "TestTV Shows - 4k",
-  "ratings_artifact_dir": "artifacts/ratings-matrix/local"
+  "ratings_artifact_dir": "artifacts/ratings-matrix/local",
+  "ratings_profile_order": "show,episode,movie",
+  "ratings_with_kometa": true,
+  "ratings_fail_on_diff": false,
+  "ratings_diff_threshold_percent": 0.0,
+  "ratings_case_offset": 0,
+  "ratings_case_limit": 0
 }
