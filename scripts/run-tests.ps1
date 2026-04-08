@@ -8,7 +8,11 @@ param(
   [string]$RatingsWithKometa,
   [string]$RatingsFailOnDiff,
   [string]$RatingsDiffIgnoreAlpha,
+  [string]$RatingsDiffUseSlotThresholds,
   [double]$RatingsDiffThresholdPercent = -1,
+  [double]$RatingsDiffThresholdOneSlotPercent = -1,
+  [double]$RatingsDiffThresholdTwoSlotPercent = -1,
+  [double]$RatingsDiffThresholdThreeSlotPercent = -1,
   [int]$RatingsCaseOffset = -1,
   [int]$RatingsCaseLimit = -1,
   [string]$RatingsExecutionMode,
@@ -40,7 +44,11 @@ $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
 #   "ratings_with_kometa": true,
 #   "ratings_fail_on_diff": false,
 #   "ratings_diff_ignore_alpha": true,
+#   "ratings_diff_use_slot_thresholds": true,
 #   "ratings_diff_threshold_percent": 0.0,
+#   "ratings_diff_threshold_one_slot_percent": 0.8,
+#   "ratings_diff_threshold_two_slot_percent": 1.5,
+#   "ratings_diff_threshold_three_slot_percent": 2.8,
 #   "ratings_execution_mode": "batch",
 #   "ratings_chunk_size": 12,
 #   "ratings_show_layer_ready_timeout_ms": 3000,
@@ -68,7 +76,11 @@ $resolvedRatingsProfileOrder = if ($RatingsProfileOrder) { $RatingsProfileOrder 
 $resolvedRatingsWithKometa = if ($RatingsWithKometa) { $RatingsWithKometa } elseif ($localConfig.ContainsKey("ratings_with_kometa")) { [string]$localConfig["ratings_with_kometa"] } elseif ($env:RATINGS_MATRIX_WITH_KOMETA) { $env:RATINGS_MATRIX_WITH_KOMETA } else { $null }
 $resolvedRatingsFailOnDiff = if ($RatingsFailOnDiff) { $RatingsFailOnDiff } elseif ($localConfig.ContainsKey("ratings_fail_on_diff")) { [string]$localConfig["ratings_fail_on_diff"] } elseif ($env:RATINGS_MATRIX_FAIL_ON_DIFF) { $env:RATINGS_MATRIX_FAIL_ON_DIFF } else { $null }
 $resolvedRatingsDiffIgnoreAlpha = if ($RatingsDiffIgnoreAlpha) { $RatingsDiffIgnoreAlpha } elseif ($localConfig.ContainsKey("ratings_diff_ignore_alpha")) { [string]$localConfig["ratings_diff_ignore_alpha"] } elseif ($env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA) { $env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA } else { $null }
+$resolvedRatingsDiffUseSlotThresholds = if ($RatingsDiffUseSlotThresholds) { $RatingsDiffUseSlotThresholds } elseif ($localConfig.ContainsKey("ratings_diff_use_slot_thresholds")) { [string]$localConfig["ratings_diff_use_slot_thresholds"] } elseif ($env:RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS) { $env:RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS } else { $null }
 $resolvedRatingsDiffThreshold = if ($RatingsDiffThresholdPercent -ge 0) { $RatingsDiffThresholdPercent } elseif ($localConfig.ContainsKey("ratings_diff_threshold_percent")) { [double]$localConfig["ratings_diff_threshold_percent"] } elseif ($env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT) { [double]$env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT } else { $null }
+$resolvedRatingsDiffThresholdOneSlot = if ($RatingsDiffThresholdOneSlotPercent -ge 0) { $RatingsDiffThresholdOneSlotPercent } elseif ($localConfig.ContainsKey("ratings_diff_threshold_one_slot_percent")) { [double]$localConfig["ratings_diff_threshold_one_slot_percent"] } elseif ($env:RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT) { [double]$env:RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT } else { $null }
+$resolvedRatingsDiffThresholdTwoSlot = if ($RatingsDiffThresholdTwoSlotPercent -ge 0) { $RatingsDiffThresholdTwoSlotPercent } elseif ($localConfig.ContainsKey("ratings_diff_threshold_two_slot_percent")) { [double]$localConfig["ratings_diff_threshold_two_slot_percent"] } elseif ($env:RATINGS_MATRIX_DIFF_THRESHOLD_TWO_SLOT_PERCENT) { [double]$env:RATINGS_MATRIX_DIFF_THRESHOLD_TWO_SLOT_PERCENT } else { $null }
+$resolvedRatingsDiffThresholdThreeSlot = if ($RatingsDiffThresholdThreeSlotPercent -ge 0) { $RatingsDiffThresholdThreeSlotPercent } elseif ($localConfig.ContainsKey("ratings_diff_threshold_three_slot_percent")) { [double]$localConfig["ratings_diff_threshold_three_slot_percent"] } elseif ($env:RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT) { [double]$env:RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT } else { $null }
 $resolvedRatingsExecutionMode = if ($RatingsExecutionMode) { $RatingsExecutionMode } elseif ($localConfig.ContainsKey("ratings_execution_mode")) { $localConfig["ratings_execution_mode"] } elseif ($env:RATINGS_MATRIX_EXECUTION_MODE) { $env:RATINGS_MATRIX_EXECUTION_MODE } else { $null }
 $resolvedRatingsChunkSize = if ($RatingsChunkSize -ge 0) { $RatingsChunkSize } elseif ($localConfig.ContainsKey("ratings_chunk_size")) { [int]$localConfig["ratings_chunk_size"] } elseif ($env:RATINGS_MATRIX_CHUNK_SIZE) { [int]$env:RATINGS_MATRIX_CHUNK_SIZE } else { $null }
 $resolvedRatingsShowLayerReadyTimeoutMs = if ($RatingsShowLayerReadyTimeoutMs -ge 0) { $RatingsShowLayerReadyTimeoutMs } elseif ($localConfig.ContainsKey("ratings_show_layer_ready_timeout_ms")) { [int]$localConfig["ratings_show_layer_ready_timeout_ms"] } elseif ($env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS) { [int]$env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS } else { $null }
@@ -101,8 +113,20 @@ if ($null -ne $resolvedRatingsFailOnDiff -and "$resolvedRatingsFailOnDiff".Trim(
 if ($null -ne $resolvedRatingsDiffIgnoreAlpha -and "$resolvedRatingsDiffIgnoreAlpha".Trim() -ne "") {
   $env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA = [string]$resolvedRatingsDiffIgnoreAlpha
 }
+if ($null -ne $resolvedRatingsDiffUseSlotThresholds -and "$resolvedRatingsDiffUseSlotThresholds".Trim() -ne "") {
+  $env:RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS = [string]$resolvedRatingsDiffUseSlotThresholds
+}
 if ($null -ne $resolvedRatingsDiffThreshold) {
   $env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT = [string]$resolvedRatingsDiffThreshold
+}
+if ($null -ne $resolvedRatingsDiffThresholdOneSlot) {
+  $env:RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT = [string]$resolvedRatingsDiffThresholdOneSlot
+}
+if ($null -ne $resolvedRatingsDiffThresholdTwoSlot) {
+  $env:RATINGS_MATRIX_DIFF_THRESHOLD_TWO_SLOT_PERCENT = [string]$resolvedRatingsDiffThresholdTwoSlot
+}
+if ($null -ne $resolvedRatingsDiffThresholdThreeSlot) {
+  $env:RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT = [string]$resolvedRatingsDiffThresholdThreeSlot
 }
 if ($null -ne $resolvedRatingsExecutionMode -and "$resolvedRatingsExecutionMode".Trim() -ne "") {
   $env:RATINGS_MATRIX_EXECUTION_MODE = [string]$resolvedRatingsExecutionMode
@@ -159,7 +183,9 @@ if ($RatingsArtifacts) {
   Write-Host "  profile_order=$env:RATINGS_MATRIX_PROFILE_ORDER"
   Write-Host "  execution_mode=$env:RATINGS_MATRIX_EXECUTION_MODE chunk_size=$env:RATINGS_MATRIX_CHUNK_SIZE"
   Write-Host "  random_count=$env:RATINGS_MATRIX_RANDOM_COUNT random_seed=$env:RATINGS_MATRIX_RANDOM_SEED"
-  Write-Host "  with_kometa=$env:RATINGS_MATRIX_WITH_KOMETA fail_on_diff=$env:RATINGS_MATRIX_FAIL_ON_DIFF diff_ignore_alpha=$env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA diff_threshold_percent=$env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT"
+  Write-Host "  with_kometa=$env:RATINGS_MATRIX_WITH_KOMETA fail_on_diff=$env:RATINGS_MATRIX_FAIL_ON_DIFF diff_ignore_alpha=$env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA"
+  Write-Host "  diff_use_slot_thresholds=$env:RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS diff_threshold_percent=$env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT"
+  Write-Host "  slot_thresholds(one/two/three)=$env:RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT/$env:RATINGS_MATRIX_DIFF_THRESHOLD_TWO_SLOT_PERCENT/$env:RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT"
   Write-Host "  show_layer_ready_timeout_ms=$env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS show_library_load_timeout_ms=$env:RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS library_load_retries=$env:RATINGS_LIBRARY_LOAD_RETRIES"
   Write-Host "  movie_library=$env:RATINGS_MATRIX_MOVIE_LIBRARY show_library=$env:RATINGS_MATRIX_SHOW_LIBRARY artifact_dir=$env:RATINGS_MATRIX_ARTIFACT_DIR"
   if ($NoCapture) {

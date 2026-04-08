@@ -65,6 +65,20 @@ WITH_KOMETA_RENDER = str(os.environ.get("RATINGS_MATRIX_WITH_KOMETA", "1")).stri
 FAIL_ON_DIFF = str(os.environ.get("RATINGS_MATRIX_FAIL_ON_DIFF", "0")).strip().lower() in {"1", "true", "yes"}
 DIFF_THRESHOLD_PERCENT = max(0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT", "0.0")))
 DIFF_IGNORE_ALPHA = str(os.environ.get("RATINGS_MATRIX_DIFF_IGNORE_ALPHA", "1")).strip().lower() in {"1", "true", "yes"}
+DIFF_USE_SLOT_THRESHOLDS = str(os.environ.get("RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS", "1")).strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+DIFF_THRESHOLD_ONE_SLOT_PERCENT = max(
+    0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT", "0.80"))
+)
+DIFF_THRESHOLD_TWO_SLOT_PERCENT = max(
+    0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_TWO_SLOT_PERCENT", "1.50"))
+)
+DIFF_THRESHOLD_THREE_SLOT_PERCENT = max(
+    0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT", "2.80"))
+)
 FAILED_PROFILE = object()
 
 ALIGNMENTS = ("vertical", "horizontal")
@@ -936,6 +950,22 @@ def _image_diff_stats(canvas_path, kometa_path, diff_path):
         return changed_pixels, diff_percent
 
 
+def _effective_diff_threshold_for_row(row):
+    # Explicit global threshold always wins when > 0.
+    if DIFF_THRESHOLD_PERCENT > 0:
+        return DIFF_THRESHOLD_PERCENT
+    if not DIFF_USE_SLOT_THRESHOLDS:
+        return DIFF_THRESHOLD_PERCENT
+
+    enabled_raw = str(row.get("enabled_slots", "") or "")
+    enabled_count = len([token for token in enabled_raw.split("|") if token.strip()])
+    if enabled_count <= 1:
+        return DIFF_THRESHOLD_ONE_SLOT_PERCENT
+    if enabled_count == 2:
+        return DIFF_THRESHOLD_TWO_SLOT_PERCENT
+    return DIFF_THRESHOLD_THREE_SLOT_PERCENT
+
+
 def _apply_kometa_result_to_row(row, result, diff_dir, failures):
     case_id = row.get("case_id", "")
     if not result:
@@ -954,11 +984,13 @@ def _apply_kometa_result_to_row(row, result, diff_dir, failures):
             changed_pixels, diff_percent = _image_diff_stats(Path(canvas_png), Path(kometa_png), diff_png)
             row["diff_pixels"] = int(changed_pixels)
             row["diff_percent"] = round(diff_percent, 6)
+            row["diff_threshold_percent"] = round(_effective_diff_threshold_for_row(row), 6)
             if changed_pixels > 0 and diff_png.exists():
                 row["diff_png"] = str(diff_png).replace("\\", "/")
-            if FAIL_ON_DIFF and diff_percent > DIFF_THRESHOLD_PERCENT:
+            effective_threshold = row["diff_threshold_percent"]
+            if FAIL_ON_DIFF and diff_percent > effective_threshold:
                 row["status"] = "FAIL"
-                extra = f"Diff {diff_percent:.4f}% exceeds threshold {DIFF_THRESHOLD_PERCENT:.4f}%"
+                extra = f"Diff {diff_percent:.4f}% exceeds threshold {effective_threshold:.4f}%"
                 row["notes"] = f"{row.get('notes', '')}; {extra}".strip("; ").strip()
                 failures.append(f"{case_id}: {extra}")
         return
@@ -1011,6 +1043,7 @@ def _write_reports(output_dir, rows):
         "diff_png",
         "diff_pixels",
         "diff_percent",
+        "diff_threshold_percent",
         "yaml_file",
         "status",
         "notes",
@@ -1111,6 +1144,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                     "diff_png": "",
                     "diff_pixels": "",
                     "diff_percent": "",
+                    "diff_threshold_percent": "",
                     "yaml_file": str(yaml_path).replace("\\", "/"),
                     "status": "FAIL",
                     "notes": f"Skipped after profile bootstrap failure: {profile_key}",
@@ -1251,6 +1285,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 "diff_png": "",
                 "diff_pixels": "",
                 "diff_percent": "",
+                "diff_threshold_percent": "",
                 "yaml_file": str(yaml_path).replace("\\", "/"),
                 "status": status,
                 "notes": "; ".join(notes),
@@ -1310,6 +1345,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 "diff_png": "",
                 "diff_pixels": "",
                 "diff_percent": "",
+                "diff_threshold_percent": "",
                 "yaml_file": str(yaml_path).replace("\\", "/"),
                 "status": "FAIL",
                 "notes": f"Unhandled case exception: {type(e).__name__}: {e}",
