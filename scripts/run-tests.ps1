@@ -8,6 +8,9 @@ param(
   [string]$RatingsWithKometa,
   [string]$RatingsFailOnDiff,
   [string]$RatingsDiffIgnoreAlpha,
+  [string]$RatingsIncludeNudges,
+  [string]$RatingsNudgeProfiles,
+  [string]$RatingsNudgeApplyTo,
   [string]$RatingsDiffUseSlotThresholds,
   [double]$RatingsDiffThresholdPercent = -1,
   [double]$RatingsDiffThresholdOneSlotPercent = -1,
@@ -44,6 +47,9 @@ $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
 #   "ratings_with_kometa": true,
 #   "ratings_fail_on_diff": false,
 #   "ratings_diff_ignore_alpha": true,
+#   "ratings_include_nudges": false,
+#   "ratings_nudge_profiles": "none,hv+15",
+#   "ratings_nudge_apply_to": "enabled_slots",
 #   "ratings_diff_use_slot_thresholds": true,
 #   "ratings_diff_threshold_percent": 0.0,
 #   "ratings_diff_threshold_one_slot_percent": 0.8,
@@ -76,6 +82,9 @@ $resolvedRatingsProfileOrder = if ($RatingsProfileOrder) { $RatingsProfileOrder 
 $resolvedRatingsWithKometa = if ($RatingsWithKometa) { $RatingsWithKometa } elseif ($localConfig.ContainsKey("ratings_with_kometa")) { [string]$localConfig["ratings_with_kometa"] } elseif ($env:RATINGS_MATRIX_WITH_KOMETA) { $env:RATINGS_MATRIX_WITH_KOMETA } else { $null }
 $resolvedRatingsFailOnDiff = if ($RatingsFailOnDiff) { $RatingsFailOnDiff } elseif ($localConfig.ContainsKey("ratings_fail_on_diff")) { [string]$localConfig["ratings_fail_on_diff"] } elseif ($env:RATINGS_MATRIX_FAIL_ON_DIFF) { $env:RATINGS_MATRIX_FAIL_ON_DIFF } else { $null }
 $resolvedRatingsDiffIgnoreAlpha = if ($RatingsDiffIgnoreAlpha) { $RatingsDiffIgnoreAlpha } elseif ($localConfig.ContainsKey("ratings_diff_ignore_alpha")) { [string]$localConfig["ratings_diff_ignore_alpha"] } elseif ($env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA) { $env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA } else { $null }
+$resolvedRatingsIncludeNudges = if ($RatingsIncludeNudges) { $RatingsIncludeNudges } elseif ($localConfig.ContainsKey("ratings_include_nudges")) { [string]$localConfig["ratings_include_nudges"] } elseif ($env:RATINGS_MATRIX_INCLUDE_NUDGES) { $env:RATINGS_MATRIX_INCLUDE_NUDGES } else { $null }
+$resolvedRatingsNudgeProfiles = if ($RatingsNudgeProfiles) { $RatingsNudgeProfiles } elseif ($localConfig.ContainsKey("ratings_nudge_profiles")) { [string]$localConfig["ratings_nudge_profiles"] } elseif ($env:RATINGS_MATRIX_NUDGE_PROFILES) { $env:RATINGS_MATRIX_NUDGE_PROFILES } else { $null }
+$resolvedRatingsNudgeApplyTo = if ($RatingsNudgeApplyTo) { $RatingsNudgeApplyTo } elseif ($localConfig.ContainsKey("ratings_nudge_apply_to")) { [string]$localConfig["ratings_nudge_apply_to"] } elseif ($env:RATINGS_MATRIX_NUDGE_APPLY_TO) { $env:RATINGS_MATRIX_NUDGE_APPLY_TO } else { $null }
 $resolvedRatingsDiffUseSlotThresholds = if ($RatingsDiffUseSlotThresholds) { $RatingsDiffUseSlotThresholds } elseif ($localConfig.ContainsKey("ratings_diff_use_slot_thresholds")) { [string]$localConfig["ratings_diff_use_slot_thresholds"] } elseif ($env:RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS) { $env:RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS } else { $null }
 $resolvedRatingsDiffThreshold = if ($RatingsDiffThresholdPercent -ge 0) { $RatingsDiffThresholdPercent } elseif ($localConfig.ContainsKey("ratings_diff_threshold_percent")) { [double]$localConfig["ratings_diff_threshold_percent"] } elseif ($env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT) { [double]$env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT } else { $null }
 $resolvedRatingsDiffThresholdOneSlot = if ($RatingsDiffThresholdOneSlotPercent -ge 0) { $RatingsDiffThresholdOneSlotPercent } elseif ($localConfig.ContainsKey("ratings_diff_threshold_one_slot_percent")) { [double]$localConfig["ratings_diff_threshold_one_slot_percent"] } elseif ($env:RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT) { [double]$env:RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT } else { $null }
@@ -112,6 +121,15 @@ if ($null -ne $resolvedRatingsFailOnDiff -and "$resolvedRatingsFailOnDiff".Trim(
 }
 if ($null -ne $resolvedRatingsDiffIgnoreAlpha -and "$resolvedRatingsDiffIgnoreAlpha".Trim() -ne "") {
   $env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA = [string]$resolvedRatingsDiffIgnoreAlpha
+}
+if ($null -ne $resolvedRatingsIncludeNudges -and "$resolvedRatingsIncludeNudges".Trim() -ne "") {
+  $env:RATINGS_MATRIX_INCLUDE_NUDGES = [string]$resolvedRatingsIncludeNudges
+}
+if ($null -ne $resolvedRatingsNudgeProfiles -and "$resolvedRatingsNudgeProfiles".Trim() -ne "") {
+  $env:RATINGS_MATRIX_NUDGE_PROFILES = [string]$resolvedRatingsNudgeProfiles
+}
+if ($null -ne $resolvedRatingsNudgeApplyTo -and "$resolvedRatingsNudgeApplyTo".Trim() -ne "") {
+  $env:RATINGS_MATRIX_NUDGE_APPLY_TO = [string]$resolvedRatingsNudgeApplyTo
 }
 if ($null -ne $resolvedRatingsDiffUseSlotThresholds -and "$resolvedRatingsDiffUseSlotThresholds".Trim() -ne "") {
   $env:RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS = [string]$resolvedRatingsDiffUseSlotThresholds
@@ -184,6 +202,7 @@ if ($RatingsArtifacts) {
   Write-Host "  execution_mode=$env:RATINGS_MATRIX_EXECUTION_MODE chunk_size=$env:RATINGS_MATRIX_CHUNK_SIZE"
   Write-Host "  random_count=$env:RATINGS_MATRIX_RANDOM_COUNT random_seed=$env:RATINGS_MATRIX_RANDOM_SEED"
   Write-Host "  with_kometa=$env:RATINGS_MATRIX_WITH_KOMETA fail_on_diff=$env:RATINGS_MATRIX_FAIL_ON_DIFF diff_ignore_alpha=$env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA"
+  Write-Host "  include_nudges=$env:RATINGS_MATRIX_INCLUDE_NUDGES nudge_profiles=$env:RATINGS_MATRIX_NUDGE_PROFILES nudge_apply_to=$env:RATINGS_MATRIX_NUDGE_APPLY_TO"
   Write-Host "  diff_use_slot_thresholds=$env:RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS diff_threshold_percent=$env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT"
   Write-Host "  slot_thresholds(one/two/three)=$env:RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT/$env:RATINGS_MATRIX_DIFF_THRESHOLD_TWO_SLOT_PERCENT/$env:RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT"
   Write-Host "  show_layer_ready_timeout_ms=$env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS show_library_load_timeout_ms=$env:RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS library_load_retries=$env:RATINGS_LIBRARY_LOAD_RETRIES"

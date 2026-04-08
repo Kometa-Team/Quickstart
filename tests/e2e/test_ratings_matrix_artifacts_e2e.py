@@ -79,6 +79,13 @@ DIFF_THRESHOLD_TWO_SLOT_PERCENT = max(
 DIFF_THRESHOLD_THREE_SLOT_PERCENT = max(
     0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT", "2.80"))
 )
+INCLUDE_NUDGES = str(os.environ.get("RATINGS_MATRIX_INCLUDE_NUDGES", "0")).strip().lower() in {
+    "1",
+    "true",
+    "yes",
+}
+NUDGE_PROFILES_RAW = (os.environ.get("RATINGS_MATRIX_NUDGE_PROFILES", "none") or "none").strip()
+NUDGE_APPLY_TO = (os.environ.get("RATINGS_MATRIX_NUDGE_APPLY_TO", "enabled_slots") or "enabled_slots").strip().lower()
 FAILED_PROFILE = object()
 
 ALIGNMENTS = ("vertical", "horizontal")
@@ -102,6 +109,58 @@ MATRIX_PROFILES = [
 
 def _profile_group_key(profile):
     return profile[0], profile[1]
+
+
+def _slugify_nudge_name(value):
+    return (value or "none").replace("+", "p").replace("-", "m").replace(" ", "")
+
+
+def _parse_nudge_token(token):
+    raw = (token or "").strip().lower().replace(" ", "")
+    if not raw or raw == "none":
+        return {"name": "none", "dx": 0, "dy": 0}
+    if raw.startswith("hv") and len(raw) > 2:
+        delta = int(raw[2:])
+        return {"name": f"hv{delta:+d}", "dx": delta, "dy": delta}
+    if raw.startswith("h") and "v" in raw[1:]:
+        v_index = raw.index("v", 1)
+        dx = int(raw[1:v_index])
+        dy = int(raw[v_index + 1 :])
+        return {"name": f"h{dx:+d}v{dy:+d}", "dx": dx, "dy": dy}
+    if raw.startswith("v") and "h" in raw[1:]:
+        h_index = raw.index("h", 1)
+        dy = int(raw[1:h_index])
+        dx = int(raw[h_index + 1 :])
+        return {"name": f"h{dx:+d}v{dy:+d}", "dx": dx, "dy": dy}
+    if raw.startswith("h") and len(raw) > 1:
+        dx = int(raw[1:])
+        return {"name": f"h{dx:+d}", "dx": dx, "dy": 0}
+    if raw.startswith("v") and len(raw) > 1:
+        dy = int(raw[1:])
+        return {"name": f"v{dy:+d}", "dx": 0, "dy": dy}
+    raise ValueError(f"Unsupported nudge profile token: {token}")
+
+
+def _nudge_profiles():
+    if not INCLUDE_NUDGES:
+        return [{"name": "none", "dx": 0, "dy": 0}]
+    parsed = []
+    for token in [part.strip() for part in NUDGE_PROFILES_RAW.split(",") if part.strip()]:
+        try:
+            parsed.append(_parse_nudge_token(token))
+        except ValueError:
+            continue
+    if not parsed:
+        return [{"name": "none", "dx": 0, "dy": 0}]
+    deduped = []
+    seen = set()
+    for profile in parsed:
+        key = (profile["dx"], profile["dy"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(profile)
+    return deduped
 
 
 def _ordered_matrix_profiles():
@@ -161,9 +220,16 @@ def _library_bases():
 
 def _all_matrix_cases():
     cases = []
+    nudge_profiles = _nudge_profiles()
     for library_type, builder_level, profile_name, enabled_slots, context_level, board_type in _ordered_matrix_profiles():
-        for alignment, h_pos, v_pos in product(ALIGNMENTS, HORIZONTAL_POSITIONS, VERTICAL_POSITIONS):
-            case_id = f"{library_type}-{builder_level}-{profile_name}-{alignment}-{h_pos}-{v_pos}"
+        for alignment, h_pos, v_pos, nudge in product(
+            ALIGNMENTS, HORIZONTAL_POSITIONS, VERTICAL_POSITIONS, nudge_profiles
+        ):
+            nudge_name = nudge["name"]
+            case_id = (
+                f"{library_type}-{builder_level}-{profile_name}-{alignment}-{h_pos}-{v_pos}"
+                f"-nudge_{_slugify_nudge_name(nudge_name)}"
+            )
             cases.append(
                 {
                     "case_id": case_id,
@@ -177,6 +243,9 @@ def _all_matrix_cases():
                     "vertical_position": v_pos,
                     "context_level": context_level,
                     "board_type": board_type,
+                    "nudge_profile": nudge_name,
+                    "nudge_dx": int(nudge["dx"]),
+                    "nudge_dy": int(nudge["dy"]),
                 }
             )
     return cases
@@ -411,6 +480,51 @@ def _configure_rating_slots(page, template, enabled, builder_level="show"):
         use_slot = slot in enabled
         _set_if_exists(page, f"{template}[{slot}]", rating_value if use_slot else "")
         _set_if_exists(page, f"{template}[{slot}_image]", image_value if use_slot else "")
+
+
+def _apply_nudge_offsets(page, template, case):
+    dx = int(case.get("nudge_dx", 0) or 0)
+    dy = int(case.get("nudge_dy", 0) or 0)
+    if dx == 0 and dy == 0:
+        return
+
+    builder_level = case.get("builder_level", "show")
+    available_slot_ids = list(_slot_values_for_builder(builder_level).keys())
+    enabled_slot_ids = list(case.get("enabled_slots", ()))
+
+    if NUDGE_APPLY_TO == "all_slots":
+        target_ids = available_slot_ids
+    else:
+        # Default: only nudge active slots.
+        target_ids = enabled_slot_ids
+
+    h_anchor = str(case.get("horizontal_position", "left") or "left").lower()
+    v_anchor = str(case.get("vertical_position", "top") or "top").lower()
+
+    def next_input_value(current_value, screen_delta, anchor):
+        # Input-space semantics for edge anchors:
+        # - left/top: input grows as layer moves right/down
+        # - right/bottom: input shrinks as layer moves right/down
+        # - center: input is center-relative and can be signed
+        if anchor in {"right", "bottom"}:
+            next_value = current_value - screen_delta
+            return max(0, next_value)
+        if anchor == "center":
+            return current_value + screen_delta
+        return max(0, current_value + screen_delta)
+
+    for idx in target_ids:
+        slot = f"rating{idx}"
+        h_name = f"{template}[{slot}_horizontal_offset]"
+        v_name = f"{template}[{slot}_vertical_offset]"
+        current_h = _get_number_or_none(page, h_name)
+        current_v = _get_number_or_none(page, v_name)
+        if current_h is None or current_v is None:
+            continue
+        next_h = next_input_value(int(current_h), dx, h_anchor)
+        next_v = next_input_value(int(current_v), dy, v_anchor)
+        _set_by_name(page, h_name, str(int(next_h)))
+        _set_by_name(page, v_name, str(int(next_v)))
 
 
 def _enable_overlay_group(page, template):
@@ -1038,6 +1152,9 @@ def _write_reports(output_dir, rows):
         "alignment",
         "horizontal_position",
         "vertical_position",
+        "nudge_profile",
+        "nudge_dx",
+        "nudge_dy",
         "canvas_png",
         "kometa_png",
         "diff_png",
@@ -1139,6 +1256,9 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                     "alignment": case["alignment"],
                     "horizontal_position": case["horizontal_position"],
                     "vertical_position": case["vertical_position"],
+                    "nudge_profile": case.get("nudge_profile", "none"),
+                    "nudge_dx": int(case.get("nudge_dx", 0) or 0),
+                    "nudge_dy": int(case.get("nudge_dy", 0) or 0),
                     "canvas_png": str(png_path).replace("\\", "/"),
                     "kometa_png": "",
                     "diff_png": "",
@@ -1189,6 +1309,8 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             _set_by_name(page, f"{template}[vertical_position]", case["vertical_position"])
             _set_if_exists(page, f"{template}[builder_level]", case["builder_level"])
             _set_board_alignment_guide(page, library_id, case["board_type"])
+            page.wait_for_timeout(CASE_SETTLE_MS)
+            _apply_nudge_offsets(page, template, case)
             page.wait_for_timeout(CASE_SETTLE_MS)
 
             board_selector = (
@@ -1280,6 +1402,9 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 "alignment": case["alignment"],
                 "horizontal_position": case["horizontal_position"],
                 "vertical_position": case["vertical_position"],
+                "nudge_profile": case.get("nudge_profile", "none"),
+                "nudge_dx": int(case.get("nudge_dx", 0) or 0),
+                "nudge_dy": int(case.get("nudge_dy", 0) or 0),
                 "canvas_png": str(png_path).replace("\\", "/"),
                 "kometa_png": "",
                 "diff_png": "",
@@ -1340,6 +1465,9 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 "alignment": case["alignment"],
                 "horizontal_position": case["horizontal_position"],
                 "vertical_position": case["vertical_position"],
+                "nudge_profile": case.get("nudge_profile", "none"),
+                "nudge_dx": int(case.get("nudge_dx", 0) or 0),
+                "nudge_dy": int(case.get("nudge_dy", 0) or 0),
                 "canvas_png": str(png_path).replace("\\", "/"),
                 "kometa_png": "",
                 "diff_png": "",
