@@ -22,11 +22,63 @@ ICON_MAP = {
     "star": "Star.png",
 }
 
-PERCENT_IMAGES = {"rt_popcorn", "rt_tomato", "tmdb", "metacritic", "mdb"}
-SLOT_SAMPLE_TEXT = {
-    "rating1": {"percent": "74%", "decimal": "7.4"},
-    "rating2": {"percent": "83%", "decimal": "9.4"},
-    "rating3": {"percent": "61%", "decimal": "8.3"},
+RATING_TEXT_MAP = {
+    "critic": "9.0",
+    "audience": "85%",
+    "user": "85%",
+}
+RATING_SAMPLE_BASE = {
+    "critic": {"decimal10": 9.0, "decimal5": 4.5, "percent": 90, "score100": 90},
+    "audience": {"decimal10": 8.5, "decimal5": 4.3, "percent": 85, "score100": 85},
+    "user": {"decimal10": 7.5, "decimal5": 3.3, "percent": 75, "score100": 75},
+}
+RATING_SAMPLE_JITTER = {
+    "decimal10": 1.2,
+    "decimal5": 0.6,
+    "percent": 12,
+    "score100": 12,
+}
+RATING_SAMPLE_LIMITS = {
+    "decimal10": {"min": 1.0, "max": 9.8},
+    "decimal5": {"min": 0.5, "max": 4.5},
+    "percent": {"min": 10, "max": 95},
+    "score100": {"min": 10, "max": 95},
+}
+RATING_SAMPLE_OVERRIDES = {
+    "rt_tomato": {"min": 10, "max": 95, "scale": "percent"},
+    "rt_popcorn": {"min": 10, "max": 95, "scale": "percent"},
+}
+RATING_VALUE_FORMAT_MAP = {
+    "anidb": {"scale": "decimal10", "decimals": 1},
+    "imdb": {"scale": "decimal10", "decimals": 1},
+    "letterboxd": {"scale": "decimal5", "decimals": 1},
+    "tmdb": {"scale": "decimal10", "decimals": 1},
+    "metacritic": {"scale": "score100", "decimals": 0},
+    "rt_popcorn": {"scale": "percent", "decimals": 0},
+    "rt_tomato": {"scale": "percent", "decimals": 0},
+    "trakt": {"scale": "percent", "decimals": 0},
+    "mal": {"scale": "decimal10", "decimals": 2},
+    "mdb": {"scale": "score100", "decimals": 0},
+    "mdblist": {"scale": "score100", "decimals": 0},
+    "star": {"scale": "decimal10", "decimals": 1},
+    "plex_star": {"scale": "decimal10", "decimals": 1},
+}
+RT_ROTTEN_THRESHOLD = 60
+RATING_FONT_MAP = {
+    "anidb": "Arimo-Medium.ttf",
+    "imdb": "Roboto-Medium.ttf",
+    "tmdb": "Consensus-SemiBold.otf",
+    "metacritic": "Montserrat-SemiBold.ttf",
+    "letterboxd": "Montserrat-Bold.ttf",
+    "trakt": "Figtree-Medium.ttf",
+    "rt_tomato": "LibreFranklin-Bold.ttf",
+    "rt_popcorn": "LibreFranklin-Bold.ttf",
+    "myanimelist": "Lato-Regular.ttf",
+    "mal": "Lato-Regular.ttf",
+    "mdblist": "Lato-Regular.ttf",
+    "mdb": "Lato-Regular.ttf",
+    "star": "Roboto-Medium.ttf",
+    "plex_star": "Roboto-Medium.ttf",
 }
 
 
@@ -41,6 +93,42 @@ def _int(v, default):
         return int(float(str(v)))
     except Exception:
         return int(default)
+
+
+def _normalize_rating_image_key(value):
+    raw = _str(value, "").strip().lower()
+    if not raw:
+        return ""
+    normalized = " ".join(raw.split())
+    mapped = {
+        "rt tomato": "rt_tomato",
+        "rt tomatoes": "rt_tomato",
+        "rt popcorn": "rt_popcorn",
+        "myanimelist": "mal",
+        "mdb": "mdb",
+    }.get(normalized)
+    if mapped:
+        return mapped
+    return normalized.replace(" ", "_")
+
+
+def _hash_string(value):
+    h = 2166136261
+    for ch in _str(value, ""):
+        h ^= ord(ch)
+        h = (h * 16777619) & 0xFFFFFFFF
+    return h
+
+
+def _seeded_random(seed):
+    t = (seed + 0x6D2B79F5) & 0xFFFFFFFF
+    t = ((t ^ (t >> 15)) * (t | 1)) & 0xFFFFFFFF
+    t ^= (t + (((t ^ (t >> 7)) * (t | 61)) & 0xFFFFFFFF)) & 0xFFFFFFFF
+    return ((t ^ (t >> 14)) & 0xFFFFFFFF) / 4294967296.0
+
+
+def _clamp_number(value, min_value, max_value):
+    return min(max(value, min_value), max_value)
 
 
 def _is_enabled(tv, slot):
@@ -269,17 +357,63 @@ def _base_image_path(repo_root, board_type):
     return preferred[0]
 
 
-def _sample_text(slot, image_key):
-    key = _str(image_key, "").strip().lower()
-    kind = "percent" if key in PERCENT_IMAGES else "decimal"
-    return SLOT_SAMPLE_TEXT.get(slot, SLOT_SAMPLE_TEXT["rating2"]).get(kind, "9.4")
+def _sample_text(rating_type, image_key, variant=None):
+    type_key = _str(rating_type, "").strip().lower()
+    normalized_image = _normalize_rating_image_key(image_key)
+    format_info = RATING_VALUE_FORMAT_MAP.get(normalized_image)
+    base_map = RATING_SAMPLE_BASE.get(type_key)
+    fallback = RATING_TEXT_MAP.get(type_key, "NR")
+    if not format_info or not base_map:
+        return fallback
+
+    scale = _str(format_info.get("scale"), "decimal10") or "decimal10"
+    base_value = base_map.get(scale)
+    if base_value is None:
+        return fallback
+
+    overrides = RATING_SAMPLE_OVERRIDES.get(normalized_image)
+    scale_key = overrides.get("scale") if isinstance(overrides, dict) and overrides.get("scale") else scale
+    limits = overrides if overrides else RATING_SAMPLE_LIMITS.get(scale_key)
+    seed = _hash_string(f"{normalized_image}|{type_key}|{_str(variant, 'base') or 'base'}")
+    rand = _seeded_random(seed)
+    jitter = float(RATING_SAMPLE_JITTER.get(scale_key, 0))
+    value = float(base_value) + ((rand - 0.5) * 2 * jitter)
+
+    if isinstance(limits, dict):
+        min_value = float(limits.get("min", value))
+        max_value = float(limits.get("max", value))
+        if normalized_image in {"rt_tomato", "rt_popcorn"} and scale_key == "percent":
+            if variant == "fresh":
+                min_value = max(RT_ROTTEN_THRESHOLD, min_value)
+            elif variant == "rotten":
+                max_value = min(RT_ROTTEN_THRESHOLD - 1, max_value)
+        value = _clamp_number(value, min_value, max_value)
+    elif scale_key == "decimal10":
+        value = _clamp_number(value, 0.1, 9.9)
+    elif scale_key == "decimal5":
+        value = _clamp_number(value, 0.1, 4.9)
+    else:
+        value = _clamp_number(value, 1.0, 99.0)
+
+    if scale_key == "percent":
+        return f"{round(value)}%"
+
+    decimals = int(format_info.get("decimals", 0))
+    if decimals == 0:
+        return f"{round(value)}"
+    return f"{value:.{max(0, decimals)}f}"
 
 
 def _build_overlay_data(repo_root, tv, slot):
     alignment, hp, vp = _alignment_vars(tv)
     h_offset, v_offset = _effective_offset(tv, slot)
     image_key = _str(tv.get(f"{slot}_image", "imdb"), "imdb").strip().lower()
-    text = _sample_text(slot, image_key)
+    normalized_image_key = _normalize_rating_image_key(image_key)
+    rating_type = _str(tv.get(slot, "critic"), "critic").strip().lower()
+    text = _sample_text(rating_type, image_key)
+    font_value = _str(tv.get(f"{slot}_font", ""), "").strip()
+    if not font_value:
+        font_value = RATING_FONT_MAP.get(normalized_image_key, "Inter-Medium.ttf")
 
     default_back_w = 270 if alignment == "horizontal" else 160
     default_back_h = 80 if alignment == "horizontal" else 160
@@ -294,10 +428,10 @@ def _build_overlay_data(repo_root, tv, slot):
             "vertical_align": vp,
             "horizontal_offset": h_offset,
             "vertical_offset": v_offset,
-            "font": _resolve_font(repo_root, tv.get(f"{slot}_font", "config/kometa/fonts/Inter-Bold.ttf")),
+            "font": _resolve_font(repo_root, font_value),
             "font_size": _int(tv.get(f"{slot}_font_size", 63), 63),
-            "font_color": _str(tv.get(f"{slot}_font_color", "#FFFFFF"), "#FFFFFF"),
-            "stroke_width": _int(tv.get(f"{slot}_stroke_width", 0), 0),
+            "font_color": _str(tv.get(f"{slot}_font_color", "#FFFFFFFF"), "#FFFFFFFF"),
+            "stroke_width": _int(tv.get(f"{slot}_stroke_width", 1), 1),
             "stroke_color": _str(tv.get(f"{slot}_stroke_color", "#00000000"), "#00000000"),
             "back_color": _str(tv.get(f"{slot}_back_color", tv.get("back_color", "#00000099")), "#00000099"),
             "back_width": _int(tv.get(f"{slot}_back_width", tv.get("back_width", default_back_w)), default_back_w),
@@ -359,12 +493,17 @@ def _render_case(repo_root, out_dir, overlay_cls, job):
                 text=built["text"],
             )
             if overlay_layer is not None:
-                out_img.paste(overlay_layer, (0, 0), overlay_layer)
+                # Use alpha compositing so semi-transparent backdrops are flattened
+                # consistently against the base guide image (matches canvas export).
+                out_img.alpha_composite(overlay_layer.convert("RGBA"), (0, 0))
             if overlay_obj.image:
-                out_img.paste(overlay_obj.image, addon_box, overlay_obj.image)
+                icon_layer = Image.new("RGBA", canvas_size, (0, 0, 0, 0))
+                icon_layer.paste(overlay_obj.image, addon_box, overlay_obj.image)
+                out_img.alpha_composite(icon_layer, (0, 0))
 
     out_path = out_dir / f"{case_id}.png"
-    out_img.save(out_path)
+    # Force opaque output to match how the canvas export is flattened.
+    out_img.convert("RGB").save(out_path)
     return out_path
 
 

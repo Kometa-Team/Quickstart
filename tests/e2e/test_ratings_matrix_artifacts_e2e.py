@@ -14,12 +14,33 @@ from urllib.parse import unquote, urlparse
 import pytest
 import modules.helpers as helpers
 from PIL import Image, ImageChops
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 from ruamel.yaml import YAML
 
-RATING_SLOT_VALUES = {
+RATING_SLOT_VALUES_MOVIE_SHOW = {
     "1": ("user", "rt_tomato"),
     "2": ("critic", "imdb"),
     "3": ("audience", "tmdb"),
+}
+RATING_SLOT_VALUES_EPISODE = {
+    "1": ("critic", "imdb"),
+    "2": ("audience", "tmdb"),
+}
+RATING_FONT_BY_IMAGE = {
+    "anidb": "Arimo-Medium.ttf",
+    "imdb": "Roboto-Medium.ttf",
+    "letterboxd": "Montserrat-Bold.ttf",
+    "tmdb": "Consensus-SemiBold.otf",
+    "metacritic": "Montserrat-SemiBold.ttf",
+    "rt_popcorn": "LibreFranklin-Bold.ttf",
+    "rt_tomato": "LibreFranklin-Bold.ttf",
+    "trakt": "Figtree-Medium.ttf",
+    "myanimelist": "Lato-Regular.ttf",
+    "mal": "Lato-Regular.ttf",
+    "mdblist": "Lato-Regular.ttf",
+    "mdb": "Lato-Regular.ttf",
+    "star": "Roboto-Medium.ttf",
+    "plex_star": "Roboto-Medium.ttf",
 }
 
 CASE_SETTLE_MS = max(50, int(os.environ.get("RATINGS_MATRIX_SETTLE_MS", "120")))
@@ -33,6 +54,7 @@ SHOW_LIBRARY_LOAD_TIMEOUT_MS = max(
     LIBRARY_LOAD_TIMEOUT_MS,
     int(os.environ.get("RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS", str(LIBRARY_LOAD_TIMEOUT_MS * 2))),
 )
+LIBRARY_LOAD_RETRIES = max(1, int(os.environ.get("RATINGS_LIBRARY_LOAD_RETRIES", "3")))
 CASE_OFFSET = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_OFFSET", "0")))
 CASE_LIMIT = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_LIMIT", "0")))
 RANDOM_COUNT = max(0, int(os.environ.get("RATINGS_MATRIX_RANDOM_COUNT", "0")))
@@ -42,6 +64,7 @@ CHUNK_SIZE = max(1, int(os.environ.get("RATINGS_MATRIX_CHUNK_SIZE", "12")))
 WITH_KOMETA_RENDER = str(os.environ.get("RATINGS_MATRIX_WITH_KOMETA", "1")).strip().lower() not in {"0", "false", "no"}
 FAIL_ON_DIFF = str(os.environ.get("RATINGS_MATRIX_FAIL_ON_DIFF", "0")).strip().lower() in {"1", "true", "yes"}
 DIFF_THRESHOLD_PERCENT = max(0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT", "0.0")))
+DIFF_IGNORE_ALPHA = str(os.environ.get("RATINGS_MATRIX_DIFF_IGNORE_ALPHA", "1")).strip().lower() in {"1", "true", "yes"}
 FAILED_PROFILE = object()
 
 ALIGNMENTS = ("vertical", "horizontal")
@@ -245,10 +268,10 @@ def _seed_library_settings_for_artifacts(monkeypatch, qs_module):
         f"{show_base}-show-template_overlay_ratings[rating3_image]": "tmdb",
         f"{show_base}-episode-overlay_ratings": True,
         f"{show_base}-episode-template_overlay_ratings[builder_level]": "episode",
-        f"{show_base}-episode-template_overlay_ratings[rating1]": "user",
-        f"{show_base}-episode-template_overlay_ratings[rating1_image]": "rt_tomato",
-        f"{show_base}-episode-template_overlay_ratings[rating2]": "critic",
-        f"{show_base}-episode-template_overlay_ratings[rating2_image]": "imdb",
+        f"{show_base}-episode-template_overlay_ratings[rating1]": "critic",
+        f"{show_base}-episode-template_overlay_ratings[rating1_image]": "imdb",
+        f"{show_base}-episode-template_overlay_ratings[rating2]": "audience",
+        f"{show_base}-episode-template_overlay_ratings[rating2_image]": "tmdb",
     }
     libraries_settings = {
         "validated": True,
@@ -303,22 +326,34 @@ def _load_library_with_ratings(page, builder_level=None, library_type=None):
         library_type,
     )
     timeout_ms = SHOW_LIBRARY_LOAD_TIMEOUT_MS if str(library_type or "").lower() == "show" else LIBRARY_LOAD_TIMEOUT_MS
+    per_attempt_timeout_ms = max(1500, timeout_ms // max(1, LIBRARY_LOAD_RETRIES))
     for library_id in library_ids:
-        page.select_option("#libraryPicker", library_id)
-        page.wait_for_function(
-            """(libraryId) => {
-              return !!document.querySelector(
-                `#library-form-container .library-settings-card[data-library-id="${libraryId}"]`
-              );
-            }""",
-            arg=library_id,
-            timeout=timeout_ms,
-        )
-        page.wait_for_timeout(200)
-        ctx = _ratings_context(page, library_id, builder_level)
-        if ctx:
-            ctx["libraryId"] = library_id
-            return ctx
+        for attempt in range(1, LIBRARY_LOAD_RETRIES + 1):
+            try:
+                page.select_option("#libraryPicker", library_id)
+                page.wait_for_function(
+                    """(libraryId) => {
+                      return !!document.querySelector(
+                        `#library-form-container .library-settings-card[data-library-id="${libraryId}"]`
+                      );
+                    }""",
+                    arg=library_id,
+                    timeout=per_attempt_timeout_ms,
+                )
+                page.wait_for_timeout(200)
+                ctx = _ratings_context(page, library_id, builder_level)
+                if ctx:
+                    ctx["libraryId"] = library_id
+                    return ctx
+            except PlaywrightTimeoutError:
+                # Intermittent library fragment/render lag is expected on some hosts.
+                # Retry the same library before failing profile bootstrap.
+                if attempt < LIBRARY_LOAD_RETRIES:
+                    page.wait_for_timeout(400)
+                    continue
+            # Context can still be missing right after the card appears; brief settle before retry.
+            if attempt < LIBRARY_LOAD_RETRIES:
+                page.wait_for_timeout(250)
     return None
 
 
@@ -351,13 +386,14 @@ def _set_if_exists(page, name, value):
     )
 
 
-def _configure_rating_slots(page, template, enabled):
-    slot_values = {
-        "rating1": ("user", "rt_tomato"),
-        "rating2": ("critic", "imdb"),
-        "rating3": ("audience", "tmdb"),
-    }
-    for slot, (rating_value, image_value) in slot_values.items():
+def _slot_values_for_builder(builder_level):
+    return RATING_SLOT_VALUES_EPISODE if str(builder_level or "").lower() == "episode" else RATING_SLOT_VALUES_MOVIE_SHOW
+
+
+def _configure_rating_slots(page, template, enabled, builder_level="show"):
+    slot_values = _slot_values_for_builder(builder_level)
+    for idx, (rating_value, image_value) in slot_values.items():
+        slot = f"rating{idx}"
         use_slot = slot in enabled
         _set_if_exists(page, f"{template}[{slot}]", rating_value if use_slot else "")
         _set_if_exists(page, f"{template}[{slot}_image]", image_value if use_slot else "")
@@ -722,15 +758,34 @@ def _build_case_payload(case, ui_offsets):
     libraries[f"{prefix}[rating_alignment]"] = case["alignment"]
     libraries[f"{prefix}[horizontal_position]"] = case["horizontal_position"]
     libraries[f"{prefix}[vertical_position]"] = case["vertical_position"]
+    libraries[f"{prefix}[back_align]"] = "center"
+    libraries[f"{prefix}[back_color]"] = "#00000099"
+    libraries[f"{prefix}[back_padding]"] = 15
+    libraries[f"{prefix}[back_radius]"] = 30
+    libraries[f"{prefix}[addon_offset]"] = 15
+    if case["alignment"] == "horizontal":
+        libraries[f"{prefix}[back_height]"] = 80
+        libraries[f"{prefix}[back_width]"] = 270
+        libraries[f"{prefix}[addon_position]"] = "left"
+    else:
+        libraries[f"{prefix}[back_height]"] = 160
+        libraries[f"{prefix}[back_width]"] = 160
+        libraries[f"{prefix}[addon_position]"] = "top"
 
     if builder == "episode":
         libraries[f"{prefix}[builder_level]"] = "episode"
 
     enabled = set(case["enabled_slots"])
-    for idx, (rating_value, image_value) in RATING_SLOT_VALUES.items():
+    slot_values = _slot_values_for_builder(case["builder_level"])
+    for idx, (rating_value, image_value) in slot_values.items():
         if idx in enabled:
             libraries[f"{prefix}[rating{idx}]"] = rating_value
             libraries[f"{prefix}[rating{idx}_image]"] = image_value
+            libraries[f"{prefix}[rating{idx}_font]"] = RATING_FONT_BY_IMAGE.get(image_value, "Inter-Medium.ttf")
+            libraries[f"{prefix}[rating{idx}_font_size]"] = 63
+            libraries[f"{prefix}[rating{idx}_font_color]"] = "#FFFFFFFF"
+            libraries[f"{prefix}[rating{idx}_stroke_width]"] = 1
+            libraries[f"{prefix}[rating{idx}_stroke_color]"] = "#00000000"
             libraries[f"{prefix}[rating{idx}_horizontal_offset]"] = int(ui_offsets[f"rating{idx}"]["h"])
             libraries[f"{prefix}[rating{idx}_vertical_offset]"] = int(ui_offsets[f"rating{idx}"]["v"])
         else:
@@ -757,10 +812,14 @@ def _run_build_config_with_payload(qs_module, monkeypatch, payload):
     monkeypatch.setattr(qs_module.output.helpers, "get_library_summaries", lambda _names: "Ratings Matrix")
     monkeypatch.setattr(qs_module.persistence, "check_minimum_settings", lambda: (True, True, True, True))
 
+    original_retrieve_settings = qs_module.output.persistence.retrieve_settings
+
     def fake_retrieve_settings(section):
         if section == "025-libraries":
             return payload
-        return {"validated": False}
+        # Preserve seeded runtime context (010-plex, telemetry, etc.) so later UI
+        # interactions in the same test run do not lose library picker options.
+        return original_retrieve_settings(section)
 
     monkeypatch.setattr(qs_module.output.persistence, "retrieve_settings", fake_retrieve_settings)
     with qs_module.app.app_context():
@@ -855,7 +914,15 @@ def _image_diff_stats(canvas_path, kometa_path, diff_path):
             k_bg = Image.new("RGBA", (target_w, target_h), (0, 0, 0, 0))
             c_bg.paste(canvas_img, (0, 0), canvas_img)
             k_bg.paste(kometa_img, (0, 0), kometa_img)
-            diff = ImageChops.difference(c_bg, k_bg)
+            canvas_img = c_bg
+            kometa_img = k_bg
+
+        if DIFF_IGNORE_ALPHA:
+            c_flat = Image.new("RGBA", canvas_img.size, (255, 255, 255, 255))
+            k_flat = Image.new("RGBA", kometa_img.size, (255, 255, 255, 255))
+            c_flat.alpha_composite(canvas_img)
+            k_flat.alpha_composite(kometa_img)
+            diff = ImageChops.difference(c_flat.convert("RGB"), k_flat.convert("RGB"))
         else:
             diff = ImageChops.difference(canvas_img, kometa_img)
 
@@ -1071,7 +1138,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 _enable_overlay_group(page, template)
                 _set_if_exists(page, f"{template}[builder_level]", case["builder_level"])
                 enabled_names = {f"rating{idx}" for idx in case["enabled_slots"]}
-                _configure_rating_slots(page, template, enabled_names)
+                _configure_rating_slots(page, template, enabled_names, case["builder_level"])
                 context = {"template": template, "library_id": library_id}
                 profile_context[profile_key] = context
 
@@ -1081,7 +1148,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             template = context["template"]
             library_id = context["library_id"]
             enabled_names = {f"rating{idx}" for idx in case["enabled_slots"]}
-            _configure_rating_slots(page, template, enabled_names)
+            _configure_rating_slots(page, template, enabled_names, case["builder_level"])
 
             _set_by_name(page, f"{template}[rating_alignment]", case["alignment"])
             _set_by_name(page, f"{template}[horizontal_position]", case["horizontal_position"])

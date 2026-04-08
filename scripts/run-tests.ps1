@@ -7,6 +7,7 @@ param(
   [string]$RatingsProfileOrder,
   [string]$RatingsWithKometa,
   [string]$RatingsFailOnDiff,
+  [string]$RatingsDiffIgnoreAlpha,
   [double]$RatingsDiffThresholdPercent = -1,
   [int]$RatingsCaseOffset = -1,
   [int]$RatingsCaseLimit = -1,
@@ -14,6 +15,7 @@ param(
   [int]$RatingsChunkSize = -1,
   [int]$RatingsShowLayerReadyTimeoutMs = -1,
   [int]$RatingsShowLibraryLoadTimeoutMs = -1,
+  [int]$RatingsLibraryLoadRetries = -1,
   [int]$RatingsRandomCount = -1,
   [string]$RatingsRandomSeed,
   [string]$RatingsMovieLibrary,
@@ -37,11 +39,13 @@ $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
 #   "ratings_profile_order": "show,episode,movie",
 #   "ratings_with_kometa": true,
 #   "ratings_fail_on_diff": false,
+#   "ratings_diff_ignore_alpha": true,
 #   "ratings_diff_threshold_percent": 0.0,
 #   "ratings_execution_mode": "batch",
 #   "ratings_chunk_size": 12,
 #   "ratings_show_layer_ready_timeout_ms": 3000,
 #   "ratings_show_library_load_timeout_ms": 40000,
+#   "ratings_library_load_retries": 3,
 #   "ratings_random_count": 0,
 #   "ratings_random_seed": "",
 #   "ratings_case_offset": 0,
@@ -57,21 +61,23 @@ if (Test-Path $localConfigPath) {
   }
 }
 
-$resolvedRatingsMovieLibrary = if ($RatingsMovieLibrary) { $RatingsMovieLibrary } elseif ($env:RATINGS_MATRIX_MOVIE_LIBRARY) { $env:RATINGS_MATRIX_MOVIE_LIBRARY } else { $localConfig["ratings_movie_library"] }
-$resolvedRatingsShowLibrary = if ($RatingsShowLibrary) { $RatingsShowLibrary } elseif ($env:RATINGS_MATRIX_SHOW_LIBRARY) { $env:RATINGS_MATRIX_SHOW_LIBRARY } else { $localConfig["ratings_show_library"] }
-$resolvedRatingsArtifactDir = if ($RatingsArtifactDir) { $RatingsArtifactDir } elseif ($env:RATINGS_MATRIX_ARTIFACT_DIR) { $env:RATINGS_MATRIX_ARTIFACT_DIR } else { $localConfig["ratings_artifact_dir"] }
-$resolvedRatingsProfileOrder = if ($RatingsProfileOrder) { $RatingsProfileOrder } elseif ($env:RATINGS_MATRIX_PROFILE_ORDER) { $env:RATINGS_MATRIX_PROFILE_ORDER } else { $localConfig["ratings_profile_order"] }
-$resolvedRatingsWithKometa = if ($RatingsWithKometa) { $RatingsWithKometa } elseif ($env:RATINGS_MATRIX_WITH_KOMETA) { $env:RATINGS_MATRIX_WITH_KOMETA } elseif ($localConfig.ContainsKey("ratings_with_kometa")) { [string]$localConfig["ratings_with_kometa"] } else { $null }
-$resolvedRatingsFailOnDiff = if ($RatingsFailOnDiff) { $RatingsFailOnDiff } elseif ($env:RATINGS_MATRIX_FAIL_ON_DIFF) { $env:RATINGS_MATRIX_FAIL_ON_DIFF } elseif ($localConfig.ContainsKey("ratings_fail_on_diff")) { [string]$localConfig["ratings_fail_on_diff"] } else { $null }
-$resolvedRatingsDiffThreshold = if ($RatingsDiffThresholdPercent -ge 0) { $RatingsDiffThresholdPercent } elseif ($env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT) { [double]$env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT } elseif ($localConfig.ContainsKey("ratings_diff_threshold_percent")) { [double]$localConfig["ratings_diff_threshold_percent"] } else { $null }
-$resolvedRatingsExecutionMode = if ($RatingsExecutionMode) { $RatingsExecutionMode } elseif ($env:RATINGS_MATRIX_EXECUTION_MODE) { $env:RATINGS_MATRIX_EXECUTION_MODE } else { $localConfig["ratings_execution_mode"] }
-$resolvedRatingsChunkSize = if ($RatingsChunkSize -ge 0) { $RatingsChunkSize } elseif ($env:RATINGS_MATRIX_CHUNK_SIZE) { [int]$env:RATINGS_MATRIX_CHUNK_SIZE } elseif ($localConfig.ContainsKey("ratings_chunk_size")) { [int]$localConfig["ratings_chunk_size"] } else { $null }
-$resolvedRatingsShowLayerReadyTimeoutMs = if ($RatingsShowLayerReadyTimeoutMs -ge 0) { $RatingsShowLayerReadyTimeoutMs } elseif ($env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS) { [int]$env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS } elseif ($localConfig.ContainsKey("ratings_show_layer_ready_timeout_ms")) { [int]$localConfig["ratings_show_layer_ready_timeout_ms"] } else { $null }
-$resolvedRatingsShowLibraryLoadTimeoutMs = if ($RatingsShowLibraryLoadTimeoutMs -ge 0) { $RatingsShowLibraryLoadTimeoutMs } elseif ($env:RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS) { [int]$env:RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS } elseif ($localConfig.ContainsKey("ratings_show_library_load_timeout_ms")) { [int]$localConfig["ratings_show_library_load_timeout_ms"] } else { $null }
-$resolvedRatingsRandomCount = if ($RatingsRandomCount -ge 0) { $RatingsRandomCount } elseif ($env:RATINGS_MATRIX_RANDOM_COUNT) { [int]$env:RATINGS_MATRIX_RANDOM_COUNT } elseif ($localConfig.ContainsKey("ratings_random_count")) { [int]$localConfig["ratings_random_count"] } else { $null }
-$resolvedRatingsRandomSeed = if ($RatingsRandomSeed) { $RatingsRandomSeed } elseif ($env:RATINGS_MATRIX_RANDOM_SEED) { $env:RATINGS_MATRIX_RANDOM_SEED } else { $localConfig["ratings_random_seed"] }
-$resolvedRatingsCaseOffset = if ($RatingsCaseOffset -ge 0) { $RatingsCaseOffset } elseif ($env:RATINGS_MATRIX_CASE_OFFSET) { [int]$env:RATINGS_MATRIX_CASE_OFFSET } elseif ($localConfig.ContainsKey("ratings_case_offset")) { [int]$localConfig["ratings_case_offset"] } else { $null }
-$resolvedRatingsCaseLimit = if ($RatingsCaseLimit -ge 0) { $RatingsCaseLimit } elseif ($env:RATINGS_MATRIX_CASE_LIMIT) { [int]$env:RATINGS_MATRIX_CASE_LIMIT } elseif ($localConfig.ContainsKey("ratings_case_limit")) { [int]$localConfig["ratings_case_limit"] } else { $null }
+$resolvedRatingsMovieLibrary = if ($RatingsMovieLibrary) { $RatingsMovieLibrary } elseif ($localConfig.ContainsKey("ratings_movie_library")) { $localConfig["ratings_movie_library"] } elseif ($env:RATINGS_MATRIX_MOVIE_LIBRARY) { $env:RATINGS_MATRIX_MOVIE_LIBRARY } else { $null }
+$resolvedRatingsShowLibrary = if ($RatingsShowLibrary) { $RatingsShowLibrary } elseif ($localConfig.ContainsKey("ratings_show_library")) { $localConfig["ratings_show_library"] } elseif ($env:RATINGS_MATRIX_SHOW_LIBRARY) { $env:RATINGS_MATRIX_SHOW_LIBRARY } else { $null }
+$resolvedRatingsArtifactDir = if ($RatingsArtifactDir) { $RatingsArtifactDir } elseif ($localConfig.ContainsKey("ratings_artifact_dir")) { $localConfig["ratings_artifact_dir"] } elseif ($env:RATINGS_MATRIX_ARTIFACT_DIR) { $env:RATINGS_MATRIX_ARTIFACT_DIR } else { $null }
+$resolvedRatingsProfileOrder = if ($RatingsProfileOrder) { $RatingsProfileOrder } elseif ($localConfig.ContainsKey("ratings_profile_order")) { $localConfig["ratings_profile_order"] } elseif ($env:RATINGS_MATRIX_PROFILE_ORDER) { $env:RATINGS_MATRIX_PROFILE_ORDER } else { $null }
+$resolvedRatingsWithKometa = if ($RatingsWithKometa) { $RatingsWithKometa } elseif ($localConfig.ContainsKey("ratings_with_kometa")) { [string]$localConfig["ratings_with_kometa"] } elseif ($env:RATINGS_MATRIX_WITH_KOMETA) { $env:RATINGS_MATRIX_WITH_KOMETA } else { $null }
+$resolvedRatingsFailOnDiff = if ($RatingsFailOnDiff) { $RatingsFailOnDiff } elseif ($localConfig.ContainsKey("ratings_fail_on_diff")) { [string]$localConfig["ratings_fail_on_diff"] } elseif ($env:RATINGS_MATRIX_FAIL_ON_DIFF) { $env:RATINGS_MATRIX_FAIL_ON_DIFF } else { $null }
+$resolvedRatingsDiffIgnoreAlpha = if ($RatingsDiffIgnoreAlpha) { $RatingsDiffIgnoreAlpha } elseif ($localConfig.ContainsKey("ratings_diff_ignore_alpha")) { [string]$localConfig["ratings_diff_ignore_alpha"] } elseif ($env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA) { $env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA } else { $null }
+$resolvedRatingsDiffThreshold = if ($RatingsDiffThresholdPercent -ge 0) { $RatingsDiffThresholdPercent } elseif ($localConfig.ContainsKey("ratings_diff_threshold_percent")) { [double]$localConfig["ratings_diff_threshold_percent"] } elseif ($env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT) { [double]$env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT } else { $null }
+$resolvedRatingsExecutionMode = if ($RatingsExecutionMode) { $RatingsExecutionMode } elseif ($localConfig.ContainsKey("ratings_execution_mode")) { $localConfig["ratings_execution_mode"] } elseif ($env:RATINGS_MATRIX_EXECUTION_MODE) { $env:RATINGS_MATRIX_EXECUTION_MODE } else { $null }
+$resolvedRatingsChunkSize = if ($RatingsChunkSize -ge 0) { $RatingsChunkSize } elseif ($localConfig.ContainsKey("ratings_chunk_size")) { [int]$localConfig["ratings_chunk_size"] } elseif ($env:RATINGS_MATRIX_CHUNK_SIZE) { [int]$env:RATINGS_MATRIX_CHUNK_SIZE } else { $null }
+$resolvedRatingsShowLayerReadyTimeoutMs = if ($RatingsShowLayerReadyTimeoutMs -ge 0) { $RatingsShowLayerReadyTimeoutMs } elseif ($localConfig.ContainsKey("ratings_show_layer_ready_timeout_ms")) { [int]$localConfig["ratings_show_layer_ready_timeout_ms"] } elseif ($env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS) { [int]$env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS } else { $null }
+$resolvedRatingsShowLibraryLoadTimeoutMs = if ($RatingsShowLibraryLoadTimeoutMs -ge 0) { $RatingsShowLibraryLoadTimeoutMs } elseif ($localConfig.ContainsKey("ratings_show_library_load_timeout_ms")) { [int]$localConfig["ratings_show_library_load_timeout_ms"] } elseif ($env:RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS) { [int]$env:RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS } else { $null }
+$resolvedRatingsLibraryLoadRetries = if ($RatingsLibraryLoadRetries -ge 0) { $RatingsLibraryLoadRetries } elseif ($localConfig.ContainsKey("ratings_library_load_retries")) { [int]$localConfig["ratings_library_load_retries"] } elseif ($env:RATINGS_LIBRARY_LOAD_RETRIES) { [int]$env:RATINGS_LIBRARY_LOAD_RETRIES } else { $null }
+$resolvedRatingsRandomCount = if ($RatingsRandomCount -ge 0) { $RatingsRandomCount } elseif ($localConfig.ContainsKey("ratings_random_count")) { [int]$localConfig["ratings_random_count"] } elseif ($env:RATINGS_MATRIX_RANDOM_COUNT) { [int]$env:RATINGS_MATRIX_RANDOM_COUNT } else { $null }
+$resolvedRatingsRandomSeed = if ($RatingsRandomSeed) { $RatingsRandomSeed } elseif ($localConfig.ContainsKey("ratings_random_seed")) { $localConfig["ratings_random_seed"] } elseif ($env:RATINGS_MATRIX_RANDOM_SEED) { $env:RATINGS_MATRIX_RANDOM_SEED } else { $null }
+$resolvedRatingsCaseOffset = if ($RatingsCaseOffset -ge 0) { $RatingsCaseOffset } elseif ($localConfig.ContainsKey("ratings_case_offset")) { [int]$localConfig["ratings_case_offset"] } elseif ($env:RATINGS_MATRIX_CASE_OFFSET) { [int]$env:RATINGS_MATRIX_CASE_OFFSET } else { $null }
+$resolvedRatingsCaseLimit = if ($RatingsCaseLimit -ge 0) { $RatingsCaseLimit } elseif ($localConfig.ContainsKey("ratings_case_limit")) { [int]$localConfig["ratings_case_limit"] } elseif ($env:RATINGS_MATRIX_CASE_LIMIT) { [int]$env:RATINGS_MATRIX_CASE_LIMIT } else { $null }
 
 if ($null -ne $resolvedRatingsProfileOrder -and "$resolvedRatingsProfileOrder".Trim() -ne "") {
   if ($resolvedRatingsProfileOrder -is [array]) {
@@ -92,6 +98,9 @@ if ($null -ne $resolvedRatingsWithKometa -and "$resolvedRatingsWithKometa".Trim(
 if ($null -ne $resolvedRatingsFailOnDiff -and "$resolvedRatingsFailOnDiff".Trim() -ne "") {
   $env:RATINGS_MATRIX_FAIL_ON_DIFF = [string]$resolvedRatingsFailOnDiff
 }
+if ($null -ne $resolvedRatingsDiffIgnoreAlpha -and "$resolvedRatingsDiffIgnoreAlpha".Trim() -ne "") {
+  $env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA = [string]$resolvedRatingsDiffIgnoreAlpha
+}
 if ($null -ne $resolvedRatingsDiffThreshold) {
   $env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT = [string]$resolvedRatingsDiffThreshold
 }
@@ -106,6 +115,9 @@ if ($null -ne $resolvedRatingsShowLayerReadyTimeoutMs) {
 }
 if ($null -ne $resolvedRatingsShowLibraryLoadTimeoutMs) {
   $env:RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS = [string]$resolvedRatingsShowLibraryLoadTimeoutMs
+}
+if ($null -ne $resolvedRatingsLibraryLoadRetries) {
+  $env:RATINGS_LIBRARY_LOAD_RETRIES = [string]$resolvedRatingsLibraryLoadRetries
 }
 if ($null -ne $resolvedRatingsRandomCount) {
   $env:RATINGS_MATRIX_RANDOM_COUNT = [string]$resolvedRatingsRandomCount
@@ -143,6 +155,13 @@ if ($RatingsArtifacts) {
   if ($resolvedRatingsMovieLibrary) { $env:RATINGS_MATRIX_MOVIE_LIBRARY = $resolvedRatingsMovieLibrary }
   if ($resolvedRatingsShowLibrary) { $env:RATINGS_MATRIX_SHOW_LIBRARY = $resolvedRatingsShowLibrary }
   if ($resolvedRatingsArtifactDir) { $env:RATINGS_MATRIX_ARTIFACT_DIR = $resolvedRatingsArtifactDir }
+  Write-Host "RatingsArtifacts effective config:" -ForegroundColor Cyan
+  Write-Host "  profile_order=$env:RATINGS_MATRIX_PROFILE_ORDER"
+  Write-Host "  execution_mode=$env:RATINGS_MATRIX_EXECUTION_MODE chunk_size=$env:RATINGS_MATRIX_CHUNK_SIZE"
+  Write-Host "  random_count=$env:RATINGS_MATRIX_RANDOM_COUNT random_seed=$env:RATINGS_MATRIX_RANDOM_SEED"
+  Write-Host "  with_kometa=$env:RATINGS_MATRIX_WITH_KOMETA fail_on_diff=$env:RATINGS_MATRIX_FAIL_ON_DIFF diff_ignore_alpha=$env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA diff_threshold_percent=$env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT"
+  Write-Host "  show_layer_ready_timeout_ms=$env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS show_library_load_timeout_ms=$env:RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS library_load_retries=$env:RATINGS_LIBRARY_LOAD_RETRIES"
+  Write-Host "  movie_library=$env:RATINGS_MATRIX_MOVIE_LIBRARY show_library=$env:RATINGS_MATRIX_SHOW_LIBRARY artifact_dir=$env:RATINGS_MATRIX_ARTIFACT_DIR"
   if ($NoCapture) {
     & $python -m pytest -m ratings_artifacts -vv -s
   } else {
