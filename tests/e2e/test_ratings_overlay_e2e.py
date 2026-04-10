@@ -329,6 +329,46 @@ def test_ratings_position_changes_reset_shared_offsets(page, live_server):
 
 
 @pytest.mark.e2e
+def test_ratings_shared_nudge_sync_respects_anchor_math(page, live_server):
+    page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")
+    page.wait_for_selector("#libraryPicker", timeout=10000)
+    template = _ensure_ratings_harness(page)
+
+    # Horizontal + left/top: shared +15 should move each slot +15 on each axis.
+    _set_by_name(page, f"{template}[rating_alignment]", "horizontal")
+    _set_by_name(page, f"{template}[horizontal_position]", "left")
+    _set_by_name(page, f"{template}[vertical_position]", "top")
+    page.wait_for_timeout(100)
+    _set_by_name(page, f"{template}[horizontal_offset]", "30")
+    _set_by_name(page, f"{template}[vertical_offset]", "30")
+    page.wait_for_timeout(100)
+
+    offsets = _slot_offsets(page, template)
+    assert offsets["rating1"]["h"] == 45
+    assert offsets["rating2"]["h"] == 360
+    assert offsets["rating3"]["h"] == 675
+    assert offsets["rating1"]["v"] == 45
+    assert offsets["rating2"]["v"] == 45
+    assert offsets["rating3"]["v"] == 45
+
+    # Horizontal + right/bottom: shared +15 means move inward from right/bottom.
+    _set_by_name(page, f"{template}[horizontal_position]", "right")
+    _set_by_name(page, f"{template}[vertical_position]", "bottom")
+    page.wait_for_timeout(100)
+    _set_by_name(page, f"{template}[horizontal_offset]", "30")
+    _set_by_name(page, f"{template}[vertical_offset]", "30")
+    page.wait_for_timeout(100)
+
+    offsets = _slot_offsets(page, template)
+    assert offsets["rating1"]["h"] == -675
+    assert offsets["rating2"]["h"] == -360
+    assert offsets["rating3"]["h"] == -45
+    assert offsets["rating1"]["v"] == -45
+    assert offsets["rating2"]["v"] == -45
+    assert offsets["rating3"]["v"] == -45
+
+
+@pytest.mark.e2e
 @pytest.mark.parametrize("builder_level", ["show", "episode"])
 def test_ratings_edge_positions_respect_15px_margin(page, live_server, builder_level):
     page.goto(f"{live_server}/step/025-libraries", wait_until="domcontentloaded")

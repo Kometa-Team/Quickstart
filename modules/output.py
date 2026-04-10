@@ -1,4 +1,5 @@
 import io
+import copy
 import os
 import ast
 import json
@@ -52,10 +53,10 @@ def clean_section_data(section_data, config_attribute):
                 clean_sub_data = {}
                 for sub_key, sub_value in value.items():
                     if not sub_key.startswith("tmp_"):
-                        clean_sub_data[sub_key] = sub_value
+                        clean_sub_data[sub_key] = copy.deepcopy(sub_value)
                 clean_data[key] = clean_sub_data
             else:
-                clean_data[key] = value
+                clean_data[key] = copy.deepcopy(value)
 
     return clean_data
 
@@ -1293,6 +1294,16 @@ def build_libraries_section(
                                 return fallback
                     return fallback
 
+                explicit_slot_offset_keys = {
+                    "rating1_horizontal_offset",
+                    "rating1_vertical_offset",
+                    "rating2_horizontal_offset",
+                    "rating2_vertical_offset",
+                    "rating3_horizontal_offset",
+                    "rating3_vertical_offset",
+                }
+                had_explicit_slot_offsets = any(key in cleaned for key in explicit_slot_offset_keys)
+
                 # Compact the configured rating slots so the emitted YAML always matches the
                 # contiguous stack shown on the Quickstart canvas, even after reducing the
                 # rating count or clearing a middle slot.
@@ -1337,26 +1348,38 @@ def build_libraries_section(
                             slot_payload[slot_key] = int(round(shared_number + (vertical_step * relative_index)))
                     cleaned.pop(shared_key, None)
 
+                preserve_explicit_multi_slot_offsets = had_explicit_slot_offsets and len(slot_payloads) > 1
+
                 # If all explicit per-slot vertical offsets are identical, they
                 # still represent a single shared anchor from Quickstart's composite preview.
                 # Re-expand them to match the preview stack used on the canvas.
                 vertical_values = [_offset_number(slot_payload.get("_vertical_offset"), None) for slot_payload in slot_payloads]
                 horizontal_values = [_offset_number(slot_payload.get("_horizontal_offset"), None) for slot_payload in slot_payloads]
-                if alignment == "vertical" and len(slot_payloads) > 1 and all(value is not None for value in vertical_values):
+                if (
+                    not preserve_explicit_multi_slot_offsets
+                    and alignment == "vertical"
+                    and len(slot_payloads) > 1
+                    and all(value is not None for value in vertical_values)
+                ):
                     if len(set(vertical_values)) == 1:
                         base_vertical = vertical_values[0]
                         for slot_position, slot_payload in enumerate(slot_payloads):
                             relative_index = slot_position - center_index
                             slot_payload["_vertical_offset"] = int(round(base_vertical + (vertical_step * relative_index)))
 
-                if slot_payloads and all(value is not None for value in horizontal_values):
+                if not preserve_explicit_multi_slot_offsets and slot_payloads and all(value is not None for value in horizontal_values):
                     if len(set(horizontal_values)) == 1:
                         base_horizontal = horizontal_values[0]
                         if base_horizontal == shared_horizontal_base:
                             for slot_payload in slot_payloads:
                                 slot_payload["_horizontal_offset"] = int(round(base_horizontal + back_padding))
 
-                if alignment == "vertical" and len(slot_payloads) > 1 and all(value is not None for value in vertical_values):
+                if (
+                    not preserve_explicit_multi_slot_offsets
+                    and alignment == "vertical"
+                    and len(slot_payloads) > 1
+                    and all(value is not None for value in vertical_values)
+                ):
                     old_vertical_step = back_height + back_padding
                     legacy_matches = True
                     for slot_position, explicit_vertical in enumerate(vertical_values):
@@ -1370,14 +1393,14 @@ def build_libraries_section(
                             relative_index = slot_position - center_index
                             slot_payload["_vertical_offset"] = int(round(shared_vertical_base + (vertical_step * relative_index)))
 
-                # Edge anchors use distance-from-edge semantics in Kometa.
-                # Negative offsets at top/bottom/left/right produce invalid YAML/runtime errors.
-                if h_pos in {"left", "right"}:
+                # Kometa enforces non-negative "distance from edge" offsets for right/bottom anchors.
+                # Left/top anchors can still legitimately be negative (intentional nudge past the edge).
+                if h_pos == "right":
                     for slot_payload in slot_payloads:
                         value = _offset_number(slot_payload.get("_horizontal_offset"), None)
                         if value is not None and value < 0:
                             slot_payload["_horizontal_offset"] = int(round(abs(value)))
-                if v_pos in {"top", "bottom"}:
+                if v_pos == "bottom":
                     for slot_payload in slot_payloads:
                         value = _offset_number(slot_payload.get("_vertical_offset"), None)
                         if value is not None and value < 0:
@@ -2074,8 +2097,10 @@ def build_config(header_style="standard", config_name=None):
                 # Fallback to "single line" divider format instead of basic text
                 header_art[config_attribute] = "#==================== " + item["name"] + " ====================#"
 
-        # Retrieve settings for each section
-        section_data = persistence.retrieve_settings(persistence_key)
+        # Retrieve settings for each section.
+        # Deep-copy here so YAML normalization cannot mutate the in-memory
+        # structure returned from persistence for this request lifecycle.
+        section_data = copy.deepcopy(persistence.retrieve_settings(persistence_key))
 
         if "validated" in section_data and section_data["validated"]:
             config_data[config_attribute] = clean_section_data(section_data, config_attribute)

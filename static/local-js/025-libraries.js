@@ -2145,7 +2145,6 @@ function wireRatingsOffsetSync (scope) {
     }
     const isConfiguredSlot = (slot) => hasMeaningfulValue(slot.ratingInput) && hasMeaningfulValue(slot.imageInput)
     const getActiveSlots = () => slotDefs.filter(isConfiguredSlot)
-    const getBackPadding = () => Math.max(0, toNumber(metricInputs.backPadding?.value, 15))
     const getAlignment = () => {
       const raw = normalizeValue(alignmentInput?.value || alignmentInput?.dataset?.default || 'vertical')
       return raw === 'horizontal' ? 'horizontal' : 'vertical'
@@ -2225,16 +2224,6 @@ function wireRatingsOffsetSync (scope) {
       const defaults = getPlacementDefaults()
       setDefaultValue(sharedInputs.horizontal, defaults.horizontal, force)
       setDefaultValue(sharedInputs.vertical, defaults.vertical, force)
-    }
-    const getVerticalStep = () => {
-      const backHeight = toNumber(metricInputs.backHeight?.value, 160)
-      const backPadding = getBackPadding()
-      return backHeight + (backPadding * 3)
-    }
-    const getHorizontalStep = () => {
-      const backWidth = toNumber(metricInputs.backWidth?.value, 160)
-      const backPadding = getBackPadding()
-      return backWidth + (backPadding * 3)
     }
     const ratingConstants = {
       edgeInset: 30,
@@ -2323,11 +2312,6 @@ function wireRatingsOffsetSync (scope) {
       })
       delete group.dataset.ratingsBulkUpdate
     }
-    const getHorizontalSlotOffset = (sharedValue) => {
-      const shared = toNumber(sharedValue, 15)
-      if (shared === 0) return 0
-      return shared + (shared > 0 ? 1 : -1) * getBackPadding()
-    }
     const updateInputValue = (input, nextValue) => {
       if (!input) return
       const normalized = String(Math.round(nextValue))
@@ -2359,21 +2343,34 @@ function wireRatingsOffsetSync (scope) {
     }
 
     const syncSharedFromSlots = (axis) => {
-      const alignment = getAlignment()
       const sharedInput = sharedInputs[axis]
-      const inputs = getActiveSlots().map(slot => slot[`${axis}Input`]).filter(Boolean)
-      if (!sharedInput || !inputs.length) return
+      const activeSlots = getActiveSlots()
+      const inputs = activeSlots.map(slot => slot[`${axis}Input`]).filter(Boolean)
+      if (!sharedInput || !inputs.length || !activeSlots.length) return
       if (group.dataset.syncingRatingOffsets === 'true' || group.dataset.resetting === 'true') {
         sharedInput.dataset.prevValue = String(sharedInput.value ?? '')
         return
       }
-      const average = Math.round(
-        inputs.reduce((sum, input) => sum + toNumber(input.value, toNumber(input.dataset.default, 0)), 0) / inputs.length
-      )
+      const defaults = getPlacementDefaults()
+      const baseOffsets = computeRatingOffsets()
+      const hPos = getHorizontalPosition()
+      const vPos = getVerticalPosition()
+      const deltas = activeSlots.map(slot => {
+        const baseAxis = axis === 'horizontal'
+          ? toNumber(baseOffsets[slot.slot]?.horizontal, 0)
+          : toNumber(baseOffsets[slot.slot]?.vertical, 0)
+        const currentAxis = toNumber(
+          slot[`${axis}Input`]?.value,
+          toNumber(slot[`${axis}Input`]?.dataset?.default, baseAxis)
+        )
+        return currentAxis - baseAxis
+      })
+      const averageDelta = Math.round(deltas.reduce((sum, value) => sum + value, 0) / deltas.length)
       withSyncGuard(() => {
-        const sharedValue = axis === 'horizontal' && alignment !== 'horizontal'
-          ? average - getBackPadding()
-          : average
+        const sharedBase = axis === 'horizontal' ? defaults.horizontal : defaults.vertical
+        const sharedValue = axis === 'horizontal'
+          ? (hPos === 'right' ? sharedBase - averageDelta : sharedBase + averageDelta)
+          : (vPos === 'bottom' ? sharedBase - averageDelta : sharedBase + averageDelta)
         sharedInput.value = String(sharedValue)
         sharedInput.dataset.prevValue = String(sharedValue)
         sharedInput.dispatchEvent(new Event('input', { bubbles: true }))
@@ -2383,7 +2380,6 @@ function wireRatingsOffsetSync (scope) {
     }
 
     const syncSlotsFromShared = (axis) => {
-      const alignment = getAlignment()
       const sharedInput = sharedInputs[axis]
       const activeSlots = getActiveSlots()
       if (!sharedInput || !activeSlots.length) return
@@ -2393,28 +2389,26 @@ function wireRatingsOffsetSync (scope) {
       }
       const current = toNumber(sharedInput.value, toNumber(sharedInput.dataset.default, 0))
       sharedInput.dataset.prevValue = String(current)
+      const defaults = getPlacementDefaults()
+      const baseOffsets = computeRatingOffsets()
+      const hPos = getHorizontalPosition()
+      const vPos = getVerticalPosition()
       withSyncGuard(() => {
         if (axis === 'horizontal') {
-          if (alignment === 'horizontal') {
-            const horizontalStep = getHorizontalStep()
-            const centerIndex = (activeSlots.length - 1) / 2
-            activeSlots.forEach((slot, index) => {
-              updateInputValue(slot.horizontalInput, current + ((index - centerIndex) * horizontalStep))
-            })
-            return
-          }
-          const slotOffset = getHorizontalSlotOffset(current)
-          activeSlots.forEach(slot => updateInputValue(slot.horizontalInput, slotOffset))
+          const sharedBase = defaults.horizontal
+          const delta = hPos === 'right' ? (sharedBase - current) : (current - sharedBase)
+          activeSlots.forEach(slot => {
+            const baseValue = toNumber(baseOffsets[slot.slot]?.horizontal, 0)
+            updateInputValue(slot.horizontalInput, baseValue + delta)
+          })
           return
         }
-        if (alignment === 'horizontal') {
-          activeSlots.forEach(slot => updateInputValue(slot.verticalInput, current))
-          return
-        }
-        const verticalStep = getVerticalStep()
-        const centerIndex = (activeSlots.length - 1) / 2
-        activeSlots.forEach((slot, index) => {
-          updateInputValue(slot.verticalInput, current + ((index - centerIndex) * verticalStep))
+
+        const sharedBase = defaults.vertical
+        const delta = vPos === 'bottom' ? (sharedBase - current) : (current - sharedBase)
+        activeSlots.forEach(slot => {
+          const baseValue = toNumber(baseOffsets[slot.slot]?.vertical, 0)
+          updateInputValue(slot.verticalInput, baseValue + delta)
         })
       })
       updateAdjustedIndicators()

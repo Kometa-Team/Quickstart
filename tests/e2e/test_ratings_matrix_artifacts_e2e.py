@@ -6,6 +6,7 @@ import os
 import random
 import subprocess
 import sys
+import time
 from datetime import datetime
 from itertools import product
 from pathlib import Path
@@ -58,6 +59,7 @@ LIBRARY_LOAD_RETRIES = max(1, int(os.environ.get("RATINGS_LIBRARY_LOAD_RETRIES",
 CASE_OFFSET = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_OFFSET", "0")))
 CASE_LIMIT = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_LIMIT", "0")))
 RANDOM_COUNT = max(0, int(os.environ.get("RATINGS_MATRIX_RANDOM_COUNT", "0")))
+PROGRESS_WRITE_INTERVAL = max(1, int(os.environ.get("RATINGS_PROGRESS_WRITE_INTERVAL", "10")))
 RANDOM_SEED_RAW = (os.environ.get("RATINGS_MATRIX_RANDOM_SEED", "") or "").strip()
 EXECUTION_MODE = (os.environ.get("RATINGS_MATRIX_EXECUTION_MODE", "batch") or "batch").strip().lower()
 CHUNK_SIZE = max(1, int(os.environ.get("RATINGS_MATRIX_CHUNK_SIZE", "12")))
@@ -139,6 +141,19 @@ def _parse_nudge_token(token):
         dy = int(raw[1:])
         return {"name": f"v{dy:+d}", "dx": 0, "dy": dy}
     raise ValueError(f"Unsupported nudge profile token: {token}")
+
+
+def _format_eta(seconds):
+    if seconds is None or not math.isfinite(seconds) or seconds < 0:
+        return "unknown"
+    total = int(round(seconds))
+    mins, secs = divmod(total, 60)
+    hours, mins = divmod(mins, 60)
+    if hours:
+        return f"{hours}h{mins:02d}m{secs:02d}s"
+    if mins:
+        return f"{mins}m{secs:02d}s"
+    return f"{secs}s"
 
 
 def _nudge_profiles():
@@ -440,6 +455,28 @@ def _load_library_with_ratings(page, builder_level=None, library_type=None):
     return None
 
 
+def _ensure_library_card_loaded(page, library_id, library_type=None):
+    timeout_ms = SHOW_LIBRARY_LOAD_TIMEOUT_MS if str(library_type or "").lower() == "show" else LIBRARY_LOAD_TIMEOUT_MS
+    per_attempt_timeout_ms = max(1500, timeout_ms // max(1, LIBRARY_LOAD_RETRIES))
+    for attempt in range(1, LIBRARY_LOAD_RETRIES + 1):
+        try:
+            page.select_option("#libraryPicker", library_id)
+            page.wait_for_function(
+                """(id) => !!document.querySelector(
+                  `#library-form-container .library-settings-card[data-library-id="${id}"]`
+                )""",
+                arg=library_id,
+                timeout=per_attempt_timeout_ms,
+            )
+            page.wait_for_timeout(120)
+            return True
+        except PlaywrightTimeoutError:
+            if attempt < LIBRARY_LOAD_RETRIES:
+                page.wait_for_timeout(350)
+                continue
+    return False
+
+
 def _set_by_name(page, name, value):
     ok = page.evaluate(
         """([name, value]) => {
@@ -482,49 +519,67 @@ def _configure_rating_slots(page, template, enabled, builder_level="show"):
         _set_if_exists(page, f"{template}[{slot}_image]", image_value if use_slot else "")
 
 
-def _apply_nudge_offsets(page, template, case):
+def _apply_nudge_offsets(page, board_selector, library_id, board_type, template, case):
     dx = int(case.get("nudge_dx", 0) or 0)
     dy = int(case.get("nudge_dy", 0) or 0)
     if dx == 0 and dy == 0:
-        return
+        return True, ""
 
-    builder_level = case.get("builder_level", "show")
-    available_slot_ids = list(_slot_values_for_builder(builder_level).keys())
-    enabled_slot_ids = list(case.get("enabled_slots", ()))
+    result = page.evaluate(
+        """([selector, libId, type, templateName, dx, dy]) => {
+          const board = document.querySelector(selector);
+          if (!board) return { ok: false, error: 'board missing' };
 
-    if NUDGE_APPLY_TO == "all_slots":
-        target_ids = available_slot_ids
-    else:
-        # Default: only nudge active slots.
-        target_ids = enabled_slot_ids
+          // Ratings overlay is rendered as a composite layer; select it so board nudge
+          // path uses the same clamp/math as real user interactions.
+          let selected = false;
+          if (typeof board._overlaySelectById === 'function') {
+            try {
+              selected = !!board._overlaySelectById(templateName);
+            } catch (_err) {
+              selected = false;
+            }
+          }
+          if (!selected) {
+            const fallbackLayer = board.querySelector('.overlay-board-layer[data-overlay-type="overlay_ratings"]');
+            if (fallbackLayer) {
+              fallbackLayer.click();
+              selected = true;
+            }
+          }
+          if (!selected) return { ok: false, error: `ratings layer not selectable for ${templateName}` };
 
-    h_anchor = str(case.get("horizontal_position", "left") or "left").lower()
-    v_anchor = str(case.get("vertical_position", "top") or "top").lower()
+          const root = board.closest('.library-settings-card') || document;
+          const stepSelectId = `${libId}-${type}-nudge-step`;
+          const stepSelect = root.querySelector(`#${stepSelectId}`) || root.querySelector('[data-overlay-board-nudge-step]');
+          if (!stepSelect) return { ok: false, error: `nudge step select missing (${stepSelectId})` };
 
-    def next_input_value(current_value, screen_delta, anchor):
-        # Input-space semantics for edge anchors:
-        # - left/top: input grows as layer moves right/down
-        # - right/bottom: input shrinks as layer moves right/down
-        # - center: input is center-relative and can be signed
-        if anchor in {"right", "bottom"}:
-            next_value = current_value - screen_delta
-            return max(0, next_value)
-        if anchor == "center":
-            return current_value + screen_delta
-        return max(0, current_value + screen_delta)
+          const hasStep = (val) => Array.from(stepSelect.options || []).some(opt => String(opt.value) === String(val));
+          const clickDir = (dir, amount) => {
+            if (!amount) return true;
+            const btn = root.querySelector(`[data-overlay-board-nudge="${dir}"]`);
+            if (!btn) return false;
+            let remaining = Math.abs(Number(amount) || 0);
+            while (remaining > 0) {
+              const step = (remaining >= 5 && hasStep(5)) ? 5 : 1;
+              stepSelect.value = String(step);
+              stepSelect.dispatchEvent(new Event('change', { bubbles: true }));
+              btn.click();
+              remaining -= step;
+            }
+            return true;
+          };
 
-    for idx in target_ids:
-        slot = f"rating{idx}"
-        h_name = f"{template}[{slot}_horizontal_offset]"
-        v_name = f"{template}[{slot}_vertical_offset]"
-        current_h = _get_number_or_none(page, h_name)
-        current_v = _get_number_or_none(page, v_name)
-        if current_h is None or current_v is None:
-            continue
-        next_h = next_input_value(int(current_h), dx, h_anchor)
-        next_v = next_input_value(int(current_v), dy, v_anchor)
-        _set_by_name(page, h_name, str(int(next_h)))
-        _set_by_name(page, v_name, str(int(next_v)))
+          const okX = dx > 0 ? clickDir('right', dx) : clickDir('left', -dx);
+          const okY = dy > 0 ? clickDir('down', dy) : clickDir('up', -dy);
+          return (okX && okY) ? { ok: true } : { ok: false, error: 'nudge button missing' };
+        }""",
+        [board_selector, library_id, board_type, template, dx, dy],
+    )
+    if not result or not result.get("ok"):
+        reason = (result or {}).get("error", "unknown nudge error")
+        return False, f"Nudge via board controls failed ({NUDGE_APPLY_TO}): {reason}"
+    return True, ""
 
 
 def _enable_overlay_group(page, template):
@@ -995,10 +1050,12 @@ def _run_kometa_render_batch(output_dir, jobs, kometa_dir):
     if not jobs:
         return {}
 
-    jobs_path = output_dir / "kometa_jobs.json"
+    jobs_path = output_dir / "_kometa_jobs_work.json"
     jobs_path.write_text(json.dumps(jobs, indent=2), encoding="utf-8")
 
-    results_path = output_dir / "kometa_results.json"
+    results_path = output_dir / "_kometa_results_work.json"
+    if results_path.exists():
+        results_path.unlink()
     script_path = Path("scripts") / "ratings_kometa_render.py"
     cmd = [
         sys.executable,
@@ -1031,6 +1088,16 @@ def _run_kometa_render_batch(output_dir, jobs, kometa_dir):
             continue
         by_case[case_id] = item
     return by_case
+
+
+def _write_kometa_manifests(output_dir, all_jobs, results_by_case):
+    jobs_path = output_dir / "kometa_jobs.json"
+    jobs_path.write_text(json.dumps(all_jobs, indent=2), encoding="utf-8")
+
+    results = list(results_by_case.values())
+    results.sort(key=lambda item: str(item.get("case_id", "")))
+    results_path = output_dir / "kometa_results.json"
+    results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
 
 def _image_diff_stats(canvas_path, kometa_path, diff_path):
@@ -1115,12 +1182,17 @@ def _apply_kometa_result_to_row(row, result, diff_dir, failures):
     failures.append(f"{case_id}: Kometa render failed: {error}")
 
 
-def _flush_chunked_kometa_jobs(output_dir, pending_jobs, row_by_case_id, diff_dir, failures, kometa_dir):
+def _flush_chunked_kometa_jobs(
+    output_dir, pending_jobs, row_by_case_id, diff_dir, failures, kometa_dir, all_jobs, all_results_by_case
+):
     if not pending_jobs:
         return {"case_ids": [], "passed": 0, "failed": 0}
+    chunk_snapshot = list(pending_jobs)
+    all_jobs.extend(chunk_snapshot)
     chunk_ids = [job["case_id"] for job in pending_jobs]
     print(f"[ratings-artifacts] chunk render start size={len(pending_jobs)} first={chunk_ids[0]} last={chunk_ids[-1]}", flush=True)
     results = _run_kometa_render_batch(output_dir, pending_jobs, kometa_dir)
+    all_results_by_case.update(results)
     passed = 0
     failed = 0
     for case_id in chunk_ids:
@@ -1137,11 +1209,38 @@ def _flush_chunked_kometa_jobs(output_dir, pending_jobs, row_by_case_id, diff_di
     return {"case_ids": chunk_ids, "passed": passed, "failed": failed}
 
 
+def _is_locked_file_error(exc):
+    return isinstance(exc, PermissionError) or getattr(exc, "errno", None) == 13 or getattr(exc, "winerror", None) in {
+        32,
+        33,
+    }
+
+
 def _write_reports(output_dir, rows):
     output_dir.mkdir(parents=True, exist_ok=True)
 
     json_path = output_dir / "summary.json"
-    json_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+    json_written = json_path
+    try:
+        json_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+    except OSError as e:
+        if not _is_locked_file_error(e):
+            raise
+        json_written = output_dir / "summary.live.json"
+        try:
+            json_written.write_text(json.dumps(rows, indent=2), encoding="utf-8")
+            print(
+                f"[ratings-artifacts] warning: summary.json is locked; wrote {json_written.name} instead",
+                flush=True,
+            )
+        except OSError as e2:
+            if not _is_locked_file_error(e2):
+                raise
+            json_written = None
+            print(
+                "[ratings-artifacts] warning: summary.json is locked and summary.live.json is also locked; skipping JSON write",
+                flush=True,
+            )
 
     csv_path = output_dir / "summary.csv"
     fieldnames = [
@@ -1165,11 +1264,35 @@ def _write_reports(output_dir, rows):
         "status",
         "notes",
     ]
-    with csv_path.open("w", encoding="utf-8", newline="") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames)
-        writer.writeheader()
-        for row in rows:
-            writer.writerow({k: row.get(k, "") for k in fieldnames})
+    csv_written = csv_path
+    try:
+        with csv_path.open("w", encoding="utf-8", newline="") as fh:
+            writer = csv.DictWriter(fh, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in rows:
+                writer.writerow({k: row.get(k, "") for k in fieldnames})
+    except OSError as e:
+        if not _is_locked_file_error(e):
+            raise
+        csv_written = output_dir / "summary.live.csv"
+        try:
+            with csv_written.open("w", encoding="utf-8", newline="") as fh:
+                writer = csv.DictWriter(fh, fieldnames=fieldnames)
+                writer.writeheader()
+                for row in rows:
+                    writer.writerow({k: row.get(k, "") for k in fieldnames})
+            print(
+                f"[ratings-artifacts] warning: summary.csv is locked; wrote {csv_written.name} instead",
+                flush=True,
+            )
+        except OSError as e2:
+            if not _is_locked_file_error(e2):
+                raise
+            csv_written = None
+            print(
+                "[ratings-artifacts] warning: summary.csv is locked and summary.live.csv is also locked; skipping CSV write",
+                flush=True,
+            )
 
     passed = sum(1 for r in rows if r.get("status") == "PASS")
     failed = sum(1 for r in rows if r.get("status") == "FAIL")
@@ -1183,8 +1306,8 @@ def _write_reports(output_dir, rows):
         "",
         "## Files",
         "",
-        "- `summary.json`",
-        "- `summary.csv`",
+        f"- `{json_written.name}`" if json_written else "- `summary.json` (write skipped: locked)",
+        f"- `{csv_written.name}`" if csv_written else "- `summary.csv` (write skipped: locked)",
         "- `canvas/*.png`",
         "- `kometa/*.png`",
         "- `diff/*.png` (only when differences exist)",
@@ -1199,7 +1322,26 @@ def _write_reports(output_dir, rows):
             if row.get("status") == "FAIL":
                 md_lines.append(f"- `{row['case_id']}`: {row.get('notes', '')}")
 
-    (output_dir / "README.md").write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    readme_path = output_dir / "README.md"
+    try:
+        readme_path.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+    except OSError as e:
+        if not _is_locked_file_error(e):
+            raise
+        fallback_readme = output_dir / "README.live.md"
+        try:
+            fallback_readme.write_text("\n".join(md_lines) + "\n", encoding="utf-8")
+            print(
+                f"[ratings-artifacts] warning: README.md is locked; wrote {fallback_readme.name} instead",
+                flush=True,
+            )
+        except OSError as e2:
+            if not _is_locked_file_error(e2):
+                raise
+            print(
+                "[ratings-artifacts] warning: README.md is locked and README.live.md is also locked; skipping README write",
+                flush=True,
+            )
 
 
 @pytest.mark.e2e
@@ -1221,12 +1363,32 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
     failures = []
     kometa_jobs = []
     chunk_jobs = []
+    all_kometa_jobs = []
+    all_kometa_results_by_case = {}
     mode = _execution_mode()
     chunk_index = 0
+    pending_rows_since_report = 0
     if mode == "chunked":
         print(f"[ratings-artifacts] execution_mode=chunked chunk_size={CHUNK_SIZE}", flush=True)
     else:
         print(f"[ratings-artifacts] execution_mode={mode}", flush=True)
+
+    report_write_interval = CHUNK_SIZE if (WITH_KOMETA_RENDER and mode == "chunked") else PROGRESS_WRITE_INTERVAL
+
+    def maybe_write_reports(force=False):
+        nonlocal pending_rows_since_report
+        if force or pending_rows_since_report >= report_write_interval:
+            try:
+                _write_reports(output_dir, rows)
+                pending_rows_since_report = 0
+            except OSError as e:
+                if _is_locked_file_error(e):
+                    print(
+                        "[ratings-artifacts] warning: report write skipped due to file lock; close Excel and run can continue",
+                        flush=True,
+                    )
+                else:
+                    raise
 
     _seed_library_settings_for_artifacts(monkeypatch, qs_module)
     _mock_remote_rating_assets(page)
@@ -1238,9 +1400,27 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
     total_cases = len(cases)
     total_chunk_target = math.ceil(total_cases / CHUNK_SIZE) if (WITH_KOMETA_RENDER and mode == "chunked" and total_cases > 0) else 0
     profile_context = {}
+    run_started = time.monotonic()
     for index, case in enumerate(cases, start=1):
         case_id = case["case_id"]
-        print(f"[ratings-artifacts] {index}/{total_cases} {case_id}", flush=True)
+        processed = index - 1
+        if processed > 0:
+            elapsed = time.monotonic() - run_started
+            avg = elapsed / processed
+            remaining = (total_cases - processed) * avg
+            eta = _format_eta(remaining)
+            elapsed_fmt = _format_eta(elapsed)
+            print(
+                f"[ratings-artifacts] {index}/{total_cases} {case_id} "
+                f"elapsed={elapsed_fmt} avg={avg:.2f}s/test eta={eta}",
+                flush=True,
+            )
+        else:
+            print(
+                f"[ratings-artifacts] {index}/{total_cases} {case_id} "
+                "elapsed=0s avg=n/a eta=estimating...",
+                flush=True,
+            )
         png_path = canvas_dir / f"{case_id}.png"
         yaml_path = yaml_dir / f"{case_id}.yml"
 
@@ -1270,8 +1450,10 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                     "notes": f"Skipped after profile bootstrap failure: {profile_key}",
                 }
                 rows.append(row)
+                pending_rows_since_report += 1
                 failures.append(f"{case_id}: {row['notes']}")
                 print(f"[ratings-artifacts] skipped {case_id} (profile failed)", flush=True)
+                maybe_write_reports()
                 continue
             if context is None:
                 ctx = _load_library_with_ratings(
@@ -1301,6 +1483,9 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
 
             template = context["template"]
             library_id = context["library_id"]
+            if not _ensure_library_card_loaded(page, library_id, case["library_type"]):
+                raise RuntimeError(f"Failed to activate library card: {library_id}")
+            _enable_overlay_group(page, template)
             enabled_names = {f"rating{idx}" for idx in case["enabled_slots"]}
             _configure_rating_slots(page, template, enabled_names, case["builder_level"])
 
@@ -1309,8 +1494,6 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             _set_by_name(page, f"{template}[vertical_position]", case["vertical_position"])
             _set_if_exists(page, f"{template}[builder_level]", case["builder_level"])
             _set_board_alignment_guide(page, library_id, case["board_type"])
-            page.wait_for_timeout(CASE_SETTLE_MS)
-            _apply_nudge_offsets(page, template, case)
             page.wait_for_timeout(CASE_SETTLE_MS)
 
             board_selector = (
@@ -1335,6 +1518,14 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                         _wait_for_rating_layer_ready(page, board_selector, case["board_type"])
                     except Exception as e:
                         notes.append(f"Rating layer wait warning: {type(e).__name__}: {e}")
+                    nudge_ok, nudge_warning = _apply_nudge_offsets(
+                        page, board_selector, library_id, case["board_type"], template, case
+                    )
+                    if nudge_warning:
+                        notes.append(nudge_warning)
+                    if not nudge_ok:
+                        status = "FAIL"
+                    page.wait_for_timeout(CASE_SETTLE_MS)
 
                     default_layer_srcs = _find_default_ratings_layer_sources(page, board_selector)
                     if default_layer_srcs:
@@ -1368,31 +1559,48 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 status = "FAIL"
                 notes.append("YAML vertical_position mismatch")
 
-            for idx in case["enabled_slots"]:
+            active_yaml_slots = []
+            for idx in ("1", "2", "3"):
+                rating_val = str(tv.get(f"rating{idx}", "") or "").strip().lower()
+                if rating_val and rating_val != "none":
+                    active_yaml_slots.append(idx)
+            if len(active_yaml_slots) != len(case["enabled_slots"]):
+                status = "FAIL"
+                notes.append(
+                    f"YAML enabled slot count mismatch (ui={len(case['enabled_slots'])}, yaml={len(active_yaml_slots)})"
+                )
+
+            for idx in active_yaml_slots:
                 slot = f"rating{idx}"
                 y_h = tv.get(f"{slot}_horizontal_offset")
                 y_v = tv.get(f"{slot}_vertical_offset")
-                if y_h is not None and int(y_h) != int(ui_offsets[slot]["h"]):
-                    status = "FAIL"
-                    notes.append(f"{slot} horizontal offset differs UI({ui_offsets[slot]['h']}) vs YAML({y_h})")
-                if y_v is not None and int(y_v) != int(ui_offsets[slot]["v"]):
-                    status = "FAIL"
-                    notes.append(f"{slot} vertical offset differs UI({ui_offsets[slot]['v']}) vs YAML({y_v})")
+                if y_h is not None:
+                    try:
+                        int(y_h)
+                    except (TypeError, ValueError):
+                        status = "FAIL"
+                        notes.append(f"{slot} horizontal offset is not numeric: {y_h}")
+                if y_v is not None:
+                    try:
+                        int(y_v)
+                    except (TypeError, ValueError):
+                        status = "FAIL"
+                        notes.append(f"{slot} vertical offset is not numeric: {y_v}")
 
-            if case["horizontal_position"] != "center":
-                for idx in case["enabled_slots"]:
+            if case["horizontal_position"] == "right":
+                for idx in active_yaml_slots:
                     slot = f"rating{idx}"
                     y_h = tv.get(f"{slot}_horizontal_offset")
                     if y_h is not None and int(y_h) < 0:
                         status = "FAIL"
-                        notes.append(f"{slot} horizontal offset is negative on edge anchor")
-            if case["vertical_position"] != "center":
-                for idx in case["enabled_slots"]:
+                        notes.append(f"{slot} horizontal offset is negative for right anchor")
+            if case["vertical_position"] == "bottom":
+                for idx in active_yaml_slots:
                     slot = f"rating{idx}"
                     y_v = tv.get(f"{slot}_vertical_offset")
                     if y_v is not None and int(y_v) < 0:
                         status = "FAIL"
-                        notes.append(f"{slot} vertical offset is negative on edge anchor")
+                        notes.append(f"{slot} vertical offset is negative for bottom anchor")
 
             row = {
                 "case_id": case_id,
@@ -1416,6 +1624,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 "notes": "; ".join(notes),
             }
             rows.append(row)
+            pending_rows_since_report += 1
             row_by_case_id[case_id] = row
             job = {
                 "case_id": case_id,
@@ -1427,7 +1636,9 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             }
             if WITH_KOMETA_RENDER:
                 if mode == "stream":
+                    all_kometa_jobs.append(job)
                     stream_results = _run_kometa_render_batch(output_dir, [job], kometa_dir)
+                    all_kometa_results_by_case.update(stream_results)
                     _apply_kometa_result_to_row(row, stream_results.get(case_id), diff_dir, failures)
                 elif mode == "chunked":
                     chunk_jobs.append(job)
@@ -1439,6 +1650,8 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                             diff_dir=diff_dir,
                             failures=failures,
                             kometa_dir=kometa_dir,
+                            all_jobs=all_kometa_jobs,
+                            all_results_by_case=all_kometa_results_by_case,
                         )
                         chunk_index += 1
                         cum_pass = sum(1 for r in rows if r.get("status") == "PASS")
@@ -1449,11 +1662,13 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                             f"cumulative_pass={cum_pass} cumulative_fail={cum_fail}",
                             flush=True,
                         )
+                        maybe_write_reports(force=True)
                 else:
                     kometa_jobs.append(job)
             if status == "FAIL":
                 failures.append(f"{case_id}: {row['notes']}")
             print(f"[ratings-artifacts] done {case_id} status={row['status']}", flush=True)
+            maybe_write_reports()
         except Exception as e:
             if "profile_key" in locals() and "context" in locals() and context is None:
                 profile_context[profile_key] = FAILED_PROFILE
@@ -1479,9 +1694,11 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                 "notes": f"Unhandled case exception: {type(e).__name__}: {e}",
             }
             rows.append(row)
+            pending_rows_since_report += 1
             row_by_case_id[case_id] = row
             failures.append(f"{case_id}: {row['notes']}")
             print(f"[ratings-artifacts] error {case_id}: {row['notes']}", flush=True)
+            maybe_write_reports()
 
     if WITH_KOMETA_RENDER and mode == "chunked" and chunk_jobs:
         result = _flush_chunked_kometa_jobs(
@@ -1491,6 +1708,8 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             diff_dir=diff_dir,
             failures=failures,
             kometa_dir=kometa_dir,
+            all_jobs=all_kometa_jobs,
+            all_results_by_case=all_kometa_results_by_case,
         )
         chunk_index += 1
         cum_pass = sum(1 for r in rows if r.get("status") == "PASS")
@@ -1501,14 +1720,21 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             f"cumulative_pass={cum_pass} cumulative_fail={cum_fail}",
             flush=True,
         )
+        maybe_write_reports(force=True)
 
     if WITH_KOMETA_RENDER and mode == "batch" and kometa_jobs:
+        all_kometa_jobs.extend(kometa_jobs)
         kometa_results = _run_kometa_render_batch(output_dir, kometa_jobs, kometa_dir)
+        all_kometa_results_by_case.update(kometa_results)
         for row in rows:
             case_id = row.get("case_id")
             if not case_id:
                 continue
             _apply_kometa_result_to_row(row, kometa_results.get(case_id), diff_dir, failures)
+        maybe_write_reports(force=True)
+
+    if WITH_KOMETA_RENDER:
+        _write_kometa_manifests(output_dir, all_kometa_jobs, all_kometa_results_by_case)
 
     _write_reports(output_dir, rows)
 
