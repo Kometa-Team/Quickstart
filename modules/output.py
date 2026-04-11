@@ -1367,7 +1367,11 @@ def build_libraries_section(
                             relative_index = slot_position - center_index
                             slot_payload["_vertical_offset"] = int(round(base_vertical + (vertical_step * relative_index)))
 
-                if not preserve_explicit_multi_slot_offsets and slot_payloads and all(value is not None for value in horizontal_values):
+                if (
+                    not preserve_explicit_multi_slot_offsets
+                    and len(slot_payloads) > 1
+                    and all(value is not None for value in horizontal_values)
+                ):
                     if len(set(horizontal_values)) == 1:
                         base_horizontal = horizontal_values[0]
                         if base_horizontal == shared_horizontal_base:

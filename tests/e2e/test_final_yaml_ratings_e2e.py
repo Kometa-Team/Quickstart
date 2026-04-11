@@ -89,6 +89,27 @@ def _ratings_libraries_settings_left_top_negative_slot():
     }
 
 
+def _ratings_libraries_settings_single_slot_center_top_nudged():
+    return {
+        "validated": True,
+        "libraries": {
+            "mov-library_movies-library": "Movies",
+            "mov-library_movies-collection_collectionless": True,
+            "mov-library_movies-movie-overlay_ratings": True,
+            "mov-library_movies-movie-template_overlay_ratings[rating_alignment]": "vertical",
+            "mov-library_movies-movie-template_overlay_ratings[horizontal_position]": "center",
+            "mov-library_movies-movie-template_overlay_ratings[vertical_position]": "top",
+            "mov-library_movies-movie-template_overlay_ratings[back_height]": 160,
+            "mov-library_movies-movie-template_overlay_ratings[back_width]": 160,
+            "mov-library_movies-movie-template_overlay_ratings[back_padding]": 15,
+            "mov-library_movies-movie-template_overlay_ratings[rating2]": "critic",
+            "mov-library_movies-movie-template_overlay_ratings[rating2_image]": "imdb",
+            "mov-library_movies-movie-template_overlay_ratings[rating2_horizontal_offset]": 15,
+            "mov-library_movies-movie-template_overlay_ratings[rating2_vertical_offset]": 45,
+        },
+    }
+
+
 @pytest.mark.e2e
 def test_final_yaml_contains_expected_ratings_overlay(page, live_server, monkeypatch, qs_module):
     monkeypatch.setattr(
@@ -209,3 +230,46 @@ def test_final_yaml_preserves_left_top_negative_rating_offset_without_mutating_s
 
     source_h = payload["libraries"]["mov-library_movies-movie-template_overlay_ratings[rating1_horizontal_offset]"]
     assert source_h == -285
+
+
+@pytest.mark.e2e
+def test_final_yaml_preserves_single_slot_nudged_horizontal_offset_without_padding(page, live_server, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module.persistence,
+        "check_minimum_settings",
+        lambda: (True, True, True, True),
+    )
+
+    payload = _ratings_libraries_settings_single_slot_center_top_nudged()
+
+    def fake_retrieve_settings(section):
+        if section == "025-libraries":
+            return payload
+        return {"validated": False}
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    page.goto(f"{live_server}/step/900-final", wait_until="domcontentloaded")
+    yaml_text = page.locator("#final-yaml").input_value()
+    assert yaml_text
+
+    parser = YAML(typ="safe", pure=True)
+    parsed = parser.load(yaml_text)
+    libraries = parsed.get("libraries", {})
+    movies = libraries.get("Movies", {})
+    overlays = movies.get("overlay_files", [])
+    ratings_entry = next((entry for entry in overlays if entry.get("default") == "ratings"), None)
+    assert ratings_entry is not None, "ratings overlay missing from final YAML"
+
+    tv = ratings_entry.get("template_variables", {})
+    assert tv.get("horizontal_position") == "center"
+    assert tv.get("vertical_position") == "top"
+    assert tv.get("rating1") == "critic"
+    assert tv.get("rating1_image") == "imdb"
+    assert tv.get("rating1_horizontal_offset") == 15
+    assert tv.get("rating1_vertical_offset") == 45
+
+    source_h = payload["libraries"]["mov-library_movies-movie-template_overlay_ratings[rating2_horizontal_offset]"]
+    source_v = payload["libraries"]["mov-library_movies-movie-template_overlay_ratings[rating2_vertical_offset]"]
+    assert source_h == 15
+    assert source_v == 45

@@ -18,6 +18,8 @@ param(
   [double]$RatingsDiffThresholdThreeSlotPercent = -1,
   [int]$RatingsCaseOffset = -1,
   [int]$RatingsCaseLimit = -1,
+  [string]$RatingsCaseIds,
+  [string]$RatingsCaseIdsFile,
   [string]$RatingsExecutionMode,
   [int]$RatingsChunkSize = -1,
   [int]$RatingsShowLayerReadyTimeoutMs = -1,
@@ -63,7 +65,9 @@ $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
 #   "ratings_random_count": 0,
 #   "ratings_random_seed": "",
 #   "ratings_case_offset": 0,
-#   "ratings_case_limit": 0
+#   "ratings_case_limit": 0,
+#   "ratings_case_ids": "",
+#   "ratings_case_ids_file": ""
 # }
 $localConfigPath = Join-Path $PSScriptRoot "run-tests.config.json"
 $localConfig = @{}
@@ -99,6 +103,8 @@ $resolvedRatingsRandomCount = if ($RatingsRandomCount -ge 0) { $RatingsRandomCou
 $resolvedRatingsRandomSeed = if ($RatingsRandomSeed) { $RatingsRandomSeed } elseif ($localConfig.ContainsKey("ratings_random_seed")) { $localConfig["ratings_random_seed"] } elseif ($env:RATINGS_MATRIX_RANDOM_SEED) { $env:RATINGS_MATRIX_RANDOM_SEED } else { $null }
 $resolvedRatingsCaseOffset = if ($RatingsCaseOffset -ge 0) { $RatingsCaseOffset } elseif ($localConfig.ContainsKey("ratings_case_offset")) { [int]$localConfig["ratings_case_offset"] } elseif ($env:RATINGS_MATRIX_CASE_OFFSET) { [int]$env:RATINGS_MATRIX_CASE_OFFSET } else { $null }
 $resolvedRatingsCaseLimit = if ($RatingsCaseLimit -ge 0) { $RatingsCaseLimit } elseif ($localConfig.ContainsKey("ratings_case_limit")) { [int]$localConfig["ratings_case_limit"] } elseif ($env:RATINGS_MATRIX_CASE_LIMIT) { [int]$env:RATINGS_MATRIX_CASE_LIMIT } else { $null }
+$resolvedRatingsCaseIds = if ($RatingsCaseIds) { $RatingsCaseIds } elseif ($localConfig.ContainsKey("ratings_case_ids")) { [string]$localConfig["ratings_case_ids"] } elseif ($env:RATINGS_MATRIX_CASE_IDS) { $env:RATINGS_MATRIX_CASE_IDS } else { $null }
+$resolvedRatingsCaseIdsFile = if ($RatingsCaseIdsFile) { $RatingsCaseIdsFile } elseif ($localConfig.ContainsKey("ratings_case_ids_file")) { [string]$localConfig["ratings_case_ids_file"] } elseif ($env:RATINGS_MATRIX_CASE_IDS_FILE) { $env:RATINGS_MATRIX_CASE_IDS_FILE } else { $null }
 
 if ($null -ne $resolvedRatingsProfileOrder -and "$resolvedRatingsProfileOrder".Trim() -ne "") {
   if ($resolvedRatingsProfileOrder -is [array]) {
@@ -112,6 +118,16 @@ if ($null -ne $resolvedRatingsCaseOffset) {
 }
 if ($null -ne $resolvedRatingsCaseLimit) {
   $env:RATINGS_MATRIX_CASE_LIMIT = [string]$resolvedRatingsCaseLimit
+}
+if ($null -ne $resolvedRatingsCaseIds -and "$resolvedRatingsCaseIds".Trim() -ne "") {
+  $env:RATINGS_MATRIX_CASE_IDS = [string]$resolvedRatingsCaseIds
+} else {
+  Remove-Item Env:RATINGS_MATRIX_CASE_IDS -ErrorAction SilentlyContinue
+}
+if ($null -ne $resolvedRatingsCaseIdsFile -and "$resolvedRatingsCaseIdsFile".Trim() -ne "") {
+  $env:RATINGS_MATRIX_CASE_IDS_FILE = [string]$resolvedRatingsCaseIdsFile
+} else {
+  Remove-Item Env:RATINGS_MATRIX_CASE_IDS_FILE -ErrorAction SilentlyContinue
 }
 if ($null -ne $resolvedRatingsWithKometa -and "$resolvedRatingsWithKometa".Trim() -ne "") {
   $env:RATINGS_MATRIX_WITH_KOMETA = [string]$resolvedRatingsWithKometa
@@ -201,6 +217,8 @@ if ($RatingsArtifacts) {
   Write-Host "  profile_order=$env:RATINGS_MATRIX_PROFILE_ORDER"
   Write-Host "  execution_mode=$env:RATINGS_MATRIX_EXECUTION_MODE chunk_size=$env:RATINGS_MATRIX_CHUNK_SIZE"
   Write-Host "  random_count=$env:RATINGS_MATRIX_RANDOM_COUNT random_seed=$env:RATINGS_MATRIX_RANDOM_SEED"
+  Write-Host "  case_offset=$env:RATINGS_MATRIX_CASE_OFFSET case_limit=$env:RATINGS_MATRIX_CASE_LIMIT"
+  Write-Host "  case_ids=$env:RATINGS_MATRIX_CASE_IDS case_ids_file=$env:RATINGS_MATRIX_CASE_IDS_FILE"
   Write-Host "  with_kometa=$env:RATINGS_MATRIX_WITH_KOMETA fail_on_diff=$env:RATINGS_MATRIX_FAIL_ON_DIFF diff_ignore_alpha=$env:RATINGS_MATRIX_DIFF_IGNORE_ALPHA"
   Write-Host "  include_nudges=$env:RATINGS_MATRIX_INCLUDE_NUDGES nudge_profiles=$env:RATINGS_MATRIX_NUDGE_PROFILES nudge_apply_to=$env:RATINGS_MATRIX_NUDGE_APPLY_TO"
   Write-Host "  diff_use_slot_thresholds=$env:RATINGS_MATRIX_DIFF_USE_SLOT_THRESHOLDS diff_threshold_percent=$env:RATINGS_MATRIX_DIFF_THRESHOLD_PERCENT"

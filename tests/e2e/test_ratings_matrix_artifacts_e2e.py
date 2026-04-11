@@ -4,6 +4,7 @@ import json
 import math
 import os
 import random
+import re
 import subprocess
 import sys
 import time
@@ -58,6 +59,8 @@ SHOW_LIBRARY_LOAD_TIMEOUT_MS = max(
 LIBRARY_LOAD_RETRIES = max(1, int(os.environ.get("RATINGS_LIBRARY_LOAD_RETRIES", "3")))
 CASE_OFFSET = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_OFFSET", "0")))
 CASE_LIMIT = max(0, int(os.environ.get("RATINGS_MATRIX_CASE_LIMIT", "0")))
+CASE_IDS_RAW = (os.environ.get("RATINGS_MATRIX_CASE_IDS", "") or "").strip()
+CASE_IDS_FILE = (os.environ.get("RATINGS_MATRIX_CASE_IDS_FILE", "") or "").strip()
 RANDOM_COUNT = max(0, int(os.environ.get("RATINGS_MATRIX_RANDOM_COUNT", "0")))
 PROGRESS_WRITE_INTERVAL = max(1, int(os.environ.get("RATINGS_PROGRESS_WRITE_INTERVAL", "10")))
 RANDOM_SEED_RAW = (os.environ.get("RATINGS_MATRIX_RANDOM_SEED", "") or "").strip()
@@ -318,6 +321,31 @@ def _random_sample_cases(cases):
 
 def _select_matrix_cases():
     all_cases = _all_matrix_cases()
+    requested_case_ids = _requested_case_ids()
+    if requested_case_ids:
+        by_id = {case["case_id"]: case for case in all_cases}
+        selected = []
+        missing = []
+        for case_id in requested_case_ids:
+            match = by_id.get(case_id)
+            if match:
+                selected.append(match)
+            else:
+                missing.append(case_id)
+        if missing:
+            sample = ", ".join(missing[:5])
+            suffix = f" (+{len(missing) - 5} more)" if len(missing) > 5 else ""
+            raise AssertionError(
+                "RATINGS_MATRIX_CASE_IDS filter contains unknown case id(s): "
+                f"{sample}{suffix}. Check nudge/profile settings and case id spelling."
+            )
+        print(
+            f"[ratings-artifacts] case-id filter enabled count={len(selected)} "
+            "(offset/limit/random ignored)",
+            flush=True,
+        )
+        return selected
+
     if CASE_LIMIT > 0:
         sliced = all_cases[CASE_OFFSET : CASE_OFFSET + CASE_LIMIT]
     elif CASE_OFFSET > 0:
@@ -325,6 +353,46 @@ def _select_matrix_cases():
     else:
         sliced = all_cases
     return _random_sample_cases(sliced)
+
+
+def _parse_case_id_tokens(raw_text):
+    if not raw_text:
+        return []
+    tokens = []
+    seen = set()
+    for part in re.split(r"[\r\n,;|]+", raw_text):
+        token = part.strip()
+        if not token or token.startswith("#"):
+            continue
+        if token in seen:
+            continue
+        seen.add(token)
+        tokens.append(token)
+    return tokens
+
+
+def _requested_case_ids():
+    selected = []
+    seen = set()
+
+    def _append_unique(values):
+        for value in values:
+            if value in seen:
+                continue
+            seen.add(value)
+            selected.append(value)
+
+    _append_unique(_parse_case_id_tokens(CASE_IDS_RAW))
+
+    if CASE_IDS_FILE:
+        file_path = Path(CASE_IDS_FILE)
+        if not file_path.is_absolute():
+            file_path = Path.cwd() / file_path
+        if not file_path.exists():
+            raise AssertionError(f"RATINGS_MATRIX_CASE_IDS_FILE not found: {file_path}")
+        _append_unique(_parse_case_id_tokens(file_path.read_text(encoding="utf-8")))
+
+    return selected
 
 
 def _seed_library_settings_for_artifacts(monkeypatch, qs_module):
