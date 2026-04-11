@@ -3,7 +3,6 @@ from itertools import product
 import pytest
 from ruamel.yaml import YAML
 
-
 RATING_SLOT_VALUES = {
     "1": ("user", "rt_tomato"),
     "2": ("critic", "imdb"),

@@ -75,15 +75,9 @@ DIFF_USE_SLOT_THRESHOLDS = str(os.environ.get("RATINGS_MATRIX_DIFF_USE_SLOT_THRE
     "true",
     "yes",
 }
-DIFF_THRESHOLD_ONE_SLOT_PERCENT = max(
-    0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT", "0.80"))
-)
-DIFF_THRESHOLD_TWO_SLOT_PERCENT = max(
-    0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_TWO_SLOT_PERCENT", "1.50"))
-)
-DIFF_THRESHOLD_THREE_SLOT_PERCENT = max(
-    0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT", "2.80"))
-)
+DIFF_THRESHOLD_ONE_SLOT_PERCENT = max(0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT", "0.80")))
+DIFF_THRESHOLD_TWO_SLOT_PERCENT = max(0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_TWO_SLOT_PERCENT", "1.50")))
+DIFF_THRESHOLD_THREE_SLOT_PERCENT = max(0.0, float(os.environ.get("RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT", "2.80")))
 INCLUDE_NUDGES = str(os.environ.get("RATINGS_MATRIX_INCLUDE_NUDGES", "0")).strip().lower() in {
     "1",
     "true",
@@ -240,14 +234,9 @@ def _all_matrix_cases():
     cases = []
     nudge_profiles = _nudge_profiles()
     for library_type, builder_level, profile_name, enabled_slots, context_level, board_type in _ordered_matrix_profiles():
-        for alignment, h_pos, v_pos, nudge in product(
-            ALIGNMENTS, HORIZONTAL_POSITIONS, VERTICAL_POSITIONS, nudge_profiles
-        ):
+        for alignment, h_pos, v_pos, nudge in product(ALIGNMENTS, HORIZONTAL_POSITIONS, VERTICAL_POSITIONS, nudge_profiles):
             nudge_name = nudge["name"]
-            case_id = (
-                f"{library_type}-{builder_level}-{profile_name}-{alignment}-{h_pos}-{v_pos}"
-                f"-nudge_{_slugify_nudge_name(nudge_name)}"
-            )
+            case_id = f"{library_type}-{builder_level}-{profile_name}-{alignment}-{h_pos}-{v_pos}" f"-nudge_{_slugify_nudge_name(nudge_name)}"
             cases.append(
                 {
                     "case_id": case_id,
@@ -312,8 +301,7 @@ def _random_sample_cases(cases):
 
     rng.shuffle(selected)
     print(
-        f"[ratings-artifacts] random mode enabled count={target_count} seed={seed_value} "
-        f"required_families={','.join(required_families)}",
+        f"[ratings-artifacts] random mode enabled count={target_count} seed={seed_value} " f"required_families={','.join(required_families)}",
         flush=True,
     )
     return selected
@@ -335,13 +323,9 @@ def _select_matrix_cases():
         if missing:
             sample = ", ".join(missing[:5])
             suffix = f" (+{len(missing) - 5} more)" if len(missing) > 5 else ""
-            raise AssertionError(
-                "RATINGS_MATRIX_CASE_IDS filter contains unknown case id(s): "
-                f"{sample}{suffix}. Check nudge/profile settings and case id spelling."
-            )
+            raise AssertionError("RATINGS_MATRIX_CASE_IDS filter contains unknown case id(s): " f"{sample}{suffix}. Check nudge/profile settings and case id spelling.")
         print(
-            f"[ratings-artifacts] case-id filter enabled count={len(selected)} "
-            "(offset/limit/random ignored)",
+            f"[ratings-artifacts] case-id filter enabled count={len(selected)} " "(offset/limit/random ignored)",
             flush=True,
         )
         return selected
@@ -868,8 +852,7 @@ def _find_default_ratings_layer_sources(page, board_selector):
 
 
 def _hide_global_nav_for_capture(page):
-    page.evaluate(
-        """() => {
+    page.evaluate("""() => {
           const selectors = [
             '.page-nav',
             '.navbar.page-nav',
@@ -881,8 +864,7 @@ def _hide_global_nav_for_capture(page):
               node.style.setProperty('visibility', 'hidden', 'important');
             });
           });
-        }"""
-    )
+        }""")
 
 
 def _capture_board_png(page, board_selector, png_path):
@@ -1250,9 +1232,7 @@ def _apply_kometa_result_to_row(row, result, diff_dir, failures):
     failures.append(f"{case_id}: Kometa render failed: {error}")
 
 
-def _flush_chunked_kometa_jobs(
-    output_dir, pending_jobs, row_by_case_id, diff_dir, failures, kometa_dir, all_jobs, all_results_by_case
-):
+def _flush_chunked_kometa_jobs(output_dir, pending_jobs, row_by_case_id, diff_dir, failures, kometa_dir, all_jobs, all_results_by_case):
     if not pending_jobs:
         return {"case_ids": [], "passed": 0, "failed": 0}
     chunk_snapshot = list(pending_jobs)
@@ -1278,10 +1258,15 @@ def _flush_chunked_kometa_jobs(
 
 
 def _is_locked_file_error(exc):
-    return isinstance(exc, PermissionError) or getattr(exc, "errno", None) == 13 or getattr(exc, "winerror", None) in {
-        32,
-        33,
-    }
+    return (
+        isinstance(exc, PermissionError)
+        or getattr(exc, "errno", None) == 13
+        or getattr(exc, "winerror", None)
+        in {
+            32,
+            33,
+        }
+    )
 
 
 def _write_reports(output_dir, rows):
@@ -1479,14 +1464,12 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             eta = _format_eta(remaining)
             elapsed_fmt = _format_eta(elapsed)
             print(
-                f"[ratings-artifacts] {index}/{total_cases} {case_id} "
-                f"elapsed={elapsed_fmt} avg={avg:.2f}s/test eta={eta}",
+                f"[ratings-artifacts] {index}/{total_cases} {case_id} " f"elapsed={elapsed_fmt} avg={avg:.2f}s/test eta={eta}",
                 flush=True,
             )
         else:
             print(
-                f"[ratings-artifacts] {index}/{total_cases} {case_id} "
-                "elapsed=0s avg=n/a eta=estimating...",
+                f"[ratings-artifacts] {index}/{total_cases} {case_id} " "elapsed=0s avg=n/a eta=estimating...",
                 flush=True,
             )
         png_path = canvas_dir / f"{case_id}.png"
@@ -1564,10 +1547,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
             _set_board_alignment_guide(page, library_id, case["board_type"])
             page.wait_for_timeout(CASE_SETTLE_MS)
 
-            board_selector = (
-                f"#library-form-container .library-settings-card[data-library-id=\"{library_id}\"] "
-                f".overlay-board[data-overlay-type=\"{case['board_type']}\"]"
-            )
+            board_selector = f'#library-form-container .library-settings-card[data-library-id="{library_id}"] ' f".overlay-board[data-overlay-type=\"{case['board_type']}\"]"
             board = page.locator(board_selector).first
 
             notes = []
@@ -1586,9 +1566,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                         _wait_for_rating_layer_ready(page, board_selector, case["board_type"])
                     except Exception as e:
                         notes.append(f"Rating layer wait warning: {type(e).__name__}: {e}")
-                    nudge_ok, nudge_warning = _apply_nudge_offsets(
-                        page, board_selector, library_id, case["board_type"], template, case
-                    )
+                    nudge_ok, nudge_warning = _apply_nudge_offsets(page, board_selector, library_id, case["board_type"], template, case)
                     if nudge_warning:
                         notes.append(nudge_warning)
                     if not nudge_ok:
@@ -1598,9 +1576,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                     default_layer_srcs = _find_default_ratings_layer_sources(page, board_selector)
                     if default_layer_srcs:
                         status = "FAIL"
-                        notes.append(
-                            f"Ratings layer used default ratings.png instead of slot icons ({len(default_layer_srcs)} layer(s))"
-                        )
+                        notes.append(f"Ratings layer used default ratings.png instead of slot icons ({len(default_layer_srcs)} layer(s))")
 
                     _hide_global_nav_for_capture(page)
                     saved, warning = _capture_board_png(page, board_selector, png_path)
@@ -1634,9 +1610,7 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
                     active_yaml_slots.append(idx)
             if len(active_yaml_slots) != len(case["enabled_slots"]):
                 status = "FAIL"
-                notes.append(
-                    f"YAML enabled slot count mismatch (ui={len(case['enabled_slots'])}, yaml={len(active_yaml_slots)})"
-                )
+                notes.append(f"YAML enabled slot count mismatch (ui={len(case['enabled_slots'])}, yaml={len(active_yaml_slots)})")
 
             for idx in active_yaml_slots:
                 slot = f"rating{idx}"
@@ -1808,7 +1782,4 @@ def test_generate_ratings_matrix_artifacts(page, live_server, monkeypatch, qs_mo
 
     if failures:
         preview = "\n".join(failures[:25])
-        pytest.fail(
-            f"Ratings artifact matrix found {len(failures)} issue(s). "
-            f"See {output_dir} for details.\n{preview}"
-        )
+        pytest.fail(f"Ratings artifact matrix found {len(failures)} issue(s). " f"See {output_dir} for details.\n{preview}")

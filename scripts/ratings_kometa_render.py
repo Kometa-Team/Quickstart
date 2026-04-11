@@ -7,7 +7,6 @@ from pathlib import Path
 
 from PIL import Image
 
-
 ICON_MAP = {
     "anidb": "AniDB.png",
     "imdb": "IMDb.png",
@@ -471,6 +470,7 @@ def _render_case(repo_root, out_dir, overlay_cls, job):
         queue_names = {}
 
     with tempfile.TemporaryDirectory(prefix="ratings-kometa-overlay-") as tmp_overlay:
+
         class _DummyLibrary:
             overlay_folder = tmp_overlay
             image_table_name = "ratings_matrix"

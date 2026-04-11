@@ -911,11 +911,7 @@ def _list_preview_images_for_type(image_type: str) -> list[str]:
     uploads: list[str] = []
     if uploads_dir and os.path.exists(uploads_dir):
         uploads = sorted(
-            [
-                img
-                for img in os.listdir(uploads_dir)
-                if any(img.lower().endswith(f".{ext}") for ext in helpers.ALLOWED_EXTENSIONS)
-            ],
+            [img for img in os.listdir(uploads_dir) if any(img.lower().endswith(f".{ext}") for ext in helpers.ALLOWED_EXTENSIONS)],
             key=str.casefold,
         )
     return builtins + [img for img in uploads if img not in builtins]

@@ -28,8 +28,7 @@ def _ratings_context(page, library_id=None, builder_level=None):
 
 
 def _ensure_ratings_harness(page):
-    return page.evaluate(
-        """() => {
+    return page.evaluate("""() => {
           const existing = document.querySelector('[data-test-ratings-harness="true"]');
           if (existing) return existing.dataset.templateName || 'test_ratings_overlay';
 
@@ -111,16 +110,13 @@ def _ensure_ratings_harness(page):
             window.wireRatingsOffsetSync(host);
           }
           return templateName;
-        }"""
-    )
+        }""")
 
 
 def _load_library_with_ratings(page, builder_level=None):
-    library_ids = page.evaluate(
-        """() => Array.from(document.querySelectorAll('#libraryPicker option[value]'))
+    library_ids = page.evaluate("""() => Array.from(document.querySelectorAll('#libraryPicker option[value]'))
           .map(opt => opt.value)
-          .filter(Boolean)"""
-    )
+          .filter(Boolean)""")
     for library_id in library_ids:
         page.select_option("#libraryPicker", library_id)
         page.wait_for_function(
@@ -136,12 +132,10 @@ def _load_library_with_ratings(page, builder_level=None):
         if ctx:
             ctx["libraryId"] = library_id
             return ctx
-    active_library_id = page.evaluate(
-        """() => {
+    active_library_id = page.evaluate("""() => {
           const card = document.querySelector('#library-form-container .library-settings-card');
           return card?.dataset?.libraryId || null;
-        }"""
-    )
+        }""")
     if active_library_id:
         page.wait_for_timeout(250)
         ctx = _ratings_context(page, active_library_id, builder_level)
@@ -217,7 +211,7 @@ def _set_if_exists(page, name, value):
           el.dispatchEvent(new Event('change', { bubbles: true }));
           return true;
         }""",
-        [name, value]
+        [name, value],
     )
 
 
@@ -234,7 +228,7 @@ def _enable_overlay_group(page, template):
           }
           return true;
         }""",
-        template
+        template,
     )
 
 
@@ -318,14 +312,8 @@ def test_ratings_position_changes_reset_shared_offsets(page, live_server):
                 expected_v = 0 if vp == "center" else 15
                 got_h = _get_number_value(page, h_name)
                 got_v = _get_number_value(page, v_name)
-                assert got_h == expected_h, (
-                    f"horizontal_offset mismatch for {alignment}/{hp}/{vp}: "
-                    f"expected {expected_h}, got {got_h}"
-                )
-                assert got_v == expected_v, (
-                    f"vertical_offset mismatch for {alignment}/{hp}/{vp}: "
-                    f"expected {expected_v}, got {got_v}"
-                )
+                assert got_h == expected_h, f"horizontal_offset mismatch for {alignment}/{hp}/{vp}: " f"expected {expected_h}, got {got_h}"
+                assert got_v == expected_v, f"vertical_offset mismatch for {alignment}/{hp}/{vp}: " f"expected {expected_v}, got {got_v}"
 
 
 @pytest.mark.e2e
@@ -404,14 +392,8 @@ def test_ratings_edge_positions_respect_15px_margin(page, live_server, builder_l
             got_v = _get_number_value(page, f"{template}[vertical_offset]")
             expected_h = 0 if hp == "center" else 15
             expected_v = 0 if vp == "center" else 15
-            assert got_h == expected_h, (
-                f"horizontal_offset mismatch for {builder_level} {alignment}/{hp}/{vp}: "
-                f"expected {expected_h}, got {got_h}"
-            )
-            assert got_v == expected_v, (
-                f"vertical_offset mismatch for {builder_level} {alignment}/{hp}/{vp}: "
-                f"expected {expected_v}, got {got_v}"
-            )
+            assert got_h == expected_h, f"horizontal_offset mismatch for {builder_level} {alignment}/{hp}/{vp}: " f"expected {expected_h}, got {got_h}"
+            assert got_v == expected_v, f"vertical_offset mismatch for {builder_level} {alignment}/{hp}/{vp}: " f"expected {expected_v}, got {got_v}"
             continue
 
         margins = _ratings_layer_margins(page, library_id, board_type)
@@ -461,14 +443,9 @@ def test_ratings_slot_order_across_position_combos(page, live_server, enabled_sl
                     axis_values = [offsets[slot]["h"] for slot in enabled]
                 else:
                     axis_values = [offsets[slot]["v"] for slot in enabled]
-                assert all(v is not None for v in axis_values), (
-                    f"Missing slot offsets for enabled={enabled}, alignment={alignment}, hp={hp}, vp={vp}: {offsets}"
-                )
+                assert all(v is not None for v in axis_values), f"Missing slot offsets for enabled={enabled}, alignment={alignment}, hp={hp}, vp={vp}: {offsets}"
 
-                assert axis_values == sorted(axis_values), (
-                    f"Slot order mismatch for alignment={alignment}, hp={hp}, vp={vp}, "
-                    f"enabled={enabled}: values={axis_values}"
-                )
+                assert axis_values == sorted(axis_values), f"Slot order mismatch for alignment={alignment}, hp={hp}, vp={vp}, " f"enabled={enabled}: values={axis_values}"
 
                 if enabled_slots == ("rating2",):
                     single = offsets["rating2"]

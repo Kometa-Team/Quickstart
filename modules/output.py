@@ -1355,35 +1355,21 @@ def build_libraries_section(
                 # Re-expand them to match the preview stack used on the canvas.
                 vertical_values = [_offset_number(slot_payload.get("_vertical_offset"), None) for slot_payload in slot_payloads]
                 horizontal_values = [_offset_number(slot_payload.get("_horizontal_offset"), None) for slot_payload in slot_payloads]
-                if (
-                    not preserve_explicit_multi_slot_offsets
-                    and alignment == "vertical"
-                    and len(slot_payloads) > 1
-                    and all(value is not None for value in vertical_values)
-                ):
+                if not preserve_explicit_multi_slot_offsets and alignment == "vertical" and len(slot_payloads) > 1 and all(value is not None for value in vertical_values):
                     if len(set(vertical_values)) == 1:
                         base_vertical = vertical_values[0]
                         for slot_position, slot_payload in enumerate(slot_payloads):
                             relative_index = slot_position - center_index
                             slot_payload["_vertical_offset"] = int(round(base_vertical + (vertical_step * relative_index)))
 
-                if (
-                    not preserve_explicit_multi_slot_offsets
-                    and len(slot_payloads) > 1
-                    and all(value is not None for value in horizontal_values)
-                ):
+                if not preserve_explicit_multi_slot_offsets and len(slot_payloads) > 1 and all(value is not None for value in horizontal_values):
                     if len(set(horizontal_values)) == 1:
                         base_horizontal = horizontal_values[0]
                         if base_horizontal == shared_horizontal_base:
                             for slot_payload in slot_payloads:
                                 slot_payload["_horizontal_offset"] = int(round(base_horizontal + back_padding))
 
-                if (
-                    not preserve_explicit_multi_slot_offsets
-                    and alignment == "vertical"
-                    and len(slot_payloads) > 1
-                    and all(value is not None for value in vertical_values)
-                ):
+                if not preserve_explicit_multi_slot_offsets and alignment == "vertical" and len(slot_payloads) > 1 and all(value is not None for value in vertical_values):
                     old_vertical_step = back_height + back_padding
                     legacy_matches = True
                     for slot_position, explicit_vertical in enumerate(vertical_values):
