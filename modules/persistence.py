@@ -293,8 +293,8 @@ def get_stored_plex_credentials(name):
     return None, None
 
 
-def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_libraries):
-    """Update the stored Plex libraries in the database and preserve `validated`."""
+def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_libraries, user_list=None):
+    """Update stored Plex cache fields in the database and preserve `validated`."""
     try:
         # Fetch existing settings from DB before updating
         settings_before = retrieve_settings(name)
@@ -312,6 +312,9 @@ def update_stored_plex_libraries(name, movie_libraries, show_libraries, music_li
         settings_before["plex"]["tmp_movie_libraries"] = ",".join(movie_libraries) if movie_libraries else ""
         settings_before["plex"]["tmp_show_libraries"] = ",".join(show_libraries) if show_libraries else ""
         settings_before["plex"]["tmp_music_libraries"] = ",".join(music_libraries) if music_libraries else ""
+        if user_list is not None:
+            cleaned_users = [str(user).strip() for user in user_list if str(user).strip()]
+            settings_before["plex"]["tmp_user_list"] = ",".join(cleaned_users)
 
         # Convert to a format that `save_settings()` expects
         settings_formatted = settings_before["plex"]  # Pass only the `plex` section

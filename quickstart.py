@@ -3240,10 +3240,33 @@ def step(name):
     # Ensure 'plex' key exists before accessing sub-keys
     plex_data = all_libraries.get("plex", {})
 
+    cached_user_list = plex_data.get("tmp_user_list", "")
+    if isinstance(cached_user_list, str):
+        has_cached_user_list = any(user.strip() for user in cached_user_list.split(","))
+    elif isinstance(cached_user_list, list):
+        has_cached_user_list = any(str(user).strip() for user in cached_user_list)
+    else:
+        has_cached_user_list = False
+
+    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    dummy_plex = persistence.get_dummy_data("plex") or {}
+    has_plex_credentials = bool(
+        plex_url
+        and plex_token
+        and str(plex_url).strip() != str(dummy_plex.get("url", "")).strip()
+        and str(plex_token).strip() != str(dummy_plex.get("token", "")).strip()
+    )
+    settings_needs_user_refresh = name == "150-settings" and not has_cached_user_list and has_plex_credentials
+
     # --- Refresh Plex data if needed ---
-    if name in ["010-plex", "025-libraries", "900-final"] or config_changed:
-        if all_libraries.get("validated"):
+    should_refresh_plex = name in ["010-plex", "025-libraries", "900-final"] or config_changed or settings_needs_user_refresh
+    if should_refresh_plex:
+        if all_libraries.get("validated") or settings_needs_user_refresh:
+            if settings_needs_user_refresh and app.config["QS_DEBUG"]:
+                helpers.ts_log("Auto-refreshing Plex cache for settings page because tmp_user_list is empty.", level="DEBUG")
             refresh_plex_libraries()
+            all_libraries = persistence.retrieve_settings("010-plex")
+            plex_data = all_libraries.get("plex", {})
         telemetry = persistence.retrieve_settings("plex_telemetry")
     else:
         telemetry = persistence.retrieve_settings("plex_telemetry")
@@ -4127,6 +4150,7 @@ def refresh_plex_libraries():
             plex_data.get("movie_libraries", []),
             plex_data.get("show_libraries", []),
             plex_data.get("music_libraries", []),
+            plex_data.get("user_list", []),
         )
 
         # Get fresh telemetry using helpers and store it
