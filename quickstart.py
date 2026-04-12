@@ -3251,10 +3251,7 @@ def step(name):
     plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
     dummy_plex = persistence.get_dummy_data("plex") or {}
     has_plex_credentials = bool(
-        plex_url
-        and plex_token
-        and str(plex_url).strip() != str(dummy_plex.get("url", "")).strip()
-        and str(plex_token).strip() != str(dummy_plex.get("token", "")).strip()
+        plex_url and plex_token and str(plex_url).strip() != str(dummy_plex.get("url", "")).strip() and str(plex_token).strip() != str(dummy_plex.get("token", "")).strip()
     )
     settings_needs_user_refresh = name == "150-settings" and not has_cached_user_list and has_plex_credentials
 
