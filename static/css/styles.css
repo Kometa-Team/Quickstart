@@ -2463,6 +2463,22 @@ div#loading {
     background: #4cc9f0;
 }
 
+.logscan-stack-cache {
+    background: #90be6d;
+}
+
+.logscan-stack-debug {
+    background: #577590;
+}
+
+.logscan-stack-info {
+    background: #43aa8b;
+}
+
+.logscan-stack-critical {
+    background: #f3722c;
+}
+
 .logscan-stack-runtime {
     background: #43aa8b;
 }
@@ -2494,6 +2510,11 @@ div#loading {
     color: var(--theme-text-muted);
 }
 
+.logscan-stack-count-wide {
+    width: 340px;
+    font-size: 0.66rem;
+}
+
 .logscan-stack-legend {
     display: flex;
     flex-wrap: wrap;
@@ -2501,6 +2522,31 @@ div#loading {
     margin-top: 0.5rem;
     font-size: 0.75rem;
     color: var(--theme-text-muted);
+}
+
+.logscan-series-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.logscan-series-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.45rem;
+    border: 1px solid var(--theme-border);
+    border-radius: 0.4rem;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--theme-text-muted);
+    font-size: 0.72rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.logscan-series-toggle.active {
+    background: rgba(255, 255, 255, 0.14);
+    color: var(--theme-text);
 }
 
 .logscan-kpi-grid {

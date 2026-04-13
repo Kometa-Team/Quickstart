@@ -95,16 +95,20 @@
     </div>
 
     <div class="row g-3 mt-3">
-      <div class="col-lg-6" data-panel-key="runtime_distribution">
+      <div class="col-12" data-panel-key="runtime_distribution">
         <div class="border border-secondary rounded p-3 h-100">
           <h6 class="text-uppercase text-muted mb-2">Runtime Distribution</h6>
           <div id="logscan-trends-runtime" class="small text-muted">Loading runtime distribution...</div>
         </div>
       </div>
-      <div class="col-lg-6" data-panel-key="counts_mix">
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-12" data-panel-key="counts_mix">
         <div class="border border-secondary rounded p-3 h-100">
-          <h6 class="text-uppercase text-muted mb-2">Warnings / Errors / Tracebacks (Avg per day)</h6>
-          <div id="logscan-trends-counts" class="small text-muted">Loading W/E/T averages...</div>
+          <h6 class="text-uppercase text-muted mb-2">Log Levels + Cache (Avg per day)</h6>
+          <div id="logscan-trends-counts-series" class="small mb-2"></div>
+          <div id="logscan-trends-counts" class="small text-muted">Loading log-level averages...</div>
         </div>
       </div>
     </div>
@@ -388,7 +392,7 @@
                   <div class="form-check form-switch">
                     <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
                       id="logscan-pref-counts-mix" data-pref-group="panels" data-pref-key="counts_mix">
-                    <label class="form-check-label" for="logscan-pref-counts-mix">Warnings / Errors / Tracebacks</label>
+                    <label class="form-check-label" for="logscan-pref-counts-mix">Log levels + cache</label>
                   </div>
                 </div>
               </div>
