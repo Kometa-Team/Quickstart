@@ -2349,7 +2349,15 @@ def build_config(header_style="standard", config_name=None):
     plex_summary = helpers.get_plex_summary()
     qs_settings_lines = helpers.get_quickstart_settings_summary()
     qs_settings_block = "\n".join(qs_settings_lines) if qs_settings_lines else ""
-    library_names = list(movie_libraries.values()) + list(show_libraries.values())
+    movie_summary_names = sorted(
+        (str(name).strip() for name in movie_libraries.values() if str(name).strip()),
+        key=lambda value: value.casefold(),
+    )
+    show_summary_names = sorted(
+        (str(name).strip() for name in show_libraries.values() if str(name).strip()),
+        key=lambda value: value.casefold(),
+    )
+    library_names = movie_summary_names + show_summary_names
     library_details = helpers.get_library_summaries(library_names)
 
     yaml_content = (

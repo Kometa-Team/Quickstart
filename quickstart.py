@@ -6466,6 +6466,8 @@ def support_info():
         elif key.startswith("sho-library_"):
             show_libraries.append(str(value))
 
+    movie_libraries = sorted((name.strip() for name in movie_libraries if str(name).strip()), key=lambda value: value.casefold())
+    show_libraries = sorted((name.strip() for name in show_libraries if str(name).strip()), key=lambda value: value.casefold())
     library_names = movie_libraries + show_libraries
     if library_names:
         library_details = helpers.get_library_summaries(library_names)
