@@ -44,6 +44,7 @@ $(document).ready(function () {
   let reingestPollTimer = null
   let reingestJobId = null
   let allRuns = []
+  const sectionDetailsByRunKey = new Map()
   let currentFilteredRuns = []
   let allRunsTotal = 0
   const sortState = { key: 'finished_at', dir: 'desc' }
@@ -1054,6 +1055,7 @@ $(document).ready(function () {
       $tableBody.html('<tr><td colspan="10" class="text-muted">No runs stored yet.</td></tr>')
       return
     }
+    sectionDetailsByRunKey.clear()
     const rows = runs.map((run, index) => {
       const command = getRunCommandValue(run) || 'n/a'
       const commandTitle = run.run_command
@@ -1073,13 +1075,16 @@ $(document).ready(function () {
         ? run.config_line_count
         : 'n/a'
       const sectionLines = buildSectionDetails(run.section_runtimes, run.run_time_seconds)
-      const sectionId = `logscan-section-${index + 1}`
       const sectionSummary = sectionLines.length ? sectionLines[0] : 'n/a'
       const cacheLineCount = (typeof run.cache_line_count === 'number' && Number.isFinite(run.cache_line_count))
         ? run.cache_line_count
         : 'n/a'
       const sectionDetails = sectionLines.length > 1 ? sectionLines.slice(1) : []
-      const sectionDetailsHtml = sectionDetails.map(line => `<div>${escapeHtml(line)}</div>`).join('')
+      const rowKey = (run.run_key && String(run.run_key).trim()) || `row-${index + 1}`
+      sectionDetailsByRunKey.set(rowKey, {
+        summary: sectionSummary,
+        details: sectionDetails
+      })
       let sectionCell = `
         <div class="d-flex flex-column align-items-center gap-1">
           <div class="text-muted small text-center">${escapeHtml(sectionSummary)}</div>
@@ -1087,13 +1092,10 @@ $(document).ready(function () {
       if (sectionDetails.length) {
         sectionCell += `
           <button type="button" class="btn nav-button btn-sm logscan-action-btn"
-            data-bs-toggle="collapse" data-bs-target="#${sectionId}"
-            aria-expanded="false" aria-controls="${sectionId}">
-            Expand
+            data-run-key="${escapeHtml(rowKey)}"
+            data-section-details="1">
+            View
           </button>
-          <div class="collapse mt-2" id="${sectionId}">
-            <div class="text-muted small">${sectionDetailsHtml}</div>
-          </div>
         `
       }
       sectionCell += '</div>'
@@ -1101,7 +1103,7 @@ $(document).ready(function () {
       if (run.kometa_version && run.kometa_newest_version && run.kometa_version !== run.kometa_newest_version) {
         kometaDisplay = `${run.kometa_version} -> ${run.kometa_newest_version}`
       }
-      const runKey = run.run_key || ''
+      const runKey = run.run_key || rowKey
       return `
         <tr>
           <td class="text-nowrap">${escapeHtml(getDisplayFinished(run))}</td>
@@ -2011,6 +2013,38 @@ $(document).ready(function () {
       })
   }
 
+  function showSectionDetails (runKey) {
+    const payload = sectionDetailsByRunKey.get(runKey)
+    if (!payload) return
+    if ($runDetailsTitle.length) {
+      $runDetailsTitle.text('Section Runtimes')
+    }
+    if ($runDetailsBody.length) {
+      const summary = payload.summary || 'n/a'
+      const details = Array.isArray(payload.details) ? payload.details : []
+      let bodyHtml = `
+        <div class="mb-3">
+          <div class="fw-semibold mb-1">Summary</div>
+          <div class="small text-muted">${escapeHtml(summary)}</div>
+        </div>
+      `
+      if (!details.length) {
+        bodyHtml += '<div class="small text-muted">No additional section details for this run.</div>'
+      } else {
+        bodyHtml += `
+          <div class="fw-semibold mb-2">Details</div>
+          <div class="small text-muted">
+            ${details.map(line => `<div>${escapeHtml(line)}</div>`).join('')}
+          </div>
+        `
+      }
+      $runDetailsBody.html(bodyHtml)
+    }
+    if (runDetailsModalEl) {
+      bootstrap.Modal.getOrCreateInstance(runDetailsModalEl).show()
+    }
+  }
+
   function fetchRuns (options = {}) {
     const suppressStatus = options && options.suppressStatus
     const rawLimit = String($limit.val() || '25').toLowerCase()
@@ -2151,6 +2185,10 @@ $(document).ready(function () {
   $tableBody.on('click', '.logscan-run-details', function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
     showRunDetails(runKey)
+  })
+  $tableBody.on('click', '[data-section-details="1"]', function () {
+    const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+    showSectionDetails(runKey)
   })
   $('#logscan-trends-table thead').on('click', '.logscan-sort-button', function () {
     const key = $(this).data('sort')

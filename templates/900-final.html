@@ -554,6 +554,41 @@
                 <i class="bi bi-files" id="copy-icon"></i>
                 <span id="copy-text">Copy</span>
               </button>
+              {% if incomplete_resume_hint %}
+              <div class="alert alert-warning mt-3 mb-2" id="incomplete-run-alert" role="alert">
+                <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
+                  <div class="me-2">
+                    <div class="fw-semibold mb-1">Previous run looks incomplete</div>
+                    <div class="small mb-1">{{ incomplete_resume_hint.message }}</div>
+                    <div class="small text-muted mb-1">
+                      Source log: <code>{{ incomplete_resume_hint.log_name }}</code>
+                      {% if incomplete_resume_hint.config_name %}
+                      | Config in log: <code>{{ incomplete_resume_hint.config_name }}</code>
+                      {% endif %}
+                    </div>
+                    {% if incomplete_resume_hint.context_mismatch %}
+                    <div class="small text-danger mb-1">
+                      Warning: this incomplete run was recorded under a different config name than the one currently loaded.
+                    </div>
+                    {% endif %}
+                    {% if incomplete_resume_hint.suggested_command %}
+                    <div class="small mt-2 mb-1 fw-semibold">Suggested recovery command</div>
+                    <code id="recovery-command-output" class="d-block text-wrap" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.suggested_command }}</code>
+                    {% elif incomplete_resume_hint.original_command %}
+                    <div class="small mt-2 mb-1 fw-semibold">Last run command from log</div>
+                    <code id="recovery-command-output" class="d-block text-wrap" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.original_command }}</code>
+                    {% endif %}
+                  </div>
+                  {% if incomplete_resume_hint.suggested_command or incomplete_resume_hint.original_command %}
+                  <button type="button" id="copy-recovery-command"
+                    class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+                    <i class="bi bi-files" id="copy-recovery-icon"></i>
+                    <span id="copy-recovery-text">Copy</span>
+                  </button>
+                  {% endif %}
+                </div>
+              </div>
+              {% endif %}
               <button id="run-now" class="btn btn-primary mt-3" disabled>
                 <i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run Now</span>
               </button>

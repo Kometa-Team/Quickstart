@@ -3538,6 +3538,7 @@ def step(name):
         page_info["saved_filename"] = saved_filename
         page_info["yaml_valid"] = validated
         page_info["quickstart_root"] = helpers.get_app_root()
+        incomplete_resume_hint = _build_latest_incomplete_resume_hint()
         session["yaml_content"] = yaml_content
         library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
         movie_libraries = []
@@ -3580,6 +3581,7 @@ def step(name):
             service_validations=service_validations,
             validation_meta=validation_meta,
             jump_to_validations=jump_to_validations,
+            incomplete_resume_hint=incomplete_resume_hint,
         )
 
         end_time = time.perf_counter()
@@ -5777,6 +5779,315 @@ def _clear_logscan_ingest_cache():
             cache_path.unlink()
     except Exception:
         pass
+
+
+def _normalize_cli_whitespace(command):
+    return re.sub(r"\s+", " ", str(command or "")).strip()
+
+
+def _command_has_flag(command, flag):
+    if not command or not flag:
+        return False
+    pattern = re.compile(rf"(^|\s){re.escape(flag)}(?=\s|$)")
+    return bool(pattern.search(command))
+
+
+def _remove_cli_switch(command, flag):
+    if not command or not flag:
+        return command
+    pattern = re.compile(rf"(^|\s){re.escape(flag)}(?=\s|$)")
+    return pattern.sub(" ", command)
+
+
+def _remove_cli_option_with_value(command, flag):
+    if not command or not flag:
+        return command
+    pattern = re.compile(
+        rf"(^|\s){re.escape(flag)}(?:=(?:\"[^\"]*\"|'[^']*'|[^\s]+)|\s+(?:\"[^\"]*\"|'[^']*'|[^\s]+))?"
+    )
+    return pattern.sub(" ", command)
+
+
+def _quote_cli_value(value):
+    text = str(value or "")
+    escaped = text.replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _resolve_config_path_for_command(config_name=None):
+    normalized_name = str(config_name or "").strip().lower().replace(" ", "_")
+    if not normalized_name:
+        normalized_name = str(session.get("config_name") or "default").strip().lower().replace(" ", "_") or "default"
+    return str((helpers.get_kometa_root_path() / "config" / f"{normalized_name}_config.yml").resolve())
+
+
+def _inject_config_path_for_command(command, config_name=None):
+    cleaned = _normalize_cli_whitespace(command)
+    if not cleaned:
+        return ""
+    config_path = _resolve_config_path_for_command(config_name=config_name)
+    quoted = _quote_cli_value(config_path)
+    if "<config>" in cleaned:
+        return _normalize_cli_whitespace(cleaned.replace("<config>", quoted))
+    cleaned = _remove_cli_option_with_value(cleaned, "--config")
+    cleaned = _remove_cli_option_with_value(cleaned, "-c")
+    return _normalize_cli_whitespace(f"{cleaned} --config {quoted}")
+
+
+def _build_recovery_command(base_command, phase=None, current_library=None):
+    command = _normalize_cli_whitespace(base_command)
+    if not command:
+        return ""
+
+    phase_modes = {
+        "operations": "--operations-only",
+        "metadata": "--metadata-only",
+        "collections": "--collections-only",
+        "overlays": "--overlays-only",
+        "playlists": "--playlists-only",
+    }
+    mode_flags = list(phase_modes.values())
+    scoped_flags = ["--run-libraries", "--run-files", "--run-collections", "--resume"]
+
+    for flag in mode_flags:
+        command = _remove_cli_switch(command, flag)
+    for flag in scoped_flags:
+        command = _remove_cli_option_with_value(command, flag)
+
+    phase_flag = phase_modes.get((phase or "").strip().lower())
+    if phase_flag:
+        command = f"{command} {phase_flag}"
+    if current_library:
+        command = f"{command} --run-libraries {_quote_cli_value(current_library)}"
+    if not _command_has_flag(command, "--run") and not _command_has_flag(command, "--times"):
+        command = f"{command} --run"
+
+    return _normalize_cli_whitespace(command)
+
+
+def _iso_from_mtime(value):
+    if isinstance(value, (int, float)):
+        try:
+            return datetime.fromtimestamp(float(value), tz=timezone.utc).isoformat().replace("+00:00", "Z")
+        except Exception:
+            return None
+    return None
+
+
+def _build_incomplete_resume_message(phase_current=None, current_library=None, finished_at=None):
+    if phase_current and current_library:
+        message = f"Run appears incomplete during {phase_current} in library '{current_library}'."
+    elif phase_current:
+        message = f"Run appears incomplete during {phase_current}."
+    elif current_library:
+        message = f"Run appears incomplete while processing library '{current_library}'."
+    else:
+        message = "Run appears incomplete."
+
+    if finished_at:
+        return f"{message} Last finished marker: {finished_at}."
+    return f"{message} No Finished Run marker was found."
+
+
+def _build_recovery_suggestions(original_command, phase_current=None, current_library=None):
+    suggestions = []
+    if not original_command:
+        return suggestions
+
+    if phase_current and current_library:
+        suggestions.append(_build_recovery_command(original_command, phase=phase_current, current_library=current_library))
+    if phase_current:
+        suggestions.append(_build_recovery_command(original_command, phase=phase_current, current_library=None))
+    if current_library:
+        suggestions.append(_build_recovery_command(original_command, phase=None, current_library=current_library))
+    suggestions.append(_normalize_cli_whitespace(original_command))
+
+    deduped = []
+    seen = set()
+    for item in suggestions:
+        normalized = _normalize_cli_whitespace(item)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        deduped.append(normalized)
+    return deduped[:4]
+
+
+def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=None):
+    try:
+        content = Path(log_path).read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return None
+
+    analyzer = logscan.LogscanAnalyzer()
+    try:
+        analysis = analyzer.analyze_content(
+            content,
+            log_path=log_path,
+            config_name=config_name,
+            include_people_scan=False,
+        )
+    except Exception:
+        return None
+
+    summary = analysis.get("summary") if isinstance(analysis, dict) else None
+    if not isinstance(summary, dict):
+        return None
+    if summary.get("run_complete"):
+        return None
+
+    try:
+        progress = analyzer.extract_progress(content, library_list=None)
+    except Exception:
+        progress = {}
+    if not isinstance(progress, dict):
+        progress = {}
+
+    phase_current = (progress.get("phase_current") or "").strip().lower() or None
+    current_library = (progress.get("current_library") or "").strip() or None
+    if not current_library:
+        for entry in progress.get("libraries", []) or []:
+            if entry.get("status") == "In progress" and entry.get("name"):
+                current_library = str(entry.get("name")).strip()
+                break
+
+    original_command = _inject_config_path_for_command(
+        summary.get("run_command") or "",
+        config_name=summary.get("config_name") or config_name,
+    )
+    suggestions = _build_recovery_suggestions(original_command, phase_current=phase_current, current_library=current_library)
+    primary = suggestions[0] if suggestions else ""
+    reason = _build_incomplete_resume_message(
+        phase_current=phase_current,
+        current_library=current_library,
+        finished_at=summary.get("finished_at"),
+    )
+    counts = summary.get("log_counts") if isinstance(summary.get("log_counts"), dict) else {}
+    mtime = summary.get("log_mtime")
+    if not isinstance(mtime, (int, float)) and isinstance(cache_entry, dict):
+        mtime = cache_entry.get("mtime")
+    created_at = summary.get("created_at")
+    if not created_at and isinstance(cache_entry, dict):
+        created_at = cache_entry.get("updated_at") or _iso_from_mtime(cache_entry.get("mtime"))
+    if not created_at:
+        created_at = _iso_from_mtime(mtime)
+    run_key = summary.get("run_key")
+    if not run_key:
+        run_key_seed = f"incomplete|{log_path}|{mtime or 0}"
+        run_key = hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest()
+
+    return {
+        "run_key": run_key,
+        "finished_at": summary.get("finished_at"),
+        "run_time_seconds": summary.get("run_time_seconds"),
+        "kometa_version": summary.get("kometa_version"),
+        "kometa_newest_version": summary.get("kometa_newest_version"),
+        "config_name": summary.get("config_name") or config_name or "",
+        "config_hash": summary.get("config_hash"),
+        "run_command": original_command,
+        "command_signature": summary.get("command_signature"),
+        "section_runtimes": summary.get("section_runtimes") or {},
+        "recommendations_count": 0,
+        "log_mtime": mtime,
+        "log_size": summary.get("log_size"),
+        "debug_count": counts.get("debug", 0),
+        "info_count": counts.get("info", 0),
+        "warning_count": counts.get("warning", 0),
+        "error_count": counts.get("error", 0),
+        "critical_count": counts.get("critical", 0),
+        "trace_count": counts.get("trace", 0),
+        "analysis_counts": summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {},
+        "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
+        "quickstart_run_marker": bool(summary.get("quickstart_run_marker")),
+        "config_line_count": summary.get("config_line_count"),
+        "cache_line_count": summary.get("cache_line_count"),
+        "created_at": created_at,
+        "run_complete": False,
+        "is_incomplete": True,
+        "incomplete_log_name": Path(log_path).name,
+        "incomplete_log_path": str(Path(log_path)),
+        "phase_current": phase_current,
+        "current_library": current_library,
+        "resume_reason": reason,
+        "resume_primary": primary,
+        "resume_recommendations": suggestions,
+    }
+
+
+def _get_incomplete_resume_runs(limit=25, config_name=None):
+    safe_limit = max(0, min(int(limit or 0), 100))
+    if safe_limit == 0:
+        return []
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    if not isinstance(cache_logs, dict):
+        return []
+
+    is_running = helpers.is_kometa_running()
+    candidates = []
+    for path_key, entry in cache_logs.items():
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("run_complete"):
+            continue
+        try:
+            path = Path(path_key).resolve()
+        except Exception:
+            continue
+        if not path.exists() or not path.is_file():
+            continue
+        if is_running and path.name.lower() == "meta.log":
+            continue
+        mtime = entry.get("mtime")
+        if not isinstance(mtime, (int, float)):
+            try:
+                mtime = path.stat().st_mtime
+            except Exception:
+                mtime = 0
+        candidates.append((float(mtime), path, entry))
+
+    try:
+        live_meta = (helpers.get_kometa_root_path() / "config" / "logs" / "meta.log").resolve()
+    except Exception:
+        live_meta = None
+    if live_meta and live_meta.exists() and live_meta.is_file():
+        already_known = any(item[1] == live_meta for item in candidates)
+        if not already_known and not is_running:
+            try:
+                live_mtime = live_meta.stat().st_mtime
+            except Exception:
+                live_mtime = 0
+            candidates.append((float(live_mtime), live_meta, {"mtime": live_mtime, "run_complete": False}))
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    results = []
+    for _, path, entry in candidates[:safe_limit]:
+        parsed = _analyze_incomplete_log_for_resume(path, cache_entry=entry, config_name=config_name)
+        if parsed:
+            results.append(parsed)
+    return results
+
+
+def _build_latest_incomplete_resume_hint():
+    incomplete_runs = _get_incomplete_resume_runs(limit=1, config_name=session.get("config_name"))
+    if not incomplete_runs:
+        return None
+    latest = incomplete_runs[0]
+
+    session_config = (session.get("config_name") or "default").strip()
+    summary_config = (latest.get("config_name") or "").strip()
+    context_mismatch = bool(summary_config and session_config and summary_config != session_config)
+
+    return {
+        "message": latest.get("resume_reason") or "Last run appears incomplete.",
+        "phase_current": latest.get("phase_current"),
+        "current_library": latest.get("current_library"),
+        "original_command": latest.get("run_command") or "",
+        "suggested_command": latest.get("resume_primary") or "",
+        "log_name": latest.get("incomplete_log_name") or "",
+        "config_name": summary_config,
+        "context_mismatch": context_mismatch,
+    }
 
 
 def _logscan_needs_reingest(cache_logs, log_dir):
