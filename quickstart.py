@@ -6192,8 +6192,6 @@ def _get_incomplete_resume_runs(limit=25, config_name=None):
     for path_key, entry in cache_logs.items():
         if not isinstance(entry, dict):
             continue
-        if entry.get("run_complete"):
-            continue
         try:
             path = Path(path_key).resolve()
         except Exception:
@@ -6224,15 +6222,16 @@ def _get_incomplete_resume_runs(limit=25, config_name=None):
             candidates.append((float(live_mtime), live_meta, {"mtime": live_mtime, "run_complete": False}))
 
     candidates.sort(key=lambda item: item[0], reverse=True)
-    results = []
-    for _, path, entry in candidates:
-        parsed = _analyze_incomplete_log_for_resume(path, cache_entry=entry, config_name=config_name)
-        if not parsed:
-            continue
-        results.append(parsed)
-        if len(results) >= safe_limit:
-            break
-    return results
+    if not candidates:
+        return []
+
+    # Only evaluate the latest run candidate. Older incomplete logs may no longer
+    # be actionable once a newer run has completed.
+    _, path, entry = candidates[0]
+    parsed = _analyze_incomplete_log_for_resume(path, cache_entry=entry, config_name=config_name)
+    if not parsed:
+        return []
+    return [parsed]
 
 
 def _build_latest_incomplete_resume_hint():

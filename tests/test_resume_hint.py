@@ -3,7 +3,7 @@ from pathlib import Path
 from flask import session
 
 
-def test_get_incomplete_resume_runs_scans_past_unparsable_latest(tmp_path, monkeypatch, qs_module):
+def test_get_incomplete_resume_runs_only_evaluates_latest_candidate(tmp_path, monkeypatch, qs_module):
     latest_candidate = tmp_path / "meta-latest.log"
     older_candidate = tmp_path / "meta-older.log"
     latest_candidate.write_text("latest", encoding="utf-8")
@@ -21,8 +21,11 @@ def test_get_incomplete_resume_runs_scans_past_unparsable_latest(tmp_path, monke
     # Keep live meta candidate out of this test.
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: tmp_path / "no-meta-root")
 
+    calls = []
+
     def fake_analyze(path, cache_entry=None, config_name=None):
         resolved = Path(path).resolve()
+        calls.append(resolved)
         if resolved == latest_candidate.resolve():
             return None
         if resolved == older_candidate.resolve():
@@ -37,8 +40,8 @@ def test_get_incomplete_resume_runs_scans_past_unparsable_latest(tmp_path, monke
     monkeypatch.setattr(qs_module, "_analyze_incomplete_log_for_resume", fake_analyze)
 
     runs = qs_module._get_incomplete_resume_runs(limit=1, config_name="testcfg")
-    assert len(runs) == 1
-    assert runs[0]["incomplete_log_name"] == older_candidate.name
+    assert runs == []
+    assert calls == [latest_candidate.resolve()]
 
 
 def test_build_latest_incomplete_resume_hint_exposes_explanation(monkeypatch, qs_module):
