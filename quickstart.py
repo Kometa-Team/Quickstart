@@ -5802,9 +5802,7 @@ def _remove_cli_switch(command, flag):
 def _remove_cli_option_with_value(command, flag):
     if not command or not flag:
         return command
-    pattern = re.compile(
-        rf"(^|\s){re.escape(flag)}(?:=(?:\"[^\"]*\"|'[^']*'|[^\s]+)|\s+(?:\"[^\"]*\"|'[^']*'|[^\s]+))?"
-    )
+    pattern = re.compile(rf"(^|\s){re.escape(flag)}(?:=(?:\"[^\"]*\"|'[^']*'|[^\s]+)|\s+(?:\"[^\"]*\"|'[^']*'|[^\s]+))?")
     return pattern.sub(" ", command)
 
 
@@ -5943,9 +5941,7 @@ def _extract_cli_option_value(command, flag):
     normalized = _normalize_cli_whitespace(command)
     if not normalized or not flag:
         return ""
-    pattern = re.compile(
-        rf"(?:^|\s){re.escape(flag)}(?:=(\"[^\"]*\"|'[^']*'|[^\s]+)|\s+(\"[^\"]*\"|'[^']*'|[^\s]+))"
-    )
+    pattern = re.compile(rf"(?:^|\s){re.escape(flag)}(?:=(\"[^\"]*\"|'[^']*'|[^\s]+)|\s+(\"[^\"]*\"|'[^']*'|[^\s]+))")
     match = pattern.search(normalized)
     if not match:
         return ""
@@ -6015,35 +6011,23 @@ def _build_resume_explanation(
     has_resume_flag = _command_has_flag(original_command, "--resume")
 
     if effective_phase and effective_phase != "collections":
-        lines.append(
-            f"Kometa --resume was not used because this run is {effective_phase}-phase; --resume only applies to collections."
-        )
+        lines.append(f"Kometa --resume was not used because this run is {effective_phase}-phase; --resume only applies to collections.")
     elif effective_phase == "collections":
         suggested_resume = _extract_cli_option_value(suggested_command, "--resume")
         suggested_library = _extract_cli_option_value(suggested_command, "--run-libraries")
         if suggested_resume:
             if current_collection and suggested_resume == current_collection:
-                lines.append(
-                    f"Collections phase detected; using --resume \"{suggested_resume}\" from latest in-progress collection activity."
-                )
+                lines.append(f'Collections phase detected; using --resume "{suggested_resume}" from latest in-progress collection activity.')
             else:
-                lines.append(f"Collections phase detected; suggestion uses --resume \"{suggested_resume}\".")
+                lines.append(f'Collections phase detected; suggestion uses --resume "{suggested_resume}".')
             if suggested_library:
-                lines.append(
-                    f"Used scoped resume (--run-libraries \"{suggested_library}\") instead of blind resume across all libraries."
-                )
+                lines.append(f'Used scoped resume (--run-libraries "{suggested_library}") instead of blind resume across all libraries.')
         elif has_resume_flag and resume_value:
-            lines.append(
-                f"Logged command already included --resume {resume_value}; it was not auto-carried forward to avoid stale checkpoints."
-            )
+            lines.append(f"Logged command already included --resume {resume_value}; it was not auto-carried forward to avoid stale checkpoints.")
         else:
-            lines.append(
-                "Collections phase detected. --resume can apply here, but no reliable resume checkpoint was found in this log."
-            )
+            lines.append("Collections phase detected. --resume can apply here, but no reliable resume checkpoint was found in this log.")
     elif has_resume_flag and resume_value:
-        lines.append(
-            f"Logged command included --resume {resume_value}, but phase could not be confirmed as collections."
-        )
+        lines.append(f"Logged command included --resume {resume_value}, but phase could not be confirmed as collections.")
     else:
         lines.append("Kometa --resume was not used because phase could not be confirmed as collections.")
 

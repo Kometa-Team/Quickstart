@@ -51,7 +51,7 @@ def test_build_latest_incomplete_resume_hint_exposes_explanation(monkeypatch, qs
                 "phase_current": "operations",
                 "current_library": "Movies",
                 "run_command": "kometa.py --run --config <config>",
-                "resume_primary": "kometa.py --run --operations-only --run-libraries \"Movies\" --config \"C:/config.yml\"",
+                "resume_primary": 'kometa.py --run --operations-only --run-libraries "Movies" --config "C:/config.yml"',
                 "incomplete_log_name": "meta.log",
                 "config_name": "testcfg",
                 "resume_explanation": ["Reason one", "Reason two"],
