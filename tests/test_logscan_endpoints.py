@@ -121,3 +121,32 @@ def test_logscan_progress_tracks_libraries(client, isolated_config_dir, monkeypa
     statuses = {entry["name"]: entry["status"] for entry in payload["libraries"]}
     assert statuses["Movies"] == "Done"
     assert statuses["TV Shows"] == "In progress"
+
+
+def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta-1.log"
+    log_path.write_text(
+        "\n".join(
+            [
+                "[2026-04-14 09:37:06,901] [kometa.py:522]             [INFO]     |====================================================================================================|",
+                "[2026-04-14 09:37:06,901] [kometa.py:522]             [INFO]     |                                            Finished Run                                            |",
+                "[2026-04-14 09:37:06,901] [kometa.py:522]             [INFO]     |                                       Version: 2.3.1-build4                                        |",
+                "[2026-04-14 09:37:06,902] [kometa.py:522]             [INFO]     |   Start Time: 07:16:22 2026-04-13     Finished: 09:36:53 2026-04-14     Run Time: 1 day, 2:20:31   |",
+                "[2026-04-14 09:37:06,902] [kometa.py:522]             [INFO]     |====================================================================================================|",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
+
+    resp = client.post("/logscan/trends/reingest", json={"reset": True})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["ingested"] >= 1
+    assert payload["skipped_incomplete"] == 0

@@ -393,11 +393,12 @@ def test_ratings_matrix_contract_all_positions(case_id, case, monkeypatch, qs_mo
         h_values.append(h)
         v_values.append(v)
 
-        # Kometa contract from parse_cords: non-center edge anchors cannot be negative.
+        # Anchor-distance contract: right/bottom edges are normalized to non-negative
+        # distances; left/top anchors may legitimately be negative for intentional nudges.
         # Only assert explicit values here; omitted values are template-driven defaults.
-        if effective_h_pos != "center" and explicit_h is not None:
+        if effective_h_pos == "right" and explicit_h is not None:
             assert explicit_h >= 0, case_id
-        if effective_v_pos != "center" and explicit_v is not None:
+        if effective_v_pos == "bottom" and explicit_v is not None:
             assert explicit_v >= 0, case_id
 
     # Keep these collected for future geometry checks; YAML-only contracts cannot

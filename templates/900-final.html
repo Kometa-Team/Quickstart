@@ -578,6 +578,14 @@
                     <div class="small mt-2 mb-1 fw-semibold">Last run command from log</div>
                     <code id="recovery-command-output" class="d-block text-wrap" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.original_command }}</code>
                     {% endif %}
+                    {% if incomplete_resume_hint.explanation %}
+                    <div class="small mt-2 mb-1 fw-semibold">Why this suggestion</div>
+                    <ul class="small mb-1 ps-3">
+                      {% for note in incomplete_resume_hint.explanation %}
+                      <li>{{ note }}</li>
+                      {% endfor %}
+                    </ul>
+                    {% endif %}
                   </div>
                   {% if incomplete_resume_hint.suggested_command or incomplete_resume_hint.original_command %}
                   <button type="button" id="copy-recovery-command"

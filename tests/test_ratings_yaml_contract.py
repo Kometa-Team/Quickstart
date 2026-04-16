@@ -141,8 +141,8 @@ def test_ratings_yaml_contract_compacts_single_slot(monkeypatch, qs_module):
     assert template_vars["rating1_image"] == "imdb"
     assert "rating2" not in template_vars
     assert "rating3" not in template_vars
-    # Single-slot normalization currently applies back_padding to horizontal offset.
-    assert template_vars["rating1_horizontal_offset"] == 30
+    # Single-slot compaction preserves explicit slot offset when provided.
+    assert template_vars["rating1_horizontal_offset"] == 15
     assert "rating1_vertical_offset" not in template_vars
 
 

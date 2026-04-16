@@ -735,16 +735,21 @@ class LogscanAnalyzer:
     def _parse_run_time_from_line(self, line):
         if not line:
             return None
-        match = re.search(r"Run Time:\s*(\d+):(\d{1,2}):(\d{1,2})", line)
+        match = re.search(
+            r"Run Time:\s*(?:(\d+)\s+day(?:s)?(?:,\s*|\s+))?(\d+):(\d{1,2}):(\d{1,2})",
+            line,
+            re.IGNORECASE,
+        )
         if not match:
             return None
         try:
-            hours = int(match.group(1))
-            minutes = int(match.group(2))
-            seconds = int(match.group(3))
+            days = int(match.group(1) or 0)
+            hours = int(match.group(2))
+            minutes = int(match.group(3))
+            seconds = int(match.group(4))
         except ValueError:
             return None
-        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+        return timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
 
     def extract_last_lines(self, content):
         lines = content.splitlines()

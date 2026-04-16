@@ -5865,6 +5865,15 @@ def _build_recovery_command(base_command, phase=None, current_library=None):
     return _normalize_cli_whitespace(command)
 
 
+def _build_collection_resume_command(base_command, current_collection=None, current_library=None):
+    command = _build_recovery_command(base_command, phase="collections", current_library=current_library)
+    if not command or not current_collection:
+        return ""
+    command = _remove_cli_option_with_value(command, "--resume")
+    command = f"{command} --resume {_quote_cli_value(current_collection)}"
+    return _normalize_cli_whitespace(command)
+
+
 def _iso_from_mtime(value):
     if isinstance(value, (int, float)):
         try:
@@ -5889,10 +5898,27 @@ def _build_incomplete_resume_message(phase_current=None, current_library=None, f
     return f"{message} No Finished Run marker was found."
 
 
-def _build_recovery_suggestions(original_command, phase_current=None, current_library=None):
+def _build_recovery_suggestions(original_command, phase_current=None, current_library=None, current_collection=None):
     suggestions = []
     if not original_command:
         return suggestions
+
+    phase_key = (phase_current or "").strip().lower()
+    if phase_key == "collections" and current_collection:
+        suggestions.append(
+            _build_collection_resume_command(
+                original_command,
+                current_collection=current_collection,
+                current_library=current_library,
+            )
+        )
+        suggestions.append(
+            _build_collection_resume_command(
+                original_command,
+                current_collection=current_collection,
+                current_library=None,
+            )
+        )
 
     if phase_current and current_library:
         suggestions.append(_build_recovery_command(original_command, phase=phase_current, current_library=current_library))
@@ -5911,6 +5937,128 @@ def _build_recovery_suggestions(original_command, phase_current=None, current_li
         seen.add(normalized)
         deduped.append(normalized)
     return deduped[:4]
+
+
+def _extract_cli_option_value(command, flag):
+    normalized = _normalize_cli_whitespace(command)
+    if not normalized or not flag:
+        return ""
+    pattern = re.compile(
+        rf"(?:^|\s){re.escape(flag)}(?:=(\"[^\"]*\"|'[^']*'|[^\s]+)|\s+(\"[^\"]*\"|'[^']*'|[^\s]+))"
+    )
+    match = pattern.search(normalized)
+    if not match:
+        return ""
+    raw = match.group(1) or match.group(2) or ""
+    if len(raw) >= 2 and ((raw[0] == '"' and raw[-1] == '"') or (raw[0] == "'" and raw[-1] == "'")):
+        return raw[1:-1]
+    return raw
+
+
+def _detect_explicit_phase_from_command(command):
+    normalized = _normalize_cli_whitespace(command)
+    if not normalized:
+        return None
+    phase_modes = {
+        "operations": "--operations-only",
+        "metadata": "--metadata-only",
+        "collections": "--collections-only",
+        "overlays": "--overlays-only",
+        "playlists": "--playlists-only",
+    }
+    matches = [phase for phase, flag in phase_modes.items() if _command_has_flag(normalized, flag)]
+    if not matches:
+        return None
+    if len(matches) == 1:
+        return matches[0]
+    return "mixed"
+
+
+def _build_resume_explanation(
+    original_command,
+    suggested_command,
+    phase_current=None,
+    current_library=None,
+    current_collection=None,
+    finished_at=None,
+):
+    lines = []
+    if finished_at:
+        lines.append(f"Last finished marker seen in the log: {finished_at}.")
+        lines.append("A final Finished Run block was not found after that point, so this run was treated as incomplete.")
+    else:
+        lines.append("No Finished Run marker was found in this log, so the run was treated as incomplete.")
+
+    phase_modes = {
+        "operations": "--operations-only",
+        "metadata": "--metadata-only",
+        "collections": "--collections-only",
+        "overlays": "--overlays-only",
+        "playlists": "--playlists-only",
+    }
+    phase_key = (phase_current or "").strip().lower()
+    phase_flag = phase_modes.get(phase_key)
+    if phase_flag:
+        lines.append(f"Detected active phase '{phase_key}', so the suggestion scopes to {phase_flag}.")
+    elif phase_current:
+        lines.append(f"Detected phase '{phase_current}', but no phase-only flag mapping was found.")
+    else:
+        explicit_phase = _detect_explicit_phase_from_command(original_command)
+        if explicit_phase and explicit_phase != "mixed":
+            lines.append(f"Detected explicit phase mode in the logged command: {phase_modes.get(explicit_phase, explicit_phase)}.")
+        elif explicit_phase == "mixed":
+            lines.append("Detected multiple phase-only flags in the logged command; mode flags were normalized.")
+
+    explicit_phase = _detect_explicit_phase_from_command(original_command)
+    effective_phase = phase_key or (explicit_phase if explicit_phase not in (None, "mixed") else "")
+    resume_value = _extract_cli_option_value(original_command, "--resume")
+    has_resume_flag = _command_has_flag(original_command, "--resume")
+
+    if effective_phase and effective_phase != "collections":
+        lines.append(
+            f"Kometa --resume was not used because this run is {effective_phase}-phase; --resume only applies to collections."
+        )
+    elif effective_phase == "collections":
+        suggested_resume = _extract_cli_option_value(suggested_command, "--resume")
+        suggested_library = _extract_cli_option_value(suggested_command, "--run-libraries")
+        if suggested_resume:
+            if current_collection and suggested_resume == current_collection:
+                lines.append(
+                    f"Collections phase detected; using --resume \"{suggested_resume}\" from latest in-progress collection activity."
+                )
+            else:
+                lines.append(f"Collections phase detected; suggestion uses --resume \"{suggested_resume}\".")
+            if suggested_library:
+                lines.append(
+                    f"Used scoped resume (--run-libraries \"{suggested_library}\") instead of blind resume across all libraries."
+                )
+        elif has_resume_flag and resume_value:
+            lines.append(
+                f"Logged command already included --resume {resume_value}; it was not auto-carried forward to avoid stale checkpoints."
+            )
+        else:
+            lines.append(
+                "Collections phase detected. --resume can apply here, but no reliable resume checkpoint was found in this log."
+            )
+    elif has_resume_flag and resume_value:
+        lines.append(
+            f"Logged command included --resume {resume_value}, but phase could not be confirmed as collections."
+        )
+    else:
+        lines.append("Kometa --resume was not used because phase could not be confirmed as collections.")
+
+    if current_library:
+        lines.append(f"Detected in-progress library '{current_library}', so the suggestion scopes with --run-libraries.")
+
+    config_path = _extract_cli_option_value(suggested_command, "--config")
+    if config_path:
+        lines.append(f"Config path in the suggested command is: {config_path}.")
+
+    normalized_original = _normalize_cli_whitespace(original_command)
+    normalized_suggested = _normalize_cli_whitespace(suggested_command)
+    if normalized_original and normalized_suggested and normalized_original != normalized_suggested:
+        lines.append("Conflicting mode/scope flags were normalized before applying the detected phase/library scope.")
+    return lines
 
 
 def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=None):
@@ -5951,12 +6099,42 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
                 current_library = str(entry.get("name")).strip()
                 break
 
+    current_collection = None
+    collection_in_library_re = re.compile(r"^\s*(.+?)\s+Collection\s+in\s+.+$", re.IGNORECASE)
+    running_collection_re = re.compile(r"^\s*Running\s+(.+?)\s+Collection\b", re.IGNORECASE)
+    try:
+        for raw_line in content.splitlines():
+            if not raw_line:
+                continue
+            msg = raw_line.split("|", 1)[1].strip() if "|" in raw_line else raw_line.strip()
+            msg = analyzer._strip_divider_wrappers(msg)
+            match = running_collection_re.search(msg) or collection_in_library_re.search(msg)
+            if match:
+                candidate = str(match.group(1) or "").strip()
+                if candidate:
+                    current_collection = candidate
+    except Exception:
+        current_collection = None
+
     original_command = _inject_config_path_for_command(
         summary.get("run_command") or "",
         config_name=summary.get("config_name") or config_name,
     )
-    suggestions = _build_recovery_suggestions(original_command, phase_current=phase_current, current_library=current_library)
+    suggestions = _build_recovery_suggestions(
+        original_command,
+        phase_current=phase_current,
+        current_library=current_library,
+        current_collection=current_collection,
+    )
     primary = suggestions[0] if suggestions else ""
+    explanation = _build_resume_explanation(
+        original_command,
+        primary,
+        phase_current=phase_current,
+        current_library=current_library,
+        current_collection=current_collection,
+        finished_at=summary.get("finished_at"),
+    )
     reason = _build_incomplete_resume_message(
         phase_current=phase_current,
         current_library=current_library,
@@ -6008,9 +6186,11 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         "incomplete_log_path": str(Path(log_path)),
         "phase_current": phase_current,
         "current_library": current_library,
+        "current_collection": current_collection,
         "resume_reason": reason,
         "resume_primary": primary,
         "resume_recommendations": suggestions,
+        "resume_explanation": explanation,
     }
 
 
@@ -6061,10 +6241,13 @@ def _get_incomplete_resume_runs(limit=25, config_name=None):
 
     candidates.sort(key=lambda item: item[0], reverse=True)
     results = []
-    for _, path, entry in candidates[:safe_limit]:
+    for _, path, entry in candidates:
         parsed = _analyze_incomplete_log_for_resume(path, cache_entry=entry, config_name=config_name)
-        if parsed:
-            results.append(parsed)
+        if not parsed:
+            continue
+        results.append(parsed)
+        if len(results) >= safe_limit:
+            break
     return results
 
 
@@ -6082,11 +6265,13 @@ def _build_latest_incomplete_resume_hint():
         "message": latest.get("resume_reason") or "Last run appears incomplete.",
         "phase_current": latest.get("phase_current"),
         "current_library": latest.get("current_library"),
+        "current_collection": latest.get("current_collection"),
         "original_command": latest.get("run_command") or "",
         "suggested_command": latest.get("resume_primary") or "",
         "log_name": latest.get("incomplete_log_name") or "",
         "config_name": summary_config,
         "context_mismatch": context_mismatch,
+        "explanation": latest.get("resume_explanation") if isinstance(latest.get("resume_explanation"), list) else [],
     }
 
 

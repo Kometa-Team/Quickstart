@@ -21,6 +21,7 @@ let lastLogStatsTotal = null
 let logStatsPollCounter = 0
 let lastLogscanPayload = null
 let logscanPollCounter = 0
+let finalLogscanAnalyzeTriggered = false
 let lastRunProgressPayload = null
 
 const _qsEnvEl = document.getElementById('qs-env')
@@ -1700,10 +1701,10 @@ $(document).ready(function () {
     }
   }
 
-  function fetchLogscanAnalysis () {
+  function fetchLogscanAnalysis (force = false) {
     if (!$logscanPanel.length) return
     logscanPollCounter += 1
-    const shouldFetch = (logscanPollCounter % 5 === 0) || !lastLogscanPayload
+    const shouldFetch = force || (logscanPollCounter % 5 === 0) || !lastLogscanPayload
     if (!shouldFetch) return
 
     fetch('/logscan/analyze')
@@ -2280,6 +2281,7 @@ $(document).ready(function () {
 
         // Handle Kometa process states
         if (data.status === 'running') {
+          finalLogscanAnalyzeTriggered = false
           // Kometa is actively running → keep Run disabled, allow Stop
           $runNow.prop('disabled', true).html('<i class="bi bi-play-fill me-1"></i> Run Now')
           $stopNow.removeClass('d-none').prop('disabled', false)
@@ -2302,6 +2304,10 @@ $(document).ready(function () {
         updateRunNowState()
 
         if (data.status === 'done') {
+          if (!finalLogscanAnalyzeTriggered) {
+            finalLogscanAnalyzeTriggered = true
+            fetchLogscanAnalysis(true)
+          }
           if (data.return_code === 0) {
             $('#run-output-log').append('\n✅ Kometa finished successfully.')
           } else {

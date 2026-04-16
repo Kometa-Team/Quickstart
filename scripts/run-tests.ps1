@@ -235,10 +235,16 @@ if ($RatingsArtifacts) {
 }
 
 if ($All) {
+  # In -All mode, force full-suite execution (including e2e) by bypassing pytest.ini addopts.
+  # Also cap the long ratings artifacts matrix to a small random sample unless explicitly overridden.
+  $allRandomCount = if ($RatingsRandomCount -ge 0) { $RatingsRandomCount } else { 9 }
+  $env:RATINGS_MATRIX_RANDOM_COUNT = [string]$allRandomCount
+  Write-Host "All mode: RATINGS_MATRIX_RANDOM_COUNT=$env:RATINGS_MATRIX_RANDOM_COUNT (override with -RatingsRandomCount)." -ForegroundColor Cyan
+
   if ($NoCapture) {
-    & $python -m pytest -vv -s
+    & $python -m pytest -o addopts= -vv -s
   } else {
-    & $python -m pytest -vv
+    & $python -m pytest -o addopts= -vv
   }
   exit $LASTEXITCODE
 }
