@@ -6200,6 +6200,8 @@ def _get_incomplete_resume_runs(limit=25, config_name=None):
             continue
         if is_running and path.name.lower() == "meta.log":
             continue
+        # Prefer ingest-cache mtime to preserve analyzed-run ordering; live
+        # meta.log is refreshed separately below when Kometa is not running.
         mtime = entry.get("mtime")
         if not isinstance(mtime, (int, float)):
             try:
@@ -6213,13 +6215,20 @@ def _get_incomplete_resume_runs(limit=25, config_name=None):
     except Exception:
         live_meta = None
     if live_meta and live_meta.exists() and live_meta.is_file():
-        already_known = any(item[1] == live_meta for item in candidates)
-        if not already_known and not is_running:
+        if not is_running:
             try:
                 live_mtime = live_meta.stat().st_mtime
             except Exception:
                 live_mtime = 0
-            candidates.append((float(live_mtime), live_meta, {"mtime": live_mtime, "run_complete": False}))
+            # Replace any cached candidate for live meta with a fresh mtime candidate.
+            candidates = [item for item in candidates if item[1] != live_meta]
+            live_entry = cache_logs.get(str(live_meta), {}) if isinstance(cache_logs, dict) else {}
+            if not isinstance(live_entry, dict):
+                live_entry = {}
+            if not isinstance(live_entry.get("mtime"), (int, float)):
+                live_entry["mtime"] = live_mtime
+            live_entry.setdefault("run_complete", False)
+            candidates.append((float(live_mtime), live_meta, live_entry))
 
     candidates.sort(key=lambda item: item[0], reverse=True)
     if not candidates:
@@ -6252,6 +6261,7 @@ def _build_latest_incomplete_resume_hint():
         "original_command": latest.get("run_command") or "",
         "suggested_command": latest.get("resume_primary") or "",
         "log_name": latest.get("incomplete_log_name") or "",
+        "log_path": latest.get("incomplete_log_path") or "",
         "config_name": summary_config,
         "context_mismatch": context_mismatch,
         "explanation": latest.get("resume_explanation") if isinstance(latest.get("resume_explanation"), list) else [],

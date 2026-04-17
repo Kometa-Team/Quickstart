@@ -99,8 +99,16 @@ def is_valid_aspect_ratio(image, target_ratio="2:3", tolerance=0.01):
 
 def extract_library_name(key):
     """Extracts the actual library name from the key format."""
-    match = re.match(r"(mov|sho)-library_([^-]+(?:-[^-]+)*)-", key)
-    return match.group(2) if match else None
+    if not isinstance(key, str):
+        return None
+    # Capture only the library-id segment between `-library_` and the next
+    # known section marker. This avoids greedy matches when template variable
+    # keys themselves contain hyphens (e.g. `use_South-Eastern Asia`).
+    match = re.match(
+        r"^(?:mov|sho)-library_(.+?)-(?:library$|collection_|template_|attribute_|overlay_|top_level_)",
+        key,
+    )
+    return match.group(1) if match else None
 
 
 def get_pyfiglet_fonts():

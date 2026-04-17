@@ -84,6 +84,9 @@ $(document).ready(function () {
   const headerGridProgress = document.getElementById('header-style-grid-progress')
   const headerGridProgressBar = headerGridProgress ? headerGridProgress.querySelector('.progress-bar') : null
   const headerStyleLabel = document.getElementById('header-style-label')
+  const kometaActionsHeading = document.getElementById('kometa-actions-heading')
+  const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
+  const kometaActionsToggle = document.getElementById('kometa-actions-toggle')
 
   function readMetaFlag (id, datasetKey, attrKey) {
     const el = document.getElementById(id)
@@ -775,6 +778,19 @@ $(document).ready(function () {
     })
   }
 
+  function syncKometaUpdateAttention () {
+    if (!kometaActionsHeading || !kometaActionsToggle) return
+    const isCollapsed = kometaActionsToggle.classList.contains('collapsed')
+    const needsAttention = KOMETA_UPDATE_AVAILABLE && isCollapsed
+    kometaActionsHeading.classList.toggle('kometa-update-attention', needsAttention)
+    kometaActionsToggle.classList.toggle('kometa-update-attention', needsAttention)
+  }
+
+  if (kometaActionsCollapse) {
+    kometaActionsCollapse.addEventListener('shown.bs.collapse', syncKometaUpdateAttention)
+    kometaActionsCollapse.addEventListener('hidden.bs.collapse', syncKometaUpdateAttention)
+  }
+
   function showCopyButtonSuccess (iconSelector, textSelector) {
     const $icon = $(iconSelector)
     const $text = $(textSelector)
@@ -1113,6 +1129,7 @@ $(document).ready(function () {
     if ($updateKometaBtn.length) {
       $updateKometaBtn.html(getUpdateButtonLabel())
     }
+    syncKometaUpdateAttention()
   }
 
   function callUpdateKometa () {

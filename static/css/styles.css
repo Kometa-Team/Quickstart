@@ -1850,6 +1850,17 @@ label {
     /* Space text from border */
 }
 
+/* Final page: draw attention to collapsed Kometa section when an update is available */
+.accordion-header.kometa-update-attention {
+    border-left: 4px solid #ffc107 !important;
+    padding-left: 10px !important;
+}
+
+.accordion-button.kometa-update-attention {
+    color: #ffc107 !important;
+    font-weight: 600;
+}
+
 /* Ensure the accordion header has a transparent background */
 .accordion-button:not(.collapsed) {
     background-color: transparent !important;

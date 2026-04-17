@@ -386,6 +386,18 @@ const EventHandler = {
   },
 
   /**
+   * Returns true if an accordion body has at least one enabled collection toggle selected.
+   * Returns false when collection toggles exist but none are selected.
+   * Returns null when no collection toggles are present.
+   */
+  hasCheckedTemplateGroupToggle: function (accordionBody) {
+    if (!accordionBody) return null
+    const toggles = Array.from(accordionBody.querySelectorAll("input[type='checkbox'][data-template-group]"))
+    if (!toggles.length) return null
+    return toggles.some(toggle => toggle.checked)
+  },
+
+  /**
    * Update accordion highlights when selections change
    */
   updateAccordionHighlights: function () {
@@ -447,6 +459,14 @@ const EventHandler = {
             return toggle?.checked
           })
         }
+      }
+
+      // Collection accordions should not stay highlighted from child values/history
+      // when every parent collection toggle is off.
+      const anyTemplateGroupChecked = EventHandler.hasCheckedTemplateGroupToggle(accordionBody)
+      if (anyTemplateGroupChecked === false) {
+        isCheckedOrSelected = false
+        hasValue = false
       }
 
       if (isCheckedOrSelected || hasValue) {
@@ -562,7 +582,11 @@ const EventHandler = {
       '.list-group li'
     ) !== null
 
-    if (!hasSelections) {
+    // If this accordion has collection toggles and none are enabled, force no highlight.
+    const anyTemplateGroupChecked = EventHandler.hasCheckedTemplateGroupToggle(accordionBody)
+    const effectiveSelections = (anyTemplateGroupChecked === false) ? false : hasSelections
+
+    if (!effectiveSelections) {
       element.classList.remove('selected')
     }
 

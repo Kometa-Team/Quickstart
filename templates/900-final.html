@@ -482,7 +482,7 @@
     <div class="accordion mt-3" id="kometa-actions-accordion" style="max-width: 1200px; width: 100%; margin: 0 auto;">
       <div class="accordion-item">
         <h2 class="accordion-header" id="kometa-actions-heading">
-          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+          <button id="kometa-actions-toggle" class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#kometa-actions-collapse" aria-expanded="false" aria-controls="kometa-actions-collapse">
             Kometa Install / Update
           </button>
@@ -566,6 +566,11 @@
                       | Config in log: <code>{{ incomplete_resume_hint.config_name }}</code>
                       {% endif %}
                     </div>
+                    {% if incomplete_resume_hint.log_path %}
+                    <div class="small text-muted mb-1 text-break">
+                      Source path: <code>{{ incomplete_resume_hint.log_path }}</code>
+                    </div>
+                    {% endif %}
                     {% if incomplete_resume_hint.context_mismatch %}
                     <div class="small text-danger mb-1">
                       Warning: this incomplete run was recorded under a different config name than the one currently loaded.

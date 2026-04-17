@@ -1205,6 +1205,20 @@ def build_libraries_section(
                         k: (True if isinstance(v, (bool, str)) and str(v).lower() == "true" else False if isinstance(v, (bool, str)) and str(v).lower() == "false" else v)
                         for k, v in all_children.items()
                     }
+                    # Normalize legacy Region key spelling so final YAML always uses
+                    # the current Kometa key with a hyphen.
+                    legacy_region_keys = {
+                        "use_South Eastern Asia": "use_South-Eastern Asia",
+                        "radarr_add_missing_South Eastern Asia": "radarr_add_missing_South-Eastern Asia",
+                        "sonarr_add_missing_South Eastern Asia": "sonarr_add_missing_South-Eastern Asia",
+                    }
+                    for old_key, new_key in legacy_region_keys.items():
+                        if old_key not in template_vars:
+                            continue
+                        # If both exist, prefer the new key's explicit value.
+                        if new_key not in template_vars:
+                            template_vars[new_key] = template_vars[old_key]
+                        template_vars.pop(old_key, None)
                     if "exclude" in template_vars:
                         exclude_values = _parse_string_list(template_vars.get("exclude"))
                         if exclude_values:

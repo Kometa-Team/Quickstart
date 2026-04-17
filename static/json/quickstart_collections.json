@@ -11227,6 +11227,224 @@
         ]
       },
       {
+        "id": "collection_simkl",
+        "label": "Simkl Charts",
+        "url": "https://kometa.wiki/en/nightly/defaults/chart/simkl",
+        "media_types": [
+          "movie",
+          "show"
+        ],
+        "template_variables": [
+          {
+            "key": "collection_section",
+            "label": "Collection Section",
+            "url": "https://kometa.wiki/en/nightly/kometa/guides/order/#kometa-default-collection-sorting",
+            "type": "text_input",
+            "default": "020",
+            "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
+          },
+          {
+            "key": "limit",
+            "label": "Limit",
+            "type": "text_input",
+            "default": "100",
+            "tooltip": "Maximum number of items to return per Simkl list. Valid range is 1 to 500."
+          },
+          {
+            "key": "use_trending_today",
+            "label": "Simkl Trending Today",
+            "tooltip": "Collection of Simkl's Trending Today list.",
+            "type": "toggle",
+            "default": true
+          },
+          {
+            "key": "radarr_add_missing_trending_today",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing_trending_today",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "use_trending_week",
+            "label": "Simkl Trending This Week",
+            "tooltip": "Collection of Simkl's Trending This Week list.",
+            "type": "toggle",
+            "default": true
+          },
+          {
+            "key": "radarr_add_missing_trending_week",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing_trending_week",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "use_trending_month",
+            "label": "Simkl Trending This Month",
+            "tooltip": "Collection of Simkl's Trending This Month list.",
+            "type": "toggle",
+            "default": true
+          },
+          {
+            "key": "radarr_add_missing_trending_month",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing_trending_month",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "use_dvd",
+            "label": "Simkl DVD",
+            "tooltip": "Collection of Simkl's Recently Released on DVD list.",
+            "type": "toggle",
+            "default": true
+          },
+          {
+            "key": "radarr_add_missing_dvd",
+            "label": "Add missing items to Radarr",
+            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "movie"
+            ]
+          },
+          {
+            "key": "sonarr_add_missing_dvd",
+            "label": "Add missing items to Sonarr",
+            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
+            "tooltip_variant": "danger",
+            "type": "toggle",
+            "media_types": [
+              "show"
+            ]
+          },
+          {
+            "key": "style",
+            "label": "Style",
+            "type": "select",
+            "tooltip": "Controls the visual theme of the collections created.",
+            "default": "color",
+            "options": [
+              "color",
+              "white"
+            ]
+          },
+          {
+            "key": "collection_mode",
+            "label": "Collection Mode",
+            "type": "select",
+            "tooltip": "Controls the collection mode of all collections in a Defaults File.<br><br> Default is <b>Library Default</b> ",
+            "default": "default",
+            "options": [
+              {
+                "value": "default",
+                "label": "Library Default"
+              },
+              {
+                "value": "hide",
+                "label": "Hide Collection"
+              },
+              {
+                "value": "hide_items",
+                "label": "Hide Items in this Collection"
+              },
+              {
+                "value": "show_items",
+                "label": "Show this Collection and its Items"
+              }
+            ]
+          },
+          {
+            "key": "visible_home",
+            "label": "Visible Home",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_library",
+            "label": "Visible Library",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Library Recommended Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "visible_shared",
+            "label": "Visible Shared",
+            "type": "toggle",
+            "tooltip": "Changes collection visible on Shared Users' Home Tab (Only works with Plex Pass)",
+            "default": false
+          },
+          {
+            "key": "collection_order",
+            "label": "Collection Order",
+            "type": "select",
+            "tooltip": "Changes the Collection Order for all collections in a Defaults File.<br><br> Default is <b>Custom (sorted in a custom order)</b> ",
+            "default": "custom",
+            "options": [
+              {
+                "value": "custom",
+                "label": "Custom Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              },
+              {
+                "value": "alpha",
+                "label": "Alphabetical Order",
+                "media_types": [
+                  "movie",
+                  "show",
+                  "episode"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
         "id": "collection_anilist",
         "label": "AniList Charts",
         "url": "https://kometa.wiki/en/nightly/defaults/chart/anilist",
@@ -20840,7 +21058,7 @@
             "default": true
           },
           {
-            "key": "use_South Eastern Asia",
+            "key": "use_South-Eastern Asia",
             "label": "South-Eastern Asia",
             "tooltip": "Collection of Movies that have been filmed in South-Eastern Asia.",
             "type": "toggle",
