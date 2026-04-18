@@ -46,7 +46,7 @@ PEOPLE_README_URLS = [
 PEOPLE_MISSING_WARNING_REGEX = (
     r"Collection Warning: No Poster Found at "
     r"(https://raw\.githubusercontent\.com/"
-    r"(?:Kometa-Team/People-Images|meisnate12/Plex-Meta-Manager-People(?:-[^/]+)?)"
+    r"(?:Kometa-Team/People-Images(?:-[^/]+)?|meisnate12/Plex-Meta-Manager-People(?:-[^/]+)?)"
     r"/[^\s\]]+)"
 )
 PEOPLE_MISSING_WARNING_RE = re.compile(PEOPLE_MISSING_WARNING_REGEX, re.IGNORECASE)
@@ -2648,7 +2648,7 @@ class LogscanAnalyzer:
             msg = raw_line.split("|", 1)[1].strip() if "|" in raw_line else raw_line.strip()
             msg = self._strip_divider_wrappers(msg)
 
-            if "kometa.py" in raw_line and playlists_header_re.match(msg):
+            if playlists_header_re.match(msg):
                 playlists_detected = True
                 playlist_running = True
                 if playlist_started_at is None and line_ts:
@@ -2657,7 +2657,7 @@ class LogscanAnalyzer:
                     processing_started_at = line_ts
                 continue
 
-            if "kometa.py" in raw_line and playlist_runtime_re.search(msg):
+            if playlist_runtime_re.search(msg):
                 playlists_detected = True
                 match = playlist_runtime_re.search(msg)
                 if match:
@@ -2666,7 +2666,7 @@ class LogscanAnalyzer:
                         playlist_total_seconds += int(seconds)
                 continue
 
-            if "kometa.py" in raw_line and playlist_finished_re.search(msg):
+            if playlist_finished_re.search(msg):
                 playlists_detected = True
                 if playlist_started_at is None and line_ts:
                     playlist_started_at = line_ts
@@ -2823,6 +2823,20 @@ class LogscanAnalyzer:
                 break
 
         section_runtimes = self.extract_section_runtimes(content)
+        # Fallback for playlist timing when runtime lines do not match the
+        # stricter live parser patterns (for example continuation lines).
+        if playlist_total_seconds <= 0 and isinstance(section_runtimes, dict):
+            playlist_runtime_total = 0
+            for section_name, seconds in section_runtimes.items():
+                if not isinstance(section_name, str):
+                    continue
+                if "playlist" not in section_name.lower():
+                    continue
+                if isinstance(seconds, (int, float)):
+                    playlist_runtime_total += int(seconds)
+            if playlist_runtime_total > 0:
+                playlist_total_seconds = playlist_runtime_total
+                playlists_detected = True
         phases_completed = []
         for section_name in section_runtimes.keys():
             phase = self._map_section_to_phase(section_name)

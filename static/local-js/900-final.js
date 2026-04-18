@@ -988,12 +988,13 @@ $(document).ready(function () {
             const total = typeof payload.playlist_total_seconds === 'number' ? payload.playlist_total_seconds : null
             const running = Boolean(payload.playlist_running)
             const elapsed = typeof payload.playlist_elapsed_seconds === 'number' ? payload.playlist_elapsed_seconds : null
+            const detected = Boolean(payload.playlists_detected)
             if (running) {
               const label = elapsed != null ? formatRunSeconds(elapsed) : 'Running'
               return `<td class="text-end"><span class="badge text-bg-primary">${label || 'Running'}</span></td>`
             }
-            if (total != null && total > 0) {
-              return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(total)}</span></td>`
+            if (total != null && (total > 0 || detected)) {
+              return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(total) || '0s'}</span></td>`
             }
             if (payload.run_finished) {
               return '<td class="text-end"><span class="badge text-bg-secondary">Not Configured</span></td>'
@@ -1055,7 +1056,8 @@ $(document).ready(function () {
         })
         if (phasesToShow.some(phase => phase.key === 'playlists')) {
           const playlistTotal = typeof payload.playlist_total_seconds === 'number' ? payload.playlist_total_seconds : null
-          if (playlistTotal != null) {
+          const playlistDetected = Boolean(payload.playlists_detected)
+          if (playlistTotal != null && (playlistTotal > 0 || playlistDetected)) {
             totals.set('playlists', playlistTotal)
           }
         }
@@ -1073,6 +1075,12 @@ $(document).ready(function () {
         })
         const totalCells = phasesToShow.map(phase => {
           const totalSeconds = totals.get(phase.key)
+          if (phase.key === 'playlists' && typeof totalSeconds === 'number' && Number.isFinite(totalSeconds)) {
+            const detected = Boolean(payload.playlists_detected)
+            if (totalSeconds > 0 || detected) {
+              return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(totalSeconds) || '0s'}</span></td>`
+            }
+          }
           if (typeof totalSeconds === 'number' && totalSeconds > 0) {
             return `<td class="text-end"><span class="badge text-bg-success">${formatRunSeconds(totalSeconds)}</span></td>`
           }
