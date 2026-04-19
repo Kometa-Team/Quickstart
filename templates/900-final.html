@@ -32,6 +32,9 @@
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
         data-bs-target="#header-style-grid-collapse" aria-expanded="false" aria-controls="header-style-grid-collapse">
         Section Style:&nbsp;<span id="header-style-label">{{ page_info.header_style.replace('_', ' ')|capitalize }}</span>
+        <span id="header-style-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--ok">
+          Active
+        </span>
       </button>
     </h2>
     <div id="header-style-grid-collapse" class="accordion-collapse collapse"
@@ -242,6 +245,12 @@
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
         data-bs-target="#config-output-collapse" aria-expanded="false" aria-controls="config-output-collapse">
         Config Output
+        <span id="config-output-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+          Pending
+        </span>
+        <span id="config-output-lines-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+          0 lines
+        </span>
       </button>
     </h2>
     <div id="config-output-collapse" class="accordion-collapse collapse" aria-labelledby="config-output-heading"
@@ -305,6 +314,9 @@
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-mode"
             aria-expanded="false" aria-controls="collapse-mode">
             Execution Mode & CLI Toggle
+            <span id="heading-mode-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+              Friendly
+            </span>
           </button>
         </h2>
         <div id="collapse-mode" class="accordion-collapse collapse" aria-labelledby="heading-mode"
@@ -324,6 +336,9 @@
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#collapse-runopt" aria-expanded="false" aria-controls="collapse-runopt">
             Run Option
+            <span id="heading-runopt-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+              Default
+            </span>
           </button>
         </h2>
         <div id="collapse-runopt" class="accordion-collapse collapse" aria-labelledby="heading-runopt"
@@ -390,6 +405,9 @@
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#collapse-modeflags" aria-expanded="false" aria-controls="collapse-modeflags">
             Optional Mode Flags
+            <span id="heading-modeflags-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+              Default
+            </span>
           </button>
         </h2>
         <div id="collapse-modeflags" class="accordion-collapse collapse" aria-labelledby="heading-modeflags"
@@ -417,6 +435,9 @@
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#collapse-logflags" aria-expanded="false" aria-controls="collapse-logflags">
             Logging Options
+            <span id="heading-logflags-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+              Default
+            </span>
           </button>
         </h2>
         <div id="collapse-logflags" class="accordion-collapse collapse" aria-labelledby="heading-logflags"
@@ -444,6 +465,9 @@
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#collapse-otherflags" aria-expanded="false" aria-controls="collapse-otherflags">
             Other Flags
+            <span id="heading-otherflags-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+              Default
+            </span>
           </button>
         </h2>
         <div id="collapse-otherflags" class="accordion-collapse collapse" aria-labelledby="heading-otherflags"
@@ -559,6 +583,9 @@
           <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#run-command-output-collapse" aria-expanded="false" aria-controls="run-command-output-collapse">
             Run Command
+            <span id="run-command-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+              Pending
+            </span>
           </button>
         </h2>
         <div id="run-command-output-collapse" class="accordion-collapse collapse"
@@ -778,6 +805,9 @@
                 data-bs-target="#logscan-accordion-collapse" aria-expanded="false"
                 aria-controls="logscan-accordion-collapse">
                 <span>Logscan Recommendations</span>
+                <span id="logscan-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+                  Pending
+                </span>
                 <small class="text-muted ms-2" id="logscan-summary"></small>
               </button>
             </h2>
