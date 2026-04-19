@@ -12,7 +12,7 @@
   "ratings_diff_use_slot_thresholds": true,
   "ratings_diff_threshold_percent": 0.0,
   "ratings_diff_threshold_one_slot_percent": 0.8,
-  "ratings_diff_threshold_two_slot_percent": 1.6,
+  "ratings_diff_threshold_two_slot_percent": 1.62,
   "ratings_diff_threshold_three_slot_percent": 2.3,
   "ratings_execution_mode": "chunked",
   "ratings_chunk_size": 9,
