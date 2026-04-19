@@ -2,10 +2,7 @@ from modules.logscan import LogscanAnalyzer, PEOPLE_MISSING_WARNING_RE
 
 
 def test_people_warning_regex_matches_signature_repo():
-    line = (
-        "Collection Warning: No Poster Found at "
-        "https://raw.githubusercontent.com/Kometa-Team/People-Images-signature/master/P/Images/Pamela%20Anderson.jpg"
-    )
+    line = "Collection Warning: No Poster Found at " "https://raw.githubusercontent.com/Kometa-Team/People-Images-signature/master/P/Images/Pamela%20Anderson.jpg"
     assert PEOPLE_MISSING_WARNING_RE.search(line)
 
 
