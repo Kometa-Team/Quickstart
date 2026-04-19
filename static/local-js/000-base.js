@@ -113,7 +113,7 @@ const QS_NAV_LOADING_QUOTES = [
   'Proving P=NP...',
   'Please wait... Consulting the manual...',
   'It is dark. You\'re likely to be eaten by a grue.',
-  'It\'s 10:00pm. Do you know where your children are?',
+  'It\'s 10:00pm somewhere. Do you know where your children are?',
   'Please wait, while we purge the Decepticons for you. Yes, You can thank us later!',
   'Chuck Norris doesn\'t wear a watch. HE decides what time it is.',
   'Creating an anti-time reaction, please wait...',
@@ -252,7 +252,8 @@ function showNavigationLoadingOverlay (action, targetLabel) {
     next: 'Opening next step…',
     jump: 'Opening selected step…',
     'library-initial': 'Loading first library…',
-    'library-switch': 'Switching library…'
+    'library-switch': 'Switching library…',
+    'kometa-check': 'Validating Kometa…'
   }
   const normalizedTarget = String(targetLabel || '').trim()
   if (label) {

@@ -1,4 +1,4 @@
-/* global $, bootstrap, showToast */
+/* global $, bootstrap, showToast, showNavigationLoadingOverlay, hideNavigationLoadingOverlay */
 
 // Global flag so other handlers know an update is in progress
 let KOMETA_UPDATING = false
@@ -6,6 +6,7 @@ let KOMETA_VALIDATED = false
 let KOMETA_VALIDATION_IN_PROGRESS = false
 let KOMETA_UPDATE_AVAILABLE = false
 let KOMETA_INSTALLED = false
+let KOMETA_CHECK_COMPLETED = false
 // Polling handles (hoist to top so all handlers see them safely)
 let kometaInterval = null
 let kometaStatusInterval = null
@@ -623,6 +624,10 @@ $(document).ready(function () {
   function validateKometaRoot () {
     if (KOMETA_VALIDATION_IN_PROGRESS) return
     KOMETA_VALIDATION_IN_PROGRESS = true
+    if (typeof showNavigationLoadingOverlay === 'function') {
+      showNavigationLoadingOverlay('kometa-check')
+    }
+    syncKometaRollupBadge()
     const $logBox = $('#kometa-validation-log')
     const $spinner = $('#spinner_validate')
     const $runNow = $('#run-now')
@@ -646,6 +651,7 @@ $(document).ready(function () {
       // ✅ send the *normalized* path to the backend
       data: JSON.stringify({ path: defaultRootPosix, config_name: configName }),
       success: (res) => {
+        KOMETA_CHECK_COMPLETED = true
         if (Array.isArray(res.log)) res.log.forEach(line => $logBox.append(`${line}\n`))
 
         if (res.success) {
@@ -717,8 +723,10 @@ $(document).ready(function () {
         }
 
         if ($spinner.length) $spinner.hide()
+        syncKometaRollupBadge()
       },
       error: (xhr) => {
+        KOMETA_CHECK_COMPLETED = true
         const msg = xhr?.responseJSON?.error || 'The Kometa root path is invalid or inaccessible. Please try again.'
         $logBox.append(`❌ ${msg}\n`)
         const lowered = String(msg || '').toLowerCase()
@@ -729,11 +737,16 @@ $(document).ready(function () {
         hideRunCommandSectionUntilValidated()
         $runNow.prop('disabled', true)
         if ($spinner.length) $spinner.hide()
+        syncKometaRollupBadge()
       },
       complete: () => {
         KOMETA_VALIDATION_IN_PROGRESS = false
         updateRunNowState()
         syncUpdateButtonLabel()
+        syncKometaRollupBadge()
+        if (typeof hideNavigationLoadingOverlay === 'function') {
+          hideNavigationLoadingOverlay()
+        }
       }
     })
   }
@@ -779,11 +792,36 @@ $(document).ready(function () {
   }
 
   function syncKometaUpdateAttention () {
-    if (!kometaActionsHeading || !kometaActionsToggle) return
-    const isCollapsed = kometaActionsToggle.classList.contains('collapsed')
-    const needsAttention = KOMETA_UPDATE_AVAILABLE && isCollapsed
-    kometaActionsHeading.classList.toggle('kometa-update-attention', needsAttention)
-    kometaActionsToggle.classList.toggle('kometa-update-attention', needsAttention)
+    if (kometaActionsHeading && kometaActionsToggle) {
+      const isCollapsed = kometaActionsToggle.classList.contains('collapsed')
+      const needsAttention = KOMETA_UPDATE_AVAILABLE && isCollapsed
+      kometaActionsHeading.classList.toggle('kometa-update-attention', needsAttention)
+      kometaActionsToggle.classList.toggle('kometa-update-attention', needsAttention)
+    }
+    syncKometaRollupBadge()
+  }
+
+  function getKometaRollupStatus () {
+    if (KOMETA_UPDATING) return { state: 'unknown', label: 'Updating...' }
+    if (KOMETA_VALIDATION_IN_PROGRESS) return { state: 'unknown', label: 'Checking...' }
+    if (!KOMETA_CHECK_COMPLETED) return { state: 'unknown', label: 'Not checked' }
+    if (!KOMETA_INSTALLED) return { state: 'error', label: 'Install needed' }
+    if (KOMETA_UPDATE_AVAILABLE) return { state: 'warn', label: 'Update available' }
+    return { state: 'ok', label: 'Up to date' }
+  }
+
+  function syncKometaRollupBadge () {
+    const badge = document.getElementById('kometa-update-rollup-badge')
+    if (!badge) return
+    const { state, label } = getKometaRollupStatus()
+    badge.textContent = label
+    badge.classList.remove(
+      'qs-validation-rollup-badge--unknown',
+      'qs-validation-rollup-badge--ok',
+      'qs-validation-rollup-badge--warn',
+      'qs-validation-rollup-badge--error'
+    )
+    badge.classList.add(`qs-validation-rollup-badge--${state}`)
   }
 
   if (kometaActionsCollapse) {
@@ -1156,6 +1194,7 @@ $(document).ready(function () {
 
     KOMETA_UPDATING = true
     KOMETA_VALIDATED = false
+    syncKometaRollupBadge()
     hideRunCommandSectionUntilValidated()
     const prevRunNowHtml = $runNow.html()
     const prevRunNowDisabled = $runNow.prop('disabled')
@@ -1248,6 +1287,7 @@ $(document).ready(function () {
       })
       .finally(() => {
         cleanupUI()
+        syncKometaRollupBadge()
       })
   }
 
@@ -1257,6 +1297,7 @@ $(document).ready(function () {
     if (!KOMETA_UPDATING) syncUpdateButtonLabel()
   })
   syncUpdateButtonLabel()
+  syncKometaRollupBadge()
 
   // Sync visibility for timeout and divider on page load
   $('#opt-timeout-container').toggleClass('d-none', !$('#opt-timeout').is(':checked'))

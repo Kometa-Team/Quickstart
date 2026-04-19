@@ -239,12 +239,12 @@
 <div class="accordion mt-3" id="config-output-accordion">
   <div class="accordion-item">
     <h2 class="accordion-header" id="config-output-heading">
-      <button class="accordion-button" type="button" data-bs-toggle="collapse"
-        data-bs-target="#config-output-collapse" aria-expanded="true" aria-controls="config-output-collapse">
+      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+        data-bs-target="#config-output-collapse" aria-expanded="false" aria-controls="config-output-collapse">
         Config Output
       </button>
     </h2>
-    <div id="config-output-collapse" class="accordion-collapse collapse show" aria-labelledby="config-output-heading"
+    <div id="config-output-collapse" class="accordion-collapse collapse" aria-labelledby="config-output-heading"
       data-bs-parent="#config-output-accordion">
       <div class="accordion-body">
         <div class="form-floating mb-2">
@@ -302,12 +302,12 @@
       <!-- Execution Mode & CLI Toggle -->
       <div class="accordion-item">
         <h2 class="accordion-header" id="heading-mode">
-          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-mode"
-            aria-expanded="true" aria-controls="collapse-mode">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-mode"
+            aria-expanded="false" aria-controls="collapse-mode">
             Execution Mode & CLI Toggle
           </button>
         </h2>
-        <div id="collapse-mode" class="accordion-collapse collapse show" aria-labelledby="heading-mode"
+        <div id="collapse-mode" class="accordion-collapse collapse" aria-labelledby="heading-mode"
           data-bs-parent="#run-command-accordion">
           <div class="accordion-body">
             <div class="form-check form-switch mb-2">
@@ -511,6 +511,9 @@
           <button id="kometa-actions-toggle" class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
             data-bs-target="#kometa-actions-collapse" aria-expanded="false" aria-controls="kometa-actions-collapse">
             Kometa Install / Update
+            <span id="kometa-update-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+              Not checked
+            </span>
           </button>
         </h2>
         <div id="kometa-actions-collapse" class="accordion-collapse collapse" aria-labelledby="kometa-actions-heading"
@@ -553,12 +556,12 @@
     <div id="run-command-output-accordion" class="accordion mt-3 d-none">
       <div class="accordion-item">
         <h2 class="accordion-header" id="run-command-output-heading">
-          <button class="accordion-button" type="button" data-bs-toggle="collapse"
-            data-bs-target="#run-command-output-collapse" aria-expanded="true" aria-controls="run-command-output-collapse">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+            data-bs-target="#run-command-output-collapse" aria-expanded="false" aria-controls="run-command-output-collapse">
             Run Command
           </button>
         </h2>
-        <div id="run-command-output-collapse" class="accordion-collapse collapse show"
+        <div id="run-command-output-collapse" class="accordion-collapse collapse"
           aria-labelledby="run-command-output-heading" data-bs-parent="#run-command-output-accordion">
           <div class="accordion-body">
             <div id="run-command-box" class="position-relative border rounded bg-body-tertiary p-3 d-none">
