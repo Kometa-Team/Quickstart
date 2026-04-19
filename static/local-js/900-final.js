@@ -104,6 +104,157 @@ $(document).ready(function () {
     el.setAttribute(`data-${attrKey}`, serialized)
   }
 
+  function setHeaderRollupBadge (id, state, label) {
+    const badge = document.getElementById(id)
+    if (!badge) return
+    badge.textContent = label
+    badge.classList.remove(
+      'qs-validation-rollup-badge--unknown',
+      'qs-validation-rollup-badge--ok',
+      'qs-validation-rollup-badge--warn',
+      'qs-validation-rollup-badge--error'
+    )
+    const normalized = ['unknown', 'ok', 'warn', 'error'].includes(state) ? state : 'unknown'
+    badge.classList.add(`qs-validation-rollup-badge--${normalized}`)
+  }
+
+  function prettifyFlag (value) {
+    const raw = String(value || '').trim()
+    if (!raw) return 'Default'
+    const noPrefix = raw.replace(/^--/, '')
+    return noPrefix.replace(/-/g, ' ')
+  }
+
+  function updateSectionStyleHeaderBadge (value) {
+    const label = formatHeaderStyleLabel(value)
+    setHeaderRollupBadge('header-style-rollup-badge', 'ok', label || 'Active')
+  }
+
+  function updateConfigOutputHeaderBadges () {
+    const yamlText = $yamlOutput.length ? String($yamlOutput.val() || '') : ''
+    const lineCount = computeYamlLineCount(yamlText)
+    setHeaderRollupBadge('config-output-lines-badge', lineCount > 0 ? 'ok' : 'unknown', `${lineCount} lines`)
+    if (!yamlText.trim()) {
+      setHeaderRollupBadge('config-output-rollup-badge', 'unknown', 'No YAML')
+      return
+    }
+    setHeaderRollupBadge('config-output-rollup-badge', showYAML ? 'ok' : 'error', showYAML ? 'Validated' : 'Needs fixes')
+  }
+
+  function updateModeHeaderBadge () {
+    const showCli = $('#show-cli-toggle').is(':checked')
+    setHeaderRollupBadge('heading-mode-rollup-badge', showCli ? 'ok' : 'unknown', showCli ? 'CLI labels' : 'Friendly')
+  }
+
+  function updateRunOptionHeaderBadge () {
+    const mainOption = $('input[name="run-option"]:checked').val() || ''
+    const selectedLibs = $('#library-multiselect').length ? ($('#library-multiselect').val() || []) : []
+    if (mainOption === '--run-libraries') {
+      if (!selectedLibs.length) {
+        setHeaderRollupBadge('heading-runopt-rollup-badge', 'warn', 'Libraries needed')
+      } else {
+        setHeaderRollupBadge('heading-runopt-rollup-badge', 'ok', `${selectedLibs.length} libraries`)
+      }
+      return
+    }
+    if (mainOption === '--times') {
+      const timesInput = $('#times-input').val().trim()
+      if (!timesInput) {
+        setHeaderRollupBadge('heading-runopt-rollup-badge', 'warn', 'Times needed')
+        return
+      }
+      setHeaderRollupBadge('heading-runopt-rollup-badge', isValidTimesFormat(timesInput) ? 'ok' : 'error', isValidTimesFormat(timesInput) ? 'Times set' : 'Invalid times')
+      return
+    }
+    if (mainOption === '--run') {
+      setHeaderRollupBadge('heading-runopt-rollup-badge', 'ok', 'Run now')
+      return
+    }
+    setHeaderRollupBadge('heading-runopt-rollup-badge', 'unknown', 'Scheduled')
+  }
+
+  function updateModeFlagsHeaderBadge () {
+    const modeFlag = $('input[name="mode-flag"]:checked').val() || ''
+    setHeaderRollupBadge('heading-modeflags-rollup-badge', modeFlag ? 'ok' : 'unknown', prettifyFlag(modeFlag))
+  }
+
+  function updateLogFlagsHeaderBadge () {
+    const logFlag = $('input[name="log-flag"]:checked').val() || ''
+    setHeaderRollupBadge('heading-logflags-rollup-badge', logFlag ? 'ok' : 'unknown', prettifyFlag(logFlag))
+  }
+
+  function updateOtherFlagsHeaderBadge () {
+    const coreCount = [
+      'delete-collections', 'delete-labels', 'read-only-config', 'low-priority',
+      'no-report', 'no-missing', 'no-countdown', 'ignore-ghost',
+      'ignore-schedules', 'no-verify-ssl', 'tests'
+    ].filter(opt => $(`#opt-${opt}`).is(':checked')).length
+    const extrasCount = ($('#opt-timeout').is(':checked') ? 1 : 0) +
+      ($('#opt-divider').is(':checked') ? 1 : 0) +
+      ($('#opt-width').is(':checked') ? 1 : 0)
+    const total = coreCount + extrasCount
+    if (!total) {
+      setHeaderRollupBadge('heading-otherflags-rollup-badge', 'unknown', 'Default')
+      return
+    }
+    setHeaderRollupBadge('heading-otherflags-rollup-badge', 'ok', `${total} enabled`)
+  }
+
+  function updateRunCommandHeaderBadge () {
+    if (!showYAML) {
+      setHeaderRollupBadge('run-command-rollup-badge', 'error', 'Fix validation')
+      return
+    }
+    if (KOMETA_VALIDATION_IN_PROGRESS) {
+      setHeaderRollupBadge('run-command-rollup-badge', 'unknown', 'Checking Kometa')
+      return
+    }
+    if (KOMETA_UPDATING) {
+      setHeaderRollupBadge('run-command-rollup-badge', 'unknown', 'Updating Kometa')
+      return
+    }
+    if (!KOMETA_VALIDATED) {
+      setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Validate Kometa')
+      return
+    }
+    if (KOMETA_STATUS === 'running') {
+      setHeaderRollupBadge('run-command-rollup-badge', 'warn', 'Run in progress')
+      return
+    }
+    setHeaderRollupBadge('run-command-rollup-badge', isRunCommandValid() ? 'ok' : 'warn', isRunCommandValid() ? 'Ready' : 'Incomplete')
+  }
+
+  function updateLogscanHeaderBadge (data) {
+    const source = data || lastLogscanPayload
+    if (!source) {
+      setHeaderRollupBadge('logscan-rollup-badge', 'unknown', 'Pending')
+      return
+    }
+    if (source.error) {
+      setHeaderRollupBadge('logscan-rollup-badge', 'error', 'Unavailable')
+      return
+    }
+    const recCount = Array.isArray(source.recommendations) ? source.recommendations.length : 0
+    const missingCount = Array.isArray(source.missing_people) ? source.missing_people.length : 0
+    const issueCount = recCount + missingCount
+    if (!issueCount) {
+      setHeaderRollupBadge('logscan-rollup-badge', 'ok', 'No issues')
+      return
+    }
+    setHeaderRollupBadge('logscan-rollup-badge', 'warn', `${issueCount} items`)
+  }
+
+  function syncFinalAccordionRollups () {
+    updateModeHeaderBadge()
+    updateRunOptionHeaderBadge()
+    updateModeFlagsHeaderBadge()
+    updateLogFlagsHeaderBadge()
+    updateOtherFlagsHeaderBadge()
+    updateConfigOutputHeaderBadges()
+    updateRunCommandHeaderBadge()
+    updateLogscanHeaderBadge()
+  }
+
   function updateValidationGate () {
     const plexValid = readMetaFlag('plex_valid', 'plexValid', 'plex-valid')
     const tmdbValid = readMetaFlag('tmdb_valid', 'tmdbValid', 'tmdb-valid')
@@ -148,6 +299,7 @@ $(document).ready(function () {
     }
 
     updateRunNowState()
+    syncFinalAccordionRollups()
   }
 
   updateValidationGate()
@@ -172,6 +324,7 @@ $(document).ready(function () {
     if (!$yamlLineCount.length || !$yamlOutput.length) return
     const lineCount = computeYamlLineCount($yamlOutput.val())
     $yamlLineCount.text(`Line count (includes comments and blank lines): ${lineCount}`)
+    updateConfigOutputHeaderBadges()
   }
 
   updateYamlLineCount()
@@ -190,6 +343,7 @@ $(document).ready(function () {
   function updateHeaderStyleLabel (value) {
     if (!headerStyleLabel) return
     headerStyleLabel.textContent = formatHeaderStyleLabel(value)
+    updateSectionStyleHeaderBadge(value)
   }
 
   function setActiveGridCard (fontName) {
@@ -449,6 +603,7 @@ $(document).ready(function () {
     updateLabels(otherFlags, 'opt-')
 
     $('[data-bs-toggle="tooltip"]').tooltip({ html: true })
+    syncFinalAccordionRollups()
   }
 
   updateFlagLabels(false) // Default to friendly labels
@@ -464,19 +619,25 @@ $(document).ready(function () {
 
   function updateRunNowState () {
     const $runNow = $('#run-now')
-    if (!$runNow.length) return
+    if (!$runNow.length) {
+      updateRunCommandHeaderBadge()
+      return
+    }
 
     if (!showYAML || KOMETA_VALIDATION_IN_PROGRESS || KOMETA_UPDATING || KOMETA_STATUS === 'running' || !KOMETA_VALIDATED) {
       $runNow.prop('disabled', true)
+      updateRunCommandHeaderBadge()
       return
     }
 
     if (!isRunCommandValid()) {
       $runNow.prop('disabled', true)
+      updateRunCommandHeaderBadge()
       return
     }
 
     $runNow.prop('disabled', false)
+    updateRunCommandHeaderBadge()
   }
 
   function buildCommand () {
@@ -511,6 +672,7 @@ $(document).ready(function () {
         $('#times-error').removeClass('d-none')
         runCmdOutput.text('⚠️ Invalid time format. Use pipe-separated 24h times like 06:00|15:00.')
         updateRunNowState()
+        syncFinalAccordionRollups()
         return false
       } else {
         $('#times-error').addClass('d-none')
@@ -525,6 +687,7 @@ $(document).ready(function () {
       if (!selectedLibs.length) {
         runCmdOutput.text('⚠️ Please select at least one library when using --run-libraries.')
         updateRunNowState()
+        syncFinalAccordionRollups()
         return false
       }
       cli += ` "${selectedLibs.join('|')}"`
@@ -557,6 +720,7 @@ $(document).ready(function () {
         $('#timeout-error').removeClass('d-none')
         runCmdOutput.text('⚠️ Invalid timeout. Please enter a positive whole number.')
         updateRunNowState()
+        syncFinalAccordionRollups()
         return false
       } else {
         $('#timeout-error').addClass('d-none')
@@ -572,6 +736,7 @@ $(document).ready(function () {
         $('#width-error').removeClass('d-none')
         runCmdOutput.text('⚠️ Width must be a number between 90 and 300.')
         updateRunNowState()
+        syncFinalAccordionRollups()
         return false
       } else {
         $('#width-error').addClass('d-none')
@@ -585,6 +750,7 @@ $(document).ready(function () {
         $('#divider-error').removeClass('d-none')
         runCmdOutput.text('⚠️ Divider must be a single character.')
         updateRunNowState()
+        syncFinalAccordionRollups()
         return false
       } else {
         $('#divider-error').addClass('d-none')
@@ -594,6 +760,7 @@ $(document).ready(function () {
 
     runCmdOutput.text(cli)
     updateRunNowState()
+    syncFinalAccordionRollups()
     return true
   }
 
@@ -1674,6 +1841,7 @@ $(document).ready(function () {
       $logscanSummary.text('')
       $logscanRecommendations.html('<div class="text-muted">Logscan unavailable.</div>')
       $logscanMissing.addClass('d-none').empty()
+      updateLogscanHeaderBadge({ error: true })
       return
     }
 
@@ -1765,6 +1933,8 @@ $(document).ready(function () {
     } else {
       $logscanMissing.addClass('d-none')
     }
+
+    updateLogscanHeaderBadge(data)
   }
 
   function fetchLogscanAnalysis (force = false) {
@@ -1782,6 +1952,7 @@ $(document).ready(function () {
       .catch(err => {
         console.error('Error fetching logscan analysis:', err)
         $logscanRecommendations.html('<div class="text-muted">Logscan unavailable.</div>')
+        updateLogscanHeaderBadge({ error: true })
       })
   }
 
