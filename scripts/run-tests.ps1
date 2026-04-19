@@ -240,13 +240,29 @@ if ($All) {
   $allRandomCount = if ($RatingsRandomCount -ge 0) { $RatingsRandomCount } else { 9 }
   $env:RATINGS_MATRIX_RANDOM_COUNT = [string]$allRandomCount
   Write-Host "All mode: RATINGS_MATRIX_RANDOM_COUNT=$env:RATINGS_MATRIX_RANDOM_COUNT (override with -RatingsRandomCount)." -ForegroundColor Cyan
+  Write-Host "All mode: running non-ratings_artifacts tests first, then ratings_artifacts last." -ForegroundColor Cyan
+
+  $overallExit = 0
 
   if ($NoCapture) {
-    & $python -m pytest -o addopts= -vv -s
+    & $python -m pytest -o addopts= -m "not ratings_artifacts" -vv -s
   } else {
-    & $python -m pytest -o addopts= -vv
+    & $python -m pytest -o addopts= -m "not ratings_artifacts" -vv
   }
-  exit $LASTEXITCODE
+  if ($LASTEXITCODE -ne 0) {
+    $overallExit = $LASTEXITCODE
+  }
+
+  if ($NoCapture) {
+    & $python -m pytest -o addopts= -m ratings_artifacts -vv -s
+  } else {
+    & $python -m pytest -o addopts= -m ratings_artifacts -vv
+  }
+  if ($LASTEXITCODE -ne 0) {
+    $overallExit = $LASTEXITCODE
+  }
+
+  exit $overallExit
 }
 
 # Default: unit/integration tests (non-E2E)
