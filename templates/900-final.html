@@ -57,8 +57,28 @@
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
         data-bs-target="#validation-status-collapse" aria-expanded="false" aria-controls="validation-status-collapse">
         Validation status
+        {% set rollup_validated = validation_rollup_summary.get('validated', 0) if validation_rollup_summary else 0 %}
+        {% set rollup_failed = validation_rollup_summary.get('failed', 0) if validation_rollup_summary else 0 %}
+        {% set rollup_skipped = validation_rollup_summary.get('skipped', 0) if validation_rollup_summary else 0 %}
+        {% set rollup_unknown = validation_rollup_summary.get('unknown', 0) if validation_rollup_summary else 0 %}
+        {% if validation_rollup_state == 'error' %}
+        {% set rollup_label = rollup_failed ~ ' failed' %}
+        {% elif validation_rollup_state == 'warn' %}
+        {% set rollup_label = rollup_skipped ~ ' pending' %}
+        {% elif validation_rollup_state == 'ok' %}
+        {% set rollup_label = 'All good' %}
+        {% else %}
+        {% set rollup_label = 'Not run' %}
+        {% endif %}
+        <span id="validation-status-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--{{ validation_rollup_state }}"
+          data-qs-validation-rollup-badge
+          data-validated="{{ rollup_validated }}"
+          data-failed="{{ rollup_failed }}"
+          data-skipped="{{ rollup_skipped }}">
+          {{ rollup_label }}
+        </span>
         <span class="small text-muted ms-2">
-          Last run:
+          Last updated:
           <span id="validation-status-last-run" data-validation-iso="{{ validation_rollup_at | default('', true) }}">Never</span>
         </span>
       </button>
@@ -78,21 +98,27 @@
               <span class="rating-mapping-option-via rating-mapping-option-via--neutral">N/A</span>
             </div>
           </div>
-          <button id="validate-all-services" type="button" class="btn btn-outline-info btn-sm">
+          <button id="validate-all-services" type="button" class="btn btn-outline-info btn-sm" data-qs-validate-all>
             <i class="bi bi-check2-circle me-1"></i> Validate Configured Services
-            <span id="validate-all-spinner" class="spinner-border spinner-border-sm ms-1 d-none" role="status" aria-hidden="true"></span>
+            <span id="validate-all-spinner" class="spinner-border spinner-border-sm ms-1 d-none qs-validate-all-spinner" role="status" aria-hidden="true"></span>
           </button>
         </div>
-        <div class="small text-muted text-uppercase">Last validation summary</div>
-        <div id="validate-all-status" class="small text-muted">{{ validation_rollup if validation_rollup else 'No validation run yet.' }}</div>
+        <div class="small text-muted text-uppercase">Current validation summary</div>
+        <div id="validate-all-status" class="small text-muted">{{ validation_rollup if validation_rollup else 'Current status unavailable.' }}</div>
         <div class="small text-muted mb-2">
           Last updated:
           <span id="validate-all-status-time" data-validation-iso="{{ validation_rollup_at | default('', true) }}">—</span>
         </div>
+        <div class="small text-muted text-uppercase">Last bulk validation run</div>
+        <div id="validate-all-status-bulk" class="small text-muted">{{ validation_bulk_rollup if validation_bulk_rollup else 'No bulk validation run yet.' }}</div>
+        <div class="small text-muted mb-2">
+          Bulk updated:
+          <span id="validate-all-status-bulk-time" data-validation-iso="{{ validation_bulk_rollup_at | default('', true) }}">—</span>
+        </div>
         {% set bulk_pages = ['010-plex','020-tmdb','025-libraries','027-playlist_files','030-tautulli','040-github','050-omdb','060-mdblist','070-notifiarr','080-gotify','085-ntfy','090-webhooks','100-anidb','110-radarr','120-sonarr','150-settings','130-trakt','140-mal'] %}
         {% set interactive_pages = [] %}
         {% set nonservice_pages = ['001-start','900-final','910-sponsor','905-analytics'] %}
-        <div class="table-responsive">
+        <div class="table-responsive" data-qs-sticky-first="true">
           <table class="table table-sm table-dark table-striped align-middle mb-0">
             <thead>
               <tr>
@@ -617,7 +643,7 @@
           <div id="run-progress-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
         </div>
         <div id="run-prep-row" class="mb-2 d-none"></div>
-        <div class="table-responsive">
+        <div class="table-responsive" data-qs-sticky-first="true">
                   <table class="table table-sm table-striped mb-0">
                     <thead>
                       <tr id="run-library-header">

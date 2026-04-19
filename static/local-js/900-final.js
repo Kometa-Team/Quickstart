@@ -1963,15 +1963,18 @@ $(document).ready(function () {
   }
 
   const validateAllBtn = document.getElementById('validate-all-services')
-  const validateAllSpinner = document.getElementById('validate-all-spinner')
   const validateAllStatus = document.getElementById('validate-all-status')
   const validateAllStatusTime = document.getElementById('validate-all-status-time')
+  const validateAllStatusBulk = document.getElementById('validate-all-status-bulk')
+  const validateAllStatusBulkTime = document.getElementById('validate-all-status-bulk-time')
   const validationStatusLastRun = document.getElementById('validation-status-last-run')
+  let previouslyBlocked = false
+  let previousStatuses = {}
+
   if (validateAllBtn) {
-    validateAllBtn.addEventListener('click', function () {
-      if (validateAllBtn.disabled) return
-      const previouslyBlocked = !showYAML
-      const previousStatuses = {}
+    document.addEventListener('qs:bulk-validation-start', function () {
+      previouslyBlocked = !showYAML
+      previousStatuses = {}
       document.querySelectorAll('[data-validation-key]').forEach(row => {
         const key = row.dataset.validationKey
         const pill = row.querySelector('.validation-status-pill')
@@ -1979,105 +1982,121 @@ $(document).ready(function () {
           previousStatuses[key] = pill.classList.contains('rating-mapping-option-via--validated')
         }
       })
-      validateAllBtn.disabled = true
-      if (validateAllSpinner) validateAllSpinner.classList.remove('d-none')
+
       if (validateAllStatus) {
-        validateAllStatus.classList.add('d-none', 'text-danger')
-        validateAllStatus.classList.remove('text-success')
+        validateAllStatus.classList.add('d-none')
+        validateAllStatus.classList.remove('text-danger', 'text-success', 'text-warning')
         validateAllStatus.textContent = 'Validating configured services...'
         validateAllStatus.classList.remove('d-none')
       }
-
-      fetch('/validate_all_services', { method: 'POST' })
-        .then(async (res) => {
-          let data = null
-          try {
-            data = await res.json()
-          } catch (err) {
-            data = null
-          }
-
-          if (!res.ok) {
-            const message = (data && (data.message || data.error)) || `Request failed (${res.status}).`
-            throw new Error(message)
-          }
-
-          if (!data || !data.success) {
-            throw new Error((data && (data.message || data.error)) || 'Validation failed. Please try again.')
-          }
-
-          const results = data.results || {}
-          const gateTargets = {
-            '010-plex': { id: 'plex_valid', datasetKey: 'plexValid', attrKey: 'plex-valid' },
-            '020-tmdb': { id: 'tmdb_valid', datasetKey: 'tmdbValid', attrKey: 'tmdb-valid' },
-            '025-libraries': { id: 'libs_valid', datasetKey: 'libsValid', attrKey: 'libs-valid' },
-            '150-settings': { id: 'sett_valid', datasetKey: 'settValid', attrKey: 'sett-valid' }
-          }
-          Object.keys(results).forEach(key => updateValidationRow(key, results[key]))
-          Object.keys(results).forEach(key => {
-            const target = gateTargets[key]
-            const result = results[key]
-            if (!target || !result) return
-            if (result.status === 'validated') {
-              setMetaFlag(target.id, target.datasetKey, target.attrKey, true)
-            } else if (result.status === 'failed' || result.status === 'skipped') {
-              setMetaFlag(target.id, target.datasetKey, target.attrKey, false)
-            }
-          })
-          const summary = data.summary || {}
-          const ok = summary.validated || 0
-          const failed = summary.failed || 0
-          const skipped = summary.skipped || 0
-          showToast('info', `Validate all complete. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}`)
-          if (validateAllStatus) {
-            // Per-row Validation Results show details; no per-summary label mapping needed.
-            // Note: summary details are shown per-row in the Validation Results column.
-            validateAllStatus.classList.remove('d-none', 'text-danger')
-            validateAllStatus.classList.add('text-success')
-            const summaryText = data.summary_text || `Completed. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}.`
-            validateAllStatus.textContent = summaryText
-            const summaryUpdatedAt = data.summary_updated_at || new Date().toISOString()
-            if (validateAllStatusTime) {
-              validateAllStatusTime.dataset.validationIso = summaryUpdatedAt
-              const parsed = new Date(summaryUpdatedAt)
-              if (!Number.isNaN(parsed.getTime())) {
-                validateAllStatusTime.textContent = formatLocalTimestamp(parsed)
-              }
-            }
-            if (validationStatusLastRun) {
-              validationStatusLastRun.dataset.validationIso = summaryUpdatedAt
-              const parsed = new Date(summaryUpdatedAt)
-              if (!Number.isNaN(parsed.getTime())) {
-                validationStatusLastRun.textContent = formatLocalTimestamp(parsed)
-              }
-            }
-          }
-          updateValidationGate()
-          const anyNewlyValidated = Object.keys(results).some(key => results[key]?.status === 'validated' && !previousStatuses[key])
-          if (previouslyBlocked && showYAML) {
-            showToast('info', 'Validation complete. Refreshing YAML output...')
-            setTimeout(() => window.location.reload(), 300)
-            return
-          }
-          if (anyNewlyValidated) {
-            showToast('info', 'Validation updated. Refreshing YAML output...')
-            setTimeout(() => window.location.reload(), 300)
-          }
-        })
-        .catch((err) => {
-          const message = err && err.message ? err.message : 'Validate all failed. Please try again.'
-          showToast('error', message)
-          if (validateAllStatus) {
-            validateAllStatus.classList.remove('d-none', 'text-success')
-            validateAllStatus.classList.add('text-danger')
-            validateAllStatus.textContent = message
-          }
-        })
-        .finally(() => {
-          validateAllBtn.disabled = false
-          if (validateAllSpinner) validateAllSpinner.classList.add('d-none')
-        })
     })
+
+    document.addEventListener('qs:bulk-validation-complete', function (event) {
+      const data = (event && event.detail) ? event.detail : {}
+      const results = data.results || {}
+      const gateTargets = {
+        '010-plex': { id: 'plex_valid', datasetKey: 'plexValid', attrKey: 'plex-valid' },
+        '020-tmdb': { id: 'tmdb_valid', datasetKey: 'tmdbValid', attrKey: 'tmdb-valid' },
+        '025-libraries': { id: 'libs_valid', datasetKey: 'libsValid', attrKey: 'libs-valid' },
+        '150-settings': { id: 'sett_valid', datasetKey: 'settValid', attrKey: 'sett-valid' }
+      }
+
+      Object.keys(results).forEach(key => updateValidationRow(key, results[key]))
+      Object.keys(results).forEach(key => {
+        const target = gateTargets[key]
+        const result = results[key]
+        if (!target || !result) return
+        if (result.status === 'validated') {
+          setMetaFlag(target.id, target.datasetKey, target.attrKey, true)
+        } else if (result.status === 'failed' || result.status === 'skipped') {
+          setMetaFlag(target.id, target.datasetKey, target.attrKey, false)
+        }
+      })
+
+      const summary = data.summary || {}
+      const ok = summary.validated || 0
+      const failed = summary.failed || 0
+      const skipped = summary.skipped || 0
+      const summaryUpdatedAt = data.summary_updated_at || new Date().toISOString()
+      if (validateAllStatus) {
+        validateAllStatus.classList.remove('d-none', 'text-danger', 'text-success', 'text-warning')
+        if (failed > 0) {
+          validateAllStatus.classList.add('text-danger')
+        } else if (skipped > 0) {
+          validateAllStatus.classList.add('text-warning')
+        } else {
+          validateAllStatus.classList.add('text-success')
+        }
+        const currentSummaryText = `Current. Validated: ${ok} • Failed: ${failed} • Pending: ${skipped}.`
+        validateAllStatus.textContent = currentSummaryText
+        if (validateAllStatusTime) {
+          validateAllStatusTime.dataset.validationIso = summaryUpdatedAt
+          const parsed = new Date(summaryUpdatedAt)
+          if (!Number.isNaN(parsed.getTime())) {
+            validateAllStatusTime.textContent = formatLocalTimestamp(parsed)
+          }
+        }
+        if (validationStatusLastRun) {
+          validationStatusLastRun.dataset.validationIso = summaryUpdatedAt
+          const parsed = new Date(summaryUpdatedAt)
+          if (!Number.isNaN(parsed.getTime())) {
+            validationStatusLastRun.textContent = formatLocalTimestamp(parsed)
+          }
+        }
+      }
+      if (validateAllStatusBulk) {
+        validateAllStatusBulk.classList.remove('d-none')
+        validateAllStatusBulk.textContent = data.summary_text || `Completed. Validated: ${ok} • Failed: ${failed} • Skipped: ${skipped}.`
+      }
+      if (validateAllStatusBulkTime) {
+        validateAllStatusBulkTime.dataset.validationIso = summaryUpdatedAt
+        const parsed = new Date(summaryUpdatedAt)
+        if (!Number.isNaN(parsed.getTime())) {
+          validateAllStatusBulkTime.textContent = formatLocalTimestamp(parsed)
+        }
+      }
+
+      updateValidationGate()
+      const anyNewlyValidated = Object.keys(results).some(key => results[key]?.status === 'validated' && !previousStatuses[key])
+      if (previouslyBlocked && showYAML) {
+        showToast('info', 'Validation complete. Refreshing YAML output...')
+        setTimeout(() => window.location.reload(), 300)
+        return
+      }
+      if (anyNewlyValidated) {
+        showToast('info', 'Validation updated. Refreshing YAML output...')
+        setTimeout(() => window.location.reload(), 300)
+      }
+    })
+
+    document.addEventListener('qs:bulk-validation-error', function (event) {
+      const detail = (event && event.detail) ? event.detail : {}
+      const message = detail.message || 'Validate all failed. Please try again.'
+      if (validateAllStatus) {
+        validateAllStatus.classList.remove('d-none', 'text-success', 'text-warning')
+        validateAllStatus.classList.add('text-danger')
+        validateAllStatus.textContent = message
+      }
+    })
+
+    if (window.QSBulkValidation && typeof window.QSBulkValidation.getSummaryState === 'function') {
+      const badge = document.getElementById('validation-status-rollup-badge')
+      if (badge) {
+        const initialSummary = {
+          validated: Number(badge.dataset.validated || 0),
+          failed: Number(badge.dataset.failed || 0),
+          skipped: Number(badge.dataset.skipped || 0)
+        }
+        const state = window.QSBulkValidation.getSummaryState(initialSummary)
+        badge.classList.remove(
+          'qs-validation-rollup-badge--unknown',
+          'qs-validation-rollup-badge--ok',
+          'qs-validation-rollup-badge--warn',
+          'qs-validation-rollup-badge--error'
+        )
+        badge.classList.add(`qs-validation-rollup-badge--${state}`)
+      }
+    }
   }
 
   $('#run-now').on('click', function () {

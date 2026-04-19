@@ -1,188 +1,100 @@
 <form method="post" id="configForm" name="configForm">
+  {% import "partials/_workspace_macros.html" as workspace %}
   {% set qs_is_docker = version_info and version_info.running_on and ('Docker' in version_info.running_on) %}
   {% set hide_step_nav = page_info.get('hide_step_nav', False) %}
-  <div id="{{ page_info['title'] }}Section">
+  {% set required_keys = ['001-start', '010-plex', '020-tmdb', '025-libraries', '150-settings'] %}
+  {% set review_keys = ['900-final', '905-analytics', '910-sponsor'] %}
+  {% set optional_ns = namespace(keys=[]) %}
+  {% for file, _ in template_list %}
+  {% set template_key = file.rsplit('.', 1)[0] %}
+  {% if template_key not in required_keys and template_key not in review_keys %}
+  {% set optional_ns.keys = optional_ns.keys + [template_key] %}
+  {% endif %}
+  {% endfor %}
+  {% set current_template = page_info['template_name'] %}
+  {% set required_open = current_template in required_keys %}
+  {% set optional_open = current_template in optional_ns.keys %}
+  {% set review_open = current_template in review_keys %}
+  <div id="{{ page_info['title'] }}Section" class="qs-workspace-section" data-current-step="{{ page_info['template_name'] }}">
+    <script>document.body.classList.add('qs-has-workspace')</script>
+    <div class="qs-workspace-shell" data-qs-workspace-shell>
+      {{ workspace.step_header(page_info) }}
 
-    <!-- Page Title + top-right badge -->
-    <div class="container text-center mt-0 page-title">
-      <div class="page-title-row">
-        <h2 class="fw-bold text-white mb-0">{{ page_info['title'] }}</h2>
-      </div>
-      <div class="page-title-row page-title-actions">
-        <button type="button" class="badge bg-secondary config-badge-button support-badge"
-          data-bs-toggle="modal" data-bs-target="#supportInfoModal" title="Support info for Quickstart">
-          <i class="bi bi-life-preserver me-1"></i> Support Info
-        </button>
-        <div class="page-title-actions-right">
-          <button type="button" class="badge bg-secondary config-badge-button settings-badge"
-            id="quickstart-settings-btn" data-bs-toggle="modal" data-bs-target="#quickstartSettingsModal"
-            data-current-port="{{ page_info.running_port }}" data-current-debug="{{ 'true' if page_info.qs_debug else 'false' }}"
-            data-current-theme="{{ page_info.qs_theme }}" data-current-optimize-defaults="{{ 'true' if page_info.qs_optimize_defaults else 'false' }}"
-            data-current-config-history="{{ page_info.qs_config_history }}" data-current-log-keep="{{ page_info.qs_kometa_log_keep }}"
-            data-current-test-libs-path="{{ page_info.qs_test_libs_path }}"
-            data-current-test-libs-tmp="{{ page_info.qs_test_libs_tmp }}"
-            data-current-session-lifetime="{{ page_info.qs_session_lifetime_days }}"
-            data-current-session-dir="{{ page_info.qs_flask_session_dir }}"
-            data-quickstart-root="{{ page_info.quickstart_root }}"
-            title="Quickstart settings">
-            <i class="bi bi-gear-fill"></i>
-          </button>
-          <button type="button" class="badge bg-secondary config-badge config-badge-button"
-            data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}">
-            <span title="Switch config">
-              Config: {{ page_info.config_name }} <i class="bi bi-chevron-down ms-1"></i>
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
+      <div class="qs-workspace-grid">
+        <aside class="qs-workspace-nav-panel" aria-label="Step navigation">
+          <div class="qs-workspace-nav-sticky">
+            {{ workspace.sidebar_controls(page_info) }}
+            {{ workspace.step_action_bar(page_info, hide_step_nav, template_list, jump_to_validations, step_statuses, sidebar_mode=True) }}
 
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark page-nav">
-      <div class="container-fluid d-flex justify-content-between align-items-center">
-
-        <!-- Previous Button (Hidden on Start Page) -->
-        {% if not hide_step_nav and page_info['template_name'] != '001-start' %}
-        <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('prev')"
-          title="Previous Step: {{ page_info['prev_page_name'] }}" formaction="/step/{{ page_info['prev_page'] }}">
-          <i id="prev-spinner-icon" class="fa fa-arrow-left"></i> Previous
-        </button>
-        {% endif %}
-
-        <!-- Jump-To Dropdown -->
-        {% if hide_step_nav %}
-        <a class="btn nav-button" href="/step/900-final" title="Back to Final Validation">
-          <i class="fa fa-arrow-left"></i> Back to Final
-        </a>
-        {% if page_info.get('show_jump_to') %}
-        <div class="dropdown mx-auto">
-          <button class="btn nav-button dropdown-toggle jump-to-button" id="stepDropdown" data-bs-toggle="dropdown"
-            aria-expanded="false">
-              <span class="jump-to-left">
-              <i class="fa fa-list"></i>
-            </span>
-            <span class="jump-to-label">Jump to: Pages</span>
-          </button>
-
-          <ul class="dropdown-menu dropdown-menu-end text-center" style="max-height: 50vh; overflow-y: auto;">
-            <li class="dropdown-item progress-container">
-              <div class="progress" style="height: 5px;">
+            <div class="qs-step-progress-strip">
+              <div class="small text-muted mb-1">Progress</div>
+              <div class="progress" style="height: 6px;">
                 <div class="progress-bar bg-success" style="width: {{ page_info.get('progress', 0) }}%;"></div>
               </div>
-              <small class="text-muted">{{ page_info.get('progress', 0) }}% Completed</small>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            {% for file, name in template_list %}
-            {% set template_key = file.rsplit('.', 1)[0] %}
-            {% set is_validated = jump_to_validations and jump_to_validations.get(template_key) %}
-            {% if name == 'Final Validation' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
-            <li>
-              <a class="dropdown-item {% if file.rsplit('.', 1)[0] == page_info['template_name'] %} active {% endif %}"
-                href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">
-                {% if is_validated %}
-                <img src="/static/favicon.png" alt="Validated" class="jump-to-validated-icon">
-                {% endif %}
-                {{ name }}
-              </a>
-            </li>
-            {% if name == 'Start' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
-        {% else %}
-        <div class="dropdown">
-          <button class="btn nav-button dropdown-toggle jump-to-button" id="stepDropdown" data-bs-toggle="dropdown"
-            aria-expanded="false">
-            <span class="jump-to-left">
-              <i class="fa fa-list"></i>
-            </span>
-            <span class="jump-to-label">Jump to: {% if page_info['template_name'] == '910-sponsor' %}
-              {{ page_info['prev_page_name'] }}
-              {% else %}
-              {{ page_info['next_page_name'] }}
-              {% endif %}</span>
-          </button>
-
-          <ul class="dropdown-menu dropdown-menu-end text-center" style="max-height: 50vh; overflow-y: auto;">
-            <!-- Progress Bar Inside Dropdown -->
-            <li class="dropdown-item progress-container">
-              <div class="progress" style="height: 5px;">
-                <div class="progress-bar bg-success" style="width: {{ page_info['progress'] }}%;"></div>
+              <div class="small text-muted mt-1 qs-step-progress-text">
+                <span class="qs-step-progress-text-full">{{ page_info.get('progress', 0) }}% Completed</span>
+                <span class="qs-step-progress-text-short">{{ page_info.get('progress', 0) }}%</span>
               </div>
-              <small class="text-muted">{{ page_info['progress'] }}% Completed</small>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
+            </div>
+            <div class="qs-step-groups">
+              {{ workspace.step_group('Required', 'required', template_list, required_keys, page_info, step_statuses, section_statuses, open_state=required_open) }}
+              {{ workspace.step_group('Optional', 'optional', template_list, optional_ns.keys, page_info, step_statuses, section_statuses, open_state=optional_open) }}
+              {{ workspace.step_group('Review', 'review', template_list, review_keys, page_info, step_statuses, section_statuses, open_state=review_open) }}
+            </div>
+            <div class="qs-step-list qs-step-list--compact" role="list">
+              {% for file, name in template_list %}
+              {% set template_key = file.rsplit('.', 1)[0] %}
+              {{ workspace.step_link(template_key, name, page_info, step_statuses) }}
+              {% endfor %}
+            </div>
 
-            <!-- Navigation Items -->
-            {% for file, name in template_list %}
-            {% set template_key = file.rsplit('.', 1)[0] %}
-            {% set is_validated = jump_to_validations and jump_to_validations.get(template_key) %}
-            {% if name == 'Final Validation' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
-            <li>
-              <a class="dropdown-item {% if file.rsplit('.', 1)[0] == page_info['template_name'] %} active {% endif %}"
-                href="javascript:void(0);" onclick="jumpTo('{{ file.rsplit('.', 1)[0] }}')">
-                {% if is_validated %}
-                <img src="/static/favicon.png" alt="Validated" class="jump-to-validated-icon">
-                {% endif %}
-                {{ name }}
-              </a>
-            </li>
-            {% if name == 'Start' %}
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-            {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
+            {{ workspace.sidebar_footer(version_info) }}
+          </div>
+        </aside>
 
-        <!-- Next Button (Hidden on Final Page) -->
-        {% if not hide_step_nav and page_info['template_name'] != '910-sponsor' %}
-        <button type="submit" class="btn nav-button d-none d-md-inline-flex" onclick="loading('next')"
-          title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
-          Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
-        </button>
-        {% endif %}
+        <section class="qs-workspace-main-panel">
+          <div class="alert alert-warning qs-inline-beta-warning" role="alert">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            <strong>Quickstart is in early development.</strong> Please provide feedback via the
+            <a href="https://discord.com/channels/822460010649878528/1335372922306695198"
+              target="_blank">quickstart-feedback Discord channel.</a>
+          </div>
+          <div class="qs-main-page-header">
+            <div class="qs-main-page-topline">
+              <div class="qs-main-page-eyebrow">Quickstart</div>
+            </div>
+            <h2 class="qs-main-page-title">{{ page_info['title'] }}</h2>
+            <div class="qs-main-page-meta">
+              <i class="bi bi-folder2-open me-1" aria-hidden="true"></i>
+              <span class="qs-main-page-meta-label">CONFIG:</span>
+              <span class="qs-main-page-meta-value">{{ page_info.config_name }}</span>
+            </div>
+          </div>
+          {% set qs_search_enabled = page_info['template_name'] in ['025-libraries', '150-settings'] %}
+          {% set qs_search_scope = 'library-form-container' if page_info['template_name'] == '025-libraries' else 'configForm' %}
+          {% if qs_search_enabled %}
+          <div class="page-search" data-qs-search-scope="{{ qs_search_scope }}">
+            <div class="input-group input-group-sm page-search-group">
+              <span class="input-group-text">
+                <i class="bi bi-search"></i>
+              </span>
+              <input type="search" class="form-control"
+                id="{{ page_info['template_name'] }}-page-search"
+                placeholder="Search this page" aria-label="Search this page"
+                data-qs-search-input>
+              <button type="button" class="btn btn-outline-secondary d-none" data-qs-search-clear>Clear</button>
+            </div>
+            <div class="small text-muted page-search-status" data-qs-search-status></div>
+          </div>
+          {% endif %}
+
+          <div class="qs-workspace-main-slot" data-qs-workspace-slot></div>
+        </section>
 
       </div>
-    </nav>
 
-    {% set qs_search_enabled = page_info['template_name'] in ['025-libraries', '150-settings'] %}
-    {% set qs_search_scope = 'library-form-container' if page_info['template_name'] == '025-libraries' else 'configForm' %}
-    {% if qs_search_enabled %}
-    <div class="page-search" data-qs-search-scope="{{ qs_search_scope }}">
-      <div class="input-group input-group-sm page-search-group">
-        <span class="input-group-text">
-          <i class="bi bi-search"></i>
-        </span>
-        <input type="search" class="form-control"
-          id="{{ page_info['template_name'] }}-page-search"
-          placeholder="Search this page" aria-label="Search this page"
-          data-qs-search-input>
-        <button type="button" class="btn btn-outline-secondary d-none" data-qs-search-clear>Clear</button>
-      </div>
-      <div class="small text-muted page-search-status" data-qs-search-status></div>
+      {{ workspace.mobile_action_bar(page_info, hide_step_nav) }}
     </div>
-    {% endif %}
 
     <!-- Switch Config Modal -->
     <div class="modal fade" id="configSwitchModal" tabindex="-1" aria-labelledby="configSwitchModalLabel" aria-hidden="true">
@@ -488,5 +400,3 @@
       </div>
     </div>
     {% endif %}
-
-    <hr class="hr page-nav-divider">

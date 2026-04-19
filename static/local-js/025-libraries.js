@@ -1,4 +1,4 @@
-/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, DOMParser */
+/* global EventHandler, ValidationHandler, OverlayHandler, Sortable, showToast, setupParentChildToggleSync, bootstrap, FontFace, PathValidation, DOMParser, showNavigationLoadingOverlay, hideNavigationLoadingOverlay */
 
 document.addEventListener('DOMContentLoaded', function () {
   console.log('[DEBUG] Initializing Libraries...')
@@ -1352,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', function () {
       copyConfirmBtn.addEventListener('click', onConfirm)
     }
 
-    function loadLibrary (libraryId) {
+    function loadLibrary (libraryId, context = 'switch') {
       if (libraryId === activeLibraryId) return
       const requestId = ++loadRequestId
       const setLoading = (flag) => {
@@ -1361,6 +1361,13 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         if (libraryPicker) {
           libraryPicker.disabled = !!flag
+        }
+        if (flag) {
+          if (typeof showNavigationLoadingOverlay === 'function') {
+            showNavigationLoadingOverlay(context === 'initial' ? 'library-initial' : 'library-switch')
+          }
+        } else if (typeof hideNavigationLoadingOverlay === 'function') {
+          hideNavigationLoadingOverlay()
         }
       }
 
@@ -1411,7 +1418,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (libraryPicker) {
       libraryPicker.addEventListener('change', (e) => {
-        loadLibrary(e.target.value)
+        loadLibrary(e.target.value, 'switch')
       })
 
       refreshPickerLabels()
@@ -1421,9 +1428,9 @@ document.addEventListener('DOMContentLoaded', function () {
         libraryPicker.querySelector('option[value]:not([value=""])')?.value
       if (configuredFirst) {
         libraryPicker.value = configuredFirst.value
-        loadLibrary(configuredFirst.value)
+        loadLibrary(configuredFirst.value, 'initial')
       } else if (firstLibrary) {
-        loadLibrary(firstLibrary)
+        loadLibrary(firstLibrary, 'initial')
       } else {
         libraryPicker.value = ''
       }

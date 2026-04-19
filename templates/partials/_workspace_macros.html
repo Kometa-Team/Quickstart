@@ -1,0 +1,253 @@
+{% macro status_icon(status, state_class='qs-step-link-state') -%}
+{% set state = status if status in ['unknown', 'ok', 'warn', 'error'] else 'warn' %}
+<span class="{{ state_class }} {{ state_class }}--{{ state }}" aria-hidden="true">
+  {% if state == 'ok' %}
+  <i class="bi bi-check-lg"></i>
+  {% elif state == 'error' %}
+  <i class="bi bi-x-lg"></i>
+  {% elif state == 'unknown' %}
+  <i class="bi bi-question-lg"></i>
+  {% else %}
+  <i class="bi bi-exclamation-lg"></i>
+  {% endif %}
+</span>
+{%- endmacro %}
+
+{% macro step_dropdown(page_info, template_list, jump_to_validations, step_statuses, progress_value) -%}
+<ul class="dropdown-menu dropdown-menu-end text-center qs-step-menu" style="max-height: 50vh; overflow-y: auto;">
+  <li class="dropdown-item progress-container">
+    <div class="progress" style="height: 5px;">
+      <div class="progress-bar bg-success" style="width: {{ progress_value }}%;"></div>
+    </div>
+    <small class="text-muted">{{ progress_value }}% Completed</small>
+  </li>
+  <li><hr class="dropdown-divider"></li>
+  {% for file, name in template_list %}
+  {% set template_key = file.rsplit('.', 1)[0] %}
+  {% set is_validated = jump_to_validations and jump_to_validations.get(template_key) %}
+  {% set step_state = (step_statuses.get(template_key) if step_statuses else none) %}
+  {% if not step_state %}
+    {% set step_state = 'ok' if is_validated else 'warn' %}
+  {% endif %}
+  {% if name == 'Final Validation' %}
+  <li><hr class="dropdown-divider"></li>
+  {% endif %}
+  <li>
+    <a class="dropdown-item {% if template_key == page_info['template_name'] %}active{% endif %}"
+      data-step-key="{{ template_key }}"
+      href="javascript:void(0);" onclick="jumpTo('{{ template_key }}')">
+      {{ status_icon(step_state, 'qs-step-dropdown-state') }}
+      {{ name }}
+    </a>
+  </li>
+  {% if name == 'Start' %}
+  <li><hr class="dropdown-divider"></li>
+  {% endif %}
+  {% endfor %}
+</ul>
+{%- endmacro %}
+
+{% macro step_header(page_info) -%}
+<div class="page-title mt-0 qs-step-header">
+  <div class="page-title-row">
+    <h2 class="fw-bold text-white mb-0">{{ page_info['title'] }}</h2>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro step_link(template_key, name, page_info, step_statuses) -%}
+{% set step_state = (step_statuses.get(template_key) if step_statuses else 'warn') %}
+<button type="button" class="qs-step-link {% if template_key == page_info['template_name'] %}is-active{% endif %}"
+  data-step-key="{{ template_key }}"
+  onclick="jumpTo('{{ template_key }}')" title="{{ name }}">
+  <span class="qs-step-link-short">{{ name[0] }}</span>
+  <span class="qs-step-link-label">{{ name }}</span>
+  {{ status_icon(step_state, 'qs-step-link-state') }}
+</button>
+{%- endmacro %}
+
+{% macro step_group(title, group_key, template_list, allowed_keys, page_info, step_statuses, section_statuses, open_state=True) -%}
+{% set group_state = (section_statuses.get(group_key) if section_statuses else 'warn') %}
+<details class="qs-step-group qs-step-group--{{ group_state }}" data-step-group="{{ group_key }}" {% if open_state %}open{% endif %}>
+  <summary class="qs-step-group-summary">
+    <span>{{ title }}</span>
+    <span class="qs-step-group-summary-right">
+      {{ status_icon(group_state, 'qs-step-group-state') }}
+      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </span>
+  </summary>
+  <div class="qs-step-group-list" role="list">
+    {% for file, name in template_list %}
+    {% set template_key = file.rsplit('.', 1)[0] %}
+    {% if template_key in allowed_keys %}
+    {{ step_link(template_key, name, page_info, step_statuses) }}
+    {% endif %}
+    {% endfor %}
+  </div>
+</details>
+{%- endmacro %}
+
+{% macro sidebar_controls(page_info) -%}
+<div class="qs-sidebar-head">
+  <div class="qs-sidebar-brand-row">
+    <button type="button" class="btn nav-button qs-sidebar-toggle" id="qs-sidebar-toggle" aria-expanded="true" title="Toggle sidebar">
+      <i class="bi bi-list qs-sidebar-toggle-open-icon"></i>
+      <img src="{{ url_for('static', filename='favicon.png') }}" alt="Quickstart" class="qs-sidebar-toggle-collapsed-logo" />
+    </button>
+    <div class="qs-sidebar-brand">
+      <img src="{{ url_for('static', filename='images/logo.webp') }}" alt="Quickstart" class="qs-sidebar-logo" />
+    </div>
+  </div>
+
+  <div class="qs-sidebar-control-group">
+    <button type="button" class="btn nav-button qs-sidebar-support"
+      data-bs-toggle="modal" data-bs-target="#supportInfoModal" title="Support info for Quickstart">
+      <i class="bi bi-life-preserver"></i><span class="qs-sidebar-text">Support</span>
+    </button>
+    <button type="button" class="btn nav-button qs-sidebar-settings"
+      id="quickstart-settings-btn" data-bs-toggle="modal" data-bs-target="#quickstartSettingsModal"
+      data-current-port="{{ page_info.running_port }}" data-current-debug="{{ 'true' if page_info.qs_debug else 'false' }}"
+      data-current-theme="{{ page_info.qs_theme }}" data-current-optimize-defaults="{{ 'true' if page_info.qs_optimize_defaults else 'false' }}"
+      data-current-config-history="{{ page_info.qs_config_history }}" data-current-log-keep="{{ page_info.qs_kometa_log_keep }}"
+      data-current-test-libs-path="{{ page_info.qs_test_libs_path }}"
+      data-current-test-libs-tmp="{{ page_info.qs_test_libs_tmp }}"
+      data-current-session-lifetime="{{ page_info.qs_session_lifetime_days }}"
+      data-current-session-dir="{{ page_info.qs_flask_session_dir }}"
+      data-quickstart-root="{{ page_info.quickstart_root }}"
+      title="Quickstart settings">
+      <i class="bi bi-gear-fill"></i><span class="qs-sidebar-text">Settings</span>
+    </button>
+    <button type="button" class="btn nav-button config-badge-button qs-sidebar-config"
+      data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}" title="Switch config">
+      <i class="bi bi-folder2-open qs-sidebar-config-icon" aria-hidden="true"></i>
+      <span class="qs-sidebar-text qs-sidebar-config-label">CONFIG</span>
+      <i class="bi bi-chevron-down ms-1 qs-sidebar-config-chevron" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="btn nav-button qs-sidebar-validate" id="qs-sidebar-validate-all"
+      data-qs-validate-all title="Validate configured services">
+      <i class="bi bi-check2-circle"></i><span class="qs-sidebar-text">Validate</span>
+      <span class="spinner-border spinner-border-sm ms-1 d-none qs-validate-all-spinner" role="status" aria-hidden="true"></span>
+    </button>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro step_action_bar(page_info, hide_step_nav, template_list, jump_to_validations, step_statuses, sidebar_mode=False) -%}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark page-nav {% if sidebar_mode %}qs-sidebar-step-actions{% endif %}">
+  <div class="container-fluid {% if sidebar_mode %}qs-sidebar-step-actions-row{% else %}d-flex justify-content-between align-items-center{% endif %}">
+    {% if not hide_step_nav and page_info['template_name'] != '001-start' %}
+    <button type="submit" class="btn nav-button {% if not sidebar_mode %}d-none d-lg-inline-flex{% endif %}" onclick='loading("prev", {{ page_info["prev_page_name"]|tojson }})'
+      title="Previous Step: {{ page_info['prev_page_name'] }}" formaction="/step/{{ page_info['prev_page'] }}">
+      <i id="prev-spinner-icon" class="fa fa-arrow-left"></i> Previous
+    </button>
+    {% endif %}
+
+    {% if hide_step_nav %}
+    <a class="btn nav-button" href="/step/900-final" title="Back to Final Validation">
+      <i class="fa fa-arrow-left"></i> Back to Final
+    </a>
+    {% if page_info.get('show_jump_to') %}
+    <div class="dropdown mx-auto">
+      <button class="btn nav-button dropdown-toggle jump-to-button" id="stepDropdown" data-bs-toggle="dropdown"
+        aria-expanded="false">
+        <span class="jump-to-left">
+          <i class="fa fa-list"></i>
+        </span>
+        <span class="jump-to-label">Jump to: Pages</span>
+      </button>
+      {{ step_dropdown(page_info, template_list, jump_to_validations, step_statuses, page_info.get('progress', 0)) }}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="dropdown">
+      <button class="btn nav-button dropdown-toggle jump-to-button" id="stepDropdown" data-bs-toggle="dropdown"
+        aria-expanded="false">
+        <span class="jump-to-left">
+          <i class="fa fa-list"></i>
+        </span>
+        <span class="jump-to-label">Jump to:
+          {% if page_info['template_name'] == '910-sponsor' %}
+          {{ page_info['prev_page_name'] }}
+          {% else %}
+          {{ page_info['next_page_name'] }}
+          {% endif %}
+        </span>
+      </button>
+      {{ step_dropdown(page_info, template_list, jump_to_validations, step_statuses, page_info['progress']) }}
+    </div>
+    {% endif %}
+
+    {% if not hide_step_nav and page_info['template_name'] != '910-sponsor' %}
+    <button type="submit" class="btn nav-button {% if not sidebar_mode %}d-none d-lg-inline-flex{% endif %}" onclick='loading("next", {{ page_info["next_page_name"]|tojson }})'
+      title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
+      Next <i id="next-spinner-icon" class="fa fa-arrow-right"></i>
+    </button>
+    {% endif %}
+  </div>
+</nav>
+{%- endmacro %}
+
+{% macro sidebar_footer(version_info) -%}
+{% set branch = version_info.branch if version_info and version_info.branch else 'Unknown' %}
+{% set local_version = version_info.local_version if version_info and version_info.local_version else 'Unknown' %}
+{% set running_on = version_info.running_on if version_info and version_info.running_on else 'Unknown' %}
+<div class="qs-sidebar-footer">
+  <div class="qs-sidebar-footer-links">
+    <a href="javascript:void(0);" onclick="jumpTo('910-sponsor');" class="btn nav-button btn-sm">
+      <i class="fa fa-heart"></i><span class="qs-sidebar-text">Donate</span>
+    </a>
+    <a href="https://kometa.wiki/en/latest/discord/" class="btn nav-button btn-sm" target="_blank">
+      <i class="bi bi-discord"></i><span class="qs-sidebar-text">Discord</span>
+    </a>
+    <a href="https://kometa.wiki/" class="btn nav-button btn-sm" target="_blank">
+      <i class="bi bi-journal-bookmark-fill"></i><span class="qs-sidebar-text">Wiki</span>
+    </a>
+    <a href="https://github.com/Kometa-Team/Kometa" class="btn nav-button btn-sm" target="_blank">
+      <i class="bi bi-github"></i><span class="qs-sidebar-text">Kometa</span>
+    </a>
+    <a href="https://github.com/Kometa-Team/Quickstart" class="btn nav-button btn-sm" target="_blank">
+      <i class="bi bi-github"></i><span class="qs-sidebar-text">Quickstart</span>
+    </a>
+  </div>
+  <div class="qs-sidebar-version">
+    <div>
+      <span class="text-muted qs-sidebar-version-label qs-sidebar-version-label-long">Branch:</span>
+      <span class="text-muted qs-sidebar-version-label qs-sidebar-version-label-short">B:</span>
+      <strong>{{ branch }}</strong>
+    </div>
+    <div>
+      <span class="text-muted qs-sidebar-version-label qs-sidebar-version-label-long">Version:</span>
+      <span class="text-muted qs-sidebar-version-label qs-sidebar-version-label-short">V:</span>
+      <strong>{{ local_version }}</strong>
+    </div>
+    <div>
+      <span class="text-muted qs-sidebar-version-label qs-sidebar-version-label-long">Platform:</span>
+      <span class="text-muted qs-sidebar-version-label qs-sidebar-version-label-short">P:</span>
+      <strong>{{ running_on }}</strong>
+    </div>
+  </div>
+</div>
+{%- endmacro %}
+
+{% macro mobile_action_bar(page_info, hide_step_nav) -%}
+<div class="qs-mobile-action-bar" id="qs-mobile-action-bar">
+  {% if hide_step_nav %}
+  <a class="btn nav-button" href="/step/900-final" title="Back to Final Validation">
+    <i class="fa fa-arrow-left"></i> Back
+  </a>
+  {% else %}
+    {% if page_info['template_name'] != '001-start' %}
+    <button type="submit" class="btn nav-button" onclick='loading("prev", {{ page_info["prev_page_name"]|tojson }})'
+      title="Previous Step: {{ page_info['prev_page_name'] }}" formaction="/step/{{ page_info['prev_page'] }}">
+      <i class="fa fa-arrow-left"></i> Back
+    </button>
+    {% endif %}
+    {% if page_info['template_name'] != '910-sponsor' %}
+    <button type="submit" class="btn nav-button" onclick='loading("next", {{ page_info["next_page_name"]|tojson }})'
+      title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
+      Next <i class="fa fa-arrow-right"></i>
+    </button>
+    {% endif %}
+  {% endif %}
+</div>
+{%- endmacro %}

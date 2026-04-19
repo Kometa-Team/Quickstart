@@ -123,6 +123,46 @@ VALIDATION_KEY_SUGGESTIONS = {
         "playlist_sync_to_user": "playlist_sync_to_users",
     }
 }
+QS_REQUIRED_STEP_KEYS = ["001-start", "010-plex", "020-tmdb", "025-libraries", "150-settings"]
+QS_REVIEW_STEP_KEYS = ["900-final", "905-analytics", "910-sponsor"]
+QS_VALIDATION_STEP_KEYS = {
+    "010-plex",
+    "020-tmdb",
+    "025-libraries",
+    "027-playlist_files",
+    "030-tautulli",
+    "040-github",
+    "050-omdb",
+    "060-mdblist",
+    "070-notifiarr",
+    "080-gotify",
+    "085-ntfy",
+    "090-webhooks",
+    "100-anidb",
+    "110-radarr",
+    "120-sonarr",
+    "130-trakt",
+    "140-mal",
+    "150-settings",
+}
+QS_STATUS_ORDER = {"unknown": 0, "ok": 1, "warn": 2, "error": 3}
+QS_WARN_REASONS = {
+    "missing_credentials",
+    "missing_tokens",
+    "no_libraries",
+    "missing_settings",
+    "disabled",
+    "no_webhooks",
+}
+QS_ERROR_REASONS = {
+    "missing_plex_validation",
+    "token_invalid",
+    "account_locked",
+    "validation_error",
+    "invalid_paths",
+    "invalid_fields",
+    "missing_placeholder_imdb",
+}
 
 
 def utc_now_iso():
@@ -179,6 +219,230 @@ def build_validation_summary(errors):
         )
 
     return summary
+
+
+def _normalize_status(value):
+    status = str(value or "").strip().lower()
+    if status in ("unknown", "ok", "warn", "error"):
+        return status
+    return "warn"
+
+
+def _safe_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _worst_status(statuses):
+    worst = "ok"
+    for status in statuses:
+        normalized = _normalize_status(status)
+        if QS_STATUS_ORDER.get(normalized, 1) > QS_STATUS_ORDER.get(worst, 1):
+            worst = normalized
+    return worst
+
+
+def _derive_live_final_validation_status(step_statuses, template_keys):
+    validation_states = []
+    for key in template_keys:
+        if key not in QS_VALIDATION_STEP_KEYS:
+            continue
+        if key not in step_statuses:
+            continue
+        validation_states.append(_normalize_status(step_statuses.get(key)))
+
+    if not validation_states:
+        return "warn"
+    if any(state == "error" for state in validation_states):
+        return "error"
+    if any(state == "warn" for state in validation_states):
+        return "warn"
+    if any(state == "ok" for state in validation_states):
+        return "ok"
+    return "warn"
+
+
+def _build_live_validation_rollup(step_statuses, template_keys):
+    counts = {"validated": 0, "failed": 0, "skipped": 0, "unknown": 0}
+    for key in template_keys:
+        if key not in QS_VALIDATION_STEP_KEYS:
+            continue
+        state = _normalize_status(step_statuses.get(key))
+        if state == "ok":
+            counts["validated"] += 1
+        elif state == "error":
+            counts["failed"] += 1
+        elif state == "warn":
+            counts["skipped"] += 1
+        else:
+            counts["unknown"] += 1
+
+    if counts["failed"] > 0:
+        state = "error"
+    elif counts["skipped"] > 0:
+        state = "warn"
+    elif counts["validated"] > 0:
+        state = "ok"
+    else:
+        state = "unknown"
+
+    summary_text = (
+        f"Current. Validated: {counts['validated']} \u2022 "
+        f"Failed: {counts['failed']} \u2022 "
+        f"Pending: {counts['skipped']}"
+    )
+    if counts["unknown"] > 0:
+        summary_text += f" \u2022 Not checked: {counts['unknown']}"
+    summary_text += "."
+
+    return {"counts": counts, "state": state, "summary_text": summary_text}
+
+
+def _latest_iso_timestamp(values):
+    latest_dt = None
+    for value in values:
+        text = str(value or "").strip()
+        if not text:
+            continue
+        try:
+            parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if latest_dt is None or parsed > latest_dt:
+            latest_dt = parsed
+    return latest_dt.isoformat().replace("+00:00", "Z") if latest_dt else None
+
+
+def _derive_step_status(template_key, group, section_rows, config_exists):
+    if template_key == "001-start":
+        return "ok" if config_exists else "error"
+
+    if template_key == "900-final":
+        return "warn"
+
+    if template_key in {"905-analytics", "910-sponsor"}:
+        return "ok"
+
+    section_name = template_key.split("-", 1)[1] if "-" in template_key else template_key
+    section_entry = section_rows.get(section_name) if isinstance(section_rows, dict) else None
+    section_entry = section_entry if isinstance(section_entry, dict) else {}
+
+    validated = helpers.booler(section_entry.get("validated", False))
+    user_entered = helpers.booler(section_entry.get("user_entered", False))
+    payload = section_entry.get("data")
+    payload = payload if isinstance(payload, dict) else {}
+    validation_status = str(payload.get("validation_status") or "").strip().lower()
+    validation_reason = str(payload.get("validation_reason") or "").strip().lower()
+    was_previously_validated = bool(payload.get("validated_at"))
+
+    if template_key in QS_VALIDATION_STEP_KEYS:
+        if validated or validation_status == "validated":
+            return "ok"
+
+        if validation_status == "failed":
+            return "error"
+
+        if validation_status == "skipped":
+            if validation_reason in QS_ERROR_REASONS:
+                return "error"
+            if validation_reason in QS_WARN_REASONS:
+                if group == "optional":
+                    return "warn" if user_entered else "unknown"
+                return "warn"
+            if group == "optional":
+                return "warn" if user_entered else "unknown"
+            return "warn" if group == "required" else ("warn" if user_entered else "ok")
+
+        if group == "required":
+            if not user_entered:
+                return "error"
+            if was_previously_validated:
+                return "error"
+            return "warn"
+
+        if not user_entered and not was_previously_validated and not validation_status:
+            return "unknown"
+        if was_previously_validated:
+            return "error"
+        return "warn" if user_entered else "ok"
+
+    if group == "required":
+        return "warn" if user_entered else "error"
+    if group == "optional":
+        return "warn" if user_entered else "unknown"
+    return "ok"
+
+
+def _build_workspace_status_context(config_name, template_list, available_configs=None):
+    template_keys = []
+    for file_entry, _ in template_list or []:
+        template_key = file_entry.rsplit(".", 1)[0]
+        template_keys.append(template_key)
+
+    required_keys = [key for key in QS_REQUIRED_STEP_KEYS if key in template_keys]
+    review_keys = [key for key in QS_REVIEW_STEP_KEYS if key in template_keys]
+    optional_keys = [key for key in template_keys if key not in required_keys and key not in review_keys]
+
+    section_rows = {}
+    if config_name:
+        try:
+            for row in database.retrieve_config_sections(config_name):
+                section_name = row.get("section")
+                if section_name:
+                    section_rows[section_name] = row
+        except Exception:
+            section_rows = {}
+
+    available_set = set(available_configs or [])
+    config_exists = bool(config_name) and (config_name in available_set or bool(section_rows))
+
+    step_statuses = {}
+    for template_key in template_keys:
+        if template_key == "900-final":
+            continue
+        if template_key in required_keys:
+            group = "required"
+        elif template_key in optional_keys:
+            group = "optional"
+        else:
+            group = "review"
+        step_statuses[template_key] = _derive_step_status(template_key, group, section_rows, config_exists)
+    if "900-final" in template_keys:
+        step_statuses["900-final"] = _derive_live_final_validation_status(step_statuses, template_keys)
+
+    required_rollup = _worst_status(step_statuses.get(key, "warn") for key in required_keys) if required_keys else "ok"
+    review_rollup = _worst_status(step_statuses.get(key, "ok") for key in review_keys) if review_keys else "ok"
+
+    optional_status_values = [step_statuses.get(key, "unknown") for key in optional_keys]
+    if not optional_status_values:
+        optional_rollup = "ok"
+    elif any(status == "error" for status in optional_status_values):
+        optional_rollup = "error"
+    elif any(status == "warn" for status in optional_status_values):
+        optional_rollup = "warn"
+    elif any(status == "unknown" for status in optional_status_values):
+        optional_rollup = "unknown"
+    else:
+        optional_rollup = "ok"
+
+    section_statuses = {
+        "required": required_rollup,
+        "optional": optional_rollup,
+        "review": review_rollup,
+    }
+
+    jump_to_validations = {}
+    for key in QS_VALIDATION_STEP_KEYS:
+        if key in step_statuses:
+            jump_to_validations[key] = step_statuses.get(key) == "ok"
+
+    return {
+        "step_statuses": step_statuses,
+        "section_statuses": section_statuses,
+        "jump_to_validations": jump_to_validations,
+    }
 
 
 def _calculate_process_cpu_percent(proc):
@@ -3083,6 +3347,16 @@ def step(name):
     header_style = "single_line"  # Default to 'single_line' font
     save_error = None
     persistence.ensure_session_config_name()
+    previous_config = session.get("config_name")
+
+    posted_config = request.form.get("configSelector")
+    posted_new_config_name = request.form.get("newConfigName")
+    if posted_config == "add_config" and posted_new_config_name:
+        posted_config = posted_new_config_name.strip()
+
+    # Ensure saves happen against the currently selected config.
+    if request.method == "POST" and posted_config:
+        session["config_name"] = posted_config
 
     if request.method == "POST":
         path_errors = path_validation.validate_payload(request.form)
@@ -3095,7 +3369,6 @@ def step(name):
             header_style = request.form.get("header_style", "single_line")
 
     # --- Detect config change ---
-    previous_config = session.get("config_name")
     selected_config = request.form.get("configSelector") or previous_config
     new_config_name = request.form.get("newConfigName")
 
@@ -3441,43 +3714,27 @@ def step(name):
         ("130-trakt", "trakt"),
         ("140-mal", "mal"),
     ]
-    validation_pages = {
-        "010-plex",
-        "020-tmdb",
-        "025-libraries",
-        "027-playlist_files",
-        "030-tautulli",
-        "040-github",
-        "050-omdb",
-        "060-mdblist",
-        "070-notifiarr",
-        "080-gotify",
-        "085-ntfy",
-        "090-webhooks",
-        "100-anidb",
-        "110-radarr",
-        "120-sonarr",
-        "130-trakt",
-        "140-mal",
-        "150-settings",
-    }
     service_validations = {}
     for section, key in service_validation_sources:
         settings = persistence.retrieve_settings(section)
         service_validations[key] = helpers.booler(settings.get("validated", False))
-    validation_sections = {key: key.split("-", 1)[1] for key in validation_pages}
-    validated_sections = database.retrieve_validated_map(config_name, list(validation_sections.values()))
-    jump_to_validations = {key: validated_sections.get(section, False) for key, section in validation_sections.items()}
+    workspace_status = _build_workspace_status_context(config_name, file_list, available_configs=available_configs)
+    jump_to_validations = workspace_status.get("jump_to_validations", {})
+    step_statuses = workspace_status.get("step_statuses", {})
+    section_statuses = workspace_status.get("section_statuses", {})
 
     if name == "900-final":
         validation_meta = []
+        template_keys_for_rollup = []
         for file, display_name in file_list:
             template_key = file.rsplit(".", 1)[0]
+            template_keys_for_rollup.append(template_key)
             settings = persistence.retrieve_settings(template_key)
-            has_validation = template_key in validation_pages
+            has_validation = template_key in QS_VALIDATION_STEP_KEYS
             validation_status = None
             validation_reason = None
             validation_details = None
+            validation_updated_at = None
             if has_validation:
                 section_name = template_key.split("-", 1)[1]
                 stored_section = database.retrieve_section_data(config_name, section_name)
@@ -3486,11 +3743,14 @@ def step(name):
                     validation_status = stored_payload.get("validation_status")
                     validation_reason = stored_payload.get("validation_reason")
                     validation_details = stored_payload.get("validation_details")
+                    validation_updated_at = stored_payload.get("validation_updated_at")
             if not validation_status and has_validation:
                 if helpers.booler(settings.get("validated", False)):
                     validation_status = "validated"
                 elif settings.get("validated_at"):
                     validation_status = "failed"
+            if not validation_updated_at and has_validation:
+                validation_updated_at = settings.get("validated_at")
 
             validation_result = ""
             if validation_status:
@@ -3517,22 +3777,28 @@ def step(name):
                     "has_validation": has_validation,
                     "validated": helpers.booler(settings.get("validated", False)) if has_validation else None,
                     "validated_at": settings.get("validated_at", "") if has_validation else "",
+                    "validation_updated_at": validation_updated_at if has_validation else "",
                     "validation_result": validation_result,
                 }
             )
         validated, validation_error, config_data, yaml_content, validation_errors = output.build_config(header_style, config_name=config_name)
         validation_summary = build_validation_summary(validation_errors)
-        validation_rollup = None
-        validation_rollup_at = None
+        live_rollup = _build_live_validation_rollup(step_statuses, template_keys_for_rollup)
+        validation_rollup = live_rollup.get("summary_text")
+        validation_rollup_summary = live_rollup.get("counts", {})
+        validation_rollup_state = live_rollup.get("state", "unknown")
+        validation_rollup_at = _latest_iso_timestamp([entry.get("validation_updated_at") for entry in validation_meta])
+        validation_bulk_rollup = None
+        validation_bulk_rollup_at = None
         try:
             stored_validation = database.retrieve_section_data(config_name, "validation_summary")
             stored_payload = stored_validation[2] if stored_validation else None
             if isinstance(stored_payload, dict):
-                validation_rollup = stored_payload.get("summary_text")
-                validation_rollup_at = stored_payload.get("updated_at")
+                validation_bulk_rollup = stored_payload.get("summary_text")
+                validation_bulk_rollup_at = stored_payload.get("updated_at")
         except Exception:
-            validation_rollup = None
-            validation_rollup_at = None
+            validation_bulk_rollup = None
+            validation_bulk_rollup_at = None
         used_fonts = helpers.collect_font_references(config_data)
         saved_filename = helpers.save_to_named_config(yaml_content, config_name, used_fonts)
         page_info["saved_filename"] = saved_filename
@@ -3571,6 +3837,10 @@ def step(name):
             validation_summary=validation_summary,
             validation_rollup=validation_rollup,
             validation_rollup_at=validation_rollup_at,
+            validation_rollup_summary=validation_rollup_summary,
+            validation_rollup_state=validation_rollup_state,
+            validation_bulk_rollup=validation_bulk_rollup,
+            validation_bulk_rollup_at=validation_bulk_rollup_at,
             template_list=file_list,
             available_configs=available_configs,
             movie_libraries=movie_libraries,
@@ -3581,6 +3851,8 @@ def step(name):
             service_validations=service_validations,
             validation_meta=validation_meta,
             jump_to_validations=jump_to_validations,
+            step_statuses=step_statuses,
+            section_statuses=section_statuses,
             incomplete_resume_hint=incomplete_resume_hint,
         )
 
@@ -3615,6 +3887,8 @@ def step(name):
         overlay_fonts=list_overlay_fonts(),
         service_validations=service_validations,
         jump_to_validations=jump_to_validations,
+        step_statuses=step_statuses,
+        section_statuses=section_statuses,
         image_data=_build_preview_image_data(),
         config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
         configured_ids=configured_ids,
@@ -6815,11 +7089,15 @@ def logscan_trends_page():
         progress_index = max(total_steps - 1, 0)
     page_info["progress"] = round(((progress_index + 1) / total_steps) * 100) if total_steps else 0
     available_configs = database.get_unique_config_names() or []
+    workspace_status = _build_workspace_status_context(page_info.get("config_name"), template_list, available_configs=available_configs)
     return render_template(
         "905-analytics.html",
         page_info=page_info,
         template_list=template_list,
         available_configs=available_configs,
+        jump_to_validations=workspace_status.get("jump_to_validations", {}),
+        step_statuses=workspace_status.get("step_statuses", {}),
+        section_statuses=workspace_status.get("section_statuses", {}),
     )
 
 

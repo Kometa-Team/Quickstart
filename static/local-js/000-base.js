@@ -65,8 +65,219 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 })
 
+function getWorkspaceLoadingHost () {
+  return document.body || document.querySelector('.qs-workspace-grid') || document.querySelector('.qs-workspace-shell')
+}
+
+const QS_NAV_LOADING_QUOTES = [
+  'Downloading more RAM…',
+  'Downloading more RAM.',
+  'Now in technicolor.',
+  'Previously on Quickstart...',
+  'Previously on Kometa...',
+  'Previously on Plex Meta Manager...',
+  'Bleep Bloop.',
+  'Locating the required gigapixels to render...',
+  'Spinning up the hamster wheel...',
+  'At least you\'re not on hold.',
+  'Hum something loud while others stare.',
+  'Scanning the high seas... please hold while we avoid suspicious parrots.',
+  'Loading... or maybe just staring dramatically into the middle distance.',
+  'Optimizing your patience... progress bar sold separately.',
+  'Negotiating with your hard drive. It\'s asking for a coffee break.',
+  'Buffering... because time travel is still in beta.',
+  'We\'re not stuck. We\'re just... thinking about our life choices.',
+  'This would be faster in Python… probably.',
+  'Polishing pixels for maximum shininess…',
+  'Untangling cable spaghetti…',
+  'Reticulating splines…',
+  'Calibrating the matrix…',
+  'Negotiating with APIs…',
+  'Aligning bits and vibes…',
+  'Warming up the hamsters…',
+  'Summoning config gremlins…',
+  'Congratulations! You are the 1000th visitor.',
+  'HELP! I\'m being held hostage and forced to write these stupid lines!',
+  'RE-calibrating the internet...',
+  'I\'ll be here all week',
+  'Don\'t forget to tip your waitress',
+  'Apply directly to the forehead',
+  'Loading Battlestation',
+  'It\'s not you. It\'s me.',
+  'Do not run! We are your friends!',
+  'What do you call 8 Hobbits? A Hobbyte.',
+  'Putting the icing on the cake. The cake is not a lie...',
+  'There is no spoon. Because we are not done loading it',
+  'Chuck Norris never git push. The repo pulls before.',
+  'Java developers never RIP. They just get Garbage Collected.',
+  'Proving P=NP...',
+  'Please wait... Consulting the manual...',
+  'It is dark. You\'re likely to be eaten by a grue.',
+  'It\'s 10:00pm. Do you know where your children are?',
+  'Please wait, while we purge the Decepticons for you. Yes, You can thank us later!',
+  'Chuck Norris doesn\'t wear a watch. HE decides what time it is.',
+  'Creating an anti-time reaction, please wait...',
+  'Rupturing the subspace barrier, please wait...',
+  'Converging tachyon pulses, please wait...',
+  'Bypassing control of the matter-antimatter integrator, please wait...',
+  'Adjusting the dilithium crystal converter assembly, please wait...',
+  'Reversing the shield polarity, please wait...',
+  'Disrupting warp fields with an inverse graviton burst, please wait...',
+  'Compiling infinite wisdom… almost done.',
+  'Reversing the bits… because why not?',
+  'Fetching more coffee for the CPU.',
+  'Allocating some humor memory… nearly full.',
+  'Defragging your patience… please hold.',
+  'Overclocking the hamsters… success imminent.',
+  'Optimizing quantum entanglement for page load…',
+  'Executing sudo patience command… don\'t panic.',
+  'Patching reality… ETA unknown.',
+  'Waiting for the flux capacitor to stabilize…',
+  'Summoning Gandalf for assistance…',
+  'We\'re engaging cloaking device, please stand by.',
+  'Trying to remember the words to the Cantina song…',
+  'Calculating the odds like C-3PO…',
+  'Asking Yoda: \'Patience, you must have…\'',
+  'Decrypting the Matrix… red pill or blue pill…?',
+  'Teleporting the data from a parallel dimension…',
+  'Counting invisible unicorns… half done.',
+  'Waiting for the penguins to align…',
+  'Negotiating with the Wi-Fi spirits…',
+  'Polishing pixels… carefully…',
+  'Training squirrels to deliver your data…',
+  'Washing imaginary dishes… almost there.',
+  'Inflating your patience balloon… watch out for pop!',
+  'Calibrating toaster for maximum browning… do not touch.',
+  'This message will self-destruct in 3… 2… 1…',
+  'Congratulations, you discovered a loading joke!',
+  'If you are reading this, you are officially patient.',
+  'Almost finished, but now I’m thinking about snacks.',
+  'Loading… your expectations may vary.',
+  'Please wait… our developers are dancing while waiting too.',
+  'You’re not stuck, the page is just contemplating existence.',
+  'This text is taking longer to write than the page.'
+]
+
+let qsNavLoadingQuoteTimer = null
+let qsNavLoadingQuotePool = []
+let qsNavLoadingLastQuote = ''
+
+function shuffleNavLoadingQuotes (items) {
+  const shuffled = items.slice()
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const temp = shuffled[i]
+    shuffled[i] = shuffled[j]
+    shuffled[j] = temp
+  }
+  return shuffled
+}
+
+function refillNavLoadingQuotePool () {
+  qsNavLoadingQuotePool = shuffleNavLoadingQuotes(QS_NAV_LOADING_QUOTES)
+  if (qsNavLoadingQuotePool.length > 1 && qsNavLoadingQuotePool[0] === qsNavLoadingLastQuote) {
+    const swapIndex = 1 + Math.floor(Math.random() * (qsNavLoadingQuotePool.length - 1))
+    const temp = qsNavLoadingQuotePool[0]
+    qsNavLoadingQuotePool[0] = qsNavLoadingQuotePool[swapIndex]
+    qsNavLoadingQuotePool[swapIndex] = temp
+  }
+}
+
+function nextNavLoadingQuote () {
+  if (!QS_NAV_LOADING_QUOTES.length) return 'Loading…'
+  if (QS_NAV_LOADING_QUOTES.length === 1) return QS_NAV_LOADING_QUOTES[0]
+  if (!qsNavLoadingQuotePool.length) {
+    refillNavLoadingQuotePool()
+  }
+  const nextQuote = qsNavLoadingQuotePool.shift() || QS_NAV_LOADING_QUOTES[0]
+  qsNavLoadingLastQuote = nextQuote
+  return nextQuote
+}
+
+function setNavLoadingQuote (overlay) {
+  if (!overlay) return
+  const quoteNode = overlay.querySelector('.qs-nav-loading-quote')
+  if (!quoteNode) return
+  quoteNode.textContent = nextNavLoadingQuote()
+}
+
+function startNavLoadingQuoteLoop (overlay) {
+  if (qsNavLoadingQuoteTimer) {
+    clearInterval(qsNavLoadingQuoteTimer)
+    qsNavLoadingQuoteTimer = null
+  }
+  setNavLoadingQuote(overlay)
+  qsNavLoadingQuoteTimer = setInterval(() => {
+    setNavLoadingQuote(overlay)
+  }, 2800)
+}
+
+function stopNavLoadingQuoteLoop () {
+  if (!qsNavLoadingQuoteTimer) return
+  clearInterval(qsNavLoadingQuoteTimer)
+  qsNavLoadingQuoteTimer = null
+}
+
+function ensureNavigationLoadingOverlay () {
+  const host = getWorkspaceLoadingHost()
+  if (!host) return null
+
+  let overlay = host.querySelector('[data-qs-nav-overlay]')
+  if (overlay) return overlay
+
+  overlay = document.createElement('div')
+  overlay.className = 'qs-nav-loading-overlay'
+  overlay.setAttribute('data-qs-nav-overlay', 'true')
+  overlay.setAttribute('aria-hidden', 'true')
+  overlay.innerHTML = `
+    <div class="qs-nav-loading-card" role="status" aria-live="polite">
+      <div class="spinner-border qs-nav-loading-spinner" aria-hidden="true"></div>
+      <div class="qs-nav-loading-text">
+        <div class="qs-nav-loading-label">Opening step…</div>
+        <div class="qs-nav-loading-quote">Downloading more RAM…</div>
+      </div>
+    </div>
+  `
+  host.appendChild(overlay)
+  return overlay
+}
+
+function showNavigationLoadingOverlay (action, targetLabel) {
+  const overlay = ensureNavigationLoadingOverlay()
+  if (!overlay) return
+
+  const label = overlay.querySelector('.qs-nav-loading-label')
+  const actionText = {
+    prev: 'Opening previous step…',
+    next: 'Opening next step…',
+    jump: 'Opening selected step…',
+    'library-initial': 'Loading first library…',
+    'library-switch': 'Switching library…'
+  }
+  const normalizedTarget = String(targetLabel || '').trim()
+  if (label) {
+    if (normalizedTarget) {
+      label.textContent = `Opening ${normalizedTarget}…`
+    } else {
+      label.textContent = actionText[action] || 'Loading…'
+    }
+  }
+
+  startNavLoadingQuoteLoop(overlay)
+  overlay.classList.add('is-active')
+  overlay.setAttribute('aria-hidden', 'false')
+}
+
+function hideNavigationLoadingOverlay () {
+  stopNavLoadingQuoteLoop()
+  document.querySelectorAll('[data-qs-nav-overlay]').forEach((overlay) => {
+    overlay.classList.remove('is-active')
+    overlay.setAttribute('aria-hidden', 'true')
+  })
+}
+
 // Loading spinner functionality
-function loading (action) {
+function loading (action, targetLabel) {
   console.log('action:', action)
 
   if (action === 'prev' || action === 'next') {
@@ -99,12 +310,14 @@ function loading (action) {
     if (jumpLeft) {
       jumpLeft.classList.add('is-loading')
     }
+    showNavigationLoadingOverlay(action, targetLabel)
     return
   }
 
   spinnerIcon.classList.remove('fa-arrow-left', 'fa-arrow-right', 'fa-list')
   // spinnerIcon.classList.add('fa-spinner', 'fa-pulse', 'fa-fw');
   spinnerIcon.classList.add('spinner-border', 'spinner-border-sm')
+  showNavigationLoadingOverlay(action, targetLabel)
 }
 
 function resetNavigationSpinners () {
@@ -126,6 +339,7 @@ function resetNavigationSpinners () {
   if (jumpLeft) {
     jumpLeft.classList.remove('is-loading')
   }
+  hideNavigationLoadingOverlay()
 }
 
 document.addEventListener('invalid', function () {
@@ -152,7 +366,26 @@ function hideSpinner (webhookType) {
 }
 
 // Function to handle jump to action
-function jumpTo (targetPage) {
+function qsGetStepLabel (targetPage) {
+  if (!targetPage) return ''
+  const key = String(targetPage).trim()
+  if (!key) return ''
+
+  const candidates = document.querySelectorAll('[data-step-key]')
+  for (const candidate of candidates) {
+    if (!candidate || !candidate.dataset || candidate.dataset.stepKey !== key) continue
+    const explicit = candidate.getAttribute('title')
+    if (explicit) return explicit.trim()
+    const labelEl = candidate.querySelector('.qs-step-link-label')
+    if (labelEl && labelEl.textContent) return labelEl.textContent.trim()
+    if (candidate.textContent) {
+      return candidate.textContent.replace(/\s+/g, ' ').trim()
+    }
+  }
+  return ''
+}
+
+function jumpTo (targetPage, targetLabel) {
   console.log('JumpTo initiated for target page:', targetPage)
 
   restoreBlankCacheExpirations()
@@ -184,7 +417,8 @@ function jumpTo (targetPage) {
   // Temporarily change the action and submit the form
   const originalAction = form.action
   form.action = '/step/' + targetPage
-  loading('jump') // optional spinner
+  const resolvedTargetLabel = String(targetLabel || '').trim() || qsGetStepLabel(targetPage)
+  loading('jump', resolvedTargetLabel) // optional spinner
   form.submit()
   form.action = originalAction // optional restore
 }
@@ -402,35 +636,301 @@ function getValidatedInput () {
   return form.querySelector('input[id$="_validated"]')
 }
 
-function updateValidationCallouts (inputId) {
-  const callouts = document.querySelectorAll('.qs-validation-accordion')
-  if (!callouts.length) return
+const QS_STATUS_STATES = ['unknown', 'ok', 'warn', 'error']
+const QS_STATUS_WEIGHT = { unknown: 0, ok: 1, warn: 2, error: 3 }
 
-  callouts.forEach((wrapper) => {
-    const targetId = inputId || wrapper.dataset.qsValidatedInput
-    const validatedInput = targetId ? document.getElementById(targetId) : getValidatedInput()
-    if (!validatedInput) return
+function qsNormalizeStatusState (status) {
+  const normalized = String(status || '').trim().toLowerCase()
+  return QS_STATUS_STATES.includes(normalized) ? normalized : 'warn'
+}
 
-    const isValidated = String(validatedInput.value || '').toLowerCase() === 'true'
-    const collapse = wrapper.querySelector('.accordion-collapse')
-    const button = wrapper.querySelector('.accordion-button')
-    if (!collapse || !button) return
+function qsGetIndicatorState (element, baseClass) {
+  if (!element) return 'warn'
+  for (const state of QS_STATUS_STATES) {
+    if (element.classList.contains(`${baseClass}--${state}`)) {
+      return state
+    }
+  }
+  return 'warn'
+}
 
-    const shouldShow = !isValidated
-    button.classList.toggle('collapsed', !shouldShow)
-    button.setAttribute('aria-expanded', shouldShow ? 'true' : 'false')
+function qsGetStatusIconClass (state) {
+  switch (state) {
+    case 'ok':
+      return 'bi-check-lg'
+    case 'error':
+      return 'bi-x-lg'
+    case 'unknown':
+      return 'bi-question-lg'
+    default:
+      return 'bi-exclamation-lg'
+  }
+}
 
-    if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
-      const instance = bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false })
-      if (shouldShow) {
-        instance.show()
-      } else {
-        instance.hide()
-      }
-    } else {
-      collapse.classList.toggle('show', shouldShow)
+function qsApplyIndicatorState (element, baseClass, nextState) {
+  if (!element) return
+  const normalized = qsNormalizeStatusState(nextState)
+  QS_STATUS_STATES.forEach((state) => {
+    element.classList.remove(`${baseClass}--${state}`)
+  })
+  element.classList.add(`${baseClass}--${normalized}`)
+
+  const icon = element.querySelector('i')
+  if (icon) {
+    icon.className = `bi ${qsGetStatusIconClass(normalized)}`
+  }
+}
+
+function qsGetCurrentStepKey () {
+  const workspace = document.querySelector('.qs-workspace-section[data-current-step]')
+  if (workspace && workspace.dataset.currentStep) {
+    return workspace.dataset.currentStep
+  }
+
+  const activeLink = document.querySelector('.qs-step-link.is-active[data-step-key]')
+  return activeLink ? activeLink.dataset.stepKey : null
+}
+
+function qsStateFromValidatedInput (validatedInput) {
+  if (!validatedInput) return null
+  const value = String(validatedInput.value || '').trim().toLowerCase()
+  if (value === 'true') return 'ok'
+  if (value === 'false') return 'error'
+  return 'warn'
+}
+
+function qsUpdateStepIndicators (stepKey, status) {
+  if (!stepKey) return
+  const normalized = qsNormalizeStatusState(status)
+
+  document.querySelectorAll('[data-step-key]').forEach((stepTarget) => {
+    if (stepTarget.dataset.stepKey !== stepKey) return
+    const linkIndicator = stepTarget.querySelector('.qs-step-link-state')
+    const dropdownIndicator = stepTarget.querySelector('.qs-step-dropdown-state')
+    qsApplyIndicatorState(linkIndicator, 'qs-step-link-state', normalized)
+    qsApplyIndicatorState(dropdownIndicator, 'qs-step-dropdown-state', normalized)
+  })
+}
+
+function qsResolveGroupState (groupKey, childStates) {
+  if (!childStates.length) {
+    return groupKey === 'optional' ? 'unknown' : 'warn'
+  }
+
+  if (groupKey === 'optional') {
+    if (childStates.includes('error')) return 'error'
+    if (childStates.includes('warn')) return 'warn'
+    if (childStates.includes('unknown')) return 'unknown'
+    return 'ok'
+  }
+
+  let worst = 'ok'
+  childStates.forEach((state) => {
+    const normalized = qsNormalizeStatusState(state)
+    if ((QS_STATUS_WEIGHT[normalized] || 0) > (QS_STATUS_WEIGHT[worst] || 0)) {
+      worst = normalized
     }
   })
+  return worst
+}
+
+function qsRefreshSectionRollups () {
+  document.querySelectorAll('.qs-step-group[data-step-group]').forEach((groupElement) => {
+    const groupKey = String(groupElement.dataset.stepGroup || '').trim().toLowerCase()
+    const childStates = Array.from(groupElement.querySelectorAll('.qs-step-group-list .qs-step-link-state'))
+      .map((indicator) => qsGetIndicatorState(indicator, 'qs-step-link-state'))
+    const groupState = qsResolveGroupState(groupKey, childStates)
+
+    QS_STATUS_STATES.forEach((state) => {
+      groupElement.classList.remove(`qs-step-group--${state}`)
+    })
+    groupElement.classList.add(`qs-step-group--${groupState}`)
+
+    const groupIndicator = groupElement.querySelector('.qs-step-group-state')
+    qsApplyIndicatorState(groupIndicator, 'qs-step-group-state', groupState)
+  })
+}
+
+function qsRefreshSidebarValidationState (inputId) {
+  const validatedInput = inputId ? document.getElementById(inputId) : getValidatedInput()
+  if (!validatedInput) return
+
+  const currentStepKey = qsGetCurrentStepKey()
+  if (!currentStepKey) return
+
+  const stepState = qsStateFromValidatedInput(validatedInput)
+  if (!stepState) return
+
+  qsUpdateStepIndicators(currentStepKey, stepState)
+  qsRefreshSectionRollups()
+}
+
+function qsSetSidebarStepStatus (stepKey, status) {
+  if (!stepKey) return
+  qsUpdateStepIndicators(stepKey, status)
+  qsRefreshSectionRollups()
+}
+
+let qsBulkValidationRequest = null
+
+function qsGetBulkSummaryCounts (summary) {
+  const source = (summary && typeof summary === 'object') ? summary : {}
+  return {
+    validated: Number(source.validated || 0),
+    failed: Number(source.failed || 0),
+    skipped: Number(source.skipped || 0)
+  }
+}
+
+function qsBulkSummaryState (summary) {
+  const counts = qsGetBulkSummaryCounts(summary)
+  if (counts.failed > 0) return 'error'
+  if (counts.skipped > 0) return 'warn'
+  if (counts.validated > 0) return 'ok'
+  return 'unknown'
+}
+
+function qsBulkSummaryLabel (summary) {
+  const counts = qsGetBulkSummaryCounts(summary)
+  const state = qsBulkSummaryState(summary)
+  if (state === 'error') return `${counts.failed} failed`
+  if (state === 'warn') return `${counts.skipped} skipped`
+  if (state === 'ok') return 'All good'
+  return 'Not run'
+}
+
+function qsApplyValidationRollupBadge (summary) {
+  const counts = qsGetBulkSummaryCounts(summary)
+  const state = qsBulkSummaryState(summary)
+  document.querySelectorAll('[data-qs-validation-rollup-badge]').forEach((badge) => {
+    if (!badge) return
+    badge.textContent = qsBulkSummaryLabel(summary)
+    badge.dataset.validated = String(counts.validated)
+    badge.dataset.failed = String(counts.failed)
+    badge.dataset.skipped = String(counts.skipped)
+    badge.classList.remove(
+      'qs-validation-rollup-badge--unknown',
+      'qs-validation-rollup-badge--ok',
+      'qs-validation-rollup-badge--warn',
+      'qs-validation-rollup-badge--error'
+    )
+    badge.classList.add(`qs-validation-rollup-badge--${state}`)
+  })
+}
+
+function qsStepStateFromBulkStatus (status) {
+  const normalized = String(status || '').trim().toLowerCase()
+  if (normalized === 'validated') return 'ok'
+  if (normalized === 'failed') return 'error'
+  if (normalized === 'skipped') return 'warn'
+  return 'warn'
+}
+
+function qsApplyBulkValidationResults (results, summary) {
+  if (results && typeof results === 'object') {
+    Object.keys(results).forEach((stepKey) => {
+      qsUpdateStepIndicators(stepKey, qsStepStateFromBulkStatus(results[stepKey] && results[stepKey].status))
+    })
+  }
+
+  const finalState = qsBulkSummaryState(summary)
+  qsUpdateStepIndicators('900-final', finalState === 'unknown' ? 'warn' : finalState)
+  qsRefreshSectionRollups()
+  qsApplyValidationRollupBadge(summary)
+}
+
+function qsSetBulkValidationLoading (isLoading) {
+  document.querySelectorAll('[data-qs-validate-all]').forEach((button) => {
+    button.disabled = !!isLoading
+    const spinner = button.querySelector('.qs-validate-all-spinner')
+    if (spinner) {
+      spinner.classList.toggle('d-none', !isLoading)
+    }
+  })
+}
+
+function qsRunBulkValidation (options = {}) {
+  if (qsBulkValidationRequest) return qsBulkValidationRequest
+
+  document.dispatchEvent(new CustomEvent('qs:bulk-validation-start', { detail: { source: options.source || null } }))
+  qsSetBulkValidationLoading(true)
+
+  qsBulkValidationRequest = fetch('/validate_all_services', { method: 'POST' })
+    .then(async (res) => {
+      let data = null
+      try {
+        data = await res.json()
+      } catch (err) {
+        data = null
+      }
+
+      if (!res.ok) {
+        const message = (data && (data.message || data.error)) || `Request failed (${res.status}).`
+        throw new Error(message)
+      }
+      if (!data || !data.success) {
+        throw new Error((data && (data.message || data.error)) || 'Validation failed. Please try again.')
+      }
+
+      const results = data.results || {}
+      const summary = data.summary || {}
+      qsApplyBulkValidationResults(results, summary)
+      document.dispatchEvent(new CustomEvent('qs:bulk-validation-complete', { detail: data }))
+
+      if (!options.silentToast && typeof showToast === 'function') {
+        const counts = qsGetBulkSummaryCounts(summary)
+        showToast('info', `Validate all complete. Validated: ${counts.validated} • Failed: ${counts.failed} • Skipped: ${counts.skipped}`)
+      }
+
+      return data
+    })
+    .catch((err) => {
+      const message = err && err.message ? err.message : 'Validate all failed. Please try again.'
+      if (typeof showToast === 'function') {
+        showToast('error', message)
+      }
+      document.dispatchEvent(new CustomEvent('qs:bulk-validation-error', { detail: { message } }))
+      throw err
+    })
+    .finally(() => {
+      qsSetBulkValidationLoading(false)
+      qsBulkValidationRequest = null
+    })
+
+  return qsBulkValidationRequest
+}
+
+function updateValidationCallouts (inputId) {
+  const callouts = document.querySelectorAll('.qs-validation-accordion')
+  if (callouts.length) {
+    callouts.forEach((wrapper) => {
+      const targetId = inputId || wrapper.dataset.qsValidatedInput
+      const validatedInput = targetId ? document.getElementById(targetId) : getValidatedInput()
+      if (!validatedInput) return
+
+      const isValidated = String(validatedInput.value || '').toLowerCase() === 'true'
+      const collapse = wrapper.querySelector('.accordion-collapse')
+      const button = wrapper.querySelector('.accordion-button')
+      if (!collapse || !button) return
+
+      const shouldShow = !isValidated
+      button.classList.toggle('collapsed', !shouldShow)
+      button.setAttribute('aria-expanded', shouldShow ? 'true' : 'false')
+
+      if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+        const instance = bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false })
+        if (shouldShow) {
+          instance.show()
+        } else {
+          instance.hide()
+        }
+      } else {
+        collapse.classList.toggle('show', shouldShow)
+      }
+    })
+  }
+
+  qsRefreshSidebarValidationState(inputId)
 }
 
 function setupValidationCallouts () {
@@ -553,11 +1053,27 @@ function restoreBlankCacheExpirations () {
 
 document.addEventListener('DOMContentLoaded', () => {
   setupValidationCallouts()
+  qsRefreshSidebarValidationState()
+  document.querySelectorAll('[data-qs-validate-all]').forEach((button) => {
+    if (button.dataset.qsValidateAllBound === 'true') return
+    button.dataset.qsValidateAllBound = 'true'
+    button.addEventListener('click', () => {
+      qsRunBulkValidation({ source: button.id || null }).catch(() => {})
+    })
+  })
 })
 
 window.QSValidationCallouts = {
   refresh: updateValidationCallouts,
-  setup: setupValidationCallouts
+  setup: setupValidationCallouts,
+  refreshSidebar: qsRefreshSidebarValidationState,
+  setStepStatus: qsSetSidebarStepStatus
+}
+window.QSBulkValidation = {
+  run: qsRunBulkValidation,
+  applyResults: qsApplyBulkValidationResults,
+  getSummaryState: qsBulkSummaryState,
+  getSummaryCounts: qsGetBulkSummaryCounts
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1624,6 +2140,178 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('scroll', onScroll, { passive: true })
   window.addEventListener('resize', onScroll)
   updateControls()
+})
+
+document.addEventListener('DOMContentLoaded', () => {
+  const viewportQuery = window.matchMedia('(min-width: 1024px)')
+  const rootEl = document.documentElement
+  const sidebarStorageKey = 'qs_sidebar_collapsed'
+  let sidebarBound = false
+  const mainSlotSelector = '[data-qs-workspace-slot]'
+  const modalPanelSelectors = [
+    '#supportInfoModal',
+    '#quickstartSettingsModal',
+    '#fontPickerModal',
+    '#zoomPreviewModal',
+    '#stop-kometa-modal',
+    '[id$="-overlay-toolbox-help-modal"]',
+    '[id$="-overlay-canvas-modal"]',
+    '[id^="logscan-"][id$="-modal"]'
+  ]
+
+  let scheduledRefresh = null
+
+  function isMobileViewport () {
+    return !viewportQuery.matches
+  }
+
+  function applyViewportFlag () {
+    rootEl.dataset.qsViewport = isMobileViewport() ? 'mobile' : 'desktop'
+  }
+
+  function setupSidebarToggle () {
+    const section = document.querySelector('.qs-workspace-section')
+    const toggleBtn = document.getElementById('qs-sidebar-toggle')
+    if (!section || !toggleBtn) return
+
+    function setSidebarState (collapsed, persist) {
+      const shouldCollapse = Boolean(collapsed) && !isMobileViewport()
+      section.dataset.qsSidebar = shouldCollapse ? 'collapsed' : 'expanded'
+      toggleBtn.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true')
+      toggleBtn.title = shouldCollapse ? 'Expand sidebar' : 'Collapse sidebar'
+      if (persist) {
+        window.localStorage.setItem(sidebarStorageKey, shouldCollapse ? '1' : '0')
+      }
+    }
+
+    if (!sidebarBound) {
+      sidebarBound = true
+      toggleBtn.addEventListener('click', () => {
+        const isCollapsed = section.dataset.qsSidebar === 'collapsed'
+        setSidebarState(!isCollapsed, true)
+      })
+    }
+
+    const saved = window.localStorage.getItem(sidebarStorageKey) === '1'
+    setSidebarState(saved, false)
+  }
+
+  function moveWorkspaceContentIntoSlot () {
+    const section = document.querySelector('.qs-workspace-section')
+    if (!section) return
+    const shell = Array.from(section.children).find(child =>
+      child.classList && child.classList.contains('qs-workspace-shell')
+    )
+    const slot = section.querySelector(mainSlotSelector)
+    if (!shell || !slot) return
+    if (slot.dataset.qsHydrated === 'true') return
+
+    let node = shell.nextSibling
+    while (node) {
+      const next = node.nextSibling
+
+      if (node.nodeType === window.Node.ELEMENT_NODE) {
+        const el = node
+        const skip =
+          el.classList.contains('modal') ||
+          el.tagName === 'SCRIPT' ||
+          el.classList.contains('page-nav-divider') ||
+          el.classList.contains('qs-mobile-action-bar')
+
+        if (!skip) {
+          slot.appendChild(el)
+        }
+      }
+
+      node = next
+    }
+
+    slot.dataset.qsHydrated = 'true'
+  }
+
+  function extractTableHeaders (table) {
+    const headers = Array.from(table.querySelectorAll('thead th')).map((header, index) => {
+      const text = String(header.textContent || '').replace(/\s+/g, ' ').trim()
+      return text || `Column ${index + 1}`
+    })
+    return headers
+  }
+
+  function annotateTableCells (table) {
+    const headers = extractTableHeaders(table)
+    if (!headers.length) return
+
+    const rows = table.querySelectorAll('tbody tr, tfoot tr')
+    rows.forEach(row => {
+      const cells = Array.from(row.children).filter(cell => cell.tagName === 'TD')
+      cells.forEach((cell, index) => {
+        if (!cell.dataset.label || cell.dataset.labelSource === 'auto') {
+          cell.dataset.label = headers[index] || headers[headers.length - 1] || `Column ${index + 1}`
+          cell.dataset.labelSource = 'auto'
+        }
+      })
+    })
+  }
+
+  function applyStickyFirstColumnHints () {
+    const explicit = document.querySelectorAll('.table-responsive[data-qs-sticky-first="true"]')
+    explicit.forEach(wrapper => {
+      wrapper.dataset.stickyFirst = 'true'
+    })
+
+    const finalWrappers = document.querySelectorAll('#validation-status-collapse .table-responsive, #run-progress .table-responsive')
+    finalWrappers.forEach(wrapper => {
+      wrapper.dataset.stickyFirst = 'true'
+    })
+  }
+
+  function applyTableMode () {
+    const wrappers = document.querySelectorAll('.qs-workspace-main-panel .table-responsive')
+    const useCardMode = isMobileViewport()
+
+    wrappers.forEach(wrapper => {
+      if (wrapper.classList.contains('qs-table-no-cards')) return
+
+      wrapper.classList.toggle('qs-table-card-mode', useCardMode)
+
+      const table = wrapper.querySelector('table')
+      if (!table) return
+      annotateTableCells(table)
+    })
+
+    applyStickyFirstColumnHints()
+  }
+
+  function applyMobilePanels () {
+    document.querySelectorAll(modalPanelSelectors.join(',')).forEach(modal => {
+      modal.classList.add('qs-mobile-panel-target')
+    })
+  }
+
+  function refreshLayoutState () {
+    const hasWorkspace = Boolean(document.querySelector('.qs-workspace-section'))
+    document.body.classList.toggle('qs-has-workspace', hasWorkspace)
+    applyViewportFlag()
+    setupSidebarToggle()
+    moveWorkspaceContentIntoSlot()
+    applyTableMode()
+    applyMobilePanels()
+  }
+
+  function scheduleRefresh () {
+    if (scheduledRefresh) return
+    scheduledRefresh = requestAnimationFrame(() => {
+      scheduledRefresh = null
+      refreshLayoutState()
+    })
+  }
+
+  refreshLayoutState()
+  viewportQuery.addEventListener('change', refreshLayoutState)
+  window.addEventListener('resize', scheduleRefresh, { passive: true })
+
+  const observer = new MutationObserver(scheduleRefresh)
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true })
 })
 
 // Optional: Rotate icon spinner style
