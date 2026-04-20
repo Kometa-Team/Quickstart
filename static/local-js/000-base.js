@@ -442,12 +442,30 @@ function jumpTo (targetPage, targetLabel) {
     }
   })
 
+  const resolvedTargetLabel = String(targetLabel || '').trim() || qsGetStepLabel(targetPage)
+  const beforeNavigateEvent = new CustomEvent('qs:before-step-navigation', {
+    cancelable: true,
+    detail: {
+      source: 'jump',
+      targetPage: String(targetPage || '').trim(),
+      targetLabel: resolvedTargetLabel
+    }
+  })
+  const allowed = document.dispatchEvent(beforeNavigateEvent)
+  if (!allowed) {
+    resetNavigationSpinners()
+    return
+  }
+
   // Temporarily change the action and submit the form
   const originalAction = form.action
   form.action = '/step/' + targetPage
-  const resolvedTargetLabel = String(targetLabel || '').trim() || qsGetStepLabel(targetPage)
   loading('jump', resolvedTargetLabel) // optional spinner
-  form.submit()
+  if (typeof form.requestSubmit === 'function') {
+    form.requestSubmit()
+  } else {
+    form.submit()
+  }
   form.action = originalAction // optional restore
 }
 
@@ -789,14 +807,323 @@ function qsRefreshSidebarValidationState (inputId) {
   const stepState = qsStateFromValidatedInput(validatedInput)
   if (!stepState) return
 
+  const activeStepLink = document.querySelector(`.qs-step-link[data-step-key="${currentStepKey}"]`)
+  const previousState = qsGetIndicatorState(activeStepLink ? activeStepLink.querySelector('.qs-step-link-state') : null, 'qs-step-link-state')
+
   qsUpdateStepIndicators(currentStepKey, stepState)
   qsRefreshSectionRollups()
+  qsRecalculateReadinessFromSidebar()
+
+  if (previousState !== stepState && window.QSWorkspaceStatus && typeof window.QSWorkspaceStatus.refresh === 'function') {
+    window.QSWorkspaceStatus.refresh({ reason: 'validation-state-change', delayMs: 120 })
+  }
 }
 
 function qsSetSidebarStepStatus (stepKey, status) {
   if (!stepKey) return
   qsUpdateStepIndicators(stepKey, status)
   qsRefreshSectionRollups()
+  qsRecalculateReadinessFromSidebar()
+}
+
+let qsWorkspaceStatusRequest = null
+let qsWorkspaceStatusPending = false
+let qsWorkspaceStatusTimer = null
+
+function qsArrayFromKeys (value) {
+  if (!Array.isArray(value)) return []
+  const seen = new Set()
+  const result = []
+  value.forEach((entry) => {
+    const key = String(entry || '').trim()
+    if (!key || seen.has(key)) return
+    seen.add(key)
+    result.push(key)
+  })
+  return result
+}
+
+function qsApplyGroupMembership (requiredKeys, optionalKeys, reviewKeys) {
+  const groups = {
+    required: document.querySelector('.qs-step-group[data-step-group="required"] .qs-step-group-list'),
+    optional: document.querySelector('.qs-step-group[data-step-group="optional"] .qs-step-group-list'),
+    review: document.querySelector('.qs-step-group[data-step-group="review"] .qs-step-group-list')
+  }
+  if (!groups.required || !groups.optional || !groups.review) return
+
+  const currentStepKey = qsGetCurrentStepKey()
+  const currentStepLinkBeforeMove = currentStepKey
+    ? document.querySelector(`.qs-step-link[data-step-key="${currentStepKey}"]`)
+    : null
+  const previousGroupKey = currentStepLinkBeforeMove
+    ? String(currentStepLinkBeforeMove.closest('.qs-step-group[data-step-group]')?.dataset?.stepGroup || '').trim().toLowerCase()
+    : ''
+
+  const stepMap = {}
+  document.querySelectorAll('.qs-step-group-list .qs-step-link[data-step-key]').forEach((stepLink) => {
+    const key = String(stepLink.dataset.stepKey || '').trim()
+    if (!key || stepMap[key]) return
+    stepMap[key] = stepLink
+  })
+
+  const appendInOrder = (listEl, keys) => {
+    keys.forEach((key) => {
+      const stepLink = stepMap[key]
+      if (!stepLink) return
+      listEl.appendChild(stepLink)
+    })
+  }
+
+  appendInOrder(groups.required, requiredKeys)
+  appendInOrder(groups.optional, optionalKeys)
+  appendInOrder(groups.review, reviewKeys)
+
+  // Preserve user-controlled expanded/collapsed state.
+  // Only auto-open when the current step actually moves to a different section
+  // (e.g., Optional -> Required via dependency changes such as MAL).
+  let currentGroupKey = ''
+  if (currentStepKey) {
+    if (requiredKeys.includes(currentStepKey)) currentGroupKey = 'required'
+    else if (reviewKeys.includes(currentStepKey)) currentGroupKey = 'review'
+    else if (optionalKeys.includes(currentStepKey)) currentGroupKey = 'optional'
+  }
+
+  if (currentGroupKey && currentGroupKey !== previousGroupKey) {
+    const nextGroup = document.querySelector(`.qs-step-group[data-step-group="${currentGroupKey}"]`)
+    if (nextGroup) nextGroup.open = true
+  }
+}
+
+function qsApplyReadinessStrip (readiness) {
+  const strip = document.querySelector('.qs-readiness-strip')
+  if (!strip) return
+
+  const source = (readiness && typeof readiness === 'object') ? readiness : {}
+  const requiredReady = Number(source.required_ready || 0)
+  const requiredTotal = Number(source.required_total || 0)
+  const requiredPercent = Number(source.required_percent || 0)
+  const requiredState = qsNormalizeStatusState(source.required_state || 'unknown')
+  const optionalSummary = String(source.optional_summary || 'Optional 0/0 configured')
+  const validationAge = String(source.validation_age_label || 'Never')
+  const validationFreshness = ['fresh', 'stale', 'never'].includes(String(source.validation_freshness || 'never'))
+    ? String(source.validation_freshness || 'never')
+    : 'never'
+
+  QS_STATUS_STATES.forEach((state) => {
+    strip.classList.remove(`qs-readiness-state-${state}`)
+  })
+  strip.classList.add(`qs-readiness-state-${requiredState}`)
+
+  const bar = strip.querySelector('.qs-readiness-required-bar')
+  if (bar) {
+    bar.style.width = `${Math.max(0, Math.min(100, requiredPercent))}%`
+  }
+
+  const full = strip.querySelector('.qs-step-progress-text-full')
+  if (full) full.textContent = `Required ${requiredReady}/${requiredTotal}`
+
+  const compact = strip.querySelector('.qs-step-progress-text-short')
+  if (compact) compact.textContent = `${requiredPercent}%`
+
+  const sublines = strip.querySelectorAll('.qs-readiness-subline')
+  if (sublines[0]) sublines[0].textContent = optionalSummary
+  if (sublines[1]) {
+    sublines[1].textContent = `Last validated: ${validationAge}`
+    sublines[1].classList.remove('qs-readiness-freshness-fresh', 'qs-readiness-freshness-stale', 'qs-readiness-freshness-never')
+    sublines[1].classList.add(`qs-readiness-freshness-${validationFreshness}`)
+  }
+}
+
+function qsApplyMalHintSidebar (reasons) {
+  const normalized = Array.isArray(reasons)
+    ? reasons.map(reason => String(reason || '').trim()).filter(Boolean)
+    : []
+
+  document.querySelectorAll('[data-qs-mal-required-hint]').forEach((hint) => {
+    const lines = hint.querySelector('[data-qs-mal-required-lines]')
+    if (!lines) return
+
+    lines.replaceChildren()
+    if (!normalized.length) {
+      hint.classList.add('d-none')
+      return
+    }
+
+    hint.classList.remove('d-none')
+    const visibleCount = 2
+    normalized.slice(0, visibleCount).forEach((reason) => {
+      const row = document.createElement('div')
+      row.className = 'qs-mal-required-hint-line'
+      row.textContent = reason
+      lines.appendChild(row)
+    })
+
+    if (normalized.length > visibleCount) {
+      const more = document.createElement('div')
+      more.className = 'qs-mal-required-hint-line'
+      more.textContent = `+${normalized.length - visibleCount} more...`
+      lines.appendChild(more)
+    }
+  })
+}
+
+function qsApplySectionStatuses (sectionStatuses) {
+  if (!sectionStatuses || typeof sectionStatuses !== 'object') {
+    qsRefreshSectionRollups()
+    return
+  }
+
+  document.querySelectorAll('.qs-step-group[data-step-group]').forEach((groupElement) => {
+    const groupKey = String(groupElement.dataset.stepGroup || '').trim().toLowerCase()
+    const state = qsNormalizeStatusState(sectionStatuses[groupKey] || 'warn')
+
+    QS_STATUS_STATES.forEach((candidate) => {
+      groupElement.classList.remove(`qs-step-group--${candidate}`)
+    })
+    groupElement.classList.add(`qs-step-group--${state}`)
+
+    const indicator = groupElement.querySelector('.qs-step-group-state')
+    qsApplyIndicatorState(indicator, 'qs-step-group-state', state)
+  })
+}
+
+function qsRecalculateReadinessFromSidebar () {
+  const requiredLinks = Array.from(document.querySelectorAll('.qs-step-group[data-step-group="required"] .qs-step-link'))
+  const optionalLinks = Array.from(document.querySelectorAll('.qs-step-group[data-step-group="optional"] .qs-step-link'))
+  if (!requiredLinks.length && !optionalLinks.length) return
+
+  const requiredStates = requiredLinks
+    .map(link => qsGetIndicatorState(link.querySelector('.qs-step-link-state'), 'qs-step-link-state'))
+  const optionalStates = optionalLinks
+    .map(link => qsGetIndicatorState(link.querySelector('.qs-step-link-state'), 'qs-step-link-state'))
+
+  const requiredTotal = requiredStates.length
+  const requiredReady = requiredStates.filter(state => state === 'ok').length
+  const requiredPercent = requiredTotal ? Math.round((requiredReady / requiredTotal) * 100) : 0
+  const requiredState = qsResolveGroupState('required', requiredStates)
+
+  const optionalTotal = optionalStates.length
+  const optionalConfigured = optionalStates.filter(state => state !== 'unknown').length
+  const optionalIssueCount = optionalStates.filter(state => state === 'warn' || state === 'error').length
+  let optionalSummary = optionalTotal ? `Optional ${optionalConfigured}/${optionalTotal} configured` : 'No optional pages'
+  if (optionalIssueCount > 0) {
+    optionalSummary += ` • ${optionalIssueCount} issue${optionalIssueCount === 1 ? '' : 's'}`
+  }
+
+  let validationAgeLabel = 'Never'
+  let validationFreshness = 'never'
+  const strip = document.querySelector('.qs-readiness-strip')
+  if (strip) {
+    const sublines = strip.querySelectorAll('.qs-readiness-subline')
+    if (sublines[1]) {
+      const text = String(sublines[1].textContent || '').trim()
+      const match = text.match(/^Last validated:\s*(.+)$/i)
+      if (match && match[1]) validationAgeLabel = match[1].trim()
+      ;['fresh', 'stale', 'never'].forEach((candidate) => {
+        if (sublines[1].classList.contains(`qs-readiness-freshness-${candidate}`)) {
+          validationFreshness = candidate
+        }
+      })
+    }
+  }
+
+  qsApplyReadinessStrip({
+    required_total: requiredTotal,
+    required_ready: requiredReady,
+    required_percent: requiredPercent,
+    required_state: requiredState,
+    optional_total: optionalTotal,
+    optional_configured: optionalConfigured,
+    optional_issue_count: optionalIssueCount,
+    optional_summary: optionalSummary,
+    validation_age_label: validationAgeLabel,
+    validation_freshness: validationFreshness
+  })
+}
+
+function qsApplyWorkspaceStatus (payload) {
+  if (!payload || typeof payload !== 'object') return
+
+  const requiredKeys = qsArrayFromKeys(payload.required_keys)
+  const optionalKeys = qsArrayFromKeys(payload.optional_keys)
+  const reviewKeys = qsArrayFromKeys(payload.review_keys)
+  const malReasons = qsArrayFromKeys(payload.mal_requirement_reasons)
+
+  window.QS_REQUIRED_KEYS = requiredKeys
+  window.QS_OPTIONAL_KEYS = optionalKeys
+  window.QS_REVIEW_KEYS = reviewKeys
+  window.QS_MAL_REQUIREMENT_REASONS = malReasons
+
+  qsApplyGroupMembership(requiredKeys, optionalKeys, reviewKeys)
+  qsApplyMalHintSidebar(malReasons)
+
+  if (payload.step_statuses && typeof payload.step_statuses === 'object') {
+    Object.keys(payload.step_statuses).forEach((stepKey) => {
+      qsUpdateStepIndicators(stepKey, payload.step_statuses[stepKey])
+    })
+  }
+
+  qsApplySectionStatuses(payload.section_statuses)
+  qsApplyReadinessStrip(payload.readiness || {})
+  qsRecalculateReadinessFromSidebar()
+  updateValidationCallouts()
+}
+
+function qsFetchWorkspaceStatus () {
+  if (qsWorkspaceStatusRequest) {
+    qsWorkspaceStatusPending = true
+    return qsWorkspaceStatusRequest
+  }
+
+  qsWorkspaceStatusRequest = fetch('/workspace_status', {
+    method: 'GET',
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' }
+  })
+    .then(async (response) => {
+      let data = null
+      try {
+        data = await response.json()
+      } catch (err) {
+        data = null
+      }
+      if (!response.ok || !data || data.success !== true) {
+        throw new Error((data && (data.message || data.error)) || `workspace_status failed (${response.status})`)
+      }
+      qsApplyWorkspaceStatus(data)
+      return data
+    })
+    .catch(() => null)
+    .finally(() => {
+      qsWorkspaceStatusRequest = null
+      if (qsWorkspaceStatusPending) {
+        qsWorkspaceStatusPending = false
+        qsFetchWorkspaceStatus()
+      }
+    })
+
+  return qsWorkspaceStatusRequest
+}
+
+function qsRefreshWorkspaceStatus (options = {}) {
+  const delayMs = Number(options.delayMs || 0)
+  const immediate = Boolean(options.immediate)
+
+  if (qsWorkspaceStatusTimer) {
+    clearTimeout(qsWorkspaceStatusTimer)
+    qsWorkspaceStatusTimer = null
+  }
+
+  if (immediate || delayMs <= 0) {
+    return qsFetchWorkspaceStatus()
+  }
+
+  qsWorkspaceStatusTimer = setTimeout(() => {
+    qsWorkspaceStatusTimer = null
+    qsFetchWorkspaceStatus()
+  }, delayMs)
+
+  return Promise.resolve(null)
 }
 
 let qsBulkValidationRequest = null
@@ -864,6 +1191,7 @@ function qsApplyBulkValidationResults (results, summary) {
   const finalState = qsBulkSummaryState(summary)
   qsUpdateStepIndicators('900-final', finalState === 'unknown' ? 'warn' : finalState)
   qsRefreshSectionRollups()
+  qsRecalculateReadinessFromSidebar()
   qsApplyValidationRollupBadge(summary)
 }
 
@@ -932,6 +1260,11 @@ function updateValidationCallouts (inputId) {
   const callouts = document.querySelectorAll('.qs-validation-accordion')
   if (callouts.length) {
     callouts.forEach((wrapper) => {
+      const alert = wrapper.querySelector('.qs-validation-callout')
+      if (alert) {
+        applyDynamicValidationCalloutState(alert)
+      }
+
       const targetId = inputId || wrapper.dataset.qsValidatedInput
       const validatedInput = targetId ? document.getElementById(targetId) : getValidatedInput()
       if (!validatedInput) return
@@ -1231,6 +1564,7 @@ function restoreBlankCacheExpirations () {
 document.addEventListener('DOMContentLoaded', () => {
   setupValidationCallouts()
   qsRefreshSidebarValidationState()
+  qsRefreshWorkspaceStatus({ immediate: true })
   document.querySelectorAll('[data-qs-validate-all]').forEach((button) => {
     if (button.dataset.qsValidateAllBound === 'true') return
     button.dataset.qsValidateAllBound = 'true'
@@ -1252,6 +1586,21 @@ window.QSBulkValidation = {
   getSummaryState: qsBulkSummaryState,
   getSummaryCounts: qsGetBulkSummaryCounts
 }
+window.QSWorkspaceStatus = {
+  refresh: qsRefreshWorkspaceStatus,
+  apply: qsApplyWorkspaceStatus,
+  recalculateFromSidebar: qsRecalculateReadinessFromSidebar
+}
+
+document.addEventListener('qs:workspace-data-changed', (event) => {
+  const detail = (event && event.detail) || {}
+  const delayMs = Number(detail.delayMs || 120)
+  qsRefreshWorkspaceStatus({ delayMs: Number.isFinite(delayMs) ? delayMs : 120 })
+})
+
+document.addEventListener('qs:bulk-validation-complete', () => {
+  qsRefreshWorkspaceStatus({ delayMs: 120 })
+})
 
 document.addEventListener('DOMContentLoaded', () => {
   const notice = window.QS_RESTART_NOTICE

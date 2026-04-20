@@ -479,6 +479,32 @@ def _latest_iso_timestamp(values):
     return latest_dt.isoformat().replace("+00:00", "Z") if latest_dt else None
 
 
+def _format_validation_age(iso_text):
+    text = str(iso_text or "").strip()
+    if not text:
+        return "Never", "never"
+    try:
+        dt_value = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return "Unknown", "never"
+    if dt_value.tzinfo is None:
+        dt_value = dt_value.replace(tzinfo=timezone.utc)
+    now_utc = datetime.now(timezone.utc)
+    delta = now_utc - dt_value.astimezone(timezone.utc)
+    if delta.total_seconds() < 0:
+        delta = timedelta(0)
+    seconds = int(delta.total_seconds())
+    if seconds < 60:
+        return "Just now", "fresh"
+    if seconds < 3600:
+        return f"{max(1, seconds // 60)}m ago", "fresh"
+    if seconds < 86400:
+        hours = max(1, seconds // 3600)
+        return f"{hours}h ago", "stale"
+    days = max(1, seconds // 86400)
+    return f"{days}d ago", "stale"
+
+
 def _is_nonblank_setting(value):
     if value is None:
         return False
@@ -725,6 +751,50 @@ def _build_workspace_status_context(config_name, template_list, available_config
         if key in step_statuses:
             jump_to_validations[key] = step_statuses.get(key) == "ok"
 
+    required_total = len(required_keys)
+    required_ready = sum(1 for key in required_keys if step_statuses.get(key) == "ok")
+    required_percent = round((required_ready / required_total) * 100) if required_total else 0
+
+    optional_total = len(optional_keys)
+    optional_configured = sum(1 for key in optional_keys if step_statuses.get(key) != "unknown")
+    optional_issue_count = sum(1 for key in optional_keys if step_statuses.get(key) in {"warn", "error"})
+
+    optional_summary = f"Optional {optional_configured}/{optional_total} configured" if optional_total else "No optional pages"
+    if optional_issue_count > 0:
+        optional_summary += f" • {optional_issue_count} issue{'s' if optional_issue_count != 1 else ''}"
+
+    validation_timestamps = []
+    for row in section_rows.values():
+        if not isinstance(row, dict):
+            continue
+        data = row.get("data")
+        if not isinstance(data, dict):
+            continue
+        for key in ("validation_updated_at", "validated_at"):
+            value = data.get(key)
+            if value:
+                validation_timestamps.append(value)
+        if row.get("section") == "validation_summary":
+            summary_updated = data.get("updated_at")
+            if summary_updated:
+                validation_timestamps.append(summary_updated)
+    latest_validation_at = _latest_iso_timestamp(validation_timestamps)
+    validation_age_label, validation_freshness = _format_validation_age(latest_validation_at)
+
+    readiness = {
+        "required_total": required_total,
+        "required_ready": required_ready,
+        "required_percent": required_percent,
+        "required_state": required_rollup,
+        "optional_total": optional_total,
+        "optional_configured": optional_configured,
+        "optional_issue_count": optional_issue_count,
+        "optional_summary": optional_summary,
+        "latest_validation_at": latest_validation_at,
+        "validation_age_label": validation_age_label,
+        "validation_freshness": validation_freshness,
+    }
+
     return {
         "step_statuses": step_statuses,
         "section_statuses": section_statuses,
@@ -733,6 +803,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "optional_keys": optional_keys,
         "review_keys": review_keys,
         "mal_requirement_reasons": mal_requirement_reasons,
+        "readiness": readiness,
     }
 
 
@@ -1546,7 +1617,7 @@ threading.Thread(target=start_update_thread, daemon=True).start()
 def inject_version_info():
     """Ensure latest version info is injected dynamically in templates"""
     return {
-        "version_info": helpers.check_for_update(),
+        "version_info": app.config.get("VERSION_CHECK") or {},
         "overlay_fonts": list_overlay_fonts(),
     }
 
@@ -3798,8 +3869,8 @@ def step(name):
     if "kometa_root" not in session:
         session["kometa_root"] = app.config.get("KOMETA_ROOT", "")
 
-    # Fetch Plex settings
-    all_libraries = persistence.retrieve_settings("010-plex")
+    # Fetch Plex settings (reuse already loaded payload on Plex step)
+    all_libraries = data if name == "010-plex" else persistence.retrieve_settings("010-plex")
 
     # Ensure 'plex' key exists before accessing sub-keys
     plex_data = all_libraries.get("plex", {})
@@ -3812,7 +3883,8 @@ def step(name):
     else:
         has_cached_user_list = False
 
-    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    plex_url = plex_data.get("url")
+    plex_token = plex_data.get("token")
     dummy_plex = persistence.get_dummy_data("plex") or {}
     has_plex_credentials = bool(
         plex_url and plex_token and str(plex_url).strip() != str(dummy_plex.get("url", "")).strip() and str(plex_token).strip() != str(dummy_plex.get("token", "")).strip()
@@ -3828,16 +3900,20 @@ def step(name):
             refresh_plex_libraries()
             all_libraries = persistence.retrieve_settings("010-plex")
             plex_data = all_libraries.get("plex", {})
-        telemetry = persistence.retrieve_settings("plex_telemetry")
-    else:
-        telemetry = persistence.retrieve_settings("plex_telemetry")
 
-    telemetry_data = telemetry.get("plex_telemetry")
+    telemetry_payload = {}
+    try:
+        telemetry_section = database.retrieve_section_data(name=selected_config, section="plex_telemetry")
+        if telemetry_section and isinstance(telemetry_section[2], dict):
+            telemetry_payload = telemetry_section[2].get("plex_telemetry", {}) or {}
+    except Exception:
+        telemetry_payload = {}
+    telemetry = {"plex_telemetry": telemetry_payload}
 
     # If telemetry is fresher in plex_data, use that
     telemetry_data = plex_data.get("telemetry")
     if not isinstance(telemetry_data, dict) or "plex_pass" not in telemetry_data:
-        telemetry_data = telemetry.get("plex_telemetry", {})
+        telemetry_data = telemetry_payload
 
         # Fallback if DB is also missing it
         if not isinstance(telemetry_data, dict) or "plex_pass" not in telemetry_data:
@@ -3947,14 +4023,15 @@ def step(name):
 
     start_time = time.perf_counter()
 
-    helpers.ts_log(f"Loading attribute_config...", level="TIMING")
-    attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
-    helpers.ts_log(f"Loading collection_config...", level="TIMING")
-    collection_config = helpers.load_quickstart_config("quickstart_collections.json")
-    helpers.ts_log(f"Loading overlay_config...", level="TIMING")
-    overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
+    needs_library_payload = name == "025-libraries"
+    attribute_config = {}
+    collection_config = []
+    overlay_config = []
+    service_validations = {}
+    overlay_fonts = []
+    image_data = {}
 
-    def add_offset_vars(config):
+    def add_offset_vars(config):  # noqa: ANN001
         """
         Ensure each overlay exposes positional offsets with sensible defaults.
         """
@@ -3994,21 +4071,30 @@ def step(name):
                     },
                 )
 
-    add_offset_vars(overlay_config)
+    if needs_library_payload:
+        helpers.ts_log(f"Loading attribute_config...", level="TIMING")
+        attribute_config = helpers.load_quickstart_config("quickstart_attributes.json")
+        helpers.ts_log(f"Loading collection_config...", level="TIMING")
+        collection_config = helpers.load_quickstart_config("quickstart_collections.json")
+        helpers.ts_log(f"Loading overlay_config...", level="TIMING")
+        overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
+        add_offset_vars(overlay_config)
+        helpers.ts_log(f"Loading preview image data...", level="TIMING")
+        image_data = _build_preview_image_data()
+        overlay_fonts = list_overlay_fonts()
 
-    service_validation_sources = [
-        ("010-plex", "plex"),
-        ("020-tmdb", "tmdb"),
-        ("050-omdb", "omdb"),
-        ("060-mdblist", "mdblist"),
-        ("100-anidb", "anidb"),
-        ("130-trakt", "trakt"),
-        ("140-mal", "mal"),
-    ]
-    service_validations = {}
-    for section, key in service_validation_sources:
-        settings = persistence.retrieve_settings(section)
-        service_validations[key] = helpers.booler(settings.get("validated", False))
+        service_validation_sources = [
+            ("010-plex", "plex"),
+            ("020-tmdb", "tmdb"),
+            ("050-omdb", "omdb"),
+            ("060-mdblist", "mdblist"),
+            ("100-anidb", "anidb"),
+            ("130-trakt", "trakt"),
+            ("140-mal", "mal"),
+        ]
+        for section, key in service_validation_sources:
+            settings = persistence.retrieve_settings(section)
+            service_validations[key] = helpers.booler(settings.get("validated", False))
     workspace_status = _build_workspace_status_context(config_name, file_list, available_configs=available_configs)
     jump_to_validations = workspace_status.get("jump_to_validations", {})
     step_statuses = workspace_status.get("step_statuses", {})
@@ -4138,7 +4224,7 @@ def step(name):
             show_libraries=show_libraries,
             library_dropdown=library_dropdown,
             config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
-            overlay_fonts=list_overlay_fonts(),
+            overlay_fonts=overlay_fonts,
             service_validations=service_validations,
             validation_meta=validation_meta,
             jump_to_validations=jump_to_validations,
@@ -4148,6 +4234,7 @@ def step(name):
             optional_keys=workspace_status.get("optional_keys", []),
             review_keys=workspace_status.get("review_keys", []),
             mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
+            workspace_readiness=workspace_status.get("readiness", {}),
             incomplete_resume_hint=incomplete_resume_hint,
         )
 
@@ -4179,7 +4266,7 @@ def step(name):
         overlay_config=overlay_config,
         template_list=file_list,
         available_configs=available_configs,
-        overlay_fonts=list_overlay_fonts(),
+        overlay_fonts=overlay_fonts,
         service_validations=service_validations,
         jump_to_validations=jump_to_validations,
         step_statuses=step_statuses,
@@ -4188,7 +4275,8 @@ def step(name):
         optional_keys=workspace_status.get("optional_keys", []),
         review_keys=workspace_status.get("review_keys", []),
         mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
-        image_data=_build_preview_image_data(),
+        workspace_readiness=workspace_status.get("readiness", {}),
+        image_data=image_data,
         config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
         configured_ids=configured_ids,
         configured_counts=configured_counts,
@@ -4198,6 +4286,27 @@ def step(name):
     if app.config["QS_DEBUG"]:
         helpers.ts_log(f"Rendered {name}.html in {end_time - start_time:.2f} seconds", level="PROFILE")
     return html
+
+
+@app.route("/workspace_status", methods=["GET"])
+def workspace_status():
+    """Return live workspace step/group/readiness state for sidebar updates."""
+    persistence.ensure_session_config_name()
+    config_name = request.args.get("config_name") or session.get("config_name")
+    available_configs = database.get_unique_config_names() or []
+    menu_templates = helpers.get_menu_list()
+    status = _build_workspace_status_context(config_name, menu_templates, available_configs=available_configs)
+    return jsonify(
+        success=True,
+        config_name=config_name,
+        step_statuses=status.get("step_statuses", {}),
+        section_statuses=status.get("section_statuses", {}),
+        required_keys=status.get("required_keys", []),
+        optional_keys=status.get("optional_keys", []),
+        review_keys=status.get("review_keys", []),
+        mal_requirement_reasons=status.get("mal_requirement_reasons", []),
+        readiness=status.get("readiness", {}),
+    )
 
 
 @app.route("/get_top_imdb_items/<library_name>")
@@ -5394,13 +5503,15 @@ def validate_all_services():
     else:
         invalid_fields = []
 
-        def check_regex(key, pattern, flags=0):
+        def check_regex(key, pattern, flags=0, allow_blank=False):
             if key not in settings_section:
                 return
             value = settings_section.get(key)
             if value is None:
                 return
             if isinstance(value, str) and not value.strip():
+                if allow_blank:
+                    return
                 invalid_fields.append(key)
                 return
             value_text = str(value).strip()
@@ -5408,14 +5519,14 @@ def validate_all_services():
                 invalid_fields.append(key)
 
         check_regex("asset_depth", r"^(0|[1-9]\d*)$")
-        check_regex("overlay_artwork_quality", r"^(100|[1-9][0-9]?)$")
+        check_regex("overlay_artwork_quality", r"^(100|[1-9][0-9]?)$", allow_blank=True)
         check_regex("cache_expiration", r"^[1-9]\d*$")
         check_regex("item_refresh_delay", r"^(0|[1-9]\d*)$")
         check_regex("minimum_items", r"^[1-9]\d*$")
         check_regex("run_again_delay", r"^(0|[1-9]\d*)$")
-        check_regex("ignore_ids", r"^(None|\d{1,8}(,\d{1,8})*)$", flags=re.IGNORECASE)
-        check_regex("ignore_imdb_ids", r"^(None|tt\d{7,8}(,tt\d{7,8})*)$", flags=re.IGNORECASE)
-        check_regex("custom_repo", r"^(None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$", flags=re.IGNORECASE)
+        check_regex("ignore_ids", r"^(None|\d{1,8}(,\d{1,8})*)$", flags=re.IGNORECASE, allow_blank=True)
+        check_regex("ignore_imdb_ids", r"^(None|tt\d{7,8}(,tt\d{7,8})*)$", flags=re.IGNORECASE, allow_blank=True)
+        check_regex("custom_repo", r"^(None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$", flags=re.IGNORECASE, allow_blank=True)
 
         asset_dirs = settings_section.get("asset_directory") if isinstance(settings_section, dict) else None
         if isinstance(asset_dirs, str):
@@ -7446,6 +7557,7 @@ def logscan_trends_page():
         optional_keys=workspace_status.get("optional_keys", []),
         review_keys=workspace_status.get("review_keys", []),
         mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
+        workspace_readiness=workspace_status.get("readiness", {}),
     )
 
 

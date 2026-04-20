@@ -268,6 +268,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function applyMalRequirementHint (reasons) {
       const normalized = normalizeMalHintReasons(reasons)
       syncMalStepGrouping(normalized.length > 0)
+
+      if (Array.isArray(window.QS_REQUIRED_KEYS) && Array.isArray(window.QS_OPTIONAL_KEYS)) {
+        const malKey = '140-mal'
+        const shouldRequire = normalized.length > 0
+        const required = window.QS_REQUIRED_KEYS.filter(key => key !== malKey)
+        const optional = window.QS_OPTIONAL_KEYS.filter(key => key !== malKey)
+        if (shouldRequire) {
+          required.push(malKey)
+        } else {
+          optional.push(malKey)
+        }
+        window.QS_REQUIRED_KEYS = required
+        window.QS_OPTIONAL_KEYS = optional
+      }
+      window.QS_MAL_REQUIREMENT_REASONS = normalized
+
       const hints = document.querySelectorAll('[data-qs-mal-required-hint]')
       hints.forEach((hint) => {
         const lines = hint.querySelector('[data-qs-mal-required-lines]')
@@ -295,6 +311,13 @@ document.addEventListener('DOMContentLoaded', function () {
           lines.appendChild(more)
         }
       })
+
+      if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+        window.QSValidationCallouts.refresh()
+      }
+      if (window.QSWorkspaceStatus && typeof window.QSWorkspaceStatus.recalculateFromSidebar === 'function') {
+        window.QSWorkspaceStatus.recalculateFromSidebar()
+      }
     }
 
     function requestMalRequirementHintNow () {
@@ -1342,6 +1365,7 @@ document.addEventListener('DOMContentLoaded', function () {
           }
           if (data && data.success) {
             scheduleMalRequirementHintRefresh(0)
+            document.dispatchEvent(new CustomEvent('qs:workspace-data-changed', { detail: { source: 'libraries-autosave', delayMs: 80 } }))
           }
           return data
         })
@@ -1474,6 +1498,7 @@ document.addEventListener('DOMContentLoaded', function () {
               showToast('success', `Mirrored settings to ${filtered.length} ${label}.`)
             }
             scheduleMalRequirementHintRefresh(0)
+            document.dispatchEvent(new CustomEvent('qs:workspace-data-changed', { detail: { source: 'libraries-copy', delayMs: 80 } }))
           })
           .catch(err => {
             console.error('[Copy] Failed to mirror library settings', err)

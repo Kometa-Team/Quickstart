@@ -138,8 +138,8 @@ document.addEventListener('DOMContentLoaded', function () {
     },
     {
       id: 'overlay_artwork_quality',
-      regex: /^(100|[1-9][0-9]?)$/,
-      errorMessage: 'Please enter an integer between 1 and 100.'
+      regex: /^(|100|[1-9][0-9]?)$/,
+      errorMessage: 'Please enter an integer between 1 and 100, or leave blank.'
     },
     {
       id: 'cache_expiration',
@@ -163,18 +163,18 @@ document.addEventListener('DOMContentLoaded', function () {
     },
     {
       id: 'ignore_ids',
-      regex: /^(None|\d{1,8}(,\d{1,8})*)$/,
-      errorMessage: 'Please enter a valid CSV list of numeric IDs (1-8 digits) or "None".'
+      regex: /^(|None|\d{1,8}(,\d{1,8})*)$/i,
+      errorMessage: 'Please enter a valid CSV list of numeric IDs (1-8 digits), "None", or leave blank.'
     },
     {
       id: 'ignore_imdb_ids',
-      regex: /^(None|tt\d{7,8}(,tt\d{7,8})*)$/,
-      errorMessage: 'Please enter a valid CSV list of IMDb IDs (e.g., tt1234567) or "None".'
+      regex: /^(|None|tt\d{7,8}(,tt\d{7,8})*)$/i,
+      errorMessage: 'Please enter a valid CSV list of IMDb IDs (e.g., tt1234567), "None", or leave blank.'
     },
     {
       id: 'custom_repo',
-      regex: /^(None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$/,
-      errorMessage: 'Please enter a valid URL or "None".'
+      regex: /^(|None|https?:\/\/[\da-z.-]+\.[a-z.]{2,6}([/\w.-]*)*\/?)$/i,
+      errorMessage: 'Please enter a valid URL, "None", or leave blank.'
     }
   ]
 
@@ -295,5 +295,26 @@ document.addEventListener('DOMContentLoaded', function () {
         setSettingsValidated(true)
       }
     })
+  })
+
+  // Sidebar step pills also navigate via jumpTo(), so validate here before that submit runs.
+  document.addEventListener('qs:before-step-navigation', function (event) {
+    const detail = event && event.detail ? event.detail : {}
+    const source = String(detail.source || '').trim().toLowerCase()
+    if (source !== 'jump') return
+
+    const workspaceSection = document.querySelector('.qs-workspace-section[data-current-step]')
+    const currentStep = workspaceSection ? String(workspaceSection.dataset.currentStep || '').trim() : ''
+    if (currentStep !== '150-settings') return
+
+    const targetStep = String(detail.targetPage || '').trim()
+    if (!targetStep || targetStep === currentStep) return
+
+    if (!validateForm()) {
+      event.preventDefault()
+      setSettingsValidated(false)
+    } else {
+      setSettingsValidated(true)
+    }
   })
 })

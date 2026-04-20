@@ -20,6 +20,7 @@
   {% set optional_open = current_template in optional_ns.keys %}
   {% set review_open = current_template in review_keys %}
   {% set mal_reasons = mal_requirement_reasons if mal_requirement_reasons is defined else [] %}
+  {% set readiness = workspace_readiness if workspace_readiness is defined else {} %}
   <div id="{{ page_info['title'] }}Section" class="qs-workspace-section" data-current-step="{{ page_info['template_name'] }}">
     <script>document.body.classList.add('qs-has-workspace')</script>
     <div class="qs-workspace-shell" data-qs-workspace-shell>
@@ -42,14 +43,20 @@
               </div>
             </div>
 
-            <div class="qs-step-progress-strip">
-              <div class="small text-muted mb-1">Progress</div>
+            <div class="qs-step-progress-strip qs-readiness-strip qs-readiness-state-{{ readiness.get('required_state', 'unknown') }}">
+              <div class="small text-muted mb-1">Readiness</div>
               <div class="progress" style="height: 6px;">
-                <div class="progress-bar bg-success" style="width: {{ page_info.get('progress', 0) }}%;"></div>
+                <div class="progress-bar qs-readiness-required-bar" style="width: {{ readiness.get('required_percent', 0) }}%;"></div>
               </div>
               <div class="small text-muted mt-1 qs-step-progress-text">
-                <span class="qs-step-progress-text-full">{{ page_info.get('progress', 0) }}% Completed</span>
-                <span class="qs-step-progress-text-short">{{ page_info.get('progress', 0) }}%</span>
+                <span class="qs-step-progress-text-full">Required {{ readiness.get('required_ready', 0) }}/{{ readiness.get('required_total', 0) }}</span>
+                <span class="qs-step-progress-text-short">{{ readiness.get('required_percent', 0) }}%</span>
+              </div>
+              <div class="small text-muted qs-readiness-subline">
+                {{ readiness.get('optional_summary', 'Optional 0/0 configured') }}
+              </div>
+              <div class="small qs-readiness-subline qs-readiness-freshness-{{ readiness.get('validation_freshness', 'never') }}">
+                Last validated: {{ readiness.get('validation_age_label', 'Never') }}
               </div>
             </div>
             <div class="qs-step-groups">
