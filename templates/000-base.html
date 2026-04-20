@@ -57,6 +57,11 @@
     window.QS_SESSION_LIFETIME_DAYS = "{{ config.get('QS_SESSION_LIFETIME_DAYS', 30) }}";
     window.QS_FLASK_SESSION_DIR = {{ config.get('QS_FLASK_SESSION_DIR', '') | tojson }};
     window.QS_RESTART_NOTICE = {{ config.get('QS_RESTART_NOTICE') | tojson }};
+    window.QS_CURRENT_TEMPLATE = {{ (page_info.get('template_name', '') if page_info else '') | tojson }};
+    window.QS_REQUIRED_KEYS = {{ (required_keys if required_keys is defined else []) | tojson }};
+    window.QS_OPTIONAL_KEYS = {{ (optional_keys if optional_keys is defined else []) | tojson }};
+    window.QS_REVIEW_KEYS = {{ (review_keys if review_keys is defined else []) | tojson }};
+    window.QS_MAL_REQUIREMENT_REASONS = {{ (mal_requirement_reasons if mal_requirement_reasons is defined else []) | tojson }};
   </script>
   <script type="text/javascript" src="{{ url_for('static', filename='local-js/000-base.js') }}"></script>
   <script type="text/javascript" src="{{ url_for('static', filename='local-js/pathValidation.js') }}"></script>

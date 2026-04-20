@@ -2,8 +2,11 @@
   {% import "partials/_workspace_macros.html" as workspace %}
   {% set qs_is_docker = version_info and version_info.running_on and ('Docker' in version_info.running_on) %}
   {% set hide_step_nav = page_info.get('hide_step_nav', False) %}
-  {% set required_keys = ['001-start', '010-plex', '020-tmdb', '025-libraries', '150-settings'] %}
-  {% set review_keys = ['900-final', '905-analytics', '910-sponsor'] %}
+  {% set required_keys = required_keys if required_keys is defined else ['001-start', '010-plex', '020-tmdb', '025-libraries', '150-settings'] %}
+  {% set review_keys = review_keys if review_keys is defined else ['900-final', '905-analytics', '910-sponsor'] %}
+  {% if optional_keys is defined %}
+  {% set optional_ns = namespace(keys=optional_keys) %}
+  {% else %}
   {% set optional_ns = namespace(keys=[]) %}
   {% for file, _ in template_list %}
   {% set template_key = file.rsplit('.', 1)[0] %}
@@ -11,10 +14,12 @@
   {% set optional_ns.keys = optional_ns.keys + [template_key] %}
   {% endif %}
   {% endfor %}
+  {% endif %}
   {% set current_template = page_info['template_name'] %}
   {% set required_open = current_template in required_keys %}
   {% set optional_open = current_template in optional_ns.keys %}
   {% set review_open = current_template in review_keys %}
+  {% set mal_reasons = mal_requirement_reasons if mal_requirement_reasons is defined else [] %}
   <div id="{{ page_info['title'] }}Section" class="qs-workspace-section" data-current-step="{{ page_info['template_name'] }}">
     <script>document.body.classList.add('qs-has-workspace')</script>
     <div class="qs-workspace-shell" data-qs-workspace-shell>
@@ -25,6 +30,17 @@
           <div class="qs-workspace-nav-sticky">
             {{ workspace.sidebar_controls(page_info) }}
             {{ workspace.step_action_bar(page_info, hide_step_nav, template_list, jump_to_validations, step_statuses, sidebar_mode=True) }}
+            <div class="qs-mal-required-hint {% if not mal_reasons %}d-none{% endif %}" data-qs-mal-required-hint>
+              <div class="qs-mal-required-hint-title">MAL required by</div>
+              <div class="qs-mal-required-hint-lines" data-qs-mal-required-lines>
+                {% for reason in mal_reasons[:2] %}
+                <div class="qs-mal-required-hint-line">{{ reason }}</div>
+                {% endfor %}
+                {% if mal_reasons|length > 2 %}
+                <div class="qs-mal-required-hint-line">+{{ mal_reasons|length - 2 }} more...</div>
+                {% endif %}
+              </div>
+            </div>
 
             <div class="qs-step-progress-strip">
               <div class="small text-muted mb-1">Progress</div>

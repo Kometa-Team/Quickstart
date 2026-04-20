@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const copyModal = copyModalEl ? new bootstrap.Modal(copyModalEl) : null
     let activeLibraryId = null
     let loadRequestId = 0
+    const malHintEndpoint = '/libraries_mal_dependency_hint'
+    let malHintRefreshTimer = null
+    let malHintRequestToken = 0
 
     // Ensure hidden "false" inputs don't submit alongside checked checkboxes with the same name
     function syncHiddenCheckboxPairs (scope) {
@@ -216,6 +219,139 @@ document.addEventListener('DOMContentLoaded', function () {
 
         syncActive()
       })
+    }
+
+    function normalizeMalHintReasons (reasons) {
+      if (!Array.isArray(reasons)) return []
+      return reasons
+        .map(reason => String(reason || '').trim())
+        .filter(Boolean)
+    }
+
+    function parseStepOrder (stepKey) {
+      const match = String(stepKey || '').match(/^(\d+)-/)
+      if (!match) return Number.MAX_SAFE_INTEGER
+      const parsed = Number.parseInt(match[1], 10)
+      return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER
+    }
+
+    function insertStepByOrder (container, stepButton) {
+      if (!container || !stepButton) return
+      const targetOrder = parseStepOrder(stepButton.dataset.stepKey)
+      const siblings = Array.from(container.querySelectorAll('.qs-step-link[data-step-key]')).filter(el => el !== stepButton)
+      const nextSibling = siblings.find(el => parseStepOrder(el.dataset.stepKey) > targetOrder)
+      if (nextSibling) {
+        container.insertBefore(stepButton, nextSibling)
+      } else {
+        container.appendChild(stepButton)
+      }
+    }
+
+    function syncMalStepGrouping (isRequired) {
+      const malStepKey = '140-mal'
+      const requiredList = document.querySelector('.qs-step-group[data-step-group="required"] .qs-step-group-list')
+      const optionalList = document.querySelector('.qs-step-group[data-step-group="optional"] .qs-step-group-list')
+      if (!requiredList || !optionalList) return
+
+      const malButton = document.querySelector(`.qs-step-group-list .qs-step-link[data-step-key="${malStepKey}"]`)
+      if (!malButton) return
+
+      const targetList = isRequired ? requiredList : optionalList
+      if (malButton.parentElement === targetList) return
+
+      insertStepByOrder(targetList, malButton)
+      if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refreshSidebar === 'function') {
+        window.QSValidationCallouts.refreshSidebar()
+      }
+    }
+
+    function applyMalRequirementHint (reasons) {
+      const normalized = normalizeMalHintReasons(reasons)
+      syncMalStepGrouping(normalized.length > 0)
+      const hints = document.querySelectorAll('[data-qs-mal-required-hint]')
+      hints.forEach((hint) => {
+        const lines = hint.querySelector('[data-qs-mal-required-lines]')
+        if (!lines) return
+
+        lines.replaceChildren()
+        if (!normalized.length) {
+          hint.classList.add('d-none')
+          return
+        }
+
+        hint.classList.remove('d-none')
+        const visibleCount = 2
+        normalized.slice(0, visibleCount).forEach((reason) => {
+          const row = document.createElement('div')
+          row.className = 'qs-mal-required-hint-line'
+          row.textContent = reason
+          lines.appendChild(row)
+        })
+
+        if (normalized.length > visibleCount) {
+          const more = document.createElement('div')
+          more.className = 'qs-mal-required-hint-line'
+          more.textContent = `+${normalized.length - visibleCount} more...`
+          lines.appendChild(more)
+        }
+      })
+    }
+
+    function requestMalRequirementHintNow () {
+      const card = libraryContainer ? libraryContainer.firstElementChild : null
+      if (!card || !activeLibraryId) return Promise.resolve()
+
+      const payload = {
+        source_library_id: activeLibraryId,
+        source_payload: buildPayloadFromCard(card)
+      }
+      const currentToken = ++malHintRequestToken
+      return fetch(malHintEndpoint, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+        .then(res => {
+          if (!res.ok) throw new Error(`MAL hint request failed: ${res.status}`)
+          return res.json()
+        })
+        .then(data => {
+          if (currentToken !== malHintRequestToken) return
+          applyMalRequirementHint(data && data.success ? data.reasons : [])
+        })
+        .catch(() => {})
+    }
+
+    function scheduleMalRequirementHintRefresh (delayMs = 220) {
+      if (malHintRefreshTimer) {
+        clearTimeout(malHintRefreshTimer)
+        malHintRefreshTimer = null
+      }
+      malHintRefreshTimer = setTimeout(() => {
+        malHintRefreshTimer = null
+        requestMalRequirementHintNow()
+      }, Math.max(0, Number(delayMs) || 0))
+    }
+
+    function bindMalRequirementHintLiveRefresh (card) {
+      if (!card || card.dataset.malHintWatcherBound === 'true') return
+
+      const shouldTrack = (name) => {
+        const fieldName = String(name || '')
+        if (!fieldName) return false
+        return /-library$|-collection_|-attribute_mass_[a-z0-9_]+_/i.test(fieldName)
+      }
+
+      const onFieldInteraction = (event) => {
+        const target = event && event.target
+        if (!target || !shouldTrack(target.name)) return
+        scheduleMalRequirementHintRefresh(160)
+      }
+
+      card.addEventListener('input', onFieldInteraction)
+      card.addEventListener('change', onFieldInteraction)
+      card.dataset.malHintWatcherBound = 'true'
     }
 
     function initRelativeYearInputs (scope) {
@@ -1072,6 +1208,8 @@ document.addEventListener('DOMContentLoaded', function () {
       wireFontUploads(card)
       wireFontPreviews(card)
       wireFontPickerButtons(card)
+      bindMalRequirementHintLiveRefresh(card)
+      scheduleMalRequirementHintRefresh(0)
     }
 
     wireFontPickerModal()
@@ -1201,6 +1339,9 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
           if (data && data.success && typeof showToast === 'function') {
             showToast('success', `Autosaved ${friendlyName}.`)
+          }
+          if (data && data.success) {
+            scheduleMalRequirementHintRefresh(0)
           }
           return data
         })
@@ -1332,6 +1473,7 @@ document.addEventListener('DOMContentLoaded', function () {
               const label = filtered.length === 1 ? 'library' : 'libraries'
               showToast('success', `Mirrored settings to ${filtered.length} ${label}.`)
             }
+            scheduleMalRequirementHintRefresh(0)
           })
           .catch(err => {
             console.error('[Copy] Failed to mirror library settings', err)

@@ -1,4 +1,4 @@
-/* global bootstrap, $, location, MutationObserver, requestAnimationFrame, cancelAnimationFrame, PathValidation, URLValidation */
+/* global bootstrap, $, location, MutationObserver, requestAnimationFrame, PathValidation, URLValidation */
 
 (function () {
   const isDebug = typeof window.QS_DEBUG !== 'undefined' && String(window.QS_DEBUG).toLowerCase() === 'true'
@@ -162,9 +162,6 @@ let qsNavLoadingQuoteTimer = null
 let qsNavLoadingQuoteKickTimer = null
 let qsNavLoadingQuotePool = []
 let qsNavLoadingLastQuote = ''
-let qsNavLoadingSpinnerRaf = null
-let qsNavLoadingSpinnerAngle = 0
-let qsNavLoadingSpinnerLastTs = 0
 
 function shuffleNavLoadingQuotes (items) {
   const shuffled = items.slice()
@@ -235,36 +232,15 @@ function stopNavLoadingQuoteLoop () {
 }
 
 function startNavLoadingSpinnerLoop (overlay) {
-  if (qsNavLoadingSpinnerRaf) {
-    cancelAnimationFrame(qsNavLoadingSpinnerRaf)
-    qsNavLoadingSpinnerRaf = null
-  }
   const spinner = overlay ? overlay.querySelector('.qs-nav-loading-spinner') : null
   if (!spinner) return
-  qsNavLoadingSpinnerLastTs = 0
-
-  const tick = (ts) => {
-    if (!spinner || !overlay || !overlay.classList.contains('is-active')) {
-      qsNavLoadingSpinnerRaf = null
-      return
-    }
-    if (!qsNavLoadingSpinnerLastTs) qsNavLoadingSpinnerLastTs = ts
-    const dt = ts - qsNavLoadingSpinnerLastTs
-    qsNavLoadingSpinnerLastTs = ts
-    qsNavLoadingSpinnerAngle = (qsNavLoadingSpinnerAngle + (dt * 0.36)) % 360
-    spinner.style.transform = `rotate(${qsNavLoadingSpinnerAngle}deg)`
-    qsNavLoadingSpinnerRaf = requestAnimationFrame(tick)
-  }
-
-  qsNavLoadingSpinnerRaf = requestAnimationFrame(tick)
+  spinner.classList.add('is-spinning')
 }
 
 function stopNavLoadingSpinnerLoop () {
-  if (qsNavLoadingSpinnerRaf) {
-    cancelAnimationFrame(qsNavLoadingSpinnerRaf)
-    qsNavLoadingSpinnerRaf = null
-  }
-  qsNavLoadingSpinnerLastTs = 0
+  document.querySelectorAll('.qs-nav-loading-spinner.is-spinning').forEach((spinner) => {
+    spinner.classList.remove('is-spinning')
+  })
 }
 
 function ensureNavigationLoadingOverlay () {
@@ -979,10 +955,154 @@ function updateValidationCallouts (inputId) {
       } else {
         collapse.classList.toggle('show', shouldShow)
       }
+
+      refreshValidationAccordionTitle(wrapper, isValidated)
     })
   }
 
   qsRefreshSidebarValidationState(inputId)
+}
+
+function getCurrentTemplateKey () {
+  const raw = String(window.QS_CURRENT_TEMPLATE || '').trim()
+  if (!raw) return ''
+  return raw.endsWith('.html') ? raw.replace(/\.html$/i, '') : raw
+}
+
+function getCurrentTemplateGroup () {
+  const key = getCurrentTemplateKey()
+  if (!key) return ''
+  const required = Array.isArray(window.QS_REQUIRED_KEYS) ? window.QS_REQUIRED_KEYS : []
+  const review = Array.isArray(window.QS_REVIEW_KEYS) ? window.QS_REVIEW_KEYS : []
+  if (required.includes(key)) return 'required'
+  if (review.includes(key)) return 'review'
+  return 'optional'
+}
+
+function applyDynamicValidationCalloutState (alert) {
+  if (!alert) return
+
+  if (!alert.dataset.qsOriginalHtml) {
+    alert.dataset.qsOriginalHtml = alert.innerHTML
+  }
+
+  const group = getCurrentTemplateGroup()
+  const templateKey = getCurrentTemplateKey()
+  const isRequired = group === 'required'
+  const isOptional = group === 'optional'
+  const isReview = group === 'review'
+
+  let html = alert.dataset.qsOriginalHtml
+
+  if (isRequired) {
+    html = html.replace(
+      /<br>\s*Alternatively,\s*navigate to another page to skip this section\./gi,
+      '<br><strong>This page is currently required based on your configuration.</strong>'
+    )
+  }
+
+  alert.innerHTML = html
+
+  const heading = alert.querySelector('h6, h4')
+  if (heading && !isReview) {
+    heading.innerHTML = `<b>${isRequired ? 'This page is mandatory and must be completed' : 'This page is optional'}</b>`
+  }
+
+  alert.classList.remove('alert-info', 'alert-danger', 'alert-warning', 'alert-success')
+  if (isRequired) {
+    alert.classList.add('alert-danger')
+  } else if (isOptional) {
+    alert.classList.add('alert-info')
+  } else if (isReview) {
+    alert.classList.add('alert-success')
+  }
+
+  if (templateKey === '140-mal') {
+    alert.querySelectorAll('[data-qs-callout-mal-reason]').forEach((el) => el.remove())
+    const reasons = Array.isArray(window.QS_MAL_REQUIREMENT_REASONS) ? window.QS_MAL_REQUIREMENT_REASONS.filter(Boolean) : []
+    if (isRequired && reasons.length) {
+      const box = document.createElement('div')
+      box.className = 'qs-callout-mal-reason mt-2'
+      box.setAttribute('data-qs-callout-mal-reason', 'true')
+
+      const title = document.createElement('div')
+      title.className = 'qs-callout-mal-reason-title'
+      title.textContent = 'Now required because:'
+      box.appendChild(title)
+
+      const list = document.createElement('ul')
+      list.className = 'qs-callout-mal-reason-list'
+      reasons.slice(0, 3).forEach((reason) => {
+        const li = document.createElement('li')
+        li.textContent = String(reason)
+        list.appendChild(li)
+      })
+      if (reasons.length > 3) {
+        const li = document.createElement('li')
+        li.textContent = `+${reasons.length - 3} more...`
+        list.appendChild(li)
+      }
+      box.appendChild(list)
+
+      const headingNode = alert.querySelector('h6, h4')
+      if (headingNode && headingNode.parentNode) {
+        headingNode.insertAdjacentElement('afterend', box)
+      } else {
+        alert.prepend(box)
+      }
+    }
+  }
+}
+
+function refreshValidationAccordionTitle (wrapper, isValidated) {
+  if (!wrapper) return
+  const button = wrapper.querySelector('.accordion-button')
+  if (!button) return
+
+  const baseTitle = String(
+    wrapper.dataset.qsCalloutTitle ||
+    button.dataset.qsBaseTitle ||
+    button.textContent ||
+    'Setup guidance'
+  ).trim()
+
+  if (!button.dataset.qsBaseTitle) {
+    button.dataset.qsBaseTitle = baseTitle
+  }
+  if (!wrapper.dataset.qsCalloutTitle) {
+    wrapper.dataset.qsCalloutTitle = baseTitle
+  }
+
+  let title = baseTitle
+  let showCheck = false
+  if (isValidated) {
+    const group = getCurrentTemplateGroup()
+    if (group === 'required') {
+      title = 'Required page validated'
+      showCheck = true
+    } else if (group === 'optional') {
+      title = 'Optional page guidance'
+      showCheck = true
+    } else if (group === 'review') {
+      title = 'Review page guidance'
+      showCheck = true
+    } else {
+      title = 'Page guidance'
+      showCheck = true
+    }
+  }
+
+  button.replaceChildren()
+  const label = document.createElement('span')
+  label.textContent = title
+  button.appendChild(label)
+
+  if (showCheck) {
+    const icon = document.createElement('i')
+    icon.className = 'bi bi-check-circle-fill ms-2 small text-success'
+    icon.setAttribute('aria-hidden', 'true')
+    button.appendChild(icon)
+  }
 }
 
 function setupValidationCallouts () {
@@ -992,6 +1112,8 @@ function setupValidationCallouts () {
   callouts.forEach((alert, index) => {
     if (alert.closest('.modal')) return
     if (alert.closest('.qs-validation-accordion')) return
+
+    applyDynamicValidationCalloutState(alert)
 
     const validatedInput = getValidatedInput()
     if (!validatedInput) return
@@ -1036,11 +1158,14 @@ function setupValidationCallouts () {
     accordionItem.appendChild(header)
     accordionItem.appendChild(collapse)
     wrapper.appendChild(accordionItem)
+    wrapper.dataset.qsCalloutTitle = title
 
     const parent = alert.parentNode
     parent.insertBefore(wrapper, alert)
     body.appendChild(alert)
     alert.classList.add('mb-0')
+
+    refreshValidationAccordionTitle(wrapper, isValidated)
   })
 }
 

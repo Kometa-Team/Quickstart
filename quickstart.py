@@ -163,6 +163,20 @@ QS_ERROR_REASONS = {
     "invalid_fields",
     "missing_placeholder_imdb",
 }
+QS_MAL_REQUIRED_STEP_KEY = "140-mal"
+QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
+QS_MAL_DEP_ATTRIBUTE_OPERATIONS = {
+    "mass_genre_update",
+    "mass_content_rating_update",
+    "mass_original_title_update",
+    "mass_studio_update",
+    "mass_originally_available_update",
+    "mass_added_at_update",
+    "mass_audience_rating_update",
+    "mass_critic_rating_update",
+    "mass_user_rating_update",
+}
+QS_MAL_DEP_ATTRIBUTE_VALUES = {"mal", "mal_english", "mal_japanese"}
 
 
 def utc_now_iso():
@@ -233,6 +247,156 @@ def _safe_int(value, default=0):
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def _is_truthy_setting_value(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text in {"", "0", "false", "none", "null", "[]", "{}"}:
+            return False
+        return True
+    if isinstance(value, (list, tuple, set, dict)):
+        return len(value) > 0
+    return bool(value)
+
+
+def _parse_json_array(value):
+    if isinstance(value, list):
+        return value
+    if not isinstance(value, str):
+        return []
+    text = value.strip()
+    if not text:
+        return []
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError):
+        return []
+    return parsed if isinstance(parsed, list) else []
+
+
+def _library_prefix_from_key(key):
+    if not isinstance(key, str) or not key.startswith(("mov-library_", "sho-library_")):
+        return None
+    if "-template_" in key:
+        return key.split("-template_", 1)[0]
+    if "-attribute_" in key:
+        return key.split("-attribute_", 1)[0]
+    if "-collection_" in key:
+        return key.split("-collection_", 1)[0]
+    if "-overlay_" in key:
+        return key.split("-overlay_", 1)[0]
+    if "-top_level_" in key:
+        return key.split("-top_level_", 1)[0]
+    if key.endswith("-library"):
+        return key[: -len("-library")]
+    return None
+
+
+def _libraries_data_requires_mal(libraries_data):
+    return bool(_libraries_data_mal_dependency_reasons(libraries_data))
+
+
+def _libraries_data_mal_dependency_reasons(libraries_data):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    active_prefixes = set()
+    for raw_key, raw_value in libraries_data.items():
+        key = str(raw_key or "").strip().lower()
+        if not key.endswith("-library"):
+            continue
+        prefix = _library_prefix_from_key(key)
+        if prefix and _is_truthy_setting_value(raw_value):
+            active_prefixes.add(prefix)
+
+    reasons = []
+    seen = set()
+
+    def add_reason(prefix, detail):
+        library_name = libraries_data.get(f"{prefix}-library")
+        if isinstance(library_name, str) and library_name.strip():
+            label = library_name.strip()
+        else:
+            label = prefix
+        reason = f"{label}: {detail}"
+        normalized = reason.lower()
+        if normalized in seen:
+            return
+        seen.add(normalized)
+        reasons.append(reason)
+
+    for raw_key, raw_value in libraries_data.items():
+        key = str(raw_key or "").strip().lower()
+        if not key:
+            continue
+
+        prefix = _library_prefix_from_key(key)
+        if prefix and active_prefixes and prefix not in active_prefixes:
+            continue
+
+        if "-collection_" in key and _is_truthy_setting_value(raw_value):
+            collection_id = f"collection_{key.rsplit('-collection_', 1)[1]}"
+            if collection_id in QS_MAL_DEP_COLLECTION_IDS:
+                add_reason(prefix or "library", "MyAnimeList Charts collection enabled")
+                continue
+
+        attr_match = re.search(r"-attribute_(mass_[a-z0-9_]+)_(mal(?:_english|_japanese)?)$", key)
+        if attr_match and _is_truthy_setting_value(raw_value):
+            operation = attr_match.group(1)
+            source_value = attr_match.group(2)
+            if operation in QS_MAL_DEP_ATTRIBUTE_OPERATIONS and source_value in QS_MAL_DEP_ATTRIBUTE_VALUES:
+                detail = f"{operation} uses {source_value}"
+                add_reason(prefix or "library", detail)
+                continue
+
+        order_match = re.search(r"-attribute_(mass_[a-z0-9_]+)_order$", key)
+        if not order_match:
+            continue
+        operation = order_match.group(1)
+        if operation not in QS_MAL_DEP_ATTRIBUTE_OPERATIONS:
+            continue
+        matched_sources = []
+        for entry in _parse_json_array(raw_value):
+            source_value = str(entry or "").strip().lower()
+            if source_value in QS_MAL_DEP_ATTRIBUTE_VALUES:
+                matched_sources.append(source_value)
+        if matched_sources:
+            joined_sources = ", ".join(sorted(set(matched_sources)))
+            detail = f"{operation} order includes {joined_sources}"
+            add_reason(prefix or "library", detail)
+
+    return reasons
+
+
+def _config_requires_mal(section_rows):
+    if not isinstance(section_rows, dict):
+        return False
+    libraries_row = section_rows.get("libraries")
+    if not isinstance(libraries_row, dict):
+        return False
+    libraries_payload = libraries_row.get("data")
+    if not isinstance(libraries_payload, dict):
+        return False
+    libraries_data = libraries_payload.get("libraries", {})
+    return _libraries_data_requires_mal(libraries_data)
+
+
+def _config_mal_dependency_reasons(section_rows):
+    if not isinstance(section_rows, dict):
+        return []
+    libraries_row = section_rows.get("libraries")
+    if not isinstance(libraries_row, dict):
+        return []
+    libraries_payload = libraries_row.get("data")
+    if not isinstance(libraries_payload, dict):
+        return []
+    libraries_data = libraries_payload.get("libraries", {})
+    return _libraries_data_mal_dependency_reasons(libraries_data)
 
 
 def _worst_status(statuses):
@@ -315,6 +479,85 @@ def _latest_iso_timestamp(values):
     return latest_dt.isoformat().replace("+00:00", "Z") if latest_dt else None
 
 
+def _is_nonblank_setting(value):
+    if value is None:
+        return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return True
+    text = str(value).strip()
+    if not text:
+        return False
+    return text.lower() not in {"none", "null", "false"}
+
+
+def _has_meaningful_optional_input(template_key, payload):
+    if not isinstance(payload, dict):
+        return False
+
+    # Playlists intentionally treat pass-through differently (handled in its own branch).
+    if template_key == "027-playlist_files":
+        return True
+
+    simple_key_requirements = {
+        "030-tautulli": ("tautulli", ("url", "apikey")),
+        "040-github": ("github", ("token",)),
+        "050-omdb": ("omdb", ("apikey",)),
+        "060-mdblist": ("mdblist", ("apikey",)),
+        "070-notifiarr": ("notifiarr", ("apikey",)),
+        "080-gotify": ("gotify", ("url", "token")),
+        "085-ntfy": ("ntfy", ("url", "token", "topic")),
+        "090-webhooks": ("webhooks", ("notifiarr", "gotify", "ntfy", "slack", "discord", "webhook", "url")),
+        "100-anidb": ("anidb", ("client", "version")),
+        "110-radarr": ("radarr", ("url", "token")),
+        "120-sonarr": ("sonarr", ("url", "token")),
+    }
+
+    req = simple_key_requirements.get(template_key)
+    if req:
+        section_name, keys = req
+        section_data = payload.get(section_name, {})
+        if isinstance(section_data, dict):
+            return any(_is_nonblank_setting(section_data.get(key)) for key in keys)
+        return False
+
+    if template_key == "130-trakt":
+        trakt = payload.get("trakt", {})
+        if not isinstance(trakt, dict):
+            return False
+        auth = trakt.get("authorization", {}) if isinstance(trakt.get("authorization"), dict) else {}
+        return any(
+            _is_nonblank_setting(value)
+            for value in (
+                trakt.get("client_id"),
+                trakt.get("client_secret"),
+                trakt.get("pin"),
+                auth.get("access_token"),
+                auth.get("refresh_token"),
+            )
+        )
+
+    if template_key == "140-mal":
+        mal = payload.get("mal", {})
+        if not isinstance(mal, dict):
+            return False
+        auth = mal.get("authorization", {}) if isinstance(mal.get("authorization"), dict) else {}
+        return any(
+            _is_nonblank_setting(value)
+            for value in (
+                mal.get("client_id"),
+                mal.get("client_secret"),
+                mal.get("localhost_url"),
+                auth.get("access_token"),
+                auth.get("refresh_token"),
+            )
+        )
+
+    # For unknown validation-backed optional steps, keep prior behavior.
+    return True
+
+
 def _derive_step_status(template_key, group, section_rows, config_exists):
     if template_key == "001-start":
         return "ok" if config_exists else "error"
@@ -328,6 +571,7 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
     section_name = template_key.split("-", 1)[1] if "-" in template_key else template_key
     section_entry = section_rows.get(section_name) if isinstance(section_rows, dict) else None
     section_entry = section_entry if isinstance(section_entry, dict) else {}
+    section_row_present = bool(section_entry)
 
     validated = helpers.booler(section_entry.get("validated", False))
     user_entered = helpers.booler(section_entry.get("user_entered", False))
@@ -336,8 +580,43 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
     validation_status = str(payload.get("validation_status") or "").strip().lower()
     validation_reason = str(payload.get("validation_reason") or "").strip().lower()
     was_previously_validated = bool(payload.get("validated_at"))
+    if template_key == "027-playlist_files":
+        playlist_payload = payload.get("playlist_files", payload if isinstance(payload, dict) else {})
+        if isinstance(playlist_payload, dict) and isinstance(playlist_payload.get("playlist_files"), dict):
+            playlist_payload = playlist_payload.get("playlist_files", {})
+        playlist_libraries = ""
+        if isinstance(playlist_payload, dict):
+            raw_libraries = playlist_payload.get("libraries")
+            if isinstance(raw_libraries, list):
+                selected_libraries = [str(item).strip() for item in raw_libraries if str(item).strip()]
+            else:
+                playlist_libraries = str(raw_libraries or "")
+                selected_libraries = [item.strip() for item in playlist_libraries.split(",") if item.strip()]
+        else:
+            selected_libraries = []
+
+        if validation_status == "failed":
+            return "error"
+        if selected_libraries:
+            # Playlist selection itself is the completion signal for this optional page.
+            return "ok"
+
+        # If user has visited/passed-through this page (even with no libraries selected),
+        # treat it as intentionally acknowledged/valid.
+        was_visited = section_row_present and (
+            user_entered
+            or bool(validation_status)
+            or bool(payload.get("validation_updated_at"))
+            or bool(payload.get("validated_at"))
+        )
+        if was_visited:
+            return "ok"
+        return "unknown"
 
     if template_key in QS_VALIDATION_STEP_KEYS:
+        if group == "optional" and not _has_meaningful_optional_input(template_key, payload):
+            return "unknown"
+
         if validated or validation_status == "validated":
             return "ok"
 
@@ -345,14 +624,16 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
             return "error"
 
         if validation_status == "skipped":
+            if template_key == "027-playlist_files" and validation_reason == "no_libraries":
+                return "unknown"
             if validation_reason in QS_ERROR_REASONS:
                 return "error"
-            if validation_reason in QS_WARN_REASONS:
-                if group == "optional":
-                    return "warn" if user_entered else "unknown"
-                return "warn"
             if group == "optional":
-                return "warn" if user_entered else "unknown"
+                # Optional sections should remain neutral when users simply pass through
+                # or when validation is skipped due to missing optional inputs.
+                return "unknown"
+            if validation_reason in QS_WARN_REASONS:
+                return "warn"
             return "warn" if group == "required" else ("warn" if user_entered else "ok")
 
         if group == "required":
@@ -381,10 +662,6 @@ def _build_workspace_status_context(config_name, template_list, available_config
         template_key = file_entry.rsplit(".", 1)[0]
         template_keys.append(template_key)
 
-    required_keys = [key for key in QS_REQUIRED_STEP_KEYS if key in template_keys]
-    review_keys = [key for key in QS_REVIEW_STEP_KEYS if key in template_keys]
-    optional_keys = [key for key in template_keys if key not in required_keys and key not in review_keys]
-
     section_rows = {}
     if config_name:
         try:
@@ -397,6 +674,16 @@ def _build_workspace_status_context(config_name, template_list, available_config
 
     available_set = set(available_configs or [])
     config_exists = bool(config_name) and (config_name in available_set or bool(section_rows))
+
+    required_seed = set(QS_REQUIRED_STEP_KEYS)
+    mal_requirement_reasons = _config_mal_dependency_reasons(section_rows) if QS_MAL_REQUIRED_STEP_KEY in template_keys else []
+    if QS_MAL_REQUIRED_STEP_KEY in template_keys and mal_requirement_reasons:
+        required_seed.add(QS_MAL_REQUIRED_STEP_KEY)
+    review_seed = set(QS_REVIEW_STEP_KEYS)
+
+    required_keys = [key for key in template_keys if key in required_seed]
+    review_keys = [key for key in template_keys if key in review_seed]
+    optional_keys = [key for key in template_keys if key not in required_seed and key not in review_seed]
 
     step_statuses = {}
     for template_key in template_keys:
@@ -442,6 +729,10 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "step_statuses": step_statuses,
         "section_statuses": section_statuses,
         "jump_to_validations": jump_to_validations,
+        "required_keys": required_keys,
+        "optional_keys": optional_keys,
+        "review_keys": review_keys,
+        "mal_requirement_reasons": mal_requirement_reasons,
     }
 
 
@@ -3853,6 +4144,10 @@ def step(name):
             jump_to_validations=jump_to_validations,
             step_statuses=step_statuses,
             section_statuses=section_statuses,
+            required_keys=workspace_status.get("required_keys", []),
+            optional_keys=workspace_status.get("optional_keys", []),
+            review_keys=workspace_status.get("review_keys", []),
+            mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
             incomplete_resume_hint=incomplete_resume_hint,
         )
 
@@ -3889,6 +4184,10 @@ def step(name):
         jump_to_validations=jump_to_validations,
         step_statuses=step_statuses,
         section_statuses=section_statuses,
+        required_keys=workspace_status.get("required_keys", []),
+        optional_keys=workspace_status.get("optional_keys", []),
+        review_keys=workspace_status.get("review_keys", []),
+        mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
         image_data=_build_preview_image_data(),
         config_dir=str(Path(helpers.CONFIG_DIR).resolve()),
         configured_ids=configured_ids,
@@ -4024,6 +4323,51 @@ def autosave_library(library_id):
     except Exception as e:
         helpers.ts_log(f"Autosave failed for library {library_id}: {e}", level="ERROR")
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/libraries_mal_dependency_hint", methods=["POST"])
+def libraries_mal_dependency_hint():
+    """Preview MAL-required dependency reasons using current in-page library edits."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        source_library_id = str(payload.get("source_library_id") or "").strip()
+        source_payload = payload.get("source_payload") if isinstance(payload.get("source_payload"), dict) else {}
+
+        settings = persistence.retrieve_settings("025-libraries")
+        libraries_data = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+        merged = libraries_data.copy() if isinstance(libraries_data, dict) else {}
+
+        if source_payload:
+            clean_payload = persistence.clean_form_data(MultiDict(source_payload))
+            incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+            incoming_dict = incoming_dict if isinstance(incoming_dict, dict) else {}
+
+            prefixes = set()
+            if source_library_id:
+                source_prefix = source_library_id.split("-card-container")[0] if source_library_id.endswith("-card-container") else source_library_id
+                if source_prefix:
+                    prefixes.add(source_prefix)
+
+            for key in incoming_dict:
+                prefix = _library_prefix_from_key(key)
+                if prefix:
+                    prefixes.add(prefix)
+
+            for prefix in prefixes:
+                for existing_key in list(merged.keys()):
+                    if existing_key == f"{prefix}-library" or existing_key.startswith(prefix + "-"):
+                        merged.pop(existing_key, None)
+
+            for key, value in incoming_dict.items():
+                if key.endswith("-library") and not _is_truthy_setting_value(value):
+                    continue
+                merged[key] = value
+
+        reasons = _libraries_data_mal_dependency_reasons(merged)
+        return jsonify({"success": True, "required": bool(reasons), "reasons": reasons})
+    except Exception as e:
+        helpers.ts_log(f"Failed to build MAL dependency hint: {e}", level="ERROR")
+        return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
 
 
 @app.route("/copy_library_settings", methods=["POST"])
@@ -7098,6 +7442,10 @@ def logscan_trends_page():
         jump_to_validations=workspace_status.get("jump_to_validations", {}),
         step_statuses=workspace_status.get("step_statuses", {}),
         section_statuses=workspace_status.get("section_statuses", {}),
+        required_keys=workspace_status.get("required_keys", []),
+        optional_keys=workspace_status.get("optional_keys", []),
+        review_keys=workspace_status.get("review_keys", []),
+        mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
     )
 
 
