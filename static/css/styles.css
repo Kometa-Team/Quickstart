@@ -3378,10 +3378,18 @@ body {
 }
 
 .qs-nav-loading-spinner {
+    flex: 0 0 auto;
+    display: inline-block;
     width: clamp(2.8rem, 2.2rem + 1.8vw, 4.2rem);
     height: clamp(2.8rem, 2.2rem + 1.8vw, 4.2rem);
-    border-width: clamp(0.21rem, 0.16rem + 0.12vw, 0.33rem);
-    color: var(--theme-primary);
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    box-sizing: border-box;
+    border: clamp(0.21rem, 0.16rem + 0.12vw, 0.33rem) solid rgba(var(--accent-color), 0.28);
+    border-top-color: var(--theme-primary);
+    border-right-color: rgba(var(--accent-color), 0.7);
+    transform: rotate(0deg);
+    will-change: transform;
 }
 
 @media (max-width: 1023.98px) {
@@ -3925,6 +3933,17 @@ body {
     gap: 0.35rem;
     font-size: 0.86rem;
     color: var(--theme-text-muted);
+    line-height: 1;
+}
+
+.qs-main-page-meta-icon {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.78rem;
+    line-height: 1;
+    transform: translateY(-1px);
 }
 
 .qs-main-page-meta-label {
@@ -3932,6 +3951,7 @@ body {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--theme-text-muted);
+    line-height: 1;
 }
 
 .qs-main-page-meta-value {
@@ -3940,6 +3960,7 @@ body {
     color: var(--theme-text);
     letter-spacing: normal;
     text-transform: none;
+    line-height: 1;
 }
 
 .qs-main-config-chip {
@@ -4391,17 +4412,30 @@ body {
         display: none;
     }
 
-    .qs-sidebar-step-actions,
+    .qs-sidebar-step-actions {
+        display: block !important;
+    }
+
     .qs-sidebar-footer {
         display: none !important;
     }
 
     .qs-step-groups {
-        display: none;
+        display: flex;
     }
 
     .qs-step-list--compact {
-        display: flex;
+        display: none;
+    }
+
+    .qs-sidebar-step-actions button[formaction] {
+        display: none !important;
+    }
+
+    .qs-sidebar-step-actions .dropdown,
+    .qs-sidebar-step-actions .jump-to-button {
+        display: block;
+        width: 100%;
     }
 
     .qs-main-page-header .page-nav .nav-button.d-none {

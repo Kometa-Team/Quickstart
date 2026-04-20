@@ -1,4 +1,4 @@
-/* global bootstrap, $, location, MutationObserver, requestAnimationFrame, PathValidation, URLValidation */
+/* global bootstrap, $, location, MutationObserver, requestAnimationFrame, cancelAnimationFrame, PathValidation, URLValidation */
 
 (function () {
   const isDebug = typeof window.QS_DEBUG !== 'undefined' && String(window.QS_DEBUG).toLowerCase() === 'true'
@@ -159,8 +159,12 @@ const QS_NAV_LOADING_QUOTES = [
 ]
 
 let qsNavLoadingQuoteTimer = null
+let qsNavLoadingQuoteKickTimer = null
 let qsNavLoadingQuotePool = []
 let qsNavLoadingLastQuote = ''
+let qsNavLoadingSpinnerRaf = null
+let qsNavLoadingSpinnerAngle = 0
+let qsNavLoadingSpinnerLastTs = 0
 
 function shuffleNavLoadingQuotes (items) {
   const shuffled = items.slice()
@@ -202,20 +206,65 @@ function setNavLoadingQuote (overlay) {
 }
 
 function startNavLoadingQuoteLoop (overlay) {
+  if (qsNavLoadingQuoteKickTimer) {
+    clearTimeout(qsNavLoadingQuoteKickTimer)
+    qsNavLoadingQuoteKickTimer = null
+  }
   if (qsNavLoadingQuoteTimer) {
     clearInterval(qsNavLoadingQuoteTimer)
     qsNavLoadingQuoteTimer = null
   }
   setNavLoadingQuote(overlay)
-  qsNavLoadingQuoteTimer = setInterval(() => {
+  // Show the first quote change quickly so short waits still feel alive.
+  qsNavLoadingQuoteKickTimer = setTimeout(() => {
     setNavLoadingQuote(overlay)
-  }, 2800)
+    qsNavLoadingQuoteTimer = setInterval(() => {
+      setNavLoadingQuote(overlay)
+    }, 2800)
+  }, 1400)
 }
 
 function stopNavLoadingQuoteLoop () {
+  if (qsNavLoadingQuoteKickTimer) {
+    clearTimeout(qsNavLoadingQuoteKickTimer)
+    qsNavLoadingQuoteKickTimer = null
+  }
   if (!qsNavLoadingQuoteTimer) return
   clearInterval(qsNavLoadingQuoteTimer)
   qsNavLoadingQuoteTimer = null
+}
+
+function startNavLoadingSpinnerLoop (overlay) {
+  if (qsNavLoadingSpinnerRaf) {
+    cancelAnimationFrame(qsNavLoadingSpinnerRaf)
+    qsNavLoadingSpinnerRaf = null
+  }
+  const spinner = overlay ? overlay.querySelector('.qs-nav-loading-spinner') : null
+  if (!spinner) return
+  qsNavLoadingSpinnerLastTs = 0
+
+  const tick = (ts) => {
+    if (!spinner || !overlay || !overlay.classList.contains('is-active')) {
+      qsNavLoadingSpinnerRaf = null
+      return
+    }
+    if (!qsNavLoadingSpinnerLastTs) qsNavLoadingSpinnerLastTs = ts
+    const dt = ts - qsNavLoadingSpinnerLastTs
+    qsNavLoadingSpinnerLastTs = ts
+    qsNavLoadingSpinnerAngle = (qsNavLoadingSpinnerAngle + (dt * 0.36)) % 360
+    spinner.style.transform = `rotate(${qsNavLoadingSpinnerAngle}deg)`
+    qsNavLoadingSpinnerRaf = requestAnimationFrame(tick)
+  }
+
+  qsNavLoadingSpinnerRaf = requestAnimationFrame(tick)
+}
+
+function stopNavLoadingSpinnerLoop () {
+  if (qsNavLoadingSpinnerRaf) {
+    cancelAnimationFrame(qsNavLoadingSpinnerRaf)
+    qsNavLoadingSpinnerRaf = null
+  }
+  qsNavLoadingSpinnerLastTs = 0
 }
 
 function ensureNavigationLoadingOverlay () {
@@ -231,7 +280,7 @@ function ensureNavigationLoadingOverlay () {
   overlay.setAttribute('aria-hidden', 'true')
   overlay.innerHTML = `
     <div class="qs-nav-loading-card" role="status" aria-live="polite">
-      <div class="spinner-border qs-nav-loading-spinner" aria-hidden="true"></div>
+      <div class="qs-nav-loading-spinner" aria-hidden="true"></div>
       <div class="qs-nav-loading-text">
         <div class="qs-nav-loading-label">Opening step…</div>
         <div class="qs-nav-loading-quote">Downloading more RAM…</div>
@@ -265,12 +314,14 @@ function showNavigationLoadingOverlay (action, targetLabel) {
   }
 
   startNavLoadingQuoteLoop(overlay)
+  startNavLoadingSpinnerLoop(overlay)
   overlay.classList.add('is-active')
   overlay.setAttribute('aria-hidden', 'false')
 }
 
 function hideNavigationLoadingOverlay () {
   stopNavLoadingQuoteLoop()
+  stopNavLoadingSpinnerLoop()
   document.querySelectorAll('[data-qs-nav-overlay]').forEach((overlay) => {
     overlay.classList.remove('is-active')
     overlay.setAttribute('aria-hidden', 'true')
