@@ -136,6 +136,13 @@
       <label for="newConfigName">New Config Name</label>
     </div>
 
+    <div id="saveConfigRow" class="d-none mb-2">
+      <button type="button" class="btn btn-primary" id="saveConfigButton" disabled>
+        <i class="bi bi-floppy me-1"></i> Save & Activate Config
+      </button>
+      <div class="small text-muted mt-1">Commits the new config to the database and resets readiness for that config.</div>
+    </div>
+
     <div class="d-flex flex-wrap gap-2 mt-2">
       <!-- Reset (Start Over) Button -->
       <button type="button" class="btn btn-warning" id="resetConfigButton" disabled data-bs-toggle="modal"

@@ -78,6 +78,8 @@ function setButtonSpinner (button, text) {
 document.addEventListener('DOMContentLoaded', function () {
   const configSelector = document.getElementById('configSelector')
   const newConfigInput = document.getElementById('newConfigName')
+  const saveConfigRow = document.getElementById('saveConfigRow')
+  const saveConfigButton = document.getElementById('saveConfigButton')
   const resetConfigButton = document.getElementById('resetConfigButton')
   const deleteConfigButton = document.getElementById('deleteConfigButton')
   const renameConfigButton = document.getElementById('renameConfigButton')
@@ -167,6 +169,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const box = document.getElementById('newConfigInput')
     if (box) box.classList.toggle('d-none', !(isAddConfig || onlyAddConfigAvailable))
+
+    const showSave = isAddConfig || onlyAddConfigAvailable
+    if (saveConfigRow) saveConfigRow.classList.toggle('d-none', !showSave)
+
+    if (saveConfigButton) {
+      const proposed = sanitizeConfigName((newConfigInput && newConfigInput.value) || '').trim()
+      saveConfigButton.disabled = !showSave || !proposed
+    }
   }
 
   function updateConfigBadge (name) {
@@ -181,28 +191,73 @@ document.addEventListener('DOMContentLoaded', function () {
     label.appendChild(icon)
   }
 
+  function updateHeaderConfigName (name) {
+    if (!name) return
+    document.querySelectorAll('.qs-main-page-meta-value').forEach((node) => {
+      node.textContent = name
+    })
+  }
+
+  function upsertConfigOption (name) {
+    if (!configSelector || !name) return
+    const existing = Array.from(configSelector.options).find(option => option.value === name)
+    if (existing) return existing
+
+    const option = document.createElement('option')
+    option.value = name
+    option.textContent = name
+    configSelector.appendChild(option)
+    return option
+  }
+
+  function refreshWorkspaceStatusNow () {
+    if (window.QSWorkspaceStatus && typeof window.QSWorkspaceStatus.refresh === 'function') {
+      window.QSWorkspaceStatus.refresh({ immediate: true })
+    }
+    document.dispatchEvent(new CustomEvent('qs:workspace-data-changed', { detail: { source: 'start-config-activate', delayMs: 0 } }))
+  }
+
+  function applyActiveConfigUi (name) {
+    if (!name) return
+    if (window.pageInfo) window.pageInfo.config_name = name
+    updateConfigBadge(name)
+    updateHeaderConfigName(name)
+    upsertConfigOption(name)
+    if (configSelector) configSelector.value = name
+    updateButtonState()
+    refreshWorkspaceStatusNow()
+  }
+
+  async function activateConfig (name) {
+    const normalized = sanitizeConfigName(name)
+    if (!normalized) {
+      throw new Error('Please enter a valid config name.')
+    }
+    const res = await fetch('/activate-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: normalized })
+    })
+    const data = await res.json()
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to activate config.')
+    }
+    return data
+  }
+
   async function syncSelectedConfig () {
     if (!configSelector) return
     const selected = configSelector.value
     if (!selected || selected === 'add_config') return
 
     if (window.pageInfo && window.pageInfo.config_name === selected) {
-      updateConfigBadge(selected)
+      applyActiveConfigUi(selected)
       return
     }
 
     try {
-      const res = await fetch('/switch-config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: selected })
-      })
-      const data = await res.json()
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to switch configs.')
-      }
-      if (window.pageInfo) window.pageInfo.config_name = data.name
-      updateConfigBadge(data.name)
+      const data = await activateConfig(selected)
+      applyActiveConfigUi(data.name)
     } catch (err) {
       showToast('error', err.message || 'Failed to switch configs.')
     }
@@ -412,6 +467,14 @@ document.addEventListener('DOMContentLoaded', function () {
     newConfigInput.addEventListener('input', function () {
       newConfigInput.value = sanitizeConfigName(newConfigInput.value)
       checkDuplicateConfigName()
+      updateButtonState()
+    })
+    newConfigInput.addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter') return
+      event.preventDefault()
+      if (saveConfigButton && !saveConfigButton.disabled) {
+        saveConfigButton.click()
+      }
     })
   }
 
@@ -544,6 +607,39 @@ document.addEventListener('DOMContentLoaded', function () {
       const needsTmdb = importNeedsTmdbCredentials || /tmdb/i.test(message)
       importTmdbCredentials.classList.toggle('d-none', !needsTmdb)
     }
+  }
+
+  if (saveConfigButton) {
+    saveConfigButton.addEventListener('click', async () => {
+      if (!newConfigInput) return
+
+      const proposed = sanitizeConfigName(newConfigInput.value)
+      newConfigInput.value = proposed
+      removeValidationMessages(newConfigInput)
+      if (!proposed) {
+        applyValidationStyles(newConfigInput, 'error', 'Enter a config name.')
+        showToast('error', 'Please enter a config name.')
+        updateButtonState()
+        return
+      }
+
+      saveConfigButton.disabled = true
+      const originalHtml = saveConfigButton.innerHTML
+      saveConfigButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Saving...'
+      try {
+        const data = await activateConfig(proposed)
+        applyActiveConfigUi(data.name)
+        if (newConfigInput) removeValidationMessages(newConfigInput)
+        showToast('success', data.created ? `Config '${data.name}' created.` : `Config '${data.name}' loaded.`)
+        window.setTimeout(() => window.location.reload(), 200)
+      } catch (err) {
+        applyValidationStyles(newConfigInput, 'error', err.message || 'Unable to save config.')
+        showToast('error', err.message || 'Unable to save config.')
+      } finally {
+        saveConfigButton.innerHTML = originalHtml
+        updateButtonState()
+      }
+    })
   }
 
   function setImportCredentialFlags (options) {

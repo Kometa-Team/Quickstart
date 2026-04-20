@@ -2409,6 +2409,35 @@ def switch_config():
     return jsonify(success=True, name=name)
 
 
+@app.route("/activate-config", methods=["POST"])
+def activate_config():
+    data = request.get_json(silent=True) or {}
+    requested_name = data.get("name")
+    name = _sanitize_config_name(requested_name)
+    if not name:
+        return jsonify(success=False, message="Config name is required."), 400
+
+    available = database.get_unique_config_names() or []
+    created = name not in available
+
+    session["config_name"] = name
+
+    if created:
+        seed_payload = {
+            "start": {"config_name": name},
+            "validated_at": utc_now_iso(),
+        }
+        database.save_section_data(
+            name=name,
+            section="start",
+            validated=True,
+            user_entered=True,
+            data=seed_payload,
+        )
+
+    return jsonify(success=True, name=name, created=created)
+
+
 @app.route("/bulk-delete-configs", methods=["POST"])
 def bulk_delete_configs():
     data = request.get_json(silent=True) or {}
