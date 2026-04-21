@@ -978,13 +978,44 @@ function qsCompactValidationLabel (label) {
   return text
 }
 
-function qsApplyMalHintSidebar (reasons) {
+function qsDependencyConfigMap () {
+  return {
+    tautulli: {
+      stepKey: '030-tautulli',
+      windowKey: 'QS_TAUTULLI_REQUIREMENT_REASONS',
+      label: 'Tautulli'
+    },
+    trakt: {
+      stepKey: '130-trakt',
+      windowKey: 'QS_TRAKT_REQUIREMENT_REASONS',
+      label: 'Trakt'
+    },
+    mal: {
+      stepKey: '140-mal',
+      windowKey: 'QS_MAL_REQUIREMENT_REASONS',
+      label: 'MyAnimeList'
+    }
+  }
+}
+
+function qsNormalizeDependencyReasons (reasons) {
   const normalized = Array.isArray(reasons)
     ? reasons.map(reason => String(reason || '').trim()).filter(Boolean)
     : []
+  return normalized
+}
 
-  document.querySelectorAll('[data-qs-mal-required-hint]').forEach((hint) => {
-    const lines = hint.querySelector('[data-qs-mal-required-lines]')
+function qsGetDependencyReasonsForProvider (providerKey) {
+  const config = qsDependencyConfigMap()[providerKey]
+  if (!config) return []
+  return qsNormalizeDependencyReasons(window[config.windowKey])
+}
+
+function qsApplyDependencyHintSidebar (providerKey, reasons) {
+  const normalized = qsNormalizeDependencyReasons(reasons)
+
+  document.querySelectorAll(`[data-qs-dependency-hint="${providerKey}"]`).forEach((hint) => {
+    const lines = hint.querySelector('[data-qs-dependency-lines]')
     if (!lines) return
 
     lines.replaceChildren()
@@ -997,17 +1028,27 @@ function qsApplyMalHintSidebar (reasons) {
     const visibleCount = 2
     normalized.slice(0, visibleCount).forEach((reason) => {
       const row = document.createElement('div')
-      row.className = 'qs-mal-required-hint-line'
+      row.className = 'qs-dependency-hint-line'
       row.textContent = reason
       lines.appendChild(row)
     })
 
     if (normalized.length > visibleCount) {
       const more = document.createElement('div')
-      more.className = 'qs-mal-required-hint-line'
+      more.className = 'qs-dependency-hint-line'
       more.textContent = `+${normalized.length - visibleCount} more...`
       lines.appendChild(more)
     }
+  })
+}
+
+function qsApplyAllDependencyHints (dependencyPayload) {
+  const configMap = qsDependencyConfigMap()
+  Object.keys(configMap).forEach((providerKey) => {
+    const reasons = dependencyPayload && typeof dependencyPayload === 'object' && providerKey in dependencyPayload
+      ? dependencyPayload[providerKey]
+      : qsGetDependencyReasonsForProvider(providerKey)
+    qsApplyDependencyHintSidebar(providerKey, reasons)
   })
 }
 
@@ -1091,15 +1132,23 @@ function qsApplyWorkspaceStatus (payload) {
   const requiredKeys = qsArrayFromKeys(payload.required_keys)
   const optionalKeys = qsArrayFromKeys(payload.optional_keys)
   const reviewKeys = qsArrayFromKeys(payload.review_keys)
+  const tautulliReasons = qsArrayFromKeys(payload.tautulli_requirement_reasons)
+  const traktReasons = qsArrayFromKeys(payload.trakt_requirement_reasons)
   const malReasons = qsArrayFromKeys(payload.mal_requirement_reasons)
 
   window.QS_REQUIRED_KEYS = requiredKeys
   window.QS_OPTIONAL_KEYS = optionalKeys
   window.QS_REVIEW_KEYS = reviewKeys
+  window.QS_TAUTULLI_REQUIREMENT_REASONS = tautulliReasons
+  window.QS_TRAKT_REQUIREMENT_REASONS = traktReasons
   window.QS_MAL_REQUIREMENT_REASONS = malReasons
 
   qsApplyGroupMembership(requiredKeys, optionalKeys, reviewKeys)
-  qsApplyMalHintSidebar(malReasons)
+  qsApplyAllDependencyHints({
+    tautulli: tautulliReasons,
+    trakt: traktReasons,
+    mal: malReasons
+  })
 
   if (payload.step_statuses && typeof payload.step_statuses === 'object') {
     Object.keys(payload.step_statuses).forEach((stepKey) => {
@@ -1394,9 +1443,12 @@ function applyDynamicValidationCalloutState (alert) {
     alert.classList.add('alert-success')
   }
 
-  if (templateKey === '140-mal') {
+  const dependencyMap = qsDependencyConfigMap()
+  const dependencyEntry = Object.entries(dependencyMap).find(([, config]) => config.stepKey === templateKey)
+  const dependencyConfig = dependencyEntry ? dependencyEntry[1] : null
+  if (dependencyConfig) {
     alert.querySelectorAll('[data-qs-callout-mal-reason]').forEach((el) => el.remove())
-    const reasons = Array.isArray(window.QS_MAL_REQUIREMENT_REASONS) ? window.QS_MAL_REQUIREMENT_REASONS.filter(Boolean) : []
+    const reasons = qsGetDependencyReasonsForProvider(dependencyEntry[0])
     if (isRequired && reasons.length) {
       const box = document.createElement('div')
       box.className = 'qs-callout-mal-reason mt-2'
@@ -1404,7 +1456,7 @@ function applyDynamicValidationCalloutState (alert) {
 
       const title = document.createElement('div')
       title.className = 'qs-callout-mal-reason-title'
-      title.textContent = 'Now required because:'
+      title.textContent = `Now required because ${dependencyConfig.label} is needed by:`
       box.appendChild(title)
 
       const list = document.createElement('ul')

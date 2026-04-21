@@ -19,6 +19,8 @@
   {% set required_open = current_template in required_keys %}
   {% set optional_open = current_template in optional_ns.keys %}
   {% set review_open = current_template in review_keys %}
+  {% set tautulli_reasons = tautulli_requirement_reasons if tautulli_requirement_reasons is defined else [] %}
+  {% set trakt_reasons = trakt_requirement_reasons if trakt_requirement_reasons is defined else [] %}
   {% set mal_reasons = mal_requirement_reasons if mal_requirement_reasons is defined else [] %}
   {% set readiness = workspace_readiness if workspace_readiness is defined else {} %}
   <div id="{{ page_info['title'] }}Section" class="qs-workspace-section" data-current-step="{{ page_info['template_name'] }}">
@@ -31,14 +33,36 @@
           <div class="qs-workspace-nav-sticky">
             {{ workspace.sidebar_controls(page_info) }}
             {{ workspace.step_action_bar(page_info, hide_step_nav, template_list, jump_to_validations, step_statuses, sidebar_mode=True) }}
-            <div class="qs-mal-required-hint {% if not mal_reasons %}d-none{% endif %}" data-qs-mal-required-hint>
-              <div class="qs-mal-required-hint-title">MAL required by</div>
-              <div class="qs-mal-required-hint-lines" data-qs-mal-required-lines>
+            <div class="qs-dependency-hint qs-tautulli-required-hint {% if not tautulli_reasons %}d-none{% endif %}" data-qs-dependency-hint="tautulli">
+              <div class="qs-dependency-hint-title">Tautulli required by</div>
+              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                {% for reason in tautulli_reasons[:2] %}
+                <div class="qs-dependency-hint-line">{{ reason }}</div>
+                {% endfor %}
+                {% if tautulli_reasons|length > 2 %}
+                <div class="qs-dependency-hint-line">+{{ tautulli_reasons|length - 2 }} more...</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="qs-dependency-hint qs-trakt-required-hint {% if not trakt_reasons %}d-none{% endif %}" data-qs-dependency-hint="trakt">
+              <div class="qs-dependency-hint-title">Trakt required by</div>
+              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                {% for reason in trakt_reasons[:2] %}
+                <div class="qs-dependency-hint-line">{{ reason }}</div>
+                {% endfor %}
+                {% if trakt_reasons|length > 2 %}
+                <div class="qs-dependency-hint-line">+{{ trakt_reasons|length - 2 }} more...</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="qs-dependency-hint qs-mal-required-hint {% if not mal_reasons %}d-none{% endif %}" data-qs-dependency-hint="mal">
+              <div class="qs-dependency-hint-title">MAL required by</div>
+              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
                 {% for reason in mal_reasons[:2] %}
-                <div class="qs-mal-required-hint-line">{{ reason }}</div>
+                <div class="qs-dependency-hint-line">{{ reason }}</div>
                 {% endfor %}
                 {% if mal_reasons|length > 2 %}
-                <div class="qs-mal-required-hint-line">+{{ mal_reasons|length - 2 }} more...</div>
+                <div class="qs-dependency-hint-line">+{{ mal_reasons|length - 2 }} more...</div>
                 {% endif %}
               </div>
             </div>

@@ -59,9 +59,25 @@ document.addEventListener('DOMContentLoaded', function () {
     const copyModal = copyModalEl ? new bootstrap.Modal(copyModalEl) : null
     let activeLibraryId = null
     let loadRequestId = 0
-    const malHintEndpoint = '/libraries_mal_dependency_hint'
-    let malHintRefreshTimer = null
-    let malHintRequestToken = 0
+    const dependencyHintConfigs = {
+      tautulli: {
+        stepKey: '030-tautulli',
+        endpoint: '/libraries_tautulli_dependency_hint',
+        windowKey: 'QS_TAUTULLI_REQUIREMENT_REASONS'
+      },
+      trakt: {
+        stepKey: '130-trakt',
+        endpoint: '/libraries_trakt_dependency_hint',
+        windowKey: 'QS_TRAKT_REQUIREMENT_REASONS'
+      },
+      mal: {
+        stepKey: '140-mal',
+        endpoint: '/libraries_mal_dependency_hint',
+        windowKey: 'QS_MAL_REQUIREMENT_REASONS'
+      }
+    }
+    let dependencyHintRefreshTimer = null
+    let dependencyHintRequestToken = 0
 
     // Ensure hidden "false" inputs don't submit alongside checked checkboxes with the same name
     function syncHiddenCheckboxPairs (scope) {
@@ -221,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
     }
 
-    function normalizeMalHintReasons (reasons) {
+    function normalizeDependencyHintReasons (reasons) {
       if (!Array.isArray(reasons)) return []
       return reasons
         .map(reason => String(reason || '').trim())
@@ -247,46 +263,50 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
 
-    function syncMalStepGrouping (isRequired) {
-      const malStepKey = '140-mal'
+    function syncDependencyStepGrouping (providerKey, isRequired) {
+      const dependencyConfig = dependencyHintConfigs[providerKey]
+      if (!dependencyConfig) return
       const requiredList = document.querySelector('.qs-step-group[data-step-group="required"] .qs-step-group-list')
       const optionalList = document.querySelector('.qs-step-group[data-step-group="optional"] .qs-step-group-list')
       if (!requiredList || !optionalList) return
 
-      const malButton = document.querySelector(`.qs-step-group-list .qs-step-link[data-step-key="${malStepKey}"]`)
-      if (!malButton) return
+      const stepButton = document.querySelector(`.qs-step-group-list .qs-step-link[data-step-key="${dependencyConfig.stepKey}"]`)
+      if (!stepButton) return
 
       const targetList = isRequired ? requiredList : optionalList
-      if (malButton.parentElement === targetList) return
+      if (stepButton.parentElement === targetList) return
 
-      insertStepByOrder(targetList, malButton)
+      insertStepByOrder(targetList, stepButton)
       if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refreshSidebar === 'function') {
         window.QSValidationCallouts.refreshSidebar()
       }
     }
 
-    function applyMalRequirementHint (reasons) {
-      const normalized = normalizeMalHintReasons(reasons)
-      syncMalStepGrouping(normalized.length > 0)
+    function applyDependencyRequirementHint (providerKey, reasons, options = {}) {
+      const dependencyConfig = dependencyHintConfigs[providerKey]
+      if (!dependencyConfig) return
+
+      const normalized = normalizeDependencyHintReasons(reasons)
+      const refreshUi = options.refreshUi !== false
+      syncDependencyStepGrouping(providerKey, normalized.length > 0)
 
       if (Array.isArray(window.QS_REQUIRED_KEYS) && Array.isArray(window.QS_OPTIONAL_KEYS)) {
-        const malKey = '140-mal'
         const shouldRequire = normalized.length > 0
-        const required = window.QS_REQUIRED_KEYS.filter(key => key !== malKey)
-        const optional = window.QS_OPTIONAL_KEYS.filter(key => key !== malKey)
+        const required = window.QS_REQUIRED_KEYS.filter(key => key !== dependencyConfig.stepKey)
+        const optional = window.QS_OPTIONAL_KEYS.filter(key => key !== dependencyConfig.stepKey)
         if (shouldRequire) {
-          required.push(malKey)
+          required.push(dependencyConfig.stepKey)
         } else {
-          optional.push(malKey)
+          optional.push(dependencyConfig.stepKey)
         }
         window.QS_REQUIRED_KEYS = required
         window.QS_OPTIONAL_KEYS = optional
       }
-      window.QS_MAL_REQUIREMENT_REASONS = normalized
+      window[dependencyConfig.windowKey] = normalized
 
-      const hints = document.querySelectorAll('[data-qs-mal-required-hint]')
+      const hints = document.querySelectorAll(`[data-qs-dependency-hint="${providerKey}"]`)
       hints.forEach((hint) => {
-        const lines = hint.querySelector('[data-qs-mal-required-lines]')
+        const lines = hint.querySelector('[data-qs-dependency-lines]')
         if (!lines) return
 
         lines.replaceChildren()
@@ -299,28 +319,30 @@ document.addEventListener('DOMContentLoaded', function () {
         const visibleCount = 2
         normalized.slice(0, visibleCount).forEach((reason) => {
           const row = document.createElement('div')
-          row.className = 'qs-mal-required-hint-line'
+          row.className = 'qs-dependency-hint-line'
           row.textContent = reason
           lines.appendChild(row)
         })
 
         if (normalized.length > visibleCount) {
           const more = document.createElement('div')
-          more.className = 'qs-mal-required-hint-line'
+          more.className = 'qs-dependency-hint-line'
           more.textContent = `+${normalized.length - visibleCount} more...`
           lines.appendChild(more)
         }
       })
 
-      if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
-        window.QSValidationCallouts.refresh()
-      }
-      if (window.QSWorkspaceStatus && typeof window.QSWorkspaceStatus.recalculateFromSidebar === 'function') {
-        window.QSWorkspaceStatus.recalculateFromSidebar()
+      if (refreshUi) {
+        if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+          window.QSValidationCallouts.refresh()
+        }
+        if (window.QSWorkspaceStatus && typeof window.QSWorkspaceStatus.recalculateFromSidebar === 'function') {
+          window.QSWorkspaceStatus.recalculateFromSidebar()
+        }
       }
     }
 
-    function requestMalRequirementHintNow () {
+    function requestDependencyRequirementHintsNow () {
       const card = libraryContainer ? libraryContainer.firstElementChild : null
       if (!card || !activeLibraryId) return Promise.resolve()
 
@@ -328,37 +350,49 @@ document.addEventListener('DOMContentLoaded', function () {
         source_library_id: activeLibraryId,
         source_payload: buildPayloadFromCard(card)
       }
-      const currentToken = ++malHintRequestToken
-      return fetch(malHintEndpoint, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const currentToken = ++dependencyHintRequestToken
+      const requests = Object.entries(dependencyHintConfigs).map(([providerKey, config]) => {
+        return fetch(config.endpoint, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+          .then(res => {
+            if (!res.ok) throw new Error(`${providerKey} hint request failed: ${res.status}`)
+            return res.json()
+          })
+          .then(data => ({ providerKey, reasons: data && data.success ? data.reasons : [] }))
+          .catch(() => ({ providerKey, reasons: [] }))
       })
-        .then(res => {
-          if (!res.ok) throw new Error(`MAL hint request failed: ${res.status}`)
-          return res.json()
+
+      return Promise.all(requests).then((results) => {
+        if (currentToken !== dependencyHintRequestToken) return
+        results.forEach(({ providerKey, reasons }) => {
+          applyDependencyRequirementHint(providerKey, reasons, { refreshUi: false })
         })
-        .then(data => {
-          if (currentToken !== malHintRequestToken) return
-          applyMalRequirementHint(data && data.success ? data.reasons : [])
-        })
-        .catch(() => {})
+        if (window.QSValidationCallouts && typeof window.QSValidationCallouts.refresh === 'function') {
+          window.QSValidationCallouts.refresh()
+        }
+        if (window.QSWorkspaceStatus && typeof window.QSWorkspaceStatus.recalculateFromSidebar === 'function') {
+          window.QSWorkspaceStatus.recalculateFromSidebar()
+        }
+      })
     }
 
-    function scheduleMalRequirementHintRefresh (delayMs = 220) {
-      if (malHintRefreshTimer) {
-        clearTimeout(malHintRefreshTimer)
-        malHintRefreshTimer = null
+    function scheduleDependencyRequirementHintRefresh (delayMs = 220) {
+      if (dependencyHintRefreshTimer) {
+        clearTimeout(dependencyHintRefreshTimer)
+        dependencyHintRefreshTimer = null
       }
-      malHintRefreshTimer = setTimeout(() => {
-        malHintRefreshTimer = null
-        requestMalRequirementHintNow()
+      dependencyHintRefreshTimer = setTimeout(() => {
+        dependencyHintRefreshTimer = null
+        requestDependencyRequirementHintsNow()
       }, Math.max(0, Number(delayMs) || 0))
     }
 
-    function bindMalRequirementHintLiveRefresh (card) {
-      if (!card || card.dataset.malHintWatcherBound === 'true') return
+    function bindDependencyRequirementHintLiveRefresh (card) {
+      if (!card || card.dataset.dependencyHintWatcherBound === 'true') return
 
       const shouldTrack = (name) => {
         const fieldName = String(name || '')
@@ -369,12 +403,12 @@ document.addEventListener('DOMContentLoaded', function () {
       const onFieldInteraction = (event) => {
         const target = event && event.target
         if (!target || !shouldTrack(target.name)) return
-        scheduleMalRequirementHintRefresh(160)
+        scheduleDependencyRequirementHintRefresh(160)
       }
 
       card.addEventListener('input', onFieldInteraction)
       card.addEventListener('change', onFieldInteraction)
-      card.dataset.malHintWatcherBound = 'true'
+      card.dataset.dependencyHintWatcherBound = 'true'
     }
 
     function initRelativeYearInputs (scope) {
@@ -1231,8 +1265,8 @@ document.addEventListener('DOMContentLoaded', function () {
       wireFontUploads(card)
       wireFontPreviews(card)
       wireFontPickerButtons(card)
-      bindMalRequirementHintLiveRefresh(card)
-      scheduleMalRequirementHintRefresh(0)
+      bindDependencyRequirementHintLiveRefresh(card)
+      scheduleDependencyRequirementHintRefresh(0)
     }
 
     wireFontPickerModal()
@@ -1364,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', function () {
             showToast('success', `Autosaved ${friendlyName}.`)
           }
           if (data && data.success) {
-            scheduleMalRequirementHintRefresh(0)
+            scheduleDependencyRequirementHintRefresh(0)
             document.dispatchEvent(new CustomEvent('qs:workspace-data-changed', { detail: { source: 'libraries-autosave', delayMs: 80 } }))
           }
           return data
@@ -1497,7 +1531,7 @@ document.addEventListener('DOMContentLoaded', function () {
               const label = filtered.length === 1 ? 'library' : 'libraries'
               showToast('success', `Mirrored settings to ${filtered.length} ${label}.`)
             }
-            scheduleMalRequirementHintRefresh(0)
+            scheduleDependencyRequirementHintRefresh(0)
             document.dispatchEvent(new CustomEvent('qs:workspace-data-changed', { detail: { source: 'libraries-copy', delayMs: 80 } }))
           })
           .catch(err => {

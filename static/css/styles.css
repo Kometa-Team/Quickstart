@@ -3790,6 +3790,7 @@ body {
     background: rgba(56, 189, 248, 0.08);
 }
 
+.qs-dependency-hint,
 .qs-mal-required-hint {
     margin-bottom: 0.55rem;
     padding: 0.35rem 0.45rem;
@@ -3798,6 +3799,17 @@ body {
     background: rgba(8, 28, 36, 0.4);
 }
 
+.qs-trakt-required-hint {
+    border-color: rgba(245, 158, 11, 0.38);
+    background: rgba(43, 30, 7, 0.34);
+}
+
+.qs-tautulli-required-hint {
+    border-color: rgba(94, 234, 212, 0.34);
+    background: rgba(7, 35, 34, 0.34);
+}
+
+.qs-dependency-hint-title,
 .qs-mal-required-hint-title {
     font-size: 0.56rem;
     font-weight: 700;
@@ -3807,11 +3819,21 @@ body {
     margin-bottom: 0.14rem;
 }
 
+.qs-tautulli-required-hint .qs-dependency-hint-title {
+    color: #8ff7ea;
+}
+
+.qs-trakt-required-hint .qs-dependency-hint-title {
+    color: #ffd793;
+}
+
+.qs-dependency-hint-lines,
 .qs-mal-required-hint-lines {
     display: grid;
     gap: 0.12rem;
 }
 
+.qs-dependency-hint-line,
 .qs-mal-required-hint-line {
     font-size: 0.61rem;
     color: var(--theme-text-muted);
@@ -4390,6 +4412,7 @@ body {
         display: none;
     }
 
+    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-dependency-hint,
     .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-mal-required-hint {
         display: none !important;
     }

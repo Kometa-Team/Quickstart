@@ -163,7 +163,11 @@ QS_ERROR_REASONS = {
     "invalid_fields",
     "missing_placeholder_imdb",
 }
+QS_TAUTULLI_REQUIRED_STEP_KEY = "030-tautulli"
+QS_TRAKT_REQUIRED_STEP_KEY = "130-trakt"
 QS_MAL_REQUIRED_STEP_KEY = "140-mal"
+QS_TAUTULLI_DEP_COLLECTION_IDS = {"collection_tautulli"}
+QS_TRAKT_DEP_COLLECTION_IDS = {"collection_trakt"}
 QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
 QS_MAL_DEP_ATTRIBUTE_OPERATIONS = {
     "mass_genre_update",
@@ -297,13 +301,9 @@ def _library_prefix_from_key(key):
     return None
 
 
-def _libraries_data_requires_mal(libraries_data):
-    return bool(_libraries_data_mal_dependency_reasons(libraries_data))
-
-
-def _libraries_data_mal_dependency_reasons(libraries_data):
+def _active_library_prefixes(libraries_data):
     if not isinstance(libraries_data, dict):
-        return []
+        return set()
 
     active_prefixes = set()
     for raw_key, raw_value in libraries_data.items():
@@ -313,22 +313,90 @@ def _libraries_data_mal_dependency_reasons(libraries_data):
         prefix = _library_prefix_from_key(key)
         if prefix and _is_truthy_setting_value(raw_value):
             active_prefixes.add(prefix)
+    return active_prefixes
 
+
+def _dependency_reason_label(libraries_data, prefix):
+    library_name = libraries_data.get(f"{prefix}-library") if isinstance(libraries_data, dict) else None
+    if isinstance(library_name, str) and library_name.strip():
+        return library_name.strip()
+    return prefix
+
+
+def _append_dependency_reason(reasons, seen, libraries_data, prefix, detail):
+    label = _dependency_reason_label(libraries_data, prefix)
+    reason = f"{label}: {detail}"
+    normalized = reason.lower()
+    if normalized in seen:
+        return
+    seen.add(normalized)
+    reasons.append(reason)
+
+
+def _libraries_data_collection_dependency_reasons(libraries_data, collection_ids, detail):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    active_prefixes = _active_library_prefixes(libraries_data)
     reasons = []
     seen = set()
 
-    def add_reason(prefix, detail):
-        library_name = libraries_data.get(f"{prefix}-library")
-        if isinstance(library_name, str) and library_name.strip():
-            label = library_name.strip()
-        else:
-            label = prefix
-        reason = f"{label}: {detail}"
-        normalized = reason.lower()
-        if normalized in seen:
-            return
-        seen.add(normalized)
-        reasons.append(reason)
+    for raw_key, raw_value in libraries_data.items():
+        key = str(raw_key or "").strip().lower()
+        if not key or "-collection_" not in key or not _is_truthy_setting_value(raw_value):
+            continue
+
+        prefix = _library_prefix_from_key(key)
+        if prefix and prefix not in active_prefixes:
+            continue
+
+        collection_id = f"collection_{key.rsplit('-collection_', 1)[1]}"
+        if collection_id in collection_ids:
+            _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
+
+    return reasons
+
+
+def _config_dependency_reasons(section_rows, dependency_resolver):
+    if not isinstance(section_rows, dict):
+        return []
+    libraries_row = section_rows.get("libraries")
+    if not isinstance(libraries_row, dict):
+        return []
+    libraries_payload = libraries_row.get("data")
+    if not isinstance(libraries_payload, dict):
+        return []
+    libraries_data = libraries_payload.get("libraries", {})
+    return dependency_resolver(libraries_data)
+
+
+def _libraries_data_requires_mal(libraries_data):
+    return bool(_libraries_data_mal_dependency_reasons(libraries_data))
+
+
+def _libraries_data_tautulli_dependency_reasons(libraries_data):
+    return _libraries_data_collection_dependency_reasons(
+        libraries_data,
+        QS_TAUTULLI_DEP_COLLECTION_IDS,
+        "Tautulli Charts collection enabled",
+    )
+
+
+def _libraries_data_trakt_dependency_reasons(libraries_data):
+    return _libraries_data_collection_dependency_reasons(
+        libraries_data,
+        QS_TRAKT_DEP_COLLECTION_IDS,
+        "Trakt Charts collection enabled",
+    )
+
+
+def _libraries_data_mal_dependency_reasons(libraries_data):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    active_prefixes = _active_library_prefixes(libraries_data)
+    reasons = []
+    seen = set()
 
     for raw_key, raw_value in libraries_data.items():
         key = str(raw_key or "").strip().lower()
@@ -336,13 +404,13 @@ def _libraries_data_mal_dependency_reasons(libraries_data):
             continue
 
         prefix = _library_prefix_from_key(key)
-        if prefix and active_prefixes and prefix not in active_prefixes:
+        if prefix and prefix not in active_prefixes:
             continue
 
         if "-collection_" in key and _is_truthy_setting_value(raw_value):
             collection_id = f"collection_{key.rsplit('-collection_', 1)[1]}"
             if collection_id in QS_MAL_DEP_COLLECTION_IDS:
-                add_reason(prefix or "library", "MyAnimeList Charts collection enabled")
+                _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", "MyAnimeList Charts collection enabled")
                 continue
 
         attr_match = re.search(r"-attribute_(mass_[a-z0-9_]+)_(mal(?:_english|_japanese)?)$", key)
@@ -351,7 +419,7 @@ def _libraries_data_mal_dependency_reasons(libraries_data):
             source_value = attr_match.group(2)
             if operation in QS_MAL_DEP_ATTRIBUTE_OPERATIONS and source_value in QS_MAL_DEP_ATTRIBUTE_VALUES:
                 detail = f"{operation} uses {source_value}"
-                add_reason(prefix or "library", detail)
+                _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
                 continue
 
         order_match = re.search(r"-attribute_(mass_[a-z0-9_]+)_order$", key)
@@ -368,7 +436,7 @@ def _libraries_data_mal_dependency_reasons(libraries_data):
         if matched_sources:
             joined_sources = ", ".join(sorted(set(matched_sources)))
             detail = f"{operation} order includes {joined_sources}"
-            add_reason(prefix or "library", detail)
+            _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
 
     return reasons
 
@@ -386,17 +454,16 @@ def _config_requires_mal(section_rows):
     return _libraries_data_requires_mal(libraries_data)
 
 
+def _config_tautulli_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_tautulli_dependency_reasons)
+
+
+def _config_trakt_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_trakt_dependency_reasons)
+
+
 def _config_mal_dependency_reasons(section_rows):
-    if not isinstance(section_rows, dict):
-        return []
-    libraries_row = section_rows.get("libraries")
-    if not isinstance(libraries_row, dict):
-        return []
-    libraries_payload = libraries_row.get("data")
-    if not isinstance(libraries_payload, dict):
-        return []
-    libraries_data = libraries_payload.get("libraries", {})
-    return _libraries_data_mal_dependency_reasons(libraries_data)
+    return _config_dependency_reasons(section_rows, _libraries_data_mal_dependency_reasons)
 
 
 def _worst_status(statuses):
@@ -702,7 +769,13 @@ def _build_workspace_status_context(config_name, template_list, available_config
     config_exists = bool(config_name) and (config_name in available_set or bool(section_rows))
 
     required_seed = set(QS_REQUIRED_STEP_KEYS)
+    tautulli_requirement_reasons = _config_tautulli_dependency_reasons(section_rows) if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys else []
+    trakt_requirement_reasons = _config_trakt_dependency_reasons(section_rows) if QS_TRAKT_REQUIRED_STEP_KEY in template_keys else []
     mal_requirement_reasons = _config_mal_dependency_reasons(section_rows) if QS_MAL_REQUIRED_STEP_KEY in template_keys else []
+    if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys and tautulli_requirement_reasons:
+        required_seed.add(QS_TAUTULLI_REQUIRED_STEP_KEY)
+    if QS_TRAKT_REQUIRED_STEP_KEY in template_keys and trakt_requirement_reasons:
+        required_seed.add(QS_TRAKT_REQUIRED_STEP_KEY)
     if QS_MAL_REQUIRED_STEP_KEY in template_keys and mal_requirement_reasons:
         required_seed.add(QS_MAL_REQUIRED_STEP_KEY)
     review_seed = set(QS_REVIEW_STEP_KEYS)
@@ -802,6 +875,8 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "required_keys": required_keys,
         "optional_keys": optional_keys,
         "review_keys": review_keys,
+        "tautulli_requirement_reasons": tautulli_requirement_reasons,
+        "trakt_requirement_reasons": trakt_requirement_reasons,
         "mal_requirement_reasons": mal_requirement_reasons,
         "readiness": readiness,
     }
@@ -4262,6 +4337,8 @@ def step(name):
             required_keys=workspace_status.get("required_keys", []),
             optional_keys=workspace_status.get("optional_keys", []),
             review_keys=workspace_status.get("review_keys", []),
+            tautulli_requirement_reasons=workspace_status.get("tautulli_requirement_reasons", []),
+            trakt_requirement_reasons=workspace_status.get("trakt_requirement_reasons", []),
             mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
             workspace_readiness=workspace_status.get("readiness", {}),
             incomplete_resume_hint=incomplete_resume_hint,
@@ -4303,6 +4380,8 @@ def step(name):
         required_keys=workspace_status.get("required_keys", []),
         optional_keys=workspace_status.get("optional_keys", []),
         review_keys=workspace_status.get("review_keys", []),
+        tautulli_requirement_reasons=workspace_status.get("tautulli_requirement_reasons", []),
+        trakt_requirement_reasons=workspace_status.get("trakt_requirement_reasons", []),
         mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
         workspace_readiness=workspace_status.get("readiness", {}),
         image_data=image_data,
@@ -4333,6 +4412,8 @@ def workspace_status():
         required_keys=status.get("required_keys", []),
         optional_keys=status.get("optional_keys", []),
         review_keys=status.get("review_keys", []),
+        tautulli_requirement_reasons=status.get("tautulli_requirement_reasons", []),
+        trakt_requirement_reasons=status.get("trakt_requirement_reasons", []),
         mal_requirement_reasons=status.get("mal_requirement_reasons", []),
         readiness=status.get("readiness", {}),
     )
@@ -4463,46 +4544,79 @@ def autosave_library(library_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+def _build_merged_libraries_hint_payload(payload):
+    source_library_id = str(payload.get("source_library_id") or "").strip()
+    source_payload = payload.get("source_payload") if isinstance(payload.get("source_payload"), dict) else {}
+
+    settings = persistence.retrieve_settings("025-libraries")
+    libraries_data = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+    merged = libraries_data.copy() if isinstance(libraries_data, dict) else {}
+
+    if not source_payload:
+        return merged
+
+    clean_payload = persistence.clean_form_data(MultiDict(source_payload))
+    incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
+    incoming_dict = incoming_dict if isinstance(incoming_dict, dict) else {}
+
+    prefixes = set()
+    if source_library_id:
+        source_prefix = source_library_id.split("-card-container")[0] if source_library_id.endswith("-card-container") else source_library_id
+        if source_prefix:
+            prefixes.add(source_prefix)
+
+    for key in incoming_dict:
+        prefix = _library_prefix_from_key(key)
+        if prefix:
+            prefixes.add(prefix)
+
+    for prefix in prefixes:
+        for existing_key in list(merged.keys()):
+            if existing_key == f"{prefix}-library" or existing_key.startswith(prefix + "-"):
+                merged.pop(existing_key, None)
+
+    for key, value in incoming_dict.items():
+        if key.endswith("-library") and not _is_truthy_setting_value(value):
+            continue
+        merged[key] = value
+
+    return merged
+
+
+def _libraries_dependency_hint_response(payload, resolver):
+    merged = _build_merged_libraries_hint_payload(payload)
+    reasons = resolver(merged)
+    return jsonify({"success": True, "required": bool(reasons), "reasons": reasons})
+
+
+@app.route("/libraries_tautulli_dependency_hint", methods=["POST"])
+def libraries_tautulli_dependency_hint():
+    """Preview Tautulli-required dependency reasons using current in-page library edits."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        return _libraries_dependency_hint_response(payload, _libraries_data_tautulli_dependency_reasons)
+    except Exception as e:
+        helpers.ts_log(f"Failed to build Tautulli dependency hint: {e}", level="ERROR")
+        return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
+
+
+@app.route("/libraries_trakt_dependency_hint", methods=["POST"])
+def libraries_trakt_dependency_hint():
+    """Preview Trakt-required dependency reasons using current in-page library edits."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        return _libraries_dependency_hint_response(payload, _libraries_data_trakt_dependency_reasons)
+    except Exception as e:
+        helpers.ts_log(f"Failed to build Trakt dependency hint: {e}", level="ERROR")
+        return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
+
+
 @app.route("/libraries_mal_dependency_hint", methods=["POST"])
 def libraries_mal_dependency_hint():
     """Preview MAL-required dependency reasons using current in-page library edits."""
     try:
         payload = request.get_json(silent=True) or {}
-        source_library_id = str(payload.get("source_library_id") or "").strip()
-        source_payload = payload.get("source_payload") if isinstance(payload.get("source_payload"), dict) else {}
-
-        settings = persistence.retrieve_settings("025-libraries")
-        libraries_data = settings.get("libraries", {}) if isinstance(settings, dict) else {}
-        merged = libraries_data.copy() if isinstance(libraries_data, dict) else {}
-
-        if source_payload:
-            clean_payload = persistence.clean_form_data(MultiDict(source_payload))
-            incoming_dict = helpers.build_config_dict("libraries", clean_payload).get("libraries", {})
-            incoming_dict = incoming_dict if isinstance(incoming_dict, dict) else {}
-
-            prefixes = set()
-            if source_library_id:
-                source_prefix = source_library_id.split("-card-container")[0] if source_library_id.endswith("-card-container") else source_library_id
-                if source_prefix:
-                    prefixes.add(source_prefix)
-
-            for key in incoming_dict:
-                prefix = _library_prefix_from_key(key)
-                if prefix:
-                    prefixes.add(prefix)
-
-            for prefix in prefixes:
-                for existing_key in list(merged.keys()):
-                    if existing_key == f"{prefix}-library" or existing_key.startswith(prefix + "-"):
-                        merged.pop(existing_key, None)
-
-            for key, value in incoming_dict.items():
-                if key.endswith("-library") and not _is_truthy_setting_value(value):
-                    continue
-                merged[key] = value
-
-        reasons = _libraries_data_mal_dependency_reasons(merged)
-        return jsonify({"success": True, "required": bool(reasons), "reasons": reasons})
+        return _libraries_dependency_hint_response(payload, _libraries_data_mal_dependency_reasons)
     except Exception as e:
         helpers.ts_log(f"Failed to build MAL dependency hint: {e}", level="ERROR")
         return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
@@ -7585,6 +7699,8 @@ def logscan_trends_page():
         required_keys=workspace_status.get("required_keys", []),
         optional_keys=workspace_status.get("optional_keys", []),
         review_keys=workspace_status.get("review_keys", []),
+        tautulli_requirement_reasons=workspace_status.get("tautulli_requirement_reasons", []),
+        trakt_requirement_reasons=workspace_status.get("trakt_requirement_reasons", []),
         mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
         workspace_readiness=workspace_status.get("readiness", {}),
     )
