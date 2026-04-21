@@ -20,13 +20,6 @@
         <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include"
           title="Controls whether this library is written to the YAML output and validated.">Include in YAML</label>
       </div>
-      <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
-        <input class="form-check-input playlist-library-toggle" type="checkbox" id="{{ library.id }}-playlist"
-          name="{{ library.id }}-playlist" value="true" data-include-toggle="{{ library.id }}-include"
-          {% if playlist_checked and include_checked %}checked{% endif %}>
-        <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-playlist"
-          title="Adds this included library to generated playlist defaults.">Include in Playlists</label>
-      </div>
       <span class="badge include-status bg-secondary" data-include-status></span>
       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay copy-library-btn" data-library-id="{{ library.id }}"
         data-library-name="{{ library.name }}" data-library-type="{{ library.type }}">
@@ -59,13 +52,6 @@
           {% if include_checked %}checked{% endif %}>
         <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-include"
           title="Controls whether this library is written to the YAML output and validated.">Include in YAML</label>
-      </div>
-      <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
-        <input class="form-check-input playlist-library-toggle" type="checkbox" id="{{ library.id }}-playlist"
-          name="{{ library.id }}-playlist" value="true" data-include-toggle="{{ library.id }}-include"
-          {% if playlist_checked and include_checked %}checked{% endif %}>
-        <label class="form-check-label small text-white-50 mb-0" for="{{ library.id }}-playlist"
-          title="Adds this included library to generated playlist defaults.">Include in Playlists</label>
       </div>
       <span class="badge include-status bg-secondary" data-include-status></span>
       <button type="button" class="btn btn-outline-secondary btn-sm btn-overlay copy-library-btn" data-library-id="{{ library.id }}"

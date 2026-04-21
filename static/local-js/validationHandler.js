@@ -115,7 +115,8 @@ const ValidationHandler = {
           return true
         }
 
-        const hasSelectedHeader = libraryContainer.querySelector('.accordion-header.selected') !== null
+        const hasSelectedHeader = Array.from(libraryContainer.querySelectorAll('.accordion-header.selected'))
+          .some(header => !header.closest('[data-qs-minimal-yaml="false"]'))
         console.log(`[DEBUG] Library "${libraryId}-container" has selected header highlight: ${hasSelectedHeader}`)
 
         if (!hasSelectedHeader) {

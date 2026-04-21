@@ -471,7 +471,9 @@ const EventHandler = {
 
       if (isCheckedOrSelected || hasValue) {
         accordionHeader.classList.add('selected')
-        EventHandler.highlightParentAccordions(accordionHeader)
+        if (accordion.dataset.qsMinimalYaml !== 'false') {
+          EventHandler.highlightParentAccordions(accordionHeader)
+        }
       } else {
         EventHandler.removeHighlightIfEmpty(accordionHeader)
       }
@@ -524,6 +526,10 @@ const EventHandler = {
     while (element) {
       const parentAccordion = element.closest('.accordion-item')
       if (!parentAccordion) break
+      if (parentAccordion.dataset.qsMinimalYaml === 'false') {
+        parentAccordion.querySelector('.accordion-header')?.classList.add('selected')
+        return
+      }
 
       const parentHeader = parentAccordion.querySelector('.accordion-header')
       const parentText = parentHeader ? parentHeader.textContent.trim() : ''

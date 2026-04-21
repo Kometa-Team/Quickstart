@@ -1233,6 +1233,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       if (playlistToggle && !playlistToggle.dataset.listenerAdded) {
         playlistToggle.addEventListener('change', () => {
+          syncStatus()
           if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
             ValidationHandler.updateValidationState()
           }
@@ -1280,10 +1281,10 @@ document.addEventListener('DOMContentLoaded', function () {
       setupMappingListHandlers('content_rating_mapper', card)
       wireOverlayDetailToggles(card)
       setupParentChildToggleVisibility(card)
-      setupAddMissingDependencies(card)
       if (typeof setupParentChildToggleSync === 'function') {
         setupParentChildToggleSync()
       }
+      setupAddMissingDependencies(card)
       wireOverlayTemplateSections(card)
       if (typeof OverlayHandler !== 'undefined' && OverlayHandler.initializeOverlayBoards) {
         OverlayHandler.initializeOverlayBoards(card)
@@ -2776,12 +2777,10 @@ function setupAddMissingDependencies (scope) {
   const addMissingToggles = Array.from(root.querySelectorAll('input.template-child-toggle[id*="radarr_add_missing_"], input.template-child-toggle[id*="sonarr_add_missing_"]'))
   if (!addMissingToggles.length) return
 
-  const groupMap = new Map()
-
-  addMissingToggles.forEach(addToggle => {
+  const resolveDependency = (addToggle) => {
     const id = addToggle.id || ''
     const split = id.split('-template_collection_')
-    if (split.length !== 2) return
+    if (split.length !== 2) return null
     const prefix = split[0]
     const tail = split[1]
     let useTail = null
@@ -2794,34 +2793,47 @@ function setupAddMissingDependencies (scope) {
         useTail = `${sonarrMatch[1]}_use_${sonarrMatch[2]}`
       }
     }
-    if (!useTail) return
+    if (!useTail) return null
     const useToggle = document.getElementById(`${prefix}-template_collection_${useTail}`)
-    if (!useToggle) return
-
-    const list = groupMap.get(useToggle) || []
-    list.push(addToggle)
-    groupMap.set(useToggle, list)
-  })
-
-  const applyState = (useToggle, toggles) => {
-    const show = useToggle.checked
-    toggles.forEach(addToggle => {
-      const row = addToggle.closest('.form-check')
-      if (row) row.style.display = show ? '' : 'none'
-      addToggle.disabled = !show
-      if (!show) {
-        addToggle.checked = false
-        const hidden = document.querySelector(`input[type="hidden"][name="${addToggle.name}"]`)
-        if (hidden) hidden.value = 'false'
-      }
-    })
+    if (!useToggle) return null
+    const parentToggle = addToggle.dataset.parentToggle
+      ? document.getElementById(addToggle.dataset.parentToggle)
+      : null
+    return { useToggle, parentToggle }
   }
 
-  groupMap.forEach((toggles, useToggle) => {
-    if (useToggle.dataset.addMissingBound === 'true') return
-    useToggle.dataset.addMissingBound = 'true'
-    useToggle.addEventListener('change', () => applyState(useToggle, toggles))
-    applyState(useToggle, toggles)
+  const applyState = (addToggle) => {
+    const dependency = resolveDependency(addToggle)
+    if (!dependency) return
+    const { useToggle } = dependency
+    const useReady = useToggle.checked && !useToggle.disabled
+    const enabled = useReady
+    const row = addToggle.closest('.form-check')
+    if (row) row.style.display = useReady ? '' : 'none'
+    addToggle.disabled = !enabled
+    if (!enabled) {
+      addToggle.checked = false
+      const hidden = document.querySelector(`input[type="hidden"][name="${addToggle.name}"]`)
+      if (hidden) {
+        hidden.value = 'false'
+        hidden.disabled = false
+      }
+    }
+  }
+
+  addMissingToggles.forEach(addToggle => {
+    const dependency = resolveDependency(addToggle)
+    if (!dependency) return
+    const { useToggle, parentToggle } = dependency
+
+    if (addToggle.dataset.addMissingBound !== 'true') {
+      const refresh = () => applyState(addToggle)
+      useToggle.addEventListener('change', refresh)
+      if (parentToggle) parentToggle.addEventListener('change', refresh)
+      addToggle.dataset.addMissingBound = 'true'
+    }
+
+    applyState(addToggle)
   })
 }
 

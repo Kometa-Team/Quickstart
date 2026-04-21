@@ -2101,6 +2101,7 @@ $(document).ready(function () {
     missing_plex_validation: 'Plex not validated',
     no_libraries: 'No libraries selected',
     invalid_paths: 'Invalid paths',
+    missing_library_defaults: 'Missing library defaults',
     missing_placeholder_imdb: 'Missing placeholder IMDb ID',
     invalid_fields: 'Invalid fields',
     no_webhooks: 'No webhooks configured',

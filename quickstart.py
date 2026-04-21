@@ -108,6 +108,7 @@ VALIDATION_REASON_LABELS = {
     "missing_plex_validation": "Plex not validated",
     "no_libraries": "No libraries selected",
     "invalid_paths": "Invalid paths",
+    "missing_library_defaults": "Missing library defaults",
     "missing_placeholder_imdb": "Missing placeholder IMDb ID",
     "invalid_fields": "Invalid fields",
     "no_webhooks": "No webhooks configured",
@@ -160,6 +161,7 @@ QS_ERROR_REASONS = {
     "validation_error",
     "invalid_paths",
     "invalid_fields",
+    "missing_library_defaults",
     "missing_placeholder_imdb",
 }
 QS_TAUTULLI_REQUIRED_STEP_KEY = "030-tautulli"
@@ -6068,6 +6070,29 @@ def validate_all_services():
             if path_errors:
                 libraries_reason = "invalid_paths"
             else:
+                def has_minimal_library_yaml_selection(lib_id):
+                    allowed_markers = ("-collection_", "-overlay_", "-attribute_", "-top_level_")
+                    for key, value in libraries_data.items():
+                        if not isinstance(key, str) or not key.startswith(f"{lib_id}-"):
+                            continue
+                        if key in {f"{lib_id}-library", f"{lib_id}-playlist"}:
+                            continue
+                        if "-playlist" in key:
+                            continue
+                        if not any(marker in key for marker in allowed_markers):
+                            continue
+                        if not is_blank_value(value) and str(value).strip().lower() != "false":
+                            return True
+                    return False
+
+                missing_minimal_yaml = [
+                    lib_id
+                    for lib_id in selected_library_ids
+                    if not has_minimal_library_yaml_selection(lib_id)
+                ]
+                if missing_minimal_yaml:
+                    libraries_reason = "missing_library_defaults"
+
                 missing_placeholders = []
                 library_names = {}
                 for lib_id in selected_library_ids:
@@ -6086,14 +6111,15 @@ def validate_all_services():
                             return value
                     return None
 
-                for lib_id in selected_library_ids:
-                    use_separator = find_library_value(lib_id, ["template_variables[use_separator]", "attribute_use_separator"])
-                    if is_blank_value(use_separator) or str(use_separator).strip().lower() == "none":
-                        continue
-                    placeholder = find_library_value(lib_id, ["attribute_template_variables[placeholder_imdb_id]", "template_variables[placeholder_imdb_id]"])
-                    if is_blank_value(placeholder):
-                        missing_placeholders.append(library_names.get(lib_id, lib_id))
-                if missing_placeholders:
+                if libraries_reason is None:
+                    for lib_id in selected_library_ids:
+                        use_separator = find_library_value(lib_id, ["template_variables[use_separator]", "attribute_use_separator"])
+                        if is_blank_value(use_separator) or str(use_separator).strip().lower() == "none":
+                            continue
+                        placeholder = find_library_value(lib_id, ["attribute_template_variables[placeholder_imdb_id]", "template_variables[placeholder_imdb_id]"])
+                        if is_blank_value(placeholder):
+                            missing_placeholders.append(library_names.get(lib_id, lib_id))
+                if libraries_reason is None and missing_placeholders:
                     libraries_reason = "missing_placeholder_imdb"
 
             update_section_validation(
@@ -6241,6 +6267,7 @@ def validate_all_services():
         "missing_plex_validation": "Plex not validated",
         "no_libraries": "No libraries selected",
         "invalid_paths": "Invalid paths",
+        "missing_library_defaults": "Missing library defaults",
         "missing_placeholder_imdb": "Missing placeholder IMDb ID",
         "invalid_fields": "Invalid fields",
         "no_webhooks": "No webhooks configured",

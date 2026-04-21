@@ -1,0 +1,31 @@
+<div class="accordion-item" data-qs-minimal-yaml="false">
+  <h2 class="accordion-header">
+    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+      data-bs-target="#{{ library.id }}-playlists" aria-expanded="false" aria-controls="{{ library.id }}-playlists">
+      Playlists
+    </button>
+  </h2>
+  <div id="{{ library.id }}-playlists" class="accordion-collapse collapse">
+    <div class="accordion-body">
+      <div class="alert alert-info mb-3" role="alert">
+        <h6><b>Playlist files</b></h6>
+        Use this library as a source for generated Defaults Playlist files.
+        This writes to the top-level <code>playlist_files</code> section and does not count as a library default,
+        overlay, or attribute selection.
+        <br><br><a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/defaults/playlist/" target="_blank">Click
+          Here</a> to go to the Defaults wiki page to see examples of the playlists that will be created.
+      </div>
+      <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+        <input class="form-check-input playlist-library-toggle" type="checkbox" id="{{ library.id }}-playlist"
+          name="{{ library.id }}-playlist" value="true" data-include-toggle="{{ library.id }}-include"
+          {% if playlist_checked and include_checked %}checked{% endif %}>
+        <label class="form-check-label mb-0" for="{{ library.id }}-playlist">
+          Include {{ library.name }}
+        </label>
+      </div>
+      <div class="form-text text-muted mt-2">
+        This requires the library to also be included in YAML, but by itself it is not enough to complete the Libraries page.
+      </div>
+    </div>
+  </div>
+</div>
