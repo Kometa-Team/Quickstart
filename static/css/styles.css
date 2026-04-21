@@ -3670,6 +3670,12 @@ body {
     justify-content: flex-start;
 }
 
+.qs-sidebar-footer-links .qs-sidebar-footer-link-full {
+    grid-column: 1 / -1;
+    justify-content: center;
+    text-align: center;
+}
+
 .qs-sidebar-version {
     margin-top: 0.65rem;
     font-size: 0.78rem;
