@@ -2805,7 +2805,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 document.addEventListener('DOMContentLoaded', () => {
-  const viewportQuery = window.matchMedia('(min-width: 1024px)')
+  const viewportQuery = window.matchMedia('(min-width: 800px)')
   const rootEl = document.documentElement
   const sidebarStorageKey = 'qs_sidebar_collapsed'
   let sidebarBound = false

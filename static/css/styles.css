@@ -3431,7 +3431,7 @@ body {
     }
 }
 
-@media (max-width: 1023.98px) {
+@media (max-width: 799.98px) {
     .qs-nav-loading-card {
         min-width: min(90vw, 680px);
         max-width: 92vw;
@@ -4375,7 +4375,7 @@ body {
     margin-bottom: 0;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 800px) {
     .qs-workspace-grid {
         grid-template-columns: minmax(204px, 226px) minmax(0, 1fr);
     }
@@ -4675,7 +4675,7 @@ body {
     }
 }
 
-@media (max-width: 1023.98px) {
+@media (max-width: 799.98px) {
     .qs-sidebar-toggle {
         display: none;
     }
