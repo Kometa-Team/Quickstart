@@ -1298,10 +1298,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function buildPayloadFromCard (card) {
       const payload = {}
+      const checkboxNames = new Set(
+        Array.from(card.querySelectorAll('input[type="checkbox"][name]'))
+          .map(el => String(el.name || '').trim())
+          .filter(Boolean)
+      )
       card.querySelectorAll('input, select, textarea').forEach(el => {
         if (!el.name || el.disabled) return
         if (el.dataset && el.dataset.skipYaml === 'true') return
         if (el.type === 'file') return
+
+        if (el.type === 'hidden' && checkboxNames.has(String(el.name || '').trim())) {
+          return
+        }
 
         if (el.tagName === 'SELECT' && el.multiple) {
           payload[el.name] = Array.from(el.selectedOptions).map(opt => opt.value)

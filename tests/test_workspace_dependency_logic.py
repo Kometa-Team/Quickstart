@@ -487,6 +487,53 @@ def test_workspace_context_promotes_sonarr_to_required(monkeypatch, qs_module):
     assert ctx["sonarr_requirement_reasons"]
 
 
+def test_workspace_status_route_returns_all_dependency_reasons(client, monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                    "mov-library_anime-library": "Anime Movies",
+                    "sho-library_tv-library": "TV Shows",
+                    "sho-library_anime-library": "Anime Shows",
+                    TAUTULLI_COLLECTION_KEY: True,
+                    OMDB_ATTRIBUTE_KEY: True,
+                    MDBLIST_ATTRIBUTE_KEY: True,
+                    ANIDB_TEMPLATE_COLLECTION_KEY: True,
+                    RADARR_TEMPLATE_COLLECTION_KEY: True,
+                    SONARR_TEMPLATE_COLLECTION_KEY: True,
+                    TRAKT_COLLECTION_KEY: True,
+                    MAL_COLLECTION_KEY: True,
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    monkeypatch.setattr(qs_module.database, "get_unique_config_names", lambda: ["cfg"])
+    monkeypatch.setattr(qs_module.helpers, "get_menu_list", _template_list)
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "cfg"
+
+    resp = client.get("/workspace_status")
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["tautulli_requirement_reasons"]
+    assert payload["omdb_requirement_reasons"]
+    assert payload["mdblist_requirement_reasons"]
+    assert payload["anidb_requirement_reasons"]
+    assert payload["radarr_requirement_reasons"]
+    assert payload["sonarr_requirement_reasons"]
+    assert payload["trakt_requirement_reasons"]
+    assert payload["mal_requirement_reasons"]
+    assert "110-radarr" in payload["required_keys"]
+    assert "120-sonarr" in payload["required_keys"]
+
+
 def test_workspace_context_promotes_trakt_to_required(monkeypatch, qs_module):
     rows = [
         _section_row(
