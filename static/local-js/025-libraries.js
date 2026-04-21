@@ -75,6 +75,11 @@ document.addEventListener('DOMContentLoaded', function () {
         endpoint: '/libraries_mdblist_dependency_hint',
         windowKey: 'QS_MDBLIST_REQUIREMENT_REASONS'
       },
+      anidb: {
+        stepKey: '100-anidb',
+        endpoint: '/libraries_anidb_dependency_hint',
+        windowKey: 'QS_ANIDB_REQUIREMENT_REASONS'
+      },
       trakt: {
         stepKey: '130-trakt',
         endpoint: '/libraries_trakt_dependency_hint',

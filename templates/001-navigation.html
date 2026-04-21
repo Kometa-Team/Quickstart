@@ -22,6 +22,7 @@
   {% set tautulli_reasons = tautulli_requirement_reasons if tautulli_requirement_reasons is defined else [] %}
   {% set omdb_reasons = omdb_requirement_reasons if omdb_requirement_reasons is defined else [] %}
   {% set mdblist_reasons = mdblist_requirement_reasons if mdblist_requirement_reasons is defined else [] %}
+  {% set anidb_reasons = anidb_requirement_reasons if anidb_requirement_reasons is defined else [] %}
   {% set trakt_reasons = trakt_requirement_reasons if trakt_requirement_reasons is defined else [] %}
   {% set mal_reasons = mal_requirement_reasons if mal_requirement_reasons is defined else [] %}
   {% set readiness = workspace_readiness if workspace_readiness is defined else {} %}
@@ -65,6 +66,17 @@
                 {% endfor %}
                 {% if mdblist_reasons|length > 2 %}
                 <div class="qs-dependency-hint-line">+{{ mdblist_reasons|length - 2 }} more...</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="qs-dependency-hint qs-anidb-required-hint {% if not anidb_reasons %}d-none{% endif %}" data-qs-dependency-hint="anidb">
+              <div class="qs-dependency-hint-title">AniDB required by</div>
+              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                {% for reason in anidb_reasons[:2] %}
+                <div class="qs-dependency-hint-line">{{ reason }}</div>
+                {% endfor %}
+                {% if anidb_reasons|length > 2 %}
+                <div class="qs-dependency-hint-line">+{{ anidb_reasons|length - 2 }} more...</div>
                 {% endif %}
               </div>
             </div>

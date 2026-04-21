@@ -4,6 +4,7 @@ TAUTULLI_COLLECTION_KEY = "mov-library_movies-collection_tautulli"
 TRAKT_COLLECTION_KEY = "sho-library_tv-collection_trakt"
 OMDB_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_content_rating_update_omdb"
 MDBLIST_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_user_rating_update_mdb_tomatoes"
+ANIDB_ATTRIBUTE_KEY = "sho-library_anime-attribute_mass_original_title_update_anidb_official"
 MAL_COLLECTION_KEY = "mov-library_anime-collection_myanimelist"
 
 
@@ -16,6 +17,7 @@ def _template_list():
         ("030-tautulli.html", "Tautulli"),
         ("050-omdb.html", "OMDb"),
         ("060-mdblist.html", "MDBList"),
+        ("100-anidb.html", "AniDB"),
         ("130-trakt.html", "Trakt"),
         ("140-mal.html", "MyAnimeList"),
         ("150-settings.html", "Settings"),
@@ -137,6 +139,35 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
             id="mdblist_order_enabled",
         ),
         pytest.param(
+            "_libraries_data_anidb_dependency_reasons",
+            {
+                "sho-library_anime-library": "Anime Shows",
+                ANIDB_ATTRIBUTE_KEY: True,
+            },
+            True,
+            "mass_original_title_update uses anidb_official",
+            id="anidb_attribute_enabled",
+        ),
+        pytest.param(
+            "_libraries_data_anidb_dependency_reasons",
+            {
+                "sho-library_anime-library": "Anime Shows",
+                "sho-library_anime-attribute_mass_genre_update_order": '["tmdb", "anidb_3_0"]',
+            },
+            True,
+            "mass_genre_update order includes anidb_3_0",
+            id="anidb_order_enabled",
+        ),
+        pytest.param(
+            "_libraries_data_anidb_dependency_reasons",
+            {
+                ANIDB_ATTRIBUTE_KEY: True,
+            },
+            False,
+            "",
+            id="anidb_ignores_inactive_library",
+        ),
+        pytest.param(
             "_libraries_data_trakt_dependency_reasons",
             {
                 "sho-library_tv-library": "TV Shows",
@@ -228,6 +259,27 @@ def test_workspace_context_promotes_mdblist_to_required(monkeypatch, qs_module):
     assert "060-mdblist" in ctx["required_keys"]
     assert "060-mdblist" not in ctx["optional_keys"]
     assert ctx["mdblist_requirement_reasons"]
+
+
+def test_workspace_context_promotes_anidb_to_required(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "sho-library_anime-library": "Anime Shows",
+                    ANIDB_ATTRIBUTE_KEY: True,
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "100-anidb" in ctx["required_keys"]
+    assert "100-anidb" not in ctx["optional_keys"]
+    assert ctx["anidb_requirement_reasons"]
 
 
 def test_workspace_context_promotes_trakt_to_required(monkeypatch, qs_module):
@@ -351,6 +403,26 @@ def test_workspace_context_keeps_mdblist_optional_without_dependency(monkeypatch
     assert "060-mdblist" not in ctx["required_keys"]
     assert "060-mdblist" in ctx["optional_keys"]
     assert ctx["mdblist_requirement_reasons"] == []
+
+
+def test_workspace_context_keeps_anidb_optional_without_dependency(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "sho-library_anime-library": "Anime Shows",
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "100-anidb" not in ctx["required_keys"]
+    assert "100-anidb" in ctx["optional_keys"]
+    assert ctx["anidb_requirement_reasons"] == []
 
 
 def test_workspace_context_keeps_trakt_optional_without_dependency(monkeypatch, qs_module):
@@ -625,6 +697,47 @@ def test_libraries_mdblist_dependency_hint_endpoint_non_matching_source_returns_
             "source_payload": {
                 "mov-library_movies-library": "Movies",
                 "mov-library_movies-attribute_mass_user_rating_update_order": '["tmdb", "omdb"]',
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is False
+    assert payload["reasons"] == []
+
+
+def test_libraries_anidb_dependency_hint_endpoint_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_anidb_dependency_hint",
+        json={
+            "source_library_id": "sho-library_anime",
+            "source_payload": {
+                "sho-library_anime-library": "Anime Shows",
+                "sho-library_anime-attribute_mass_genre_update_order": '["tmdb", "anidb_rating"]',
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("mass_genre_update order includes anidb_rating" in reason for reason in payload["reasons"])
+
+
+def test_libraries_anidb_dependency_hint_endpoint_inactive_library_returns_empty(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_anidb_dependency_hint",
+        json={
+            "source_library_id": "sho-library_anime",
+            "source_payload": {
+                ANIDB_ATTRIBUTE_KEY: "true",
             },
         },
     )

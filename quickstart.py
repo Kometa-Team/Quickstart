@@ -166,6 +166,7 @@ QS_ERROR_REASONS = {
 QS_TAUTULLI_REQUIRED_STEP_KEY = "030-tautulli"
 QS_OMDB_REQUIRED_STEP_KEY = "050-omdb"
 QS_MDBLIST_REQUIRED_STEP_KEY = "060-mdblist"
+QS_ANIDB_REQUIRED_STEP_KEY = "100-anidb"
 QS_TRAKT_REQUIRED_STEP_KEY = "130-trakt"
 QS_MAL_REQUIRED_STEP_KEY = "140-mal"
 QS_TAUTULLI_DEP_COLLECTION_IDS = {"collection_tautulli"}
@@ -173,6 +174,7 @@ QS_TRAKT_DEP_COLLECTION_IDS = {"collection_trakt"}
 QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
 QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
 QS_MDBLIST_DEP_SOURCE_PREFIXES = ("mdb",)
+QS_ANIDB_DEP_SOURCE_PREFIXES = ("anidb",)
 QS_MAL_DEP_ATTRIBUTE_OPERATIONS = {
     "mass_genre_update",
     "mass_content_rating_update",
@@ -472,6 +474,13 @@ def _libraries_data_mdblist_dependency_reasons(libraries_data):
     )
 
 
+def _libraries_data_anidb_dependency_reasons(libraries_data):
+    return _attribute_dependency_source_reasons(
+        libraries_data,
+        QS_ANIDB_DEP_SOURCE_PREFIXES,
+    )
+
+
 def _libraries_data_mal_dependency_reasons(libraries_data):
     if not isinstance(libraries_data, dict):
         return []
@@ -546,6 +555,10 @@ def _config_omdb_dependency_reasons(section_rows):
 
 def _config_mdblist_dependency_reasons(section_rows):
     return _config_dependency_reasons(section_rows, _libraries_data_mdblist_dependency_reasons)
+
+
+def _config_anidb_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_anidb_dependency_reasons)
 
 
 def _config_trakt_dependency_reasons(section_rows):
@@ -862,6 +875,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
     tautulli_requirement_reasons = _config_tautulli_dependency_reasons(section_rows) if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys else []
     omdb_requirement_reasons = _config_omdb_dependency_reasons(section_rows) if QS_OMDB_REQUIRED_STEP_KEY in template_keys else []
     mdblist_requirement_reasons = _config_mdblist_dependency_reasons(section_rows) if QS_MDBLIST_REQUIRED_STEP_KEY in template_keys else []
+    anidb_requirement_reasons = _config_anidb_dependency_reasons(section_rows) if QS_ANIDB_REQUIRED_STEP_KEY in template_keys else []
     trakt_requirement_reasons = _config_trakt_dependency_reasons(section_rows) if QS_TRAKT_REQUIRED_STEP_KEY in template_keys else []
     mal_requirement_reasons = _config_mal_dependency_reasons(section_rows) if QS_MAL_REQUIRED_STEP_KEY in template_keys else []
     if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys and tautulli_requirement_reasons:
@@ -870,6 +884,8 @@ def _build_workspace_status_context(config_name, template_list, available_config
         required_seed.add(QS_OMDB_REQUIRED_STEP_KEY)
     if QS_MDBLIST_REQUIRED_STEP_KEY in template_keys and mdblist_requirement_reasons:
         required_seed.add(QS_MDBLIST_REQUIRED_STEP_KEY)
+    if QS_ANIDB_REQUIRED_STEP_KEY in template_keys and anidb_requirement_reasons:
+        required_seed.add(QS_ANIDB_REQUIRED_STEP_KEY)
     if QS_TRAKT_REQUIRED_STEP_KEY in template_keys and trakt_requirement_reasons:
         required_seed.add(QS_TRAKT_REQUIRED_STEP_KEY)
     if QS_MAL_REQUIRED_STEP_KEY in template_keys and mal_requirement_reasons:
@@ -974,6 +990,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "tautulli_requirement_reasons": tautulli_requirement_reasons,
         "omdb_requirement_reasons": omdb_requirement_reasons,
         "mdblist_requirement_reasons": mdblist_requirement_reasons,
+        "anidb_requirement_reasons": anidb_requirement_reasons,
         "trakt_requirement_reasons": trakt_requirement_reasons,
         "mal_requirement_reasons": mal_requirement_reasons,
         "readiness": readiness,
@@ -4717,6 +4734,17 @@ def libraries_mdblist_dependency_hint():
         return _libraries_dependency_hint_response(payload, _libraries_data_mdblist_dependency_reasons)
     except Exception as e:
         helpers.ts_log(f"Failed to build MDBList dependency hint: {e}", level="ERROR")
+        return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
+
+
+@app.route("/libraries_anidb_dependency_hint", methods=["POST"])
+def libraries_anidb_dependency_hint():
+    """Preview AniDB-required dependency reasons using current in-page library edits."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        return _libraries_dependency_hint_response(payload, _libraries_data_anidb_dependency_reasons)
+    except Exception as e:
+        helpers.ts_log(f"Failed to build AniDB dependency hint: {e}", level="ERROR")
         return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
 
 

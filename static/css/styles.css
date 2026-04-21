@@ -3814,6 +3814,11 @@ body {
     background: rgba(35, 22, 58, 0.34);
 }
 
+.qs-anidb-required-hint {
+    border-color: rgba(96, 165, 250, 0.34);
+    background: rgba(17, 31, 58, 0.34);
+}
+
 .qs-tautulli-required-hint {
     border-color: rgba(94, 234, 212, 0.34);
     background: rgba(7, 35, 34, 0.34);
@@ -3839,6 +3844,10 @@ body {
 
 .qs-mdblist-required-hint .qs-dependency-hint-title {
     color: #d0bcff;
+}
+
+.qs-anidb-required-hint .qs-dependency-hint-title {
+    color: #a8d0ff;
 }
 
 .qs-trakt-required-hint .qs-dependency-hint-title {

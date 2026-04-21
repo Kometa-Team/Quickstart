@@ -995,6 +995,11 @@ function qsDependencyConfigMap () {
       windowKey: 'QS_MDBLIST_REQUIREMENT_REASONS',
       label: 'MDBList'
     },
+    anidb: {
+      stepKey: '100-anidb',
+      windowKey: 'QS_ANIDB_REQUIREMENT_REASONS',
+      label: 'AniDB'
+    },
     trakt: {
       stepKey: '130-trakt',
       windowKey: 'QS_TRAKT_REQUIREMENT_REASONS',
@@ -1145,6 +1150,7 @@ function qsApplyWorkspaceStatus (payload) {
   const tautulliReasons = qsArrayFromKeys(payload.tautulli_requirement_reasons)
   const omdbReasons = qsArrayFromKeys(payload.omdb_requirement_reasons)
   const mdblistReasons = qsArrayFromKeys(payload.mdblist_requirement_reasons)
+  const anidbReasons = qsArrayFromKeys(payload.anidb_requirement_reasons)
   const traktReasons = qsArrayFromKeys(payload.trakt_requirement_reasons)
   const malReasons = qsArrayFromKeys(payload.mal_requirement_reasons)
 
@@ -1154,6 +1160,7 @@ function qsApplyWorkspaceStatus (payload) {
   window.QS_TAUTULLI_REQUIREMENT_REASONS = tautulliReasons
   window.QS_OMDB_REQUIREMENT_REASONS = omdbReasons
   window.QS_MDBLIST_REQUIREMENT_REASONS = mdblistReasons
+  window.QS_ANIDB_REQUIREMENT_REASONS = anidbReasons
   window.QS_TRAKT_REQUIREMENT_REASONS = traktReasons
   window.QS_MAL_REQUIREMENT_REASONS = malReasons
 
@@ -1162,6 +1169,7 @@ function qsApplyWorkspaceStatus (payload) {
     tautulli: tautulliReasons,
     omdb: omdbReasons,
     mdblist: mdblistReasons,
+    anidb: anidbReasons,
     trakt: traktReasons,
     mal: malReasons
   })
