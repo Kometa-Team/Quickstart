@@ -166,6 +166,35 @@ def _playlist_libraries_from_library_toggles(nested_libraries_data):
     return has_playlist_toggle, playlist_libraries
 
 
+def _legacy_playlist_libraries_from_settings():
+    settings = persistence.retrieve_settings("027-playlist_files") or {}
+    playlist_payload = settings.get("playlist_files", {}) if isinstance(settings, dict) else {}
+    if isinstance(playlist_payload, dict) and isinstance(playlist_payload.get("playlist_files"), dict):
+        playlist_payload = playlist_payload.get("playlist_files", {})
+    raw_libraries = playlist_payload.get("libraries", "") if isinstance(playlist_payload, dict) else ""
+    if isinstance(raw_libraries, list):
+        return [str(item).strip() for item in raw_libraries if str(item).strip()]
+    return [item.strip() for item in str(raw_libraries or "").split(",") if item.strip()]
+
+
+def _legacy_playlist_libraries_for_selected_libraries(nested_libraries_data):
+    legacy_names = set(_legacy_playlist_libraries_from_settings())
+    if not legacy_names or not isinstance(nested_libraries_data, dict):
+        return []
+
+    selected_libraries = []
+    seen = set()
+    for key, value in nested_libraries_data.items():
+        if not isinstance(key, str) or not key.endswith("-library"):
+            continue
+        library_name = str(value or "").strip()
+        if library_name and library_name in legacy_names and library_name not in seen:
+            selected_libraries.append(library_name)
+            seen.add(library_name)
+
+    return selected_libraries
+
+
 def _coerce_string_list(values):
     cleaned = []
     seen = set()
@@ -2322,6 +2351,10 @@ def build_config(header_style="standard", config_name=None):
                 config_data["playlist_files"] = _format_playlist_files(playlist_libraries)
             else:
                 config_data.pop("playlist_files", None)
+        else:
+            legacy_playlist_libraries = _legacy_playlist_libraries_for_selected_libraries(nested_libraries_data)
+            if legacy_playlist_libraries:
+                config_data["playlist_files"] = _format_playlist_files(legacy_playlist_libraries)
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
 

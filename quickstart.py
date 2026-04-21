@@ -129,7 +129,6 @@ QS_VALIDATION_STEP_KEYS = {
     "010-plex",
     "020-tmdb",
     "025-libraries",
-    "027-playlist_files",
     "030-tautulli",
     "040-github",
     "050-omdb",
@@ -4875,7 +4874,7 @@ def _migrate_legacy_playlist_libraries_to_library_toggles(movie_libraries=None, 
         return legacy_names
 
     if any(isinstance(key, str) and key.endswith("-playlist") for key in libraries_data):
-        return legacy_names
+        return set()
 
     if movie_libraries is None or show_libraries is None:
         movie_libraries, show_libraries, _telemetry = _build_library_lists()
@@ -4898,9 +4897,12 @@ def _migrate_legacy_playlist_libraries_to_library_toggles(movie_libraries=None, 
     updated_libraries = libraries_data.copy()
     updated_libraries.update(migrated)
     settings["libraries"] = updated_libraries
+    config_name = session.get("config_name")
+    if not config_name:
+        return legacy_names
     try:
         database.save_section_data(
-            name=session["config_name"],
+            name=config_name,
             section="libraries",
             validated=helpers.booler(settings.get("validated", False)),
             user_entered=True,
@@ -6049,7 +6051,6 @@ def validate_all_services():
     plex_is_valid = helpers.booler(plex_settings.get("validated", False)) if isinstance(plex_settings, dict) else False
     if not plex_is_valid:
         skip_section_validation("025-libraries", "libraries", reason="missing_plex_validation")
-        skip_section_validation("027-playlist_files", "playlist_files", reason="missing_plex_validation")
     else:
         libraries_settings = persistence.retrieve_settings("025-libraries") or {}
         libraries_data = libraries_settings.get("libraries", {}) if isinstance(libraries_settings, dict) else {}
@@ -6102,31 +6103,6 @@ def validate_all_services():
                 reason=libraries_reason,
                 details=missing_placeholders if libraries_reason == "missing_placeholder_imdb" else None,
             )
-
-        libraries_settings = persistence.retrieve_settings("025-libraries") or {}
-        libraries_payload = libraries_settings.get("libraries", {}) if isinstance(libraries_settings, dict) else {}
-        playlist_libraries = []
-        if isinstance(libraries_payload, dict):
-            for key, value in libraries_payload.items():
-                if not isinstance(key, str) or not key.endswith("-library") or not _is_truthy_setting_value(value):
-                    continue
-                prefix = key[: -len("-library")]
-                if _is_truthy_setting_value(libraries_payload.get(f"{prefix}-playlist")):
-                    playlist_libraries.append(str(value).strip())
-
-        if not playlist_libraries:
-            playlist_settings = persistence.retrieve_settings("027-playlist_files") or {}
-            playlist_payload = playlist_settings.get("playlist_files", {}) if isinstance(playlist_settings, dict) else {}
-            if isinstance(playlist_payload, dict) and isinstance(playlist_payload.get("playlist_files"), dict):
-                playlist_payload = playlist_payload.get("playlist_files", {})
-            libraries_value = ""
-            if isinstance(playlist_payload, dict):
-                libraries_value = playlist_payload.get("libraries") or ""
-            playlist_libraries = [lib.strip() for lib in str(libraries_value).split(",") if lib.strip()]
-        if playlist_libraries:
-            update_section_validation("027-playlist_files", "playlist_files", True)
-        else:
-            skip_section_validation("027-playlist_files", "playlist_files", reason="no_libraries")
 
     # Bulk validation for settings
     settings_settings = persistence.retrieve_settings("150-settings") or {}

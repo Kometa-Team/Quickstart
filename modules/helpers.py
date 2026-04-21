@@ -419,6 +419,7 @@ def belongs_in_template_list(file):
     return (
         file.endswith(".html")
         and file not in ["000-base.html", "001-navigation.html"]
+        and file != "027-playlist_files.html"
         and file[:3].isdigit()
         # and file[3] == "-"
         and not file.startswith("999-")
