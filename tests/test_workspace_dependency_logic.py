@@ -13,6 +13,14 @@ SONARR_ATTRIBUTE_KEY = "sho-library_tv-attribute_sonarr_add_all"
 SONARR_CUSTOM_KEY = "sho-library_tv-attribute_sonarr_remove_by_tag_custom"
 SONARR_COLLECTION_KEY = "sho-library_tv-collection_sonarr_add_missing_best"
 MAL_COLLECTION_KEY = "mov-library_anime-collection_myanimelist"
+MDBLIST_OVERLAY_ENABLED_KEY = "mov-library_movies-movie-overlay_ratings"
+MDBLIST_OVERLAY_IMAGE_KEY = "mov-library_movies-movie-template_overlay_ratings[rating1_image]"
+TRAKT_OVERLAY_ENABLED_KEY = "sho-library_tv-episode-overlay_ratings"
+TRAKT_OVERLAY_IMAGE_KEY = "sho-library_tv-episode-template_overlay_ratings[rating2_image]"
+MAL_OVERLAY_ENABLED_KEY = "sho-library_anime-show-overlay_ratings"
+MAL_OVERLAY_IMAGE_KEY = "sho-library_anime-show-template_overlay_ratings[rating1_image]"
+ANIDB_OVERLAY_ENABLED_KEY = "sho-library_anime-show-overlay_ratings"
+ANIDB_OVERLAY_IMAGE_KEY = "sho-library_anime-show-template_overlay_ratings[rating2_image]"
 
 
 def _template_list():
@@ -65,6 +73,16 @@ def _section_row(section, *, validated=False, user_entered=False, data=None):
             True,
             "mass_user_rating_update order includes mal_japanese",
             id="mal_source_in_order",
+        ),
+        pytest.param(
+            {
+                "sho-library_anime-library": "Anime Shows",
+                MAL_OVERLAY_ENABLED_KEY: True,
+                MAL_OVERLAY_IMAGE_KEY: "mal",
+            },
+            True,
+            "show ratings overlay uses mal",
+            id="mal_overlay_enabled",
         ),
         pytest.param(
             {
@@ -148,6 +166,17 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
             id="mdblist_order_enabled",
         ),
         pytest.param(
+            "_libraries_data_mdblist_dependency_reasons",
+            {
+                "mov-library_movies-library": "Movies",
+                MDBLIST_OVERLAY_ENABLED_KEY: True,
+                MDBLIST_OVERLAY_IMAGE_KEY: "mdb",
+            },
+            True,
+            "movie ratings overlay uses mdb",
+            id="mdblist_overlay_enabled",
+        ),
+        pytest.param(
             "_libraries_data_anidb_dependency_reasons",
             {
                 "sho-library_anime-library": "Anime Shows",
@@ -180,11 +209,33 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
         pytest.param(
             "_libraries_data_anidb_dependency_reasons",
             {
+                "sho-library_anime-library": "Anime Shows",
+                ANIDB_OVERLAY_ENABLED_KEY: True,
+                ANIDB_OVERLAY_IMAGE_KEY: "anidb",
+            },
+            True,
+            "show ratings overlay uses anidb",
+            id="anidb_overlay_enabled",
+        ),
+        pytest.param(
+            "_libraries_data_anidb_dependency_reasons",
+            {
                 ANIDB_ATTRIBUTE_KEY: True,
             },
             False,
             "",
             id="anidb_ignores_inactive_library",
+        ),
+        pytest.param(
+            "_libraries_data_trakt_dependency_reasons",
+            {
+                "sho-library_tv-library": "TV Shows",
+                TRAKT_OVERLAY_ENABLED_KEY: True,
+                TRAKT_OVERLAY_IMAGE_KEY: "trakt",
+            },
+            True,
+            "episode ratings overlay uses trakt",
+            id="trakt_overlay_enabled",
         ),
         pytest.param(
             "_libraries_data_radarr_dependency_reasons",
@@ -443,6 +494,27 @@ def test_workspace_context_promotes_mal_to_required(monkeypatch, qs_module):
     assert "140-mal" in ctx["required_keys"]
     assert "140-mal" not in ctx["optional_keys"]
     assert ctx["mal_requirement_reasons"]
+
+
+def test_workspace_context_promotes_mal_to_required_from_overlay(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "sho-library_anime-library": "Anime Shows",
+                    MAL_OVERLAY_ENABLED_KEY: True,
+                    MAL_OVERLAY_IMAGE_KEY: "mal",
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "140-mal" in ctx["required_keys"]
+    assert any("show ratings overlay uses mal" in reason for reason in ctx["mal_requirement_reasons"])
 
 
 def test_workspace_context_keeps_mal_optional_without_dependency(monkeypatch, qs_module):
@@ -745,6 +817,28 @@ def test_libraries_mal_dependency_hint_endpoint_returns_reasons(client, monkeypa
     assert any("MyAnimeList Charts collection enabled" in reason for reason in payload["reasons"])
 
 
+def test_libraries_mal_dependency_hint_endpoint_overlay_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_mal_dependency_hint",
+        json={
+            "source_library_id": "sho-library_anime",
+            "source_payload": {
+                "sho-library_anime-library": "Anime Shows",
+                MAL_OVERLAY_ENABLED_KEY: "true",
+                MAL_OVERLAY_IMAGE_KEY: "mal",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("show ratings overlay uses mal" in reason for reason in payload["reasons"])
+
+
 def test_libraries_tautulli_dependency_hint_endpoint_returns_reasons(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
 
@@ -848,6 +942,28 @@ def test_libraries_mdblist_dependency_hint_endpoint_returns_reasons(client, monk
     assert any("mass_user_rating_update order includes mdb_tomatoes" in reason for reason in payload["reasons"])
 
 
+def test_libraries_mdblist_dependency_hint_endpoint_overlay_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_mdblist_dependency_hint",
+        json={
+            "source_library_id": "mov-library_movies",
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                MDBLIST_OVERLAY_ENABLED_KEY: "true",
+                MDBLIST_OVERLAY_IMAGE_KEY: "letterboxd",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("movie ratings overlay uses letterboxd" in reason for reason in payload["reasons"])
+
+
 def test_libraries_mdblist_dependency_hint_endpoint_non_matching_source_returns_empty(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
 
@@ -909,6 +1025,28 @@ def test_libraries_anidb_dependency_hint_endpoint_collection_returns_reasons(cli
     assert payload["success"] is True
     assert payload["required"] is True
     assert any("AniDB Popular collection enabled" in reason for reason in payload["reasons"])
+
+
+def test_libraries_anidb_dependency_hint_endpoint_overlay_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_anidb_dependency_hint",
+        json={
+            "source_library_id": "sho-library_anime",
+            "source_payload": {
+                "sho-library_anime-library": "Anime Shows",
+                ANIDB_OVERLAY_ENABLED_KEY: "true",
+                ANIDB_OVERLAY_IMAGE_KEY: "anidb",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("show ratings overlay uses anidb" in reason for reason in payload["reasons"])
 
 
 def test_libraries_anidb_dependency_hint_endpoint_inactive_library_returns_empty(client, monkeypatch, qs_module):
@@ -1033,6 +1171,28 @@ def test_libraries_trakt_dependency_hint_endpoint_returns_reasons(client, monkey
     assert payload["success"] is True
     assert payload["required"] is True
     assert any("Trakt Charts collection enabled" in reason for reason in payload["reasons"])
+
+
+def test_libraries_trakt_dependency_hint_endpoint_overlay_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_trakt_dependency_hint",
+        json={
+            "source_library_id": "sho-library_tv",
+            "source_payload": {
+                "sho-library_tv-library": "TV Shows",
+                TRAKT_OVERLAY_ENABLED_KEY: "true",
+                TRAKT_OVERLAY_IMAGE_KEY: "trakt",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("episode ratings overlay uses trakt" in reason for reason in payload["reasons"])
 
 
 def test_libraries_trakt_dependency_hint_endpoint_disabled_collection_returns_empty(client, monkeypatch, qs_module):

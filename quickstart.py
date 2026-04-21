@@ -178,6 +178,10 @@ QS_ANIDB_DEP_COLLECTION_IDS = {"collection_use_anidb"}
 QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
 QS_MDBLIST_DEP_SOURCE_PREFIXES = ("mdb",)
 QS_ANIDB_DEP_SOURCE_PREFIXES = ("anidb",)
+QS_MDBLIST_OVERLAY_IMAGE_VALUES = {"letterboxd", "metacritic", "rt_tomato", "rt_popcorn", "mdb"}
+QS_ANIDB_OVERLAY_IMAGE_VALUES = {"anidb"}
+QS_TRAKT_OVERLAY_IMAGE_VALUES = {"trakt"}
+QS_MAL_OVERLAY_IMAGE_VALUES = {"mal"}
 QS_RADARR_DEP_ATTRIBUTE_PREFIXES = ("radarr_add_all", "radarr_remove_by_tag")
 QS_RADARR_DEP_COLLECTION_PREFIXES = ("collection_radarr_",)
 QS_SONARR_DEP_ATTRIBUTE_PREFIXES = ("sonarr_add_all", "sonarr_remove_by_tag")
@@ -299,6 +303,18 @@ def _parse_json_array(value):
 def _library_prefix_from_key(key):
     if not isinstance(key, str) or not key.startswith(("mov-library_", "sho-library_")):
         return None
+    for marker in (
+        "-movie-template_",
+        "-show-template_",
+        "-season-template_",
+        "-episode-template_",
+        "-movie-overlay_",
+        "-show-overlay_",
+        "-season-overlay_",
+        "-episode-overlay_",
+    ):
+        if marker in key:
+            return key.split(marker, 1)[0]
     if "-template_" in key:
         return key.split("-template_", 1)[0]
     if "-attribute_" in key:
@@ -413,6 +429,45 @@ def _libraries_data_service_dependency_reasons(libraries_data, attribute_prefixe
     return reasons
 
 
+def _libraries_data_overlay_rating_dependency_reasons(libraries_data, image_values):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    active_prefixes = _active_library_prefixes(libraries_data)
+    reasons = []
+    seen = set()
+    normalized_images = {str(value or "").strip().lower() for value in image_values if str(value or "").strip()}
+    if not normalized_images:
+        return reasons
+
+    for raw_key, raw_value in libraries_data.items():
+        key = str(raw_key or "").strip().lower()
+        selected_image = str(raw_value or "").strip().lower()
+        if selected_image not in normalized_images:
+            continue
+
+        match = re.match(
+            r"^(?P<prefix>(?:mov|sho)-library_[a-z0-9_]+)-(?P<builder>movie|show|season|episode)-template_overlay_ratings\[rating[123]_image\]$",
+            key,
+        )
+        if not match:
+            continue
+
+        prefix = match.group("prefix")
+        builder = match.group("builder")
+        if prefix not in active_prefixes:
+            continue
+
+        overlay_toggle_key = f"{prefix}-{builder}-overlay_ratings"
+        if not _is_truthy_setting_value(libraries_data.get(overlay_toggle_key)):
+            continue
+
+        detail = f"{builder} ratings overlay uses {selected_image}"
+        _append_dependency_reason(reasons, seen, libraries_data, prefix, detail)
+
+    return reasons
+
+
 def _attribute_dependency_source_reasons(libraries_data, source_prefixes):
     if not isinstance(libraries_data, dict):
         return []
@@ -503,11 +558,16 @@ def _libraries_data_tautulli_dependency_reasons(libraries_data):
 
 
 def _libraries_data_trakt_dependency_reasons(libraries_data):
-    return _libraries_data_collection_dependency_reasons(
+    collection_reasons = _libraries_data_collection_dependency_reasons(
         libraries_data,
         QS_TRAKT_DEP_COLLECTION_IDS,
         "Trakt Charts collection enabled",
     )
+    overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
+        libraries_data,
+        QS_TRAKT_OVERLAY_IMAGE_VALUES,
+    )
+    return collection_reasons + [reason for reason in overlay_reasons if reason not in collection_reasons]
 
 
 def _libraries_data_omdb_dependency_reasons(libraries_data):
@@ -518,10 +578,15 @@ def _libraries_data_omdb_dependency_reasons(libraries_data):
 
 
 def _libraries_data_mdblist_dependency_reasons(libraries_data):
-    return _attribute_dependency_source_reasons(
+    attribute_reasons = _attribute_dependency_source_reasons(
         libraries_data,
         QS_MDBLIST_DEP_SOURCE_PREFIXES,
     )
+    overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
+        libraries_data,
+        QS_MDBLIST_OVERLAY_IMAGE_VALUES,
+    )
+    return attribute_reasons + [reason for reason in overlay_reasons if reason not in attribute_reasons]
 
 
 def _libraries_data_anidb_dependency_reasons(libraries_data):
@@ -534,7 +599,12 @@ def _libraries_data_anidb_dependency_reasons(libraries_data):
         QS_ANIDB_DEP_COLLECTION_IDS,
         "AniDB Popular collection enabled",
     )
-    return attribute_reasons + [reason for reason in collection_reasons if reason not in attribute_reasons]
+    overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
+        libraries_data,
+        QS_ANIDB_OVERLAY_IMAGE_VALUES,
+    )
+    merged_reasons = attribute_reasons + [reason for reason in collection_reasons if reason not in attribute_reasons]
+    return merged_reasons + [reason for reason in overlay_reasons if reason not in merged_reasons]
 
 
 def _libraries_data_radarr_dependency_reasons(libraries_data):
@@ -601,7 +671,11 @@ def _libraries_data_mal_dependency_reasons(libraries_data):
             detail = f"{operation} order includes {joined_sources}"
             _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
 
-    return reasons
+    overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
+        libraries_data,
+        QS_MAL_OVERLAY_IMAGE_VALUES,
+    )
+    return reasons + [reason for reason in overlay_reasons if reason not in reasons]
 
 
 def _config_requires_mal(section_rows):
