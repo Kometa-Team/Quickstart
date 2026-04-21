@@ -167,6 +167,8 @@ QS_TAUTULLI_REQUIRED_STEP_KEY = "030-tautulli"
 QS_OMDB_REQUIRED_STEP_KEY = "050-omdb"
 QS_MDBLIST_REQUIRED_STEP_KEY = "060-mdblist"
 QS_ANIDB_REQUIRED_STEP_KEY = "100-anidb"
+QS_RADARR_REQUIRED_STEP_KEY = "110-radarr"
+QS_SONARR_REQUIRED_STEP_KEY = "120-sonarr"
 QS_TRAKT_REQUIRED_STEP_KEY = "130-trakt"
 QS_MAL_REQUIRED_STEP_KEY = "140-mal"
 QS_TAUTULLI_DEP_COLLECTION_IDS = {"collection_tautulli"}
@@ -175,6 +177,10 @@ QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
 QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
 QS_MDBLIST_DEP_SOURCE_PREFIXES = ("mdb",)
 QS_ANIDB_DEP_SOURCE_PREFIXES = ("anidb",)
+QS_RADARR_DEP_ATTRIBUTE_PREFIXES = ("radarr_add_all", "radarr_remove_by_tag")
+QS_RADARR_DEP_COLLECTION_PREFIXES = ("collection_radarr_",)
+QS_SONARR_DEP_ATTRIBUTE_PREFIXES = ("sonarr_add_all", "sonarr_remove_by_tag")
+QS_SONARR_DEP_COLLECTION_PREFIXES = ("collection_sonarr_",)
 QS_MAL_DEP_ATTRIBUTE_OPERATIONS = {
     "mass_genre_update",
     "mass_content_rating_update",
@@ -363,6 +369,49 @@ def _libraries_data_collection_dependency_reasons(libraries_data, collection_ids
     return reasons
 
 
+def _libraries_data_service_dependency_reasons(libraries_data, attribute_prefixes, collection_prefixes):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    active_prefixes = _active_library_prefixes(libraries_data)
+    reasons = []
+    seen = set()
+    normalized_attribute_prefixes = tuple(str(prefix or "").strip().lower() for prefix in attribute_prefixes if str(prefix or "").strip())
+    normalized_collection_prefixes = tuple(str(prefix or "").strip().lower() for prefix in collection_prefixes if str(prefix or "").strip())
+
+    for raw_key, raw_value in libraries_data.items():
+        key = str(raw_key or "").strip().lower()
+        if not key or not _is_truthy_setting_value(raw_value):
+            continue
+
+        prefix = _library_prefix_from_key(key)
+        if prefix and prefix not in active_prefixes:
+            continue
+
+        if "-attribute_" in key:
+            attribute_key = key.split("-attribute_", 1)[1]
+            matched_attribute = next(
+                (
+                    attr_prefix
+                    for attr_prefix in normalized_attribute_prefixes
+                    if attribute_key == attr_prefix or attribute_key.startswith(f"{attr_prefix}_")
+                ),
+                None,
+            )
+            if matched_attribute:
+                detail = f"{matched_attribute} configured" if attribute_key.endswith("_custom") else f"{attribute_key} enabled"
+                _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
+                continue
+
+        if "-collection_" in key:
+            collection_id = f"collection_{key.rsplit('-collection_', 1)[1]}"
+            if any(collection_id.startswith(collection_prefix) for collection_prefix in normalized_collection_prefixes):
+                detail = f"{collection_id} enabled"
+                _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
+
+    return reasons
+
+
 def _attribute_dependency_source_reasons(libraries_data, source_prefixes):
     if not isinstance(libraries_data, dict):
         return []
@@ -481,6 +530,22 @@ def _libraries_data_anidb_dependency_reasons(libraries_data):
     )
 
 
+def _libraries_data_radarr_dependency_reasons(libraries_data):
+    return _libraries_data_service_dependency_reasons(
+        libraries_data,
+        QS_RADARR_DEP_ATTRIBUTE_PREFIXES,
+        QS_RADARR_DEP_COLLECTION_PREFIXES,
+    )
+
+
+def _libraries_data_sonarr_dependency_reasons(libraries_data):
+    return _libraries_data_service_dependency_reasons(
+        libraries_data,
+        QS_SONARR_DEP_ATTRIBUTE_PREFIXES,
+        QS_SONARR_DEP_COLLECTION_PREFIXES,
+    )
+
+
 def _libraries_data_mal_dependency_reasons(libraries_data):
     if not isinstance(libraries_data, dict):
         return []
@@ -559,6 +624,14 @@ def _config_mdblist_dependency_reasons(section_rows):
 
 def _config_anidb_dependency_reasons(section_rows):
     return _config_dependency_reasons(section_rows, _libraries_data_anidb_dependency_reasons)
+
+
+def _config_radarr_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_radarr_dependency_reasons)
+
+
+def _config_sonarr_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_sonarr_dependency_reasons)
 
 
 def _config_trakt_dependency_reasons(section_rows):
@@ -876,6 +949,8 @@ def _build_workspace_status_context(config_name, template_list, available_config
     omdb_requirement_reasons = _config_omdb_dependency_reasons(section_rows) if QS_OMDB_REQUIRED_STEP_KEY in template_keys else []
     mdblist_requirement_reasons = _config_mdblist_dependency_reasons(section_rows) if QS_MDBLIST_REQUIRED_STEP_KEY in template_keys else []
     anidb_requirement_reasons = _config_anidb_dependency_reasons(section_rows) if QS_ANIDB_REQUIRED_STEP_KEY in template_keys else []
+    radarr_requirement_reasons = _config_radarr_dependency_reasons(section_rows) if QS_RADARR_REQUIRED_STEP_KEY in template_keys else []
+    sonarr_requirement_reasons = _config_sonarr_dependency_reasons(section_rows) if QS_SONARR_REQUIRED_STEP_KEY in template_keys else []
     trakt_requirement_reasons = _config_trakt_dependency_reasons(section_rows) if QS_TRAKT_REQUIRED_STEP_KEY in template_keys else []
     mal_requirement_reasons = _config_mal_dependency_reasons(section_rows) if QS_MAL_REQUIRED_STEP_KEY in template_keys else []
     if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys and tautulli_requirement_reasons:
@@ -886,6 +961,10 @@ def _build_workspace_status_context(config_name, template_list, available_config
         required_seed.add(QS_MDBLIST_REQUIRED_STEP_KEY)
     if QS_ANIDB_REQUIRED_STEP_KEY in template_keys and anidb_requirement_reasons:
         required_seed.add(QS_ANIDB_REQUIRED_STEP_KEY)
+    if QS_RADARR_REQUIRED_STEP_KEY in template_keys and radarr_requirement_reasons:
+        required_seed.add(QS_RADARR_REQUIRED_STEP_KEY)
+    if QS_SONARR_REQUIRED_STEP_KEY in template_keys and sonarr_requirement_reasons:
+        required_seed.add(QS_SONARR_REQUIRED_STEP_KEY)
     if QS_TRAKT_REQUIRED_STEP_KEY in template_keys and trakt_requirement_reasons:
         required_seed.add(QS_TRAKT_REQUIRED_STEP_KEY)
     if QS_MAL_REQUIRED_STEP_KEY in template_keys and mal_requirement_reasons:
@@ -991,6 +1070,8 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "omdb_requirement_reasons": omdb_requirement_reasons,
         "mdblist_requirement_reasons": mdblist_requirement_reasons,
         "anidb_requirement_reasons": anidb_requirement_reasons,
+        "radarr_requirement_reasons": radarr_requirement_reasons,
+        "sonarr_requirement_reasons": sonarr_requirement_reasons,
         "trakt_requirement_reasons": trakt_requirement_reasons,
         "mal_requirement_reasons": mal_requirement_reasons,
         "readiness": readiness,
@@ -4745,6 +4826,28 @@ def libraries_anidb_dependency_hint():
         return _libraries_dependency_hint_response(payload, _libraries_data_anidb_dependency_reasons)
     except Exception as e:
         helpers.ts_log(f"Failed to build AniDB dependency hint: {e}", level="ERROR")
+        return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
+
+
+@app.route("/libraries_radarr_dependency_hint", methods=["POST"])
+def libraries_radarr_dependency_hint():
+    """Preview Radarr-required dependency reasons using current in-page library edits."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        return _libraries_dependency_hint_response(payload, _libraries_data_radarr_dependency_reasons)
+    except Exception as e:
+        helpers.ts_log(f"Failed to build Radarr dependency hint: {e}", level="ERROR")
+        return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
+
+
+@app.route("/libraries_sonarr_dependency_hint", methods=["POST"])
+def libraries_sonarr_dependency_hint():
+    """Preview Sonarr-required dependency reasons using current in-page library edits."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        return _libraries_dependency_hint_response(payload, _libraries_data_sonarr_dependency_reasons)
+    except Exception as e:
+        helpers.ts_log(f"Failed to build Sonarr dependency hint: {e}", level="ERROR")
         return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
 
 

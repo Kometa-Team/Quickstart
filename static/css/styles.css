@@ -3819,6 +3819,16 @@ body {
     background: rgba(17, 31, 58, 0.34);
 }
 
+.qs-radarr-required-hint {
+    border-color: rgba(248, 113, 113, 0.34);
+    background: rgba(56, 20, 20, 0.34);
+}
+
+.qs-sonarr-required-hint {
+    border-color: rgba(74, 222, 128, 0.34);
+    background: rgba(14, 42, 23, 0.34);
+}
+
 .qs-tautulli-required-hint {
     border-color: rgba(94, 234, 212, 0.34);
     background: rgba(7, 35, 34, 0.34);
@@ -3848,6 +3858,14 @@ body {
 
 .qs-anidb-required-hint .qs-dependency-hint-title {
     color: #a8d0ff;
+}
+
+.qs-radarr-required-hint .qs-dependency-hint-title {
+    color: #ffb4b4;
+}
+
+.qs-sonarr-required-hint .qs-dependency-hint-title {
+    color: #aef0bf;
 }
 
 .qs-trakt-required-hint .qs-dependency-hint-title {

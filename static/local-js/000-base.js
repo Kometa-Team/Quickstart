@@ -1000,6 +1000,16 @@ function qsDependencyConfigMap () {
       windowKey: 'QS_ANIDB_REQUIREMENT_REASONS',
       label: 'AniDB'
     },
+    radarr: {
+      stepKey: '110-radarr',
+      windowKey: 'QS_RADARR_REQUIREMENT_REASONS',
+      label: 'Radarr'
+    },
+    sonarr: {
+      stepKey: '120-sonarr',
+      windowKey: 'QS_SONARR_REQUIREMENT_REASONS',
+      label: 'Sonarr'
+    },
     trakt: {
       stepKey: '130-trakt',
       windowKey: 'QS_TRAKT_REQUIREMENT_REASONS',
@@ -1151,6 +1161,8 @@ function qsApplyWorkspaceStatus (payload) {
   const omdbReasons = qsArrayFromKeys(payload.omdb_requirement_reasons)
   const mdblistReasons = qsArrayFromKeys(payload.mdblist_requirement_reasons)
   const anidbReasons = qsArrayFromKeys(payload.anidb_requirement_reasons)
+  const radarrReasons = qsArrayFromKeys(payload.radarr_requirement_reasons)
+  const sonarrReasons = qsArrayFromKeys(payload.sonarr_requirement_reasons)
   const traktReasons = qsArrayFromKeys(payload.trakt_requirement_reasons)
   const malReasons = qsArrayFromKeys(payload.mal_requirement_reasons)
 
@@ -1161,6 +1173,8 @@ function qsApplyWorkspaceStatus (payload) {
   window.QS_OMDB_REQUIREMENT_REASONS = omdbReasons
   window.QS_MDBLIST_REQUIREMENT_REASONS = mdblistReasons
   window.QS_ANIDB_REQUIREMENT_REASONS = anidbReasons
+  window.QS_RADARR_REQUIREMENT_REASONS = radarrReasons
+  window.QS_SONARR_REQUIREMENT_REASONS = sonarrReasons
   window.QS_TRAKT_REQUIREMENT_REASONS = traktReasons
   window.QS_MAL_REQUIREMENT_REASONS = malReasons
 
@@ -1170,6 +1184,8 @@ function qsApplyWorkspaceStatus (payload) {
     omdb: omdbReasons,
     mdblist: mdblistReasons,
     anidb: anidbReasons,
+    radarr: radarrReasons,
+    sonarr: sonarrReasons,
     trakt: traktReasons,
     mal: malReasons
   })

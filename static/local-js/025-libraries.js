@@ -80,6 +80,16 @@ document.addEventListener('DOMContentLoaded', function () {
         endpoint: '/libraries_anidb_dependency_hint',
         windowKey: 'QS_ANIDB_REQUIREMENT_REASONS'
       },
+      radarr: {
+        stepKey: '110-radarr',
+        endpoint: '/libraries_radarr_dependency_hint',
+        windowKey: 'QS_RADARR_REQUIREMENT_REASONS'
+      },
+      sonarr: {
+        stepKey: '120-sonarr',
+        endpoint: '/libraries_sonarr_dependency_hint',
+        windowKey: 'QS_SONARR_REQUIREMENT_REASONS'
+      },
       trakt: {
         stepKey: '130-trakt',
         endpoint: '/libraries_trakt_dependency_hint',

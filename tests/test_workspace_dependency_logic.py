@@ -5,6 +5,12 @@ TRAKT_COLLECTION_KEY = "sho-library_tv-collection_trakt"
 OMDB_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_content_rating_update_omdb"
 MDBLIST_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_user_rating_update_mdb_tomatoes"
 ANIDB_ATTRIBUTE_KEY = "sho-library_anime-attribute_mass_original_title_update_anidb_official"
+RADARR_ATTRIBUTE_KEY = "mov-library_movies-attribute_radarr_add_all"
+RADARR_CUSTOM_KEY = "mov-library_movies-attribute_radarr_remove_by_tag_custom"
+RADARR_COLLECTION_KEY = "mov-library_movies-collection_radarr_add_missing_best"
+SONARR_ATTRIBUTE_KEY = "sho-library_tv-attribute_sonarr_add_all"
+SONARR_CUSTOM_KEY = "sho-library_tv-attribute_sonarr_remove_by_tag_custom"
+SONARR_COLLECTION_KEY = "sho-library_tv-collection_sonarr_add_missing_best"
 MAL_COLLECTION_KEY = "mov-library_anime-collection_myanimelist"
 
 
@@ -18,6 +24,8 @@ def _template_list():
         ("050-omdb.html", "OMDb"),
         ("060-mdblist.html", "MDBList"),
         ("100-anidb.html", "AniDB"),
+        ("110-radarr.html", "Radarr"),
+        ("120-sonarr.html", "Sonarr"),
         ("130-trakt.html", "Trakt"),
         ("140-mal.html", "MyAnimeList"),
         ("150-settings.html", "Settings"),
@@ -168,6 +176,66 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
             id="anidb_ignores_inactive_library",
         ),
         pytest.param(
+            "_libraries_data_radarr_dependency_reasons",
+            {
+                "mov-library_movies-library": "Movies",
+                RADARR_ATTRIBUTE_KEY: True,
+            },
+            True,
+            "radarr_add_all enabled",
+            id="radarr_attribute_enabled",
+        ),
+        pytest.param(
+            "_libraries_data_radarr_dependency_reasons",
+            {
+                "mov-library_movies-library": "Movies",
+                RADARR_CUSTOM_KEY: '["keep"]',
+            },
+            True,
+            "radarr_remove_by_tag configured",
+            id="radarr_custom_configured",
+        ),
+        pytest.param(
+            "_libraries_data_radarr_dependency_reasons",
+            {
+                "mov-library_movies-library": "Movies",
+                RADARR_COLLECTION_KEY: True,
+            },
+            True,
+            "collection_radarr_add_missing_best enabled",
+            id="radarr_collection_enabled",
+        ),
+        pytest.param(
+            "_libraries_data_sonarr_dependency_reasons",
+            {
+                "sho-library_tv-library": "TV Shows",
+                SONARR_ATTRIBUTE_KEY: True,
+            },
+            True,
+            "sonarr_add_all enabled",
+            id="sonarr_attribute_enabled",
+        ),
+        pytest.param(
+            "_libraries_data_sonarr_dependency_reasons",
+            {
+                "sho-library_tv-library": "TV Shows",
+                SONARR_CUSTOM_KEY: '["remove"]',
+            },
+            True,
+            "sonarr_remove_by_tag configured",
+            id="sonarr_custom_configured",
+        ),
+        pytest.param(
+            "_libraries_data_sonarr_dependency_reasons",
+            {
+                "sho-library_tv-library": "TV Shows",
+                SONARR_COLLECTION_KEY: True,
+            },
+            True,
+            "collection_sonarr_add_missing_best enabled",
+            id="sonarr_collection_enabled",
+        ),
+        pytest.param(
             "_libraries_data_trakt_dependency_reasons",
             {
                 "sho-library_tv-library": "TV Shows",
@@ -280,6 +348,48 @@ def test_workspace_context_promotes_anidb_to_required(monkeypatch, qs_module):
     assert "100-anidb" in ctx["required_keys"]
     assert "100-anidb" not in ctx["optional_keys"]
     assert ctx["anidb_requirement_reasons"]
+
+
+def test_workspace_context_promotes_radarr_to_required(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                    RADARR_COLLECTION_KEY: True,
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "110-radarr" in ctx["required_keys"]
+    assert "110-radarr" not in ctx["optional_keys"]
+    assert ctx["radarr_requirement_reasons"]
+
+
+def test_workspace_context_promotes_sonarr_to_required(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "sho-library_tv-library": "TV Shows",
+                    SONARR_COLLECTION_KEY: True,
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "120-sonarr" in ctx["required_keys"]
+    assert "120-sonarr" not in ctx["optional_keys"]
+    assert ctx["sonarr_requirement_reasons"]
 
 
 def test_workspace_context_promotes_trakt_to_required(monkeypatch, qs_module):
@@ -423,6 +533,46 @@ def test_workspace_context_keeps_anidb_optional_without_dependency(monkeypatch, 
     assert "100-anidb" not in ctx["required_keys"]
     assert "100-anidb" in ctx["optional_keys"]
     assert ctx["anidb_requirement_reasons"] == []
+
+
+def test_workspace_context_keeps_radarr_optional_without_dependency(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "110-radarr" not in ctx["required_keys"]
+    assert "110-radarr" in ctx["optional_keys"]
+    assert ctx["radarr_requirement_reasons"] == []
+
+
+def test_workspace_context_keeps_sonarr_optional_without_dependency(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "sho-library_tv-library": "TV Shows",
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "120-sonarr" not in ctx["required_keys"]
+    assert "120-sonarr" in ctx["optional_keys"]
+    assert ctx["sonarr_requirement_reasons"] == []
 
 
 def test_workspace_context_keeps_trakt_optional_without_dependency(monkeypatch, qs_module):
@@ -738,6 +888,89 @@ def test_libraries_anidb_dependency_hint_endpoint_inactive_library_returns_empty
             "source_library_id": "sho-library_anime",
             "source_payload": {
                 ANIDB_ATTRIBUTE_KEY: "true",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is False
+    assert payload["reasons"] == []
+
+
+def test_libraries_radarr_dependency_hint_endpoint_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_radarr_dependency_hint",
+        json={
+            "source_library_id": "mov-library_movies",
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                RADARR_CUSTOM_KEY: '["remove-me"]',
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("radarr_remove_by_tag configured" in reason for reason in payload["reasons"])
+
+
+def test_libraries_radarr_dependency_hint_endpoint_inactive_library_returns_empty(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_radarr_dependency_hint",
+        json={
+            "source_library_id": "mov-library_movies",
+            "source_payload": {
+                RADARR_COLLECTION_KEY: "true",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is False
+    assert payload["reasons"] == []
+
+
+def test_libraries_sonarr_dependency_hint_endpoint_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_sonarr_dependency_hint",
+        json={
+            "source_library_id": "sho-library_tv",
+            "source_payload": {
+                "sho-library_tv-library": "TV Shows",
+                SONARR_COLLECTION_KEY: "true",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("collection_sonarr_add_missing_best enabled" in reason for reason in payload["reasons"])
+
+
+def test_libraries_sonarr_dependency_hint_endpoint_disabled_payload_returns_empty(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_sonarr_dependency_hint",
+        json={
+            "source_library_id": "sho-library_tv",
+            "source_payload": {
+                "sho-library_tv-library": "TV Shows",
+                SONARR_ATTRIBUTE_KEY: "false",
             },
         },
     )

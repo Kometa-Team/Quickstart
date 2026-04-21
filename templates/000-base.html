@@ -65,6 +65,8 @@
     window.QS_OMDB_REQUIREMENT_REASONS = {{ (omdb_requirement_reasons if omdb_requirement_reasons is defined else []) | tojson }};
     window.QS_MDBLIST_REQUIREMENT_REASONS = {{ (mdblist_requirement_reasons if mdblist_requirement_reasons is defined else []) | tojson }};
     window.QS_ANIDB_REQUIREMENT_REASONS = {{ (anidb_requirement_reasons if anidb_requirement_reasons is defined else []) | tojson }};
+    window.QS_RADARR_REQUIREMENT_REASONS = {{ (radarr_requirement_reasons if radarr_requirement_reasons is defined else []) | tojson }};
+    window.QS_SONARR_REQUIREMENT_REASONS = {{ (sonarr_requirement_reasons if sonarr_requirement_reasons is defined else []) | tojson }};
     window.QS_TRAKT_REQUIREMENT_REASONS = {{ (trakt_requirement_reasons if trakt_requirement_reasons is defined else []) | tojson }};
     window.QS_MAL_REQUIREMENT_REASONS = {{ (mal_requirement_reasons if mal_requirement_reasons is defined else []) | tojson }};
   </script>
