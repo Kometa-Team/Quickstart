@@ -20,6 +20,8 @@
   {% set optional_open = current_template in optional_ns.keys %}
   {% set review_open = current_template in review_keys %}
   {% set tautulli_reasons = tautulli_requirement_reasons if tautulli_requirement_reasons is defined else [] %}
+  {% set omdb_reasons = omdb_requirement_reasons if omdb_requirement_reasons is defined else [] %}
+  {% set mdblist_reasons = mdblist_requirement_reasons if mdblist_requirement_reasons is defined else [] %}
   {% set trakt_reasons = trakt_requirement_reasons if trakt_requirement_reasons is defined else [] %}
   {% set mal_reasons = mal_requirement_reasons if mal_requirement_reasons is defined else [] %}
   {% set readiness = workspace_readiness if workspace_readiness is defined else {} %}
@@ -41,6 +43,28 @@
                 {% endfor %}
                 {% if tautulli_reasons|length > 2 %}
                 <div class="qs-dependency-hint-line">+{{ tautulli_reasons|length - 2 }} more...</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="qs-dependency-hint qs-omdb-required-hint {% if not omdb_reasons %}d-none{% endif %}" data-qs-dependency-hint="omdb">
+              <div class="qs-dependency-hint-title">OMDb required by</div>
+              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                {% for reason in omdb_reasons[:2] %}
+                <div class="qs-dependency-hint-line">{{ reason }}</div>
+                {% endfor %}
+                {% if omdb_reasons|length > 2 %}
+                <div class="qs-dependency-hint-line">+{{ omdb_reasons|length - 2 }} more...</div>
+                {% endif %}
+              </div>
+            </div>
+            <div class="qs-dependency-hint qs-mdblist-required-hint {% if not mdblist_reasons %}d-none{% endif %}" data-qs-dependency-hint="mdblist">
+              <div class="qs-dependency-hint-title">MDBList required by</div>
+              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                {% for reason in mdblist_reasons[:2] %}
+                <div class="qs-dependency-hint-line">{{ reason }}</div>
+                {% endfor %}
+                {% if mdblist_reasons|length > 2 %}
+                <div class="qs-dependency-hint-line">+{{ mdblist_reasons|length - 2 }} more...</div>
                 {% endif %}
               </div>
             </div>

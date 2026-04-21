@@ -985,6 +985,16 @@ function qsDependencyConfigMap () {
       windowKey: 'QS_TAUTULLI_REQUIREMENT_REASONS',
       label: 'Tautulli'
     },
+    omdb: {
+      stepKey: '050-omdb',
+      windowKey: 'QS_OMDB_REQUIREMENT_REASONS',
+      label: 'OMDb'
+    },
+    mdblist: {
+      stepKey: '060-mdblist',
+      windowKey: 'QS_MDBLIST_REQUIREMENT_REASONS',
+      label: 'MDBList'
+    },
     trakt: {
       stepKey: '130-trakt',
       windowKey: 'QS_TRAKT_REQUIREMENT_REASONS',
@@ -1133,6 +1143,8 @@ function qsApplyWorkspaceStatus (payload) {
   const optionalKeys = qsArrayFromKeys(payload.optional_keys)
   const reviewKeys = qsArrayFromKeys(payload.review_keys)
   const tautulliReasons = qsArrayFromKeys(payload.tautulli_requirement_reasons)
+  const omdbReasons = qsArrayFromKeys(payload.omdb_requirement_reasons)
+  const mdblistReasons = qsArrayFromKeys(payload.mdblist_requirement_reasons)
   const traktReasons = qsArrayFromKeys(payload.trakt_requirement_reasons)
   const malReasons = qsArrayFromKeys(payload.mal_requirement_reasons)
 
@@ -1140,12 +1152,16 @@ function qsApplyWorkspaceStatus (payload) {
   window.QS_OPTIONAL_KEYS = optionalKeys
   window.QS_REVIEW_KEYS = reviewKeys
   window.QS_TAUTULLI_REQUIREMENT_REASONS = tautulliReasons
+  window.QS_OMDB_REQUIREMENT_REASONS = omdbReasons
+  window.QS_MDBLIST_REQUIREMENT_REASONS = mdblistReasons
   window.QS_TRAKT_REQUIREMENT_REASONS = traktReasons
   window.QS_MAL_REQUIREMENT_REASONS = malReasons
 
   qsApplyGroupMembership(requiredKeys, optionalKeys, reviewKeys)
   qsApplyAllDependencyHints({
     tautulli: tautulliReasons,
+    omdb: omdbReasons,
+    mdblist: mdblistReasons,
     trakt: traktReasons,
     mal: malReasons
   })

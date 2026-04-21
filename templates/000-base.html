@@ -62,6 +62,8 @@
     window.QS_OPTIONAL_KEYS = {{ (optional_keys if optional_keys is defined else []) | tojson }};
     window.QS_REVIEW_KEYS = {{ (review_keys if review_keys is defined else []) | tojson }};
     window.QS_TAUTULLI_REQUIREMENT_REASONS = {{ (tautulli_requirement_reasons if tautulli_requirement_reasons is defined else []) | tojson }};
+    window.QS_OMDB_REQUIREMENT_REASONS = {{ (omdb_requirement_reasons if omdb_requirement_reasons is defined else []) | tojson }};
+    window.QS_MDBLIST_REQUIREMENT_REASONS = {{ (mdblist_requirement_reasons if mdblist_requirement_reasons is defined else []) | tojson }};
     window.QS_TRAKT_REQUIREMENT_REASONS = {{ (trakt_requirement_reasons if trakt_requirement_reasons is defined else []) | tojson }};
     window.QS_MAL_REQUIREMENT_REASONS = {{ (mal_requirement_reasons if mal_requirement_reasons is defined else []) | tojson }};
   </script>

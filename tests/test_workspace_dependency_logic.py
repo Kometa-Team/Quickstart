@@ -2,6 +2,8 @@ import pytest
 
 TAUTULLI_COLLECTION_KEY = "mov-library_movies-collection_tautulli"
 TRAKT_COLLECTION_KEY = "sho-library_tv-collection_trakt"
+OMDB_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_content_rating_update_omdb"
+MDBLIST_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_user_rating_update_mdb_tomatoes"
 MAL_COLLECTION_KEY = "mov-library_anime-collection_myanimelist"
 
 
@@ -12,6 +14,8 @@ def _template_list():
         ("020-tmdb.html", "TMDb"),
         ("025-libraries.html", "Libraries"),
         ("030-tautulli.html", "Tautulli"),
+        ("050-omdb.html", "OMDb"),
+        ("060-mdblist.html", "MDBList"),
         ("130-trakt.html", "Trakt"),
         ("140-mal.html", "MyAnimeList"),
         ("150-settings.html", "Settings"),
@@ -94,6 +98,45 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
             id="tautulli_ignores_inactive_library",
         ),
         pytest.param(
+            "_libraries_data_omdb_dependency_reasons",
+            {
+                "mov-library_movies-library": "Movies",
+                OMDB_ATTRIBUTE_KEY: True,
+            },
+            True,
+            "mass_content_rating_update uses omdb",
+            id="omdb_attribute_enabled",
+        ),
+        pytest.param(
+            "_libraries_data_omdb_dependency_reasons",
+            {
+                OMDB_ATTRIBUTE_KEY: True,
+            },
+            False,
+            "",
+            id="omdb_ignores_inactive_library",
+        ),
+        pytest.param(
+            "_libraries_data_mdblist_dependency_reasons",
+            {
+                "mov-library_movies-library": "Movies",
+                MDBLIST_ATTRIBUTE_KEY: True,
+            },
+            True,
+            "mass_user_rating_update uses mdb_tomatoes",
+            id="mdblist_attribute_enabled",
+        ),
+        pytest.param(
+            "_libraries_data_mdblist_dependency_reasons",
+            {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-attribute_mass_user_rating_update_order": '["tmdb", "mdb", "omdb_tomatoes"]',
+            },
+            True,
+            "mass_user_rating_update order includes mdb",
+            id="mdblist_order_enabled",
+        ),
+        pytest.param(
             "_libraries_data_trakt_dependency_reasons",
             {
                 "sho-library_tv-library": "TV Shows",
@@ -143,6 +186,48 @@ def test_workspace_context_promotes_tautulli_to_required(monkeypatch, qs_module)
     assert "030-tautulli" in ctx["required_keys"]
     assert "030-tautulli" not in ctx["optional_keys"]
     assert ctx["tautulli_requirement_reasons"]
+
+
+def test_workspace_context_promotes_omdb_to_required(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                    OMDB_ATTRIBUTE_KEY: True,
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "050-omdb" in ctx["required_keys"]
+    assert "050-omdb" not in ctx["optional_keys"]
+    assert ctx["omdb_requirement_reasons"]
+
+
+def test_workspace_context_promotes_mdblist_to_required(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                    MDBLIST_ATTRIBUTE_KEY: True,
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "060-mdblist" in ctx["required_keys"]
+    assert "060-mdblist" not in ctx["optional_keys"]
+    assert ctx["mdblist_requirement_reasons"]
 
 
 def test_workspace_context_promotes_trakt_to_required(monkeypatch, qs_module):
@@ -226,6 +311,46 @@ def test_workspace_context_keeps_tautulli_optional_without_dependency(monkeypatc
     assert "030-tautulli" not in ctx["required_keys"]
     assert "030-tautulli" in ctx["optional_keys"]
     assert ctx["tautulli_requirement_reasons"] == []
+
+
+def test_workspace_context_keeps_omdb_optional_without_dependency(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "050-omdb" not in ctx["required_keys"]
+    assert "050-omdb" in ctx["optional_keys"]
+    assert ctx["omdb_requirement_reasons"] == []
+
+
+def test_workspace_context_keeps_mdblist_optional_without_dependency(monkeypatch, qs_module):
+    rows = [
+        _section_row(
+            "libraries",
+            data={
+                "libraries": {
+                    "mov-library_movies-library": "Movies",
+                }
+            },
+        )
+    ]
+
+    monkeypatch.setattr(qs_module.database, "retrieve_config_sections", lambda _name: rows)
+    ctx = qs_module._build_workspace_status_context("cfg", _template_list(), available_configs=["cfg"])
+
+    assert "060-mdblist" not in ctx["required_keys"]
+    assert "060-mdblist" in ctx["optional_keys"]
+    assert ctx["mdblist_requirement_reasons"] == []
 
 
 def test_workspace_context_keeps_trakt_optional_without_dependency(monkeypatch, qs_module):
@@ -417,6 +542,89 @@ def test_libraries_tautulli_dependency_hint_endpoint_inactive_library_returns_em
             "source_library_id": "mov-library_movies",
             "source_payload": {
                 TAUTULLI_COLLECTION_KEY: "true",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is False
+    assert payload["reasons"] == []
+
+
+def test_libraries_omdb_dependency_hint_endpoint_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_omdb_dependency_hint",
+        json={
+            "source_library_id": "mov-library_movies",
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                OMDB_ATTRIBUTE_KEY: "true",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("mass_content_rating_update uses omdb" in reason for reason in payload["reasons"])
+
+
+def test_libraries_omdb_dependency_hint_endpoint_inactive_library_returns_empty(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_omdb_dependency_hint",
+        json={
+            "source_library_id": "mov-library_movies",
+            "source_payload": {
+                OMDB_ATTRIBUTE_KEY: "true",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is False
+    assert payload["reasons"] == []
+
+
+def test_libraries_mdblist_dependency_hint_endpoint_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_mdblist_dependency_hint",
+        json={
+            "source_library_id": "mov-library_movies",
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-attribute_mass_user_rating_update_order": '["tmdb", "mdb_tomatoes"]',
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("mass_user_rating_update order includes mdb_tomatoes" in reason for reason in payload["reasons"])
+
+
+def test_libraries_mdblist_dependency_hint_endpoint_non_matching_source_returns_empty(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_mdblist_dependency_hint",
+        json={
+            "source_library_id": "mov-library_movies",
+            "source_payload": {
+                "mov-library_movies-library": "Movies",
+                "mov-library_movies-attribute_mass_user_rating_update_order": '["tmdb", "omdb"]',
             },
         },
     )

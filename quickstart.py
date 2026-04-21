@@ -164,11 +164,15 @@ QS_ERROR_REASONS = {
     "missing_placeholder_imdb",
 }
 QS_TAUTULLI_REQUIRED_STEP_KEY = "030-tautulli"
+QS_OMDB_REQUIRED_STEP_KEY = "050-omdb"
+QS_MDBLIST_REQUIRED_STEP_KEY = "060-mdblist"
 QS_TRAKT_REQUIRED_STEP_KEY = "130-trakt"
 QS_MAL_REQUIRED_STEP_KEY = "140-mal"
 QS_TAUTULLI_DEP_COLLECTION_IDS = {"collection_tautulli"}
 QS_TRAKT_DEP_COLLECTION_IDS = {"collection_trakt"}
 QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
+QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
+QS_MDBLIST_DEP_SOURCE_PREFIXES = ("mdb",)
 QS_MAL_DEP_ATTRIBUTE_OPERATIONS = {
     "mass_genre_update",
     "mass_content_rating_update",
@@ -357,6 +361,70 @@ def _libraries_data_collection_dependency_reasons(libraries_data, collection_ids
     return reasons
 
 
+def _attribute_dependency_source_reasons(libraries_data, source_prefixes):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    active_prefixes = _active_library_prefixes(libraries_data)
+    reasons = []
+    seen = set()
+    normalized_prefixes = tuple(str(prefix or "").strip().lower() for prefix in source_prefixes if str(prefix or "").strip())
+    if not normalized_prefixes:
+        return reasons
+
+    def matches_source(source_value):
+        normalized = str(source_value or "").strip().lower()
+        if not normalized:
+            return False
+        return any(normalized == prefix or normalized.startswith(f"{prefix}_") for prefix in normalized_prefixes)
+
+    def extract_operation_and_source(key):
+        attr_body = key.split("-attribute_", 1)[1] if "-attribute_" in key else ""
+        if not attr_body or attr_body.endswith("_order"):
+            return None, None
+        parts = [part for part in attr_body.split("_") if part]
+        if len(parts) < 3:
+            return None, None
+        for split_index in range(2, len(parts)):
+            operation = "_".join(parts[:split_index])
+            source_value = "_".join(parts[split_index:])
+            if operation.startswith("mass_") and matches_source(source_value):
+                return operation, source_value
+        return None, None
+
+    for raw_key, raw_value in libraries_data.items():
+        key = str(raw_key or "").strip().lower()
+        if not key or "-attribute_" not in key:
+            continue
+
+        prefix = _library_prefix_from_key(key)
+        if prefix and prefix not in active_prefixes:
+            continue
+
+        operation, source_value = extract_operation_and_source(key)
+        if operation and source_value and _is_truthy_setting_value(raw_value):
+            detail = f"{operation} uses {source_value}"
+            _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
+            continue
+
+        order_match = re.search(r"-attribute_(mass_[a-z0-9_]+)_order$", key)
+        if not order_match:
+            continue
+
+        operation = order_match.group(1)
+        matched_sources = []
+        for entry in _parse_json_array(raw_value):
+            source_value = str(entry or "").strip().lower()
+            if matches_source(source_value):
+                matched_sources.append(source_value)
+        if matched_sources:
+            joined_sources = ", ".join(sorted(set(matched_sources)))
+            detail = f"{operation} order includes {joined_sources}"
+            _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
+
+    return reasons
+
+
 def _config_dependency_reasons(section_rows, dependency_resolver):
     if not isinstance(section_rows, dict):
         return []
@@ -387,6 +455,20 @@ def _libraries_data_trakt_dependency_reasons(libraries_data):
         libraries_data,
         QS_TRAKT_DEP_COLLECTION_IDS,
         "Trakt Charts collection enabled",
+    )
+
+
+def _libraries_data_omdb_dependency_reasons(libraries_data):
+    return _attribute_dependency_source_reasons(
+        libraries_data,
+        QS_OMDB_DEP_SOURCE_PREFIXES,
+    )
+
+
+def _libraries_data_mdblist_dependency_reasons(libraries_data):
+    return _attribute_dependency_source_reasons(
+        libraries_data,
+        QS_MDBLIST_DEP_SOURCE_PREFIXES,
     )
 
 
@@ -456,6 +538,14 @@ def _config_requires_mal(section_rows):
 
 def _config_tautulli_dependency_reasons(section_rows):
     return _config_dependency_reasons(section_rows, _libraries_data_tautulli_dependency_reasons)
+
+
+def _config_omdb_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_omdb_dependency_reasons)
+
+
+def _config_mdblist_dependency_reasons(section_rows):
+    return _config_dependency_reasons(section_rows, _libraries_data_mdblist_dependency_reasons)
 
 
 def _config_trakt_dependency_reasons(section_rows):
@@ -770,10 +860,16 @@ def _build_workspace_status_context(config_name, template_list, available_config
 
     required_seed = set(QS_REQUIRED_STEP_KEYS)
     tautulli_requirement_reasons = _config_tautulli_dependency_reasons(section_rows) if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys else []
+    omdb_requirement_reasons = _config_omdb_dependency_reasons(section_rows) if QS_OMDB_REQUIRED_STEP_KEY in template_keys else []
+    mdblist_requirement_reasons = _config_mdblist_dependency_reasons(section_rows) if QS_MDBLIST_REQUIRED_STEP_KEY in template_keys else []
     trakt_requirement_reasons = _config_trakt_dependency_reasons(section_rows) if QS_TRAKT_REQUIRED_STEP_KEY in template_keys else []
     mal_requirement_reasons = _config_mal_dependency_reasons(section_rows) if QS_MAL_REQUIRED_STEP_KEY in template_keys else []
     if QS_TAUTULLI_REQUIRED_STEP_KEY in template_keys and tautulli_requirement_reasons:
         required_seed.add(QS_TAUTULLI_REQUIRED_STEP_KEY)
+    if QS_OMDB_REQUIRED_STEP_KEY in template_keys and omdb_requirement_reasons:
+        required_seed.add(QS_OMDB_REQUIRED_STEP_KEY)
+    if QS_MDBLIST_REQUIRED_STEP_KEY in template_keys and mdblist_requirement_reasons:
+        required_seed.add(QS_MDBLIST_REQUIRED_STEP_KEY)
     if QS_TRAKT_REQUIRED_STEP_KEY in template_keys and trakt_requirement_reasons:
         required_seed.add(QS_TRAKT_REQUIRED_STEP_KEY)
     if QS_MAL_REQUIRED_STEP_KEY in template_keys and mal_requirement_reasons:
@@ -876,6 +972,8 @@ def _build_workspace_status_context(config_name, template_list, available_config
         "optional_keys": optional_keys,
         "review_keys": review_keys,
         "tautulli_requirement_reasons": tautulli_requirement_reasons,
+        "omdb_requirement_reasons": omdb_requirement_reasons,
+        "mdblist_requirement_reasons": mdblist_requirement_reasons,
         "trakt_requirement_reasons": trakt_requirement_reasons,
         "mal_requirement_reasons": mal_requirement_reasons,
         "readiness": readiness,
@@ -4597,6 +4695,28 @@ def libraries_tautulli_dependency_hint():
         return _libraries_dependency_hint_response(payload, _libraries_data_tautulli_dependency_reasons)
     except Exception as e:
         helpers.ts_log(f"Failed to build Tautulli dependency hint: {e}", level="ERROR")
+        return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
+
+
+@app.route("/libraries_omdb_dependency_hint", methods=["POST"])
+def libraries_omdb_dependency_hint():
+    """Preview OMDb-required dependency reasons using current in-page library edits."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        return _libraries_dependency_hint_response(payload, _libraries_data_omdb_dependency_reasons)
+    except Exception as e:
+        helpers.ts_log(f"Failed to build OMDb dependency hint: {e}", level="ERROR")
+        return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
+
+
+@app.route("/libraries_mdblist_dependency_hint", methods=["POST"])
+def libraries_mdblist_dependency_hint():
+    """Preview MDBList-required dependency reasons using current in-page library edits."""
+    try:
+        payload = request.get_json(silent=True) or {}
+        return _libraries_dependency_hint_response(payload, _libraries_data_mdblist_dependency_reasons)
+    except Exception as e:
+        helpers.ts_log(f"Failed to build MDBList dependency hint: {e}", level="ERROR")
         return jsonify({"success": False, "required": False, "reasons": [], "error": str(e)}), 500
 
 

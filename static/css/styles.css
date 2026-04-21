@@ -3804,6 +3804,16 @@ body {
     background: rgba(43, 30, 7, 0.34);
 }
 
+.qs-omdb-required-hint {
+    border-color: rgba(244, 114, 182, 0.34);
+    background: rgba(54, 16, 37, 0.34);
+}
+
+.qs-mdblist-required-hint {
+    border-color: rgba(167, 139, 250, 0.36);
+    background: rgba(35, 22, 58, 0.34);
+}
+
 .qs-tautulli-required-hint {
     border-color: rgba(94, 234, 212, 0.34);
     background: rgba(7, 35, 34, 0.34);
@@ -3821,6 +3831,14 @@ body {
 
 .qs-tautulli-required-hint .qs-dependency-hint-title {
     color: #8ff7ea;
+}
+
+.qs-omdb-required-hint .qs-dependency-hint-title {
+    color: #ffb2d6;
+}
+
+.qs-mdblist-required-hint .qs-dependency-hint-title {
+    color: #d0bcff;
 }
 
 .qs-trakt-required-hint .qs-dependency-hint-title {

@@ -65,6 +65,16 @@ document.addEventListener('DOMContentLoaded', function () {
         endpoint: '/libraries_tautulli_dependency_hint',
         windowKey: 'QS_TAUTULLI_REQUIREMENT_REASONS'
       },
+      omdb: {
+        stepKey: '050-omdb',
+        endpoint: '/libraries_omdb_dependency_hint',
+        windowKey: 'QS_OMDB_REQUIREMENT_REASONS'
+      },
+      mdblist: {
+        stepKey: '060-mdblist',
+        endpoint: '/libraries_mdblist_dependency_hint',
+        windowKey: 'QS_MDBLIST_REQUIREMENT_REASONS'
+      },
       trakt: {
         stepKey: '130-trakt',
         endpoint: '/libraries_trakt_dependency_hint',
