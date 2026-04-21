@@ -5,6 +5,7 @@ TRAKT_COLLECTION_KEY = "sho-library_tv-collection_trakt"
 OMDB_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_content_rating_update_omdb"
 MDBLIST_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_user_rating_update_mdb_tomatoes"
 ANIDB_ATTRIBUTE_KEY = "sho-library_anime-attribute_mass_original_title_update_anidb_official"
+ANIDB_COLLECTION_KEY = "sho-library_anime-collection_use_anidb"
 RADARR_ATTRIBUTE_KEY = "mov-library_movies-attribute_radarr_add_all"
 RADARR_CUSTOM_KEY = "mov-library_movies-attribute_radarr_remove_by_tag_custom"
 RADARR_COLLECTION_KEY = "mov-library_movies-collection_radarr_add_missing_best"
@@ -165,6 +166,16 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
             True,
             "mass_genre_update order includes anidb_3_0",
             id="anidb_order_enabled",
+        ),
+        pytest.param(
+            "_libraries_data_anidb_dependency_reasons",
+            {
+                "sho-library_anime-library": "Anime Shows",
+                ANIDB_COLLECTION_KEY: True,
+            },
+            True,
+            "AniDB Popular collection enabled",
+            id="anidb_collection_enabled",
         ),
         pytest.param(
             "_libraries_data_anidb_dependency_reasons",
@@ -877,6 +888,27 @@ def test_libraries_anidb_dependency_hint_endpoint_returns_reasons(client, monkey
     assert payload["success"] is True
     assert payload["required"] is True
     assert any("mass_genre_update order includes anidb_rating" in reason for reason in payload["reasons"])
+
+
+def test_libraries_anidb_dependency_hint_endpoint_collection_returns_reasons(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
+
+    resp = client.post(
+        "/libraries_anidb_dependency_hint",
+        json={
+            "source_library_id": "sho-library_anime",
+            "source_payload": {
+                "sho-library_anime-library": "Anime Shows",
+                ANIDB_COLLECTION_KEY: "true",
+            },
+        },
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["required"] is True
+    assert any("AniDB Popular collection enabled" in reason for reason in payload["reasons"])
 
 
 def test_libraries_anidb_dependency_hint_endpoint_inactive_library_returns_empty(client, monkeypatch, qs_module):

@@ -174,6 +174,7 @@ QS_MAL_REQUIRED_STEP_KEY = "140-mal"
 QS_TAUTULLI_DEP_COLLECTION_IDS = {"collection_tautulli"}
 QS_TRAKT_DEP_COLLECTION_IDS = {"collection_trakt"}
 QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
+QS_ANIDB_DEP_COLLECTION_IDS = {"collection_use_anidb"}
 QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
 QS_MDBLIST_DEP_SOURCE_PREFIXES = ("mdb",)
 QS_ANIDB_DEP_SOURCE_PREFIXES = ("anidb",)
@@ -524,10 +525,16 @@ def _libraries_data_mdblist_dependency_reasons(libraries_data):
 
 
 def _libraries_data_anidb_dependency_reasons(libraries_data):
-    return _attribute_dependency_source_reasons(
+    attribute_reasons = _attribute_dependency_source_reasons(
         libraries_data,
         QS_ANIDB_DEP_SOURCE_PREFIXES,
     )
+    collection_reasons = _libraries_data_collection_dependency_reasons(
+        libraries_data,
+        QS_ANIDB_DEP_COLLECTION_IDS,
+        "AniDB Popular collection enabled",
+    )
+    return attribute_reasons + [reason for reason in collection_reasons if reason not in attribute_reasons]
 
 
 def _libraries_data_radarr_dependency_reasons(libraries_data):
