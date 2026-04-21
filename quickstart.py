@@ -175,6 +175,7 @@ QS_TAUTULLI_DEP_COLLECTION_IDS = {"collection_tautulli"}
 QS_TRAKT_DEP_COLLECTION_IDS = {"collection_trakt"}
 QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
 QS_ANIDB_DEP_COLLECTION_IDS = {"collection_use_anidb"}
+QS_ANIDB_DEP_TEMPLATE_COLLECTION_IDS = {"use_anidb"}
 QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
 QS_MDBLIST_DEP_SOURCE_PREFIXES = ("mdb",)
 QS_ANIDB_DEP_SOURCE_PREFIXES = ("anidb",)
@@ -184,8 +185,10 @@ QS_TRAKT_OVERLAY_IMAGE_VALUES = {"trakt"}
 QS_MAL_OVERLAY_IMAGE_VALUES = {"mal"}
 QS_RADARR_DEP_ATTRIBUTE_PREFIXES = ("radarr_add_all", "radarr_remove_by_tag")
 QS_RADARR_DEP_COLLECTION_PREFIXES = ("collection_radarr_",)
+QS_RADARR_DEP_TEMPLATE_COLLECTION_PREFIXES = ("radarr_add_missing_",)
 QS_SONARR_DEP_ATTRIBUTE_PREFIXES = ("sonarr_add_all", "sonarr_remove_by_tag")
 QS_SONARR_DEP_COLLECTION_PREFIXES = ("collection_sonarr_",)
+QS_SONARR_DEP_TEMPLATE_COLLECTION_PREFIXES = ("sonarr_add_missing_",)
 QS_MAL_DEP_ATTRIBUTE_OPERATIONS = {
     "mass_genre_update",
     "mass_content_rating_update",
@@ -386,7 +389,38 @@ def _libraries_data_collection_dependency_reasons(libraries_data, collection_ids
     return reasons
 
 
-def _libraries_data_service_dependency_reasons(libraries_data, attribute_prefixes, collection_prefixes):
+def _libraries_data_template_collection_dependency_reasons(libraries_data, child_ids, detail):
+    if not isinstance(libraries_data, dict):
+        return []
+
+    active_prefixes = _active_library_prefixes(libraries_data)
+    reasons = []
+    seen = set()
+    normalized_child_ids = tuple(str(child_id or "").strip().lower() for child_id in child_ids if str(child_id or "").strip())
+    if not normalized_child_ids:
+        return reasons
+
+    for raw_key, raw_value in libraries_data.items():
+        key = str(raw_key or "").strip().lower()
+        if not key or "-template_collection_" not in key or not _is_truthy_setting_value(raw_value):
+            continue
+
+        prefix = _library_prefix_from_key(key)
+        if prefix and prefix not in active_prefixes:
+            continue
+
+        matched_child_id = None
+        for child_id in normalized_child_ids:
+            if re.search(rf"-template_collection_[a-z0-9_]+_{re.escape(child_id)}$", key):
+                matched_child_id = child_id
+                break
+        if matched_child_id:
+            _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
+
+    return reasons
+
+
+def _libraries_data_service_dependency_reasons(libraries_data, attribute_prefixes, collection_prefixes, template_collection_prefixes=()):
     if not isinstance(libraries_data, dict):
         return []
 
@@ -395,6 +429,9 @@ def _libraries_data_service_dependency_reasons(libraries_data, attribute_prefixe
     seen = set()
     normalized_attribute_prefixes = tuple(str(prefix or "").strip().lower() for prefix in attribute_prefixes if str(prefix or "").strip())
     normalized_collection_prefixes = tuple(str(prefix or "").strip().lower() for prefix in collection_prefixes if str(prefix or "").strip())
+    normalized_template_collection_prefixes = tuple(
+        str(prefix or "").strip().lower() for prefix in template_collection_prefixes if str(prefix or "").strip()
+    )
 
     for raw_key, raw_value in libraries_data.items():
         key = str(raw_key or "").strip().lower()
@@ -424,6 +461,21 @@ def _libraries_data_service_dependency_reasons(libraries_data, attribute_prefixe
             collection_id = f"collection_{key.rsplit('-collection_', 1)[1]}"
             if any(collection_id.startswith(collection_prefix) for collection_prefix in normalized_collection_prefixes):
                 detail = f"{collection_id} enabled"
+                _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
+                continue
+
+        if "-template_collection_" in key:
+            matched_child_key = None
+            for template_prefix in normalized_template_collection_prefixes:
+                match = re.search(
+                    rf"-template_collection_[a-z0-9_]+_({re.escape(template_prefix)}[a-z0-9_]*)$",
+                    key,
+                )
+                if match:
+                    matched_child_key = match.group(1)
+                    break
+            if matched_child_key:
+                detail = f"{matched_child_key} enabled"
                 _append_dependency_reason(reasons, seen, libraries_data, prefix or "library", detail)
 
     return reasons
@@ -599,11 +651,17 @@ def _libraries_data_anidb_dependency_reasons(libraries_data):
         QS_ANIDB_DEP_COLLECTION_IDS,
         "AniDB Popular collection enabled",
     )
+    template_collection_reasons = _libraries_data_template_collection_dependency_reasons(
+        libraries_data,
+        QS_ANIDB_DEP_TEMPLATE_COLLECTION_IDS,
+        "AniDB Popular collection enabled",
+    )
     overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
         libraries_data,
         QS_ANIDB_OVERLAY_IMAGE_VALUES,
     )
     merged_reasons = attribute_reasons + [reason for reason in collection_reasons if reason not in attribute_reasons]
+    merged_reasons += [reason for reason in template_collection_reasons if reason not in merged_reasons]
     return merged_reasons + [reason for reason in overlay_reasons if reason not in merged_reasons]
 
 
@@ -612,6 +670,7 @@ def _libraries_data_radarr_dependency_reasons(libraries_data):
         libraries_data,
         QS_RADARR_DEP_ATTRIBUTE_PREFIXES,
         QS_RADARR_DEP_COLLECTION_PREFIXES,
+        QS_RADARR_DEP_TEMPLATE_COLLECTION_PREFIXES,
     )
 
 
@@ -620,6 +679,7 @@ def _libraries_data_sonarr_dependency_reasons(libraries_data):
         libraries_data,
         QS_SONARR_DEP_ATTRIBUTE_PREFIXES,
         QS_SONARR_DEP_COLLECTION_PREFIXES,
+        QS_SONARR_DEP_TEMPLATE_COLLECTION_PREFIXES,
     )
 
 

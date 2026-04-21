@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const shouldTrack = (name) => {
         const fieldName = String(name || '')
         if (!fieldName) return false
-        return /-library$|-collection_|-attribute_mass_[a-z0-9_]+_/i.test(fieldName)
+        return /-library$|-collection_|-template_collection_|-attribute_|-overlay_|-template_overlay_/i.test(fieldName)
       }
 
       const onFieldInteraction = (event) => {
