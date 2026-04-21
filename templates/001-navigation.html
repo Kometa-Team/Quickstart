@@ -50,13 +50,27 @@
               </div>
               <div class="small text-muted mt-1 qs-step-progress-text">
                 <span class="qs-step-progress-text-full">Required {{ readiness.get('required_ready', 0) }}/{{ readiness.get('required_total', 0) }}</span>
-                <span class="qs-step-progress-text-short">{{ readiness.get('required_percent', 0) }}%</span>
+                <span class="qs-step-progress-text-short">{{ readiness.get('required_ready', 0) }}/{{ readiness.get('required_total', 0) }}</span>
               </div>
               <div class="small text-muted qs-readiness-subline">
                 {{ readiness.get('optional_summary', 'Optional 0/0 configured') }}
               </div>
               <div class="small qs-readiness-subline qs-readiness-freshness-{{ readiness.get('validation_freshness', 'never') }}">
                 Last validated: {{ readiness.get('validation_age_label', 'Never') }}
+              </div>
+              <div class="qs-readiness-compact" data-qs-readiness-compact>
+                <div class="qs-readiness-compact-row" data-qs-readiness-required-row title="Required progress">
+                  <span class="qs-readiness-compact-label">R</span>
+                  <span class="qs-readiness-compact-value" data-qs-readiness-required-short>{{ readiness.get('required_ready', 0) }}/{{ readiness.get('required_total', 0) }}</span>
+                </div>
+                <div class="qs-readiness-compact-row" data-qs-readiness-optional-row title="Optional progress">
+                  <span class="qs-readiness-compact-label">O</span>
+                  <span class="qs-readiness-compact-value" data-qs-readiness-optional-short>{{ readiness.get('optional_configured', 0) }}/{{ readiness.get('optional_total', 0) }}</span>
+                </div>
+                <div class="qs-readiness-compact-row qs-readiness-compact-row--freshness qs-readiness-freshness-{{ readiness.get('validation_freshness', 'never') }}" data-qs-readiness-validation-row title="Validation freshness">
+                  <span class="qs-readiness-compact-label">V</span>
+                  <span class="qs-readiness-compact-value" data-qs-readiness-validation-short>{{ readiness.get('validation_age_label', 'Never') }}</span>
+                </div>
               </div>
             </div>
             <div class="qs-step-groups">

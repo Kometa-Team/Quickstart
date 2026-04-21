@@ -903,6 +903,9 @@ function qsApplyReadinessStrip (readiness) {
   const requiredTotal = Number(source.required_total || 0)
   const requiredPercent = Number(source.required_percent || 0)
   const requiredState = qsNormalizeStatusState(source.required_state || 'unknown')
+  const optionalTotal = Number(source.optional_total || 0)
+  const optionalConfigured = Number(source.optional_configured || 0)
+  const optionalIssueCount = Number(source.optional_issue_count || 0)
   const optionalSummary = String(source.optional_summary || 'Optional 0/0 configured')
   const validationAge = String(source.validation_age_label || 'Never')
   const validationFreshness = ['fresh', 'stale', 'never'].includes(String(source.validation_freshness || 'never'))
@@ -923,7 +926,7 @@ function qsApplyReadinessStrip (readiness) {
   if (full) full.textContent = `Required ${requiredReady}/${requiredTotal}`
 
   const compact = strip.querySelector('.qs-step-progress-text-short')
-  if (compact) compact.textContent = `${requiredPercent}%`
+  if (compact) compact.textContent = `${requiredReady}/${requiredTotal}`
 
   const sublines = strip.querySelectorAll('.qs-readiness-subline')
   if (sublines[0]) sublines[0].textContent = optionalSummary
@@ -932,6 +935,47 @@ function qsApplyReadinessStrip (readiness) {
     sublines[1].classList.remove('qs-readiness-freshness-fresh', 'qs-readiness-freshness-stale', 'qs-readiness-freshness-never')
     sublines[1].classList.add(`qs-readiness-freshness-${validationFreshness}`)
   }
+
+  const compactRequired = strip.querySelector('[data-qs-readiness-required-short]')
+  if (compactRequired) compactRequired.textContent = `${requiredReady}/${requiredTotal}`
+
+  const compactRequiredRow = strip.querySelector('[data-qs-readiness-required-row]')
+  if (compactRequiredRow) {
+    compactRequiredRow.title = `Required ${requiredReady}/${requiredTotal} complete`
+  }
+
+  const compactOptional = strip.querySelector('[data-qs-readiness-optional-short]')
+  if (compactOptional) compactOptional.textContent = `${optionalConfigured}/${optionalTotal}`
+
+  const compactOptionalRow = strip.querySelector('[data-qs-readiness-optional-row]')
+  if (compactOptionalRow) {
+    compactOptionalRow.title = optionalSummary
+    compactOptionalRow.classList.remove('qs-readiness-compact-row--ok', 'qs-readiness-compact-row--warn', 'qs-readiness-compact-row--unknown')
+    if (optionalIssueCount > 0) {
+      compactOptionalRow.classList.add('qs-readiness-compact-row--warn')
+    } else if (optionalConfigured > 0 || optionalTotal === 0) {
+      compactOptionalRow.classList.add('qs-readiness-compact-row--ok')
+    } else {
+      compactOptionalRow.classList.add('qs-readiness-compact-row--unknown')
+    }
+  }
+
+  const compactValidation = strip.querySelector('[data-qs-readiness-validation-short]')
+  if (compactValidation) compactValidation.textContent = qsCompactValidationLabel(validationAge)
+
+  const compactValidationRow = strip.querySelector('[data-qs-readiness-validation-row]')
+  if (compactValidationRow) {
+    compactValidationRow.title = `Last validated: ${validationAge}`
+    compactValidationRow.classList.remove('qs-readiness-freshness-fresh', 'qs-readiness-freshness-stale', 'qs-readiness-freshness-never')
+    compactValidationRow.classList.add(`qs-readiness-freshness-${validationFreshness}`)
+  }
+}
+
+function qsCompactValidationLabel (label) {
+  const text = String(label || 'Never').trim()
+  if (!text) return 'Never'
+  if (/^just now$/i.test(text)) return 'Now'
+  return text
 }
 
 function qsApplyMalHintSidebar (reasons) {
