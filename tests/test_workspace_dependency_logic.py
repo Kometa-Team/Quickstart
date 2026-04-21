@@ -854,6 +854,44 @@ def test_mal_optional_without_credentials_ignores_stale_failed_marker(qs_module)
     assert state == "unknown"
 
 
+def test_github_optional_placeholder_stays_unknown_even_with_failed_marker(qs_module):
+    section_rows = {
+        "github": {
+            "validated": False,
+            "user_entered": True,
+            "data": {
+                "validation_status": "failed",
+                "validation_reason": "validation_error",
+                "github": {
+                    "token": "Enter GitHub Personal Access Token",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("040-github", "optional", section_rows, config_exists=True)
+    assert state == "unknown"
+
+
+def test_github_optional_with_token_and_failed_marker_is_error(qs_module):
+    section_rows = {
+        "github": {
+            "validated": False,
+            "user_entered": True,
+            "data": {
+                "validation_status": "failed",
+                "validation_reason": "token_invalid",
+                "github": {
+                    "token": "ghp_invalid",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("040-github", "optional", section_rows, config_exists=True)
+    assert state == "error"
+
+
 def test_mal_optional_with_credentials_and_not_validated_is_warn(qs_module):
     section_rows = {
         "mal": {

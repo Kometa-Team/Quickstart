@@ -1,6 +1,10 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+<div class="alert alert-warning" role="alert">
+  <strong>Playlist selection has moved.</strong>
+  This legacy page is read-only for now. Use the <strong>Include in Playlists</strong> toggle on each library card in the Libraries page.
+</div>
 <div id="validation-messages" class="alert alert-danger" role="alert" style="display: none;">
 </div>
 <div id="libraries-container" style="display: none;">
@@ -10,7 +14,7 @@
     {% for library in movie_libraries %}
     {% set library_id = library|replace(' ', '-')|replace('/', '-') %}
     <div class="form-check form-switch">
-      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library_id }}">
+      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library_id }}" disabled>
       <label class="form-check-label" for="library_{{ library_id }}">{{ library }}</label>
     </div>
     {% endfor %}
@@ -21,7 +25,7 @@
     {% for library in show_libraries %}
     {% set library_id = library|replace(' ', '-')|replace('/', '-') %}
     <div class="form-check form-switch">
-      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library_id }}">
+      <input class="form-check-input library-checkbox" type="checkbox" value="{{ library }}" id="library_{{ library_id }}" disabled>
       <label class="form-check-label" for="library_{{ library_id }}">{{ library }}</label>
     </div>
     {% endfor %}

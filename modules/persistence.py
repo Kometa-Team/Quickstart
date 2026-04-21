@@ -232,8 +232,8 @@ def save_settings(raw_source, form_data):
 
             # Apply incoming values for the affected libraries
             for k, v in incoming_libraries.items():
-                # Treat empty include toggle as removal
-                if k.endswith("-library") and (v in [None, False, ""]):
+                # Treat empty include/playlist toggles as removal
+                if (k.endswith("-library") or k.endswith("-playlist")) and (v in [None, False, "", "false"]):
                     continue
                 merged_libraries[k] = v
 

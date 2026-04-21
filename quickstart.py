@@ -902,6 +902,15 @@ def _is_nonblank_setting(value):
     return text.lower() not in {"none", "null", "false"}
 
 
+def _is_meaningful_optional_status_input(value):
+    if not _is_nonblank_setting(value):
+        return False
+    text = str(value).strip().lower()
+    # UI template placeholders can be persisted as defaults; they should not
+    # make an optional page look user-configured in the workspace menu.
+    return not (text.startswith("enter ") and any(token in text for token in ("token", "api key", "url", "client")))
+
+
 def _has_meaningful_optional_input(template_key, payload):
     if not isinstance(payload, dict):
         return False
@@ -929,7 +938,7 @@ def _has_meaningful_optional_input(template_key, payload):
         section_name, keys = req
         section_data = payload.get(section_name, {})
         if isinstance(section_data, dict):
-            return any(_is_nonblank_setting(section_data.get(key)) for key in keys)
+            return any(_is_meaningful_optional_status_input(section_data.get(key)) for key in keys)
         return False
 
     if template_key == "130-trakt":
@@ -938,7 +947,7 @@ def _has_meaningful_optional_input(template_key, payload):
             return False
         auth = trakt.get("authorization", {}) if isinstance(trakt.get("authorization"), dict) else {}
         return any(
-            _is_nonblank_setting(value)
+            _is_meaningful_optional_status_input(value)
             for value in (
                 trakt.get("client_id"),
                 trakt.get("client_secret"),
@@ -954,7 +963,7 @@ def _has_meaningful_optional_input(template_key, payload):
             return False
         auth = mal.get("authorization", {}) if isinstance(mal.get("authorization"), dict) else {}
         return any(
-            _is_nonblank_setting(value)
+            _is_meaningful_optional_status_input(value)
             for value in (
                 mal.get("client_id"),
                 mal.get("client_secret"),
@@ -4844,6 +4853,66 @@ def _build_library_lists():
     return movie_libraries, show_libraries, telemetry_data
 
 
+def _legacy_playlist_library_names():
+    settings = persistence.retrieve_settings("027-playlist_files") or {}
+    playlist_payload = settings.get("playlist_files", {}) if isinstance(settings, dict) else {}
+    if isinstance(playlist_payload, dict) and isinstance(playlist_payload.get("playlist_files"), dict):
+        playlist_payload = playlist_payload.get("playlist_files", {})
+    raw_libraries = playlist_payload.get("libraries", "") if isinstance(playlist_payload, dict) else ""
+    if isinstance(raw_libraries, list):
+        return {str(item).strip() for item in raw_libraries if str(item).strip()}
+    return {item.strip() for item in str(raw_libraries or "").split(",") if item.strip()}
+
+
+def _migrate_legacy_playlist_libraries_to_library_toggles(movie_libraries=None, show_libraries=None):
+    legacy_names = _legacy_playlist_library_names()
+    if not legacy_names:
+        return set()
+
+    settings = persistence.retrieve_settings("025-libraries") or {}
+    libraries_data = settings.get("libraries", {}) if isinstance(settings, dict) else {}
+    if not isinstance(libraries_data, dict):
+        return legacy_names
+
+    if any(isinstance(key, str) and key.endswith("-playlist") for key in libraries_data):
+        return legacy_names
+
+    if movie_libraries is None or show_libraries is None:
+        movie_libraries, show_libraries, _telemetry = _build_library_lists()
+
+    migrated = {}
+    for library in list(movie_libraries or []) + list(show_libraries or []):
+        library_id = library.get("id")
+        library_name = library.get("name")
+        if not library_id or not library_name:
+            continue
+        if library_name not in legacy_names:
+            continue
+        if not _is_truthy_setting_value(libraries_data.get(f"{library_id}-library")):
+            continue
+        migrated[f"{library_id}-playlist"] = "true"
+
+    if not migrated:
+        return legacy_names
+
+    updated_libraries = libraries_data.copy()
+    updated_libraries.update(migrated)
+    settings["libraries"] = updated_libraries
+    try:
+        database.save_section_data(
+            name=session["config_name"],
+            section="libraries",
+            validated=helpers.booler(settings.get("validated", False)),
+            user_entered=True,
+            data=settings,
+        )
+    except Exception as e:
+        helpers.ts_log(f"Failed to migrate legacy playlist libraries: {e}", level="ERROR")
+        return legacy_names
+
+    return legacy_names
+
+
 @app.route("/library_fragment/<library_id>")
 def library_fragment(library_id):
     """Return a single library form fragment so we can lazy-load library settings on the page."""
@@ -4858,6 +4927,7 @@ def library_fragment(library_id):
     collection_config = helpers.load_quickstart_config("quickstart_collections.json")
     overlay_config = helpers.load_quickstart_config("quickstart_overlays.json")
 
+    legacy_playlist_libraries = _migrate_legacy_playlist_libraries_to_library_toggles(movie_libraries, show_libraries)
     data = persistence.retrieve_settings("025-libraries")
     configured_ids = _configured_library_ids(data.get("libraries", {}))
 
@@ -4876,6 +4946,7 @@ def library_fragment(library_id):
         image_data=image_data,
         movie_images=image_data["movie"],
         configured_ids=configured_ids,
+        legacy_playlist_libraries=legacy_playlist_libraries,
     )
 
     return html
@@ -4928,7 +4999,7 @@ def _build_merged_libraries_hint_payload(payload):
                 merged.pop(existing_key, None)
 
     for key, value in incoming_dict.items():
-        if key.endswith("-library") and not _is_truthy_setting_value(value):
+        if (key.endswith("-library") or key.endswith("-playlist")) and not _is_truthy_setting_value(value):
             continue
         merged[key] = value
 
@@ -6032,14 +6103,26 @@ def validate_all_services():
                 details=missing_placeholders if libraries_reason == "missing_placeholder_imdb" else None,
             )
 
-        playlist_settings = persistence.retrieve_settings("027-playlist_files") or {}
-        playlist_payload = playlist_settings.get("playlist_files", {}) if isinstance(playlist_settings, dict) else {}
-        if isinstance(playlist_payload, dict) and isinstance(playlist_payload.get("playlist_files"), dict):
-            playlist_payload = playlist_payload.get("playlist_files", {})
-        libraries_value = ""
-        if isinstance(playlist_payload, dict):
-            libraries_value = playlist_payload.get("libraries") or ""
-        playlist_libraries = [lib.strip() for lib in str(libraries_value).split(",") if lib.strip()]
+        libraries_settings = persistence.retrieve_settings("025-libraries") or {}
+        libraries_payload = libraries_settings.get("libraries", {}) if isinstance(libraries_settings, dict) else {}
+        playlist_libraries = []
+        if isinstance(libraries_payload, dict):
+            for key, value in libraries_payload.items():
+                if not isinstance(key, str) or not key.endswith("-library") or not _is_truthy_setting_value(value):
+                    continue
+                prefix = key[: -len("-library")]
+                if _is_truthy_setting_value(libraries_payload.get(f"{prefix}-playlist")):
+                    playlist_libraries.append(str(value).strip())
+
+        if not playlist_libraries:
+            playlist_settings = persistence.retrieve_settings("027-playlist_files") or {}
+            playlist_payload = playlist_settings.get("playlist_files", {}) if isinstance(playlist_settings, dict) else {}
+            if isinstance(playlist_payload, dict) and isinstance(playlist_payload.get("playlist_files"), dict):
+                playlist_payload = playlist_payload.get("playlist_files", {})
+            libraries_value = ""
+            if isinstance(playlist_payload, dict):
+                libraries_value = playlist_payload.get("libraries") or ""
+            playlist_libraries = [lib.strip() for lib in str(libraries_value).split(",") if lib.strip()]
         if playlist_libraries:
             update_section_validation("027-playlist_files", "playlist_files", True)
         else:

@@ -130,6 +130,42 @@ def _to_number(value):
     return None
 
 
+def _format_playlist_files(libraries_list):
+    return {
+        "playlist_files": [
+            {
+                "default": "playlist",
+                "template_variables": {"libraries": libraries_list},
+            }
+        ]
+    }
+
+
+def _playlist_libraries_from_library_toggles(nested_libraries_data):
+    if not isinstance(nested_libraries_data, dict):
+        return False, []
+
+    has_playlist_toggle = any(isinstance(key, str) and key.endswith("-playlist") for key in nested_libraries_data)
+    playlist_libraries = []
+    seen = set()
+
+    for key, value in nested_libraries_data.items():
+        if not isinstance(key, str) or not key.endswith("-library"):
+            continue
+        if value in [None, "", False]:
+            continue
+        prefix = key[: -len("-library")]
+        include_playlist = _coerce_bool(nested_libraries_data.get(f"{prefix}-playlist"))
+        if include_playlist is not True:
+            continue
+        library_name = str(value).strip()
+        if library_name and library_name not in seen:
+            playlist_libraries.append(library_name)
+            seen.add(library_name)
+
+    return has_playlist_toggle, playlist_libraries
+
+
 def _coerce_string_list(values):
     cleaned = []
     seen = set()
@@ -2142,14 +2178,7 @@ def build_config(header_style="standard", config_name=None):
             helpers.ts_log(f"Processed libraries list: {libraries_value}", level="DEBUG")
 
         # Format playlist_files data
-        formatted_playlist_files = {
-            "playlist_files": [
-                {
-                    "default": "playlist",
-                    "template_variables": {"libraries": libraries_list},
-                }
-            ]
-        }
+        formatted_playlist_files = _format_playlist_files(libraries_list)
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Formatted playlist_files data:", formatted_playlist_files, level="DEBUG")
 
@@ -2287,6 +2316,12 @@ def build_config(header_style="standard", config_name=None):
             show_top_level,
         )
         config_data["libraries"] = libraries_section
+        has_playlist_toggle, playlist_libraries = _playlist_libraries_from_library_toggles(nested_libraries_data)
+        if has_playlist_toggle:
+            if playlist_libraries:
+                config_data["playlist_files"] = _format_playlist_files(playlist_libraries)
+            else:
+                config_data.pop("playlist_files", None)
         if app.config["QS_DEBUG"]:
             helpers.ts_log(f"Final Libraries Section: {libraries_section}", level="DEBUG")
 

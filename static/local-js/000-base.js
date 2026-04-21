@@ -707,7 +707,7 @@ function qsGetStatusIconClass (state) {
     case 'error':
       return 'bi-x-lg'
     case 'unknown':
-      return 'bi-question-lg'
+      return 'bi-info-lg'
     default:
       return 'bi-exclamation-lg'
   }
@@ -737,11 +737,73 @@ function qsGetCurrentStepKey () {
   return activeLink ? activeLink.dataset.stepKey : null
 }
 
+function qsIsNonBlankFormValue (value) {
+  const text = String(value || '').trim()
+  if (!text) return false
+  return !['none', 'null', 'false'].includes(text.toLowerCase())
+}
+
+function qsCurrentStepHasMeaningfulInput () {
+  const stepKey = qsGetCurrentStepKey()
+  const fieldMap = {
+    '030-tautulli': ['tautulli_url', 'tautulli_apikey'],
+    '040-github': ['github_token'],
+    '050-omdb': ['omdb_apikey'],
+    '060-mdblist': ['mdblist_apikey'],
+    '070-notifiarr': ['notifiarr_apikey'],
+    '080-gotify': ['gotify_url', 'gotify_token'],
+    '085-ntfy': ['ntfy_url', 'ntfy_token', 'ntfy_topic'],
+    '100-anidb': ['anidb_client', 'anidb_version'],
+    '110-radarr': ['radarr_url', 'radarr_token'],
+    '120-sonarr': ['sonarr_url', 'sonarr_token'],
+    '130-trakt': ['trakt_client_id', 'trakt_client_secret', 'trakt_pin', 'trakt_access_token', 'trakt_refresh_token'],
+    '140-mal': ['mal_client_id', 'mal_client_secret', 'mal_localhost_url', 'mal_access_token', 'mal_refresh_token']
+  }
+  const mappedFields = fieldMap[stepKey] || []
+  if (mappedFields.length) {
+    return mappedFields.some((id) => qsIsNonBlankFormValue(document.getElementById(id)?.value))
+  }
+
+  const form = document.getElementById('configForm')
+  if (!form) return false
+  const fields = form.querySelectorAll('input, select, textarea')
+  return Array.from(fields).some((field) => {
+    if (!field || field.disabled) return false
+    const type = String(field.type || '').toLowerCase()
+    if (['hidden', 'button', 'submit', 'reset', 'file'].includes(type)) return false
+    if (field.id && (field.id.endsWith('_validated') || field.id.endsWith('_validated_at'))) return false
+    if (type === 'checkbox' || type === 'radio') return Boolean(field.checked)
+    return qsIsNonBlankFormValue(field.value)
+  })
+}
+
+function qsSetCurrentValidationAttempted (attempted) {
+  const validatedInput = getValidatedInput()
+  if (!validatedInput) return
+  if (attempted) {
+    validatedInput.dataset.qsValidationAttempted = 'true'
+  } else {
+    delete validatedInput.dataset.qsValidationAttempted
+  }
+}
+
 function qsStateFromValidatedInput (validatedInput) {
   if (!validatedInput) return null
   const value = String(validatedInput.value || '').trim().toLowerCase()
   if (value === 'true') return 'ok'
-  if (value === 'false') return 'error'
+
+  const group = getCurrentTemplateGroup()
+  if (value === 'false') {
+    if (group === 'optional') {
+      if (validatedInput.dataset.qsValidationAttempted === 'true') return 'error'
+      return qsCurrentStepHasMeaningfulInput() ? 'warn' : 'unknown'
+    }
+    return group === 'review' ? 'ok' : 'error'
+  }
+
+  if (group === 'optional') {
+    return qsCurrentStepHasMeaningfulInput() ? 'warn' : 'unknown'
+  }
   return 'warn'
 }
 
@@ -1620,6 +1682,10 @@ function applyDynamicValidationCalloutState (alert, isConfiguredOverride = null)
 
 function qsGetCalloutAccordionState (isConfigured) {
   if (isConfigured) return 'ok'
+  const inputState = qsStateFromValidatedInput(getValidatedInput())
+  if (inputState) return inputState
+  const currentState = qsGetCurrentStepStatus()
+  if (currentState) return currentState
   const group = getCurrentTemplateGroup()
   if (group === 'required') return 'error'
   if (group === 'optional') return 'unknown'
@@ -1629,10 +1695,7 @@ function qsGetCalloutAccordionState (isConfigured) {
 
 function qsGetCalloutAccordionIconClass (state) {
   const normalized = qsNormalizeStatusState(state)
-  if (normalized === 'ok') return 'bi-check-circle-fill text-success'
-  if (normalized === 'error') return 'bi-exclamation-triangle-fill text-danger'
-  if (normalized === 'unknown') return 'bi-info-circle-fill qs-validation-accordion-icon-info'
-  return 'bi-exclamation-circle-fill text-warning'
+  return qsGetStatusIconClass(normalized)
 }
 
 function refreshValidationAccordionTitle (wrapper, isValidated) {
@@ -1674,10 +1737,14 @@ function refreshValidationAccordionTitle (wrapper, isValidated) {
   label.textContent = title
   button.appendChild(label)
 
+  const indicator = document.createElement('span')
+  indicator.className = `qs-step-link-state qs-step-link-state--${qsNormalizeStatusState(state)} ms-2`
+  indicator.setAttribute('aria-hidden', 'true')
+
   const icon = document.createElement('i')
-  icon.className = `bi ${qsGetCalloutAccordionIconClass(state)} ms-2 small`
-  icon.setAttribute('aria-hidden', 'true')
-  button.appendChild(icon)
+  icon.className = `bi ${qsGetCalloutAccordionIconClass(state)}`
+  indicator.appendChild(icon)
+  button.appendChild(indicator)
 }
 
 function setupValidationCallouts () {
@@ -1807,6 +1874,25 @@ document.addEventListener('DOMContentLoaded', () => {
   setupValidationCallouts()
   qsRefreshSidebarValidationState()
   qsRefreshWorkspaceStatus({ immediate: true })
+  document.addEventListener('click', (event) => {
+    const target = event.target instanceof window.Element ? event.target : null
+    if (!target) return
+    if (target.closest('#validateButton, #validate_trakt_pin, #validate_mal_url, .validate-button')) {
+      qsSetCurrentValidationAttempted(true)
+    }
+  })
+  document.addEventListener('input', (event) => {
+    const target = event.target instanceof window.Element ? event.target : null
+    if (!target || !target.closest('#configForm')) return
+    if (target.matches('input[id$="_validated"], input[id$="_validated_at"]')) return
+    qsSetCurrentValidationAttempted(false)
+  }, true)
+  document.addEventListener('change', (event) => {
+    const target = event.target instanceof window.Element ? event.target : null
+    if (!target || !target.closest('#configForm')) return
+    if (target.matches('input[id$="_validated"], input[id$="_validated_at"]')) return
+    qsSetCurrentValidationAttempted(false)
+  }, true)
   document.querySelectorAll('[data-qs-validate-all]').forEach((button) => {
     if (button.dataset.qsValidateAllBound === 'true') return
     button.dataset.qsValidateAllBound = 'true'

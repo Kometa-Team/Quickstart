@@ -1200,6 +1200,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function wireIncludeToggle (card, libraryId) {
       if (!libraryPicker || !card) return
       const toggle = card.querySelector('.include-library-toggle')
+      const playlistToggle = card.querySelector('.playlist-library-toggle')
       const option = libraryPicker.querySelector(`option[value="${libraryId}"]`)
       const targetInputId = toggle?.dataset.targetInput
       const targetInput = targetInputId ? document.getElementById(targetInputId) : null
@@ -1212,6 +1213,13 @@ document.addEventListener('DOMContentLoaded', function () {
         status.textContent = included ? 'Included in YAML' : 'Excluded from YAML'
         status.classList.toggle('bg-success', included)
         status.classList.toggle('bg-secondary', !included)
+        if (playlistToggle) {
+          if (!included) {
+            playlistToggle.checked = false
+          }
+          playlistToggle.disabled = !included
+          playlistToggle.closest('.form-check')?.classList.toggle('opacity-50', !included)
+        }
       }
 
       toggle.addEventListener('change', () => {
@@ -1223,6 +1231,14 @@ document.addEventListener('DOMContentLoaded', function () {
           ValidationHandler.updateValidationState()
         }
       })
+      if (playlistToggle && !playlistToggle.dataset.listenerAdded) {
+        playlistToggle.addEventListener('change', () => {
+          if (typeof ValidationHandler !== 'undefined' && ValidationHandler.updateValidationState) {
+            ValidationHandler.updateValidationState()
+          }
+        })
+        playlistToggle.dataset.listenerAdded = 'true'
+      }
       syncStatus()
       toggle.dataset.listenerAdded = 'true'
     }
@@ -1336,6 +1352,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         payload[el.name] = el.value ?? ''
+      })
+      card.querySelectorAll('input.playlist-library-toggle[type="checkbox"][name]:disabled').forEach(el => {
+        payload[el.name] = 'false'
       })
       return payload
     }
