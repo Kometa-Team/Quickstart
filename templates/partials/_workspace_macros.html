@@ -69,7 +69,7 @@
 {% macro step_group(title, group_key, template_list, allowed_keys, page_info, step_statuses, section_statuses, open_state=True) -%}
 {% set group_state = (section_statuses.get(group_key) if section_statuses else 'warn') %}
 <details class="qs-step-group qs-step-group--{{ group_state }}" data-step-group="{{ group_key }}" {% if open_state %}open{% endif %}>
-  <summary class="qs-step-group-summary">
+  <summary class="qs-step-group-summary" title="{{ title }}">
     <span>{{ title }}</span>
     <span class="qs-step-group-summary-right">
       {{ status_icon(group_state, 'qs-step-group-state') }}
@@ -121,7 +121,6 @@
       data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}" title="Switch config">
       <i class="bi bi-folder2-open qs-sidebar-config-icon" aria-hidden="true"></i>
       <span class="qs-sidebar-text qs-sidebar-config-label">CONFIG</span>
-      <i class="bi bi-chevron-down ms-1 qs-sidebar-config-chevron" aria-hidden="true"></i>
     </button>
     <button type="button" class="btn nav-button qs-sidebar-validate" id="qs-sidebar-validate-all"
       data-qs-validate-all title="Validate ALL configured services">
@@ -193,19 +192,19 @@
 {% set running_on = version_info.running_on if version_info and version_info.running_on else 'Unknown' %}
 <div class="qs-sidebar-footer">
   <div class="qs-sidebar-footer-links">
-    <a href="javascript:void(0);" onclick="jumpTo('910-sponsor');" class="btn nav-button btn-sm">
+    <a href="javascript:void(0);" onclick="jumpTo('910-sponsor');" class="btn nav-button btn-sm" title="Donate">
       <i class="fa fa-heart"></i><span class="qs-sidebar-text">Donate</span>
     </a>
-    <a href="https://kometa.wiki/en/latest/discord/" class="btn nav-button btn-sm" target="_blank">
+    <a href="https://kometa.wiki/en/latest/discord/" class="btn nav-button btn-sm" target="_blank" title="Discord">
       <i class="bi bi-discord"></i><span class="qs-sidebar-text">Discord</span>
     </a>
-    <a href="https://kometa.wiki/" class="btn nav-button btn-sm" target="_blank">
+    <a href="https://kometa.wiki/" class="btn nav-button btn-sm" target="_blank" title="Wiki">
       <i class="bi bi-journal-bookmark-fill"></i><span class="qs-sidebar-text">Wiki</span>
     </a>
-    <a href="https://github.com/Kometa-Team/Kometa" class="btn nav-button btn-sm" target="_blank">
+    <a href="https://github.com/Kometa-Team/Kometa" class="btn nav-button btn-sm" target="_blank" title="Kometa">
       <i class="bi bi-github"></i><span class="qs-sidebar-text">Kometa</span>
     </a>
-    <a href="https://github.com/Kometa-Team/Quickstart" class="btn nav-button btn-sm qs-sidebar-footer-link-full" target="_blank">
+    <a href="https://github.com/Kometa-Team/Quickstart" class="btn nav-button btn-sm qs-sidebar-footer-link-full" target="_blank" title="Quickstart">
       <i class="bi bi-github"></i><span class="qs-sidebar-text">Quickstart</span>
     </a>
   </div>

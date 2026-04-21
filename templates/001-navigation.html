@@ -38,94 +38,105 @@
           <div class="qs-workspace-nav-sticky">
             {{ workspace.sidebar_controls(page_info) }}
             {{ workspace.step_action_bar(page_info, hide_step_nav, template_list, jump_to_validations, step_statuses, sidebar_mode=True) }}
-            <div class="qs-dependency-hint qs-tautulli-required-hint {% if not tautulli_reasons %}d-none{% endif %}" data-qs-dependency-hint="tautulli">
-              <div class="qs-dependency-hint-title">Tautulli required by</div>
-              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
-                {% for reason in tautulli_reasons[:2] %}
-                <div class="qs-dependency-hint-line">{{ reason }}</div>
-                {% endfor %}
-                {% if tautulli_reasons|length > 2 %}
-                <div class="qs-dependency-hint-line">+{{ tautulli_reasons|length - 2 }} more...</div>
-                {% endif %}
+            <details class="qs-step-group qs-dependency-todo-group d-none" data-qs-dependency-todo>
+              <summary class="qs-step-group-summary" title="TODO" aria-label="Outstanding dependency setup tasks">
+                <span>TODO</span>
+                <span class="qs-step-group-summary-right">
+                  <span class="qs-dependency-todo-count" data-qs-dependency-todo-count>0</span>
+                  <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                </span>
+              </summary>
+              <div class="qs-dependency-todo-list" data-qs-dependency-todo-list>
+                <div class="qs-dependency-hint qs-tautulli-required-hint {% if not tautulli_reasons %}d-none{% endif %}" data-qs-dependency-hint="tautulli" data-qs-dependency-short="T">
+                  <div class="qs-dependency-hint-title">Tautulli required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in tautulli_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if tautulli_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ tautulli_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-omdb-required-hint {% if not omdb_reasons %}d-none{% endif %}" data-qs-dependency-hint="omdb" data-qs-dependency-short="O">
+                  <div class="qs-dependency-hint-title">OMDb required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in omdb_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if omdb_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ omdb_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-mdblist-required-hint {% if not mdblist_reasons %}d-none{% endif %}" data-qs-dependency-hint="mdblist" data-qs-dependency-short="M">
+                  <div class="qs-dependency-hint-title">MDBList required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in mdblist_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if mdblist_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ mdblist_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-anidb-required-hint {% if not anidb_reasons %}d-none{% endif %}" data-qs-dependency-hint="anidb" data-qs-dependency-short="A">
+                  <div class="qs-dependency-hint-title">AniDB required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in anidb_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if anidb_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ anidb_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-radarr-required-hint {% if not radarr_reasons %}d-none{% endif %}" data-qs-dependency-hint="radarr" data-qs-dependency-short="R">
+                  <div class="qs-dependency-hint-title">Radarr required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in radarr_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if radarr_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ radarr_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-sonarr-required-hint {% if not sonarr_reasons %}d-none{% endif %}" data-qs-dependency-hint="sonarr" data-qs-dependency-short="S">
+                  <div class="qs-dependency-hint-title">Sonarr required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in sonarr_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if sonarr_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ sonarr_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-trakt-required-hint {% if not trakt_reasons %}d-none{% endif %}" data-qs-dependency-hint="trakt" data-qs-dependency-short="T">
+                  <div class="qs-dependency-hint-title">Trakt required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in trakt_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if trakt_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ trakt_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
+                <div class="qs-dependency-hint qs-mal-required-hint {% if not mal_reasons %}d-none{% endif %}" data-qs-dependency-hint="mal" data-qs-dependency-short="M">
+                  <div class="qs-dependency-hint-title">MAL required by</div>
+                  <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
+                    {% for reason in mal_reasons[:2] %}
+                    <div class="qs-dependency-hint-line">{{ reason }}</div>
+                    {% endfor %}
+                    {% if mal_reasons|length > 2 %}
+                    <div class="qs-dependency-hint-line">+{{ mal_reasons|length - 2 }} more...</div>
+                    {% endif %}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="qs-dependency-hint qs-omdb-required-hint {% if not omdb_reasons %}d-none{% endif %}" data-qs-dependency-hint="omdb">
-              <div class="qs-dependency-hint-title">OMDb required by</div>
-              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
-                {% for reason in omdb_reasons[:2] %}
-                <div class="qs-dependency-hint-line">{{ reason }}</div>
-                {% endfor %}
-                {% if omdb_reasons|length > 2 %}
-                <div class="qs-dependency-hint-line">+{{ omdb_reasons|length - 2 }} more...</div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="qs-dependency-hint qs-mdblist-required-hint {% if not mdblist_reasons %}d-none{% endif %}" data-qs-dependency-hint="mdblist">
-              <div class="qs-dependency-hint-title">MDBList required by</div>
-              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
-                {% for reason in mdblist_reasons[:2] %}
-                <div class="qs-dependency-hint-line">{{ reason }}</div>
-                {% endfor %}
-                {% if mdblist_reasons|length > 2 %}
-                <div class="qs-dependency-hint-line">+{{ mdblist_reasons|length - 2 }} more...</div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="qs-dependency-hint qs-anidb-required-hint {% if not anidb_reasons %}d-none{% endif %}" data-qs-dependency-hint="anidb">
-              <div class="qs-dependency-hint-title">AniDB required by</div>
-              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
-                {% for reason in anidb_reasons[:2] %}
-                <div class="qs-dependency-hint-line">{{ reason }}</div>
-                {% endfor %}
-                {% if anidb_reasons|length > 2 %}
-                <div class="qs-dependency-hint-line">+{{ anidb_reasons|length - 2 }} more...</div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="qs-dependency-hint qs-radarr-required-hint {% if not radarr_reasons %}d-none{% endif %}" data-qs-dependency-hint="radarr">
-              <div class="qs-dependency-hint-title">Radarr required by</div>
-              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
-                {% for reason in radarr_reasons[:2] %}
-                <div class="qs-dependency-hint-line">{{ reason }}</div>
-                {% endfor %}
-                {% if radarr_reasons|length > 2 %}
-                <div class="qs-dependency-hint-line">+{{ radarr_reasons|length - 2 }} more...</div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="qs-dependency-hint qs-sonarr-required-hint {% if not sonarr_reasons %}d-none{% endif %}" data-qs-dependency-hint="sonarr">
-              <div class="qs-dependency-hint-title">Sonarr required by</div>
-              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
-                {% for reason in sonarr_reasons[:2] %}
-                <div class="qs-dependency-hint-line">{{ reason }}</div>
-                {% endfor %}
-                {% if sonarr_reasons|length > 2 %}
-                <div class="qs-dependency-hint-line">+{{ sonarr_reasons|length - 2 }} more...</div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="qs-dependency-hint qs-trakt-required-hint {% if not trakt_reasons %}d-none{% endif %}" data-qs-dependency-hint="trakt">
-              <div class="qs-dependency-hint-title">Trakt required by</div>
-              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
-                {% for reason in trakt_reasons[:2] %}
-                <div class="qs-dependency-hint-line">{{ reason }}</div>
-                {% endfor %}
-                {% if trakt_reasons|length > 2 %}
-                <div class="qs-dependency-hint-line">+{{ trakt_reasons|length - 2 }} more...</div>
-                {% endif %}
-              </div>
-            </div>
-            <div class="qs-dependency-hint qs-mal-required-hint {% if not mal_reasons %}d-none{% endif %}" data-qs-dependency-hint="mal">
-              <div class="qs-dependency-hint-title">MAL required by</div>
-              <div class="qs-dependency-hint-lines" data-qs-dependency-lines>
-                {% for reason in mal_reasons[:2] %}
-                <div class="qs-dependency-hint-line">{{ reason }}</div>
-                {% endfor %}
-                {% if mal_reasons|length > 2 %}
-                <div class="qs-dependency-hint-line">+{{ mal_reasons|length - 2 }} more...</div>
-                {% endif %}
-              </div>
-            </div>
+            </details>
 
             <div class="qs-step-progress-strip qs-readiness-strip qs-readiness-state-{{ readiness.get('required_state', 'unknown') }}">
               <div class="small text-muted mb-1">Readiness</div>

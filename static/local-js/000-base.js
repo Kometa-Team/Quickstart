@@ -748,6 +748,10 @@ function qsStateFromValidatedInput (validatedInput) {
 function qsUpdateStepIndicators (stepKey, status) {
   if (!stepKey) return
   const normalized = qsNormalizeStatusState(status)
+  window.QS_STEP_STATUSES = window.QS_STEP_STATUSES && typeof window.QS_STEP_STATUSES === 'object'
+    ? window.QS_STEP_STATUSES
+    : {}
+  window.QS_STEP_STATUSES[stepKey] = normalized
 
   document.querySelectorAll('[data-step-key]').forEach((stepTarget) => {
     if (stepTarget.dataset.stepKey !== stepKey) return
@@ -756,6 +760,25 @@ function qsUpdateStepIndicators (stepKey, status) {
     qsApplyIndicatorState(linkIndicator, 'qs-step-link-state', normalized)
     qsApplyIndicatorState(dropdownIndicator, 'qs-step-dropdown-state', normalized)
   })
+}
+
+function qsGetCurrentStepStatus () {
+  const stepKey = qsGetCurrentStepKey()
+  if (!stepKey) return null
+
+  if (window.QS_STEP_STATUSES && typeof window.QS_STEP_STATUSES === 'object' && window.QS_STEP_STATUSES[stepKey]) {
+    return qsNormalizeStatusState(window.QS_STEP_STATUSES[stepKey])
+  }
+
+  const indicator = document.querySelector(`.qs-step-link[data-step-key="${stepKey}"] .qs-step-link-state`)
+  return indicator ? qsGetIndicatorState(indicator, 'qs-step-link-state') : null
+}
+
+function qsIsCurrentStepConfigured (validatedInput) {
+  if (validatedInput) {
+    return String(validatedInput.value || '').toLowerCase() === 'true'
+  }
+  return qsGetCurrentStepStatus() === 'ok'
 }
 
 function qsResolveGroupState (groupKey, childStates) {
@@ -813,6 +836,7 @@ function qsRefreshSidebarValidationState (inputId) {
   qsUpdateStepIndicators(currentStepKey, stepState)
   qsRefreshSectionRollups()
   qsRecalculateReadinessFromSidebar()
+  qsApplyAllDependencyHints()
 
   if (previousState !== stepState && window.QSWorkspaceStatus && typeof window.QSWorkspaceStatus.refresh === 'function') {
     window.QSWorkspaceStatus.refresh({ reason: 'validation-state-change', delayMs: 120 })
@@ -824,6 +848,7 @@ function qsSetSidebarStepStatus (stepKey, status) {
   qsUpdateStepIndicators(stepKey, status)
   qsRefreshSectionRollups()
   qsRecalculateReadinessFromSidebar()
+  qsApplyAllDependencyHints()
 }
 
 let qsWorkspaceStatusRequest = null
@@ -1036,15 +1061,72 @@ function qsGetDependencyReasonsForProvider (providerKey) {
   return qsNormalizeDependencyReasons(window[config.windowKey])
 }
 
+function qsGetStepStatus (stepKey) {
+  if (!stepKey) return null
+
+  if (window.QS_STEP_STATUSES && typeof window.QS_STEP_STATUSES === 'object' && window.QS_STEP_STATUSES[stepKey]) {
+    return qsNormalizeStatusState(window.QS_STEP_STATUSES[stepKey])
+  }
+
+  const indicator = document.querySelector(`.qs-step-link[data-step-key="${stepKey}"] .qs-step-link-state`)
+  return indicator ? qsGetIndicatorState(indicator, 'qs-step-link-state') : null
+}
+
+function qsIsDependencyStepConfigured (providerKey) {
+  const config = qsDependencyConfigMap()[providerKey]
+  if (!config) return false
+  return qsGetStepStatus(config.stepKey) === 'ok'
+}
+
+function qsBindDependencyHintNavigation (hint, providerKey) {
+  if (!hint || hint.dataset.qsDependencyNavBound === 'true') return
+  const config = qsDependencyConfigMap()[providerKey]
+  if (!config) return
+
+  hint.dataset.qsDependencyNavBound = 'true'
+  hint.dataset.stepKey = config.stepKey
+  hint.setAttribute('role', 'button')
+  hint.setAttribute('tabindex', '0')
+  hint.title = config.label
+
+  const navigate = () => {
+    if (hint.classList.contains('d-none')) return
+    jumpTo(config.stepKey, config.label)
+  }
+
+  hint.addEventListener('click', navigate)
+  hint.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+    event.preventDefault()
+    navigate()
+  })
+}
+
+function qsRefreshDependencyTodoGroup () {
+  const group = document.querySelector('[data-qs-dependency-todo]')
+  if (!group) return
+
+  const visibleHints = Array.from(group.querySelectorAll('[data-qs-dependency-hint]'))
+    .filter((hint) => !hint.classList.contains('d-none'))
+  const countElement = group.querySelector('[data-qs-dependency-todo-count]')
+
+  if (countElement) {
+    countElement.textContent = String(visibleHints.length)
+  }
+
+  group.classList.toggle('d-none', visibleHints.length === 0)
+}
+
 function qsApplyDependencyHintSidebar (providerKey, reasons) {
   const normalized = qsNormalizeDependencyReasons(reasons)
 
   document.querySelectorAll(`[data-qs-dependency-hint="${providerKey}"]`).forEach((hint) => {
+    qsBindDependencyHintNavigation(hint, providerKey)
     const lines = hint.querySelector('[data-qs-dependency-lines]')
     if (!lines) return
 
     lines.replaceChildren()
-    if (!normalized.length) {
+    if (!normalized.length || qsIsDependencyStepConfigured(providerKey)) {
       hint.classList.add('d-none')
       return
     }
@@ -1065,6 +1147,7 @@ function qsApplyDependencyHintSidebar (providerKey, reasons) {
       lines.appendChild(more)
     }
   })
+  qsRefreshDependencyTodoGroup()
 }
 
 function qsApplyAllDependencyHints (dependencyPayload) {
@@ -1393,38 +1476,41 @@ function updateValidationCallouts (inputId) {
   const callouts = document.querySelectorAll('.qs-validation-accordion')
   if (callouts.length) {
     callouts.forEach((wrapper) => {
-      const alert = wrapper.querySelector('.qs-validation-callout')
-      if (alert) {
-        applyDynamicValidationCalloutState(alert)
-      }
-
       const targetId = inputId || wrapper.dataset.qsValidatedInput
       const validatedInput = targetId ? document.getElementById(targetId) : getValidatedInput()
-      if (!validatedInput) return
+      const isConfigured = qsIsCurrentStepConfigured(validatedInput)
 
-      const isValidated = String(validatedInput.value || '').toLowerCase() === 'true'
+      const alert = wrapper.querySelector('.qs-validation-callout')
+      if (alert) {
+        applyDynamicValidationCalloutState(alert, isConfigured)
+      }
+
       const collapse = wrapper.querySelector('.accordion-collapse')
       const button = wrapper.querySelector('.accordion-button')
       if (!collapse || !button) return
 
-      const shouldShow = !isValidated
-      button.classList.toggle('collapsed', !shouldShow)
-      button.setAttribute('aria-expanded', shouldShow ? 'true' : 'false')
+      const shouldCollapse = isConfigured && wrapper.dataset.qsAutoCollapsed !== 'true'
+      if (shouldCollapse) {
+        button.classList.add('collapsed')
+        button.setAttribute('aria-expanded', 'false')
 
-      if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
-        const instance = bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false })
-        if (shouldShow) {
-          instance.show()
-        } else {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+          const instance = bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false })
           instance.hide()
+        } else {
+          collapse.classList.remove('show')
         }
-      } else {
-        collapse.classList.toggle('show', shouldShow)
+        wrapper.dataset.qsAutoCollapsed = 'true'
       }
 
-      refreshValidationAccordionTitle(wrapper, isValidated)
+      refreshValidationAccordionTitle(wrapper, isConfigured)
     })
   }
+
+  document.querySelectorAll('.qs-validation-callout').forEach((alert) => {
+    if (alert.closest('.qs-validation-accordion')) return
+    applyDynamicValidationCalloutState(alert)
+  })
 
   qsRefreshSidebarValidationState(inputId)
 }
@@ -1445,7 +1531,7 @@ function getCurrentTemplateGroup () {
   return 'optional'
 }
 
-function applyDynamicValidationCalloutState (alert) {
+function applyDynamicValidationCalloutState (alert, isConfiguredOverride = null) {
   if (!alert) return
 
   if (!alert.dataset.qsOriginalHtml) {
@@ -1457,10 +1543,13 @@ function applyDynamicValidationCalloutState (alert) {
   const isRequired = group === 'required'
   const isOptional = group === 'optional'
   const isReview = group === 'review'
+  const isConfigured = isConfiguredOverride === null
+    ? qsIsCurrentStepConfigured(getValidatedInput())
+    : Boolean(isConfiguredOverride)
 
   let html = alert.dataset.qsOriginalHtml
 
-  if (isRequired) {
+  if (isRequired && !isConfigured) {
     html = html.replace(
       /<br>\s*Alternatively,\s*navigate to another page to skip this section\./gi,
       '<br><strong>This page is currently required based on your configuration.</strong>'
@@ -1471,16 +1560,20 @@ function applyDynamicValidationCalloutState (alert) {
 
   const heading = alert.querySelector('h6, h4')
   if (heading && !isReview) {
-    heading.innerHTML = `<b>${isRequired ? 'This page is mandatory and must be completed' : 'This page is optional'}</b>`
+    heading.innerHTML = `<b>${
+      isConfigured
+        ? (isRequired ? 'This required page is configured' : 'This optional page is configured')
+        : (isRequired ? 'This page is mandatory and must be completed' : 'This page is optional')
+    }</b>`
   }
 
   alert.classList.remove('alert-info', 'alert-danger', 'alert-warning', 'alert-success')
-  if (isRequired) {
+  if (isConfigured || isReview) {
+    alert.classList.add('alert-success')
+  } else if (isRequired) {
     alert.classList.add('alert-danger')
   } else if (isOptional) {
     alert.classList.add('alert-info')
-  } else if (isReview) {
-    alert.classList.add('alert-success')
   }
 
   const dependencyMap = qsDependencyConfigMap()
@@ -1496,7 +1589,9 @@ function applyDynamicValidationCalloutState (alert) {
 
       const title = document.createElement('div')
       title.className = 'qs-callout-mal-reason-title'
-      title.textContent = `Now required because ${dependencyConfig.label} is needed by:`
+      title.textContent = isConfigured
+        ? `${dependencyConfig.label} was required because it is needed by:`
+        : `Now required because ${dependencyConfig.label} is needed by:`
       box.appendChild(title)
 
       const list = document.createElement('ul')
@@ -1523,6 +1618,23 @@ function applyDynamicValidationCalloutState (alert) {
   }
 }
 
+function qsGetCalloutAccordionState (isConfigured) {
+  if (isConfigured) return 'ok'
+  const group = getCurrentTemplateGroup()
+  if (group === 'required') return 'error'
+  if (group === 'optional') return 'unknown'
+  if (group === 'review') return 'ok'
+  return 'warn'
+}
+
+function qsGetCalloutAccordionIconClass (state) {
+  const normalized = qsNormalizeStatusState(state)
+  if (normalized === 'ok') return 'bi-check-circle-fill text-success'
+  if (normalized === 'error') return 'bi-exclamation-triangle-fill text-danger'
+  if (normalized === 'unknown') return 'bi-info-circle-fill qs-validation-accordion-icon-info'
+  return 'bi-exclamation-circle-fill text-warning'
+}
+
 function refreshValidationAccordionTitle (wrapper, isValidated) {
   if (!wrapper) return
   const button = wrapper.querySelector('.accordion-button')
@@ -1543,21 +1655,17 @@ function refreshValidationAccordionTitle (wrapper, isValidated) {
   }
 
   let title = baseTitle
-  let showCheck = false
+  const state = qsGetCalloutAccordionState(isValidated)
   if (isValidated) {
     const group = getCurrentTemplateGroup()
     if (group === 'required') {
       title = 'Required page validated'
-      showCheck = true
     } else if (group === 'optional') {
       title = 'Optional page guidance'
-      showCheck = true
     } else if (group === 'review') {
       title = 'Review page guidance'
-      showCheck = true
     } else {
       title = 'Page guidance'
-      showCheck = true
     }
   }
 
@@ -1566,12 +1674,10 @@ function refreshValidationAccordionTitle (wrapper, isValidated) {
   label.textContent = title
   button.appendChild(label)
 
-  if (showCheck) {
-    const icon = document.createElement('i')
-    icon.className = 'bi bi-check-circle-fill ms-2 small text-success'
-    icon.setAttribute('aria-hidden', 'true')
-    button.appendChild(icon)
-  }
+  const icon = document.createElement('i')
+  icon.className = `bi ${qsGetCalloutAccordionIconClass(state)} ms-2 small`
+  icon.setAttribute('aria-hidden', 'true')
+  button.appendChild(icon)
 }
 
 function setupValidationCallouts () {
@@ -1582,12 +1688,10 @@ function setupValidationCallouts () {
     if (alert.closest('.modal')) return
     if (alert.closest('.qs-validation-accordion')) return
 
-    applyDynamicValidationCalloutState(alert)
-
     const validatedInput = getValidatedInput()
-    if (!validatedInput) return
+    const isValidated = qsIsCurrentStepConfigured(validatedInput)
 
-    const isValidated = String(validatedInput.value || '').toLowerCase() === 'true'
+    applyDynamicValidationCalloutState(alert, isValidated)
     const heading = alert.querySelector('h6, h4')
     const title = alert.dataset.qsCalloutTitle || (heading ? heading.textContent.trim() : 'Setup guidance')
     const accordionId = `qs-validation-accordion-${index}`
@@ -1596,7 +1700,9 @@ function setupValidationCallouts () {
 
     const wrapper = document.createElement('div')
     wrapper.className = 'accordion qs-validation-accordion mb-2'
-    wrapper.dataset.qsValidatedInput = validatedInput.id
+    if (validatedInput && validatedInput.id) {
+      wrapper.dataset.qsValidatedInput = validatedInput.id
+    }
     const accordionItem = document.createElement('div')
     accordionItem.className = 'accordion-item'
 
