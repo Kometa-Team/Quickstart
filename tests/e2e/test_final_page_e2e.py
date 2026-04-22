@@ -46,8 +46,28 @@ def _wait_for_run_now_enabled(page):
     )
 
 
+def _allow_final_gate(qs_module, monkeypatch):
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "dependency_cards": [],
+            "setup_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "can_build_config": True,
+            "config_valid": True,
+        },
+    )
+
+
 @pytest.mark.e2e
 def test_run_now_queued_toast(page, live_server, monkeypatch, qs_module):
+    _allow_final_gate(qs_module, monkeypatch)
     monkeypatch.setattr(
         qs_module.output,
         "build_config",
@@ -80,6 +100,7 @@ def test_run_now_queued_toast(page, live_server, monkeypatch, qs_module):
 
 @pytest.mark.e2e
 def test_stop_modal_and_state_reset(page, live_server, monkeypatch, qs_module):
+    _allow_final_gate(qs_module, monkeypatch)
     monkeypatch.setattr(
         qs_module.output,
         "build_config",
@@ -117,6 +138,7 @@ def test_stop_modal_and_state_reset(page, live_server, monkeypatch, qs_module):
 
 @pytest.mark.e2e
 def test_reconnect_after_refresh_shows_running(page, live_server, monkeypatch, qs_module):
+    _allow_final_gate(qs_module, monkeypatch)
     monkeypatch.setattr(
         qs_module.output,
         "build_config",
@@ -196,6 +218,7 @@ def test_maintenance_pause_resume_toasts(page, live_server):
 
 @pytest.mark.e2e
 def test_queued_run_auto_start_toast(page, live_server, monkeypatch, qs_module):
+    _allow_final_gate(qs_module, monkeypatch)
     monkeypatch.setattr(
         qs_module.output,
         "build_config",

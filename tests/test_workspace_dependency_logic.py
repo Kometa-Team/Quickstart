@@ -892,6 +892,47 @@ def test_github_optional_with_token_and_failed_marker_is_error(qs_module):
     assert state == "error"
 
 
+def test_webhooks_optional_provider_selection_counts_as_configured(qs_module):
+    section_rows = {
+        "webhooks": {
+            "validated": True,
+            "user_entered": False,
+            "data": {
+                "validation_status": "validated",
+                "webhooks": {
+                    "error": "",
+                    "run_start": "notifiarr",
+                    "run_end": "",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("090-webhooks", "optional", section_rows, config_exists=True)
+    assert state == "ok"
+
+
+def test_webhooks_optional_without_selection_stays_unknown(qs_module):
+    section_rows = {
+        "webhooks": {
+            "validated": False,
+            "user_entered": False,
+            "data": {
+                "validation_status": "skipped",
+                "validation_reason": "no_webhooks",
+                "webhooks": {
+                    "error": "",
+                    "run_start": "",
+                    "run_end": "",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("090-webhooks", "optional", section_rows, config_exists=True)
+    assert state == "unknown"
+
+
 def test_mal_optional_with_credentials_and_not_validated_is_warn(qs_module):
     section_rows = {
         "mal": {

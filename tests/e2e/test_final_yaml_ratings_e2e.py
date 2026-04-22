@@ -2,6 +2,25 @@ import pytest
 from ruamel.yaml import YAML
 
 
+def _allow_final_gate(qs_module, monkeypatch):
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "dependency_cards": [],
+            "setup_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "can_build_config": True,
+            "config_valid": True,
+        },
+    )
+
+
 def _ratings_libraries_settings():
     return {
         "validated": True,
@@ -112,6 +131,7 @@ def _ratings_libraries_settings_single_slot_center_top_nudged():
 
 @pytest.mark.e2e
 def test_final_yaml_contains_expected_ratings_overlay(page, live_server, monkeypatch, qs_module):
+    _allow_final_gate(qs_module, monkeypatch)
     monkeypatch.setattr(
         qs_module.persistence,
         "check_minimum_settings",
@@ -154,6 +174,7 @@ def test_final_yaml_contains_expected_ratings_overlay(page, live_server, monkeyp
 
 @pytest.mark.e2e
 def test_final_yaml_bottom_center_horizontal_ratings_use_non_negative_vertical_offsets(page, live_server, monkeypatch, qs_module):
+    _allow_final_gate(qs_module, monkeypatch)
     monkeypatch.setattr(
         qs_module.persistence,
         "check_minimum_settings",
@@ -196,6 +217,7 @@ def test_final_yaml_bottom_center_horizontal_ratings_use_non_negative_vertical_o
 
 @pytest.mark.e2e
 def test_final_yaml_preserves_left_top_negative_rating_offset_without_mutating_source(page, live_server, monkeypatch, qs_module):
+    _allow_final_gate(qs_module, monkeypatch)
     monkeypatch.setattr(
         qs_module.persistence,
         "check_minimum_settings",
@@ -234,6 +256,7 @@ def test_final_yaml_preserves_left_top_negative_rating_offset_without_mutating_s
 
 @pytest.mark.e2e
 def test_final_yaml_preserves_single_slot_nudged_horizontal_offset_without_padding(page, live_server, monkeypatch, qs_module):
+    _allow_final_gate(qs_module, monkeypatch)
     monkeypatch.setattr(
         qs_module.persistence,
         "check_minimum_settings",

@@ -278,7 +278,9 @@ function showNavigationLoadingOverlay (action, targetLabel) {
     jump: 'Opening selected step…',
     'library-initial': 'Loading first library…',
     'library-switch': 'Switching library…',
-    'kometa-check': 'Validating Kometa…'
+    'kometa-check': 'Validating Kometa…',
+    'header-style': 'Regenerating section style…',
+    'config-switch': 'Saving current page…'
   }
   const normalizedTarget = String(targetLabel || '').trim()
   if (label) {
@@ -1347,14 +1349,18 @@ function qsApplyWorkspaceStatus (payload) {
   updateValidationCallouts()
 }
 
-function qsFetchWorkspaceStatus () {
+function qsFetchWorkspaceStatus (options = {}) {
   if (qsWorkspaceStatusRequest) {
     qsWorkspaceStatusPending = true
     return qsWorkspaceStatusRequest
   }
 
-  qsWorkspaceStatusRequest = fetch('/workspace_status', {
+  const params = new URLSearchParams()
+  if (options.configName) params.set('config_name', options.configName)
+  params.set('_', String(Date.now()))
+  qsWorkspaceStatusRequest = fetch(`/workspace_status?${params.toString()}`, {
     method: 'GET',
+    cache: 'no-store',
     credentials: 'same-origin',
     headers: { Accept: 'application/json' }
   })
@@ -1376,7 +1382,7 @@ function qsFetchWorkspaceStatus () {
       qsWorkspaceStatusRequest = null
       if (qsWorkspaceStatusPending) {
         qsWorkspaceStatusPending = false
-        qsFetchWorkspaceStatus()
+        qsFetchWorkspaceStatus(options)
       }
     })
 
@@ -1386,6 +1392,7 @@ function qsFetchWorkspaceStatus () {
 function qsRefreshWorkspaceStatus (options = {}) {
   const delayMs = Number(options.delayMs || 0)
   const immediate = Boolean(options.immediate)
+  const requestOptions = { configName: options.configName || '' }
 
   if (qsWorkspaceStatusTimer) {
     clearTimeout(qsWorkspaceStatusTimer)
@@ -1393,12 +1400,12 @@ function qsRefreshWorkspaceStatus (options = {}) {
   }
 
   if (immediate || delayMs <= 0) {
-    return qsFetchWorkspaceStatus()
+    return qsFetchWorkspaceStatus(requestOptions)
   }
 
   qsWorkspaceStatusTimer = setTimeout(() => {
     qsWorkspaceStatusTimer = null
-    qsFetchWorkspaceStatus()
+    qsFetchWorkspaceStatus(requestOptions)
   }, delayMs)
 
   return Promise.resolve(null)
@@ -2098,6 +2105,33 @@ document.addEventListener('DOMContentLoaded', () => {
     return badgeBtn?.dataset.current || ''
   }
 
+  async function autoSaveCurrentPageBeforeConfigSwitch (currentConfig) {
+    const form = document.getElementById('configForm')
+    const path = window.location?.pathname || ''
+    if (!form || !path.startsWith('/step/')) {
+      return { saved: false, skipped: true }
+    }
+
+    const formData = new FormData(form)
+    if (currentConfig) {
+      formData.set('configSelector', currentConfig)
+      formData.set('config_name', currentConfig)
+    }
+
+    const response = await fetch(path, {
+      method: 'POST',
+      body: formData,
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { Accept: 'text/html' }
+    })
+    const text = await response.text()
+    if (!response.ok || text.includes('Invalid values:')) {
+      throw new Error('Current page could not be saved. Fix validation errors before switching configs.')
+    }
+    return { saved: true, skipped: false }
+  }
+
   if (select) {
     modalEl.addEventListener('show.bs.modal', () => {
       const current = getCurrentConfig()
@@ -2116,10 +2150,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       confirmBtn.disabled = true
-      confirmBtn.textContent = 'Switching...'
+      confirmBtn.textContent = 'Saving...'
       window.QS_SWITCHING_CONFIG = true
 
       try {
+        if (typeof showNavigationLoadingOverlay === 'function') {
+          showNavigationLoadingOverlay('config-switch')
+        }
+        await autoSaveCurrentPageBeforeConfigSwitch(current)
+        confirmBtn.textContent = 'Switching...'
         const res = await fetch('/switch-config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2129,12 +2168,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Failed to switch configs.')
         }
+        if (badgeBtn) {
+          badgeBtn.dataset.current = data.name || target
+        }
+        if (data.workspace_status && typeof qsApplyWorkspaceStatus === 'function') {
+          qsApplyWorkspaceStatus(Object.assign({ success: true, config_name: data.name || target }, data.workspace_status))
+        } else {
+          qsRefreshWorkspaceStatus({ immediate: true, configName: data.name || target })
+        }
         showToast('success', `Switched to config "${data.name}".`)
         setTimeout(() => window.location.reload(), 150)
       } catch (err) {
         window.QS_SWITCHING_CONFIG = false
         confirmBtn.disabled = false
         confirmBtn.textContent = 'Switch'
+        if (typeof hideNavigationLoadingOverlay === 'function') {
+          hideNavigationLoadingOverlay()
+        }
         showToast('error', err.message || 'Failed to switch configs.')
       }
     })

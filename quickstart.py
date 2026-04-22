@@ -1033,6 +1033,8 @@ def _has_meaningful_optional_input(template_key, payload):
         section_name, keys = req
         section_data = payload.get(section_name, {})
         if isinstance(section_data, dict):
+            if template_key == "090-webhooks":
+                return any(_is_meaningful_optional_status_input(value) for value in section_data.values())
             return any(_is_meaningful_optional_status_input(section_data.get(key)) for key in keys)
         return False
 
@@ -2922,7 +2924,12 @@ def switch_config():
         return jsonify(success=False, message="Config not found."), 404
 
     session["config_name"] = name
-    return jsonify(success=True, name=name)
+    try:
+        menu_templates = helpers.get_menu_list()
+        workspace_status = _build_workspace_status_context(name, menu_templates, available_configs=available)
+    except Exception:
+        workspace_status = {}
+    return jsonify(success=True, name=name, workspace_status=workspace_status)
 
 
 @app.route("/activate-config", methods=["POST"])

@@ -360,6 +360,54 @@
     </a>
   </h5>
 
+  <!-- Kometa actions (validate/install before command options) -->
+  <div class="accordion mt-3" id="kometa-actions-accordion">
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="kometa-actions-heading">
+        <button id="kometa-actions-toggle" class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+          data-bs-target="#kometa-actions-collapse" aria-expanded="false" aria-controls="kometa-actions-collapse">
+          Kometa Install / Update
+          <span id="kometa-update-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
+            Not checked
+          </span>
+        </button>
+      </h2>
+      <div id="kometa-actions-collapse" class="accordion-collapse collapse" aria-labelledby="kometa-actions-heading"
+        data-bs-parent="#kometa-actions-accordion">
+        <div class="accordion-body">
+          <div id="kometa-actions">
+            <div class="alert alert-secondary mb-0">
+              <div class="mb-2">
+                Kometa will be installed/updated in:
+                <code id="kometa-install-path">{{ kometa_default_display }}</code>
+              </div>
+              <div class="d-flex flex-wrap align-items-center gap-3">
+                <button id="update-kometa-btn" type="button" class="btn btn-primary btn-sm"
+                  data-branch="{{ version_info.branch }}">
+                  <i class="bi bi-arrow-clockwise me-1"></i> Check for Kometa Updates
+                </button>
+                <div class="form-check form-switch small">
+                  <input class="form-check-input" type="checkbox" id="force-kometa-update">
+                  <label class="form-check-label" for="force-kometa-update">Force update</label>
+                </div>
+              </div>
+              <div class="form-text text-muted mt-1">
+                Force update re-downloads Kometa even if it is already up to date.
+              </div>
+              <div id="kometa-update-box" class="alert alert-warning mt-2 mb-0 d-none" role="alert">
+                Update available: <span id="kometa-local-version"></span> -> <span id="kometa-remote-version"></span>.
+                Click "Update Available" to apply it.
+              </div>
+
+              <pre id="kometa-validation-log" class="form-control bg-dark text-light mt-3"
+                style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="mt-4" id="run-command-section">
     <!-- Existing content remains unchanged inside this block -->
     <div class="accordion mt-4" id="run-command-accordion">
@@ -582,54 +630,6 @@
         </div>
       </div>
 
-    </div>
-
-    <!-- Kometa actions (always visible) -->
-    <div class="accordion mt-3" id="kometa-actions-accordion">
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="kometa-actions-heading">
-          <button id="kometa-actions-toggle" class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-            data-bs-target="#kometa-actions-collapse" aria-expanded="false" aria-controls="kometa-actions-collapse">
-            Kometa Install / Update
-            <span id="kometa-update-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
-              Not checked
-            </span>
-          </button>
-        </h2>
-        <div id="kometa-actions-collapse" class="accordion-collapse collapse" aria-labelledby="kometa-actions-heading"
-          data-bs-parent="#kometa-actions-accordion">
-          <div class="accordion-body">
-            <div id="kometa-actions">
-              <div class="alert alert-secondary mb-0">
-                <div class="mb-2">
-                  Kometa will be installed/updated in:
-                  <code id="kometa-install-path">{{ kometa_default_display }}</code>
-                </div>
-                <div class="d-flex flex-wrap align-items-center gap-3">
-                  <button id="update-kometa-btn" type="button" class="btn btn-primary btn-sm"
-                    data-branch="{{ version_info.branch }}">
-                    <i class="bi bi-arrow-clockwise me-1"></i> Check for Kometa Updates
-                  </button>
-                  <div class="form-check form-switch small">
-                    <input class="form-check-input" type="checkbox" id="force-kometa-update">
-                    <label class="form-check-label" for="force-kometa-update">Force update</label>
-                  </div>
-                </div>
-                <div class="form-text text-muted mt-1">
-                  Force update re-downloads Kometa even if it is already up to date.
-                </div>
-                <div id="kometa-update-box" class="alert alert-warning mt-2 mb-0 d-none" role="alert">
-                  Update available: <span id="kometa-local-version"></span> -> <span id="kometa-remote-version"></span>.
-                  Click "Update Available" to apply it.
-                </div>
-
-                <pre id="kometa-validation-log" class="form-control bg-dark text-light mt-3"
-                  style="height: 300px; overflow-y: auto; overflow-x: auto; white-space: pre;"></pre>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Command Output -->

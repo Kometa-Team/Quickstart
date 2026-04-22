@@ -88,6 +88,7 @@ $(document).ready(function () {
   const kometaActionsHeading = document.getElementById('kometa-actions-heading')
   const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
   const kometaActionsToggle = document.getElementById('kometa-actions-toggle')
+  let headerStyleSubmitting = false
 
   function readMetaFlag (id, datasetKey, attrKey) {
     const el = document.getElementById(id)
@@ -1066,20 +1067,27 @@ $(document).ready(function () {
     const accordion = $('#run-command-output-accordion')
     const box = $('#run-command-box')
     accordion.addClass('d-none')
+    $('#run-command-output-collapse').removeClass('show')
+    $('#run-command-output-heading .accordion-button').addClass('collapsed').attr('aria-expanded', 'false')
     box.removeClass('fade-in').addClass('d-none') // Hide instantly
     $('#run-now').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Waiting...')
   }
 
-  function showRunCommandSectionAfterValidated () {
+  function revealRunCommandSection () {
     const accordion = $('#run-command-output-accordion')
     const box = $('#run-command-box')
 
     accordion.removeClass('d-none')
+    $('#run-command-output-collapse').addClass('show')
+    $('#run-command-output-heading .accordion-button').removeClass('collapsed').attr('aria-expanded', 'true')
     box.removeClass('d-none') // Reveal element (opacity still 0)
     setTimeout(() => {
       box.addClass('fade-in') // Let browser register change, then fade in
     }, 10)
+  }
 
+  function showRunCommandSectionAfterValidated () {
+    revealRunCommandSection()
     $('#run-now').html('<i class="bi bi-play-fill me-1"></i> Run Now')
     try { buildCommand() } catch (_) {}
     updateRunNowState()
@@ -2071,8 +2079,21 @@ $(document).ready(function () {
 
   if (document.getElementById('header-style')) {
     document.getElementById('header-style').addEventListener('change', function () {
-      showToast('info', 'Updating header style. Please wait for the page to reload...')
-      if (headerStyleWait) headerStyleWait.classList.remove('d-none')
+      if (headerStyleSubmitting) return
+      headerStyleSubmitting = true
+      showToast('info', 'Regenerating section style. Please wait for the page to reload...')
+      if (typeof showNavigationLoadingOverlay === 'function') {
+        showNavigationLoadingOverlay('header-style')
+      }
+      if (headerStyleWait) {
+        headerStyleWait.textContent = 'Regenerating section style and YAML...'
+        headerStyleWait.classList.remove('d-none')
+      }
+      if (headerGrid) {
+        headerGrid.querySelectorAll('.header-style-card').forEach(card => {
+          card.disabled = true
+        })
+      }
       if (finalContentWrapper) finalContentWrapper.classList.add('is-updating')
       setTimeout(() => {
         document.getElementById('configForm').submit()
@@ -2587,6 +2608,7 @@ $(document).ready(function () {
         if (data.status === 'running') {
           finalLogscanAnalyzeTriggered = false
           // Kometa is actively running → keep Run disabled, allow Stop
+          revealRunCommandSection()
           $runNow.prop('disabled', true).html('<i class="bi bi-play-fill me-1"></i> Run Now')
           $stopNow.removeClass('d-none').prop('disabled', false)
           $('#run-output').removeClass('d-none')

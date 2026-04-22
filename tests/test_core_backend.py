@@ -205,6 +205,43 @@ def test_final_page_stale_bulk_gate_skips_config_generation(client, isolated_con
     assert b'data-auto-validate="true"' in resp.data
 
 
+def test_switch_config_returns_new_workspace_status(client, isolated_config_dir, app, qs_module):
+    from modules import database
+
+    stale_config = "pytest_switch_stale"
+    ready_config = "pytest_switch_ready"
+
+    database.save_section_data(
+        name=stale_config,
+        section="start",
+        validated=True,
+        user_entered=True,
+        data={"start": {"config_name": stale_config}, "validated_at": qs_module.utc_now_iso()},
+    )
+
+    for section in ("start", "plex", "tmdb", "libraries", "settings"):
+        database.save_section_data(
+            name=ready_config,
+            section=section,
+            validated=True,
+            user_entered=True,
+            data={section: {"configured": True}, "validated_at": qs_module.utc_now_iso()},
+        )
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = stale_config
+
+    resp = client.post("/switch-config", json={"name": ready_config})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["name"] == ready_config
+    assert payload["workspace_status"]["step_statuses"]["010-plex"] == "ok"
+
+    with client.session_transaction() as sess:
+        assert sess["config_name"] == ready_config
+
+
 def test_list_uploaded_images_includes_builtin_guides(client):
     expected = {"overlay_alignment_guide.png", "overlay_alignment_guide_episodes.png"}
 

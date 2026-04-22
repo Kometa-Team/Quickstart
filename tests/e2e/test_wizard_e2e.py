@@ -5,22 +5,25 @@ import pytest
 from playwright.sync_api import expect
 
 
+def _seed_config(name):
+    import modules.database as database
+    import quickstart
+
+    database.save_section_data(
+        name=name,
+        section="start",
+        validated=True,
+        user_entered=True,
+        data={"start": {"config_name": name}, "validated_at": quickstart.utc_now_iso()},
+    )
+
+
 def _ordered_stems():
-    repo_root = Path(__file__).resolve().parents[2]
-    templates_dir = repo_root / "templates"
-    files = sorted(p.name for p in templates_dir.iterdir() if p.is_file())
-    included = []
-    for file in files:
-        if not file.endswith(".html"):
-            continue
-        if file in {"000-base.html", "001-navigation.html"}:
-            continue
-        if file.startswith("999-"):
-            continue
-        if not file[:3].isdigit():
-            continue
-        included.append(Path(file).stem)
-    return included
+    import modules.helpers as helpers
+    import quickstart
+
+    with quickstart.app.app_context():
+        return [Path(file).stem for file, _display_name in helpers.get_menu_list()]
 
 
 def _goto_step(page, live_server, stem):
@@ -29,6 +32,40 @@ def _goto_step(page, live_server, stem):
 
 def _step_shell(page):
     return page.locator("#configForm").first
+
+
+@pytest.mark.e2e
+def test_config_switch_auto_saves_current_page(page, live_server):
+    import modules.database as database
+
+    source_config = "pytest_switch_source"
+    target_config = "pytest_switch_target"
+    _seed_config(source_config)
+    _seed_config(target_config)
+
+    page.goto(f"{live_server}/step/020-tmdb", wait_until="domcontentloaded")
+    page.evaluate(
+        """async (name) => {
+          const res = await fetch('/switch-config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name })
+          })
+          if (!res.ok) throw new Error('failed to set source config')
+        }""",
+        source_config,
+    )
+    page.reload(wait_until="domcontentloaded")
+
+    page.locator("#tmdb_apikey").fill("autosave-before-switch")
+    page.locator(".config-badge-button").click()
+    page.locator("#configSwitchSelect").select_option(target_config)
+    page.locator("#configSwitchConfirm").click()
+
+    expect(page.locator(".qs-main-page-meta-value")).to_contain_text(target_config)
+    _validated, user_entered, data = database.retrieve_section_data(source_config, "tmdb")
+    assert user_entered is True
+    assert data["tmdb"]["apikey"] == "autosave-before-switch"
 
 
 @pytest.mark.e2e
