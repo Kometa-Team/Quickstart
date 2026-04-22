@@ -182,3 +182,22 @@ def test_ratings_yaml_contract_bottom_horizontal_prunes_default_offsets(monkeypa
     assert "back_height" not in template_vars
     assert "back_width" not in template_vars
     assert "addon_position" not in template_vars
+
+
+def test_generated_playlist_files_get_header_without_legacy_playlist_page(monkeypatch, qs_module):
+    payload = _build_library_payload(
+        {
+            "rating_alignment": "horizontal",
+            "horizontal_position": "left",
+            "vertical_position": "center",
+            "rating1": "user",
+            "rating1_image": "tmdb",
+        }
+    )
+    payload["libraries"]["mov-library_movies-playlist"] = "true"
+
+    yaml_content = _run_build_config_with_payload(qs_module, monkeypatch, payload)
+
+    assert "#==================== Playlists ====================#" in yaml_content
+    assert "playlist_files:" in yaml_content
+    assert "- Movies" in yaml_content

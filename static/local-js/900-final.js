@@ -255,14 +255,46 @@ $(document).ready(function () {
     updateLogscanHeaderBadge()
   }
 
+  function getFinalGateState () {
+    const el = document.getElementById('final-gate-state')
+    if (!el) {
+      return {
+        stage: 'config',
+        autoValidate: false,
+        configValid: false
+      }
+    }
+    return {
+      stage: String(el.dataset.stage || 'config'),
+      todoCount: Number(el.dataset.todoCount || 0),
+      autoValidate: el.dataset.autoValidate === 'true',
+      configValid: el.dataset.configValid === 'true',
+      bulkFresh: el.dataset.bulkFresh === 'true'
+    }
+  }
+
   function updateValidationGate () {
+    const finalGate = getFinalGateState()
+    if (finalGate.stage === 'todo' || finalGate.stage === 'freshness') {
+      showYAML = false
+      $('#validation-messages').hide()
+      $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').addClass('d-none')
+      $('#download-btn, #download-redacted-btn').addClass('d-none')
+      $('#run-controls-container').addClass('d-none')
+      $('#run-now').prop('disabled', true)
+      $('#run-now-label').text('Run Now')
+      updateRunNowState()
+      syncFinalAccordionRollups()
+      return
+    }
+
     const plexValid = readMetaFlag('plex_valid', 'plexValid', 'plex-valid')
     const tmdbValid = readMetaFlag('tmdb_valid', 'tmdbValid', 'tmdb-valid')
     const libsValid = readMetaFlag('libs_valid', 'libsValid', 'libs-valid')
     const settValid = readMetaFlag('sett_valid', 'settValid', 'sett-valid')
     const yamlValid = readMetaFlag('yaml_valid', 'yamlValid', 'yaml-valid')
 
-    showYAML = plexValid && tmdbValid && libsValid && settValid && yamlValid
+    showYAML = finalGate.configValid || (plexValid && tmdbValid && libsValid && settValid && yamlValid)
 
     const validationMessages = []
     const rowFor = (label, href) => {
@@ -285,7 +317,11 @@ $(document).ready(function () {
     $('#run-now-label').text('Run Now')
 
     if (!showYAML) {
-      $('#validation-messages').html(validationMessages.join('<br>')).show()
+      if (validationMessages.length) {
+        $('#validation-messages').html(validationMessages.join('<br>')).show()
+      } else {
+        $('#validation-messages').hide()
+      }
       $('#no-validation-warning, #yaml-warnings, #yaml-warning-msg, #validation-error').removeClass('d-none')
       $('#download-btn, #download-redacted-btn').addClass('d-none')
       $('#run-controls-container').addClass('d-none') // Hide run section
@@ -864,12 +900,14 @@ $(document).ready(function () {
           $('#kometa-install-path').text(kometaRootDisplay)
 
           // Rebuild command and reveal run section only when all validations pass
-          const allValid =
+          const finalGate = getFinalGateState()
+          const allValid = showYAML && (finalGate.configValid || (
             $('#plex_valid').data('plex-valid') === 'True' &&
             $('#tmdb_valid').data('tmdb-valid') === 'True' &&
             $('#libs_valid').data('libs-valid') === 'True' &&
             $('#sett_valid').data('sett-valid') === 'True' &&
             $('#yaml_valid').data('yaml-valid') === 'True'
+          ))
 
           $('#run-command-output').text('')
           try { buildCommand() } catch (_) { }
@@ -2027,7 +2065,7 @@ $(document).ready(function () {
   checkKometaStatus()
 
   // First-run: validate Kometa root once the log box is present.
-  if (document.getElementById('kometa-validation-log')) {
+  if (document.getElementById('kometa-validation-log') && getFinalGateState().stage !== 'todo' && getFinalGateState().stage !== 'freshness') {
     validateKometaRoot()
   }
 
@@ -2309,6 +2347,15 @@ $(document).ready(function () {
         )
         badge.classList.add(`qs-validation-rollup-badge--${state}`)
       }
+    }
+
+    if (getFinalGateState().autoValidate && window.QSBulkValidation && typeof window.QSBulkValidation.run === 'function') {
+      window.QSBulkValidation.run({ source: 'final-freshness', silentToast: true })
+        .then(() => {
+          showToast('info', 'Validate All complete. Refreshing final validation...')
+          setTimeout(() => window.location.reload(), 300)
+        })
+        .catch(() => {})
     }
   }
 

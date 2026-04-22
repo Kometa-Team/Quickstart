@@ -202,6 +202,7 @@ QS_MAL_DEP_ATTRIBUTE_OPERATIONS = {
     "mass_user_rating_update",
 }
 QS_MAL_DEP_ATTRIBUTE_VALUES = {"mal", "mal_english", "mal_japanese"}
+QS_FINAL_VALIDATION_TTL_HOURS = 12
 
 
 def utc_now_iso():
@@ -888,6 +889,99 @@ def _format_validation_age(iso_text):
         return f"{hours}h ago", "stale"
     days = max(1, seconds // 86400)
     return f"{days}d ago", "stale"
+
+
+def _parse_iso_datetime(iso_text):
+    text = str(iso_text or "").strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _bulk_validation_is_fresh(iso_text, ttl_hours=QS_FINAL_VALIDATION_TTL_HOURS):
+    parsed = _parse_iso_datetime(iso_text)
+    if parsed is None:
+        return False
+    return datetime.now(timezone.utc) - parsed <= timedelta(hours=ttl_hours)
+
+
+def _build_final_gate(workspace_status, template_list, validation_bulk_rollup_at):
+    label_map = {file.rsplit(".", 1)[0]: display_name for file, display_name in template_list or []}
+    step_statuses = workspace_status.get("step_statuses", {}) if isinstance(workspace_status, dict) else {}
+    required_keys = workspace_status.get("required_keys", []) if isinstance(workspace_status, dict) else []
+    optional_keys = workspace_status.get("optional_keys", []) if isinstance(workspace_status, dict) else []
+
+    blockers = []
+    seen = set()
+    for key in required_keys:
+        state = step_statuses.get(key, "warn")
+        if state == "ok":
+            continue
+        blockers.append({"key": key, "label": label_map.get(key, key), "state": state, "group": "required"})
+        seen.add(key)
+
+    for key in optional_keys:
+        state = step_statuses.get(key, "unknown")
+        if state not in {"warn", "error"} or key in seen:
+            continue
+        blockers.append({"key": key, "label": label_map.get(key, key), "state": state, "group": "optional"})
+        seen.add(key)
+
+    dependency_defs = [
+        ("tautulli", QS_TAUTULLI_REQUIRED_STEP_KEY, "Tautulli", "tautulli_requirement_reasons", "qs-tautulli-required-hint"),
+        ("omdb", QS_OMDB_REQUIRED_STEP_KEY, "OMDb", "omdb_requirement_reasons", "qs-omdb-required-hint"),
+        ("mdblist", QS_MDBLIST_REQUIRED_STEP_KEY, "MDBList", "mdblist_requirement_reasons", "qs-mdblist-required-hint"),
+        ("anidb", QS_ANIDB_REQUIRED_STEP_KEY, "AniDB", "anidb_requirement_reasons", "qs-anidb-required-hint"),
+        ("radarr", QS_RADARR_REQUIRED_STEP_KEY, "Radarr", "radarr_requirement_reasons", "qs-radarr-required-hint"),
+        ("sonarr", QS_SONARR_REQUIRED_STEP_KEY, "Sonarr", "sonarr_requirement_reasons", "qs-sonarr-required-hint"),
+        ("trakt", QS_TRAKT_REQUIRED_STEP_KEY, "Trakt", "trakt_requirement_reasons", "qs-trakt-required-hint"),
+        ("mal", QS_MAL_REQUIRED_STEP_KEY, "MyAnimeList", "mal_requirement_reasons", "qs-mal-required-hint"),
+    ]
+    dependency_cards = []
+    for provider, step_key, label, reasons_key, css_class in dependency_defs:
+        reasons = workspace_status.get(reasons_key, []) if isinstance(workspace_status, dict) else []
+        if not reasons or step_statuses.get(step_key) == "ok":
+            continue
+        dependency_cards.append(
+            {
+                "provider": provider,
+                "key": step_key,
+                "label": label,
+                "title": f"{label} required by",
+                "reasons": reasons,
+                "state": step_statuses.get(step_key, "warn"),
+                "css_class": css_class,
+            }
+        )
+    dependency_keys = {card["key"] for card in dependency_cards}
+    setup_blockers = [blocker for blocker in blockers if blocker.get("key") not in dependency_keys]
+
+    bulk_fresh = _bulk_validation_is_fresh(validation_bulk_rollup_at)
+    if blockers:
+        stage = "todo"
+    elif not bulk_fresh:
+        stage = "freshness"
+    else:
+        stage = "config"
+
+    return {
+        "stage": stage,
+        "todo_count": len(blockers),
+        "todo_blockers": blockers,
+        "dependency_cards": dependency_cards,
+        "setup_blockers": setup_blockers,
+        "bulk_validation_fresh": bulk_fresh,
+        "bulk_validation_at": validation_bulk_rollup_at or "",
+        "validation_ttl_hours": QS_FINAL_VALIDATION_TTL_HOURS,
+        "can_build_config": not blockers and bulk_fresh,
+        "config_valid": False,
+    }
 
 
 def _is_nonblank_setting(value):
@@ -4553,69 +4647,6 @@ def step(name):
 
     if name == "900-final":
         validation_meta = []
-        template_keys_for_rollup = []
-        for file, display_name in file_list:
-            template_key = file.rsplit(".", 1)[0]
-            template_keys_for_rollup.append(template_key)
-            settings = persistence.retrieve_settings(template_key)
-            has_validation = template_key in QS_VALIDATION_STEP_KEYS
-            validation_status = None
-            validation_reason = None
-            validation_details = None
-            validation_updated_at = None
-            if has_validation:
-                section_name = template_key.split("-", 1)[1]
-                stored_section = database.retrieve_section_data(config_name, section_name)
-                stored_payload = stored_section[2] if stored_section else None
-                if isinstance(stored_payload, dict):
-                    validation_status = stored_payload.get("validation_status")
-                    validation_reason = stored_payload.get("validation_reason")
-                    validation_details = stored_payload.get("validation_details")
-                    validation_updated_at = stored_payload.get("validation_updated_at")
-            if not validation_status and has_validation:
-                if helpers.booler(settings.get("validated", False)):
-                    validation_status = "validated"
-                elif settings.get("validated_at"):
-                    validation_status = "failed"
-            if not validation_updated_at and has_validation:
-                validation_updated_at = settings.get("validated_at")
-
-            validation_result = ""
-            if validation_status:
-                label = validation_status.capitalize()
-                if validation_reason:
-                    pretty = VALIDATION_REASON_LABELS.get(validation_reason, validation_reason.replace("_", " "))
-                    detail_text = ""
-                    if isinstance(validation_details, (list, tuple)):
-                        detail_text = ", ".join(str(item) for item in validation_details if str(item))
-                    elif validation_details is not None:
-                        detail_text = str(validation_details)
-                    if detail_text:
-                        validation_result = f"{label}: {pretty}: {detail_text}"
-                    else:
-                        validation_result = f"{label}: {pretty}"
-                else:
-                    validation_result = label
-
-            validation_meta.append(
-                {
-                    "key": template_key,
-                    "label": display_name,
-                    "page": template_key,
-                    "has_validation": has_validation,
-                    "validated": helpers.booler(settings.get("validated", False)) if has_validation else None,
-                    "validated_at": settings.get("validated_at", "") if has_validation else "",
-                    "validation_updated_at": validation_updated_at if has_validation else "",
-                    "validation_result": validation_result,
-                }
-            )
-        validated, validation_error, config_data, yaml_content, validation_errors = output.build_config(header_style, config_name=config_name)
-        validation_summary = build_validation_summary(validation_errors)
-        live_rollup = _build_live_validation_rollup(step_statuses, template_keys_for_rollup)
-        validation_rollup = live_rollup.get("summary_text")
-        validation_rollup_summary = live_rollup.get("counts", {})
-        validation_rollup_state = live_rollup.get("state", "unknown")
-        validation_rollup_at = _latest_iso_timestamp([entry.get("validation_updated_at") for entry in validation_meta])
         validation_bulk_rollup = None
         validation_bulk_rollup_at = None
         try:
@@ -4627,8 +4658,92 @@ def step(name):
         except Exception:
             validation_bulk_rollup = None
             validation_bulk_rollup_at = None
-        used_fonts = helpers.collect_font_references(config_data)
-        saved_filename = helpers.save_to_named_config(yaml_content, config_name, used_fonts)
+
+        final_gate = _build_final_gate(workspace_status, file_list, validation_bulk_rollup_at)
+        template_keys_for_rollup = [file.rsplit(".", 1)[0] for file, _ in file_list]
+        validation_rollup = None
+        validation_rollup_summary = {}
+        validation_rollup_state = "unknown"
+        validation_rollup_at = None
+        if final_gate.get("stage") != "todo":
+            for file, display_name in file_list:
+                template_key = file.rsplit(".", 1)[0]
+                settings = persistence.retrieve_settings(template_key)
+                has_validation = template_key in QS_VALIDATION_STEP_KEYS
+                validation_status = None
+                validation_reason = None
+                validation_details = None
+                validation_updated_at = None
+                if has_validation:
+                    section_name = template_key.split("-", 1)[1]
+                    stored_section = database.retrieve_section_data(config_name, section_name)
+                    stored_payload = stored_section[2] if stored_section else None
+                    if isinstance(stored_payload, dict):
+                        validation_status = stored_payload.get("validation_status")
+                        validation_reason = stored_payload.get("validation_reason")
+                        validation_details = stored_payload.get("validation_details")
+                        validation_updated_at = stored_payload.get("validation_updated_at")
+                if not validation_status and has_validation:
+                    if helpers.booler(settings.get("validated", False)):
+                        validation_status = "validated"
+                    elif settings.get("validated_at"):
+                        validation_status = "failed"
+                if not validation_updated_at and has_validation:
+                    validation_updated_at = settings.get("validated_at")
+
+                validation_result = ""
+                if validation_status:
+                    label = validation_status.capitalize()
+                    if validation_reason:
+                        pretty = VALIDATION_REASON_LABELS.get(validation_reason, validation_reason.replace("_", " "))
+                        detail_text = ""
+                        if isinstance(validation_details, (list, tuple)):
+                            detail_text = ", ".join(str(item) for item in validation_details if str(item))
+                        elif validation_details is not None:
+                            detail_text = str(validation_details)
+                        if detail_text:
+                            validation_result = f"{label}: {pretty}: {detail_text}"
+                        else:
+                            validation_result = f"{label}: {pretty}"
+                    else:
+                        validation_result = label
+
+                validation_meta.append(
+                    {
+                        "key": template_key,
+                        "label": display_name,
+                        "page": template_key,
+                        "has_validation": has_validation,
+                        "validated": helpers.booler(settings.get("validated", False)) if has_validation else None,
+                        "validated_at": settings.get("validated_at", "") if has_validation else "",
+                        "validation_updated_at": validation_updated_at if has_validation else "",
+                        "validation_result": validation_result,
+                    }
+                )
+            live_rollup = _build_live_validation_rollup(step_statuses, template_keys_for_rollup)
+            validation_rollup = live_rollup.get("summary_text")
+            validation_rollup_summary = live_rollup.get("counts", {})
+            validation_rollup_state = live_rollup.get("state", "unknown")
+            validation_rollup_at = _latest_iso_timestamp([entry.get("validation_updated_at") for entry in validation_meta])
+        validated = False
+        validation_error = None
+        config_data = {}
+        yaml_content = ""
+        validation_errors = []
+        validation_summary = []
+        saved_filename = ""
+
+        if final_gate.get("can_build_config"):
+            validated, validation_error, config_data, yaml_content, validation_errors = output.build_config(header_style, config_name=config_name)
+            validation_summary = build_validation_summary(validation_errors)
+            used_fonts = helpers.collect_font_references(config_data)
+            saved_filename = helpers.save_to_named_config(yaml_content, config_name, used_fonts)
+            final_gate["config_valid"] = bool(validated)
+            final_gate["stage"] = "kometa" if validated else "config"
+        elif final_gate.get("stage") == "freshness":
+            validation_rollup_state = "warn"
+            if not validation_bulk_rollup:
+                validation_bulk_rollup = f"Validation is stale. Bulk validation has not run in the last {QS_FINAL_VALIDATION_TTL_HOURS} hours."
         page_info["saved_filename"] = saved_filename
         page_info["yaml_valid"] = validated
         page_info["quickstart_root"] = helpers.get_app_root()
@@ -4693,6 +4808,7 @@ def step(name):
             trakt_requirement_reasons=workspace_status.get("trakt_requirement_reasons", []),
             mal_requirement_reasons=workspace_status.get("mal_requirement_reasons", []),
             workspace_readiness=workspace_status.get("readiness", {}),
+            final_gate=final_gate,
             incomplete_resume_hint=incomplete_resume_hint,
         )
 

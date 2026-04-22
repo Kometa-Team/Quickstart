@@ -2155,6 +2155,18 @@ def build_config(header_style="standard", config_name=None):
     header_art = {}
     library_types = {}
 
+    def header_for_section(section_key, display_name):
+        if section_key in header_art:
+            return header_art[section_key]
+        if header_style == "none":
+            return ""
+        if header_style == "single line" or helpers.contains_non_latin(display_name):
+            return "#==================== " + display_name + " ====================#"
+        try:
+            return add_border_to_ascii_art(pyfiglet.figlet_format(display_name, font=header_style))
+        except pyfiglet.FontNotFound:
+            return "#==================== " + display_name + " ====================#"
+
     # Process sections and generate header art
     for name in sections:
         item = sections[name]
@@ -2719,7 +2731,7 @@ def build_config(header_style="standard", config_name=None):
     for section_key, section_stem in ordered_sections:
         if section_key in config_data:
             section_data = config_data[section_key]
-            section_art = header_art[section_key]
+            section_art = header_for_section(section_key, helpers.user_visible_name(section_key))
             yaml_content += dump_section(section_art, section_key, section_data)
 
     validated = False

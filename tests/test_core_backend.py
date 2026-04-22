@@ -87,6 +87,21 @@ def test_validate_plex_bad_token(client, monkeypatch, qs_module):
 
 
 def test_yaml_generation_sets_session_and_redacts(client, isolated_config_dir, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "can_build_config": True,
+            "config_valid": True,
+        },
+    )
+
     def fake_build_config(*_args, **_kwargs):
         return True, None, {"plex": {}}, "plex:\n  token: secret\n", []
 
@@ -109,6 +124,20 @@ def test_yaml_generation_sets_session_and_redacts(client, isolated_config_dir, m
 
 def test_yaml_generation_missing_sections_shows_error(client, isolated_config_dir, monkeypatch, qs_module):
     monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "config",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "can_build_config": True,
+            "config_valid": False,
+        },
+    )
+    monkeypatch.setattr(
         qs_module.output,
         "build_config",
         lambda *_args, **_kwargs: (False, "Missing sections", {}, "", []),
@@ -120,6 +149,60 @@ def test_yaml_generation_missing_sections_shows_error(client, isolated_config_di
     resp = client.get("/step/900-final")
     assert resp.status_code == 200
     assert b"Missing sections" in resp.data
+
+
+def test_final_page_todo_gate_skips_config_generation(client, isolated_config_dir, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "todo",
+            "todo_count": 1,
+            "todo_blockers": [{"key": "010-plex", "label": "Plex", "state": "warn", "group": "required"}],
+            "bulk_validation_fresh": False,
+            "bulk_validation_at": "",
+            "validation_ttl_hours": 12,
+            "can_build_config": False,
+            "config_valid": False,
+        },
+    )
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("build_config should not run")))
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "pytest_final_todo_gate"
+
+    resp = client.get("/step/900-final")
+    assert resp.status_code == 200
+    assert b"Resolve setup tasks first" in resp.data
+    assert b"Validation status" not in resp.data
+    assert b"Section Style" not in resp.data
+    assert b"Thank you for using Quickstart" not in resp.data
+
+
+def test_final_page_stale_bulk_gate_skips_config_generation(client, isolated_config_dir, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "freshness",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": False,
+            "bulk_validation_at": "",
+            "validation_ttl_hours": 12,
+            "can_build_config": False,
+            "config_valid": False,
+        },
+    )
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("build_config should not run")))
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "pytest_final_stale_gate"
+
+    resp = client.get("/step/900-final")
+    assert resp.status_code == 200
+    assert b"Validation is stale" in resp.data
+    assert b'data-auto-validate="true"' in resp.data
 
 
 def test_list_uploaded_images_includes_builtin_guides(client):

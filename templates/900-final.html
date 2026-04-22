@@ -1,7 +1,9 @@
 {% extends "000-base.html" %}
 {% block content %}
 {% include "001-navigation.html" %}
+{% if not final_gate or final_gate.stage != 'todo' %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+{% endif %}
 
 <div id="plex-maintenance-window" data-window="{{ page_info.telemetry.maintenance_window }}"></div>
 <div id="qs-env" data-running-on="{{ version_info.running_on | default('') }}"></div>
@@ -25,7 +27,15 @@
 </div>
 
 <input type="hidden" id="header-style" name="header_style" value="{{ page_info.header_style }}">
+<div id="final-gate-state" class="d-none"
+  data-stage="{{ final_gate.stage if final_gate else 'config' }}"
+  data-todo-count="{{ final_gate.todo_count if final_gate else 0 }}"
+  data-auto-validate="{{ 'true' if final_gate and final_gate.stage == 'freshness' else 'false' }}"
+  data-config-valid="{{ 'true' if final_gate and final_gate.config_valid else 'false' }}"
+  data-bulk-fresh="{{ 'true' if final_gate and final_gate.bulk_validation_fresh else 'false' }}">
+</div>
 <div id="header-style-wait" class="form-text text-info mt-2 d-none">Updating header style... please wait.</div>
+{% if not final_gate or final_gate.stage != 'todo' %}
 <div class="accordion mt-2 mb-2" id="header-style-grid-accordion">
   <div class="accordion-item">
     <h2 class="accordion-header" id="header-style-grid-heading">
@@ -52,8 +62,54 @@
     </div>
   </div>
 </div>
+{% endif %}
 
-{% if validation_meta %}
+{% if final_gate and final_gate.stage in ['todo', 'freshness', 'config'] %}
+<div id="final-gate-panel" class="alert qs-final-gate-panel qs-final-gate-panel--{{ final_gate.stage }} {{ 'alert-danger' if final_gate.stage == 'config' else '' }}" role="alert">
+  {% if final_gate.stage == 'todo' %}
+  <div class="fw-semibold mb-1 qs-final-gate-title">Resolve setup tasks first</div>
+  <div class="qs-final-gate-copy">
+    Final validation is blocked by {{ final_gate.todo_count }} workspace task{{ '' if final_gate.todo_count == 1 else 's' }}. Open the cards below to finish setup.
+  </div>
+  {% if final_gate.dependency_cards %}
+  <div class="qs-final-todo-grid mt-3">
+    {% for card in final_gate.dependency_cards %}
+    <button type="button"
+      class="qs-dependency-hint qs-final-todo-card {{ card.css_class }}"
+      onclick="jumpTo('{{ card.key }}', '{{ card.label }}')">
+      <div class="qs-dependency-hint-title">{{ card.title }}</div>
+      <div class="qs-dependency-hint-lines">
+        {% for reason in card.reasons %}
+        <div class="qs-dependency-hint-line">{{ reason }}</div>
+        {% endfor %}
+      </div>
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if final_gate.setup_blockers %}
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    {% for blocker in final_gate.setup_blockers %}
+    <button type="button" class="btn btn-outline-warning btn-sm" onclick="jumpTo('{{ blocker.key }}', '{{ blocker.label }}')">
+      {{ blocker.label }}
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% elif final_gate.stage == 'freshness' %}
+  <div class="fw-semibold mb-1">Validation is stale</div>
+  <div>
+    Bulk validation is missing or older than {{ final_gate.validation_ttl_hours }} hours. Quickstart is running Validate All now and will refresh this page when it finishes.
+    <span class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span>
+  </div>
+  {% elif final_gate.stage == 'config' %}
+  <div class="fw-semibold mb-1">Generated config needs attention</div>
+  <div>Fix the config validation errors below before checking Kometa or running the command.</div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if validation_meta and (not final_gate or final_gate.stage != 'todo') %}
 <div class="accordion mt-3 mb-3" id="validation-status-accordion">
   <div class="accordion-item">
     <h2 class="accordion-header" id="validation-status-heading">
@@ -86,7 +142,7 @@
         </span>
       </button>
     </h2>
-    <div id="validation-status-collapse" class="accordion-collapse collapse" aria-labelledby="validation-status-heading"
+    <div id="validation-status-collapse" class="accordion-collapse collapse{% if final_gate and final_gate.stage == 'freshness' %} show{% endif %}" aria-labelledby="validation-status-heading"
       data-bs-parent="#validation-status-accordion">
       <div class="accordion-body">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
@@ -239,7 +295,7 @@
   {% endfor %}
 </div>
 {% endif %}
-<div class="accordion mt-3" id="config-output-accordion">
+<div class="accordion mt-3{% if final_gate and final_gate.stage in ['todo', 'freshness'] %} d-none{% endif %}" id="config-output-accordion">
   <div class="accordion-item">
     <h2 class="accordion-header" id="config-output-heading">
       <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
@@ -291,7 +347,7 @@
   </div>
 </div>
 
-{% if yaml_content %}
+{% if yaml_content and page_info.yaml_valid %}
 <!-- Run Command Builder -->
 <div id="run-controls-container" class="d-none">
   <hr>
@@ -529,7 +585,7 @@
     </div>
 
     <!-- Kometa actions (always visible) -->
-    <div class="accordion mt-3" id="kometa-actions-accordion" style="max-width: 1200px; width: 100%; margin: 0 auto;">
+    <div class="accordion mt-3" id="kometa-actions-accordion">
       <div class="accordion-item">
         <h2 class="accordion-header" id="kometa-actions-heading">
           <button id="kometa-actions-toggle" class="accordion-button collapsed" type="button" data-bs-toggle="collapse"

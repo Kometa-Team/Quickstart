@@ -1862,17 +1862,6 @@ label {
     /* Space text from border */
 }
 
-/* Final page: draw attention to collapsed Kometa section when an update is available */
-.accordion-header.kometa-update-attention {
-    border-left: 4px solid #ffc107 !important;
-    padding-left: 10px !important;
-}
-
-.accordion-button.kometa-update-attention {
-    color: #ffc107 !important;
-    font-weight: 600;
-}
-
 /* Ensure the accordion header has a transparent background */
 .accordion-button:not(.collapsed) {
     background-color: transparent !important;
@@ -3928,6 +3917,51 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.qs-final-todo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.75rem;
+}
+
+.qs-final-gate-panel {
+    border: 1px solid rgba(251, 191, 36, 0.42);
+    background: rgba(13, 18, 22, 0.78);
+    color: var(--theme-text);
+}
+
+.qs-final-gate-panel--todo {
+    box-shadow: inset 0 3px 0 rgba(251, 191, 36, 0.72);
+}
+
+.qs-final-gate-title {
+    color: #facc15;
+}
+
+.qs-final-gate-copy {
+    color: #f8e7a1;
+}
+
+.qs-final-todo-card {
+    width: 100%;
+    margin-bottom: 0;
+    padding: 0.75rem 0.85rem;
+    text-align: left;
+    color: var(--theme-text);
+}
+
+.qs-final-todo-card .qs-dependency-hint-title {
+    font-size: 0.68rem;
+}
+
+.qs-final-todo-card .qs-dependency-hint-lines {
+    gap: 0.25rem;
+}
+
+.qs-final-todo-card .qs-dependency-hint-line {
+    font-size: 0.75rem;
+    white-space: normal;
 }
 
 .qs-dependency-todo-group {
