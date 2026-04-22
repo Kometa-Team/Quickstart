@@ -2,6 +2,15 @@
 
 $(document).ready(function () {
   const $tableBody = $('#logscan-trends-table tbody')
+  const $tableSummary = $('#logscan-table-summary')
+  const $tableSortKey = $('#logscan-table-sort-key')
+  const $tableSortDir = $('#logscan-table-sort-dir')
+  const $tablePageSize = $('#logscan-table-page-size')
+  const $tablePageInfo = $('#logscan-table-page-info')
+  const $tablePrev = $('#logscan-table-prev')
+  const $tableNext = $('#logscan-table-next')
+  const $tableToggle = $('#logscan-table-toggle')
+  const tableCollapseEl = document.getElementById('logscan-recent-runs-collapse')
   const $summary = $('#logscan-trends-summary')
   const $daily = $('#logscan-trends-daily')
   const $dailyRuntime = $('#logscan-trends-daily-runtime')
@@ -46,7 +55,9 @@ $(document).ready(function () {
   let allRuns = []
   const sectionDetailsByRunKey = new Map()
   let currentFilteredRuns = []
+  let currentTableRuns = []
   let allRunsTotal = 0
+  let tablePage = 1
   const sortState = { key: 'finished_at', dir: 'desc' }
   let lastIngestState = null
   let analyticsPrefs = null
@@ -1050,13 +1061,52 @@ $(document).ready(function () {
     $dailyRuntime.html(rows.join(''))
   }
 
+  function getTablePageSize () {
+    const parsed = parseInt($tablePageSize.val() || '10', 10)
+    if ([10, 25, 100].includes(parsed)) return parsed
+    return 10
+  }
+
+  function updateTableSummary (total, pageSize, pageCount) {
+    if ($tableSummary.length) {
+      if (!total) {
+        $tableSummary.text('No runs match the current filters.')
+      } else {
+        const matchingText = `${total} matching loaded run${total === 1 ? '' : 's'}`
+        const loadedText = allRunsTotal > allRuns.length
+          ? `${allRuns.length} loaded / ${allRunsTotal} total stored`
+          : `${allRuns.length} loaded`
+        $tableSummary.text(`${matchingText}. ${loadedText}. Page size: ${pageSize}.`)
+      }
+    }
+    if (!$tablePageInfo.length) return
+    if (!total) {
+      $tablePageInfo.text('No rows')
+      return
+    }
+    const start = ((tablePage - 1) * pageSize) + 1
+    const end = Math.min(total, tablePage * pageSize)
+    $tablePageInfo.text(`Showing ${start}-${end} of ${total} loaded run${total === 1 ? '' : 's'} (page ${tablePage}/${pageCount})`)
+  }
+
   function renderTable (runs) {
-    if (!runs.length) {
-      $tableBody.html('<tr><td colspan="10" class="text-muted">No runs stored yet.</td></tr>')
+    currentTableRuns = runs
+    const pageSize = getTablePageSize()
+    const total = runs.length
+    const pageCount = Math.max(1, Math.ceil(total / pageSize))
+    tablePage = Math.min(Math.max(tablePage, 1), pageCount)
+    updateTableSummary(total, pageSize, pageCount)
+    $tablePrev.prop('disabled', tablePage <= 1 || total === 0)
+    $tableNext.prop('disabled', tablePage >= pageCount || total === 0)
+    if (!total) {
+      $tableBody.html('<tr><td colspan="10" class="text-muted">No runs match the current filters.</td></tr>')
       return
     }
     sectionDetailsByRunKey.clear()
-    const rows = runs.map((run, index) => {
+    const pageStart = (tablePage - 1) * pageSize
+    const pageRuns = runs.slice(pageStart, pageStart + pageSize)
+    const rows = pageRuns.map((run, index) => {
+      const absoluteIndex = pageStart + index
       const command = getRunCommandValue(run) || 'n/a'
       const commandTitle = run.run_command
         ? `Original: ${run.run_command}`
@@ -1080,7 +1130,7 @@ $(document).ready(function () {
         ? run.cache_line_count
         : 'n/a'
       const sectionDetails = sectionLines.length > 1 ? sectionLines.slice(1) : []
-      const rowKey = (run.run_key && String(run.run_key).trim()) || `row-${index + 1}`
+      const rowKey = (run.run_key && String(run.run_key).trim()) || `row-${absoluteIndex + 1}`
       sectionDetailsByRunKey.set(rowKey, {
         summary: sectionSummary,
         details: sectionDetails
@@ -1598,6 +1648,8 @@ $(document).ready(function () {
     if ($button.length) {
       $button.addClass(sortState.dir === 'asc' ? 'is-asc' : 'is-desc')
     }
+    $tableSortKey.val(sortState.key)
+    $tableSortDir.val(sortState.dir === 'asc' ? 'asc' : 'desc')
   }
 
   function updateConfigFilter (runs) {
@@ -1788,6 +1840,11 @@ $(document).ready(function () {
     $reset.prop('disabled', disabled)
     $reingest.prop('disabled', disabled)
     $limit.prop('disabled', disabled)
+    $tableSortKey.prop('disabled', disabled)
+    $tableSortDir.prop('disabled', disabled)
+    $tablePageSize.prop('disabled', disabled)
+    $tablePrev.prop('disabled', disabled || tablePage <= 1 || currentTableRuns.length === 0)
+    $tableNext.prop('disabled', disabled || tablePage >= Math.max(1, Math.ceil(currentTableRuns.length / getTablePageSize())) || currentTableRuns.length === 0)
     $configFilter.prop('disabled', disabled)
     $commandFilter.prop('disabled', disabled)
     $dateStart.prop('disabled', disabled)
@@ -2082,21 +2139,67 @@ $(document).ready(function () {
         $counts.text('Unable to load log-level averages.')
         $issues.text('Unable to load issue trends.')
         $libraries.text('Unable to load library totals.')
+        if ($tableSummary.length) $tableSummary.text('Unable to load runs.')
+        if ($tablePageInfo.length) $tablePageInfo.text('No rows')
+        $tablePrev.prop('disabled', true)
+        $tableNext.prop('disabled', true)
         $tableBody.html('<tr><td colspan="10" class="text-muted">Unable to load runs.</td></tr>')
       })
   }
 
-  $limit.on('change', fetchRuns)
+  $limit.on('change', function () {
+    tablePage = 1
+    fetchRuns()
+  })
+  $tablePageSize.on('change', function () {
+    tablePage = 1
+    renderTable(currentTableRuns)
+  })
+  $tableSortKey.on('change', function () {
+    const key = String($tableSortKey.val() || 'finished_at')
+    if (!key) return
+    sortState.key = key
+    tablePage = 1
+    applyFiltersAndRender()
+  })
+  $tableSortDir.on('change', function () {
+    sortState.dir = $tableSortDir.val() === 'asc' ? 'asc' : 'desc'
+    tablePage = 1
+    applyFiltersAndRender()
+  })
+  $tablePrev.on('click', function () {
+    if (tablePage <= 1) return
+    tablePage -= 1
+    renderTable(currentTableRuns)
+  })
+  $tableNext.on('click', function () {
+    const pageCount = Math.max(1, Math.ceil(currentTableRuns.length / getTablePageSize()))
+    if (tablePage >= pageCount) return
+    tablePage += 1
+    renderTable(currentTableRuns)
+  })
+  if (tableCollapseEl) {
+    tableCollapseEl.addEventListener('shown.bs.collapse', function () {
+      $tableToggle.text('Hide table')
+    })
+    tableCollapseEl.addEventListener('hidden.bs.collapse', function () {
+      $tableToggle.text('Show table')
+    })
+  }
   $configFilter.on('change', function () {
+    tablePage = 1
     loadPreferences().then(() => applyFiltersAndRender())
   })
   $commandFilter.on('change', function () {
+    tablePage = 1
     applyFiltersAndRender()
   })
   $dateStart.on('change', function () {
+    tablePage = 1
     applyFiltersAndRender()
   })
   $dateEnd.on('change', function () {
+    tablePage = 1
     applyFiltersAndRender()
   })
   $libraryFilter.on('change', function () {
@@ -2116,6 +2219,7 @@ $(document).ready(function () {
   })
   $resetFilters.on('click', function () {
     $limit.val('500')
+    tablePage = 1
     $configFilter.val('')
     $commandFilter.val('')
     $libraryFilter.val('')
@@ -2193,6 +2297,7 @@ $(document).ready(function () {
   $('#logscan-trends-table thead').on('click', '.logscan-sort-button', function () {
     const key = $(this).data('sort')
     if (!key) return
+    tablePage = 1
     if (sortState.key === key) {
       sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc'
     } else {

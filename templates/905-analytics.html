@@ -2,16 +2,16 @@
 {% block content %}
 {% include "001-navigation.html" %}
 
-<div class="card border-secondary mb-3">
+<div class="card border-secondary mb-3 logscan-control-card">
   <div class="card-body">
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-      <div>
+    <div class="logscan-control-shell">
+      <div class="logscan-control-copy">
         <p class="text-muted small mb-0">
           Recent Kometa runs parsed from <code>config/kometa/config/logs/meta.log</code>. Tokens and secrets are excluded.
         </p>
       </div>
-      <div class="d-flex flex-wrap align-items-center gap-2">
-        <select id="logscan-trends-limit" class="form-select form-select-sm w-auto"
+      <div class="logscan-control-grid">
+        <select id="logscan-trends-limit" class="form-select form-select-sm w-auto logscan-control-field"
           title="Display limit only. Does not affect reingest.">
           <option value="10">Last 10 runs</option>
           <option value="25" selected>Last 25 runs</option>
@@ -19,39 +19,39 @@
           <option value="100">Last 100 runs</option>
           <option value="500">Last 500 runs</option>
         </select>
-        <div id="logscan-trends-count" class="small text-muted"></div>
-        <div class="input-group input-group-sm w-auto">
+        <div id="logscan-trends-count" class="small text-muted logscan-run-count"></div>
+        <div class="input-group input-group-sm w-auto logscan-date-range">
           <span class="input-group-text">From</span>
           <input id="logscan-trends-date-start" type="date" class="form-control form-control-sm"
             title="Start date">
           <span class="input-group-text">To</span>
           <input id="logscan-trends-date-end" type="date" class="form-control form-control-sm" title="End date">
         </div>
-        <select id="logscan-trends-config-filter" class="form-select form-select-sm w-auto"
+        <select id="logscan-trends-config-filter" class="form-select form-select-sm w-auto logscan-control-field"
           title="Filter visuals by tracked config.">
           <option value="">All configs</option>
         </select>
-        <select id="logscan-trends-command-filter" class="form-select form-select-sm w-auto"
+        <select id="logscan-trends-command-filter" class="form-select form-select-sm w-auto logscan-control-field"
           title="Filter visuals by run command.">
           <option value="">All commands</option>
         </select>
-        <select id="logscan-trends-library-filter" class="form-select form-select-sm w-auto"
+        <select id="logscan-trends-library-filter" class="form-select form-select-sm w-auto logscan-control-field"
           title="Filter library inventory by library.">
           <option value="">All libraries</option>
         </select>
-        <button id="logscan-trends-preferences" class="btn nav-button btn-sm" type="button"
+        <button id="logscan-trends-preferences" class="btn nav-button btn-sm logscan-control-action" type="button"
           data-bs-toggle="modal" data-bs-target="#logscan-preferences-modal">
           Customize
         </button>
-        <button id="logscan-trends-reset-filters" class="btn nav-button btn-sm" type="button">
+        <button id="logscan-trends-reset-filters" class="btn nav-button btn-sm logscan-control-action" type="button">
           Reset filters
         </button>
-        <a id="logscan-trends-missing-download" class="btn nav-button btn-sm d-none" href="/logscan/trends/people-missing">
+        <a id="logscan-trends-missing-download" class="btn nav-button btn-sm d-none logscan-control-action" href="/logscan/trends/people-missing">
           Download missing people log
         </a>
-        <button id="logscan-trends-reingest" class="btn nav-button btn-sm" type="button"
+        <button id="logscan-trends-reingest" class="btn nav-button btn-sm logscan-control-action" type="button"
           data-bs-toggle="modal" data-bs-target="#logscan-reingest-modal">Reingest logs</button>
-        <button id="logscan-trends-reset" class="btn nav-button btn-sm" type="button"
+        <button id="logscan-trends-reset" class="btn nav-button btn-sm logscan-control-action" type="button"
           data-bs-toggle="modal" data-bs-target="#logscan-reset-modal">Reset trends</button>
       </div>
     </div>
@@ -125,125 +125,167 @@
   </div>
 </div>
 
-<div class="card border-secondary">
+<div class="card border-secondary logscan-table-card">
   <div class="card-body">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-      <h6 class="mb-0 text-uppercase">RECENT RUNS</h6>
-      <button type="button" class="btn nav-button btn-sm" data-bs-toggle="modal"
-        data-bs-target="#logscan-columns-modal">Column Help</button>
+    <div class="logscan-table-header">
+      <div>
+        <h6 class="mb-1 text-uppercase">Recent Runs</h6>
+        <div id="logscan-table-summary" class="small text-muted">Loading runs...</div>
+      </div>
+      <div class="logscan-table-actions">
+        <button class="btn nav-button btn-sm collapsed" type="button" data-bs-toggle="collapse"
+          data-bs-target="#logscan-recent-runs-collapse" aria-expanded="false"
+          aria-controls="logscan-recent-runs-collapse" id="logscan-table-toggle">
+          Show table
+        </button>
+        <button type="button" class="btn nav-button btn-sm" data-bs-toggle="modal"
+          data-bs-target="#logscan-columns-modal">Column Help</button>
+      </div>
     </div>
-    <div class="table-responsive" data-qs-sticky-first="true">
-      <table class="table table-dark table-sm align-middle mb-0" id="logscan-trends-table">
-        <thead>
-          <tr>
-            <th>
-              <button type="button" class="logscan-sort-button is-desc" data-sort="finished_at"
-                title="Sort by finished timestamp" aria-label="Sort by finished timestamp">
-                Finished
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-            <th>
-              <button type="button" class="logscan-sort-button" data-sort="run_time_seconds"
-                title="Sort by runtime" aria-label="Sort by runtime">
-                Runtime
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-            <th>
-              <button type="button" class="logscan-sort-button" data-sort="config_name"
-                title="Sort by config" aria-label="Sort by config">
-                Config
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-            <th>
-              <button type="button" class="logscan-sort-button" data-sort="config_line_count"
-                title="Sort by config line count" aria-label="Sort by config line count">
-                Config lines
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-            <th>
-              <button type="button" class="logscan-sort-button" data-sort="cache_line_count"
-                title="Sort by cache lines" aria-label="Sort by cache lines">
-                Cache lines
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-            <th>
-              <button type="button" class="logscan-sort-button" data-sort="command_signature"
-                title="Sort by command" aria-label="Sort by command">
-                Command
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-            <th title="W = Warnings, E = Errors, T = Tracebacks; M = Movies, S = Shows, Ep = Episodes, Tot = Total">
-              <button type="button" class="logscan-sort-button" data-sort="counts"
-                title="Sort by total warnings/errors/tracebacks" aria-label="Sort by counts">
-                Counts (W/E/T + M/S/EP/TOT)
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-            <th>
-              <button type="button" class="logscan-sort-button" data-sort="kometa_version"
-                title="Sort by Kometa version" aria-label="Sort by Kometa version">
-                Kometa
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-            <th>
-              <button type="button" class="logscan-sort-button" data-sort="section_runtimes"
-                title="Sort by section runtimes" aria-label="Sort by section runtimes">
-                Section Runtimes
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-            <th class="text-center">
-              <button type="button" class="logscan-sort-button" data-sort="recommendations_count"
-                title="Sort by report count" aria-label="Sort by report count">
-                Report
-                <span class="logscan-sort-icons" aria-hidden="true">
-                  <span class="logscan-sort-up"></span>
-                  <span class="logscan-sort-down"></span>
-                </span>
-              </button>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colspan="10" class="text-muted">Loading runs...</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="collapse" id="logscan-recent-runs-collapse">
+      <div class="logscan-table-toolbar">
+        <label class="small text-muted" for="logscan-table-sort-key">Sort by</label>
+        <select id="logscan-table-sort-key" class="form-select form-select-sm w-auto">
+          <option value="finished_at" selected>Finished</option>
+          <option value="run_time_seconds">Runtime</option>
+          <option value="config_name">Config</option>
+          <option value="config_line_count">Config lines</option>
+          <option value="cache_line_count">Cache lines</option>
+          <option value="command_signature">Command</option>
+          <option value="counts">Counts</option>
+          <option value="kometa_version">Kometa</option>
+          <option value="section_runtimes">Section runtimes</option>
+          <option value="recommendations_count">Report</option>
+        </select>
+        <select id="logscan-table-sort-dir" class="form-select form-select-sm w-auto" aria-label="Sort direction">
+          <option value="desc" selected>Descending</option>
+          <option value="asc">Ascending</option>
+        </select>
+        <label class="small text-muted" for="logscan-table-page-size">Rows per page</label>
+        <select id="logscan-table-page-size" class="form-select form-select-sm w-auto">
+          <option value="10" selected>10 per page</option>
+          <option value="25">25 per page</option>
+          <option value="100">100 per page</option>
+        </select>
+        <div id="logscan-table-page-info" class="small text-muted"></div>
+        <div class="logscan-table-pager">
+          <button id="logscan-table-prev" type="button" class="btn nav-button btn-sm">Previous</button>
+          <button id="logscan-table-next" type="button" class="btn nav-button btn-sm">Next</button>
+        </div>
+      </div>
+      <div class="table-responsive" data-qs-sticky-first="true">
+        <table class="table table-dark table-sm align-middle mb-0" id="logscan-trends-table">
+          <thead>
+            <tr>
+              <th>
+                <button type="button" class="logscan-sort-button is-desc" data-sort="finished_at"
+                  title="Sort by finished timestamp" aria-label="Sort by finished timestamp">
+                  Finished
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="run_time_seconds"
+                  title="Sort by runtime" aria-label="Sort by runtime">
+                  Runtime
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="config_name"
+                  title="Sort by config" aria-label="Sort by config">
+                  Config
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="config_line_count"
+                  title="Sort by config line count" aria-label="Sort by config line count">
+                  Config lines
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="cache_line_count"
+                  title="Sort by cache lines" aria-label="Sort by cache lines">
+                  Cache lines
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="command_signature"
+                  title="Sort by command" aria-label="Sort by command">
+                  Command
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th title="W = Warnings, E = Errors, T = Tracebacks; M = Movies, S = Shows, Ep = Episodes, Tot = Total">
+                <button type="button" class="logscan-sort-button" data-sort="counts"
+                  title="Sort by total warnings/errors/tracebacks" aria-label="Sort by counts">
+                  Counts (W/E/T + M/S/EP/TOT)
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="kometa_version"
+                  title="Sort by Kometa version" aria-label="Sort by Kometa version">
+                  Kometa
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="section_runtimes"
+                  title="Sort by section runtimes" aria-label="Sort by section runtimes">
+                  Section Runtimes
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th class="text-center">
+                <button type="button" class="logscan-sort-button" data-sort="recommendations_count"
+                  title="Sort by report count" aria-label="Sort by report count">
+                  Report
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="10" class="text-muted">Loading runs...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -314,7 +356,7 @@
 
 <div class="modal fade" id="logscan-columns-modal" tabindex="-1" aria-labelledby="logscan-columns-title"
   aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content bg-dark text-light border-secondary">
       <div class="modal-header">
         <h5 class="modal-title" id="logscan-columns-title">Logscan Columns</h5>

@@ -47,14 +47,6 @@
 </ul>
 {%- endmacro %}
 
-{% macro step_header(page_info) -%}
-<div class="page-title mt-0 qs-step-header">
-  <div class="page-title-row">
-    <h2 class="fw-bold text-white mb-0">{{ page_info['title'] }}</h2>
-  </div>
-</div>
-{%- endmacro %}
-
 {% macro step_link(template_key, name, page_info, step_statuses) -%}
 {% set step_state = (step_statuses.get(template_key) if step_statuses else 'warn') %}
 <button type="button" class="qs-step-link {% if template_key == page_info['template_name'] %}is-active{% endif %}"
