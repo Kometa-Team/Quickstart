@@ -7,7 +7,7 @@ jsonschema==4.26.0
 namesgenerator==0.3
 pillow==12.2.0
 PlexAPI==4.18.1
-pre-commit==4.5.1
+pre-commit==4.6.0
 psutil==7.2.2
 pyfiglet==1.0.4
 PyQt5==5.15.11; platform_system != "Linux" or platform_machine != "aarch64"
