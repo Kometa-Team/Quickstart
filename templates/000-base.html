@@ -102,7 +102,7 @@
       <div class="content-wrapper qs-content-wrapper">
       <!-- New Version Available Message for user-->
       {% if version_info and version_info.update_available %}
-      <div class="alert alert-danger text-center qs-wide-alert" role="alert">
+      <div class="alert alert-danger text-center qs-wide-alert" id="quickstart-update-alert" data-qs-update-alert role="alert">
         <i class="bi bi-arrow-up-circle"></i>
         A new version of Quickstart (<strong>{{ version_info.remote_version }}</strong>) is available!
 
@@ -141,10 +141,10 @@
         </a>
         {% endif %}
       </div>
-      <br>
+      <br data-qs-update-alert-spacer>
       {% endif %}
       <!-- Early Development Warning -->
-      <div class="alert alert-warning text-center early-warning qs-wide-alert" role="alert">
+      <div class="alert alert-warning text-center early-warning qs-wide-alert" data-qs-update-alert-anchor role="alert">
         <b>Quickstart is in early development.</b> Please provide feedback via the
         <a href="https://discord.com/channels/822460010649878528/1335372922306695198"
           target="_blank">quickstart-feedback Discord channel.</a>

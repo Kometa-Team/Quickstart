@@ -1,6 +1,7 @@
 def test_start_kometa_queues_during_maintenance(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module, "_find_running_kometa_process", lambda: None)
     monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (60, 120, "01:00-02:00"))
     monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: True)
 
@@ -17,6 +18,7 @@ def test_start_kometa_queues_during_maintenance(client, monkeypatch, qs_module):
 def test_start_kometa_starts_outside_maintenance(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module, "_find_running_kometa_process", lambda: None)
     monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (60, 120, "01:00-02:00"))
     monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: False)
     monkeypatch.setattr(qs_module, "_launch_kometa_command", lambda *_: (True, 4321))

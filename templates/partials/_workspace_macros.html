@@ -224,29 +224,10 @@
       <span class="text-muted qs-sidebar-version-label qs-sidebar-version-label-short">P:</span>
       <strong>{{ running_on }}</strong>
     </div>
+    <button type="button" class="btn btn-outline-info btn-sm qs-sidebar-update-check" data-qs-update-check title="Check for Quickstart updates">
+      <i class="bi bi-arrow-clockwise me-1"></i><span class="qs-sidebar-text">Check Updates</span>
+    </button>
+    <div class="qs-sidebar-update-status text-muted" data-qs-update-check-status></div>
   </div>
-</div>
-{%- endmacro %}
-
-{% macro mobile_action_bar(page_info, hide_step_nav) -%}
-<div class="qs-mobile-action-bar" id="qs-mobile-action-bar">
-  {% if hide_step_nav %}
-  <a class="btn nav-button" href="/step/900-final" title="Back to Final Validation">
-    <i class="fa fa-arrow-left"></i> Back
-  </a>
-  {% else %}
-    {% if page_info['template_name'] != '001-start' %}
-    <button type="submit" class="btn nav-button" onclick='loading("prev", {{ page_info["prev_page_name"]|tojson }})'
-      title="Previous Step: {{ page_info['prev_page_name'] }}" formaction="/step/{{ page_info['prev_page'] }}">
-      <i class="fa fa-arrow-left"></i> Back
-    </button>
-    {% endif %}
-    {% if page_info['template_name'] != '910-sponsor' %}
-    <button type="submit" class="btn nav-button" onclick='loading("next", {{ page_info["next_page_name"]|tojson }})'
-      title="Next Step: {{ page_info['next_page_name'] }}" formaction="/step/{{ page_info['next_page'] }}">
-      Next <i class="fa fa-arrow-right"></i>
-    </button>
-    {% endif %}
-  {% endif %}
 </div>
 {%- endmacro %}

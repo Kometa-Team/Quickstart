@@ -28,6 +28,26 @@ def test_update_quickstart_exception(client, monkeypatch):
     assert payload["success"] is False
 
 
+def test_check_quickstart_update_refreshes_cached_version(client, monkeypatch, qs_module):
+    fake_info = {
+        "local_version": "0.0.1",
+        "remote_version": "9.9.9",
+        "branch": "develop",
+        "kometa_branch": "nightly",
+        "update_available": True,
+        "running_on": "Local-Windows",
+        "file_ext": "",
+    }
+    monkeypatch.setattr(helpers, "check_for_update", lambda: fake_info)
+
+    resp = client.post("/check-quickstart-update")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["version_info"] == fake_info
+    assert qs_module.app.config["VERSION_CHECK"] == fake_info
+
+
 def test_update_kometa_conflict_when_running(client, monkeypatch):
     monkeypatch.setattr(helpers, "is_kometa_running", lambda: True)
     monkeypatch.setattr(helpers, "get_kometa_pid", lambda: 1234)

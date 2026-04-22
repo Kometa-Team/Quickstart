@@ -1999,12 +1999,110 @@ function restartQuickstart (reason) {
     })
 }
 
-/* eslint-enable no-unused-vars */
-document.addEventListener('DOMContentLoaded', () => {
-  const updateBtn = document.getElementById('updateQuickstartBtn')
-  const resultBox = document.getElementById('updateResult')
+function getQuickstartUpdateCommand (info) {
+  const branch = String(info?.branch || 'master')
+  if (branch === 'master') return 'git pull && pip install -r requirements.txt'
+  if (branch === 'develop') return 'git fetch && git reset --hard kometa-team/develop && pip install -r requirements.txt'
+  return `git fetch && git checkout ${branch} && pip install -r requirements.txt`
+}
 
-  if (updateBtn && resultBox) {
+function renderQuickstartUpdateAlert (info) {
+  const existingAlerts = document.querySelectorAll('[data-qs-update-alert]')
+  existingAlerts.forEach(el => el.remove())
+  document.querySelectorAll('[data-qs-update-alert-spacer]').forEach(el => el.remove())
+
+  if (!info || !info.update_available) return
+
+  const anchor = document.querySelector('[data-qs-update-alert-anchor]') || document.querySelector('.early-warning')
+  const wrapper = anchor?.parentElement || document.querySelector('.qs-content-wrapper')
+  if (!wrapper) return
+
+  const alert = document.createElement('div')
+  alert.className = 'alert alert-danger text-center qs-wide-alert'
+  alert.id = 'quickstart-update-alert'
+  alert.dataset.qsUpdateAlert = 'true'
+  alert.setAttribute('role', 'alert')
+
+  const icon = document.createElement('i')
+  icon.className = 'bi bi-arrow-up-circle'
+  alert.append(icon, document.createTextNode(' A new version of Quickstart ('))
+
+  const version = document.createElement('strong')
+  version.textContent = info.remote_version || 'unknown'
+  alert.append(version, document.createTextNode(') is available!'))
+
+  const runningOn = String(info.running_on || '')
+  const branch = String(info.branch || 'master')
+  alert.append(document.createElement('br'), document.createElement('br'))
+
+  if (runningOn === 'Docker') {
+    alert.append(document.createTextNode('Since you are running Quickstart inside a Docker container, update it as you normally would:'))
+    alert.append(document.createElement('br'))
+    const code = document.createElement('code')
+    code.textContent = `docker pull kometateam/quickstart:${branch}`
+    alert.append(code)
+  } else if (runningOn.startsWith('Local')) {
+    alert.append(document.createTextNode('Update with:'))
+    alert.append(document.createElement('br'))
+    const code = document.createElement('code')
+    code.textContent = getQuickstartUpdateCommand(info)
+    alert.append(code, document.createElement('br'))
+    const button = document.createElement('button')
+    button.id = 'updateQuickstartBtn'
+    button.className = 'btn btn-warning mt-2'
+    button.dataset.branch = branch
+    const buttonIcon = document.createElement('i')
+    buttonIcon.className = 'bi bi-arrow-clockwise'
+    button.append(buttonIcon, document.createTextNode(' Run Update Now'))
+    alert.append(button)
+    const result = document.createElement('div')
+    result.id = 'updateResult'
+    result.className = 'mt-3 text-start small d-none'
+    alert.append(result)
+  } else {
+    const releaseTag = branch === 'develop' ? 'prerelease' : `v${info.remote_version || ''}`
+    const buildSuffix = branch === 'develop' && info.buildnum ? `-build${info.buildnum}` : ''
+    const platform = runningOn.replace('Frozen-', '')
+    const link = document.createElement('a')
+    link.href = `https://github.com/Kometa-Team/Quickstart/releases/download/${releaseTag}/Quickstart-v${info.remote_version || ''}${buildSuffix}-${platform}${info.file_ext || ''}`
+    link.target = '_blank'
+    link.className = 'alert-link'
+    link.textContent = 'Click here to update.'
+    alert.append(link)
+  }
+
+  const spacer = document.createElement('br')
+  spacer.dataset.qsUpdateAlertSpacer = 'true'
+  wrapper.insertBefore(alert, anchor || wrapper.firstChild)
+  wrapper.insertBefore(spacer, anchor || alert.nextSibling)
+  bindQuickstartUpdateButtons(alert)
+}
+
+async function runQuickstartUpdateCheck (options = {}) {
+  const res = await fetch('/check-quickstart-update', { method: 'POST' })
+  const data = await res.json()
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Failed to check for Quickstart updates.')
+  }
+  renderQuickstartUpdateAlert(data.version_info)
+  if (!options.silent && typeof showToast === 'function') {
+    if (data.version_info?.update_available) {
+      showToast('warning', `Quickstart update available: ${data.version_info.remote_version || 'unknown'}`)
+    } else {
+      showToast('success', 'Quickstart is up to date.')
+    }
+  }
+  return data.version_info
+}
+
+/* eslint-enable no-unused-vars */
+function bindQuickstartUpdateButtons (root = document) {
+  const buttons = root.querySelectorAll ? root.querySelectorAll('#updateQuickstartBtn') : []
+  buttons.forEach(updateBtn => {
+    if (updateBtn.dataset.qsUpdateBound === 'true') return
+    const resultBox = updateBtn.closest('[data-qs-update-alert]')?.querySelector('#updateResult') || document.getElementById('updateResult')
+    if (!resultBox) return
+    updateBtn.dataset.qsUpdateBound = 'true'
     updateBtn.addEventListener('click', async () => {
       if (updateBtn.dataset.state === 'ready-restart') {
         restartQuickstart('update')
@@ -2090,7 +2188,57 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     })
-  }
+  })
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  bindQuickstartUpdateButtons(document)
+})
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-qs-update-check]').forEach(button => {
+    if (button.dataset.qsUpdateCheckBound === 'true') return
+    button.dataset.qsUpdateCheckBound = 'true'
+    const statusEl = button.closest('.qs-sidebar-version')?.querySelector('[data-qs-update-check-status]')
+
+    function setUpdateStatus (text, isError) {
+      if (!statusEl) return
+      statusEl.textContent = text || ''
+      statusEl.classList.toggle('text-danger', Boolean(isError))
+      statusEl.classList.toggle('text-muted', !isError)
+    }
+
+    button.addEventListener('click', async () => {
+      button.disabled = true
+      const originalHtml = button.innerHTML
+      button.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i><span class="qs-sidebar-text">Checking...</span>'
+      setUpdateStatus('Checking...', false)
+      try {
+        const info = await runQuickstartUpdateCheck({ silent: true })
+        if (info?.update_available) {
+          setUpdateStatus(`${info.local_version || 'unknown'} -> ${info.remote_version || 'unknown'}`, false)
+          showToast('warning', `Quickstart update available: ${info.remote_version || 'unknown'}`)
+        } else {
+          setUpdateStatus(`Up to date (${info?.local_version || 'unknown'})`, false)
+          showToast('success', 'Quickstart is up to date.')
+        }
+      } catch (err) {
+        const message = err?.message || 'Failed to check for Quickstart updates.'
+        setUpdateStatus('Check failed.', true)
+        showToast('error', message)
+      } finally {
+        button.disabled = false
+        button.innerHTML = originalHtml
+      }
+    })
+  })
+})
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (getCurrentTemplateKey() !== '900-final') return
+  runQuickstartUpdateCheck({ silent: true }).catch(() => {
+    // Keep final-page update checks non-intrusive; manual checks report errors.
+  })
 })
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -3119,8 +3267,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const skip =
           el.classList.contains('modal') ||
           el.tagName === 'SCRIPT' ||
-          el.classList.contains('page-nav-divider') ||
-          el.classList.contains('qs-mobile-action-bar')
+          el.classList.contains('page-nav-divider')
 
         if (!skip) {
           slot.appendChild(el)

@@ -2305,6 +2305,26 @@ def update_quickstart():
         return jsonify({"success": False, "log": logs}), 500
 
 
+@app.route("/check-quickstart-update", methods=["POST"])
+def check_quickstart_update():
+    try:
+        version_info = helpers.check_for_update()
+        app.config["VERSION_CHECK"] = version_info
+        return jsonify({"success": True, "version_info": version_info})
+    except Exception as e:
+        helpers.ts_log(f"Quickstart update check failed: {e}", level="ERROR")
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "message": "Failed to check for Quickstart updates.",
+                    "version_info": app.config.get("VERSION_CHECK") or {},
+                }
+            ),
+            500,
+        )
+
+
 # Initialize Flask-Session
 server_session = Session(app)
 server_thread = None
