@@ -2817,6 +2817,7 @@ const OverlayHandler = {
       const overlayType = board.dataset.overlayType || ''
       board.classList.toggle('overlay-board--landscape', baseWidth > baseHeight)
       const ratio = baseWidth / baseHeight
+      board.style.setProperty('--overlay-board-ratio', `${ratio}`)
       canvas.style.setProperty('--overlay-board-ratio', `${ratio}`)
 
       const layers = new Map()

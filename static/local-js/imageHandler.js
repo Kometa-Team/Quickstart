@@ -5,9 +5,19 @@ const ImageHandler = {
     'overlay_alignment_guide.png',
     'overlay_alignment_guide_episodes.png'
   ]),
+  BUILTIN_PREVIEW_IMAGES_BY_TYPE: {
+    movie: new Set(['overlay_alignment_guide.png']),
+    show: new Set(['overlay_alignment_guide.png']),
+    season: new Set(['overlay_alignment_guide.png']),
+    episode: new Set(['overlay_alignment_guide_episodes.png'])
+  },
 
   isBuiltinPreviewImage: function (imageName) {
     return ImageHandler.BUILTIN_PREVIEW_IMAGES.has(imageName)
+  },
+
+  isBuiltinPreviewImageForType: function (imageName, type) {
+    return ImageHandler.BUILTIN_PREVIEW_IMAGES_BY_TYPE[type]?.has(imageName) || false
   },
 
   loadAvailableImages: function (libraryId, type = 'movie', callback = null) {
@@ -112,9 +122,11 @@ const ImageHandler = {
 
     const baseWidth = Number(board.dataset.baseWidth) || (type === 'episode' ? 1920 : 1000)
     const baseHeight = Number(board.dataset.baseHeight) || (type === 'episode' ? 1080 : 1500)
-    const normalized = selectedImage && selectedImage !== 'default'
+    const selectedIsBuiltin = ImageHandler.isBuiltinPreviewImage(selectedImage)
+    const selectedIsValidBuiltin = ImageHandler.isBuiltinPreviewImageForType(selectedImage, type)
+    const normalized = selectedImage && selectedImage !== 'default' && (!selectedIsBuiltin || selectedIsValidBuiltin)
       ? (
-          ImageHandler.isBuiltinPreviewImage(selectedImage)
+          selectedIsValidBuiltin
             ? `/static/images/${encodeURIComponent(selectedImage)}`
             : `/config/uploads/${type}s/${encodeURIComponent(selectedImage)}`
         )

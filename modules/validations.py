@@ -43,6 +43,11 @@ def validate_plex_server(data):
 
     # Validate Plex URL and Token
     try:
+        cached = helpers.get_cached_plex_validation(plex_url, plex_token)
+        if cached:
+            helpers.ts_log("Using cached Plex validation payload.", level="DEBUG")
+            return jsonify(cached)
+
         plex = PlexServer(plex_url, plex_token, timeout=8)
 
         # Fetch Plex settings
@@ -68,10 +73,11 @@ def validate_plex_server(data):
         helpers.ts_log(f"User list retrieved from Plex: {user_list}", level="INFO")
         helpers.ts_log(f"User has Plex Pass: {has_plex_pass}", level="INFO")
 
-        # Retrieve library sections
-        music_libraries = [section.title for section in plex.library.sections() if section.type == "artist"]
-        movie_libraries = [section.title for section in plex.library.sections() if section.type == "movie"]
-        show_libraries = [section.title for section in plex.library.sections() if section.type == "show"]
+        # Retrieve library sections once. This can be expensive on large Plex servers.
+        sections = plex.library.sections()
+        music_libraries = [section.title for section in sections if section.type == "artist"]
+        movie_libraries = [section.title for section in sections if section.type == "movie"]
+        show_libraries = [section.title for section in sections if section.type == "show"]
 
         helpers.ts_log(f"Music libraries: {music_libraries}", level="INFO")
         helpers.ts_log(f"Movie libraries: {movie_libraries}", level="INFO")
@@ -83,17 +89,17 @@ def validate_plex_server(data):
         return jsonify({"valid": False, "error": f"Invalid Plex URL or Token: {str(e)}"})
 
     # If PlexServer instance is successfully created and db_cache is retrieved, return success response
-    return jsonify(
-        {
-            "validated": True,
-            "db_cache": db_cache,  # Send back the integer value of db_cache
-            "user_list": user_list,
-            "music_libraries": music_libraries,
-            "movie_libraries": movie_libraries,
-            "show_libraries": show_libraries,
-            "has_plex_pass": has_plex_pass,
-        }
-    )
+    payload = {
+        "validated": True,
+        "db_cache": db_cache,  # Send back the integer value of db_cache
+        "user_list": user_list,
+        "music_libraries": music_libraries,
+        "movie_libraries": movie_libraries,
+        "show_libraries": show_libraries,
+        "has_plex_pass": has_plex_pass,
+    }
+    helpers.set_cached_plex_validation(plex_url, plex_token, payload)
+    return jsonify(payload)
 
 
 def validate_tautulli_server(data):

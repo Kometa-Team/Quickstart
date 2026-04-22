@@ -11,7 +11,9 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import zipfile
+import copy
 
 from pathlib import Path
 from plexapi.server import PlexServer
@@ -56,6 +58,64 @@ LOG_DIR = os.path.join("config", "logs")
 LOG_FILE = os.path.join(LOG_DIR, "quickstart.log")
 MAX_LOG_BACKUPS = 10
 RESTART_NOTICE_FILE = os.path.join(CONFIG_DIR, ".restart_notice.json")
+PLEX_DISCOVERY_CACHE_TTL_SECONDS = int(os.environ.get("QS_PLEX_DISCOVERY_CACHE_TTL_SECONDS", "300"))
+_PLEX_DISCOVERY_CACHE = {}
+
+
+def _plex_discovery_cache_key(kind, plex_url, plex_token):
+    normalized_url = str(plex_url or "").strip().rstrip("/").lower()
+    token_digest = hashlib.sha256(str(plex_token or "").encode("utf-8")).hexdigest()
+    return kind, normalized_url, token_digest
+
+
+def _get_plex_discovery_cache(kind, plex_url, plex_token):
+    key = _plex_discovery_cache_key(kind, plex_url, plex_token)
+    entry = _PLEX_DISCOVERY_CACHE.get(key)
+    if not entry:
+        return None
+    age = time.monotonic() - entry.get("created_at", 0)
+    if age > PLEX_DISCOVERY_CACHE_TTL_SECONDS:
+        _PLEX_DISCOVERY_CACHE.pop(key, None)
+        return None
+    return copy.deepcopy(entry.get("payload"))
+
+
+def _set_plex_discovery_cache(kind, plex_url, plex_token, payload):
+    if not plex_url or not plex_token or not isinstance(payload, dict):
+        return
+    key = _plex_discovery_cache_key(kind, plex_url, plex_token)
+    _PLEX_DISCOVERY_CACHE[key] = {
+        "created_at": time.monotonic(),
+        "payload": copy.deepcopy(payload),
+    }
+
+
+def get_cached_plex_validation(plex_url, plex_token):
+    return _get_plex_discovery_cache("validation", plex_url, plex_token)
+
+
+def set_cached_plex_validation(plex_url, plex_token, payload):
+    _set_plex_discovery_cache("validation", plex_url, plex_token, payload)
+
+
+def get_cached_plex_metadata(plex_url, plex_token):
+    return _get_plex_discovery_cache("metadata", plex_url, plex_token)
+
+
+def set_cached_plex_metadata(plex_url, plex_token, payload):
+    _set_plex_discovery_cache("metadata", plex_url, plex_token, payload)
+
+
+def get_cached_plex_refresh(plex_url, plex_token):
+    return _get_plex_discovery_cache("refresh", plex_url, plex_token)
+
+
+def set_cached_plex_refresh(plex_url, plex_token, payload):
+    _set_plex_discovery_cache("refresh", plex_url, plex_token, payload)
+
+
+def clear_plex_discovery_cache():
+    _PLEX_DISCOVERY_CACHE.clear()
 
 
 def normalize_id(name, existing_ids):
@@ -888,9 +948,16 @@ def get_library_summaries(configured_library_names):
         return f"Plex library summary unavailable: {str(e)}"
 
 
-def get_plex_metadata():
+def get_plex_metadata(plex_url=None, plex_token=None):
     try:
-        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+        if not plex_url or not plex_token:
+            plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+
+        cached = get_cached_plex_metadata(plex_url, plex_token)
+        if cached:
+            ts_log("Using cached Plex metadata payload.", level="DEBUG")
+            return cached
+
         plex = PlexServer(plex_url, plex_token)
 
         # Plex Pass
@@ -926,10 +993,11 @@ def get_plex_metadata():
         except Exception:
             maintenance_window = "Unavailable"
 
-        # Per-library info
-        library_metadata = get_library_metadata()
+        # Per-library info. Fetch sections once so metadata and counts share the same section list.
+        sections = plex.library.sections()
+        library_metadata = get_library_metadata(plex=plex, sections=sections)
 
-        return {
+        metadata = {
             "plex_pass": plex_pass,
             "update_channel": update_channel,
             "server_name": plex.friendlyName,
@@ -940,6 +1008,8 @@ def get_plex_metadata():
             "maintenance_window": maintenance_window,
             "libraries": library_metadata,
         }
+        set_cached_plex_metadata(plex_url, plex_token, metadata)
+        return metadata
 
     except Exception as e:
         return {
@@ -953,13 +1023,18 @@ def get_plex_metadata():
         }
 
 
-def get_library_metadata():
+def get_library_metadata(plex=None, sections=None, plex_url=None, plex_token=None):
     try:
-        plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
-        plex = PlexServer(plex_url, plex_token)
+        if plex is None:
+            if not plex_url or not plex_token:
+                plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+            plex = PlexServer(plex_url, plex_token)
 
         library_data = {}
-        for section in plex.library.sections():
+        if sections is None:
+            sections = plex.library.sections()
+
+        for section in sections:
             try:
                 lib_info = {
                     "agent": section.agent,

@@ -2040,6 +2040,12 @@ BUILTIN_PREVIEW_IMAGES = (
     "overlay_alignment_guide.png",
     "overlay_alignment_guide_episodes.png",
 )
+BUILTIN_PREVIEW_IMAGES_BY_TYPE = {
+    "movie": ("overlay_alignment_guide.png",),
+    "show": ("overlay_alignment_guide.png",),
+    "season": ("overlay_alignment_guide.png",),
+    "episode": ("overlay_alignment_guide_episodes.png",),
+}
 PREVIEW_FOLDER = os.path.join(helpers.CONFIG_DIR, "previews")
 os.makedirs(PREVIEW_FOLDER, exist_ok=True)
 OVERLAY_CACHE_FOLDER = os.path.join(helpers.CONFIG_DIR, "cache", "overlays")
@@ -2050,7 +2056,8 @@ _FONT_CACHE: list[str] = []
 
 def _list_preview_images_for_type(image_type: str) -> list[str]:
     """Return built-in guide images plus uploaded images for a preview image type."""
-    builtins = [name for name in BUILTIN_PREVIEW_IMAGES if os.path.exists(os.path.join(IMAGES_FOLDER, name))]
+    builtin_candidates = BUILTIN_PREVIEW_IMAGES_BY_TYPE.get(image_type, ())
+    builtins = [name for name in builtin_candidates if os.path.exists(os.path.join(IMAGES_FOLDER, name))]
     uploads_dir = UPLOAD_FOLDERS.get(image_type)
     uploads: list[str] = []
     if uploads_dir and os.path.exists(uploads_dir):
@@ -2067,6 +2074,9 @@ def _build_preview_image_data() -> dict[str, list[str]]:
 
 def _resolve_preview_base_image_path(img_type: str, selected_image: str) -> str:
     if not selected_image or selected_image == "default":
+        return DEFAULT_IMAGE_MAP.get(img_type, DEFAULT_IMAGE_MAP["movie"])
+
+    if selected_image in BUILTIN_PREVIEW_IMAGES and selected_image not in BUILTIN_PREVIEW_IMAGES_BY_TYPE.get(img_type, ()):
         return DEFAULT_IMAGE_MAP.get(img_type, DEFAULT_IMAGE_MAP["movie"])
 
     static_candidate = _safe_join(IMAGES_FOLDER, selected_image)
@@ -5631,6 +5641,32 @@ def refresh_plex_libraries():
                 400,
             )
 
+        cached_refresh = helpers.get_cached_plex_refresh(plex_url, plex_token)
+        if cached_refresh:
+            helpers.ts_log("Using cached Plex library refresh payload.", level="DEBUG")
+            persistence.update_stored_plex_libraries(
+                "010-plex",
+                cached_refresh.get("movie_libraries", []),
+                cached_refresh.get("show_libraries", []),
+                cached_refresh.get("music_libraries", []),
+                cached_refresh.get("user_list", []),
+            )
+            cached_telemetry = {
+                key: value
+                for key, value in cached_refresh.items()
+                if key
+                not in {
+                    "validated",
+                    "user_list",
+                    "music_libraries",
+                    "movie_libraries",
+                    "show_libraries",
+                    "has_plex_pass",
+                }
+            }
+            persistence.save_settings("plex_telemetry", cached_telemetry)
+            return jsonify(cached_refresh)
+
         # Validate Plex server and get updated libraries
         plex_response = validations.validate_plex_server({"plex_url": plex_url, "plex_token": plex_token})
         plex_data = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
@@ -5648,11 +5684,12 @@ def refresh_plex_libraries():
         )
 
         # Get fresh telemetry using helpers and store it
-        telemetry = helpers.get_plex_metadata()
+        telemetry = helpers.get_plex_metadata(plex_url=plex_url, plex_token=plex_token)
         persistence.save_settings("plex_telemetry", telemetry)
 
         # Merge both plex_data and telemetry for response
         merged_response = {**plex_data, **telemetry}
+        helpers.set_cached_plex_refresh(plex_url, plex_token, merged_response)
 
         return jsonify(merged_response)
 
