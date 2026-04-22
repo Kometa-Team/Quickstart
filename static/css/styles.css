@@ -4787,7 +4787,7 @@ body {
 
 @media (min-width: 800px) {
     .qs-workspace-section {
-        --qs-sidebar-width: clamp(204px, 12vw, 226px);
+        --qs-sidebar-width: 226px;
     }
 
     .qs-workspace-grid {
@@ -4804,7 +4804,7 @@ body {
     .qs-workspace-status-sticky {
         position: sticky;
         top: var(--qs-sticky-top);
-        min-height: calc(100dvh - (var(--qs-sticky-top) * 2));
+        min-height: 0;
         height: auto;
         max-height: none;
         overflow: visible;
@@ -4817,7 +4817,7 @@ body {
     }
 
     .qs-workspace-nav-sticky .qs-sidebar-footer {
-        margin-top: auto;
+        margin-top: var(--qs-space-2);
     }
 
     .qs-workspace-main-panel {
