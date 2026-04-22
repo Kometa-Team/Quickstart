@@ -34,6 +34,7 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 
 ### Config Management & History
 - **SQLite-Backed Storage:** All configs and page data are stored in a database, so you can switch between configs at any time
+- **Safe Config Switching:** Switching configs from the sidebar auto-saves the current page first, then refreshes readiness and TODO state for the selected config
 - **Automatic Backups:** Every config is saved as a versioned `.yml` file for historical reference
 - **Download & Run Anywhere:** Final configs can be downloaded and run outside Quickstart if preferred
 
@@ -41,10 +42,19 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Step-by-Step Pages:** Each section validates its own data, giving you instant feedback before proceeding
 - **Library Telemetry:** Pulls real Plex server data (Plex Pass status, library types, agent/scanner compatibility)
 - **Dynamic Toggles & Templates:** Rich UI for enabling collections, overlays, and builder template variables
+- **Dependency-Aware Optional Pages:** Optional pages such as Tautulli, OMDb, MDBList, AniDB, Radarr, Sonarr, Trakt, and MyAnimeList become required when selected library features need them
+- **TODO Sidebar:** Outstanding dependency and validation tasks are grouped into clickable cards that save the current page and open the affected setup page
+- **Library-Scoped Playlists:** Playlist file selection now lives on the Libraries page so playlists stay tied to the libraries included in the generated YAML
 - **Filtered Page Search:** Find matches on Libraries and Settings pages and auto-expand matching sections
 - **Settings Cog:** Quick access to runtime controls like debug mode and port changes from anywhere
 
 ![Libraries Page](static/images/readme/libraries-page.png)
+
+### Final Validation Gates
+- **Fail-Fast Setup Checks:** Final Validation stops at the TODO gate when required setup work remains instead of building YAML or checking Kometa prematurely
+- **Validation Freshness:** If bulk validation is stale, Quickstart automatically runs Validate All and refreshes workspace status before continuing
+- **Config Before Runtime:** Quickstart builds and validates the generated config before checking Kometa or showing run controls
+- **Kometa Update Guidance:** Missing Kometa is a hard blocker, while available Kometa updates are shown as guidance without blocking the run command
 
 ### Built-in Kometa Runner
 - **One-Click Execution:** The final page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
@@ -115,6 +125,7 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
   - [Safe Playground Mode](#safe-playground-mode)
   - [Config Management \& History](#config-management--history)
   - [Guided, Validated Workflow](#guided-validated-workflow)
+  - [Final Validation Gates](#final-validation-gates)
   - [Built-in Kometa Runner](#built-in-kometa-runner)
   - [Live Previews \& Assets](#live-previews--assets)
   - [Automatic Updates](#automatic-updates)

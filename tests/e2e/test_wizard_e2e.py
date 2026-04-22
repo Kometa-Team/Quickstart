@@ -35,7 +35,7 @@ def _step_shell(page):
 
 
 @pytest.mark.e2e
-def test_config_switch_auto_saves_current_page(page, live_server):
+def test_config_switch_auto_saves_current_page(page, live_server, app):
     import modules.database as database
 
     source_config = "pytest_switch_source"
@@ -63,7 +63,8 @@ def test_config_switch_auto_saves_current_page(page, live_server):
     page.locator("#configSwitchConfirm").click()
 
     expect(page.locator(".qs-main-page-meta-value")).to_contain_text(target_config)
-    _validated, user_entered, data = database.retrieve_section_data(source_config, "tmdb")
+    with app.app_context():
+        _validated, user_entered, data = database.retrieve_section_data(source_config, "tmdb")
     assert user_entered is True
     assert data["tmdb"]["apikey"] == "autosave-before-switch"
 
