@@ -763,7 +763,9 @@ class LogscanAnalyzer:
                 continue
             if fallback_index is None:
                 fallback_index = idx
-            if "Finished:" in line or "Start Time:" in line or (idx > 0 and "Finished " in lines[idx - 1]):
+            previous_line = lines[idx - 1] if idx > 0 else ""
+            previous_is_finished_run = re.search(r"\bFinished\s+Run\b", previous_line, re.IGNORECASE)
+            if "Finished:" in line or "Start Time:" in line or previous_is_finished_run:
                 run_time_index = idx
                 run_time_is_final = True
                 break

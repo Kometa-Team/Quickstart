@@ -25,6 +25,20 @@ def test_analyze_content_marks_complete_for_day_runtime():
     assert summary.get("run_time_seconds") == (1 * 24 * 3600) + (2 * 3600) + (20 * 60) + 31
 
 
+def test_library_runtime_does_not_become_finished_run_total():
+    analyzer = LogscanAnalyzer()
+    content = "\n".join(
+        [
+            "[2026-04-22 06:50:18,000] [metadata.py:100] [INFO] |                                      Finished Movies                                      |",
+            "[2026-04-22 06:50:20,000] [metadata.py:100] [INFO] |                                      Run Time: 0:00:02                                     |",
+        ]
+    )
+
+    analyzer.extract_last_lines(content)
+
+    assert analyzer.run_time is None
+
+
 def test_extract_progress_playlist_runtime_from_continuation_line():
     analyzer = LogscanAnalyzer()
     content = "\n".join(

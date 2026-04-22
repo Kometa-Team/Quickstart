@@ -2324,6 +2324,218 @@ div#loading {
     justify-content: flex-end;
 }
 
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table {
+    border: 0;
+    background: transparent;
+    overflow: visible;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table {
+    display: block;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table thead {
+    display: none;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table tbody {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 34rem), 1fr));
+    gap: 0.75rem;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table tr {
+    display: block;
+    border: 1px solid var(--theme-border);
+    border-radius: 8px;
+    padding: 0.7rem 0.85rem;
+    background: var(--theme-bg-card);
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td {
+    display: grid;
+    grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr);
+    gap: 0.65rem;
+    align-items: start;
+    border: 0;
+    padding: 0.3rem 0;
+    text-align: left !important;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td::before {
+    content: none;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td > * {
+    min-width: 0;
+    justify-self: start;
+    text-align: left !important;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td .align-items-center {
+    align-items: flex-start !important;
+}
+
+.logscan-card-label {
+    color: var(--theme-text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.logscan-card-value {
+    color: var(--theme-text);
+    font-weight: 700;
+    line-height: 1.35;
+    min-width: 0;
+}
+
+.logscan-card-value .text-muted {
+    color: var(--theme-text) !important;
+    opacity: 0.78;
+}
+
+.logscan-info-dot {
+    align-items: center;
+    background: rgba(0, 188, 140, 0.14);
+    border: 1px solid rgba(0, 188, 140, 0.55);
+    border-radius: 999px;
+    color: var(--theme-primary);
+    cursor: help;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-size: 0.65rem;
+    font-weight: 800;
+    height: 1rem;
+    justify-content: center;
+    line-height: 1;
+    position: relative;
+    text-transform: none;
+    width: 1rem;
+}
+
+.logscan-info-dot:hover::after,
+.logscan-info-dot:focus::after {
+    background: rgba(5, 8, 10, 0.96);
+    border: 1px solid var(--theme-border);
+    border-radius: 0.5rem;
+    box-shadow: 0 0.6rem 1.5rem rgba(0, 0, 0, 0.35);
+    color: var(--theme-text);
+    content: attr(data-help);
+    font-size: 0.78rem;
+    font-weight: 600;
+    left: 50%;
+    letter-spacing: 0;
+    line-height: 1.35;
+    max-width: 80vw;
+    min-width: 13rem;
+    padding: 0.55rem 0.7rem;
+    position: absolute;
+    text-transform: none;
+    top: calc(100% + 0.45rem);
+    transform: translateX(-50%);
+    white-space: normal;
+    width: max-content;
+    z-index: 20;
+}
+
+.logscan-counts-inline,
+.logscan-card-inline {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.75rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.logscan-card-inline {
+    justify-content: flex-start;
+}
+
+.logscan-section-summary {
+    color: var(--theme-text);
+    font-size: inherit;
+    font-weight: 700;
+}
+
+.logscan-counts-inline {
+    white-space: nowrap;
+}
+
+.logscan-count-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.logscan-count-chip {
+    align-items: center;
+    border: 1px solid currentColor;
+    border-radius: 0.45rem;
+    display: inline-flex;
+    gap: 0.25rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1;
+    padding: 0.24rem 0.42rem;
+    white-space: nowrap;
+}
+
+.logscan-count-chip span {
+    opacity: 0.82;
+}
+
+.logscan-count-chip strong {
+    color: inherit;
+    font-weight: 900;
+}
+
+.logscan-count-chip--warning {
+    background: rgba(249, 199, 79, 0.14);
+    color: #f9c74f;
+}
+
+.logscan-count-chip--error {
+    background: rgba(249, 65, 68, 0.14);
+    color: #ff6b6e;
+}
+
+.logscan-count-chip--trace {
+    background: rgba(76, 201, 240, 0.14);
+    color: #4cc9f0;
+}
+
+.logscan-count-chip--movie {
+    background: rgba(67, 170, 139, 0.14);
+    color: #5bd3ad;
+}
+
+.logscan-count-chip--show {
+    background: rgba(144, 190, 109, 0.14);
+    color: #a5d979;
+}
+
+.logscan-count-chip--episode {
+    background: rgba(87, 117, 144, 0.18);
+    color: #95b6d7;
+}
+
+.logscan-count-chip--total {
+    background: rgba(0, 188, 140, 0.14);
+    color: var(--theme-primary);
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td[data-label="Report"] .logscan-action-btn,
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td[data-label="Section runtimes"] .logscan-action-btn {
+    min-width: 72px;
+}
+
 .logscan-sort-button {
     background: transparent;
     border: 0;
@@ -5246,6 +5458,10 @@ html[data-qs-viewport="mobile"] .qs-workspace-main-panel .table-responsive.qs-ta
 
 html[data-qs-viewport="mobile"] .qs-workspace-main-panel .table-responsive.qs-table-card-mode table td .align-items-center {
     align-items: flex-start !important;
+}
+
+html[data-qs-viewport="mobile"] .qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td::before {
+    content: none;
 }
 
 html[data-qs-viewport="mobile"] .modal.qs-mobile-panel-target .modal-dialog {

@@ -262,8 +262,52 @@ $(document).ready(function () {
     }, 0)
   }
 
+  function getRunTimeParts (run) {
+    const raw = run && typeof run.run_time_seconds === 'number' && Number.isFinite(run.run_time_seconds)
+      ? run.run_time_seconds
+      : 0
+    const sectionTotal = getSectionTotal(run && run.section_runtimes)
+    const effective = Math.max(raw, sectionTotal)
+    return { raw, sectionTotal, effective }
+  }
+
+  function getEffectiveRunTimeSeconds (run) {
+    return getRunTimeParts(run).effective
+  }
+
+  function getRuntimeHelpText (run) {
+    const parts = getRunTimeParts(run)
+    if (parts.raw > 0 && parts.sectionTotal > parts.raw + 60) {
+      return `Displayed from section runtimes (${formatSeconds(parts.sectionTotal)}) because the parsed run total was ${formatSeconds(parts.raw)}. Reingest logs after this update to refresh stored run totals.`
+    }
+    return 'Total run time parsed from the Kometa run summary.'
+  }
+
   function getCountsTotal (run) {
     return getCount(run, 'warning_count') + getCount(run, 'error_count') + getCount(run, 'trace_count')
+  }
+
+  function renderInfoDot (helpText) {
+    return `<span class="logscan-info-dot" tabindex="0" title="${escapeHtml(helpText)}" data-help="${escapeHtml(helpText)}" aria-label="${escapeHtml(helpText)}">i</span>`
+  }
+
+  function renderRunCardCell (label, helpText, valueHtml, attrs = '') {
+    return `
+      <td data-label="${escapeHtml(label)}" ${attrs}>
+        <span class="logscan-card-label">${escapeHtml(label)} ${renderInfoDot(helpText)}</span>
+        <span class="logscan-card-value">${valueHtml}</span>
+      </td>
+    `
+  }
+
+  function renderCountChip (shortName, label, value, variant) {
+    const displayValue = Number.isFinite(value) ? value : 0
+    const title = `${shortName} = ${label}: ${displayValue}`
+    return `
+      <span class="logscan-count-chip logscan-count-chip--${variant}" title="${escapeHtml(title)}">
+        <span>${escapeHtml(shortName)}</span><strong>${escapeHtml(String(displayValue))}</strong>
+      </span>
+    `
   }
 
   function normalizeConfigName (value) {
@@ -846,7 +890,7 @@ $(document).ready(function () {
       }
     })
     const runtimeValues = runs
-      .map(run => run.run_time_seconds)
+      .map(run => getEffectiveRunTimeSeconds(run))
       .filter(val => typeof val === 'number' && Number.isFinite(val) && val > 0)
     const avgRuntime = runtimeValues.length
       ? runtimeValues.reduce((sum, val) => sum + val, 0) / runtimeValues.length
@@ -1026,7 +1070,7 @@ $(document).ready(function () {
     runs.forEach(run => {
       const key = getRunDateKey(run)
       if (!key) return
-      const runtime = run.run_time_seconds
+      const runtime = getEffectiveRunTimeSeconds(run)
       if (typeof runtime !== 'number' || !Number.isFinite(runtime) || runtime <= 0) return
       if (!buckets[key]) {
         buckets[key] = { total: 0, count: 0 }
@@ -1114,17 +1158,21 @@ $(document).ready(function () {
       const warnings = getCount(run, 'warning_count')
       const errors = getCount(run, 'error_count')
       const traces = getCount(run, 'trace_count')
-      const counts = `W:${warnings} E:${errors} T:${traces}`
       const libraryTotals = getRunLibraryTotals(run)
-      const hasLibraryTotals = libraryTotals.movies > 0 || libraryTotals.episodes > 0 || libraryTotals.shows > 0
-      const libraryCounts = hasLibraryTotals
-        ? `M:${libraryTotals.movies} S:${libraryTotals.shows} Ep:${libraryTotals.episodes} Tot:${libraryTotals.total}`
-        : 'M:- S:- Ep:- Tot:-'
-      const countsTitle = `Warnings: ${warnings} | Errors: ${errors} | Tracebacks: ${traces} | Movies: ${libraryTotals.movies} | Shows: ${libraryTotals.shows} | Episodes: ${libraryTotals.episodes} | Total: ${libraryTotals.total}`
+      const countChips = [
+        renderCountChip('W', 'Warnings', warnings, 'warning'),
+        renderCountChip('E', 'Errors', errors, 'error'),
+        renderCountChip('T', 'Tracebacks', traces, 'trace'),
+        renderCountChip('M', 'Movies', libraryTotals.movies, 'movie'),
+        renderCountChip('S', 'Shows', libraryTotals.shows, 'show'),
+        renderCountChip('Ep', 'Episodes', libraryTotals.episodes, 'episode'),
+        renderCountChip('Tot', 'Total items', libraryTotals.total, 'total')
+      ].join('')
       const configLineCount = (typeof run.config_line_count === 'number' && Number.isFinite(run.config_line_count))
         ? run.config_line_count
         : 'n/a'
-      const sectionLines = buildSectionDetails(run.section_runtimes, run.run_time_seconds)
+      const runtimeParts = getRunTimeParts(run)
+      const sectionLines = buildSectionDetails(run.section_runtimes, runtimeParts.effective)
       const sectionSummary = sectionLines.length ? sectionLines[0] : 'n/a'
       const cacheLineCount = (typeof run.cache_line_count === 'number' && Number.isFinite(run.cache_line_count))
         ? run.cache_line_count
@@ -1136,8 +1184,7 @@ $(document).ready(function () {
         details: sectionDetails
       })
       let sectionCell = `
-        <div class="d-flex flex-column align-items-center gap-1">
-          <div class="text-muted small text-center">${escapeHtml(sectionSummary)}</div>
+        <div class="logscan-card-inline">
       `
       if (sectionDetails.length) {
         sectionCell += `
@@ -1148,6 +1195,7 @@ $(document).ready(function () {
           </button>
         `
       }
+      sectionCell += `<span class="logscan-section-summary">${escapeHtml(sectionSummary)}</span>`
       sectionCell += '</div>'
       let kometaDisplay = run.kometa_version || 'n/a'
       if (run.kometa_version && run.kometa_newest_version && run.kometa_version !== run.kometa_newest_version) {
@@ -1156,22 +1204,19 @@ $(document).ready(function () {
       const runKey = run.run_key || rowKey
       return `
         <tr>
-          <td class="text-nowrap">${escapeHtml(getDisplayFinished(run))}</td>
-          <td>${escapeHtml(formatSeconds(run.run_time_seconds))}</td>
-          <td>${escapeHtml(run.config_name || 'default')}</td>
-          <td class="text-center">${escapeHtml(configLineCount)}</td>
-          <td class="text-center">${escapeHtml(cacheLineCount)}</td>
-          <td><span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span></td>
-          <td title="${escapeHtml(countsTitle)}">
-            <div>${escapeHtml(counts)}</div>
-            <div class="text-muted small">${escapeHtml(libraryCounts)}</div>
-          </td>
-          <td>${escapeHtml(kometaDisplay)}</td>
-          <td class="text-center align-middle">${sectionCell}</td>
-          <td class="text-center align-middle">
+          ${renderRunCardCell('Finished', 'Timestamp of the run finishing.', escapeHtml(getDisplayFinished(run)), 'class="text-nowrap"')}
+          ${renderRunCardCell('Runtime', getRuntimeHelpText(run), escapeHtml(formatSeconds(runtimeParts.effective)))}
+          ${renderRunCardCell('Config', 'Config name detected for the run.', escapeHtml(run.config_name || 'default'))}
+          ${renderRunCardCell('Config lines', 'Non-comment lines captured from the redacted config output.', escapeHtml(String(configLineCount)))}
+          ${renderRunCardCell('Cache lines', 'Number of log lines that include "from Cache".', escapeHtml(String(cacheLineCount)))}
+          ${renderRunCardCell('Command', 'Sanitized Kometa command line.', `<span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span>`)}
+          ${renderRunCardCell('Counts', 'W warnings, E errors, T tracebacks, M movies, S shows, Ep episodes, Tot total library items.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
+          ${renderRunCardCell('Kometa', 'Version detected for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
+          ${renderRunCardCell('Section runtimes', 'Runtime totals parsed per Kometa section.', sectionCell)}
+          ${renderRunCardCell('Report', 'Open the recommendations recorded for the run.', `
             <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-run-details"
               data-run-key="${escapeHtml(runKey)}">Open</button>
-          </td>
+          `)}
         </tr>
       `
     })
@@ -1181,7 +1226,7 @@ $(document).ready(function () {
   function renderRuntimeDistribution (runs) {
     if (!$runtime.length) return
     const durations = runs
-      .map(run => run.run_time_seconds)
+      .map(run => getEffectiveRunTimeSeconds(run))
       .filter(val => typeof val === 'number' && Number.isFinite(val) && val > 0)
     if (!durations.length) {
       $runtime.text('No runtime data yet.')
@@ -1590,17 +1635,29 @@ $(document).ready(function () {
       case 'finished_at':
         return getSortTimestamp(run)
       case 'run_time_seconds':
-        return typeof run.run_time_seconds === 'number' ? run.run_time_seconds : 0
+        return getEffectiveRunTimeSeconds(run)
       case 'config_name':
         return normalizeConfigName(run.config_name)
       case 'command_signature':
         return getRunCommandValue(run)
       case 'counts':
         return getCountsTotal(run)
+      case 'warning_count':
+      case 'error_count':
+      case 'trace_count':
+        return getCount(run, key)
       case 'config_line_count':
         return typeof run.config_line_count === 'number' ? run.config_line_count : 0
       case 'cache_line_count':
         return typeof run.cache_line_count === 'number' ? run.cache_line_count : 0
+      case 'library_movies':
+        return getRunLibraryTotals(run).movies
+      case 'library_shows':
+        return getRunLibraryTotals(run).shows
+      case 'library_episodes':
+        return getRunLibraryTotals(run).episodes
+      case 'library_total':
+        return getRunLibraryTotals(run).total
       case 'kometa_version':
         return run.kometa_version || ''
       case 'section_runtimes':
