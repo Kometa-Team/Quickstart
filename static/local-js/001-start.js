@@ -1328,13 +1328,17 @@ document.addEventListener('DOMContentLoaded', function () {
       confirmImportButton.disabled = true
       confirmImportButton.textContent = 'Importing...'
 
-      function showImportRedirectOverlay (message, detail) {
+      function showImportRedirectOverlay (message, detail, options = {}) {
         const existing = document.getElementById('qs-import-redirect')
         if (existing) {
           const msgEl = existing.querySelector('.qs-import-redirect-message')
           const detailEl = existing.querySelector('.qs-import-redirect-detail')
+          const spinner = existing.querySelector('.qs-import-redirect-spinner')
+          const actionsEl = existing.querySelector('.qs-import-redirect-actions')
           if (msgEl) msgEl.textContent = message || msgEl.textContent
           if (detailEl) detailEl.textContent = detail || detailEl.textContent
+          if (spinner) spinner.classList.toggle('d-none', Boolean(options.done))
+          renderImportRedirectActions(actionsEl, options.actions || [])
           return
         }
 
@@ -1358,9 +1362,10 @@ document.addEventListener('DOMContentLoaded', function () {
         card.style.cssText = 'background:#0f1113;border:1px solid #2b2f33;max-width:520px;width:100%;'
 
         const spinner = document.createElement('div')
-        spinner.className = 'spinner-border text-info mb-3'
+        spinner.className = 'spinner-border text-info mb-3 qs-import-redirect-spinner'
         spinner.setAttribute('role', 'status')
         spinner.setAttribute('aria-hidden', 'true')
+        spinner.classList.toggle('d-none', Boolean(options.done))
 
         const messageEl = document.createElement('div')
         messageEl.className = 'fw-semibold mb-1 qs-import-redirect-message'
@@ -1376,7 +1381,11 @@ document.addEventListener('DOMContentLoaded', function () {
         button.className = 'btn btn-sm btn-outline-info qs-import-redirect-btn d-none'
         button.textContent = 'Open Start'
 
-        card.append(spinner, messageEl, detailEl, button)
+        const actionsEl = document.createElement('div')
+        actionsEl.className = 'qs-import-redirect-actions d-flex flex-wrap justify-content-center gap-2 mb-3'
+        renderImportRedirectActions(actionsEl, options.actions || [])
+
+        card.append(spinner, messageEl, detailEl, actionsEl, button)
         overlay.appendChild(card)
 
         document.body.appendChild(overlay)
@@ -1393,6 +1402,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       }
 
+      function renderImportRedirectActions (container, actions) {
+        if (!container) return
+        container.replaceChildren()
+        if (!Array.isArray(actions) || !actions.length) {
+          container.classList.add('d-none')
+          return
+        }
+        container.classList.remove('d-none')
+        actions.forEach(action => {
+          if (!action || !action.href || !action.label) return
+          const link = document.createElement('a')
+          link.className = action.className || 'btn btn-sm btn-outline-warning'
+          link.href = action.href
+          link.textContent = action.label
+          container.appendChild(link)
+        })
+      }
+
       function summarizeBulkValidation (data) {
         const summary = data && data.summary ? data.summary : {}
         const counts = window.QSBulkValidation && typeof window.QSBulkValidation.getSummaryCounts === 'function'
@@ -1403,6 +1430,56 @@ document.addEventListener('DOMContentLoaded', function () {
               skipped: Number(summary.skipped || 0)
             }
         return `Validation complete. ${counts.validated} passed, ${counts.failed} failed, ${counts.skipped} skipped.`
+      }
+
+      function summarizeImportResult (data) {
+        const sections = Array.isArray(data.imported_sections) ? data.imported_sections.length : 0
+        const skippedSections = Array.isArray(data.skipped_sections) ? data.skipped_sections.length : 0
+        const copiedFonts = Array.isArray(data.fonts_copied) ? data.fonts_copied.length : 0
+        const skippedFonts = Array.isArray(data.fonts_skipped) ? data.fonts_skipped.length : 0
+        const mapping = data.mapping_summary && typeof data.mapping_summary === 'object' ? data.mapping_summary : {}
+        const mapped = Number(mapping.mapped || 0)
+        const ignored = Number(mapping.ignored || 0)
+        const parts = [`${sections} section${sections === 1 ? '' : 's'} imported`]
+        if (skippedSections) parts.push(`${skippedSections} skipped`)
+        if (mapped || ignored) parts.push(`${mapped} mapped, ${ignored} ignored`)
+        if (copiedFonts || skippedFonts) parts.push(`${copiedFonts} font${copiedFonts === 1 ? '' : 's'} copied, ${skippedFonts} skipped`)
+        return parts.join(' • ')
+      }
+
+      function stepLabelForValidationKey (stepKey) {
+        const labels = {
+          '010-plex': 'Plex',
+          '020-tmdb': 'TMDb',
+          '025-libraries': 'Libraries',
+          '030-tautulli': 'Tautulli',
+          '040-github': 'GitHub',
+          '050-omdb': 'OMDb',
+          '060-mdblist': 'MDBList',
+          '070-notifiarr': 'Notifiarr',
+          '080-gotify': 'Gotify',
+          '085-ntfy': 'ntfy',
+          '090-webhooks': 'Webhooks',
+          '100-anidb': 'AniDB',
+          '110-radarr': 'Radarr',
+          '120-sonarr': 'Sonarr',
+          '130-trakt': 'Trakt',
+          '140-mal': 'MyAnimeList',
+          '150-settings': 'Settings'
+        }
+        return labels[stepKey] || String(stepKey || '').replace(/^\d+-/, '')
+      }
+
+      function validationFailureActions (data) {
+        const results = data && data.results && typeof data.results === 'object' ? data.results : {}
+        return Object.keys(results)
+          .filter(stepKey => results[stepKey] && results[stepKey].status === 'failed')
+          .slice(0, 4)
+          .map(stepKey => ({
+            href: `/step/${encodeURIComponent(stepKey)}`,
+            label: stepLabelForValidationKey(stepKey),
+            className: 'btn btn-sm btn-outline-warning'
+          }))
       }
 
       async function runImportBulkValidation () {
@@ -1439,31 +1516,38 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Import failed.')
         }
-        let msg = `Imported config '${data.config_name}'.`
-        if (Array.isArray(data.fonts_copied) && data.fonts_copied.length) {
-          msg += ` Fonts added: ${data.fonts_copied.length}.`
-        }
-        const skippedExisting = Array.isArray(data.fonts_skipped_existing) ? data.fonts_skipped_existing : []
-        const skippedFailed = Array.isArray(data.fonts_skipped_failed) ? data.fonts_skipped_failed : []
-        if (skippedExisting.length) {
-          msg += ` Fonts skipped (already exists): ${skippedExisting.length}.`
-        }
-        if (skippedFailed.length) {
-          msg += ` Fonts skipped (copy failed): ${skippedFailed.length}.`
-        }
-        if (!skippedExisting.length && !skippedFailed.length && Array.isArray(data.fonts_skipped) && data.fonts_skipped.length) {
-          msg += ` Fonts skipped: ${data.fonts_skipped.length}.`
-        }
+        const msg = `Imported config '${data.config_name}'.`
+        const importSummaryText = summarizeImportResult(data)
         const modal = bootstrap.Modal.getInstance(importConfigModalEl)
         if (modal) modal.hide()
-        showImportRedirectOverlay(msg, 'Validating imported config...')
+        showImportRedirectOverlay(msg, `${importSummaryText}\nValidating imported config...`)
         try {
           const validationData = await runImportBulkValidation()
-          showImportRedirectOverlay('Import complete.', `${summarizeBulkValidation(validationData)} Reloading Start...`)
-          setTimeout(() => { window.location = '/step/001-start' }, 900)
+          const actions = validationFailureActions(validationData)
+          if (actions.length) {
+            actions.push({ href: '/step/001-start', label: 'Open Start', className: 'btn btn-sm btn-outline-info' })
+            showImportRedirectOverlay(
+              'Import complete.',
+              `${importSummaryText}\n${summarizeBulkValidation(validationData)} Review failed pages below.`,
+              { done: true, actions }
+            )
+          } else {
+            showImportRedirectOverlay(
+              'Import complete.',
+              `${importSummaryText}\n${summarizeBulkValidation(validationData)} Reloading Start...`,
+              { done: true }
+            )
+            setTimeout(() => { window.location = '/step/001-start' }, 900)
+          }
         } catch (validationErr) {
-          showImportRedirectOverlay('Import complete.', `${validationErr.message || 'Validation failed.'} Reloading Start...`)
-          setTimeout(() => { window.location = '/step/001-start' }, 1600)
+          showImportRedirectOverlay(
+            'Import complete.',
+            `${importSummaryText}\n${validationErr.message || 'Validation failed.'}`,
+            {
+              done: true,
+              actions: [{ href: '/step/001-start', label: 'Open Start', className: 'btn btn-sm btn-outline-info' }]
+            }
+          )
         }
       } catch (err) {
         const message = err.message || 'Import failed.'

@@ -1043,6 +1043,19 @@ $(document).ready(function () {
     kometaActionsCollapse.addEventListener('hidden.bs.collapse', syncKometaUpdateAttention)
   }
 
+  function setKometaPrepareRunningState (isRunning) {
+    const accordion = document.getElementById('kometa-actions-accordion')
+    if (accordion) accordion.classList.toggle('opacity-50', Boolean(isRunning))
+    if (!kometaActionsCollapse || !kometaActionsToggle) return
+    if (isRunning && kometaActionsCollapse.classList.contains('show') && typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+      bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).hide()
+    }
+    if (isRunning) {
+      kometaActionsToggle.classList.add('collapsed')
+      kometaActionsToggle.setAttribute('aria-expanded', 'false')
+    }
+  }
+
   function showCopyButtonSuccess (iconSelector, textSelector) {
     const $icon = $(iconSelector)
     const $text = $(textSelector)
@@ -2570,6 +2583,7 @@ $(document).ready(function () {
         const $forceUpdate = $forceUpdateToggle
         const $runNow = $('#run-now')
         const $stopNow = $('#stop-now')
+        setKometaPrepareRunningState(data.status === 'running')
 
         // Disable update if Kometa is running or an update is in progress
         const shouldDisableUpdate = (data.status === 'running') || KOMETA_UPDATING

@@ -4282,11 +4282,22 @@ def import_config_confirm():
     session.pop("import_preview_plex_token", None)
     session.pop("import_preview_tmdb_apikey", None)
     session["config_name"] = config_name
+    importable_sections = sorted(str(section) for section in (cached.get("importable_sections") or payload.keys()))
+    skipped_sections = sorted(section for section in importable_sections if section not in set(imported_sections))
+    report_summary = report.summary() if "report" in locals() else (cached.get("report_summary") or {})
+    mapping_values = [str(value).strip() for value in library_mapping.values()] if isinstance(library_mapping, dict) else []
+    mapping_summary = {
+        "mapped": sum(1 for value in mapping_values if value and value != "__ignore__"),
+        "ignored": sum(1 for value in mapping_values if value == "__ignore__"),
+    }
 
     return jsonify(
         success=True,
         config_name=config_name,
         imported_sections=imported_sections,
+        skipped_sections=skipped_sections,
+        report_summary=report_summary,
+        mapping_summary=mapping_summary,
         fonts_copied=fonts_copied,
         fonts_skipped=fonts_skipped,
         fonts_skipped_existing=fonts_skipped_existing,

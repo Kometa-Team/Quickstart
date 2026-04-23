@@ -99,6 +99,10 @@ This reduces the chance of Plex background maintenance colliding with long Komet
 - **Library mapping:** Imported library names must be mapped to Plex libraries (or ignored) before confirming the import; you can re‑preview after mapping.
 - **After import:** Quickstart stays on the Welcome page, runs bulk validation automatically, then refreshes the workspace status for the imported config.
 
+#### What happens after import?
+
+After you confirm an import, Quickstart saves the new config, shows a compact summary of imported sections, skipped sections, mapped libraries, and copied fonts, then runs bulk validation automatically. If validation fails for any page, Quickstart keeps the summary open with direct links to the failed pages. If validation passes, it refreshes the Welcome page with the imported config selected.
+
 ![Import Config](static/images/readme/import-config.png)
 
 ### Quickstart Scope
@@ -385,10 +389,19 @@ Quickstart runs on port 7171 by default. You can change it in one of three ways:
 
 Quickstart uses pytest for unit/integration tests and Playwright for E2E tests.
 
-Install runtime and dev test dependencies before running tests, and rerun this when either requirements file changes:
+### Developer Testing
+
+Set up or refresh the local test environment, including runtime requirements, developer requirements, and Playwright browsers:
 
 ```
-python -m pip install -r requirements.txt -r requirements-dev.txt
+.\scripts\setup-dev.ps1
+```
+
+You can also run setup through the test runner:
+
+```
+.\scripts\run-tests.ps1 -Setup
+.\scripts\run-tests.ps1 -Setup -All
 ```
 
 Run tests (PowerShell):
@@ -397,6 +410,15 @@ Run tests (PowerShell):
 .\scripts\run-tests.ps1          # Unit/integration (non-E2E)
 .\scripts\run-tests.ps1 -E2E     # End-to-end tests (Playwright)
 .\scripts\run-tests.ps1 -All     # Everything
+```
+
+Fast focused paths:
+
+```
+.\venv\Scripts\python.exe -m pytest tests\test_importer_edge_cases.py
+.\venv\Scripts\python.exe -m pytest tests\test_workspace_dependency_logic.py
+.\venv\Scripts\python.exe -m pytest tests\test_core_backend.py -k final
+.\scripts\run-tests.ps1 -E2E
 ```
 
 If you prefer raw commands:

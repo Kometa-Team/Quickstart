@@ -30,6 +30,7 @@ param(
   [string]$RatingsMovieLibrary,
   [string]$RatingsShowLibrary,
   [string]$RatingsArtifactDir,
+  [switch]$Setup,
   [switch]$All
 )
 
@@ -38,6 +39,17 @@ $ErrorActionPreference = "Stop"
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $venvPython = Join-Path $repoRoot "venv\\Scripts\\python.exe"
 $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
+
+if ($Setup) {
+  & (Join-Path $PSScriptRoot "setup-dev.ps1")
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+  if (-not ($E2E -or $Unit -or $RatingsMatrix -or $RatingsArtifacts -or $All)) {
+    exit 0
+  }
+  $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
+}
 
 # Optional local config file for per-user defaults:
 # scripts/run-tests.config.json
