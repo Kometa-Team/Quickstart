@@ -36,6 +36,7 @@ scm
 Seerr
 Sortable
 tmdb
+TODO
 txt
 ui
 venv
