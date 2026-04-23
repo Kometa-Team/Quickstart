@@ -692,7 +692,6 @@ document.addEventListener('DOMContentLoaded', function () {
     anidb: 'AniDB',
     webhooks: 'Webhooks',
     settings: 'Settings',
-    playlist_files: 'Playlists',
     libraries: 'Libraries'
   }
 
@@ -700,7 +699,6 @@ document.addEventListener('DOMContentLoaded', function () {
     'plex',
     'tmdb',
     'libraries',
-    'playlist_files',
     'tautulli',
     'github',
     'omdb',
@@ -717,7 +715,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'settings'
   ]
 
-  const mergeDefaultSelected = new Set(['libraries', 'playlist_files', 'settings'])
+  const mergeDefaultSelected = new Set(['libraries', 'settings'])
 
   function renderMergeSections (sections) {
     if (!importMergeSection || !importMergeSectionList) return
@@ -1366,17 +1364,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const messageEl = document.createElement('div')
         messageEl.className = 'fw-semibold mb-1 qs-import-redirect-message'
-        messageEl.textContent = message || 'Import complete. Redirecting...'
+        messageEl.textContent = message || 'Import complete.'
 
         const detailEl = document.createElement('div')
         detailEl.className = 'small text-muted mb-3 qs-import-redirect-detail'
         detailEl.style.whiteSpace = 'pre-line'
-        detailEl.textContent = detail || 'Loading Final Validation. This can take up to 30 seconds.'
+        detailEl.textContent = detail || 'Validating imported config...'
 
         const button = document.createElement('button')
         button.type = 'button'
         button.className = 'btn btn-sm btn-outline-info qs-import-redirect-btn d-none'
-        button.textContent = 'Go to Final Validation'
+        button.textContent = 'Open Start'
 
         card.append(spinner, messageEl, detailEl, button)
         overlay.appendChild(card)
@@ -1385,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const redirectBtn = overlay.querySelector('.qs-import-redirect-btn')
         if (redirectBtn) {
           redirectBtn.addEventListener('click', () => {
-            window.location = '/step/900-final'
+            window.location = '/step/001-start'
           })
           setTimeout(() => {
             if (document.getElementById('qs-import-redirect')) {
@@ -1393,6 +1391,25 @@ document.addEventListener('DOMContentLoaded', function () {
             }
           }, 60000)
         }
+      }
+
+      function summarizeBulkValidation (data) {
+        const summary = data && data.summary ? data.summary : {}
+        const counts = window.QSBulkValidation && typeof window.QSBulkValidation.getSummaryCounts === 'function'
+          ? window.QSBulkValidation.getSummaryCounts(summary)
+          : {
+              validated: Number(summary.validated || 0),
+              failed: Number(summary.failed || 0),
+              skipped: Number(summary.skipped || 0)
+            }
+        return `Validation complete. ${counts.validated} passed, ${counts.failed} failed, ${counts.skipped} skipped.`
+      }
+
+      async function runImportBulkValidation () {
+        if (!window.QSBulkValidation || typeof window.QSBulkValidation.run !== 'function') {
+          throw new Error('Bulk validation is unavailable.')
+        }
+        return window.QSBulkValidation.run({ source: 'import-confirm', silentToast: true })
       }
       try {
         const libraryMapping = {}
@@ -1437,11 +1454,17 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!skippedExisting.length && !skippedFailed.length && Array.isArray(data.fonts_skipped) && data.fonts_skipped.length) {
           msg += ` Fonts skipped: ${data.fonts_skipped.length}.`
         }
-        const guidance = 'Import complete. Go to Final Validation and click Validate Configured Services to check all services, then fix any failures (especially interactive pages).'
-        showImportRedirectOverlay(msg, `${guidance}\nLoading Final Validation. This can take up to 30 seconds.`)
         const modal = bootstrap.Modal.getInstance(importConfigModalEl)
         if (modal) modal.hide()
-        setTimeout(() => { window.location = '/step/900-final' }, 1200)
+        showImportRedirectOverlay(msg, 'Validating imported config...')
+        try {
+          const validationData = await runImportBulkValidation()
+          showImportRedirectOverlay('Import complete.', `${summarizeBulkValidation(validationData)} Reloading Start...`)
+          setTimeout(() => { window.location = '/step/001-start' }, 900)
+        } catch (validationErr) {
+          showImportRedirectOverlay('Import complete.', `${validationErr.message || 'Validation failed.'} Reloading Start...`)
+          setTimeout(() => { window.location = '/step/001-start' }, 1600)
+        }
       } catch (err) {
         const message = err.message || 'Import failed.'
         if (/import token is invalid/i.test(message)) {

@@ -3999,9 +3999,15 @@ def import_config_confirm():
             selected_sections = {section for section in merge_sections if section in importable_sections}
         else:
             selected_sections = set(importable_sections)
+        if "playlist_files" in selected_sections:
+            selected_sections.discard("playlist_files")
+            selected_sections.add("libraries")
         if not selected_sections:
             return jsonify(success=False, message="Select at least one section to merge."), 400
-        config_data = {key: value for key, value in config_data.items() if key in selected_sections}
+        selected_config_sections = set(selected_sections)
+        if "libraries" in selected_config_sections:
+            selected_config_sections.add("playlist_files")
+        config_data = {key: value for key, value in config_data.items() if key in selected_config_sections}
     if not config_name:
         return jsonify(success=False, message="Import payload is invalid."), 400
 

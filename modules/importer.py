@@ -937,37 +937,48 @@ def prepare_import_payload(
             report.add("unmapped", f"libraries.{lib_name}.operations.{op_key}", "No importable values found.")
         return True, imported_any
 
+    playlist_libraries: set[str] = set()
+    playlist_payload = config_data.get("playlist_files")
+    if playlist_payload is not None:
+        if isinstance(playlist_payload, list):
+            for idx, entry in enumerate(playlist_payload):
+                if not isinstance(entry, dict):
+                    report.add("unmapped", f"playlist_files[{idx}]", "Unsupported playlist entry format.")
+                    continue
+                tv = entry.get("template_variables", {})
+                if not isinstance(tv, dict):
+                    report.add("unmapped", f"playlist_files[{idx}].template_variables", "Unsupported template_variables format.")
+                    continue
+                libs = tv.get("libraries")
+                if not isinstance(libs, list):
+                    report.add("unmapped", f"playlist_files[{idx}].template_variables.libraries", "Missing playlist library entries.")
+                    continue
+                entry_libs = [str(lib).strip() for lib in libs if str(lib).strip()]
+                if not entry_libs:
+                    report.add("unmapped", f"playlist_files[{idx}].template_variables.libraries", "Missing playlist library entries.")
+                    continue
+
+                playlist_libraries.update(entry_libs)
+                report.add("imported", f"playlist_files[{idx}]")
+                default_value = entry.get("default")
+                if default_value == "playlist":
+                    report.add("imported", f"playlist_files[{idx}].default")
+                elif default_value is not None:
+                    report.add("unmapped", f"playlist_files[{idx}].default", "Unsupported playlist default.")
+                report.add("imported", f"playlist_files[{idx}].template_variables")
+                report.add("imported", f"playlist_files[{idx}].template_variables.libraries")
+                for lib_idx in range(len(entry_libs)):
+                    report.add("imported", f"playlist_files[{idx}].template_variables.libraries[{lib_idx}]")
+            if playlist_libraries:
+                report.add("imported", "playlist_files")
+        else:
+            report.add("unmapped", "playlist_files", "Unsupported playlist_files format.")
+
     for section in SIMPLE_SECTIONS:
         if section not in config_data:
             continue
         section_payload = config_data.get(section)
         if section == "playlist_files":
-            libraries = []
-            if isinstance(section_payload, list):
-                for idx, entry in enumerate(section_payload):
-                    if isinstance(entry, dict):
-                        tv = entry.get("template_variables", {})
-                        if isinstance(tv, dict):
-                            libs = tv.get("libraries")
-                            if isinstance(libs, list):
-                                entry_libs = [str(lib) for lib in libs if str(lib).strip()]
-                                libraries.extend(entry_libs)
-                                report.add("imported", f"{section}[{idx}]")
-                                default_value = entry.get("default")
-                                if default_value == "playlist":
-                                    report.add("imported", f"{section}[{idx}].default")
-                                elif default_value is not None:
-                                    report.add("unmapped", f"{section}[{idx}].default", "Unsupported playlist default.")
-                                report.add("imported", f"{section}[{idx}].template_variables")
-                                report.add("imported", f"{section}[{idx}].template_variables.libraries")
-                                for lib_idx in range(len(entry_libs)):
-                                    report.add("imported", f"{section}[{idx}].template_variables.libraries[{lib_idx}]")
-            if libraries:
-                payload[section] = {"playlist_files": {"libraries": ",".join(libraries)}}
-                report.add("imported", section)
-                report.add("imported", f"{section}.libraries")
-            else:
-                report.add("unmapped", section, "Missing playlist library entries.")
             continue
 
         if isinstance(section_payload, dict):
@@ -995,6 +1006,7 @@ def prepare_import_payload(
     if isinstance(libraries_payload, dict):
         libraries_data: dict[str, Any] = {}
         existing_ids: set[str] = set()
+        matched_playlist_libraries: set[str] = set()
 
         for lib_name, lib_cfg in libraries_payload.items():
             if not isinstance(lib_cfg, dict):
@@ -1032,6 +1044,12 @@ def prepare_import_payload(
             lib_id = f"{lib_type}-library_{helpers.normalize_id(name, existing_ids)}"
             libraries_data[f"{lib_id}-library"] = resolved_name
             report.add("imported", f"libraries.{lib_name}.library")
+            playlist_names_for_library = {name, resolved_name}
+            matched_names = playlist_libraries.intersection(playlist_names_for_library)
+            if matched_names:
+                libraries_data[f"{lib_id}-playlist"] = "true"
+                matched_playlist_libraries.update(matched_names)
+                report.add("imported", f"libraries.{lib_name}.playlist_files")
 
             # Top-level values
             for yaml_key, field_prefix in top_level_map.items():
@@ -1331,11 +1349,19 @@ def prepare_import_payload(
 
         if libraries_data:
             payload["libraries"] = {"libraries": libraries_data}
+            for playlist_library in sorted(playlist_libraries - matched_playlist_libraries):
+                report.add(
+                    "unmapped",
+                    f"playlist_files.libraries.{playlist_library}",
+                    "No matching imported library found.",
+                )
         else:
             report.add("unmapped", "libraries", "No importable libraries found.")
 
     elif libraries_payload is not None:
         report.add("unmapped", "libraries", "Unsupported libraries format.")
+    elif playlist_libraries:
+        report.add("unmapped", "playlist_files", "Playlist selections are imported through Libraries; no importable libraries were found.")
 
     for key in config_data.keys():
         if key in SIMPLE_SECTIONS or key == "libraries":
