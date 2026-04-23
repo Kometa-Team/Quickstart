@@ -1014,6 +1014,10 @@ def _has_meaningful_optional_input(template_key, payload):
     if template_key == "027-playlist_files":
         return True
 
+    if template_key == "100-anidb":
+        anidb = payload.get("anidb", {})
+        return isinstance(anidb, dict) and helpers.booler(anidb.get("enable"))
+
     simple_key_requirements = {
         "030-tautulli": ("tautulli", ("url", "apikey")),
         "040-github": ("github", ("token",)),
@@ -1023,7 +1027,6 @@ def _has_meaningful_optional_input(template_key, payload):
         "080-gotify": ("gotify", ("url", "token")),
         "085-ntfy": ("ntfy", ("url", "token", "topic")),
         "090-webhooks": ("webhooks", ("notifiarr", "gotify", "ntfy", "slack", "discord", "webhook", "url")),
-        "100-anidb": ("anidb", ("client", "version")),
         "110-radarr": ("radarr", ("url", "token")),
         "120-sonarr": ("sonarr", ("url", "token")),
     }

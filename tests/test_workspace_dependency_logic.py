@@ -790,6 +790,26 @@ def test_optional_skipped_with_user_input_stays_unknown(qs_module):
     assert state == "unknown"
 
 
+def test_anidb_enabled_and_bulk_validated_is_ok(qs_module):
+    section_rows = {
+        "anidb": {
+            "validated": True,
+            "user_entered": True,
+            "data": {
+                "validation_status": "validated",
+                "anidb": {
+                    "enable": True,
+                    "language": "en",
+                    "cache_expiration": "60",
+                },
+            },
+        }
+    }
+
+    state = qs_module._derive_step_status("100-anidb", "optional", section_rows, config_exists=True)
+    assert state == "ok"
+
+
 def test_playlist_never_visited_is_unknown(qs_module):
     state = qs_module._derive_step_status("027-playlist_files", "optional", {}, config_exists=True)
     assert state == "unknown"

@@ -747,6 +747,9 @@ function qsIsNonBlankFormValue (value) {
 
 function qsCurrentStepHasMeaningfulInput () {
   const stepKey = qsGetCurrentStepKey()
+  if (stepKey === '100-anidb') {
+    return Boolean(document.getElementById('anidb_enable')?.checked)
+  }
   const fieldMap = {
     '030-tautulli': ['tautulli_url', 'tautulli_apikey'],
     '040-github': ['github_token'],
@@ -755,7 +758,6 @@ function qsCurrentStepHasMeaningfulInput () {
     '070-notifiarr': ['notifiarr_apikey'],
     '080-gotify': ['gotify_url', 'gotify_token'],
     '085-ntfy': ['ntfy_url', 'ntfy_token', 'ntfy_topic'],
-    '100-anidb': ['anidb_client', 'anidb_version'],
     '110-radarr': ['radarr_url', 'radarr_token'],
     '120-sonarr': ['sonarr_url', 'sonarr_token'],
     '130-trakt': ['trakt_client_id', 'trakt_client_secret', 'trakt_pin', 'trakt_access_token', 'trakt_refresh_token'],
