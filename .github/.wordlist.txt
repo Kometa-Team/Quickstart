@@ -1,4 +1,5 @@
 allowlist
+AniDB
 AppIndicator
 bullmoose
 CDNs
@@ -20,7 +21,10 @@ KStatusNotifierItem
 localhost
 Logscan
 MacOS
+MDBList
 meisnate
+MyAnimeList
+OMDb
 Personalization
 Plex
 PowerShell
@@ -30,13 +34,17 @@ py
 PyQt
 pytest
 quickstart
+Radarr
 Reingest
 repo
 scm
 Seerr
+Sonarr
 Sortable
+Tautulli
 tmdb
 TODO
+Trakt
 txt
 ui
 venv
