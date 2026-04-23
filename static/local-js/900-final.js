@@ -5,6 +5,7 @@ let KOMETA_UPDATING = false
 let KOMETA_VALIDATED = false
 let KOMETA_VALIDATION_IN_PROGRESS = false
 let KOMETA_UPDATE_AVAILABLE = false
+let KOMETA_UPDATE_CHECK_SKIPPED = false
 let KOMETA_INSTALLED = false
 let KOMETA_CHECK_COMPLETED = false
 // Polling handles (hoist to top so all handlers see them safely)
@@ -863,7 +864,13 @@ $(document).ready(function () {
           $logBox.append('✅ Kometa root validated successfully.\n')
           if (res.kometa_version) $logBox.append(`📦 Local Kometa version: ${res.kometa_version}\n`)
 
-          if (res.remote_version && res.local_version) {
+          if (res.kometa_update_check_skipped) {
+            KOMETA_UPDATE_CHECK_SKIPPED = true
+            KOMETA_UPDATE_AVAILABLE = false
+            $('#kometa-update-box').addClass('d-none')
+            syncUpdateButtonLabel()
+          } else if (res.remote_version && res.local_version) {
+            KOMETA_UPDATE_CHECK_SKIPPED = false
             const hadUpdate = KOMETA_UPDATE_AVAILABLE
             if (res.kometa_update_available) {
               KOMETA_UPDATE_AVAILABLE = true
@@ -1012,6 +1019,7 @@ $(document).ready(function () {
     if (KOMETA_VALIDATION_IN_PROGRESS) return { state: 'unknown', label: 'Checking...' }
     if (!KOMETA_CHECK_COMPLETED) return { state: 'unknown', label: 'Not checked' }
     if (!KOMETA_INSTALLED) return { state: 'error', label: 'Install needed' }
+    if (KOMETA_UPDATE_CHECK_SKIPPED) return { state: 'unknown', label: 'Skipped while running' }
     if (KOMETA_UPDATE_AVAILABLE) return { state: 'warn', label: 'Update available' }
     return { state: 'ok', label: 'Up to date' }
   }
@@ -1407,6 +1415,7 @@ $(document).ready(function () {
 
     KOMETA_UPDATING = true
     KOMETA_VALIDATED = false
+    KOMETA_UPDATE_CHECK_SKIPPED = false
     syncKometaRollupBadge()
     hideRunCommandSectionUntilValidated()
     const prevRunNowHtml = $runNow.html()
@@ -2607,6 +2616,7 @@ $(document).ready(function () {
         // Handle Kometa process states
         if (data.status === 'running') {
           finalLogscanAnalyzeTriggered = false
+          $('#incomplete-run-alert').addClass('d-none')
           // Kometa is actively running → keep Run disabled, allow Stop
           revealRunCommandSection()
           $runNow.prop('disabled', true).html('<i class="bi bi-play-fill me-1"></i> Run Now')

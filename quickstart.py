@@ -4784,7 +4784,8 @@ def step(name):
         page_info["saved_filename"] = saved_filename
         page_info["yaml_valid"] = validated
         page_info["quickstart_root"] = helpers.get_app_root()
-        incomplete_resume_hint = _build_latest_incomplete_resume_hint()
+        kometa_is_running = helpers.is_kometa_running()
+        incomplete_resume_hint = None if kometa_is_running else _build_latest_incomplete_resume_hint()
         session["yaml_content"] = yaml_content
         library_settings = persistence.retrieve_settings("025-libraries").get("libraries", {})
         movie_libraries = []
@@ -9004,11 +9005,20 @@ def validate_kometa_root():
 
     log("✅ Kometa root is valid and ready.")
 
-    kometa_update_info = helpers.check_kometa_update(p)
-    if kometa_update_info["update_available"]:
-        log(f"⬆️ Update available: {kometa_update_info['local_version']} → {kometa_update_info['remote_version']}")
+    kometa_update_check_skipped = helpers.is_kometa_running()
+    if kometa_update_check_skipped:
+        kometa_update_info = {
+            "local_version": kometa_version,
+            "remote_version": "",
+            "update_available": False,
+        }
+        log("ℹ️ Kometa is currently running; update check skipped.")
     else:
-        log(f"✅ Kometa is up to date: {kometa_update_info['local_version']}")
+        kometa_update_info = helpers.check_kometa_update(p)
+        if kometa_update_info["update_available"]:
+            log(f"⬆️ Update available: {kometa_update_info['local_version']} → {kometa_update_info['remote_version']}")
+        else:
+            log(f"✅ Kometa is up to date: {kometa_update_info['local_version']}")
 
     return (
         jsonify(
@@ -9023,6 +9033,7 @@ def validate_kometa_root():
             local_version=kometa_update_info["local_version"],
             remote_version=kometa_update_info["remote_version"],
             kometa_update_available=kometa_update_info["update_available"],
+            kometa_update_check_skipped=kometa_update_check_skipped,
             log=logs,
         ),
         200,
