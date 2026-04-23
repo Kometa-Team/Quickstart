@@ -97,7 +97,7 @@ This reduces the chance of Plex background maintenance colliding with long Komet
 - **Preview required:** Quickstart always runs a preview before import and shows a line‑by‑line report (`imported / not imported`) with filters (All/Imported/Not Imported/Comments) and a downloadable report.
 - **Plex credentials prompt:** If the import contains libraries, Plex validation is required for mapping. Quickstart will prompt for Plex URL/token if none are present; if the credentials in the file fail validation, you’ll be prompted to correct them and re‑run Preview.
 - **Library mapping:** Imported library names must be mapped to Plex libraries (or ignored) before confirming the import; you can re‑preview after mapping.
-- **After import:** Quickstart redirects to Final Validation. Review each page and validate services (Plex/TMDB/etc.) before generating the final config.
+- **After import:** Quickstart stays on the Welcome page, runs bulk validation automatically, then refreshes the workspace status for the imported config.
 
 ![Import Config](static/images/readme/import-config.png)
 
@@ -384,6 +384,12 @@ Quickstart runs on port 7171 by default. You can change it in one of three ways:
 ## Testing
 
 Quickstart uses pytest for unit/integration tests and Playwright for E2E tests.
+
+Install runtime and dev test dependencies before running tests, and rerun this when either requirements file changes:
+
+```
+python -m pip install -r requirements.txt -r requirements-dev.txt
+```
 
 Run tests (PowerShell):
 
