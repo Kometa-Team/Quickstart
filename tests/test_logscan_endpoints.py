@@ -83,6 +83,439 @@ def test_logscan_trends_empty(client, isolated_config_dir):
     payload = resp.get_json()
     assert payload["total_runs"] == 0
     assert payload["runs"] == []
+    assert payload["archive_storage"]["archived_bytes"] == 0
+    assert payload["archive_storage"]["archived_files"] == 0
+    assert payload["archive_storage"]["extra_archived_files"] == 0
+    assert payload["archive_storage"]["retention_label"] == "Keep all archived logs"
+
+
+def test_logscan_trends_includes_archive_storage_and_run_file_metadata(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = archive_dir / "meta-2026-04-23.log"
+    extra_path = archive_dir / "meta-2026-04-22.log"
+    log_bytes = b"archived log contents\n"
+    extra_bytes = b"extra archived log\n"
+    log_path.write_bytes(log_bytes)
+    extra_path.write_bytes(extra_bytes)
+    stats = log_path.stat()
+    monkeypatch.setitem(qs_module.app.config, "QS_KOMETA_LOG_KEEP", 7)
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-archive-1",
+            "finished_at": "2026-04-23T10:00:00Z",
+            "config_name": "demo",
+            "created_at": "2026-04-23T10:00:00Z",
+            "log_mtime": stats.st_mtime,
+            "log_size": stats.st_size,
+        }
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {"version": 1, "logs": {str(log_path.resolve()): {"run_key": "run-archive-1", "run_complete": True}}},
+    )
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["archive_storage"]["archived_files"] == 1
+    assert payload["archive_storage"]["archived_bytes"] == len(log_bytes)
+    assert payload["archive_storage"]["extra_archived_files"] == 1
+    assert payload["archive_storage"]["extra_archived_bytes"] == len(extra_bytes)
+    assert payload["archive_storage"]["disk_archived_files"] == 2
+    assert payload["archive_storage"]["retention_label"] == "Keep last 7 archived logs"
+    assert payload["runs"][0]["log_location"] == "archive"
+    assert payload["runs"][0]["log_available"] is True
+    assert payload["runs"][0]["log_can_delete"] is True
+    assert payload["runs"][0]["log_resolved_size"] == len(log_bytes)
+
+
+def test_logscan_trends_does_not_bind_historical_run_to_live_log(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    live_path = log_dir / "meta.log"
+    log_bytes = b"same sized log\n"
+    live_path.write_bytes(log_bytes)
+    stats = live_path.stat()
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-historical-1",
+            "finished_at": "2026-04-23T09:00:00Z",
+            "config_name": "demo",
+            "created_at": "2026-04-23T09:00:00Z",
+            "log_mtime": stats.st_mtime,
+            "log_size": stats.st_size,
+        }
+    )
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: {"version": 1, "logs": {}})
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["runs"][0]["log_available"] is False
+    assert payload["runs"][0]["log_location"] == "missing"
+
+
+def test_logscan_trends_includes_incomplete_runs_in_table_payload(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    incomplete_path = archive_dir / "meta-20260423-120000Z-10.log"
+    incomplete_path.write_text("incomplete log\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        qs_module,
+        "_get_logscan_incomplete_runs",
+        lambda limit=100, config_name=None: [
+            {
+                "run_key": "run-incomplete-1",
+                "config_name": "demo",
+                "created_at": "2026-04-23T12:00:00Z",
+                "log_mtime": incomplete_path.stat().st_mtime,
+                "log_size": incomplete_path.stat().st_size,
+                "run_complete": False,
+                "is_incomplete": True,
+                "resume_reason": "Run appears incomplete.",
+                "recommendations_count": 2,
+            }
+        ],
+    )
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: {"version": 1, "logs": {str(incomplete_path.resolve()): {"run_key": "run-incomplete-1", "run_complete": False}}})
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["total_incomplete_runs"] == 1
+    assert len(payload["incomplete_runs"]) == 1
+    assert payload["incomplete_runs"][0]["is_incomplete"] is True
+    assert payload["incomplete_runs"][0]["log_location"] == "archive"
+    assert payload["incomplete_runs"][0]["log_can_delete"] is True
+    assert payload["archive_storage"]["archived_files"] == 1
+
+
+def test_logscan_trends_includes_incomplete_fallback_when_detailed_parse_fails(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    incomplete_path = archive_dir / "meta-fallback.log"
+    incomplete_path.write_text("cannot parse this fully\n", encoding="utf-8")
+    monkeypatch.setattr(qs_module, "_analyze_incomplete_log_for_resume", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {"version": 1, "logs": {str(incomplete_path.resolve()): {"run_key": "run-fallback-1", "run_complete": False, "mtime": incomplete_path.stat().st_mtime, "size": incomplete_path.stat().st_size}}},
+    )
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["total_incomplete_runs"] == 1
+    assert payload["incomplete_runs"][0]["run_key"] == "run-fallback-1"
+    assert payload["incomplete_runs"][0]["is_incomplete"] is True
+    assert "preserved for investigation" in payload["incomplete_runs"][0]["resume_reason"].lower()
+
+
+def test_logscan_trends_uses_cached_incomplete_summary_without_reparse(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    incomplete_path = archive_dir / "meta-cached.log"
+    incomplete_path.write_text("cached incomplete\n", encoding="utf-8")
+    monkeypatch.setattr(
+        qs_module,
+        "_analyze_incomplete_log_for_resume",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("should not reparse cached incomplete entries")),
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {
+            "version": 1,
+            "logs": {
+                str(incomplete_path.resolve()): {
+                    "run_key": "run-cached-1",
+                    "run_complete": False,
+                    "mtime": incomplete_path.stat().st_mtime,
+                    "size": incomplete_path.stat().st_size,
+                    "updated_at": "2026-04-23T22:00:00Z",
+                    "summary": {
+                        "run_key": "run-cached-1",
+                        "finished_at": "2026-04-23T21:59:00Z",
+                        "run_time_seconds": 123,
+                        "config_name": "demo",
+                        "run_command": "kometa.py --run --collections-only",
+                        "command_signature": "--run --collections-only",
+                        "log_counts": {"warning": 2, "error": 1},
+                        "analysis_counts": {"playlist_errors": 1},
+                    },
+                    "recommendations": [{"first_line": "INFO - Run incomplete", "message": "Review the log"}],
+                }
+            },
+        },
+    )
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["total_incomplete_runs"] == 1
+    row = payload["incomplete_runs"][0]
+    assert row["run_key"] == "run-cached-1"
+    assert row["config_name"] == "demo"
+    assert row["warning_count"] == 2
+    assert row["error_count"] == 1
+    assert row["recommendations_count"] == 1
+
+
+def test_logscan_trends_recommendations_support_incomplete_run(client, isolated_config_dir, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.database, "get_log_run_recommendations", lambda run_key: [])
+    monkeypatch.setattr(
+        qs_module,
+        "_get_logscan_incomplete_run",
+        lambda run_key, config_name=None: {
+            "run_key": run_key,
+            "recommendations": [{"first_line": "INFO - Run incomplete", "summary": "Needs review"}],
+        },
+    )
+
+    resp = client.get("/logscan/trends/recommendations?run_key=run-incomplete-1")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert len(payload["recommendations"]) == 1
+
+
+def test_logscan_trends_log_delete_supports_incomplete_run_without_db(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = archive_dir / "meta-incomplete.log"
+    log_path.write_text("delete incomplete\n", encoding="utf-8")
+    monkeypatch.setattr(qs_module.database, "get_log_run", lambda run_key: None)
+    monkeypatch.setattr(
+        qs_module,
+        "_get_logscan_incomplete_run",
+        lambda run_key, config_name=None: {
+            "run_key": run_key,
+            "log_mtime": log_path.stat().st_mtime,
+            "log_size": log_path.stat().st_size,
+            "is_incomplete": True,
+        },
+    )
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: {"version": 1, "logs": {str(log_path.resolve()): {"run_key": "run-incomplete-1", "run_complete": False}}})
+
+    resp = client.post("/logscan/trends/log/delete", json={"run_key": "run-incomplete-1"})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["deleted_run"] is False
+    assert not log_path.exists()
+
+
+def test_logscan_trends_log_delete_supports_bulk_delete(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    first_log = archive_dir / "meta-bulk-1.log"
+    second_log = archive_dir / "meta-bulk-2.log"
+    first_log.write_text("bulk one\n", encoding="utf-8")
+    second_log.write_text("bulk two\n", encoding="utf-8")
+
+    run_map = {
+        "bulk-run-1": {
+            "run_key": "bulk-run-1",
+            "log_mtime": first_log.stat().st_mtime,
+            "log_size": first_log.stat().st_size,
+            "config_name": "demo",
+            "created_at": "2026-04-23T10:00:00Z",
+        },
+        "bulk-run-2": {
+            "run_key": "bulk-run-2",
+            "log_mtime": second_log.stat().st_mtime,
+            "log_size": second_log.stat().st_size,
+            "config_name": "demo",
+            "created_at": "2026-04-23T10:05:00Z",
+        },
+    }
+    deleted_run_keys = []
+
+    monkeypatch.setattr(qs_module.database, "get_log_run", lambda run_key: run_map.get(run_key))
+    monkeypatch.setattr(qs_module.database, "delete_log_run", lambda run_key: deleted_run_keys.append(run_key) or True)
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {
+            "version": 1,
+            "logs": {
+                str(first_log.resolve()): {"run_key": "bulk-run-1", "run_complete": True},
+                str(second_log.resolve()): {"run_key": "bulk-run-2", "run_complete": True},
+            },
+        },
+    )
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda cache: None)
+
+    resp = client.post("/logscan/trends/log/delete", json={"run_keys": ["bulk-run-1", "bulk-run-2"]})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["deleted"] == 2
+    assert payload["success"] is True
+    assert set(deleted_run_keys) == {"bulk-run-1", "bulk-run-2"}
+    assert not first_log.exists()
+    assert not second_log.exists()
+
+
+def test_logscan_trends_log_download(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta-1.log"
+    log_path.write_text("hello from meta log\n", encoding="utf-8")
+
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {"version": 1, "logs": {str(log_path.resolve()): {"run_key": "run-123", "run_complete": True}}},
+    )
+
+    resp = client.get("/logscan/trends/log?run_key=run-123")
+    assert resp.status_code == 200
+    assert resp.data.replace(b"\r\n", b"\n") == b"hello from meta log\n"
+
+
+def test_logscan_trends_log_delete_removes_archived_log_and_run(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = archive_dir / "meta-delete-me.log"
+    log_path.write_text("delete me\n", encoding="utf-8")
+    stats = log_path.stat()
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-delete-1",
+            "finished_at": "2026-04-23T11:00:00Z",
+            "config_name": "cleanup",
+            "created_at": "2026-04-23T11:00:00Z",
+            "log_mtime": stats.st_mtime,
+            "log_size": stats.st_size,
+        }
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {"version": 1, "logs": {str(log_path.resolve()): {"run_key": "run-delete-1", "run_complete": True}}},
+    )
+
+    resp = client.post("/logscan/trends/log/delete", json={"run_key": "run-delete-1"})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["deleted_file"] is True
+    assert not log_path.exists()
+    assert qs_module.database.get_log_run("run-delete-1") is None
+
+
+def test_logscan_trends_log_delete_rejects_live_log(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text("still live\n", encoding="utf-8")
+    stats = log_path.stat()
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-live-1",
+            "finished_at": "2026-04-23T12:00:00Z",
+            "config_name": "live",
+            "created_at": "2026-04-23T12:00:00Z",
+            "log_mtime": stats.st_mtime,
+            "log_size": stats.st_size,
+        }
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {"version": 1, "logs": {str(log_path.resolve()): {"run_key": "run-live-1", "run_complete": True}}},
+    )
+
+    resp = client.post("/logscan/trends/log/delete", json={"run_key": "run-live-1"})
+    assert resp.status_code == 409
+    assert log_path.exists()
+    assert qs_module.database.get_log_run("run-live-1") is not None
+
+
+def test_archive_log_file_uses_canonical_timestamp_size_name(isolated_config_dir, qs_module):
+    log_dir = isolated_config_dir / "kometa" / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta-3.log"
+    log_path.write_bytes(b"abc123\n")
+    fixed_epoch = 1766595600  # 2025-12-24T17:00:00Z
+    os.utime(log_path, (fixed_epoch, fixed_epoch))
+
+    archived = qs_module._archive_log_file(log_path, archive_dir, log_dir=log_dir)
+
+    assert archived is not None
+    assert archived.name == "meta-20251224-170000Z-7.log"
+    assert archived.exists()
+    assert not log_path.exists()
+
+
+def test_archive_finished_live_meta_log_if_idle_moves_live_file_and_cache(isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    live_path = log_dir / "meta.log"
+    live_path.write_text("finished live run\n", encoding="utf-8")
+
+    cache = {
+        "version": 1,
+        "logs": {
+            str(live_path.resolve()): {
+                "mtime": live_path.stat().st_mtime,
+                "size": live_path.stat().st_size,
+                "run_key": "run-live-finished-1",
+                "run_complete": True,
+                "updated_at": "2026-04-23T20:00:00Z",
+            }
+        },
+    }
+    saved = {}
+
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: cache)
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda value: saved.setdefault("cache", value))
+
+    archived = qs_module._archive_finished_live_meta_log_if_idle(log_dir=log_dir)
+
+    assert archived is not None
+    assert archived.exists()
+    assert archived.parent == archive_dir
+    assert not live_path.exists()
+    saved_cache = saved["cache"]
+    assert str(live_path.resolve()) not in saved_cache["logs"]
+    assert str(archived.resolve()) in saved_cache["logs"]
+    assert saved_cache["logs"][str(archived.resolve())]["run_key"] == "run-live-finished-1"
+
+
+def test_normalize_logscan_archive_filenames_renames_legacy_files_and_updates_cache(isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    legacy_path = archive_dir / "meta-1.log"
+    legacy_path.write_bytes(b"legacy\n")
+    fixed_epoch = 1766595600  # 2025-12-24T17:00:00Z
+    os.utime(legacy_path, (fixed_epoch, fixed_epoch))
+    cache = {"version": 1, "logs": {str(legacy_path.resolve()): {"run_key": "run-legacy", "run_complete": True}}}
+    saved = {}
+
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: cache)
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda value: saved.setdefault("cache", value))
+
+    result = qs_module._normalize_logscan_archive_filenames(archive_dir=archive_dir)
+
+    assert result["renamed"] == 1
+    renamed_path = archive_dir / "meta-20251224-170000Z-7.log"
+    assert renamed_path.exists()
+    assert not legacy_path.exists()
+    saved_cache = saved["cache"]
+    assert str(renamed_path.resolve()) in saved_cache["logs"]
+    assert str(legacy_path.resolve()) not in saved_cache["logs"]
 
 
 def test_logscan_progress_tracks_libraries(client, isolated_config_dir, monkeypatch, qs_module):

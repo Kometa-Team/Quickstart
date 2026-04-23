@@ -2167,6 +2167,183 @@ def migrate_config_archives(history_limit: int | None = None) -> dict:
     return {"moved": moved, "errors": errors, "history_limit": history_limit}
 
 
+def normalize_config_name_for_storage(config_name: str | None) -> str:
+    name = str(config_name or "").strip().lower().replace(" ", "_")
+    return name or "default"
+
+
+def delete_config_artifacts(config_name: str | None, kometa_root: str | Path | None = None) -> dict:
+    normalized = normalize_config_name_for_storage(config_name)
+    config_dir = Path(CONFIG_DIR)
+    archive_root = config_dir / "archives"
+    removed: list[str] = []
+    errors: list[str] = []
+
+    targets = [
+        config_dir / f"{normalized}_config.yml",
+        archive_root / normalized,
+    ]
+
+    if kometa_root:
+        targets.append(Path(kometa_root) / "config" / f"{normalized}_config.yml")
+
+    for target in targets:
+        try:
+            if not target.exists():
+                continue
+            if target.is_dir():
+                shutil.rmtree(target)
+            else:
+                target.unlink()
+            removed.append(str(target))
+        except Exception as exc:
+            errors.append(f"Failed to remove {target}: {exc}")
+
+    return {"removed": removed, "errors": errors, "config_name": normalized}
+
+
+def list_orphaned_config_artifacts(active_config_names: list[str] | None = None, kometa_root: str | Path | None = None) -> dict:
+    config_dir = Path(CONFIG_DIR)
+    archive_root = config_dir / "archives"
+    current_pattern = re.compile(r"^(?P<name>.+)_config\.yml$", re.IGNORECASE)
+
+    if active_config_names is None:
+        try:
+            from modules import database
+
+            active_config_names = database.get_unique_config_names() or []
+        except Exception as exc:
+            return {"orphans": [], "errors": [f"Failed to load active config names: {exc}"]}
+
+    active_names = {normalize_config_name_for_storage(name) for name in active_config_names if str(name or "").strip()}
+    bundles: dict[str, dict] = {}
+
+    def ensure_bundle(name: str) -> dict:
+        normalized = normalize_config_name_for_storage(name)
+        bundle = bundles.get(normalized)
+        if bundle is None:
+            bundle = {
+                "name": normalized,
+                "has_current_file": False,
+                "has_kometa_copy": False,
+                "has_archive_dir": False,
+                "archive_count": 0,
+                "paths": [],
+            }
+            bundles[normalized] = bundle
+        return bundle
+
+    for path in config_dir.glob("*_config.yml"):
+        if not path.is_file():
+            continue
+        match = current_pattern.match(path.name)
+        if not match:
+            continue
+        bundle = ensure_bundle(match.group("name"))
+        bundle["has_current_file"] = True
+        bundle["paths"].append(str(path))
+
+    if archive_root.exists():
+        for path in archive_root.iterdir():
+            if not path.is_dir():
+                continue
+            bundle = ensure_bundle(path.name)
+            bundle["has_archive_dir"] = True
+            bundle["archive_count"] = sum(1 for child in path.glob("*.yml") if child.is_file())
+            bundle["paths"].append(str(path))
+
+    if kometa_root:
+        kometa_config_dir = Path(kometa_root) / "config"
+        if kometa_config_dir.exists():
+            for path in kometa_config_dir.glob("*_config.yml"):
+                if not path.is_file():
+                    continue
+                match = current_pattern.match(path.name)
+                if not match:
+                    continue
+                bundle = ensure_bundle(match.group("name"))
+                bundle["has_kometa_copy"] = True
+                bundle["paths"].append(str(path))
+
+    orphans = [bundle for name, bundle in sorted(bundles.items()) if name not in active_names]
+    return {"orphans": orphans, "errors": [], "active_names": sorted(active_names)}
+
+
+def list_orphaned_config_versions(config_name: str | None) -> dict:
+    normalized = normalize_config_name_for_storage(config_name)
+    config_dir = Path(CONFIG_DIR)
+    archive_dir = config_dir / "archives" / normalized
+    versions: list[dict] = []
+
+    def add_version(path: Path, kind: str) -> None:
+        try:
+            stats = path.stat()
+        except Exception:
+            return
+        versions.append(
+            {
+                "name": normalized,
+                "path": str(path.resolve()),
+                "kind": kind,
+                "filename": path.name,
+                "mtime": stats.st_mtime,
+                "modified_at": datetime.datetime.fromtimestamp(stats.st_mtime, datetime.UTC).isoformat().replace("+00:00", "Z"),
+                "size": stats.st_size,
+            }
+        )
+
+    current_file = config_dir / f"{normalized}_config.yml"
+    if current_file.exists() and current_file.is_file():
+        add_version(current_file, "current")
+
+    if archive_dir.exists() and archive_dir.is_dir():
+        for path in archive_dir.glob("*.yml"):
+            if path.is_file():
+                add_version(path, "archive")
+
+    versions.sort(key=lambda item: (item.get("mtime") or 0, 1 if item.get("kind") == "current" else 0), reverse=True)
+    return {"name": normalized, "versions": versions}
+
+
+def prune_orphaned_config_archives(active_config_names: list[str] | None = None) -> dict:
+    archive_root = Path(CONFIG_DIR) / "archives"
+    removed: list[str] = []
+    errors: list[str] = []
+
+    if active_config_names is None:
+        try:
+            from modules import database
+
+            active_config_names = database.get_unique_config_names() or []
+        except Exception as exc:
+            return {"removed": [], "errors": [f"Failed to load active config names: {exc}"]}
+
+    active_names = {normalize_config_name_for_storage(name) for name in active_config_names if str(name or "").strip()}
+    if not archive_root.exists():
+        return {"removed": [], "errors": []}
+
+    for path in archive_root.iterdir():
+        if not path.is_dir():
+            continue
+        normalized = normalize_config_name_for_storage(path.name)
+        should_remove = normalized not in active_names
+        if not should_remove:
+            try:
+                should_remove = not any(path.iterdir())
+            except Exception as exc:
+                errors.append(f"Failed to inspect archive directory {path}: {exc}")
+                continue
+        if not should_remove:
+            continue
+        try:
+            shutil.rmtree(path)
+            removed.append(str(path))
+        except Exception as exc:
+            errors.append(f"Failed to remove archive directory {path}: {exc}")
+
+    return {"removed": removed, "errors": errors}
+
+
 def _unwrap_doublewrap(s: str) -> str:
     """Turn ""Foo Bar"" -> "Foo Bar" (leave normal "Foo Bar" alone)."""
     if len(s) >= 2 and s[0] == s[-1] == '"':

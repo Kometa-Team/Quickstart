@@ -167,6 +167,11 @@
         data-bs-target="#bulkDeleteModal">
         <i class="bi bi-trash3"></i> Delete Configs
       </button>
+
+      <button type="button" class="btn btn-outline-secondary" id="orphanedArtifactsButton" data-bs-toggle="modal"
+        data-bs-target="#orphanedArtifactsModal">
+        <i class="bi bi-hdd-stack"></i> Review File Drift
+      </button>
     </div>
   </div>
 </div>
@@ -238,6 +243,62 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" autofocus>No, keep them</button>
         <button type="button" class="btn btn-danger" id="confirmBulkDeleteButton" disabled>Delete Selected</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="orphanedArtifactsModal" tabindex="-1" aria-labelledby="orphanedArtifactsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="orphanedArtifactsModalLabel">
+          <i class="bi bi-hdd-stack me-2"></i>Review File Drift
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2">
+          These config bundles exist on disk but are not referenced by the Quickstart database. Leave any unchecked to keep them on disk.
+        </p>
+        <div class="alert alert-warning py-2 small mb-3" role="alert">
+          This tool only deletes filesystem artifacts. It does not remove anything from the database.
+        </div>
+        <div id="orphanedArtifactsError" class="alert alert-danger d-none py-2 small" role="alert"></div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="orphanedArtifactsSelectAll">
+          <label class="form-check-label" for="orphanedArtifactsSelectAll">Select all orphaned config bundles</label>
+        </div>
+        <div id="orphanedArtifactsList" class="bulk-delete-list"></div>
+        <div class="small text-muted mt-2">Selected: <span id="orphanedArtifactsCount">0</span></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep for now</button>
+        <button type="button" class="btn btn-danger" id="confirmOrphanedArtifactsDelete" disabled>Delete Selected</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="orphanedArtifactsRestoreModal" tabindex="-1" aria-labelledby="orphanedArtifactsRestoreModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="orphanedArtifactsRestoreModalLabel">
+          <i class="bi bi-arrow-counterclockwise me-2"></i>Restore From Disk
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2">
+          Choose one saved version to restore into the Quickstart database. Versions are sorted newest first.
+        </p>
+        <div id="orphanedArtifactsRestoreError" class="alert alert-danger d-none py-2 small" role="alert"></div>
+        <div id="orphanedArtifactsRestoreList" class="bulk-delete-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmOrphanedArtifactsRestore" disabled>Restore Selected Version</button>
       </div>
     </div>
   </div>

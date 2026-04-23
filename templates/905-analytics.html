@@ -131,6 +131,7 @@
       <div>
         <h6 class="mb-1 text-uppercase">Recent Runs</h6>
         <div id="logscan-table-summary" class="small text-muted">Loading runs...</div>
+        <div id="logscan-table-policy" class="small text-muted">Loading archived log policy...</div>
       </div>
       <div class="logscan-table-actions">
         <button class="btn nav-button btn-sm collapsed" type="button" data-bs-toggle="collapse"
@@ -142,8 +143,17 @@
     </div>
     <div class="collapse" id="logscan-recent-runs-collapse">
       <div class="logscan-table-toolbar">
+        <div class="logscan-table-bulk-actions">
+          <button id="logscan-table-select-all" type="button" class="btn nav-button btn-sm">Select all</button>
+          <button id="logscan-table-select-complete" type="button" class="btn nav-button btn-sm">Select complete</button>
+          <button id="logscan-table-select-incomplete" type="button" class="btn nav-button btn-sm">Select incomplete</button>
+          <button id="logscan-table-clear-selection" type="button" class="btn nav-button btn-sm">Clear</button>
+          <button id="logscan-table-delete-selected" type="button" class="btn nav-button nav-button-danger btn-sm" disabled>Delete selected</button>
+          <div id="logscan-table-selection-summary" class="small text-muted">No logs selected.</div>
+        </div>
         <label class="small text-muted" for="logscan-table-sort-key">Sort by</label>
         <select id="logscan-table-sort-key" class="form-select form-select-sm w-auto">
+          <option value="status">Status</option>
           <option value="finished_at" selected>Finished</option>
           <option value="run_time_seconds">Runtime</option>
           <option value="config_name">Config</option>
@@ -160,6 +170,7 @@
           <option value="library_total">Total items</option>
           <option value="kometa_version">Kometa</option>
           <option value="section_runtimes">Section runtimes</option>
+          <option value="log_resolved_size">Log size</option>
           <option value="recommendations_count">Report</option>
         </select>
         <select id="logscan-table-sort-dir" class="form-select form-select-sm w-auto" aria-label="Sort direction">
@@ -182,6 +193,12 @@
         <table class="table table-dark table-sm align-middle mb-0" id="logscan-trends-table">
           <thead>
             <tr>
+              <th class="text-center">
+                <span class="text-nowrap">Select</span>
+              </th>
+              <th>
+                <span class="text-nowrap">Status</span>
+              </th>
               <th>
                 <button type="button" class="logscan-sort-button is-desc" data-sort="finished_at"
                   title="Sort by finished timestamp" aria-label="Sort by finished timestamp">
@@ -272,6 +289,17 @@
                   </span>
                 </button>
               </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="log_resolved_size"
+                  title="Sort by log size" aria-label="Sort by log size">
+                  Log size
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th class="text-center">Log</th>
               <th class="text-center">
                 <button type="button" class="logscan-sort-button" data-sort="recommendations_count"
                   title="Sort by report count" aria-label="Sort by report count">
@@ -286,7 +314,7 @@
           </thead>
           <tbody>
             <tr>
-              <td colspan="10" class="text-muted">Loading runs...</td>
+              <td colspan="14" class="text-muted">Loading runs...</td>
             </tr>
           </tbody>
         </table>
@@ -331,6 +359,27 @@
       <div class="modal-footer">
         <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn nav-button nav-button-danger btn-sm" id="logscan-confirm-reset">Reset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-delete-log-modal" tabindex="-1" aria-labelledby="logscan-delete-log-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-delete-log-title">Delete Logs</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="logscan-delete-log-body">Delete this log from disk and remove it from Analytics?</div>
+        <div class="small text-muted mt-2">The live <code>meta.log</code> is never deleted from this action.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button nav-button-danger btn-sm" id="logscan-confirm-delete-log">Delete</button>
       </div>
     </div>
   </div>

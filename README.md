@@ -154,6 +154,7 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
   - [Linux/Mac:](#linuxmac)
   - [Debugging \& Changing Ports](#debugging--changing-ports)
 - [Testing](#testing)
+- [Appendix: Dependency Map](#appendix-dependency-map)
 
 ## Prerequisites
 
@@ -432,5 +433,45 @@ Notes for Playwright on Windows:
 
 - Playwright requires named pipes. If you see `Access is denied`, re-run PowerShell as Administrator or adjust security policy to allow Playwright browser processes.
 - E2E tests load Bootstrap and jQuery from CDNs (`cdn.jsdelivr.net`, `code.jquery.com`). If you’re behind a strict firewall, allowlist those hosts or the tests may fail to render the UI correctly.
+
+## Appendix: Dependency Map
+
+This appendix documents the current rules that promote optional setup pages into the menu TODO table. A dependency card appears only when the related page exists in the active template list and at least one active library triggers one of the rules below.
+
+An "active library" means the library include toggle is enabled (`*-library` is truthy). Disabled libraries do not create dependency TODO cards.
+
+| TODO card / page | Step key | Trigger source in Libraries | Exact trigger rule | Example menu reason |
+| --- | --- | --- | --- | --- |
+| Tautulli | `030-tautulli` | Collections | `collection_tautulli` enabled on an active library | `Movies: Tautulli Charts collection enabled` |
+| OMDb | `050-omdb` | Mass update attributes | Any `mass_*` attribute that uses an `omdb` source, including `_order` lists containing `omdb*` | `Movies: mass_content_rating_update uses omdb` |
+| MDBList | `060-mdblist` | Mass update attributes; ratings overlays | Any `mass_*` attribute that uses an `mdb` source, any `_order` list containing `mdb*`, or ratings overlay image set to `letterboxd`, `metacritic`, `rt_tomato`, `rt_popcorn`, or `mdb` | `Movies: movie ratings overlay uses mdb` |
+| AniDB | `100-anidb` | Mass update attributes; collections; template collections; ratings overlays | Any `mass_*` attribute that uses an `anidb` source, any `_order` list containing `anidb*`, `collection_use_anidb`, template collection child ids ending in `use_anidb`, or ratings overlay image set to `anidb` | `Anime Shows: AniDB Popular collection enabled` |
+| Radarr | `110-radarr` | Library attributes; collections; template collections | Any enabled/configured `radarr_add_all*` or `radarr_remove_by_tag*` attribute, any collection id starting with `collection_radarr_`, or any template collection child id starting with `radarr_add_missing_` | `Movies: radarr_add_all enabled` |
+| Sonarr | `120-sonarr` | Library attributes; collections; template collections | Any enabled/configured `sonarr_add_all*` or `sonarr_remove_by_tag*` attribute, any collection id starting with `collection_sonarr_`, or any template collection child id starting with `sonarr_add_missing_` | `TV Shows: sonarr_add_all enabled` |
+| Trakt | `130-trakt` | Collections; ratings overlays | `collection_trakt` enabled on an active library, or ratings overlay image set to `trakt` | `TV Shows: Trakt Charts collection enabled` |
+| MyAnimeList | `140-mal` | Collections; supported mass update attributes; ratings overlays | `collection_myanimelist`, supported `mass_*` operations using `mal`, `mal_english`, or `mal_japanese`, matching `_order` lists containing those values, or ratings overlay image set to `mal` | `Anime: MyAnimeList Charts collection enabled` |
+
+### MyAnimeList-specific mass update operations
+
+The following attribute operations will trigger the MyAnimeList TODO card when they use `mal`, `mal_english`, or `mal_japanese` directly or through the corresponding `_order` list:
+
+| Operation |
+| --- |
+| `mass_genre_update` |
+| `mass_content_rating_update` |
+| `mass_original_title_update` |
+| `mass_studio_update` |
+| `mass_originally_available_update` |
+| `mass_added_at_update` |
+| `mass_audience_rating_update` |
+| `mass_critic_rating_update` |
+| `mass_user_rating_update` |
+
+### Notes
+
+- Duplicate dependency reasons are deduplicated before being shown in the menu.
+- The TODO table is driven from stored Libraries data, not just the current page URL.
+- Only MyAnimeList uses an explicit operation allowlist. OMDb, MDBList, and AniDB mass-update dependency checks are source-prefix driven and already cover matching `mass_*` attributes plus `_order` lists.
+- Validation status still affects whether the card is marked warning vs ready; the table above only covers what makes a provider page become required in the first place.
 
 <!--body3-end-->

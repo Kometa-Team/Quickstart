@@ -130,6 +130,7 @@ def get_unique_config_names():
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
         connection.row_factory = sqlite3.Row
         with closing(connection.cursor()) as cursor:
+            cursor.execute(persisted_section_table_create())
             cursor.execute("SELECT DISTINCT name FROM section_data ORDER BY name ASC")
             return [row["name"] for row in cursor.fetchall()]
 
@@ -307,6 +308,42 @@ def clear_log_runs():
     return True
 
 
+def _decode_log_run_row(row):
+    if not row:
+        return None
+    decoded = dict(row)
+    section_runtimes = decoded.get("section_runtimes")
+    if isinstance(section_runtimes, str):
+        try:
+            decoded["section_runtimes"] = json.loads(section_runtimes)
+        except json.JSONDecodeError:
+            decoded["section_runtimes"] = None
+    recommendations = decoded.get("recommendations")
+    if isinstance(recommendations, str):
+        try:
+            recommendations = json.loads(recommendations)
+        except json.JSONDecodeError:
+            recommendations = None
+    if isinstance(recommendations, list):
+        decoded["recommendations_count"] = len(recommendations)
+    else:
+        decoded["recommendations_count"] = 0
+    analysis_counts = decoded.get("analysis_counts")
+    if isinstance(analysis_counts, str):
+        try:
+            decoded["analysis_counts"] = json.loads(analysis_counts)
+        except json.JSONDecodeError:
+            decoded["analysis_counts"] = None
+    library_counts = decoded.get("library_counts")
+    if isinstance(library_counts, str):
+        try:
+            decoded["library_counts"] = json.loads(library_counts)
+        except json.JSONDecodeError:
+            decoded["library_counts"] = None
+    decoded["quickstart_run_marker"] = bool(decoded.get("quickstart_run_marker"))
+    return decoded
+
+
 def get_log_runs(limit=100):
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
         connection.row_factory = sqlite3.Row
@@ -323,39 +360,36 @@ def get_log_runs(limit=100):
                    LIMIT ?""",
                 (limit,),
             )
-            rows = [dict(row) for row in cursor.fetchall()]
+            rows = [_decode_log_run_row(row) for row in cursor.fetchall()]
             for row in rows:
-                section_runtimes = row.get("section_runtimes")
-                if isinstance(section_runtimes, str):
-                    try:
-                        row["section_runtimes"] = json.loads(section_runtimes)
-                    except json.JSONDecodeError:
-                        row["section_runtimes"] = None
-                recommendations = row.get("recommendations")
-                if isinstance(recommendations, str):
-                    try:
-                        recommendations = json.loads(recommendations)
-                    except json.JSONDecodeError:
-                        recommendations = None
-                if isinstance(recommendations, list):
-                    row["recommendations_count"] = len(recommendations)
-                else:
-                    row["recommendations_count"] = 0
                 row.pop("recommendations", None)
-                analysis_counts = row.get("analysis_counts")
-                if isinstance(analysis_counts, str):
-                    try:
-                        row["analysis_counts"] = json.loads(analysis_counts)
-                    except json.JSONDecodeError:
-                        row["analysis_counts"] = None
-                library_counts = row.get("library_counts")
-                if isinstance(library_counts, str):
-                    try:
-                        row["library_counts"] = json.loads(library_counts)
-                    except json.JSONDecodeError:
-                        row["library_counts"] = None
-                row["quickstart_run_marker"] = bool(row.get("quickstart_run_marker"))
-    return rows
+    return [row for row in rows if row]
+
+
+def get_log_run(run_key):
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            _ensure_log_runs_columns(cursor)
+            cursor.execute(
+                """SELECT run_key, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
+                          config_name, config_hash, run_command, command_signature, section_runtimes,
+                          recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
+                          error_count, critical_count, trace_count, analysis_counts, library_counts,
+                          quickstart_run_marker, config_line_count, cache_line_count, created_at
+                   FROM log_runs
+                   WHERE run_key == ?
+                   LIMIT 1""",
+                (run_key,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            decoded = _decode_log_run_row(row)
+            if decoded:
+                decoded.pop("recommendations", None)
+            return decoded
+    return None
 
 
 def get_log_runs_count():
@@ -387,6 +421,15 @@ def get_log_run_recommendations(run_key):
                 except json.JSONDecodeError:
                     recs = None
             return recs if isinstance(recs, list) else []
+
+
+def delete_log_run(run_key):
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            _ensure_log_runs_columns(cursor)
+            cursor.execute("DELETE FROM log_runs WHERE run_key == ?", (run_key,))
+            return cursor.rowcount > 0
 
 
 ANALYTICS_DEFAULT_PREFS = {

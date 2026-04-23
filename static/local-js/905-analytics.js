@@ -3,6 +3,7 @@
 $(document).ready(function () {
   const $tableBody = $('#logscan-trends-table tbody')
   const $tableSummary = $('#logscan-table-summary')
+  const $tablePolicy = $('#logscan-table-policy')
   const $tableSortKey = $('#logscan-table-sort-key')
   const $tableSortDir = $('#logscan-table-sort-dir')
   const $tablePageSize = $('#logscan-table-page-size')
@@ -10,6 +11,12 @@ $(document).ready(function () {
   const $tablePrev = $('#logscan-table-prev')
   const $tableNext = $('#logscan-table-next')
   const $tableToggle = $('#logscan-table-toggle')
+  const $tableSelectAll = $('#logscan-table-select-all')
+  const $tableSelectComplete = $('#logscan-table-select-complete')
+  const $tableSelectIncomplete = $('#logscan-table-select-incomplete')
+  const $tableClearSelection = $('#logscan-table-clear-selection')
+  const $tableDeleteSelected = $('#logscan-table-delete-selected')
+  const $tableSelectionSummary = $('#logscan-table-selection-summary')
   const tableCollapseEl = document.getElementById('logscan-recent-runs-collapse')
   const $summary = $('#logscan-trends-summary')
   const $daily = $('#logscan-trends-daily')
@@ -38,6 +45,8 @@ $(document).ready(function () {
   const $confirmReingest = $('#logscan-confirm-reingest')
   const $missingDownload = $('#logscan-trends-missing-download')
   const $confirmMissingDownload = $('#logscan-confirm-missing-download')
+  const $deleteLogBody = $('#logscan-delete-log-body')
+  const $confirmDeleteLog = $('#logscan-confirm-delete-log')
   const $runDetailsBody = $('#logscan-run-details-body')
   const $runDetailsTitle = $('#logscan-run-details-title')
   const $preferencesSave = $('#logscan-preferences-save')
@@ -47,17 +56,24 @@ $(document).ready(function () {
   const resetModalEl = document.getElementById('logscan-reset-modal')
   const reingestModalEl = document.getElementById('logscan-reingest-modal')
   const missingDownloadModalEl = document.getElementById('logscan-missing-download-modal')
+  const deleteLogModalEl = document.getElementById('logscan-delete-log-modal')
   const runDetailsModalEl = document.getElementById('logscan-run-details-modal')
   const preferencesModalEl = document.getElementById('logscan-preferences-modal')
   let missingDownloadUrl = ''
+  let pendingDeleteRun = null
   let reingestPollTimer = null
   let reingestJobId = null
   let allRuns = []
+  let allIncompleteRuns = []
+  let allTableRuns = []
   const sectionDetailsByRunKey = new Map()
   let currentFilteredRuns = []
   let currentTableRuns = []
   let allRunsTotal = 0
+  let allIncompleteRunsTotal = 0
+  let latestArchiveStorage = null
   let tablePage = 1
+  const selectedRunKeys = new Set()
   const sortState = { key: 'finished_at', dir: 'desc' }
   let lastIngestState = null
   let analyticsPrefs = null
@@ -88,6 +104,22 @@ $(document).ready(function () {
     if (typeof value !== 'number' || !Number.isFinite(value)) return '0'
     if (Number.isInteger(value)) return String(value)
     return value.toFixed(1).replace(/\.0$/, '')
+  }
+
+  function formatBytes (value) {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 'n/a'
+    if (value === 0) return '0 B'
+    const units = ['B', 'KB', 'MB', 'GB', 'TB']
+    let size = value
+    let unitIndex = 0
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024
+      unitIndex += 1
+    }
+    const precision = size >= 10 || unitIndex === 0 ? 1 : 2
+    const rounded = Number(size.toFixed(precision))
+    const display = Number.isInteger(rounded) ? String(rounded) : String(rounded)
+    return `${display} ${units[unitIndex]}`
   }
 
   function formatTimestamp (value) {
@@ -974,6 +1006,30 @@ $(document).ready(function () {
     }).join(''))
   }
 
+  function renderArchiveStorageSummary (storage) {
+    if (!$tablePolicy.length) return
+    const keepLimit = storage && Number.isFinite(storage.keep_limit)
+      ? storage.keep_limit
+      : (parseInt(window.QS_KOMETA_LOG_KEEP || '0', 10) || 0)
+    const retentionLabel = storage && storage.retention_label
+      ? storage.retention_label
+      : (keepLimit > 0 ? `Keep last ${keepLimit} archived logs` : 'Keep all archived logs')
+    const archivedFiles = storage && Number.isFinite(storage.archived_files) ? storage.archived_files : 0
+    const archivedBytes = storage && Number.isFinite(storage.archived_bytes) ? storage.archived_bytes : 0
+    const extraArchivedFiles = storage && Number.isFinite(storage.extra_archived_files) ? storage.extra_archived_files : 0
+    const extraArchivedBytes = storage && Number.isFinite(storage.extra_archived_bytes) ? storage.extra_archived_bytes : 0
+    const fileLabel = archivedFiles === 1 ? 'file' : 'files'
+    const lines = [
+      `Archived log retention: ${retentionLabel}`,
+      `Tracked archived log storage: ${formatBytes(archivedBytes)} across ${archivedFiles} ${fileLabel}`
+    ]
+    if (extraArchivedFiles > 0) {
+      const extraLabel = extraArchivedFiles === 1 ? 'file' : 'files'
+      lines.push(`Additional archived logs on disk not linked to Analytics: ${formatBytes(extraArchivedBytes)} across ${extraArchivedFiles} ${extraLabel}`)
+    }
+    $tablePolicy.html(lines.map(line => `<div>${escapeHtml(line)}</div>`).join(''))
+  }
+
   function renderDaily (runs) {
     const buckets = buildDailyBuckets(runs)
     const days = Object.keys(buckets).sort().slice(-14)
@@ -1111,30 +1167,80 @@ $(document).ready(function () {
     return 10
   }
 
+  function isRunSelectable (run) {
+    return Boolean(run && run.run_key && run.log_can_delete)
+  }
+
+  function getSelectableRuns (runs) {
+    return Array.isArray(runs) ? runs.filter(isRunSelectable) : []
+  }
+
+  function getSelectableRunsByCompletion (runs, isIncomplete) {
+    return getSelectableRuns(runs).filter(run => Boolean(run && run.is_incomplete) === Boolean(isIncomplete))
+  }
+
+  function pruneSelectedRunKeys () {
+    const validKeys = new Set(getSelectableRuns(allTableRuns).map(run => run.run_key))
+    Array.from(selectedRunKeys).forEach(runKey => {
+      if (!validKeys.has(runKey)) {
+        selectedRunKeys.delete(runKey)
+      }
+    })
+  }
+
+  function updateSelectionSummary () {
+    if (!$tableSelectionSummary.length) return
+    const selectedCount = selectedRunKeys.size
+    const visibleSelectable = getSelectableRuns(currentTableRuns).length
+    const visibleCompleteSelectable = getSelectableRunsByCompletion(currentTableRuns, false).length
+    const visibleIncompleteSelectable = getSelectableRunsByCompletion(currentTableRuns, true).length
+    if (!selectedCount) {
+      $tableSelectionSummary.text('No logs selected.')
+    } else {
+      $tableSelectionSummary.text(`${selectedCount} selected. ${visibleSelectable} deletable in current view.`)
+    }
+    if ($tableDeleteSelected.length) {
+      $tableDeleteSelected.prop('disabled', selectedCount === 0)
+    }
+    if ($tableClearSelection.length) {
+      $tableClearSelection.prop('disabled', selectedCount === 0)
+    }
+    if ($tableSelectAll.length) {
+      $tableSelectAll.prop('disabled', visibleSelectable === 0)
+    }
+    if ($tableSelectComplete.length) {
+      $tableSelectComplete.prop('disabled', visibleCompleteSelectable === 0)
+    }
+    if ($tableSelectIncomplete.length) {
+      $tableSelectIncomplete.prop('disabled', visibleIncompleteSelectable === 0)
+    }
+  }
+
   function updateTableSummary (total, pageSize, pageCount) {
+    const totalComplete = Number.isFinite(allRunsTotal) ? allRunsTotal : allRuns.length
+    const totalIncomplete = Number.isFinite(allIncompleteRunsTotal) ? allIncompleteRunsTotal : allIncompleteRuns.length
     if ($tableSummary.length) {
       if (!total) {
         $tableSummary.text('No runs match the current filters.')
       } else {
-        const matchingText = `${total} matching loaded run${total === 1 ? '' : 's'}`
-        const loadedText = allRunsTotal > allRuns.length
-          ? `${allRuns.length} loaded / ${allRunsTotal} total stored`
-          : `${allRuns.length} loaded`
-        $tableSummary.text(`${matchingText}. ${loadedText}. Page size: ${pageSize}.`)
+        $tableSummary.text(`Ingested: ${totalComplete}. Incomplete: ${totalIncomplete}. Showing: ${total}. Page size: ${pageSize}.`)
       }
     }
     if (!$tablePageInfo.length) return
     if (!total) {
       $tablePageInfo.text('No rows')
+      updateSelectionSummary()
       return
     }
     const start = ((tablePage - 1) * pageSize) + 1
     const end = Math.min(total, tablePage * pageSize)
-    $tablePageInfo.text(`Showing ${start}-${end} of ${total} loaded run${total === 1 ? '' : 's'} (page ${tablePage}/${pageCount})`)
+    $tablePageInfo.text(`Showing ${start}-${end} of ${total} loaded entr${total === 1 ? 'y' : 'ies'} (page ${tablePage}/${pageCount})`)
+    updateSelectionSummary()
   }
 
   function renderTable (runs) {
     currentTableRuns = runs
+    pruneSelectedRunKeys()
     const pageSize = getTablePageSize()
     const total = runs.length
     const pageCount = Math.max(1, Math.ceil(total / pageSize))
@@ -1143,7 +1249,7 @@ $(document).ready(function () {
     $tablePrev.prop('disabled', tablePage <= 1 || total === 0)
     $tableNext.prop('disabled', tablePage >= pageCount || total === 0)
     if (!total) {
-      $tableBody.html('<tr><td colspan="10" class="text-muted">No runs match the current filters.</td></tr>')
+      $tableBody.html('<tr><td colspan="14" class="text-muted">No runs match the current filters.</td></tr>')
       return
     }
     sectionDetailsByRunKey.clear()
@@ -1202,9 +1308,51 @@ $(document).ready(function () {
         kometaDisplay = `${run.kometa_version} -> ${run.kometa_newest_version}`
       }
       const runKey = run.run_key || rowKey
+      const isSelectable = isRunSelectable(run)
+      const isSelected = isSelectable && selectedRunKeys.has(runKey)
+      const statusDisplay = run.is_incomplete ? 'Incomplete' : 'Complete'
+      const finishedDisplay = escapeHtml(getDisplayFinished(run))
+      const sizeBytes = typeof run.log_resolved_size === 'number'
+        ? run.log_resolved_size
+        : (typeof run.log_size === 'number' ? run.log_size : null)
+      const runLabel = `${run.config_name || 'default'} @ ${getDisplayFinished(run)}`
+      const logActions = []
+      if (run.log_available) {
+        logActions.push(`
+          <a class="btn nav-button btn-sm logscan-action-btn" href="/logscan/trends/log?run_key=${encodeURIComponent(runKey)}">
+            Download
+          </a>
+        `)
+      } else {
+        logActions.push('<span class="small text-muted">Unavailable</span>')
+      }
+      if (run.log_can_delete) {
+        logActions.push(`
+          <button type="button" class="btn nav-button nav-button-danger btn-sm logscan-action-btn logscan-delete-log"
+            data-run-key="${escapeHtml(runKey)}"
+            data-run-label="${escapeHtml(runLabel)}">
+            Delete
+          </button>
+        `)
+      } else if (run.log_location === 'live') {
+        logActions.push('<span class="small text-muted">Live log</span>')
+      }
+      if (run.is_incomplete && run.resume_reason) {
+        logActions.push(`<span class="small text-warning">${escapeHtml(run.resume_reason)}</span>`)
+      }
       return `
-        <tr>
-          ${renderRunCardCell('Finished', 'Timestamp of the run finishing.', escapeHtml(getDisplayFinished(run)), 'class="text-nowrap"')}
+        <tr class="${isSelected ? 'logscan-row-selected' : ''}">
+          ${renderRunCardCell('Select', 'Select this archived log for bulk delete.', `
+            <span class="logscan-select-wrap">
+              <input type="checkbox" class="form-check-input logscan-select-checkbox"
+                data-run-key="${escapeHtml(runKey)}"
+                ${isSelected ? 'checked' : ''}
+                ${isSelectable ? '' : 'disabled'}
+                aria-label="Select ${escapeHtml(runLabel)}">
+            </span>
+          `, 'class="logscan-select-cell"')}
+          ${renderRunCardCell('Status', 'Complete runs are included in charts. Incomplete logs are shown here for investigation and file management.', escapeHtml(statusDisplay), run.is_incomplete ? 'class="text-nowrap text-warning fw-semibold"' : 'class="text-nowrap text-success fw-semibold"')}
+          ${renderRunCardCell('Finished', 'Timestamp of the run finishing. Incomplete logs are shown here for investigation only and are excluded from charts.', finishedDisplay, 'class="text-nowrap"')}
           ${renderRunCardCell('Runtime', getRuntimeHelpText(run), escapeHtml(formatSeconds(runtimeParts.effective)))}
           ${renderRunCardCell('Config', 'Config name detected for the run.', escapeHtml(run.config_name || 'default'))}
           ${renderRunCardCell('Config lines', 'Non-comment lines captured from the redacted config output.', escapeHtml(String(configLineCount)))}
@@ -1213,9 +1361,13 @@ $(document).ready(function () {
           ${renderRunCardCell('Counts', 'W warnings, E errors, T tracebacks, M movies, S shows, Ep episodes, Tot total library items.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
           ${renderRunCardCell('Kometa', 'Version detected for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
           ${renderRunCardCell('Section runtimes', 'Runtime totals parsed per Kometa section.', sectionCell)}
-          ${renderRunCardCell('Report', 'Open the recommendations recorded for the run.', `
-            <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-run-details"
-              data-run-key="${escapeHtml(runKey)}">Open</button>
+          ${renderRunCardCell('Log size', 'Current on-disk size of the resolved log file when available, otherwise the ingested size.', escapeHtml(formatBytes(sizeBytes)))}
+          ${renderRunCardCell('Log', 'Download the source log for this run. Archived logs can also be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
+          ${renderRunCardCell('Report', run.is_incomplete ? 'Open recommendations and diagnostics captured for this incomplete log.' : 'Open the recommendations recorded for the run.', `
+            <div class="logscan-action-stack">
+              <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-run-details"
+                data-run-key="${escapeHtml(runKey)}">Open</button>
+            </div>
           `)}
         </tr>
       `
@@ -1632,6 +1784,8 @@ $(document).ready(function () {
 
   function getSortValue (run, key) {
     switch (key) {
+      case 'status':
+        return run && run.is_incomplete ? 1 : 0
       case 'finished_at':
         return getSortTimestamp(run)
       case 'run_time_seconds':
@@ -1662,6 +1816,8 @@ $(document).ready(function () {
         return run.kometa_version || ''
       case 'section_runtimes':
         return getSectionTotal(run.section_runtimes)
+      case 'log_resolved_size':
+        return typeof run.log_resolved_size === 'number' ? run.log_resolved_size : 0
       case 'recommendations_count':
         return typeof run.recommendations_count === 'number' ? run.recommendations_count : 0
       default:
@@ -1782,10 +1938,11 @@ $(document).ready(function () {
 
   function updateRunCountDisplay (filtered) {
     if (!$runCount.length) return
-    const loaded = allRuns.length
-    const total = Number.isFinite(allRunsTotal) && allRunsTotal > 0 ? allRunsTotal : loaded
+    const loaded = allTableRuns.length
+    const total = (Number.isFinite(allRunsTotal) ? allRunsTotal : allRuns.length) +
+      (Number.isFinite(allIncompleteRunsTotal) ? allIncompleteRunsTotal : allIncompleteRuns.length)
     const filteredCount = filtered.length
-    let text = `Runs shown: ${filteredCount}`
+    let text = `Entries shown: ${filteredCount}`
     if (filteredCount !== loaded) {
       text += ` of ${loaded} loaded`
     }
@@ -1819,9 +1976,9 @@ $(document).ready(function () {
 
   function updateFilterOptions (state) {
     let changed = false
-    changed = updateConfigFilter(filterRuns(allRuns, { ...state, config: '' })) || changed
-    changed = updateCommandFilter(filterRuns(allRuns, { ...state, command: '' })) || changed
-    changed = updateDateRangeInputs(filterRuns(allRuns, { ...state, start: '', end: '' }), state) || changed
+    changed = updateConfigFilter(filterRuns(allTableRuns, { ...state, config: '' })) || changed
+    changed = updateCommandFilter(filterRuns(allTableRuns, { ...state, command: '' })) || changed
+    changed = updateDateRangeInputs(filterRuns(allTableRuns, { ...state, start: '', end: '' }), state) || changed
     changed = updateLibraryFilter(filterRuns(allRuns, { ...state, library: '' })) || changed
     return changed
   }
@@ -1834,6 +1991,7 @@ $(document).ready(function () {
       state = getFilterState()
     }
     const filtered = filterRuns(allRuns, state)
+    const filteredTableRuns = filterRuns(allTableRuns, state)
     currentFilteredRuns = filtered
     updateRunCountDisplay(filtered)
     renderSummary(filtered)
@@ -1843,7 +2001,7 @@ $(document).ready(function () {
     renderIssueTrends(filtered)
     updateLibraryFilter(filtered)
     renderLibraryInventory(filtered)
-    renderTable(sortRuns(filtered))
+    renderTable(sortRuns(filteredTableRuns))
     renderIngestHealth(lastIngestState)
     updateSortIndicators()
   }
@@ -1909,6 +2067,11 @@ $(document).ready(function () {
     $confirmReset.prop('disabled', disabled)
     $confirmReingest.prop('disabled', disabled)
     $confirmMissingDownload.prop('disabled', disabled)
+    $tableSelectAll.prop('disabled', disabled || getSelectableRuns(currentTableRuns).length === 0)
+    $tableSelectComplete.prop('disabled', disabled || getSelectableRunsByCompletion(currentTableRuns, false).length === 0)
+    $tableSelectIncomplete.prop('disabled', disabled || getSelectableRunsByCompletion(currentTableRuns, true).length === 0)
+    $tableClearSelection.prop('disabled', disabled || selectedRunKeys.size === 0)
+    $tableDeleteSelected.prop('disabled', disabled || selectedRunKeys.size === 0)
   }
 
   function setMissingDownloadVisible (visible, count) {
@@ -2169,13 +2332,19 @@ $(document).ready(function () {
       .then(res => res.json())
       .then(data => {
         allRuns = Array.isArray(data.runs) ? data.runs : []
+        allIncompleteRuns = Array.isArray(data.incomplete_runs) ? data.incomplete_runs : []
+        allTableRuns = allRuns.concat(allIncompleteRuns)
+        pruneSelectedRunKeys()
         allRunsTotal = Number.isFinite(data.total_runs) ? data.total_runs : allRuns.length
+        allIncompleteRunsTotal = Number.isFinite(data.total_incomplete_runs) ? data.total_incomplete_runs : allIncompleteRuns.length
+        latestArchiveStorage = data && data.archive_storage ? data.archive_storage : null
+        renderArchiveStorageSummary(latestArchiveStorage)
         if (data && data.ingest_health && (!lastIngestState || lastIngestState.status !== 'running')) {
           lastIngestState = data.ingest_health
         }
-        updateConfigFilter(allRuns)
-        updateCommandFilter(allRuns)
-        updateDateRangeInputs(allRuns, getFilterState())
+        updateConfigFilter(allTableRuns)
+        updateCommandFilter(allTableRuns)
+        updateDateRangeInputs(allTableRuns, getFilterState())
         loadPreferences()
           .then(() => {
             applyFiltersAndRender()
@@ -2197,10 +2366,94 @@ $(document).ready(function () {
         $issues.text('Unable to load issue trends.')
         $libraries.text('Unable to load library totals.')
         if ($tableSummary.length) $tableSummary.text('Unable to load runs.')
+        if ($tablePolicy.length) $tablePolicy.text('Unable to load archived log policy.')
         if ($tablePageInfo.length) $tablePageInfo.text('No rows')
         $tablePrev.prop('disabled', true)
         $tableNext.prop('disabled', true)
-        $tableBody.html('<tr><td colspan="10" class="text-muted">Unable to load runs.</td></tr>')
+        $tableBody.html('<tr><td colspan="14" class="text-muted">Unable to load runs.</td></tr>')
+        updateSelectionSummary()
+      })
+  }
+
+  function refreshAnalyticsPage (options = {}) {
+    const suppressStatus = Boolean(options && options.suppressStatus)
+    checkMissingDownload()
+    fetchRuns({ suppressStatus })
+    fetchReingestStatus()
+  }
+
+  function getSelectedRuns () {
+    if (!selectedRunKeys.size) return []
+    return getSelectableRuns(allTableRuns).filter(run => selectedRunKeys.has(run.run_key))
+  }
+
+  function openDeleteLogModal (runKeys, runLabel) {
+    const normalizedRunKeys = Array.isArray(runKeys)
+      ? runKeys.map(value => String(value || '').trim()).filter(Boolean)
+      : [String(runKeys || '').trim()].filter(Boolean)
+    if (!normalizedRunKeys.length) return
+    pendingDeleteRun = {
+      runKeys: normalizedRunKeys,
+      runLabel,
+      bulk: normalizedRunKeys.length > 1
+    }
+    if ($deleteLogBody.length) {
+      if (normalizedRunKeys.length === 1) {
+        $deleteLogBody.html(`Delete log for <strong>${escapeHtml(runLabel || normalizedRunKeys[0])}</strong> from disk and remove it from Analytics?`)
+      } else {
+        $deleteLogBody.html(`Delete <strong>${normalizedRunKeys.length} selected logs</strong> from disk and remove their runs from Analytics?`)
+      }
+    }
+    if (deleteLogModalEl) {
+      bootstrap.Modal.getOrCreateInstance(deleteLogModalEl).show()
+      return
+    }
+    const confirmText = normalizedRunKeys.length === 1
+      ? `Delete log for ${runLabel || normalizedRunKeys[0]}?`
+      : `Delete ${normalizedRunKeys.length} selected logs?`
+    if (window.confirm(confirmText)) {
+      handleDeleteLog()
+    }
+  }
+
+  function handleDeleteLog () {
+    if (!pendingDeleteRun || !Array.isArray(pendingDeleteRun.runKeys) || !pendingDeleteRun.runKeys.length) {
+      hideModal(deleteLogModalEl)
+      return
+    }
+    $confirmDeleteLog.prop('disabled', true)
+    fetch('/logscan/trends/log/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        pendingDeleteRun.runKeys.length === 1
+          ? { run_key: pendingDeleteRun.runKeys[0] }
+          : { run_keys: pendingDeleteRun.runKeys }
+      )
+    })
+      .then(async res => {
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          throw new Error((data && data.error) || 'Delete failed')
+        }
+        hideModal(deleteLogModalEl)
+        const deletedKeys = Array.isArray(pendingDeleteRun.runKeys) ? pendingDeleteRun.runKeys : []
+        deletedKeys.forEach(runKey => selectedRunKeys.delete(runKey))
+        const deletedCount = Number.isFinite(data && data.deleted) ? data.deleted : deletedKeys.length
+        pendingDeleteRun = null
+        if (Array.isArray(data && data.failures) && data.failures.length) {
+          updateStatus(`${deletedCount} logs deleted. ${data.failures.length} failed.`)
+        } else {
+          updateStatus(deletedCount > 1 ? `${deletedCount} logs deleted.` : 'Log deleted.')
+        }
+        fetchRuns({ suppressStatus: true })
+      })
+      .catch(err => {
+        console.error(err)
+        updateStatus(err && err.message ? err.message : 'Failed to delete log.', true)
+      })
+      .finally(() => {
+        $confirmDeleteLog.prop('disabled', false)
       })
   }
 
@@ -2324,6 +2577,7 @@ $(document).ready(function () {
   })
   $confirmReset.on('click', handleReset)
   $confirmReingest.on('click', handleReingest)
+  $confirmDeleteLog.on('click', handleDeleteLog)
   $missingDownload.on('click', function (event) {
     event.preventDefault()
     if (!$missingDownload.length || $missingDownload.hasClass('d-none')) return
@@ -2347,6 +2601,43 @@ $(document).ready(function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
     showRunDetails(runKey)
   })
+  $tableBody.on('change', '.logscan-select-checkbox', function () {
+    const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+    if (!runKey) return
+    if ($(this).is(':checked')) {
+      selectedRunKeys.add(runKey)
+    } else {
+      selectedRunKeys.delete(runKey)
+    }
+    renderTable(currentTableRuns)
+  })
+  $tableBody.on('click', '.logscan-delete-log', function () {
+    const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+    const runLabel = $(this).data('runLabel') || $(this).attr('data-run-label') || runKey
+    if (!runKey) return
+    openDeleteLogModal(runKey, runLabel)
+  })
+  $tableSelectAll.on('click', function () {
+    getSelectableRuns(currentTableRuns).forEach(run => selectedRunKeys.add(run.run_key))
+    renderTable(currentTableRuns)
+  })
+  $tableSelectComplete.on('click', function () {
+    getSelectableRunsByCompletion(currentTableRuns, false).forEach(run => selectedRunKeys.add(run.run_key))
+    renderTable(currentTableRuns)
+  })
+  $tableSelectIncomplete.on('click', function () {
+    getSelectableRunsByCompletion(currentTableRuns, true).forEach(run => selectedRunKeys.add(run.run_key))
+    renderTable(currentTableRuns)
+  })
+  $tableClearSelection.on('click', function () {
+    selectedRunKeys.clear()
+    renderTable(currentTableRuns)
+  })
+  $tableDeleteSelected.on('click', function () {
+    const selectedRuns = getSelectedRuns()
+    if (!selectedRuns.length) return
+    openDeleteLogModal(selectedRuns.map(run => run.run_key), `${selectedRuns.length} selected logs`)
+  })
   $tableBody.on('click', '[data-section-details="1"]', function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
     showSectionDetails(runKey)
@@ -2363,8 +2654,10 @@ $(document).ready(function () {
     }
     applyFiltersAndRender()
   })
+  window.addEventListener('pageshow', function (event) {
+    if (!event || !event.persisted) return
+    refreshAnalyticsPage({ suppressStatus: true })
+  })
   renderCountsSeriesSelector()
-  checkMissingDownload()
-  fetchRuns()
-  fetchReingestStatus()
+  refreshAnalyticsPage()
 })

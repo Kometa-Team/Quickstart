@@ -2190,7 +2190,6 @@ if cleanup_flag not in {"1", "true", "yes"}:
         helpers.update_env_variable("QS_CONFIG_CLEANUP_DONE", "1")
         os.environ["QS_CONFIG_CLEANUP_DONE"] = "1"
 
-
 def _load_or_create_secret_key():
     env_key = os.getenv("QS_SECRET_KEY", "").strip()
     if env_key:
@@ -2941,6 +2940,9 @@ def clear_data_section(name, section):
 @app.route("/clear_data/<name>")
 def clear_data(name):
     database.reset_data(name)
+    cleanup = helpers.delete_config_artifacts(name, kometa_root=app.config.get("KOMETA_ROOT", "."))
+    for msg in cleanup.get("errors", []):
+        helpers.ts_log(msg, level="WARNING")
     flash("SQLite storage cleared successfully.", "success")
     return redirect(url_for("start"))
 
@@ -3010,6 +3012,9 @@ def bulk_delete_configs():
     for name in cleaned:
         if name in available:
             database.reset_data(name)
+            cleanup = helpers.delete_config_artifacts(name, kometa_root=app.config.get("KOMETA_ROOT", "."))
+            for msg in cleanup.get("errors", []):
+                helpers.ts_log(msg, level="WARNING")
             deleted.append(name)
 
     remaining = database.get_unique_config_names() or []
@@ -3019,6 +3024,438 @@ def bulk_delete_configs():
         current = session["config_name"]
 
     return jsonify(success=True, deleted=deleted, remaining=remaining, current=current)
+
+
+@app.route("/orphaned-config-artifacts", methods=["GET"])
+def orphaned_config_artifacts():
+    result = helpers.list_orphaned_config_artifacts(kometa_root=app.config.get("KOMETA_ROOT", "."))
+    status_code = 200 if not result.get("errors") else 500
+    return jsonify(success=not bool(result.get("errors")), orphans=result.get("orphans", []), errors=result.get("errors", [])), status_code
+
+
+@app.route("/orphaned-config-artifacts/versions", methods=["GET"])
+def orphaned_config_artifact_versions():
+    name = request.args.get("name")
+    normalized = helpers.normalize_config_name_for_storage(name)
+    inventory = helpers.list_orphaned_config_artifacts(kometa_root=app.config.get("KOMETA_ROOT", "."))
+    if inventory.get("errors"):
+        return jsonify(success=False, message="Unable to inspect config storage.", errors=inventory["errors"]), 500
+
+    orphan_names = {item.get("name") for item in inventory.get("orphans", []) if item.get("name")}
+    if normalized not in orphan_names:
+        return jsonify(success=False, message="Config bundle is not currently orphaned."), 404
+
+    result = helpers.list_orphaned_config_versions(normalized)
+    return jsonify(success=True, name=normalized, versions=result.get("versions", []))
+
+
+@app.route("/orphaned-config-artifacts/restore", methods=["POST"])
+def restore_orphaned_config_artifact():
+    data = request.get_json(silent=True) or {}
+    name = helpers.normalize_config_name_for_storage(data.get("name"))
+    selected_path = data.get("path")
+    if not name or not isinstance(selected_path, str) or not selected_path.strip():
+        return jsonify(success=False, message="Config bundle name and version path are required."), 400
+
+    available = database.get_unique_config_names() or []
+    if any(existing.lower() == name.lower() for existing in available):
+        return jsonify(success=False, message="Config already exists in the database."), 400
+
+    inventory = helpers.list_orphaned_config_artifacts(kometa_root=app.config.get("KOMETA_ROOT", "."))
+    if inventory.get("errors"):
+        return jsonify(success=False, message="Unable to inspect config storage.", errors=inventory["errors"]), 500
+
+    orphan_names = {item.get("name") for item in inventory.get("orphans", []) if item.get("name")}
+    if name not in orphan_names:
+        return jsonify(success=False, message="Config bundle is not currently orphaned."), 404
+
+    versions = helpers.list_orphaned_config_versions(name).get("versions", [])
+    version_lookup = {entry.get("path"): entry for entry in versions if entry.get("path")}
+    if selected_path not in version_lookup:
+        return jsonify(success=False, message="Selected version is not available for restore."), 400
+
+    try:
+        source_path = Path(selected_path).resolve()
+        yaml_text = source_path.read_text(encoding="utf-8", errors="replace")
+    except Exception as exc:
+        return jsonify(success=False, message=f"Unable to read the selected config version: {exc}"), 400
+
+    config_data = importer.load_yaml_config(yaml_text)
+    if not config_data:
+        return jsonify(success=False, message="Selected config version could not be parsed as YAML."), 400
+
+    payload, report = importer.prepare_import_payload(config_data, set(), set())
+    if not payload:
+        return jsonify(success=False, message="Selected config version has no importable Quickstart sections."), 400
+
+    for section, data_blob in payload.items():
+        database.save_section_data(
+            name=name,
+            section=section,
+            validated=False,
+            user_entered=True,
+            data=data_blob,
+        )
+
+    config_dir = Path(helpers.CONFIG_DIR)
+    current_file = (config_dir / f"{name}_config.yml").resolve()
+    if source_path != current_file:
+        helpers.save_to_named_config(yaml_text, name)
+    else:
+        kometa_config_dir = Path(app.config.get("KOMETA_ROOT", ".")) / "config"
+        try:
+            kometa_config_dir.mkdir(parents=True, exist_ok=True)
+            (kometa_config_dir / current_file.name).write_text(yaml_text, encoding="utf-8")
+        except OSError as exc:
+            helpers.ts_log(f"Failed to sync restored config to Kometa: {exc}", level="WARNING")
+
+    session["config_name"] = name
+    try:
+        menu_templates = helpers.get_menu_list()
+        workspace_status = _build_workspace_status_context(name, menu_templates, available_configs=database.get_unique_config_names() or [])
+    except Exception:
+        workspace_status = {}
+
+    return jsonify(
+        success=True,
+        config_name=name,
+        restored_path=str(source_path),
+        imported_sections=sorted(payload.keys()),
+        report_summary=report.summary(),
+        workspace_status=workspace_status,
+    )
+
+
+@app.route("/orphaned-config-artifacts/delete", methods=["POST"])
+def delete_orphaned_config_artifacts():
+    data = request.get_json(silent=True) or {}
+    names = data.get("names") or []
+    if not isinstance(names, list):
+        return jsonify(success=False, message="Invalid request payload."), 400
+
+    selected = [helpers.normalize_config_name_for_storage(name) for name in names if str(name or "").strip()]
+    if not selected:
+        return jsonify(success=False, message="No orphaned configs selected."), 400
+
+    inventory = helpers.list_orphaned_config_artifacts(kometa_root=app.config.get("KOMETA_ROOT", "."))
+    if inventory.get("errors"):
+        return jsonify(success=False, message="Unable to inspect config storage.", errors=inventory["errors"]), 500
+
+    orphan_names = {item.get("name") for item in inventory.get("orphans", []) if item.get("name")}
+    invalid = [name for name in selected if name not in orphan_names]
+    if invalid:
+        return jsonify(success=False, message="Only orphaned config bundles can be deleted here.", invalid=invalid), 400
+
+    deleted = []
+    errors = []
+    for name in selected:
+        result = helpers.delete_config_artifacts(name, kometa_root=app.config.get("KOMETA_ROOT", "."))
+        if result.get("errors"):
+            errors.extend(result["errors"])
+        else:
+            deleted.append(name)
+
+    if errors:
+        return jsonify(success=False, deleted=deleted, errors=errors, message="Some orphaned config bundles could not be deleted."), 500
+
+    return jsonify(success=True, deleted=deleted)
+
+
+def _build_logscan_resolution_context(log_dir=None, include_candidate_files=True):
+    cache_entries = []
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    if isinstance(cache_logs, dict):
+        for raw_path, entry in cache_logs.items():
+            if not isinstance(entry, dict):
+                continue
+            try:
+                path = Path(raw_path).resolve()
+            except Exception:
+                continue
+            if not path.exists() or not path.is_file():
+                continue
+            try:
+                stats = path.stat()
+            except Exception:
+                continue
+            cache_entries.append(
+                {
+                    "path": path,
+                    "mtime": float(stats.st_mtime),
+                    "size": int(stats.st_size),
+                    "run_key": entry.get("run_key"),
+                }
+            )
+
+    candidate_files = []
+    if include_candidate_files:
+        for path in _iter_logscan_candidate_files(log_dir=log_dir, include_archive=True, include_compressed=True):
+            try:
+                stats = path.stat()
+            except Exception:
+                continue
+            candidate_files.append(
+                {
+                    "path": path,
+                    "mtime": float(stats.st_mtime),
+                    "size": int(stats.st_size),
+                    "location": _classify_logscan_file_location(path, log_dir=log_dir),
+                }
+            )
+    return {"cache_entries": cache_entries, "candidate_files": candidate_files}
+
+
+def _find_logscan_cache_entry_for_run(run_key):
+    if not run_key:
+        return None
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    if not isinstance(cache_logs, dict):
+        return None
+    for raw_path, entry in cache_logs.items():
+        if not isinstance(entry, dict) or entry.get("run_key") != run_key:
+            continue
+        try:
+            path = Path(raw_path).resolve()
+        except Exception:
+            continue
+        if not path.exists() or not path.is_file():
+            continue
+        try:
+            stats = path.stat()
+            mtime = float(stats.st_mtime)
+            size = int(stats.st_size)
+        except Exception:
+            mtime = float(entry.get("mtime", 0) or 0)
+            size = int(entry.get("size", 0) or 0)
+        return {
+            "path": path,
+            "mtime": mtime,
+            "size": size,
+            "run_key": entry.get("run_key"),
+        }
+    return None
+
+
+def _match_logscan_run_to_file(run_record, context=None, log_dir=None, allow_live_fallback=True):
+    if not isinstance(run_record, dict):
+        return None
+    context = context or _build_logscan_resolution_context(log_dir=log_dir)
+    run_key = run_record.get("run_key")
+    if run_key:
+        cache_matches = [entry for entry in context.get("cache_entries", []) if entry.get("run_key") == run_key]
+        if cache_matches:
+            cache_matches.sort(key=lambda entry: entry.get("mtime", 0), reverse=True)
+            match = cache_matches[0]
+            return {
+                "path": match["path"],
+                "location": _classify_logscan_file_location(match["path"], log_dir=log_dir),
+                "size": match.get("size"),
+                "mtime": match.get("mtime"),
+                "source": "cache",
+            }
+
+    target_mtime = run_record.get("log_mtime")
+    target_size = run_record.get("log_size")
+    candidates = []
+    for entry in context.get("candidate_files", []):
+        if not allow_live_fallback and entry.get("location") == "live":
+            continue
+        size_matches = target_size is not None and entry.get("size") == target_size
+        mtime_delta = None
+        mtime_matches = False
+        if target_mtime is not None:
+            try:
+                mtime_delta = abs(float(entry.get("mtime", 0)) - float(target_mtime))
+                mtime_matches = mtime_delta <= 1.0
+            except Exception:
+                mtime_delta = None
+        if not size_matches and not mtime_matches:
+            continue
+        rank = 0
+        if size_matches:
+            rank += 2
+        if mtime_matches:
+            rank += 2
+        candidates.append((rank, mtime_delta if mtime_delta is not None else 999999, -entry.get("mtime", 0), entry))
+    if not candidates:
+        return None
+    candidates.sort()
+    match = candidates[0][3]
+    return {
+        "path": match["path"],
+        "location": match.get("location") or _classify_logscan_file_location(match["path"], log_dir=log_dir),
+        "size": match.get("size"),
+        "mtime": match.get("mtime"),
+        "source": "fallback",
+    }
+
+
+def _resolve_logscan_run_log_info(run_key, run_record=None, context=None):
+    if not run_key:
+        return None
+    cache_matches = []
+    if isinstance(context, dict):
+        cache_matches = [entry for entry in context.get("cache_entries", []) if entry.get("run_key") == run_key]
+    else:
+        direct_match = _find_logscan_cache_entry_for_run(run_key)
+        if direct_match:
+            cache_matches = [direct_match]
+    if cache_matches:
+        cache_matches.sort(key=lambda entry: entry.get("mtime", 0), reverse=True)
+        match = cache_matches[0]
+        location = _classify_logscan_file_location(match["path"])
+        if not (isinstance(run_record, dict) and location == "live"):
+            return {
+                "path": match["path"],
+                "location": location,
+                "size": match.get("size"),
+                "mtime": match.get("mtime"),
+                "source": "cache",
+            }
+    run_record = run_record if isinstance(run_record, dict) else database.get_log_run(run_key)
+    if not run_record:
+        if cache_matches:
+            match = cache_matches[0]
+            return {
+                "path": match["path"],
+                "location": _classify_logscan_file_location(match["path"]),
+                "size": match.get("size"),
+                "mtime": match.get("mtime"),
+                "source": "cache",
+            }
+        return None
+    full_context = context
+    if not isinstance(full_context, dict) or not isinstance(full_context.get("candidate_files"), list) or not full_context.get("candidate_files"):
+        full_context = _build_logscan_resolution_context(include_candidate_files=True)
+    info = _match_logscan_run_to_file(run_record, context=full_context, allow_live_fallback=False)
+    if info:
+        return info
+    if cache_matches:
+        match = cache_matches[0]
+        return {
+            "path": match["path"],
+            "location": _classify_logscan_file_location(match["path"]),
+            "size": match.get("size"),
+            "mtime": match.get("mtime"),
+            "source": "cache",
+        }
+    return None
+
+
+def _resolve_logscan_run_log_path(run_key):
+    info = _resolve_logscan_run_log_info(run_key)
+    return info.get("path") if isinstance(info, dict) else None
+
+
+def _delete_logscan_run_artifact(run_key):
+    run_key = str(run_key or "").strip()
+    if not run_key:
+        return False, {"error": "run_key required"}, 400
+    run_record = database.get_log_run(run_key)
+    incomplete_run = None if run_record else _get_logscan_incomplete_run(run_key)
+    if not run_record and not incomplete_run:
+        return False, {"error": "Run not found.", "run_key": run_key}, 404
+    target_run = run_record if run_record else incomplete_run
+    info = _resolve_logscan_run_log_info(run_key, run_record=target_run)
+    if not info or not info.get("path"):
+        return False, {"error": "Archived log file for this run could not be found.", "run_key": run_key}, 404
+    if info.get("location") != "archive":
+        return False, {"error": "Only archived logs can be deleted from Analytics.", "run_key": run_key}, 409
+    deleted_file = False
+    try:
+        Path(info["path"]).unlink()
+        deleted_file = True
+    except FileNotFoundError:
+        deleted_file = False
+    except Exception as exc:
+        return False, {"error": f"Failed to delete archived log: {exc}", "run_key": run_key}, 500
+
+    if run_record:
+        database.delete_log_run(run_key)
+    _remove_logscan_ingest_cache_entries(run_key=run_key, raw_path=str(Path(info["path"]).resolve()))
+    return True, {
+        "success": True,
+        "run_key": run_key,
+        "deleted_file": deleted_file,
+        "deleted_run": bool(run_record),
+    }, 200
+
+
+def _annotate_logscan_runs(runs, context=None):
+    if not isinstance(runs, list) or not runs:
+        return [] if isinstance(runs, list) else []
+    context = context or _build_logscan_resolution_context()
+    annotated = []
+    for run in runs:
+        if not isinstance(run, dict):
+            continue
+        row = dict(run)
+        info = _resolve_logscan_run_log_info(row.get("run_key"), run_record=row, context=context)
+        row["log_available"] = bool(info and info.get("path"))
+        row["log_location"] = info.get("location") if info else "missing"
+        row["log_resolved_size"] = info.get("size") if info and isinstance(info.get("size"), int) else row.get("log_size")
+        row["log_can_delete"] = row["log_location"] == "archive" and row["log_available"]
+        annotated.append(row)
+    return annotated
+
+
+@app.route("/logscan/trends/log", methods=["GET"])
+def logscan_trends_log_download():
+    run_key = request.args.get("run_key")
+    if not run_key:
+        return jsonify({"error": "run_key required"}), 400
+    log_path = _resolve_logscan_run_log_path(run_key)
+    if not log_path:
+        return jsonify({"error": "Log file for this run could not be found."}), 404
+    return send_file(
+        str(log_path),
+        as_attachment=True,
+        download_name=log_path.name,
+        mimetype="text/plain",
+    )
+
+
+@app.route("/logscan/trends/log/delete", methods=["POST"])
+def logscan_trends_log_delete():
+    payload = request.get_json(silent=True) or {}
+    raw_run_keys = payload.get("run_keys")
+    if isinstance(raw_run_keys, list):
+        run_keys = [str(value or "").strip() for value in raw_run_keys if str(value or "").strip()]
+    else:
+        run_key = str(payload.get("run_key", "")).strip()
+        run_keys = [run_key] if run_key else []
+    unique_run_keys = list(dict.fromkeys(run_keys))
+    if not unique_run_keys:
+        return jsonify({"error": "run_key required"}), 400
+
+    deleted = []
+    failures = []
+    for run_key in unique_run_keys:
+        success, result, status = _delete_logscan_run_artifact(run_key)
+        if success:
+            deleted.append(result)
+        else:
+            result["status"] = status
+            failures.append(result)
+
+    if not deleted and failures:
+        first = failures[0]
+        return jsonify({"success": False, "error": first.get("error"), "failures": failures}), int(first.get("status", 400))
+
+    response = {
+        "success": not failures,
+        "deleted": len(deleted),
+        "results": deleted,
+        "deleted_file_count": sum(1 for item in deleted if item.get("deleted_file")),
+        "deleted_run_count": sum(1 for item in deleted if item.get("deleted_run")),
+        "failures": failures,
+    }
+    if len(unique_run_keys) == 1 and deleted:
+        response["deleted_file"] = bool(deleted[0].get("deleted_file"))
+        response["deleted_run"] = bool(deleted[0].get("deleted_run"))
+    return jsonify(response)
 
 
 @app.route("/rename-config", methods=["POST"])
@@ -7016,6 +7453,10 @@ def logscan_analyze():
             }
             _save_logscan_ingest_cache(ingest_cache)
             try:
+                _archive_finished_live_meta_log_if_idle(log_path.parent)
+            except Exception:
+                pass
+            try:
                 _archive_rotated_logs(log_path.parent)
             except Exception:
                 pass
@@ -7209,13 +7650,35 @@ def logscan_progress():
 @app.route("/logscan/trends", methods=["GET"])
 def logscan_trends():
     try:
+        _archive_finished_live_meta_log_if_idle()
+    except Exception:
+        pass
+    try:
         limit = int(request.args.get("limit", "50"))
     except Exception:
         limit = 50
     limit = max(1, min(limit, 500))
     total_runs = database.get_log_runs_count()
     ingest_health = _logscan_ingest_health()
-    return jsonify({"runs": database.get_log_runs(limit=limit), "total_runs": total_runs, "ingest_health": ingest_health})
+    resolution_context = _build_logscan_resolution_context()
+    runs = _annotate_logscan_runs(database.get_log_runs(limit=limit), context=resolution_context)
+    incomplete_runs = _annotate_logscan_runs(_get_logscan_incomplete_runs(limit=limit), context=resolution_context)
+    all_runs = database.get_log_runs(limit=max(total_runs, 1)) if total_runs else []
+    all_incomplete_runs = _get_logscan_incomplete_runs(limit=500)
+    return jsonify(
+        {
+            "runs": runs,
+            "incomplete_runs": incomplete_runs,
+            "total_runs": total_runs,
+            "total_incomplete_runs": len(all_incomplete_runs),
+            "ingest_health": ingest_health,
+            "archive_storage": _get_logscan_archive_storage_summary(
+                all_runs=all_runs,
+                incomplete_runs=all_incomplete_runs,
+                context=resolution_context,
+            ),
+        }
+    )
 
 
 @app.route("/logscan/trends/recommendations", methods=["GET"])
@@ -7224,6 +7687,10 @@ def logscan_trends_recommendations():
     if not run_key:
         return jsonify({"error": "run_key required"}), 400
     recommendations = database.get_log_run_recommendations(run_key)
+    if not recommendations:
+        incomplete_run = _get_logscan_incomplete_run(run_key)
+        if incomplete_run:
+            recommendations = incomplete_run.get("recommendations") if isinstance(incomplete_run.get("recommendations"), list) else []
     return jsonify({"run_key": run_key, "recommendations": recommendations})
 
 
@@ -7273,7 +7740,43 @@ def _get_logscan_archive_dir():
     return archive_dir
 
 
-def _get_logscan_log_files(log_dir=None, include_archive=True):
+def _build_logscan_archive_filename(path, stats=None, counter=None):
+    path = Path(path)
+    if stats is None:
+        stats = path.stat()
+    timestamp = datetime.fromtimestamp(float(stats.st_mtime), tz=timezone.utc).strftime("%Y%m%d-%H%M%SZ")
+    size = int(stats.st_size)
+    suffix = "".join(path.suffixes)
+    if not suffix:
+        suffix = ".log"
+    base_name = f"meta-{timestamp}-{size}"
+    if counter and counter > 1:
+        base_name = f"{base_name}-{counter}"
+    return f"{base_name}{suffix}"
+
+
+def _build_logscan_archive_destination(path, archive_dir, stats=None):
+    path = Path(path)
+    archive_dir = Path(archive_dir)
+    if stats is None:
+        stats = path.stat()
+    counter = 1
+    while True:
+        candidate = archive_dir / _build_logscan_archive_filename(path, stats=stats, counter=counter)
+        if candidate.resolve() == path.resolve():
+            return candidate
+        if not candidate.exists():
+            return candidate
+        try:
+            candidate_stats = candidate.stat()
+            if int(candidate_stats.st_size) == int(stats.st_size) and float(candidate_stats.st_mtime) == float(stats.st_mtime):
+                return candidate
+        except Exception:
+            pass
+        counter += 1
+
+
+def _iter_logscan_candidate_files(log_dir=None, include_archive=True, include_compressed=False):
     log_dir = Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs"
     archive_dir = _get_logscan_archive_dir() if include_archive else None
     log_files = []
@@ -7287,7 +7790,7 @@ def _get_logscan_log_files(log_dir=None, include_archive=True):
             if not path.is_file():
                 continue
             suffixes = [suffix.lower() for suffix in path.suffixes]
-            if suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
+            if not include_compressed and suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
                 continue
             if ".log" not in path.name.lower():
                 continue
@@ -7300,6 +7803,90 @@ def _get_logscan_log_files(log_dir=None, include_archive=True):
             return 0
 
     return sorted({path.resolve() for path in log_files}, key=_mtime)
+
+
+def _get_logscan_log_files(log_dir=None, include_archive=True):
+    return _iter_logscan_candidate_files(log_dir=log_dir, include_archive=include_archive, include_compressed=False)
+
+
+def _classify_logscan_file_location(path, log_dir=None):
+    if not path:
+        return "missing"
+    try:
+        resolved = Path(path).resolve()
+    except Exception:
+        return "missing"
+    live_dir = (Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs").resolve()
+    archive_dir = _get_logscan_archive_dir().resolve()
+    try:
+        resolved.relative_to(archive_dir)
+        return "archive"
+    except ValueError:
+        pass
+    try:
+        resolved.relative_to(live_dir)
+        return "live"
+    except ValueError:
+        pass
+    return "other"
+
+
+def _format_archived_log_retention_label(keep_limit):
+    if keep_limit <= 0:
+        return "Keep all archived logs"
+    if keep_limit == 1:
+        return "Keep last 1 archived log"
+    return f"Keep last {keep_limit} archived logs"
+
+
+def _get_logscan_archive_storage_summary(all_runs=None, incomplete_runs=None, context=None):
+    context = context or _build_logscan_resolution_context()
+    archive_paths = {}
+    for entry in context.get("candidate_files", []):
+        path = entry.get("path")
+        if not path or _classify_logscan_file_location(path) != "archive":
+            continue
+        archive_paths[str(path.resolve())] = entry
+
+    tracked_paths = set()
+    tracked_bytes = 0
+    for run in list(all_runs or []) + list(incomplete_runs or []):
+        if not isinstance(run, dict):
+            continue
+        info = _resolve_logscan_run_log_info(run.get("run_key"), run_record=run, context=context)
+        if not info or info.get("location") != "archive" or not info.get("path"):
+            continue
+        path_key = str(Path(info["path"]).resolve())
+        if path_key in tracked_paths:
+            continue
+        tracked_paths.add(path_key)
+        if isinstance(info.get("size"), int):
+            tracked_bytes += info["size"]
+        else:
+            entry = archive_paths.get(path_key)
+            tracked_bytes += int(entry.get("size", 0)) if isinstance(entry, dict) else 0
+
+    total_archived_bytes = 0
+    for entry in archive_paths.values():
+        if isinstance(entry.get("size"), int):
+            total_archived_bytes += entry["size"]
+
+    total_archived_files = len(archive_paths)
+    tracked_archived_files = len(tracked_paths)
+    extra_archived_files = max(0, total_archived_files - tracked_archived_files)
+    extra_archived_bytes = max(0, total_archived_bytes - tracked_bytes)
+    keep_limit = int(app.config.get("QS_KOMETA_LOG_KEEP", 0) or 0)
+    return {
+        "archived_bytes": tracked_bytes,
+        "archived_files": tracked_archived_files,
+        "disk_archived_bytes": total_archived_bytes,
+        "disk_archived_files": total_archived_files,
+        "extra_archived_files": extra_archived_files,
+        "extra_archived_bytes": extra_archived_bytes,
+        "keep_limit": keep_limit,
+        "retention_label": _format_archived_log_retention_label(keep_limit),
+        "compression_ready": True,
+    }
 
 
 def _get_logscan_ingest_cache_path():
@@ -7345,6 +7932,77 @@ def _clear_logscan_ingest_cache():
             cache_path.unlink()
     except Exception:
         pass
+
+
+def _remove_logscan_ingest_cache_entries(run_key=None, raw_path=None):
+    cache = _load_logscan_ingest_cache()
+    logs = cache.get("logs", {}) if isinstance(cache, dict) else {}
+    if not isinstance(logs, dict):
+        return False
+    changed = False
+    for cache_key, entry in list(logs.items()):
+        matches_run = bool(run_key and isinstance(entry, dict) and entry.get("run_key") == run_key)
+        matches_path = bool(raw_path and cache_key == raw_path)
+        if not matches_run and not matches_path:
+            continue
+        logs.pop(cache_key, None)
+        changed = True
+    if changed:
+        cache["logs"] = logs
+        _save_logscan_ingest_cache(cache)
+    return changed
+
+
+def _normalize_logscan_archive_filenames(archive_dir=None):
+    archive_dir = Path(archive_dir) if archive_dir else _get_logscan_archive_dir()
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    if not isinstance(cache_logs, dict):
+        cache_logs = {}
+    renamed = 0
+    skipped = 0
+    errors = []
+    cache_dirty = False
+
+    for path in sorted(_iter_logscan_candidate_files(include_archive=True, include_compressed=False), key=lambda item: item.name.lower()):
+        if _classify_logscan_file_location(path) != "archive":
+            continue
+        try:
+            stats = path.stat()
+            target = _build_logscan_archive_destination(path, archive_dir, stats=stats)
+            if target.resolve() == path.resolve():
+                skipped += 1
+                continue
+            source_key = str(path.resolve())
+            target_key = str(target.resolve())
+            shutil.move(str(path), str(target))
+            if source_key in cache_logs:
+                cache_logs[target_key] = cache_logs.pop(source_key)
+                cache_dirty = True
+            renamed += 1
+        except Exception as exc:
+            errors.append(f"Failed to normalize archived log {path}: {exc}")
+    if cache_dirty:
+        ingest_cache["logs"] = cache_logs
+        _save_logscan_ingest_cache(ingest_cache)
+    return {"renamed": renamed, "skipped": skipped, "errors": errors}
+
+
+logscan_archive_flag = os.getenv("QS_LOGSCAN_ARCHIVE_NAMING_DONE", "").strip().lower()
+if logscan_archive_flag not in {"1", "true", "yes"}:
+    logscan_archive_result = _normalize_logscan_archive_filenames()
+    if logscan_archive_result.get("renamed"):
+        helpers.ts_log(
+            f"Normalized {logscan_archive_result['renamed']} archived Kometa log file(s) to the canonical naming scheme.",
+            level="INFO",
+        )
+    if logscan_archive_result.get("errors"):
+        for msg in logscan_archive_result["errors"]:
+            helpers.ts_log(msg, level="WARNING")
+    else:
+        helpers.update_env_variable("QS_LOGSCAN_ARCHIVE_NAMING_DONE", "1")
+        os.environ["QS_LOGSCAN_ARCHIVE_NAMING_DONE"] = "1"
 
 
 def _normalize_cli_whitespace(command):
@@ -7629,6 +8287,9 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         return None
 
     summary = analysis.get("summary") if isinstance(analysis, dict) else None
+    recommendations = analysis.get("recommendations") if isinstance(analysis, dict) else None
+    if not isinstance(recommendations, list):
+        recommendations = []
     if not isinstance(summary, dict):
         return None
     if summary.get("run_complete"):
@@ -7715,7 +8376,8 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         "run_command": original_command,
         "command_signature": summary.get("command_signature"),
         "section_runtimes": summary.get("section_runtimes") or {},
-        "recommendations_count": 0,
+        "recommendations_count": len(recommendations),
+        "recommendations": recommendations,
         "log_mtime": mtime,
         "log_size": summary.get("log_size"),
         "debug_count": counts.get("debug", 0),
@@ -7742,6 +8404,192 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         "resume_recommendations": suggestions,
         "resume_explanation": explanation,
     }
+
+
+def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_name=None):
+    path = Path(log_path)
+    cache_entry = cache_entry if isinstance(cache_entry, dict) else {}
+    summary = cache_entry.get("summary") if isinstance(cache_entry.get("summary"), dict) else {}
+    recommendations = cache_entry.get("recommendations")
+    if not isinstance(recommendations, list):
+        recommendations = []
+    try:
+        stats = path.stat()
+        mtime = stats.st_mtime
+        size = stats.st_size
+    except Exception:
+        mtime = cache_entry.get("mtime") if isinstance(cache_entry.get("mtime"), (int, float)) else None
+        size = cache_entry.get("size") if isinstance(cache_entry.get("size"), int) else None
+    counts = summary.get("log_counts") if isinstance(summary.get("log_counts"), dict) else {}
+    run_key = summary.get("run_key") or cache_entry.get("run_key")
+    if not run_key:
+        run_key_seed = f"incomplete|cached|{path}|{mtime or 0}|{size or 0}"
+        run_key = hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest()
+    created_at = summary.get("created_at")
+    if not created_at:
+        created_at = cache_entry.get("updated_at") or _iso_from_mtime(mtime)
+    original_command = _inject_config_path_for_command(
+        summary.get("run_command") or "",
+        config_name=summary.get("config_name") or config_name,
+    )
+    return {
+        "run_key": run_key,
+        "finished_at": summary.get("finished_at"),
+        "run_time_seconds": summary.get("run_time_seconds"),
+        "kometa_version": summary.get("kometa_version"),
+        "kometa_newest_version": summary.get("kometa_newest_version"),
+        "config_name": summary.get("config_name") or config_name or "",
+        "config_hash": summary.get("config_hash"),
+        "run_command": original_command,
+        "command_signature": summary.get("command_signature"),
+        "section_runtimes": summary.get("section_runtimes") or {},
+        "recommendations_count": len(recommendations),
+        "recommendations": recommendations,
+        "log_mtime": mtime,
+        "log_size": summary.get("log_size") if isinstance(summary.get("log_size"), int) else size,
+        "debug_count": counts.get("debug", 0),
+        "info_count": counts.get("info", 0),
+        "warning_count": counts.get("warning", 0),
+        "error_count": counts.get("error", 0),
+        "critical_count": counts.get("critical", 0),
+        "trace_count": counts.get("trace", 0),
+        "analysis_counts": summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {},
+        "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
+        "quickstart_run_marker": bool(summary.get("quickstart_run_marker")),
+        "config_line_count": summary.get("config_line_count"),
+        "cache_line_count": summary.get("cache_line_count"),
+        "created_at": created_at,
+        "run_complete": False,
+        "is_incomplete": True,
+        "incomplete_log_name": path.name,
+        "incomplete_log_path": str(path),
+        "phase_current": cache_entry.get("phase_current"),
+        "current_library": cache_entry.get("current_library"),
+        "current_collection": cache_entry.get("current_collection"),
+        "resume_reason": cache_entry.get("resume_reason") or "Run appears incomplete. Open the report for more detail or download the log for investigation.",
+        "resume_primary": cache_entry.get("resume_primary") or "",
+        "resume_recommendations": cache_entry.get("resume_recommendations") if isinstance(cache_entry.get("resume_recommendations"), list) else [],
+        "resume_explanation": cache_entry.get("resume_explanation") if isinstance(cache_entry.get("resume_explanation"), list) else [],
+    }
+
+
+def _build_incomplete_log_fallback(log_path, cache_entry=None, config_name=None):
+    path = Path(log_path)
+    cache_entry = cache_entry if isinstance(cache_entry, dict) else {}
+    try:
+        stats = path.stat()
+        mtime = stats.st_mtime
+        size = stats.st_size
+    except Exception:
+        mtime = cache_entry.get("mtime") if isinstance(cache_entry.get("mtime"), (int, float)) else None
+        size = cache_entry.get("size") if isinstance(cache_entry.get("size"), int) else None
+    run_key = cache_entry.get("run_key")
+    if not run_key:
+        run_key_seed = f"incomplete|fallback|{path}|{mtime or 0}|{size or 0}"
+        run_key = hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest()
+    created_at = cache_entry.get("updated_at") or _iso_from_mtime(mtime)
+    return {
+        "run_key": run_key,
+        "finished_at": None,
+        "run_time_seconds": None,
+        "kometa_version": "",
+        "kometa_newest_version": "",
+        "config_name": config_name or "",
+        "config_hash": None,
+        "run_command": "",
+        "command_signature": "",
+        "section_runtimes": {},
+        "recommendations_count": 0,
+        "recommendations": [],
+        "log_mtime": mtime,
+        "log_size": size,
+        "debug_count": 0,
+        "info_count": 0,
+        "warning_count": 0,
+        "error_count": 0,
+        "critical_count": 0,
+        "trace_count": 0,
+        "analysis_counts": {},
+        "library_counts": {},
+        "quickstart_run_marker": False,
+        "config_line_count": None,
+        "cache_line_count": None,
+        "created_at": created_at,
+        "run_complete": False,
+        "is_incomplete": True,
+        "incomplete_log_name": path.name,
+        "incomplete_log_path": str(path),
+        "phase_current": None,
+        "current_library": None,
+        "current_collection": None,
+        "resume_reason": "Run appears incomplete. Detailed parse data is not available, but the log is preserved for investigation.",
+        "resume_primary": "",
+        "resume_recommendations": [],
+        "resume_explanation": ["Quickstart preserved this incomplete log file even though detailed parsing was unavailable."],
+    }
+
+
+def _get_logscan_incomplete_runs(limit=100, config_name=None):
+    safe_limit = max(0, min(int(limit or 0), 500))
+    if safe_limit == 0:
+        return []
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    if not isinstance(cache_logs, dict):
+        return []
+
+    candidates = []
+    for path_key, entry in cache_logs.items():
+        if not isinstance(entry, dict) or entry.get("run_complete") is True:
+            continue
+        try:
+            path = Path(path_key).resolve()
+        except Exception:
+            continue
+        if not path.exists() or not path.is_file():
+            continue
+        try:
+            mtime = path.stat().st_mtime
+        except Exception:
+            mtime = entry.get("mtime") if isinstance(entry.get("mtime"), (int, float)) else 0
+        candidates.append((float(mtime or 0), path, entry))
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    parsed_runs = []
+    for _, path, entry in candidates[:safe_limit]:
+        if isinstance(entry.get("summary"), dict):
+            parsed = _build_incomplete_run_from_cache_entry(path, cache_entry=entry, config_name=config_name)
+        else:
+            parsed = _build_incomplete_log_fallback(path, cache_entry=entry, config_name=config_name)
+        if parsed:
+            parsed_runs.append(parsed)
+    return parsed_runs
+
+
+def _get_logscan_incomplete_run(run_key, config_name=None):
+    if not run_key:
+        return None
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    if not isinstance(cache_logs, dict):
+        return None
+    for path_key, entry in cache_logs.items():
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("run_complete") is True:
+            continue
+        if entry.get("run_key") != run_key:
+            continue
+        path = Path(path_key)
+        if not path.exists() or not path.is_file():
+            return None
+        if isinstance(entry.get("summary"), dict):
+            return _build_incomplete_run_from_cache_entry(path, cache_entry=entry, config_name=config_name)
+        parsed = _analyze_incomplete_log_for_resume(path, cache_entry=entry, config_name=config_name)
+        if parsed:
+            return parsed
+        return _build_incomplete_log_fallback(path, cache_entry=entry, config_name=config_name)
+    return None
 
 
 def _get_incomplete_resume_runs(limit=25, config_name=None):
@@ -7907,19 +8755,19 @@ def _start_logscan_auto_reingest(log_dir):
     return True
 
 
-def _archive_log_file(path, archive_dir, log_dir=None):
+def _archive_log_file(path, archive_dir, log_dir=None, allow_live_meta=False):
     try:
         path = Path(path)
         if not path.exists() or not path.is_file():
             return None
-        if path.name.lower() == "meta.log":
+        if path.name.lower() == "meta.log" and not allow_live_meta:
             return None
         if log_dir and path.resolve().parent != Path(log_dir).resolve():
             return None
         archive_dir = Path(archive_dir)
         archive_dir.mkdir(parents=True, exist_ok=True)
         src_stats = path.stat()
-        dest = archive_dir / path.name
+        dest = _build_logscan_archive_destination(path, archive_dir, stats=src_stats)
         if dest.exists():
             try:
                 dst_stats = dest.stat()
@@ -7928,18 +8776,55 @@ def _archive_log_file(path, archive_dir, log_dir=None):
                     return dest
             except Exception:
                 pass
-            suffix = "".join(path.suffixes)
-            base = path.name[: -len(suffix)] if suffix else path.stem
-            candidate = archive_dir / f"{base}-{int(src_stats.st_mtime)}-{src_stats.st_size}{suffix}"
-            counter = 1
-            while candidate.exists():
-                candidate = archive_dir / f"{base}-{int(src_stats.st_mtime)}-{src_stats.st_size}-{counter}{suffix}"
-                counter += 1
-            dest = candidate
         shutil.move(str(path), str(dest))
         return dest
     except Exception:
         return None
+
+
+def _archive_finished_live_meta_log_if_idle(log_dir=None):
+    log_dir = Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs"
+    live_path = (log_dir / "meta.log").resolve()
+    if helpers.is_kometa_running():
+        return None
+    if not live_path.exists() or not live_path.is_file():
+        return None
+
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    if not isinstance(cache_logs, dict):
+        return None
+
+    live_key = str(live_path)
+    live_entry = cache_logs.get(live_key)
+    if not isinstance(live_entry, dict):
+        return None
+    if live_entry.get("run_complete") is not True:
+        return None
+    if not live_entry.get("run_key"):
+        return None
+
+    archive_dir = _get_logscan_archive_dir()
+    archived_path = _archive_log_file(live_path, archive_dir, log_dir=log_dir, allow_live_meta=True)
+    if not archived_path:
+        return None
+
+    try:
+        archived_stats = archived_path.stat()
+        archived_key = str(archived_path.resolve())
+    except Exception:
+        return None
+
+    updated_entry = dict(live_entry)
+    updated_entry["mtime"] = archived_stats.st_mtime
+    updated_entry["size"] = archived_stats.st_size
+    updated_entry["updated_at"] = datetime.now(timezone.utc).isoformat()
+    cache_logs.pop(live_key, None)
+    cache_logs[archived_key] = updated_entry
+    ingest_cache["logs"] = cache_logs
+    _save_logscan_ingest_cache(ingest_cache)
+    _prune_logscan_archive(archive_dir)
+    return archived_path
 
 
 def _archive_rotated_logs(log_dir):
@@ -8108,12 +8993,36 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                     skipped_incomplete += 1
                     if len(sample_incomplete) < 5:
                         sample_incomplete.append(path.name)
+                    incomplete_recommendations = result.get("recommendations") if isinstance(result, dict) else None
+                    if not isinstance(incomplete_recommendations, list):
+                        incomplete_recommendations = []
                     cache_logs[cache_key] = {
                         "mtime": stats.st_mtime,
                         "size": stats.st_size,
                         "run_key": summary.get("run_key"),
                         "run_complete": False,
                         "updated_at": datetime.now(timezone.utc).isoformat(),
+                        "summary": {
+                            "run_key": summary.get("run_key"),
+                            "finished_at": summary.get("finished_at"),
+                            "run_time_seconds": summary.get("run_time_seconds"),
+                            "kometa_version": summary.get("kometa_version"),
+                            "kometa_newest_version": summary.get("kometa_newest_version"),
+                            "config_name": summary.get("config_name"),
+                            "config_hash": summary.get("config_hash"),
+                            "run_command": summary.get("run_command"),
+                            "command_signature": summary.get("command_signature"),
+                            "section_runtimes": summary.get("section_runtimes") if isinstance(summary.get("section_runtimes"), dict) else {},
+                            "log_size": summary.get("log_size"),
+                            "log_counts": summary.get("log_counts") if isinstance(summary.get("log_counts"), dict) else {},
+                            "analysis_counts": summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {},
+                            "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
+                            "quickstart_run_marker": bool(summary.get("quickstart_run_marker")),
+                            "config_line_count": summary.get("config_line_count"),
+                            "cache_line_count": summary.get("cache_line_count"),
+                            "created_at": summary.get("created_at"),
+                        },
+                        "recommendations": incomplete_recommendations,
                     }
                     cache_dirty = True
                     continue

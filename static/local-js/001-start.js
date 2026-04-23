@@ -89,6 +89,16 @@ document.addEventListener('DOMContentLoaded', function () {
   const bulkDeleteSelectAll = document.getElementById('bulkDeleteSelectAll')
   const bulkDeleteCount = document.getElementById('bulkDeleteCount')
   const confirmBulkDeleteButton = document.getElementById('confirmBulkDeleteButton')
+  const orphanedArtifactsModalEl = document.getElementById('orphanedArtifactsModal')
+  const orphanedArtifactsList = document.getElementById('orphanedArtifactsList')
+  const orphanedArtifactsSelectAll = document.getElementById('orphanedArtifactsSelectAll')
+  const orphanedArtifactsCount = document.getElementById('orphanedArtifactsCount')
+  const orphanedArtifactsError = document.getElementById('orphanedArtifactsError')
+  const confirmOrphanedArtifactsDelete = document.getElementById('confirmOrphanedArtifactsDelete')
+  const orphanedArtifactsRestoreModalEl = document.getElementById('orphanedArtifactsRestoreModal')
+  const orphanedArtifactsRestoreList = document.getElementById('orphanedArtifactsRestoreList')
+  const orphanedArtifactsRestoreError = document.getElementById('orphanedArtifactsRestoreError')
+  const confirmOrphanedArtifactsRestore = document.getElementById('confirmOrphanedArtifactsRestore')
   const configActionModalElement = document.getElementById('configActionModal')
   const renameConfigModalEl = document.getElementById('renameConfigModal')
   const renameConfigCurrentName = document.getElementById('renameConfigCurrentName')
@@ -128,6 +138,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (configActionModalElement) configActionModal = new bootstrap.Modal(configActionModalElement)
 
   let currentAction = ''
+  let orphanedRestoreTarget = ''
   let importToken = null
   let importReportHeader = ''
   let importReportBody = ''
@@ -340,6 +351,232 @@ document.addEventListener('DOMContentLoaded', function () {
     return row
   }
 
+  function setOrphanedArtifactsError (message) {
+    if (!orphanedArtifactsError) return
+    if (!message) {
+      orphanedArtifactsError.classList.add('d-none')
+      orphanedArtifactsError.textContent = ''
+      return
+    }
+    orphanedArtifactsError.classList.remove('d-none')
+    orphanedArtifactsError.textContent = message
+  }
+
+  function setOrphanedArtifactsRestoreError (message) {
+    if (!orphanedArtifactsRestoreError) return
+    if (!message) {
+      orphanedArtifactsRestoreError.classList.add('d-none')
+      orphanedArtifactsRestoreError.textContent = ''
+      return
+    }
+    orphanedArtifactsRestoreError.classList.remove('d-none')
+    orphanedArtifactsRestoreError.textContent = message
+  }
+
+  function updateOrphanedArtifactsState () {
+    if (!orphanedArtifactsList || !confirmOrphanedArtifactsDelete) return
+    const allBoxes = orphanedArtifactsList.querySelectorAll('.orphaned-artifact-checkbox')
+    const checked = orphanedArtifactsList.querySelectorAll('.orphaned-artifact-checkbox:checked')
+
+    if (orphanedArtifactsCount) orphanedArtifactsCount.textContent = String(checked.length)
+    confirmOrphanedArtifactsDelete.disabled = checked.length === 0
+
+    if (orphanedArtifactsSelectAll) {
+      orphanedArtifactsSelectAll.checked = allBoxes.length > 0 && checked.length === allBoxes.length
+      orphanedArtifactsSelectAll.indeterminate = checked.length > 0 && checked.length < allBoxes.length
+      orphanedArtifactsSelectAll.disabled = allBoxes.length === 0
+    }
+  }
+
+  function buildArtifactBadge (text, className) {
+    const badge = document.createElement('span')
+    badge.className = `badge ${className}`
+    badge.textContent = text
+    return badge
+  }
+
+  function buildOrphanedArtifactRow (item, index) {
+    const row = document.createElement('div')
+    row.className = 'form-check bulk-delete-item orphaned-artifact-item'
+
+    const input = document.createElement('input')
+    input.type = 'checkbox'
+    input.className = 'form-check-input orphaned-artifact-checkbox'
+    input.value = item.name
+    input.id = `orphaned-artifact-${index}-${String(item.name || '').replace(/[^a-zA-Z0-9_-]/g, '_')}`
+    input.addEventListener('change', updateOrphanedArtifactsState)
+
+    const label = document.createElement('label')
+    label.className = 'form-check-label orphaned-artifact-label'
+    label.setAttribute('for', input.id)
+
+    const titleRow = document.createElement('div')
+    titleRow.className = 'd-flex flex-wrap align-items-center gap-2'
+
+    const title = document.createElement('span')
+    title.className = 'fw-semibold'
+    title.textContent = item.name
+    titleRow.appendChild(title)
+
+    if (item.has_current_file) titleRow.appendChild(buildArtifactBadge('current yaml', 'bg-primary-subtle text-primary-emphasis'))
+    if (item.has_kometa_copy) titleRow.appendChild(buildArtifactBadge('kometa copy', 'bg-info-subtle text-info-emphasis'))
+    if (item.has_archive_dir) {
+      const archiveText = item.archive_count === 1 ? '1 archive' : `${item.archive_count} archives`
+      titleRow.appendChild(buildArtifactBadge(archiveText, 'bg-warning-subtle text-warning-emphasis'))
+    }
+
+    const meta = document.createElement('div')
+    meta.className = 'small text-muted mt-1 orphaned-artifact-meta'
+    meta.textContent = Array.isArray(item.paths) && item.paths.length
+      ? item.paths.join(' • ')
+      : 'No filesystem paths reported.'
+
+    const actions = document.createElement('div')
+    actions.className = 'mt-2'
+    const restoreButton = document.createElement('button')
+    restoreButton.type = 'button'
+    restoreButton.className = 'btn btn-sm btn-outline-primary orphaned-artifact-restore'
+    restoreButton.dataset.name = item.name
+    restoreButton.textContent = 'Restore...'
+    actions.appendChild(restoreButton)
+
+    label.appendChild(titleRow)
+    label.appendChild(meta)
+    label.appendChild(actions)
+    row.appendChild(input)
+    row.appendChild(label)
+    return row
+  }
+
+  function updateOrphanedArtifactsRestoreState () {
+    if (!confirmOrphanedArtifactsRestore || !orphanedArtifactsRestoreList) return
+    const selected = orphanedArtifactsRestoreList.querySelector('.orphaned-artifact-version-radio:checked')
+    confirmOrphanedArtifactsRestore.disabled = !selected
+  }
+
+  function buildOrphanedArtifactVersionRow (item, index) {
+    const row = document.createElement('div')
+    row.className = 'form-check bulk-delete-item orphaned-artifact-version-item'
+
+    const input = document.createElement('input')
+    input.type = 'radio'
+    input.name = 'orphanedArtifactVersion'
+    input.className = 'form-check-input orphaned-artifact-version-radio'
+    input.value = item.path
+    input.id = `orphaned-artifact-version-${index}`
+    if (index === 0) input.checked = true
+    input.addEventListener('change', updateOrphanedArtifactsRestoreState)
+
+    const label = document.createElement('label')
+    label.className = 'form-check-label orphaned-artifact-label'
+    label.setAttribute('for', input.id)
+
+    const titleRow = document.createElement('div')
+    titleRow.className = 'd-flex flex-wrap align-items-center gap-2'
+
+    const title = document.createElement('span')
+    title.className = 'fw-semibold'
+    title.textContent = item.kind === 'current' ? 'Current saved config' : item.filename
+    titleRow.appendChild(title)
+    titleRow.appendChild(buildArtifactBadge(item.kind === 'current' ? 'current' : 'archive', item.kind === 'current' ? 'bg-primary-subtle text-primary-emphasis' : 'bg-warning-subtle text-warning-emphasis'))
+
+    const meta = document.createElement('div')
+    meta.className = 'small text-muted mt-1 orphaned-artifact-meta'
+    const sizeLabel = Number.isFinite(item.size) ? `${item.size} bytes` : 'size unavailable'
+    meta.textContent = `${item.modified_at || 'unknown time'} • ${sizeLabel} • ${item.path}`
+
+    label.appendChild(titleRow)
+    label.appendChild(meta)
+    row.appendChild(input)
+    row.appendChild(label)
+    return row
+  }
+
+  async function openOrphanedArtifactsRestore (name) {
+    if (!orphanedArtifactsRestoreModalEl || !orphanedArtifactsRestoreList) return
+    orphanedRestoreTarget = String(name || '').trim()
+    if (!orphanedRestoreTarget) return
+    setOrphanedArtifactsRestoreError('')
+    orphanedArtifactsRestoreList.replaceChildren()
+    if (confirmOrphanedArtifactsRestore) confirmOrphanedArtifactsRestore.disabled = true
+
+    const title = document.getElementById('orphanedArtifactsRestoreModalLabel')
+    if (title) title.innerHTML = `<i class="bi bi-arrow-counterclockwise me-2"></i>Restore ${orphanedRestoreTarget}`
+
+    const loading = document.createElement('div')
+    loading.className = 'small text-muted'
+    loading.textContent = 'Loading saved versions...'
+    orphanedArtifactsRestoreList.appendChild(loading)
+
+    const modal = bootstrap.Modal.getOrCreateInstance(orphanedArtifactsRestoreModalEl)
+    modal.show()
+
+    try {
+      const res = await fetch(`/orphaned-config-artifacts/versions?name=${encodeURIComponent(orphanedRestoreTarget)}`)
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to load saved versions.')
+      }
+      orphanedArtifactsRestoreList.replaceChildren()
+      const versions = Array.isArray(data.versions) ? data.versions : []
+      if (!versions.length) {
+        const empty = document.createElement('div')
+        empty.className = 'small text-muted'
+        empty.textContent = 'No saved versions were found for this config bundle.'
+        orphanedArtifactsRestoreList.appendChild(empty)
+        updateOrphanedArtifactsRestoreState()
+        return
+      }
+      versions.forEach((item, index) => {
+        orphanedArtifactsRestoreList.appendChild(buildOrphanedArtifactVersionRow(item, index))
+      })
+      updateOrphanedArtifactsRestoreState()
+    } catch (err) {
+      orphanedArtifactsRestoreList.replaceChildren()
+      setOrphanedArtifactsRestoreError(err.message || 'Failed to load saved versions.')
+      updateOrphanedArtifactsRestoreState()
+    }
+  }
+
+  async function renderOrphanedArtifactsList () {
+    if (!orphanedArtifactsList) return
+    orphanedArtifactsList.replaceChildren()
+    setOrphanedArtifactsError('')
+
+    const loading = document.createElement('div')
+    loading.className = 'small text-muted'
+    loading.textContent = 'Scanning config storage...'
+    orphanedArtifactsList.appendChild(loading)
+
+    try {
+      const res = await fetch('/orphaned-config-artifacts')
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error((data.errors && data.errors[0]) || data.message || 'Failed to inspect config storage.')
+      }
+
+      orphanedArtifactsList.replaceChildren()
+      const items = Array.isArray(data.orphans) ? data.orphans : []
+      if (!items.length) {
+        const empty = document.createElement('div')
+        empty.className = 'text-muted small'
+        empty.textContent = 'No orphaned config bundles found.'
+        orphanedArtifactsList.appendChild(empty)
+        updateOrphanedArtifactsState()
+        return
+      }
+
+      items.forEach((item, index) => {
+        orphanedArtifactsList.appendChild(buildOrphanedArtifactRow(item, index))
+      })
+      updateOrphanedArtifactsState()
+    } catch (err) {
+      orphanedArtifactsList.replaceChildren()
+      setOrphanedArtifactsError(err.message || 'Failed to inspect config storage.')
+      updateOrphanedArtifactsState()
+    }
+  }
+
   function renderBulkDeleteList () {
     if (!bulkDeleteList) return
     bulkDeleteList.replaceChildren()
@@ -474,6 +711,102 @@ document.addEventListener('DOMContentLoaded', function () {
       event.preventDefault()
       if (saveConfigButton && !saveConfigButton.disabled) {
         saveConfigButton.click()
+      }
+    })
+  }
+
+  if (orphanedArtifactsModalEl) {
+    orphanedArtifactsModalEl.addEventListener('show.bs.modal', renderOrphanedArtifactsList)
+  }
+
+  if (orphanedArtifactsSelectAll) {
+    orphanedArtifactsSelectAll.addEventListener('change', () => {
+      if (!orphanedArtifactsList) return
+      const checkboxes = orphanedArtifactsList.querySelectorAll('.orphaned-artifact-checkbox')
+      checkboxes.forEach(box => { box.checked = orphanedArtifactsSelectAll.checked })
+      updateOrphanedArtifactsState()
+    })
+  }
+
+  if (confirmOrphanedArtifactsDelete) {
+    confirmOrphanedArtifactsDelete.addEventListener('click', async () => {
+      if (!orphanedArtifactsList) return
+      const selected = Array.from(orphanedArtifactsList.querySelectorAll('.orphaned-artifact-checkbox:checked'))
+        .map(box => box.value)
+      if (!selected.length) {
+        showToast('error', 'Select at least one orphaned config bundle to delete.')
+        return
+      }
+
+      confirmOrphanedArtifactsDelete.disabled = true
+      const originalText = confirmOrphanedArtifactsDelete.textContent
+      confirmOrphanedArtifactsDelete.textContent = 'Deleting...'
+
+      try {
+        const res = await fetch('/orphaned-config-artifacts/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ names: selected })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error((data.errors && data.errors[0]) || data.message || 'Failed to delete orphaned config bundles.')
+        }
+        showToast('success', `Deleted ${data.deleted.length} orphaned config bundle(s).`)
+        const modal = bootstrap.Modal.getInstance(orphanedArtifactsModalEl)
+        if (modal) modal.hide()
+        setTimeout(() => window.location.reload(), 900)
+      } catch (err) {
+        confirmOrphanedArtifactsDelete.disabled = false
+        confirmOrphanedArtifactsDelete.textContent = originalText
+        setOrphanedArtifactsError(err.message || 'Failed to delete orphaned config bundles.')
+        showToast('error', err.message || 'Failed to delete orphaned config bundles.')
+      }
+    })
+  }
+
+  if (orphanedArtifactsList) {
+    orphanedArtifactsList.addEventListener('click', (event) => {
+      const button = event.target.closest('.orphaned-artifact-restore')
+      if (!button) return
+      event.preventDefault()
+      event.stopPropagation()
+      openOrphanedArtifactsRestore(button.dataset.name)
+    })
+  }
+
+  if (confirmOrphanedArtifactsRestore) {
+    confirmOrphanedArtifactsRestore.addEventListener('click', async () => {
+      if (!orphanedArtifactsRestoreList || !orphanedRestoreTarget) return
+      const selected = orphanedArtifactsRestoreList.querySelector('.orphaned-artifact-version-radio:checked')
+      if (!selected) {
+        setOrphanedArtifactsRestoreError('Select a saved version to restore.')
+        return
+      }
+
+      confirmOrphanedArtifactsRestore.disabled = true
+      const originalText = confirmOrphanedArtifactsRestore.textContent
+      confirmOrphanedArtifactsRestore.textContent = 'Restoring...'
+
+      try {
+        const res = await fetch('/orphaned-config-artifacts/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: orphanedRestoreTarget, path: selected.value })
+        })
+        const data = await res.json()
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to restore config bundle.')
+        }
+        showToast('success', `Restored '${data.config_name}' from disk.`)
+        const modal = bootstrap.Modal.getInstance(orphanedArtifactsRestoreModalEl)
+        if (modal) modal.hide()
+        setTimeout(() => window.location.reload(), 900)
+      } catch (err) {
+        confirmOrphanedArtifactsRestore.disabled = false
+        confirmOrphanedArtifactsRestore.textContent = originalText
+        setOrphanedArtifactsRestoreError(err.message || 'Failed to restore config bundle.')
+        showToast('error', err.message || 'Failed to restore config bundle.')
       }
     })
   }

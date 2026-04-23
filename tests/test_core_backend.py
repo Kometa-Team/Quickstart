@@ -348,6 +348,195 @@ def test_switch_config_returns_new_workspace_status(client, isolated_config_dir,
         assert sess["config_name"] == ready_config
 
 
+def test_clear_data_removes_config_artifacts(client, isolated_config_dir, app):
+    from modules import database
+    from pathlib import Path
+
+    config_name = "pytest_delete_me"
+    config_file = isolated_config_dir / f"{config_name}_config.yml"
+    archive_dir = isolated_config_dir / "archives" / config_name
+    archive_file = archive_dir / f"{config_name}_config_1.yml"
+    kometa_config = app.config["KOMETA_ROOT"]
+
+    config_file.write_text("test: true\n", encoding="utf-8")
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    archive_file.write_text("archived: true\n", encoding="utf-8")
+    kometa_path = Path(kometa_config) / "config"
+    kometa_path.mkdir(parents=True, exist_ok=True)
+    (kometa_path / f"{config_name}_config.yml").write_text("test: true\n", encoding="utf-8")
+
+    database.save_section_data(
+        name=config_name,
+        section="start",
+        validated=True,
+        user_entered=True,
+        data={"start": {"config_name": config_name}},
+    )
+
+    resp = client.get(f"/clear_data/{config_name}")
+    assert resp.status_code == 302
+    assert database.get_unique_config_names() == []
+    assert not config_file.exists()
+    assert not archive_dir.exists()
+    assert not (kometa_path / f"{config_name}_config.yml").exists()
+
+
+def test_bulk_delete_configs_removes_config_artifacts(client, isolated_config_dir, app):
+    from modules import database
+    from pathlib import Path
+
+    first = "pytest_bulk_one"
+    second = "pytest_bulk_two"
+    kometa_path = Path(app.config["KOMETA_ROOT"]) / "config"
+    kometa_path.mkdir(parents=True, exist_ok=True)
+
+    for name in (first, second):
+        (isolated_config_dir / f"{name}_config.yml").write_text("test: true\n", encoding="utf-8")
+        archive_dir = isolated_config_dir / "archives" / name
+        archive_dir.mkdir(parents=True, exist_ok=True)
+        (archive_dir / f"{name}_config_1.yml").write_text("archived: true\n", encoding="utf-8")
+        (kometa_path / f"{name}_config.yml").write_text("test: true\n", encoding="utf-8")
+        database.save_section_data(
+            name=name,
+            section="start",
+            validated=True,
+            user_entered=True,
+            data={"start": {"config_name": name}},
+        )
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = first
+
+    resp = client.post("/bulk-delete-configs", json={"names": [first, second]})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert set(payload["deleted"]) == {first, second}
+    assert database.get_unique_config_names() == []
+
+    for name in (first, second):
+        assert not (isolated_config_dir / f"{name}_config.yml").exists()
+        assert not (isolated_config_dir / "archives" / name).exists()
+        assert not (kometa_path / f"{name}_config.yml").exists()
+
+
+def test_orphaned_config_artifacts_route_lists_disk_only_bundles(client, isolated_config_dir, app):
+    from modules import database
+    from pathlib import Path
+
+    keep_name = "keep_me"
+    orphan_name = "delete_me"
+    archive_dir = isolated_config_dir / "archives" / orphan_name
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    (archive_dir / f"{orphan_name}_config_1.yml").write_text("archive: true\n", encoding="utf-8")
+    (isolated_config_dir / f"{orphan_name}_config.yml").write_text("current: true\n", encoding="utf-8")
+
+    kometa_path = Path(app.config["KOMETA_ROOT"]) / "config"
+    kometa_path.mkdir(parents=True, exist_ok=True)
+    (kometa_path / f"{orphan_name}_config.yml").write_text("kometa: true\n", encoding="utf-8")
+
+    database.save_section_data(
+        name=keep_name,
+        section="start",
+        validated=True,
+        user_entered=True,
+        data={"start": {"config_name": keep_name}},
+    )
+
+    resp = client.get("/orphaned-config-artifacts")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert len(payload["orphans"]) == 1
+    orphan = payload["orphans"][0]
+    assert orphan["name"] == orphan_name
+    assert orphan["has_current_file"] is True
+    assert orphan["has_kometa_copy"] is True
+    assert orphan["has_archive_dir"] is True
+    assert orphan["archive_count"] == 1
+
+
+def test_delete_orphaned_config_artifacts_route_removes_selected_bundle(client, isolated_config_dir, app):
+    from pathlib import Path
+
+    orphan_name = "delete_me"
+    archive_dir = isolated_config_dir / "archives" / orphan_name
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    (archive_dir / f"{orphan_name}_config_1.yml").write_text("archive: true\n", encoding="utf-8")
+    (isolated_config_dir / f"{orphan_name}_config.yml").write_text("current: true\n", encoding="utf-8")
+
+    kometa_path = Path(app.config["KOMETA_ROOT"]) / "config"
+    kometa_path.mkdir(parents=True, exist_ok=True)
+    (kometa_path / f"{orphan_name}_config.yml").write_text("kometa: true\n", encoding="utf-8")
+
+    resp = client.post("/orphaned-config-artifacts/delete", json={"names": [orphan_name]})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["deleted"] == [orphan_name]
+    assert not (isolated_config_dir / f"{orphan_name}_config.yml").exists()
+    assert not archive_dir.exists()
+    assert not (kometa_path / f"{orphan_name}_config.yml").exists()
+
+
+def test_orphaned_config_artifact_versions_returns_newest_first(client, isolated_config_dir):
+    import os
+    import time
+
+    orphan_name = "delete_me"
+    current_file = isolated_config_dir / f"{orphan_name}_config.yml"
+    archive_dir = isolated_config_dir / "archives" / orphan_name
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    older = archive_dir / f"{orphan_name}_config_1.yml"
+    newer = archive_dir / f"{orphan_name}_config_2.yml"
+
+    current_file.write_text("settings:\n  cache: false\n", encoding="utf-8")
+    older.write_text("settings:\n  cache: false\n", encoding="utf-8")
+    newer.write_text("settings:\n  cache: true\n", encoding="utf-8")
+
+    now = time.time()
+    os.utime(older, (now - 100, now - 100))
+    os.utime(current_file, (now - 50, now - 50))
+    os.utime(newer, (now, now))
+
+    resp = client.get(f"/orphaned-config-artifacts/versions?name={orphan_name}")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert [item["filename"] for item in payload["versions"]] == [newer.name, current_file.name, older.name]
+
+
+def test_restore_orphaned_config_artifact_restores_selected_version(client, isolated_config_dir, app):
+    from modules import database
+
+    orphan_name = "delete_me"
+    current_file = isolated_config_dir / f"{orphan_name}_config.yml"
+    archive_dir = isolated_config_dir / "archives" / orphan_name
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    selected_version = archive_dir / f"{orphan_name}_config_1.yml"
+
+    current_file.write_text("settings:\n  cache: false\n", encoding="utf-8")
+    selected_version.write_text("settings:\n  cache: true\n", encoding="utf-8")
+
+    resp = client.post(
+        "/orphaned-config-artifacts/restore",
+        json={"name": orphan_name, "path": str(selected_version.resolve())},
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["config_name"] == orphan_name
+    assert "settings" in payload["imported_sections"]
+
+    validated, user_entered, data = database.retrieve_section_data(orphan_name, "settings")
+    assert validated is False
+    assert user_entered is True
+    assert data["settings"]["cache"] is True
+
+    restored_text = current_file.read_text(encoding="utf-8")
+    assert "cache: true" in restored_text
+
+
 def test_list_uploaded_images_includes_builtin_guides(client):
     expected_by_type = {
         "movie": {"overlay_alignment_guide.png"},
