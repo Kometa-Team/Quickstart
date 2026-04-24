@@ -1,8 +1,7 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
-<div class="row g-3 start-hero">
-  <div class="col-lg-12">
+<div class="start-hero">
     <div class="card h-100 border-secondary start-card">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-center gap-2 mb-3 start-warning">
@@ -100,7 +99,6 @@
         </div>
       </div>
     </div>
-  </div>
 </div>
 
 <div class="card border-secondary start-card mt-4">
