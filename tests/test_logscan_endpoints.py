@@ -185,7 +185,9 @@ def test_logscan_trends_includes_incomplete_runs_in_table_payload(client, isolat
             }
         ],
     )
-    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: {"version": 1, "logs": {str(incomplete_path.resolve()): {"run_key": "run-incomplete-1", "run_complete": False}}})
+    monkeypatch.setattr(
+        qs_module, "_load_logscan_ingest_cache", lambda: {"version": 1, "logs": {str(incomplete_path.resolve()): {"run_key": "run-incomplete-1", "run_complete": False}}}
+    )
 
     resp = client.get("/logscan/trends")
     assert resp.status_code == 200
@@ -207,7 +209,17 @@ def test_logscan_trends_includes_incomplete_fallback_when_detailed_parse_fails(c
     monkeypatch.setattr(
         qs_module,
         "_load_logscan_ingest_cache",
-        lambda: {"version": 1, "logs": {str(incomplete_path.resolve()): {"run_key": "run-fallback-1", "run_complete": False, "mtime": incomplete_path.stat().st_mtime, "size": incomplete_path.stat().st_size}}},
+        lambda: {
+            "version": 1,
+            "logs": {
+                str(incomplete_path.resolve()): {
+                    "run_key": "run-fallback-1",
+                    "run_complete": False,
+                    "mtime": incomplete_path.stat().st_mtime,
+                    "size": incomplete_path.stat().st_size,
+                }
+            },
+        },
     )
 
     resp = client.get("/logscan/trends")

@@ -432,9 +432,7 @@ def _libraries_data_service_dependency_reasons(libraries_data, attribute_prefixe
     seen = set()
     normalized_attribute_prefixes = tuple(str(prefix or "").strip().lower() for prefix in attribute_prefixes if str(prefix or "").strip())
     normalized_collection_prefixes = tuple(str(prefix or "").strip().lower() for prefix in collection_prefixes if str(prefix or "").strip())
-    normalized_template_collection_prefixes = tuple(
-        str(prefix or "").strip().lower() for prefix in template_collection_prefixes if str(prefix or "").strip()
-    )
+    normalized_template_collection_prefixes = tuple(str(prefix or "").strip().lower() for prefix in template_collection_prefixes if str(prefix or "").strip())
 
     for raw_key, raw_value in libraries_data.items():
         key = str(raw_key or "").strip().lower()
@@ -448,11 +446,7 @@ def _libraries_data_service_dependency_reasons(libraries_data, attribute_prefixe
         if "-attribute_" in key:
             attribute_key = key.split("-attribute_", 1)[1]
             matched_attribute = next(
-                (
-                    attr_prefix
-                    for attr_prefix in normalized_attribute_prefixes
-                    if attribute_key == attr_prefix or attribute_key.startswith(f"{attr_prefix}_")
-                ),
+                (attr_prefix for attr_prefix in normalized_attribute_prefixes if attribute_key == attr_prefix or attribute_key.startswith(f"{attr_prefix}_")),
                 None,
             )
             if matched_attribute:
@@ -839,11 +833,7 @@ def _build_live_validation_rollup(step_statuses, template_keys):
     else:
         state = "unknown"
 
-    summary_text = (
-        f"Current. Validated: {counts['validated']} \u2022 "
-        f"Failed: {counts['failed']} \u2022 "
-        f"Pending: {counts['skipped']}"
-    )
+    summary_text = f"Current. Validated: {counts['validated']} \u2022 " f"Failed: {counts['failed']} \u2022 " f"Pending: {counts['skipped']}"
     if counts["unknown"] > 0:
         summary_text += f" \u2022 Not checked: {counts['unknown']}"
     summary_text += "."
@@ -1123,12 +1113,7 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
 
         # If user has visited/passed-through this page (even with no libraries selected),
         # treat it as intentionally acknowledged/valid.
-        was_visited = section_row_present and (
-            user_entered
-            or bool(validation_status)
-            or bool(payload.get("validation_updated_at"))
-            or bool(payload.get("validated_at"))
-        )
+        was_visited = section_row_present and (user_entered or bool(validation_status) or bool(payload.get("validation_updated_at")) or bool(payload.get("validated_at")))
         if was_visited:
             return "ok"
         return "unknown"
@@ -2190,6 +2175,7 @@ if cleanup_flag not in {"1", "true", "yes"}:
     else:
         helpers.update_env_variable("QS_CONFIG_CLEANUP_DONE", "1")
         os.environ["QS_CONFIG_CLEANUP_DONE"] = "1"
+
 
 def _load_or_create_secret_key():
     env_key = os.getenv("QS_SECRET_KEY", "").strip()
@@ -3424,12 +3410,16 @@ def _delete_logscan_run_artifact(run_key):
     if run_record:
         database.delete_log_run(run_key)
     _remove_logscan_ingest_cache_entries(run_key=run_key, raw_path=str(Path(info["path"]).resolve()))
-    return True, {
-        "success": True,
-        "run_key": run_key,
-        "deleted_file": deleted_file,
-        "deleted_run": bool(run_record),
-    }, 200
+    return (
+        True,
+        {
+            "success": True,
+            "run_key": run_key,
+            "deleted_file": deleted_file,
+            "deleted_run": bool(run_record),
+        },
+        200,
+    )
 
 
 def _compress_logscan_run_artifact(run_key):
@@ -3478,12 +3468,16 @@ def _compress_logscan_run_artifact(run_key):
     cache["logs"] = cache_logs
     _save_logscan_ingest_cache(cache)
 
-    return True, {
-        "success": True,
-        "run_key": run_key,
-        "compressed_file": True,
-        "compressed_path": compressed_key,
-    }, 200
+    return (
+        True,
+        {
+            "success": True,
+            "run_key": run_key,
+            "compressed_file": True,
+            "compressed_path": compressed_key,
+        },
+        200,
+    )
 
 
 def _annotate_logscan_runs(runs, context=None):
@@ -6853,6 +6847,7 @@ def validate_all_services():
             if path_errors:
                 libraries_reason = "invalid_paths"
             else:
+
                 def has_minimal_library_yaml_selection(lib_id):
                     allowed_markers = ("-collection_", "-overlay_", "-attribute_", "-top_level_")
                     for key, value in libraries_data.items():
@@ -6868,11 +6863,7 @@ def validate_all_services():
                             return True
                     return False
 
-                missing_minimal_yaml = [
-                    lib_id
-                    for lib_id in selected_library_ids
-                    if not has_minimal_library_yaml_selection(lib_id)
-                ]
+                missing_minimal_yaml = [lib_id for lib_id in selected_library_ids if not has_minimal_library_yaml_selection(lib_id)]
                 if missing_minimal_yaml:
                     libraries_reason = "missing_library_defaults"
 

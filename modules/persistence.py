@@ -14,7 +14,6 @@ from werkzeug.datastructures import MultiDict
 
 from modules import database, helpers, iso, url_validation
 
-
 _ISO_639_1_LANGUAGES = None
 _ISO_3166_1_REGIONS = None
 _ISO_639_2_LANGUAGES = None
