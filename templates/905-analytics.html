@@ -367,7 +367,7 @@
 
 <div class="modal fade" id="logscan-delete-log-modal" tabindex="-1" aria-labelledby="logscan-delete-log-title"
   aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered logscan-confirm-modal-dialog">
     <div class="modal-content bg-dark text-light border-secondary">
       <div class="modal-header">
         <h5 class="modal-title" id="logscan-delete-log-title">Delete Logs</h5>
@@ -377,9 +377,12 @@
       <div class="modal-body">
         <div id="logscan-delete-log-body">Delete this log from disk and remove it from Analytics?</div>
         <div class="small text-muted mt-2">The live <code>meta.log</code> is never deleted from this action.</div>
+        <div id="logscan-delete-log-status" class="alert alert-info d-none py-2 small mt-3 mb-0" role="status"></div>
+        <div id="logscan-delete-log-success" class="alert alert-success d-none py-2 small mt-3 mb-0" role="status"></div>
+        <div id="logscan-delete-log-error" class="alert alert-danger d-none py-2 small mt-3 mb-0" role="alert"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button btn-sm" id="logscan-cancel-delete-log" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn nav-button nav-button-danger btn-sm" id="logscan-confirm-delete-log">Delete</button>
       </div>
     </div>
@@ -388,7 +391,7 @@
 
 <div class="modal fade" id="logscan-compress-log-modal" tabindex="-1" aria-labelledby="logscan-compress-log-title"
   aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered logscan-confirm-modal-dialog">
     <div class="modal-content bg-dark text-light border-secondary">
       <div class="modal-header">
         <h5 class="modal-title" id="logscan-compress-log-title">Compress Logs</h5>
@@ -398,9 +401,12 @@
       <div class="modal-body">
         <div id="logscan-compress-log-body">Compress this archived log as <code>.log.gz</code>?</div>
         <div class="small text-muted mt-2">Only archived plain <code>.log</code> files are compressed. The active <code>meta.log</code> is never touched from this action.</div>
+        <div id="logscan-compress-log-status" class="alert alert-info d-none py-2 small mt-3 mb-0" role="status"></div>
+        <div id="logscan-compress-log-success" class="alert alert-success d-none py-2 small mt-3 mb-0" role="status"></div>
+        <div id="logscan-compress-log-error" class="alert alert-danger d-none py-2 small mt-3 mb-0" role="alert"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button btn-sm" id="logscan-cancel-compress-log" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn nav-button btn-sm" id="logscan-confirm-compress-log">Compress</button>
       </div>
     </div>

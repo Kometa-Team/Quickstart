@@ -47,9 +47,17 @@ $(document).ready(function () {
   const $missingDownload = $('#logscan-trends-missing-download')
   const $confirmMissingDownload = $('#logscan-confirm-missing-download')
   const $deleteLogBody = $('#logscan-delete-log-body')
+  const $deleteLogStatus = $('#logscan-delete-log-status')
+  const $deleteLogSuccess = $('#logscan-delete-log-success')
+  const $deleteLogError = $('#logscan-delete-log-error')
   const $confirmDeleteLog = $('#logscan-confirm-delete-log')
+  const $cancelDeleteLog = $('#logscan-cancel-delete-log')
   const $compressLogBody = $('#logscan-compress-log-body')
+  const $compressLogStatus = $('#logscan-compress-log-status')
+  const $compressLogSuccess = $('#logscan-compress-log-success')
+  const $compressLogError = $('#logscan-compress-log-error')
   const $confirmCompressLog = $('#logscan-confirm-compress-log')
+  const $cancelCompressLog = $('#logscan-cancel-compress-log')
   const $runDetailsBody = $('#logscan-run-details-body')
   const $runDetailsTitle = $('#logscan-run-details-title')
   const $preferencesSave = $('#logscan-preferences-save')
@@ -2084,6 +2092,36 @@ $(document).ready(function () {
     if (instance) instance.hide()
   }
 
+  function setButtonSpinner ($button, text) {
+    if (!$button || !$button.length) return
+    $button.html(`<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>${escapeHtml(text)}`)
+  }
+
+  function setModalAlert ($el, message) {
+    if (!$el || !$el.length) return
+    if (!message) {
+      $el.addClass('d-none').text('')
+      return
+    }
+    $el.removeClass('d-none').text(message)
+  }
+
+  function setDeleteModalBusy (busy) {
+    $confirmDeleteLog.prop('disabled', busy)
+    $cancelDeleteLog.prop('disabled', busy)
+    if (deleteLogModalEl) {
+      $(deleteLogModalEl).find('.btn-close').prop('disabled', busy)
+    }
+  }
+
+  function setCompressModalBusy (busy) {
+    $confirmCompressLog.prop('disabled', busy)
+    $cancelCompressLog.prop('disabled', busy)
+    if (compressLogModalEl) {
+      $(compressLogModalEl).find('.btn-close').prop('disabled', busy)
+    }
+  }
+
   function setControlsDisabled (disabled) {
     $reset.prop('disabled', disabled)
     $reingest.prop('disabled', disabled)
@@ -2467,6 +2505,11 @@ $(document).ready(function () {
         $deleteLogBody.html(`Delete <strong>${normalizedRunKeys.length} selected logs</strong> from disk and remove their runs from Analytics?`)
       }
     }
+    setModalAlert($deleteLogStatus, '')
+    setModalAlert($deleteLogSuccess, '')
+    setModalAlert($deleteLogError, '')
+    $confirmDeleteLog.text('Delete')
+    setDeleteModalBusy(false)
     if (deleteLogModalEl) {
       bootstrap.Modal.getOrCreateInstance(deleteLogModalEl).show()
       return
@@ -2484,7 +2527,13 @@ $(document).ready(function () {
       hideModal(deleteLogModalEl)
       return
     }
-    $confirmDeleteLog.prop('disabled', true)
+    let deleteSucceeded = false
+    const deleteCount = pendingDeleteRun.runKeys.length
+    setModalAlert($deleteLogSuccess, '')
+    setModalAlert($deleteLogError, '')
+    setModalAlert($deleteLogStatus, deleteCount > 1 ? `Deleting ${deleteCount} logs...` : 'Deleting log...')
+    setDeleteModalBusy(true)
+    setButtonSpinner($confirmDeleteLog, 'Deleting...')
     fetch('/logscan/trends/log/delete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2499,24 +2548,32 @@ $(document).ready(function () {
         if (!res.ok) {
           throw new Error((data && data.error) || 'Delete failed')
         }
-        hideModal(deleteLogModalEl)
         const deletedKeys = Array.isArray(pendingDeleteRun.runKeys) ? pendingDeleteRun.runKeys : []
         deletedKeys.forEach(runKey => selectedRunKeys.delete(runKey))
         const deletedCount = Number.isFinite(data && data.deleted) ? data.deleted : deletedKeys.length
+        deleteSucceeded = true
         pendingDeleteRun = null
+        setModalAlert($deleteLogStatus, '')
+        setModalAlert($deleteLogSuccess, deletedCount > 1 ? `${deletedCount} logs deleted. Updating Analytics...` : 'Log deleted. Updating Analytics...')
         if (Array.isArray(data && data.failures) && data.failures.length) {
           updateStatus(`${deletedCount} logs deleted. ${data.failures.length} failed.`)
         } else {
           updateStatus(deletedCount > 1 ? `${deletedCount} logs deleted.` : 'Log deleted.')
         }
+        window.setTimeout(() => hideModal(deleteLogModalEl), 650)
         fetchRuns({ suppressStatus: true })
       })
       .catch(err => {
         console.error(err)
+        setModalAlert($deleteLogStatus, '')
+        setModalAlert($deleteLogError, err && err.message ? err.message : 'Failed to delete log.')
         updateStatus(err && err.message ? err.message : 'Failed to delete log.', true)
       })
       .finally(() => {
-        $confirmDeleteLog.prop('disabled', false)
+        if (!deleteSucceeded) {
+          $confirmDeleteLog.text('Delete')
+          setDeleteModalBusy(false)
+        }
       })
   }
 
@@ -2525,7 +2582,13 @@ $(document).ready(function () {
       hideModal(compressLogModalEl)
       return
     }
-    $confirmCompressLog.prop('disabled', true)
+    let compressSucceeded = false
+    const compressCount = pendingCompressRun.runKeys.length
+    setModalAlert($compressLogSuccess, '')
+    setModalAlert($compressLogError, '')
+    setModalAlert($compressLogStatus, compressCount > 1 ? `Compressing ${compressCount} logs...` : 'Compressing log...')
+    setCompressModalBusy(true)
+    setButtonSpinner($confirmCompressLog, 'Compressing...')
     fetch('/logscan/trends/log/compress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2540,22 +2603,30 @@ $(document).ready(function () {
         if (!res.ok) {
           throw new Error((data && data.error) || 'Compress failed')
         }
-        hideModal(compressLogModalEl)
         const compressedCount = Number.isFinite(data && data.compressed) ? data.compressed : pendingCompressRun.runKeys.length
+        compressSucceeded = true
         pendingCompressRun = null
+        setModalAlert($compressLogStatus, '')
+        setModalAlert($compressLogSuccess, compressedCount > 1 ? `${compressedCount} logs compressed. Updating Analytics...` : 'Log compressed. Updating Analytics...')
         if (Array.isArray(data && data.failures) && data.failures.length) {
           updateStatus(`${compressedCount} logs compressed. ${data.failures.length} failed.`)
         } else {
           updateStatus(compressedCount > 1 ? `${compressedCount} logs compressed.` : 'Log compressed.')
         }
+        window.setTimeout(() => hideModal(compressLogModalEl), 650)
         fetchRuns({ suppressStatus: true })
       })
       .catch(err => {
         console.error(err)
+        setModalAlert($compressLogStatus, '')
+        setModalAlert($compressLogError, err && err.message ? err.message : 'Failed to compress log.')
         updateStatus(err && err.message ? err.message : 'Failed to compress log.', true)
       })
       .finally(() => {
-        $confirmCompressLog.prop('disabled', false)
+        if (!compressSucceeded) {
+          $confirmCompressLog.text('Compress')
+          setCompressModalBusy(false)
+        }
       })
   }
 

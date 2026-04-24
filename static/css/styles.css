@@ -412,6 +412,14 @@ html[data-theme="dark"] body {
     border-color: var(--theme-border);
 }
 
+.logscan-confirm-modal-dialog {
+    max-width: 34rem;
+}
+
+.logscan-confirm-modal-dialog .modal-body {
+    flex: 0 0 auto;
+}
+
 code {
     font-size: 0.875em;
     color: var(--theme-primary);
@@ -2454,9 +2462,13 @@ div#loading {
 
 .logscan-card-value {
     color: var(--theme-text);
+    display: block;
     font-weight: 700;
     line-height: 1.35;
     min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .logscan-card-value .text-muted {
@@ -4615,6 +4627,9 @@ body {
     border: 1px solid var(--theme-border);
     border-radius: 0.7rem;
     background: rgba(0, 0, 0, 0.26);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     padding: 0.65rem 0.85rem;
     margin-bottom: var(--qs-space-2);
 }
@@ -5590,4 +5605,10 @@ html[data-qs-viewport="mobile"] .modal.qs-mobile-panel-target .modal-content {
     border-radius: 0;
     min-height: 100dvh;
     border: 0;
+}
+
+html[data-qs-viewport="mobile"] .logscan-confirm-modal-dialog {
+    width: calc(100vw - 1rem);
+    max-width: calc(100vw - 1rem);
+    margin: 0.5rem auto;
 }

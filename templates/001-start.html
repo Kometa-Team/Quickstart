@@ -262,6 +262,8 @@
         <div class="alert alert-warning py-2 small mb-3" role="alert">
           This tool only deletes filesystem artifacts. It does not remove anything from the database.
         </div>
+        <div id="orphanedArtifactsStatus" class="alert alert-info d-none py-2 small" role="status"></div>
+        <div id="orphanedArtifactsSuccess" class="alert alert-success d-none py-2 small" role="status"></div>
         <div id="orphanedArtifactsError" class="alert alert-danger d-none py-2 small" role="alert"></div>
         <div class="form-check mb-2">
           <input class="form-check-input" type="checkbox" id="orphanedArtifactsSelectAll">
@@ -271,7 +273,7 @@
         <div class="small text-muted mt-2">Selected: <span id="orphanedArtifactsCount">0</span></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep for now</button>
+        <button type="button" class="btn btn-secondary" id="cancelOrphanedArtifactsDelete" data-bs-dismiss="modal">Keep for now</button>
         <button type="button" class="btn btn-danger" id="confirmOrphanedArtifactsDelete" disabled>Delete Selected</button>
       </div>
     </div>
@@ -291,11 +293,13 @@
         <p class="small text-muted mb-2">
           Choose one saved version to restore into the Quickstart database. Versions are sorted newest first.
         </p>
+        <div id="orphanedArtifactsRestoreStatus" class="alert alert-info d-none py-2 small" role="status"></div>
+        <div id="orphanedArtifactsRestoreSuccess" class="alert alert-success d-none py-2 small" role="status"></div>
         <div id="orphanedArtifactsRestoreError" class="alert alert-danger d-none py-2 small" role="alert"></div>
         <div id="orphanedArtifactsRestoreList" class="bulk-delete-list"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" id="cancelOrphanedArtifactsRestore" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" id="confirmOrphanedArtifactsRestore" disabled>Restore Selected Version</button>
       </div>
     </div>

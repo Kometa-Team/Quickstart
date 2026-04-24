@@ -3128,7 +3128,12 @@ def delete_orphaned_config_artifacts():
     if inventory.get("errors"):
         return jsonify(success=False, message="Unable to inspect config storage.", errors=inventory["errors"]), 500
 
-    orphan_names = {item.get("name") for item in inventory.get("orphans", []) if item.get("name")}
+    orphan_bundles = {
+        item.get("name"): item
+        for item in inventory.get("orphans", [])
+        if isinstance(item, dict) and item.get("name")
+    }
+    orphan_names = set(orphan_bundles)
     invalid = [name for name in selected if name not in orphan_names]
     if invalid:
         return jsonify(success=False, message="Only orphaned config bundles can be deleted here.", invalid=invalid), 400
@@ -3136,7 +3141,7 @@ def delete_orphaned_config_artifacts():
     deleted = []
     errors = []
     for name in selected:
-        result = helpers.delete_config_artifacts(name, kometa_root=app.config.get("KOMETA_ROOT", "."))
+        result = helpers.delete_orphaned_artifact_bundle(orphan_bundles.get(name))
         if result.get("errors"):
             errors.extend(result["errors"])
         else:

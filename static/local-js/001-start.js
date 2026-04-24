@@ -93,11 +93,17 @@ document.addEventListener('DOMContentLoaded', function () {
   const orphanedArtifactsList = document.getElementById('orphanedArtifactsList')
   const orphanedArtifactsSelectAll = document.getElementById('orphanedArtifactsSelectAll')
   const orphanedArtifactsCount = document.getElementById('orphanedArtifactsCount')
+  const orphanedArtifactsStatus = document.getElementById('orphanedArtifactsStatus')
+  const orphanedArtifactsSuccess = document.getElementById('orphanedArtifactsSuccess')
   const orphanedArtifactsError = document.getElementById('orphanedArtifactsError')
+  const cancelOrphanedArtifactsDelete = document.getElementById('cancelOrphanedArtifactsDelete')
   const confirmOrphanedArtifactsDelete = document.getElementById('confirmOrphanedArtifactsDelete')
   const orphanedArtifactsRestoreModalEl = document.getElementById('orphanedArtifactsRestoreModal')
   const orphanedArtifactsRestoreList = document.getElementById('orphanedArtifactsRestoreList')
+  const orphanedArtifactsRestoreStatus = document.getElementById('orphanedArtifactsRestoreStatus')
+  const orphanedArtifactsRestoreSuccess = document.getElementById('orphanedArtifactsRestoreSuccess')
   const orphanedArtifactsRestoreError = document.getElementById('orphanedArtifactsRestoreError')
+  const cancelOrphanedArtifactsRestore = document.getElementById('cancelOrphanedArtifactsRestore')
   const confirmOrphanedArtifactsRestore = document.getElementById('confirmOrphanedArtifactsRestore')
   const configActionModalElement = document.getElementById('configActionModal')
   const renameConfigModalEl = document.getElementById('renameConfigModal')
@@ -352,25 +358,43 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function setOrphanedArtifactsError (message) {
-    if (!orphanedArtifactsError) return
-    if (!message) {
-      orphanedArtifactsError.classList.add('d-none')
-      orphanedArtifactsError.textContent = ''
-      return
-    }
-    orphanedArtifactsError.classList.remove('d-none')
-    orphanedArtifactsError.textContent = message
+    setInlineAlert(orphanedArtifactsError, message)
   }
 
   function setOrphanedArtifactsRestoreError (message) {
-    if (!orphanedArtifactsRestoreError) return
+    setInlineAlert(orphanedArtifactsRestoreError, message)
+  }
+
+  function setInlineAlert (element, message) {
+    if (!element) return
     if (!message) {
-      orphanedArtifactsRestoreError.classList.add('d-none')
-      orphanedArtifactsRestoreError.textContent = ''
+      element.classList.add('d-none')
+      element.textContent = ''
       return
     }
-    orphanedArtifactsRestoreError.classList.remove('d-none')
-    orphanedArtifactsRestoreError.textContent = message
+    element.classList.remove('d-none')
+    element.textContent = message
+  }
+
+  function setOrphanedArtifactsBusy (isBusy) {
+    if (confirmOrphanedArtifactsDelete) confirmOrphanedArtifactsDelete.disabled = isBusy || confirmOrphanedArtifactsDelete.disabled
+    if (cancelOrphanedArtifactsDelete) cancelOrphanedArtifactsDelete.disabled = isBusy
+    if (orphanedArtifactsSelectAll) orphanedArtifactsSelectAll.disabled = isBusy || orphanedArtifactsSelectAll.disabled
+    if (orphanedArtifactsModalEl) {
+      orphanedArtifactsModalEl.querySelectorAll('.btn-close, .orphaned-artifact-checkbox, .orphaned-artifact-restore')
+        .forEach(el => { el.disabled = isBusy })
+    }
+    if (!isBusy) updateOrphanedArtifactsState()
+  }
+
+  function setOrphanedArtifactsRestoreBusy (isBusy) {
+    if (confirmOrphanedArtifactsRestore) confirmOrphanedArtifactsRestore.disabled = isBusy || confirmOrphanedArtifactsRestore.disabled
+    if (cancelOrphanedArtifactsRestore) cancelOrphanedArtifactsRestore.disabled = isBusy
+    if (orphanedArtifactsRestoreModalEl) {
+      orphanedArtifactsRestoreModalEl.querySelectorAll('.btn-close, .orphaned-artifact-version-radio')
+        .forEach(el => { el.disabled = isBusy })
+    }
+    if (!isBusy) updateOrphanedArtifactsRestoreState()
   }
 
   function updateOrphanedArtifactsState () {
@@ -496,9 +520,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!orphanedArtifactsRestoreModalEl || !orphanedArtifactsRestoreList) return
     orphanedRestoreTarget = String(name || '').trim()
     if (!orphanedRestoreTarget) return
+    setInlineAlert(orphanedArtifactsRestoreStatus, '')
+    setInlineAlert(orphanedArtifactsRestoreSuccess, '')
     setOrphanedArtifactsRestoreError('')
     orphanedArtifactsRestoreList.replaceChildren()
-    if (confirmOrphanedArtifactsRestore) confirmOrphanedArtifactsRestore.disabled = true
+    if (confirmOrphanedArtifactsRestore) {
+      confirmOrphanedArtifactsRestore.disabled = true
+      confirmOrphanedArtifactsRestore.textContent = 'Restore Selected Version'
+    }
+    if (cancelOrphanedArtifactsRestore) cancelOrphanedArtifactsRestore.disabled = false
+    orphanedArtifactsRestoreModalEl.querySelectorAll('.btn-close').forEach(el => { el.disabled = false })
 
     const title = document.getElementById('orphanedArtifactsRestoreModalLabel')
     if (title) title.innerHTML = `<i class="bi bi-arrow-counterclockwise me-2"></i>Restore ${orphanedRestoreTarget}`
@@ -541,7 +572,14 @@ document.addEventListener('DOMContentLoaded', function () {
   async function renderOrphanedArtifactsList () {
     if (!orphanedArtifactsList) return
     orphanedArtifactsList.replaceChildren()
+    setInlineAlert(orphanedArtifactsStatus, '')
+    setInlineAlert(orphanedArtifactsSuccess, '')
     setOrphanedArtifactsError('')
+    if (confirmOrphanedArtifactsDelete) confirmOrphanedArtifactsDelete.textContent = 'Delete Selected'
+    if (cancelOrphanedArtifactsDelete) cancelOrphanedArtifactsDelete.disabled = false
+    if (orphanedArtifactsModalEl) {
+      orphanedArtifactsModalEl.querySelectorAll('.btn-close').forEach(el => { el.disabled = false })
+    }
 
     const loading = document.createElement('div')
     loading.className = 'small text-muted'
@@ -738,9 +776,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return
       }
 
-      confirmOrphanedArtifactsDelete.disabled = true
-      const originalText = confirmOrphanedArtifactsDelete.textContent
-      confirmOrphanedArtifactsDelete.textContent = 'Deleting...'
+      setInlineAlert(orphanedArtifactsSuccess, '')
+      setOrphanedArtifactsError('')
+      setInlineAlert(orphanedArtifactsStatus, `Deleting ${selected.length} orphaned config bundle(s)...`)
+      setOrphanedArtifactsBusy(true)
+      setButtonSpinner(confirmOrphanedArtifactsDelete, 'Deleting...')
 
       try {
         const res = await fetch('/orphaned-config-artifacts/delete', {
@@ -752,13 +792,16 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!res.ok || !data.success) {
           throw new Error((data.errors && data.errors[0]) || data.message || 'Failed to delete orphaned config bundles.')
         }
+        setInlineAlert(orphanedArtifactsStatus, '')
+        await renderOrphanedArtifactsList()
+        setInlineAlert(orphanedArtifactsSuccess, `Deleted ${data.deleted.length} orphaned config bundle(s).`)
+        confirmOrphanedArtifactsDelete.textContent = 'Delete Selected'
+        setOrphanedArtifactsBusy(false)
         showToast('success', `Deleted ${data.deleted.length} orphaned config bundle(s).`)
-        const modal = bootstrap.Modal.getInstance(orphanedArtifactsModalEl)
-        if (modal) modal.hide()
-        setTimeout(() => window.location.reload(), 900)
       } catch (err) {
-        confirmOrphanedArtifactsDelete.disabled = false
-        confirmOrphanedArtifactsDelete.textContent = originalText
+        setInlineAlert(orphanedArtifactsStatus, '')
+        setOrphanedArtifactsBusy(false)
+        confirmOrphanedArtifactsDelete.textContent = 'Delete Selected'
         setOrphanedArtifactsError(err.message || 'Failed to delete orphaned config bundles.')
         showToast('error', err.message || 'Failed to delete orphaned config bundles.')
       }
@@ -784,9 +827,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return
       }
 
-      confirmOrphanedArtifactsRestore.disabled = true
-      const originalText = confirmOrphanedArtifactsRestore.textContent
-      confirmOrphanedArtifactsRestore.textContent = 'Restoring...'
+      setInlineAlert(orphanedArtifactsRestoreSuccess, '')
+      setOrphanedArtifactsRestoreError('')
+      setInlineAlert(orphanedArtifactsRestoreStatus, `Restoring '${orphanedRestoreTarget}' from disk...`)
+      setOrphanedArtifactsRestoreBusy(true)
+      setButtonSpinner(confirmOrphanedArtifactsRestore, 'Restoring...')
 
       try {
         const res = await fetch('/orphaned-config-artifacts/restore', {
@@ -798,13 +843,19 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Failed to restore config bundle.')
         }
+        setInlineAlert(orphanedArtifactsRestoreStatus, '')
+        setInlineAlert(orphanedArtifactsRestoreSuccess, `Restored '${data.config_name}'. Reloading the workspace...`)
+        setButtonIconAndText(confirmOrphanedArtifactsRestore, 'bi bi-check2', 'Restored')
         showToast('success', `Restored '${data.config_name}' from disk.`)
-        const modal = bootstrap.Modal.getInstance(orphanedArtifactsRestoreModalEl)
-        if (modal) modal.hide()
-        setTimeout(() => window.location.reload(), 900)
+        window.setTimeout(() => {
+          const modal = bootstrap.Modal.getInstance(orphanedArtifactsRestoreModalEl)
+          if (modal) modal.hide()
+        }, 1400)
+        window.setTimeout(() => window.location.reload(), 2600)
       } catch (err) {
-        confirmOrphanedArtifactsRestore.disabled = false
-        confirmOrphanedArtifactsRestore.textContent = originalText
+        setInlineAlert(orphanedArtifactsRestoreStatus, '')
+        setOrphanedArtifactsRestoreBusy(false)
+        confirmOrphanedArtifactsRestore.textContent = 'Restore Selected Version'
         setOrphanedArtifactsRestoreError(err.message || 'Failed to restore config bundle.')
         showToast('error', err.message || 'Failed to restore config bundle.')
       }

@@ -479,6 +479,19 @@ def test_delete_orphaned_config_artifacts_route_removes_selected_bundle(client, 
     assert not (kometa_path / f"{orphan_name}_config.yml").exists()
 
 
+def test_delete_orphaned_config_artifacts_route_removes_copy_named_yaml(client, isolated_config_dir):
+    copied_path = isolated_config_dir / "bullmoose20_config - Copy (10)_config.yml"
+    copied_name = "bullmoose20_config_-_copy_(10)"
+    copied_path.write_text("current: true\n", encoding="utf-8")
+
+    resp = client.post("/orphaned-config-artifacts/delete", json={"names": [copied_name]})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["deleted"] == [copied_name.lower().replace(" ", "_")]
+    assert not copied_path.exists()
+
+
 def test_orphaned_config_artifact_versions_returns_newest_first(client, isolated_config_dir):
     import os
     import time

@@ -2202,6 +2202,48 @@ def delete_config_artifacts(config_name: str | None, kometa_root: str | Path | N
     return {"removed": removed, "errors": errors, "config_name": normalized}
 
 
+def delete_orphaned_artifact_bundle(bundle: dict | None) -> dict:
+    bundle = bundle if isinstance(bundle, dict) else {}
+    bundle_name = normalize_config_name_for_storage(bundle.get("name"))
+    removed: list[str] = []
+    errors: list[str] = []
+    raw_paths = bundle.get("paths")
+    candidate_paths = []
+
+    if isinstance(raw_paths, list):
+        for raw_path in raw_paths:
+            text = str(raw_path or "").strip()
+            if text:
+                candidate_paths.append(text)
+
+    seen: set[str] = set()
+    for raw_path in candidate_paths:
+        try:
+            target = Path(raw_path).resolve()
+        except Exception as exc:
+            errors.append(f"Failed to resolve {raw_path}: {exc}")
+            continue
+        target_key = str(target)
+        if target_key in seen:
+            continue
+        seen.add(target_key)
+        try:
+            if not target.exists():
+                continue
+            if target.is_dir():
+                shutil.rmtree(target)
+            else:
+                target.unlink()
+            removed.append(target_key)
+        except Exception as exc:
+            errors.append(f"Failed to remove {target}: {exc}")
+
+    if not removed and not errors:
+        errors.append(f"No filesystem artifacts were removed for {bundle_name}.")
+
+    return {"removed": removed, "errors": errors, "config_name": bundle_name}
+
+
 def list_orphaned_config_artifacts(active_config_names: list[str] | None = None, kometa_root: str | Path | None = None) -> dict:
     config_dir = Path(CONFIG_DIR)
     archive_root = config_dir / "archives"
