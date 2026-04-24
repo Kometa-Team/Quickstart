@@ -3207,10 +3207,10 @@ document.addEventListener('DOMContentLoaded', () => {
     '#quickstartSettingsModal',
     '#fontPickerModal',
     '#zoomPreviewModal',
-    '#stop-kometa-modal',
     '[id$="-overlay-toolbox-help-modal"]',
     '[id$="-overlay-canvas-modal"]',
-    '[id^="logscan-"][id$="-modal"]'
+    '#logscan-preferences-modal',
+    '#logscan-run-details-modal'
   ]
 
   let scheduledRefresh = null
