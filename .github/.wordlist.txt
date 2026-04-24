@@ -46,6 +46,7 @@ Tautulli
 tmdb
 TODO
 Trakt
+truthy
 txt
 ui
 venv
