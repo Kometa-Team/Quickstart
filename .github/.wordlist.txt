@@ -9,6 +9,7 @@ CLI
 config
 configs
 Deduped
+deduplicated
 else's
 Emby
 exe
