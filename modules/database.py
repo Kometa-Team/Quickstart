@@ -2,7 +2,7 @@ import json
 import os
 import pickle
 import sqlite3
-from flask import current_app as app
+from flask import current_app as app, has_app_context
 from contextlib import closing
 
 from modules import helpers
@@ -57,7 +57,7 @@ def retrieve_section_data(name, section):
             row = cursor.fetchone()
             if row:
                 unpickled = pickle.loads(row["data"])
-                if app.config["QS_DEBUG"]:
+                if has_app_context() and app.config["QS_DEBUG"]:
                     helpers.ts_log(f"Retrieved data for name={name}, section={section}: {unpickled}", level="DEBUG")
                 return (
                     helpers.booler(row["validated"]),
