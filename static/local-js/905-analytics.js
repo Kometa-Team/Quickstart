@@ -15,6 +15,7 @@ $(document).ready(function () {
   const $tableSelectComplete = $('#logscan-table-select-complete')
   const $tableSelectIncomplete = $('#logscan-table-select-incomplete')
   const $tableClearSelection = $('#logscan-table-clear-selection')
+  const $tableCompressSelected = $('#logscan-table-compress-selected')
   const $tableDeleteSelected = $('#logscan-table-delete-selected')
   const $tableSelectionSummary = $('#logscan-table-selection-summary')
   const tableCollapseEl = document.getElementById('logscan-recent-runs-collapse')
@@ -47,6 +48,8 @@ $(document).ready(function () {
   const $confirmMissingDownload = $('#logscan-confirm-missing-download')
   const $deleteLogBody = $('#logscan-delete-log-body')
   const $confirmDeleteLog = $('#logscan-confirm-delete-log')
+  const $compressLogBody = $('#logscan-compress-log-body')
+  const $confirmCompressLog = $('#logscan-confirm-compress-log')
   const $runDetailsBody = $('#logscan-run-details-body')
   const $runDetailsTitle = $('#logscan-run-details-title')
   const $preferencesSave = $('#logscan-preferences-save')
@@ -57,10 +60,12 @@ $(document).ready(function () {
   const reingestModalEl = document.getElementById('logscan-reingest-modal')
   const missingDownloadModalEl = document.getElementById('logscan-missing-download-modal')
   const deleteLogModalEl = document.getElementById('logscan-delete-log-modal')
+  const compressLogModalEl = document.getElementById('logscan-compress-log-modal')
   const runDetailsModalEl = document.getElementById('logscan-run-details-modal')
   const preferencesModalEl = document.getElementById('logscan-preferences-modal')
   let missingDownloadUrl = ''
   let pendingDeleteRun = null
+  let pendingCompressRun = null
   let reingestPollTimer = null
   let reingestJobId = null
   let allRuns = []
@@ -1179,6 +1184,19 @@ $(document).ready(function () {
     return getSelectableRuns(runs).filter(run => Boolean(run && run.is_incomplete) === Boolean(isIncomplete))
   }
 
+  function isRunCompressible (run) {
+    return Boolean(run && run.run_key && run.log_can_compress)
+  }
+
+  function getCompressibleRuns (runs) {
+    return Array.isArray(runs) ? runs.filter(isRunCompressible) : []
+  }
+
+  function getSelectedCompressibleRuns () {
+    if (!selectedRunKeys.size) return []
+    return getCompressibleRuns(allTableRuns).filter(run => selectedRunKeys.has(run.run_key))
+  }
+
   function pruneSelectedRunKeys () {
     const validKeys = new Set(getSelectableRuns(allTableRuns).map(run => run.run_key))
     Array.from(selectedRunKeys).forEach(runKey => {
@@ -1194,10 +1212,14 @@ $(document).ready(function () {
     const visibleSelectable = getSelectableRuns(currentTableRuns).length
     const visibleCompleteSelectable = getSelectableRunsByCompletion(currentTableRuns, false).length
     const visibleIncompleteSelectable = getSelectableRunsByCompletion(currentTableRuns, true).length
+    const selectedCompressibleCount = getSelectedCompressibleRuns().length
     if (!selectedCount) {
       $tableSelectionSummary.text('No logs selected.')
     } else {
-      $tableSelectionSummary.text(`${selectedCount} selected. ${visibleSelectable} deletable in current view.`)
+      $tableSelectionSummary.text(`${selectedCount} selected. ${selectedCompressibleCount} compressible. ${visibleSelectable} deletable in current view.`)
+    }
+    if ($tableCompressSelected.length) {
+      $tableCompressSelected.prop('disabled', selectedCompressibleCount === 0)
     }
     if ($tableDeleteSelected.length) {
       $tableDeleteSelected.prop('disabled', selectedCount === 0)
@@ -1326,6 +1348,17 @@ $(document).ready(function () {
       } else {
         logActions.push('<span class="small text-muted">Unavailable</span>')
       }
+      if (run.log_can_compress) {
+        logActions.push(`
+          <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-compress-log"
+            data-run-key="${escapeHtml(runKey)}"
+            data-run-label="${escapeHtml(runLabel)}">
+            Compress
+          </button>
+        `)
+      } else if (run.log_is_compressed) {
+        logActions.push('<span class="small text-muted">Compressed</span>')
+      }
       if (run.log_can_delete) {
         logActions.push(`
           <button type="button" class="btn nav-button nav-button-danger btn-sm logscan-action-btn logscan-delete-log"
@@ -1342,7 +1375,7 @@ $(document).ready(function () {
       }
       return `
         <tr class="${isSelected ? 'logscan-row-selected' : ''}">
-          ${renderRunCardCell('Select', 'Select this archived log for bulk delete.', `
+          ${renderRunCardCell('Select', 'Select this archived log for bulk actions.', `
             <span class="logscan-select-wrap">
               <input type="checkbox" class="form-check-input logscan-select-checkbox"
                 data-run-key="${escapeHtml(runKey)}"
@@ -1362,7 +1395,7 @@ $(document).ready(function () {
           ${renderRunCardCell('Kometa', 'Version detected for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
           ${renderRunCardCell('Section runtimes', 'Runtime totals parsed per Kometa section.', sectionCell)}
           ${renderRunCardCell('Log size', 'Current on-disk size of the resolved log file when available, otherwise the ingested size.', escapeHtml(formatBytes(sizeBytes)))}
-          ${renderRunCardCell('Log', 'Download the source log for this run. Archived logs can also be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
+          ${renderRunCardCell('Log', 'Download the source log for this run. Archived plain logs can also be compressed, and archived logs can be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
           ${renderRunCardCell('Report', run.is_incomplete ? 'Open recommendations and diagnostics captured for this incomplete log.' : 'Open the recommendations recorded for the run.', `
             <div class="logscan-action-stack">
               <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-run-details"
@@ -2071,6 +2104,7 @@ $(document).ready(function () {
     $tableSelectComplete.prop('disabled', disabled || getSelectableRunsByCompletion(currentTableRuns, false).length === 0)
     $tableSelectIncomplete.prop('disabled', disabled || getSelectableRunsByCompletion(currentTableRuns, true).length === 0)
     $tableClearSelection.prop('disabled', disabled || selectedRunKeys.size === 0)
+    $tableCompressSelected.prop('disabled', disabled || getSelectedCompressibleRuns().length === 0)
     $tableDeleteSelected.prop('disabled', disabled || selectedRunKeys.size === 0)
   }
 
@@ -2387,6 +2421,35 @@ $(document).ready(function () {
     return getSelectableRuns(allTableRuns).filter(run => selectedRunKeys.has(run.run_key))
   }
 
+  function openCompressLogModal (runKeys, runLabel) {
+    const normalizedRunKeys = Array.isArray(runKeys)
+      ? runKeys.map(value => String(value || '').trim()).filter(Boolean)
+      : [String(runKeys || '').trim()].filter(Boolean)
+    if (!normalizedRunKeys.length) return
+    pendingCompressRun = {
+      runKeys: normalizedRunKeys,
+      runLabel,
+      bulk: normalizedRunKeys.length > 1
+    }
+    if ($compressLogBody.length) {
+      if (normalizedRunKeys.length === 1) {
+        $compressLogBody.html(`Compress archived log for <strong>${escapeHtml(runLabel || normalizedRunKeys[0])}</strong> as <code>.log.gz</code>?`)
+      } else {
+        $compressLogBody.html(`Compress <strong>${normalizedRunKeys.length} selected logs</strong> as <code>.log.gz</code>?`)
+      }
+    }
+    if (compressLogModalEl) {
+      bootstrap.Modal.getOrCreateInstance(compressLogModalEl).show()
+      return
+    }
+    const confirmText = normalizedRunKeys.length === 1
+      ? `Compress archived log for ${runLabel || normalizedRunKeys[0]}?`
+      : `Compress ${normalizedRunKeys.length} selected logs?`
+    if (window.confirm(confirmText)) {
+      handleCompressLog()
+    }
+  }
+
   function openDeleteLogModal (runKeys, runLabel) {
     const normalizedRunKeys = Array.isArray(runKeys)
       ? runKeys.map(value => String(value || '').trim()).filter(Boolean)
@@ -2454,6 +2517,45 @@ $(document).ready(function () {
       })
       .finally(() => {
         $confirmDeleteLog.prop('disabled', false)
+      })
+  }
+
+  function handleCompressLog () {
+    if (!pendingCompressRun || !Array.isArray(pendingCompressRun.runKeys) || !pendingCompressRun.runKeys.length) {
+      hideModal(compressLogModalEl)
+      return
+    }
+    $confirmCompressLog.prop('disabled', true)
+    fetch('/logscan/trends/log/compress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(
+        pendingCompressRun.runKeys.length === 1
+          ? { run_key: pendingCompressRun.runKeys[0] }
+          : { run_keys: pendingCompressRun.runKeys }
+      )
+    })
+      .then(async res => {
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          throw new Error((data && data.error) || 'Compress failed')
+        }
+        hideModal(compressLogModalEl)
+        const compressedCount = Number.isFinite(data && data.compressed) ? data.compressed : pendingCompressRun.runKeys.length
+        pendingCompressRun = null
+        if (Array.isArray(data && data.failures) && data.failures.length) {
+          updateStatus(`${compressedCount} logs compressed. ${data.failures.length} failed.`)
+        } else {
+          updateStatus(compressedCount > 1 ? `${compressedCount} logs compressed.` : 'Log compressed.')
+        }
+        fetchRuns({ suppressStatus: true })
+      })
+      .catch(err => {
+        console.error(err)
+        updateStatus(err && err.message ? err.message : 'Failed to compress log.', true)
+      })
+      .finally(() => {
+        $confirmCompressLog.prop('disabled', false)
       })
   }
 
@@ -2578,6 +2680,7 @@ $(document).ready(function () {
   $confirmReset.on('click', handleReset)
   $confirmReingest.on('click', handleReingest)
   $confirmDeleteLog.on('click', handleDeleteLog)
+  $confirmCompressLog.on('click', handleCompressLog)
   $missingDownload.on('click', function (event) {
     event.preventDefault()
     if (!$missingDownload.length || $missingDownload.hasClass('d-none')) return
@@ -2617,6 +2720,12 @@ $(document).ready(function () {
     if (!runKey) return
     openDeleteLogModal(runKey, runLabel)
   })
+  $tableBody.on('click', '.logscan-compress-log', function () {
+    const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+    const runLabel = $(this).data('runLabel') || $(this).attr('data-run-label') || runKey
+    if (!runKey) return
+    openCompressLogModal(runKey, runLabel)
+  })
   $tableSelectAll.on('click', function () {
     getSelectableRuns(currentTableRuns).forEach(run => selectedRunKeys.add(run.run_key))
     renderTable(currentTableRuns)
@@ -2637,6 +2746,11 @@ $(document).ready(function () {
     const selectedRuns = getSelectedRuns()
     if (!selectedRuns.length) return
     openDeleteLogModal(selectedRuns.map(run => run.run_key), `${selectedRuns.length} selected logs`)
+  })
+  $tableCompressSelected.on('click', function () {
+    const selectedRuns = getSelectedCompressibleRuns()
+    if (!selectedRuns.length) return
+    openCompressLogModal(selectedRuns.map(run => run.run_key), `${selectedRuns.length} selected logs`)
   })
   $tableBody.on('click', '[data-section-details="1"]', function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')

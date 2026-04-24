@@ -148,6 +148,7 @@
           <button id="logscan-table-select-complete" type="button" class="btn nav-button btn-sm">Select complete</button>
           <button id="logscan-table-select-incomplete" type="button" class="btn nav-button btn-sm">Select incomplete</button>
           <button id="logscan-table-clear-selection" type="button" class="btn nav-button btn-sm">Clear</button>
+          <button id="logscan-table-compress-selected" type="button" class="btn nav-button btn-sm" disabled>Compress selected</button>
           <button id="logscan-table-delete-selected" type="button" class="btn nav-button nav-button-danger btn-sm" disabled>Delete selected</button>
           <div id="logscan-table-selection-summary" class="small text-muted">No logs selected.</div>
         </div>
@@ -380,6 +381,27 @@
       <div class="modal-footer">
         <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn nav-button nav-button-danger btn-sm" id="logscan-confirm-delete-log">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="logscan-compress-log-modal" tabindex="-1" aria-labelledby="logscan-compress-log-title"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light border-secondary">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logscan-compress-log-title">Compress Logs</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+          aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="logscan-compress-log-body">Compress this archived log as <code>.log.gz</code>?</div>
+        <div class="small text-muted mt-2">Only archived plain <code>.log</code> files are compressed. The active <code>meta.log</code> is never touched from this action.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn nav-button btn-sm" id="logscan-confirm-compress-log">Compress</button>
       </div>
     </div>
   </div>

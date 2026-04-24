@@ -1,4 +1,5 @@
 import argparse
+import gzip
 import io
 import json
 import os
@@ -3349,6 +3350,54 @@ def _resolve_logscan_run_log_path(run_key):
     return info.get("path") if isinstance(info, dict) else None
 
 
+def _resolve_logscan_run_archive_action_info(run_key, prefer_uncompressed=False):
+    run_key = str(run_key or "").strip()
+    if not run_key:
+        return None
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    if isinstance(cache_logs, dict):
+        archive_matches = []
+        for raw_path, entry in cache_logs.items():
+            if not isinstance(entry, dict) or entry.get("run_key") != run_key:
+                continue
+            try:
+                path = Path(raw_path).resolve()
+            except Exception:
+                continue
+            if not path.exists() or not path.is_file():
+                continue
+            location = _classify_logscan_file_location(path)
+            if location != "archive":
+                continue
+            try:
+                stats = path.stat()
+                size = int(stats.st_size)
+                mtime = float(stats.st_mtime)
+            except Exception:
+                size = int(entry.get("size", 0) or 0)
+                mtime = float(entry.get("mtime", 0) or 0)
+            archive_matches.append(
+                {
+                    "path": path,
+                    "location": location,
+                    "size": size,
+                    "mtime": mtime,
+                    "source": "cache",
+                    "is_compressed": _is_logscan_gzip_path(path),
+                }
+            )
+        if archive_matches:
+            if prefer_uncompressed:
+                plain_matches = [item for item in archive_matches if not item.get("is_compressed")]
+                if plain_matches:
+                    plain_matches.sort(key=lambda item: item.get("mtime", 0), reverse=True)
+                    return plain_matches[0]
+            archive_matches.sort(key=lambda item: item.get("mtime", 0), reverse=True)
+            return archive_matches[0]
+    return None
+
+
 def _delete_logscan_run_artifact(run_key):
     run_key = str(run_key or "").strip()
     if not run_key:
@@ -3383,6 +3432,60 @@ def _delete_logscan_run_artifact(run_key):
     }, 200
 
 
+def _compress_logscan_run_artifact(run_key):
+    run_key = str(run_key or "").strip()
+    if not run_key:
+        return False, {"error": "run_key required"}, 400
+    run_record = database.get_log_run(run_key)
+    incomplete_run = None if run_record else _get_logscan_incomplete_run(run_key)
+    if not run_record and not incomplete_run:
+        return False, {"error": "Run not found.", "run_key": run_key}, 404
+    target_run = run_record if run_record else incomplete_run
+    info = _resolve_logscan_run_archive_action_info(run_key, prefer_uncompressed=True) or _resolve_logscan_run_log_info(run_key, run_record=target_run)
+    if not info or not info.get("path"):
+        return False, {"error": "Archived log file for this run could not be found.", "run_key": run_key}, 404
+    source_path = Path(info["path"])
+    if info.get("location") != "archive":
+        return False, {"error": "Only archived logs can be compressed from Analytics.", "run_key": run_key}, 409
+    if _is_logscan_gzip_path(source_path):
+        return False, {"error": "Archived log is already compressed.", "run_key": run_key}, 409
+
+    archive_dir = _get_logscan_archive_dir()
+    compressed_path = _archive_log_file(source_path, archive_dir)
+    if not compressed_path or not compressed_path.exists():
+        return False, {"error": "Failed to compress archived log.", "run_key": run_key}, 500
+
+    cache = _load_logscan_ingest_cache()
+    cache_logs = cache.get("logs", {}) if isinstance(cache, dict) else {}
+    if not isinstance(cache_logs, dict):
+        cache_logs = {}
+    source_key = str(source_path.resolve())
+    compressed_key = str(compressed_path.resolve())
+    cache_entry = cache_logs.pop(source_key, None)
+    if not isinstance(cache_entry, dict):
+        cache_entry = {
+            "run_key": run_key,
+            "run_complete": not bool(incomplete_run),
+        }
+    try:
+        compressed_stats = compressed_path.stat()
+        cache_entry["mtime"] = compressed_stats.st_mtime
+        cache_entry["size"] = compressed_stats.st_size
+    except Exception:
+        pass
+    cache_entry["updated_at"] = datetime.now(timezone.utc).isoformat()
+    cache_logs[compressed_key] = cache_entry
+    cache["logs"] = cache_logs
+    _save_logscan_ingest_cache(cache)
+
+    return True, {
+        "success": True,
+        "run_key": run_key,
+        "compressed_file": True,
+        "compressed_path": compressed_key,
+    }, 200
+
+
 def _annotate_logscan_runs(runs, context=None):
     if not isinstance(runs, list) or not runs:
         return [] if isinstance(runs, list) else []
@@ -3396,7 +3499,9 @@ def _annotate_logscan_runs(runs, context=None):
         row["log_available"] = bool(info and info.get("path"))
         row["log_location"] = info.get("location") if info else "missing"
         row["log_resolved_size"] = info.get("size") if info and isinstance(info.get("size"), int) else row.get("log_size")
+        row["log_is_compressed"] = bool(info and info.get("path") and _is_logscan_gzip_path(info["path"]))
         row["log_can_delete"] = row["log_location"] == "archive" and row["log_available"]
+        row["log_can_compress"] = row["log_location"] == "archive" and row["log_available"] and not row["log_is_compressed"]
         annotated.append(row)
     return annotated
 
@@ -3409,11 +3514,12 @@ def logscan_trends_log_download():
     log_path = _resolve_logscan_run_log_path(run_key)
     if not log_path:
         return jsonify({"error": "Log file for this run could not be found."}), 404
+    mimetype = "application/gzip" if _is_logscan_gzip_path(log_path) else "text/plain"
     return send_file(
         str(log_path),
         as_attachment=True,
         download_name=log_path.name,
-        mimetype="text/plain",
+        mimetype=mimetype,
     )
 
 
@@ -3455,6 +3561,45 @@ def logscan_trends_log_delete():
     if len(unique_run_keys) == 1 and deleted:
         response["deleted_file"] = bool(deleted[0].get("deleted_file"))
         response["deleted_run"] = bool(deleted[0].get("deleted_run"))
+    return jsonify(response)
+
+
+@app.route("/logscan/trends/log/compress", methods=["POST"])
+def logscan_trends_log_compress():
+    payload = request.get_json(silent=True) or {}
+    raw_run_keys = payload.get("run_keys")
+    if isinstance(raw_run_keys, list):
+        run_keys = [str(value or "").strip() for value in raw_run_keys if str(value or "").strip()]
+    else:
+        run_key = str(payload.get("run_key", "")).strip()
+        run_keys = [run_key] if run_key else []
+    unique_run_keys = list(dict.fromkeys(run_keys))
+    if not unique_run_keys:
+        return jsonify({"error": "run_key required"}), 400
+
+    compressed = []
+    failures = []
+    for run_key in unique_run_keys:
+        success, result, status = _compress_logscan_run_artifact(run_key)
+        if success:
+            compressed.append(result)
+        else:
+            result["status"] = status
+            failures.append(result)
+
+    if not compressed and failures:
+        first = failures[0]
+        return jsonify({"success": False, "error": first.get("error"), "failures": failures}), int(first.get("status", 400))
+
+    response = {
+        "success": not failures,
+        "compressed": len(compressed),
+        "results": compressed,
+        "failures": failures,
+    }
+    if len(unique_run_keys) == 1 and compressed:
+        response["compressed_file"] = bool(compressed[0].get("compressed_file"))
+        response["compressed_path"] = compressed[0].get("compressed_path")
     return jsonify(response)
 
 
@@ -7740,13 +7885,41 @@ def _get_logscan_archive_dir():
     return archive_dir
 
 
-def _build_logscan_archive_filename(path, stats=None, counter=None):
+def _is_logscan_gzip_path(path):
+    try:
+        suffixes = [suffix.lower() for suffix in Path(path).suffixes]
+    except Exception:
+        return False
+    return bool(suffixes and suffixes[-1] == ".gz")
+
+
+def _read_logscan_text(path, encoding="utf-8", errors="replace"):
+    path = Path(path)
+    if _is_logscan_gzip_path(path):
+        with gzip.open(path, "rt", encoding=encoding, errors=errors) as handle:
+            return handle.read()
+    return path.read_text(encoding=encoding, errors=errors)
+
+
+def _iter_logscan_text_lines(path, encoding="utf-8", errors="replace"):
+    path = Path(path)
+    if _is_logscan_gzip_path(path):
+        with gzip.open(path, "rt", encoding=encoding, errors=errors) as handle:
+            for line in handle:
+                yield line
+        return
+    with path.open("r", encoding=encoding, errors=errors) as handle:
+        for line in handle:
+            yield line
+
+
+def _build_logscan_archive_filename(path, stats=None, counter=None, preferred_suffix=None):
     path = Path(path)
     if stats is None:
         stats = path.stat()
     timestamp = datetime.fromtimestamp(float(stats.st_mtime), tz=timezone.utc).strftime("%Y%m%d-%H%M%SZ")
     size = int(stats.st_size)
-    suffix = "".join(path.suffixes)
+    suffix = preferred_suffix or "".join(path.suffixes)
     if not suffix:
         suffix = ".log"
     base_name = f"meta-{timestamp}-{size}"
@@ -7755,24 +7928,18 @@ def _build_logscan_archive_filename(path, stats=None, counter=None):
     return f"{base_name}{suffix}"
 
 
-def _build_logscan_archive_destination(path, archive_dir, stats=None):
+def _build_logscan_archive_destination(path, archive_dir, stats=None, preferred_suffix=None):
     path = Path(path)
     archive_dir = Path(archive_dir)
     if stats is None:
         stats = path.stat()
     counter = 1
     while True:
-        candidate = archive_dir / _build_logscan_archive_filename(path, stats=stats, counter=counter)
+        candidate = archive_dir / _build_logscan_archive_filename(path, stats=stats, counter=counter, preferred_suffix=preferred_suffix)
         if candidate.resolve() == path.resolve():
             return candidate
         if not candidate.exists():
             return candidate
-        try:
-            candidate_stats = candidate.stat()
-            if int(candidate_stats.st_size) == int(stats.st_size) and float(candidate_stats.st_mtime) == float(stats.st_mtime):
-                return candidate
-        except Exception:
-            pass
         counter += 1
 
 
@@ -7790,7 +7957,9 @@ def _iter_logscan_candidate_files(log_dir=None, include_archive=True, include_co
             if not path.is_file():
                 continue
             suffixes = [suffix.lower() for suffix in path.suffixes]
-            if not include_compressed and suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
+            if suffixes and suffixes[-1] in (".zip", ".7z"):
+                continue
+            if not include_compressed and suffixes and suffixes[-1] == ".gz":
                 continue
             if ".log" not in path.name.lower():
                 continue
@@ -7806,7 +7975,7 @@ def _iter_logscan_candidate_files(log_dir=None, include_archive=True, include_co
 
 
 def _get_logscan_log_files(log_dir=None, include_archive=True):
-    return _iter_logscan_candidate_files(log_dir=log_dir, include_archive=include_archive, include_compressed=False)
+    return _iter_logscan_candidate_files(log_dir=log_dir, include_archive=include_archive, include_compressed=True)
 
 
 def _classify_logscan_file_location(path, log_dir=None):
@@ -7965,7 +8134,7 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
     errors = []
     cache_dirty = False
 
-    for path in sorted(_iter_logscan_candidate_files(include_archive=True, include_compressed=False), key=lambda item: item.name.lower()):
+    for path in sorted(_iter_logscan_candidate_files(include_archive=True, include_compressed=True), key=lambda item: item.name.lower()):
         if _classify_logscan_file_location(path) != "archive":
             continue
         try:
@@ -8271,7 +8440,7 @@ def _build_resume_explanation(
 
 def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=None):
     try:
-        content = Path(log_path).read_text(encoding="utf-8", errors="replace")
+        content = _read_logscan_text(log_path, encoding="utf-8", errors="replace")
     except Exception:
         return None
 
@@ -8767,16 +8936,27 @@ def _archive_log_file(path, archive_dir, log_dir=None, allow_live_meta=False):
         archive_dir = Path(archive_dir)
         archive_dir.mkdir(parents=True, exist_ok=True)
         src_stats = path.stat()
-        dest = _build_logscan_archive_destination(path, archive_dir, stats=src_stats)
+        should_compress = not _is_logscan_gzip_path(path)
+        preferred_suffix = ".log.gz" if should_compress else None
+        dest = _build_logscan_archive_destination(path, archive_dir, stats=src_stats, preferred_suffix=preferred_suffix)
         if dest.exists():
+            path.unlink()
+            return dest
+        if should_compress:
             try:
-                dst_stats = dest.stat()
-                if dst_stats.st_size == src_stats.st_size and dst_stats.st_mtime == src_stats.st_mtime:
-                    path.unlink()
-                    return dest
+                with path.open("rb") as source, gzip.open(dest, "wb") as target:
+                    shutil.copyfileobj(source, target)
+                os.utime(dest, (src_stats.st_atime, src_stats.st_mtime))
+                path.unlink()
             except Exception:
-                pass
-        shutil.move(str(path), str(dest))
+                try:
+                    if dest.exists():
+                        dest.unlink()
+                except Exception:
+                    pass
+                raise
+        else:
+            shutil.move(str(path), str(dest))
         return dest
     except Exception:
         return None
@@ -8858,7 +9038,7 @@ def _prune_logscan_archive(archive_dir):
         if not path.is_file():
             continue
         suffixes = [suffix.lower() for suffix in path.suffixes]
-        if suffixes and suffixes[-1] in (".gz", ".zip", ".7z"):
+        if suffixes and suffixes[-1] in (".zip", ".7z"):
             continue
         if ".log" not in path.name.lower():
             continue
@@ -8979,7 +9159,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 cached_run_key = cached_entry.get("run_key")
                 skip_save_if_cached = cached_entry.get("run_complete") is True and cached_run_key
 
-                content = path.read_text(encoding="utf-8", errors="replace")
+                content = _read_logscan_text(path, encoding="utf-8", errors="replace")
                 result = analyzer.analyze_content(
                     content,
                     log_path=path,

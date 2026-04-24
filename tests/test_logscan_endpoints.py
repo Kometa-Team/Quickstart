@@ -1,3 +1,5 @@
+import copy
+import gzip
 import os
 import time
 from pathlib import Path
@@ -39,6 +41,7 @@ def test_logscan_analyze_caches_and_invalidates(client, isolated_config_dir, mon
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module.database, "save_log_run", lambda *args, **kwargs: None)
     monkeypatch.setattr(qs_module, "_archive_rotated_logs", lambda *_: None)
+    monkeypatch.setattr(qs_module, "_archive_finished_live_meta_log_if_idle", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(qs_module, "_logscan_needs_reingest", lambda *_: False)
     monkeypatch.setattr(qs_module, "_start_logscan_auto_reingest", lambda *_: None)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
@@ -68,6 +71,7 @@ def test_logscan_analyze_malformed_log(client, isolated_config_dir, monkeypatch,
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module.database, "save_log_run", lambda *args, **kwargs: None)
     monkeypatch.setattr(qs_module, "_archive_rotated_logs", lambda *_: None)
+    monkeypatch.setattr(qs_module, "_archive_finished_live_meta_log_if_idle", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(qs_module, "_logscan_needs_reingest", lambda *_: False)
     monkeypatch.setattr(qs_module, "_start_logscan_auto_reingest", lambda *_: None)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
@@ -315,6 +319,9 @@ def test_logscan_trends_log_delete_supports_bulk_delete(client, isolated_config_
     second_log = archive_dir / "meta-bulk-2.log"
     first_log.write_text("bulk one\n", encoding="utf-8")
     second_log.write_text("bulk two\n", encoding="utf-8")
+    first_stats = first_log.stat()
+    second_epoch = int(first_stats.st_mtime) + 2
+    os.utime(second_log, (second_epoch, second_epoch))
 
     run_map = {
         "bulk-run-1": {
@@ -357,6 +364,64 @@ def test_logscan_trends_log_delete_supports_bulk_delete(client, isolated_config_
     assert set(deleted_run_keys) == {"bulk-run-1", "bulk-run-2"}
     assert not first_log.exists()
     assert not second_log.exists()
+
+
+def test_logscan_trends_log_compress_supports_bulk_compress(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    first_log = archive_dir / "meta-bulk-1.log"
+    second_log = archive_dir / "meta-bulk-2.log"
+    first_log.write_text("bulk one\n", encoding="utf-8")
+    second_log.write_text("bulk two\n", encoding="utf-8")
+
+    run_map = {
+        "bulk-run-1": {
+            "run_key": "bulk-run-1",
+            "log_mtime": first_log.stat().st_mtime,
+            "log_size": first_log.stat().st_size,
+            "config_name": "demo",
+            "created_at": "2026-04-23T10:00:00Z",
+        },
+        "bulk-run-2": {
+            "run_key": "bulk-run-2",
+            "log_mtime": second_log.stat().st_mtime,
+            "log_size": second_log.stat().st_size,
+            "config_name": "demo",
+            "created_at": "2026-04-23T10:05:00Z",
+        },
+    }
+    saved_cache = {}
+    cache = {
+        "version": 1,
+        "logs": {
+            str(first_log.resolve()): {"run_key": "bulk-run-1", "run_complete": True},
+            str(second_log.resolve()): {"run_key": "bulk-run-2", "run_complete": True},
+        },
+    }
+
+    monkeypatch.setattr(qs_module.database, "get_log_run", lambda run_key: run_map.get(run_key))
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: copy.deepcopy(cache))
+    monkeypatch.setattr(
+        qs_module,
+        "_save_logscan_ingest_cache",
+        lambda updated_cache: (
+            saved_cache.__setitem__("cache", copy.deepcopy(updated_cache)),
+            cache.clear(),
+            cache.update(copy.deepcopy(updated_cache)),
+        ),
+    )
+
+    resp = client.post("/logscan/trends/log/compress", json={"run_keys": ["bulk-run-1", "bulk-run-2"]})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["compressed"] == 2
+    assert payload["success"] is True
+    assert not first_log.exists()
+    assert not second_log.exists()
+    compressed_paths = sorted(archive_dir.glob("*.log.gz"))
+    assert len(compressed_paths) == 2
+    for path in compressed_paths:
+        assert str(path.resolve()) in saved_cache["cache"]["logs"]
 
 
 def test_logscan_trends_log_download(client, isolated_config_dir, monkeypatch, qs_module):
@@ -408,6 +473,44 @@ def test_logscan_trends_log_delete_removes_archived_log_and_run(client, isolated
     assert qs_module.database.get_log_run("run-delete-1") is None
 
 
+def test_logscan_trends_log_compress_compresses_archived_log_and_updates_cache(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = archive_dir / "meta-compress-me.log"
+    log_path.write_text("compress me\n", encoding="utf-8")
+    stats = log_path.stat()
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-compress-1",
+            "finished_at": "2026-04-23T11:00:00Z",
+            "config_name": "cleanup",
+            "created_at": "2026-04-23T11:00:00Z",
+            "log_mtime": stats.st_mtime,
+            "log_size": stats.st_size,
+        }
+    )
+    saved_cache = {}
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {"version": 1, "logs": {str(log_path.resolve()): {"run_key": "run-compress-1", "run_complete": True}}},
+    )
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda cache: saved_cache.__setitem__("cache", cache))
+
+    resp = client.post("/logscan/trends/log/compress", json={"run_key": "run-compress-1"})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["compressed_file"] is True
+    compressed_path = Path(payload["compressed_path"])
+    assert compressed_path.exists()
+    assert not log_path.exists()
+    with gzip.open(compressed_path, "rt", encoding="utf-8") as handle:
+        assert handle.read() == "compress me\n"
+    assert str(compressed_path.resolve()) in saved_cache["cache"]["logs"]
+    assert str(log_path.resolve()) not in saved_cache["cache"]["logs"]
+
+
 def test_logscan_trends_log_delete_rejects_live_log(client, isolated_config_dir, monkeypatch, qs_module):
     kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
     log_dir = kometa_root / "config" / "logs"
@@ -450,9 +553,12 @@ def test_archive_log_file_uses_canonical_timestamp_size_name(isolated_config_dir
     archived = qs_module._archive_log_file(log_path, archive_dir, log_dir=log_dir)
 
     assert archived is not None
-    assert archived.name == "meta-20251224-170000Z-7.log"
+    assert archived.name == "meta-20251224-170000Z-7.log.gz"
     assert archived.exists()
     assert not log_path.exists()
+    assert int(archived.stat().st_mtime) == fixed_epoch
+    with gzip.open(archived, "rt", encoding="utf-8") as handle:
+        assert handle.read() == "abc123\n"
 
 
 def test_archive_finished_live_meta_log_if_idle_moves_live_file_and_cache(isolated_config_dir, monkeypatch, qs_module):
@@ -492,6 +598,7 @@ def test_archive_finished_live_meta_log_if_idle_moves_live_file_and_cache(isolat
     assert str(live_path.resolve()) not in saved_cache["logs"]
     assert str(archived.resolve()) in saved_cache["logs"]
     assert saved_cache["logs"][str(archived.resolve())]["run_key"] == "run-live-finished-1"
+    assert archived.suffixes[-2:] == [".log", ".gz"]
 
 
 def test_normalize_logscan_archive_filenames_renames_legacy_files_and_updates_cache(isolated_config_dir, monkeypatch, qs_module):
@@ -516,6 +623,78 @@ def test_normalize_logscan_archive_filenames_renames_legacy_files_and_updates_ca
     saved_cache = saved["cache"]
     assert str(renamed_path.resolve()) in saved_cache["logs"]
     assert str(legacy_path.resolve()) not in saved_cache["logs"]
+
+
+def test_logscan_trends_log_download_supports_gzip_archive(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = archive_dir / "meta-download.log.gz"
+    with gzip.open(log_path, "wt", encoding="utf-8") as handle:
+        handle.write("hello from compressed log\n")
+
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {"version": 1, "logs": {str(log_path.resolve()): {"run_key": "run-gz-download", "run_complete": True}}},
+    )
+
+    resp = client.get("/logscan/trends/log?run_key=run-gz-download")
+    assert resp.status_code == 200
+    assert resp.mimetype == "application/gzip"
+    assert gzip.decompress(resp.data).replace(b"\r\n", b"\n") == b"hello from compressed log\n"
+
+
+def test_logscan_trends_log_delete_removes_gzip_archived_log_and_run(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = archive_dir / "meta-delete-me.log.gz"
+    with gzip.open(log_path, "wt", encoding="utf-8") as handle:
+        handle.write("delete me compressed\n")
+    stats = log_path.stat()
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-delete-gz-1",
+            "finished_at": "2026-04-23T11:00:00Z",
+            "config_name": "cleanup",
+            "created_at": "2026-04-23T11:00:00Z",
+            "log_mtime": stats.st_mtime,
+            "log_size": stats.st_size,
+        }
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {"version": 1, "logs": {str(log_path.resolve()): {"run_key": "run-delete-gz-1", "run_complete": True}}},
+    )
+
+    resp = client.post("/logscan/trends/log/delete", json={"run_key": "run-delete-gz-1"})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["deleted_file"] is True
+    assert not log_path.exists()
+    assert qs_module.database.get_log_run("run-delete-gz-1") is None
+
+
+def test_prune_logscan_archive_counts_gzip_archives(isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    older = archive_dir / "meta-older.log.gz"
+    newer = archive_dir / "meta-newer.log.gz"
+    with gzip.open(older, "wt", encoding="utf-8") as handle:
+        handle.write("older\n")
+    with gzip.open(newer, "wt", encoding="utf-8") as handle:
+        handle.write("newer\n")
+    os.utime(older, (1766595600, 1766595600))
+    os.utime(newer, (1766599200, 1766599200))
+    monkeypatch.setitem(qs_module.app.config, "QS_KOMETA_LOG_KEEP", 1)
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda cache: None)
+
+    removed = qs_module._prune_logscan_archive(archive_dir)
+
+    assert removed == 1
+    assert not older.exists()
+    assert newer.exists()
 
 
 def test_logscan_progress_tracks_libraries(client, isolated_config_dir, monkeypatch, qs_module):
@@ -573,6 +752,37 @@ def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, m
         ),
         encoding="utf-8",
     )
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
+
+    resp = client.post("/logscan/trends/reingest", json={"reset": True})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["ingested"] >= 1
+    assert payload["skipped_incomplete"] == 0
+
+
+def test_logscan_reingest_ingests_gzip_archived_log(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = archive_dir / "meta-1.log.gz"
+    with gzip.open(log_path, "wt", encoding="utf-8") as handle:
+        handle.write(
+            "\n".join(
+                [
+                    "[2026-04-14 09:37:06,901] [kometa.py:522]             [INFO]     |====================================================================================================|",
+                    "[2026-04-14 09:37:06,901] [kometa.py:522]             [INFO]     |                                            Finished Run                                            |",
+                    "[2026-04-14 09:37:06,901] [kometa.py:522]             [INFO]     |                                       Version: 2.3.1-build4                                        |",
+                    "[2026-04-14 09:37:06,902] [kometa.py:522]             [INFO]     |   Start Time: 07:16:22 2026-04-13     Finished: 09:36:53 2026-04-14     Run Time: 1 day, 2:20:31   |",
+                    "[2026-04-14 09:37:06,902] [kometa.py:522]             [INFO]     |====================================================================================================|",
+                ]
+            )
+        )
 
     monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
     monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
