@@ -62,6 +62,7 @@ PLEX_DISCOVERY_CACHE_TTL_SECONDS = int(os.environ.get("QS_PLEX_DISCOVERY_CACHE_T
 _PLEX_DISCOVERY_CACHE = {}
 KOMETA_UPDATE_CACHE_TTL_SECONDS = int(os.environ.get("QS_KOMETA_UPDATE_CACHE_TTL_SECONDS", "600"))
 _KOMETA_UPDATE_CACHE = {}
+KOMETA_BRANCH_OVERRIDES = {"master", "develop", "nightly"}
 
 
 def _plex_discovery_cache_key(kind, plex_url, plex_token):
@@ -120,18 +121,30 @@ def clear_plex_discovery_cache():
     _PLEX_DISCOVERY_CACHE.clear()
 
 
-def _kometa_update_cache_key(kometa_root, branch, local_version):
+def _kometa_update_cache_key(kometa_root, branch, local_version, local_sha=None, local_branch=None):
     try:
         root = str(Path(kometa_root).resolve())
     except Exception:
         root = str(kometa_root or "")
-    return root, str(branch or "").strip(), str(local_version or "").strip()
+    return root, str(branch or "").strip(), str(local_version or "").strip(), str(local_sha or "").strip(), str(local_branch or "").strip()
 
 
-def get_cached_kometa_update(kometa_root=None, force_refresh=False):
-    branch = get_kometa_branch()
+def normalize_kometa_branch_override(value):
+    branch = str(value or "").strip().lower()
+    return branch if branch in KOMETA_BRANCH_OVERRIDES else ""
+
+
+def resolve_kometa_update_branch(branch_override=None):
+    branch = normalize_kometa_branch_override(branch_override)
+    return branch or get_kometa_branch()
+
+
+def get_cached_kometa_update(kometa_root=None, force_refresh=False, branch_override=None):
+    branch = resolve_kometa_update_branch(branch_override)
     local_version = get_kometa_local_version(kometa_root)
-    key = _kometa_update_cache_key(kometa_root or ".", branch, local_version)
+    local_sha = get_kometa_local_sha(kometa_root)
+    local_branch = get_kometa_local_branch(kometa_root)
+    key = _kometa_update_cache_key(kometa_root or ".", branch, local_version, local_sha=local_sha, local_branch=local_branch)
 
     if not force_refresh:
         entry = _KOMETA_UPDATE_CACHE.get(key)
@@ -143,7 +156,7 @@ def get_cached_kometa_update(kometa_root=None, force_refresh=False):
                 return payload
             _KOMETA_UPDATE_CACHE.pop(key, None)
 
-    payload = check_kometa_update(kometa_root)
+    payload = check_kometa_update(kometa_root, branch_override=branch_override)
     if isinstance(payload, dict):
         payload = copy.deepcopy(payload)
         payload["cached"] = False
@@ -154,7 +167,10 @@ def get_cached_kometa_update(kometa_root=None, force_refresh=False):
         return payload
     return {
         "local_version": local_version,
+        "local_sha": local_sha,
+        "local_branch": local_branch,
         "remote_version": None,
+        "remote_sha": None,
         "branch": branch,
         "update_available": False,
         "cached": False,
@@ -1243,16 +1259,55 @@ def get_kometa_local_version(kometa_root=None):
     return "unknown"
 
 
-def check_kometa_update(kometa_root=None):
-    branch = get_kometa_branch()
+def get_kometa_local_sha(kometa_root=None):
+    if kometa_root is None:
+        kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
+    else:
+        kometa_root = Path(kometa_root)
+
+    return _read_text(kometa_root / ".kometa_sha")
+
+
+def get_kometa_local_branch(kometa_root=None):
+    if kometa_root is None:
+        kometa_root = Path(app.config.get("KOMETA_ROOT", "."))
+    else:
+        kometa_root = Path(kometa_root)
+
+    return normalize_kometa_branch_override(_read_text(kometa_root / ".kometa_branch"))
+
+
+def get_kometa_remote_sha(branch="nightly"):
+    return _get_upstream_sha(branch, [])
+
+
+def check_kometa_update(kometa_root=None, branch_override=None):
+    branch = resolve_kometa_update_branch(branch_override)
     local_version = get_kometa_local_version(kometa_root)
+    local_sha = get_kometa_local_sha(kometa_root)
+    local_branch = get_kometa_local_branch(kometa_root)
     remote_version = get_kometa_remote_version(branch)
-    update_available = remote_version and remote_version != local_version
+    remote_sha = get_kometa_remote_sha(branch)
+    branch_mismatch = bool(local_branch and local_branch != branch)
+
+    if local_sha and remote_sha:
+        update_available = local_sha != remote_sha
+        comparison_basis = "sha"
+    else:
+        update_available = bool(remote_version and remote_version != local_version)
+        comparison_basis = "version"
+        if branch_mismatch:
+            update_available = True
 
     return {
         "local_version": local_version,
+        "local_sha": local_sha,
+        "local_branch": local_branch,
         "remote_version": remote_version,
+        "remote_sha": remote_sha,
         "branch": branch,
+        "branch_mismatch": branch_mismatch,
+        "comparison_basis": comparison_basis,
         "update_available": update_available,
     }
 
@@ -1668,6 +1723,7 @@ def _write_text(p: Path, s: str):
 def _get_upstream_sha(branch: str, logs: list[str]) -> str | None:
     try:
         url = GITHUB_API_BRANCH.format(branch=branch)
+        logs.append(f"🔎 Resolving upstream SHA from: {url}")
         r = requests.get(url, timeout=20)
         if r.status_code != 200:
             logs.append(f"❌ GitHub API {r.status_code} for {url}")
@@ -1686,7 +1742,7 @@ def _get_upstream_sha(branch: str, logs: list[str]) -> str | None:
 def _download_zip(branch: str, logs: list[str]) -> bytes | None:
     try:
         url = GITHUB_ZIP_URL.format(branch=branch)
-        logs.append(f"📥 Downloading {branch}.zip…")
+        logs.append(f"📥 Downloading {branch}.zip from: {url}")
         r = requests.get(url, timeout=60)
         if r.status_code != 200:
             logs.append(f"❌ ZIP download failed ({r.status_code})")
@@ -1781,11 +1837,15 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> boo
                 tmp_root = Path(td) / root_name
                 zf.extractall(Path(td))
                 # Wipe current contents (keep dest_dir itself)
+                logs.append(f"🧹 Removing existing Kometa contents from: {dest_dir}")
+                removed_count = 0
                 for child in dest_dir.iterdir():
+                    removed_count += 1
                     if child.is_file() or child.is_symlink():
                         child.unlink(missing_ok=True)
                     else:
                         shutil.rmtree(child, ignore_errors=True)
+                logs.append(f"🧹 Removed {removed_count} existing entr{'y' if removed_count == 1 else 'ies'}.")
                 # Copy over
                 for item in tmp_root.iterdir():
                     target = dest_dir / item.name
@@ -1793,6 +1853,11 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> boo
                         shutil.copytree(item, target, dirs_exist_ok=True)
                     else:
                         shutil.copy2(item, target)
+        version_file = dest_dir / "VERSION"
+        if version_file.exists():
+            version_value = _read_text(version_file)
+            if version_value:
+                logs.append(f"📦 Extracted VERSION file: {version_value}")
         logs.append(f"📦 Extracted to: {dest_dir}")
         return True
     except Exception as e:
@@ -1948,6 +2013,7 @@ def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "night
         config_root = Path(config_root).resolve()
         kometa_dir = config_root / "kometa"
         sha_file = kometa_dir / ".kometa_sha"
+        branch_file = kometa_dir / ".kometa_branch"
 
         logs.append(f"⚙️ ZIP updater → branch '{branch}'")
         _ensure_dir(kometa_dir)
@@ -1989,6 +2055,7 @@ def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "night
             return {"success": False, "log": logs}
 
         _write_text(sha_file, upstream_sha)
+        _write_text(branch_file, branch)
         logs.append("✅ Kometa updated via ZIP.")
         return {"success": True, "log": logs}
 

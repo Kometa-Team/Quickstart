@@ -384,9 +384,31 @@
                 Kometa will be installed/updated in:
                 <code id="kometa-install-path">{{ kometa_default_display }}</code>
               </div>
+              <div class="row g-2 align-items-end mb-2">
+                <div class="col-sm-6 col-lg-4">
+                  <label class="form-label form-label-sm mb-1" for="kometa-branch-override">Kometa Branch</label>
+                  <select id="kometa-branch-override" class="form-select form-select-sm">
+                    <option value="">Auto (default)</option>
+                    <option value="master">master</option>
+                    <option value="develop">develop</option>
+                    <option value="nightly">nightly</option>
+                  </select>
+                </div>
+              </div>
+              <div id="kometa-branch-override-warning" class="alert alert-warning small py-2 px-3 mb-2 d-none" role="alert">
+                Branch override is enabled. This bypasses Quickstart's default Kometa branch selection and will install or check the selected branch directly.
+              </div>
+              <div class="alert alert-light border small py-2 px-3 mb-2" role="status">
+                <div><strong>Selection:</strong> <span id="kometa-branch-selection">Auto</span></div>
+                <div><strong>Effective branch:</strong> <code id="kometa-effective-branch">nightly</code></div>
+                <div><strong>Local version:</strong> <span id="kometa-local-version-status">Unknown</span></div>
+                <div><strong>Remote version:</strong> <span id="kometa-remote-version-status">Not checked</span></div>
+                <div><strong>Remote VERSION source:</strong> <code id="kometa-version-source-url"></code></div>
+                <div><strong>Kometa ZIP source:</strong> <code id="kometa-zip-source-url"></code></div>
+              </div>
               <div class="d-flex flex-wrap align-items-center gap-3">
                 <button id="update-kometa-btn" type="button" class="btn btn-primary btn-sm"
-                  data-branch="{{ version_info.branch }}">
+                  data-qs-branch="{{ version_info.branch }}">
                   <i class="bi bi-arrow-clockwise me-1"></i> Check for Kometa Updates
                 </button>
                 <div class="form-check form-switch small">

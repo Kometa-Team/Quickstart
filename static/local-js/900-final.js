@@ -26,6 +26,7 @@ let lastLogscanPayload = null
 let logscanPollCounter = 0
 let finalLogscanAnalyzeTriggered = false
 let lastRunProgressPayload = null
+const KOMETA_BRANCH_OVERRIDE_STORAGE_KEY = 'qs-kometa-branch-override'
 
 const _qsEnvEl = document.getElementById('qs-env')
 const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
@@ -63,6 +64,13 @@ $(document).ready(function () {
   const $logscanSections = $('#logscan-sections')
   const $updateKometaBtn = $('#update-kometa-btn')
   const $forceUpdateToggle = $('#force-kometa-update')
+  const $kometaBranchOverride = $('#kometa-branch-override')
+  const $kometaBranchSelection = $('#kometa-branch-selection')
+  const $kometaEffectiveBranch = $('#kometa-effective-branch')
+  const $kometaLocalVersionStatus = $('#kometa-local-version-status')
+  const $kometaRemoteVersionStatus = $('#kometa-remote-version-status')
+  const $kometaVersionSourceUrl = $('#kometa-version-source-url')
+  const $kometaZipSourceUrl = $('#kometa-zip-source-url')
   const $runStatusRow = $('#run-status-row')
   const $runStatusTimer = $('#run-status-timer')
   const $runStatusMetrics = $('#run-status-metrics')
@@ -90,8 +98,13 @@ $(document).ready(function () {
   const kometaActionsHeading = document.getElementById('kometa-actions-heading')
   const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
   const kometaActionsToggle = document.getElementById('kometa-actions-toggle')
+  const kometaBranchOverrideWarning = document.getElementById('kometa-branch-override-warning')
   const runCommandCollapse = document.getElementById('run-command-output-collapse')
   let headerStyleSubmitting = false
+  let kometaLocalVersionStatus = 'Unknown'
+  let kometaRemoteVersionStatus = ''
+  let kometaRemoteVersionChecked = false
+  let kometaRemoteVersionSkipped = false
 
   function readMetaFlag (id, datasetKey, attrKey) {
     const el = document.getElementById(id)
@@ -1002,15 +1015,12 @@ $(document).ready(function () {
   }
 
   function probeKometaRoot () {
-    const $logBox = $('#kometa-validation-log')
     const $out = $('#run-command-output')
     const defaultRootPosix = ($out.data('kometa-root-default') || '').toString().trim()
     const defaultRootDisplay = ($out.data('kometa-root-default-display') || defaultRootPosix)
-    if (!defaultRootPosix) return
+    if (!defaultRootPosix) return Promise.resolve(null)
 
-    $logBox.text('🔍 Checking Kometa path and local install state...\n\n')
-
-    $.ajax({
+    return $.ajax({
       type: 'POST',
       url: '/probe-kometa-root',
       contentType: 'application/json',
@@ -1018,7 +1028,7 @@ $(document).ready(function () {
       success: (res) => {
         KOMETA_LOCAL_CHECK_COMPLETED = true
         KOMETA_INSTALLED = !!res.kometa_installed
-        if (Array.isArray(res.log)) res.log.forEach(line => $logBox.append(`${line}\n`))
+        if (Array.isArray(res.log)) res.log.forEach(line => appendKometaStatusLine(line))
 
         const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || defaultRootDisplay)
         const venvPythonDisplay = (res.venv_python_display || res.venv_python || 'python3')
@@ -1030,6 +1040,7 @@ $(document).ready(function () {
         $out.data('kometa-root-posix', kometaRootPosix)
         $out.data('venv-python-posix', venvPythonPosix)
         $('#kometa-install-path').text(kometaRootDisplay)
+        syncKometaSourceStatus({ localVersion: res.kometa_version || 'Unknown' })
 
         if (!KOMETA_INSTALLED) {
           KOMETA_VALIDATED = false
@@ -1044,7 +1055,8 @@ $(document).ready(function () {
         KOMETA_INSTALLED = false
         KOMETA_VALIDATED = false
         const msg = xhr?.responseJSON?.error || 'Unable to probe the Kometa path.'
-        $logBox.append(`❌ ${msg}\n`)
+        appendKometaStatusLine(`❌ ${msg}`)
+        syncKometaSourceStatus({ localVersion: 'Unknown' })
         hideRunCommandSectionUntilValidated()
         syncUpdateButtonLabel()
         syncKometaRollupBadge()
@@ -1053,18 +1065,15 @@ $(document).ready(function () {
   }
 
   function checkKometaUpdate (forceRefresh = false) {
-    const $logBox = $('#kometa-validation-log')
     const $out = $('#run-command-output')
     const defaultRootPosix = ($out.data('kometa-root-default') || '').toString().trim()
+    const branchOverride = getKometaBranchOverride()
     if (!defaultRootPosix) return Promise.resolve(null)
-
-    $logBox.append('\n🔎 Checking Kometa update status...\n')
-    if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
 
     return fetch('/check-kometa-update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path: defaultRootPosix, force: forceRefresh })
+      body: JSON.stringify({ path: defaultRootPosix, force: forceRefresh, branch_override: branchOverride })
     })
       .then(async res => {
         const data = await res.json()
@@ -1077,7 +1086,13 @@ $(document).ready(function () {
         KOMETA_UPDATE_CHECK_COMPLETED = !!data.update_check_completed
         KOMETA_UPDATE_CHECK_SKIPPED = !!data.kometa_update_check_skipped
         KOMETA_UPDATE_AVAILABLE = !!data.kometa_update_available
-        if (Array.isArray(data.log)) data.log.forEach(line => $logBox.append(`${line}\n`))
+        if (Array.isArray(data.log)) data.log.forEach(line => appendKometaStatusLine(line))
+        syncKometaSourceStatus({
+          localVersion: data.local_version || kometaLocalVersionStatus,
+          remoteVersion: data.remote_version || '',
+          checked: Boolean(data.update_check_completed),
+          skipped: Boolean(data.kometa_update_check_skipped)
+        })
 
         if (data.local_version && data.remote_version && data.kometa_update_available) {
           $('#kometa-update-box').removeClass('d-none')
@@ -1089,14 +1104,13 @@ $(document).ready(function () {
 
         syncUpdateButtonLabel()
         syncKometaRollupBadge()
-        if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
         return data
       })
       .catch(err => {
-        $logBox.append(`❌ ${err.message || 'Failed to check Kometa update status.'}\n`)
+        appendKometaStatusLine(`❌ ${err.message || 'Failed to check Kometa update status.'}`)
+        syncKometaSourceStatus({ checked: false, skipped: false, remoteVersion: '' })
         syncUpdateButtonLabel()
         syncKometaRollupBadge()
-        if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
         throw err
       })
   }
@@ -1149,6 +1163,145 @@ $(document).ready(function () {
       kometaActionsToggle.classList.toggle('kometa-update-attention', needsAttention)
     }
     syncKometaRollupBadge()
+  }
+
+  function getKometaBranchOverride () {
+    const raw = ($kometaBranchOverride.val() || '').toString().trim().toLowerCase()
+    return ['master', 'develop', 'nightly'].includes(raw) ? raw : ''
+  }
+
+  function getQuickstartBranch () {
+    return ($updateKometaBtn.data('qs-branch') || 'master').toString().trim().toLowerCase()
+  }
+
+  function getAutoKometaBranch () {
+    return getQuickstartBranch() === 'master' ? 'master' : 'nightly'
+  }
+
+  function getEffectiveKometaBranch () {
+    return getKometaBranchOverride() || getAutoKometaBranch()
+  }
+
+  function getKometaVersionSourceUrlValue (branch) {
+    return `https://raw.githubusercontent.com/Kometa-Team/Kometa/${branch}/VERSION`
+  }
+
+  function getKometaZipSourceUrlValue (branch) {
+    return `https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/${branch}`
+  }
+
+  function loadSavedKometaBranchOverride () {
+    try {
+      const saved = window.localStorage.getItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY) || ''
+      if (['master', 'develop', 'nightly'].includes(saved)) {
+        $kometaBranchOverride.val(saved)
+      } else {
+        $kometaBranchOverride.val('')
+      }
+    } catch (_) {
+      $kometaBranchOverride.val('')
+    }
+  }
+
+  function saveKometaBranchOverride () {
+    try {
+      const value = getKometaBranchOverride()
+      if (value) window.localStorage.setItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY, value)
+      else window.localStorage.removeItem(KOMETA_BRANCH_OVERRIDE_STORAGE_KEY)
+    } catch (_) {}
+  }
+
+  function syncKometaSourceStatus (options = {}) {
+    if (Object.prototype.hasOwnProperty.call(options, 'localVersion')) {
+      kometaLocalVersionStatus = options.localVersion || 'Unknown'
+    }
+    if (Object.prototype.hasOwnProperty.call(options, 'remoteVersion')) {
+      kometaRemoteVersionStatus = options.remoteVersion || ''
+    }
+    if (Object.prototype.hasOwnProperty.call(options, 'checked')) {
+      kometaRemoteVersionChecked = Boolean(options.checked)
+    }
+    if (Object.prototype.hasOwnProperty.call(options, 'skipped')) {
+      kometaRemoteVersionSkipped = Boolean(options.skipped)
+    }
+
+    const selected = getKometaBranchOverride()
+    const effective = getEffectiveKometaBranch()
+    const selectionLabel = selected ? `Override (${selected})` : 'Auto'
+
+    $kometaBranchSelection.text(selectionLabel)
+    $kometaEffectiveBranch.text(effective)
+    $kometaLocalVersionStatus.text(kometaLocalVersionStatus || 'Unknown')
+
+    if (kometaRemoteVersionSkipped) {
+      $kometaRemoteVersionStatus.text('Skipped while running')
+    } else if (kometaRemoteVersionChecked) {
+      $kometaRemoteVersionStatus.text(kometaRemoteVersionStatus || 'Unknown')
+    } else {
+      $kometaRemoteVersionStatus.text('Not checked')
+    }
+
+    $kometaVersionSourceUrl.text(getKometaVersionSourceUrlValue(effective))
+    $kometaZipSourceUrl.text(getKometaZipSourceUrlValue(effective))
+  }
+
+  function setKometaStatusLog (lines) {
+    const $logBox = $('#kometa-validation-log')
+    const text = Array.isArray(lines) ? lines.join('\n') : String(lines || '')
+    $logBox.text(text ? `${text}\n` : '')
+    if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
+  }
+
+  function appendKometaStatusLine (line) {
+    const $logBox = $('#kometa-validation-log')
+    $logBox.append(`${line}\n`)
+    if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
+  }
+
+  function syncKometaBranchOverrideWarning () {
+    if (!kometaBranchOverrideWarning) return
+    kometaBranchOverrideWarning.classList.toggle('d-none', !getKometaBranchOverride())
+  }
+
+  function invalidateKometaUpdateStatus () {
+    KOMETA_UPDATE_AVAILABLE = false
+    KOMETA_UPDATE_CHECK_COMPLETED = false
+    KOMETA_UPDATE_CHECK_SKIPPED = false
+    kometaRemoteVersionStatus = ''
+    kometaRemoteVersionChecked = false
+    kometaRemoteVersionSkipped = false
+    $('#kometa-update-box').addClass('d-none')
+    syncKometaSourceStatus()
+    syncUpdateButtonLabel()
+    syncKometaRollupBadge()
+  }
+
+  function runKometaStatusPass (forceRefresh = false) {
+    const selection = getKometaBranchOverride()
+    const effective = getEffectiveKometaBranch()
+    const lines = [
+      '🔄 Refreshing Kometa status...',
+      `ℹ️ Selected Kometa branch mode: ${selection || 'auto'}`,
+      `ℹ️ Effective Kometa branch: ${effective}`,
+      `🌐 Remote VERSION source: ${getKometaVersionSourceUrlValue(effective)}`,
+      `📥 Kometa ZIP source: ${getKometaZipSourceUrlValue(effective)}`,
+      '',
+      '🔍 Checking Kometa path and local install state...'
+    ]
+    setKometaStatusLog(lines)
+    invalidateKometaUpdateStatus()
+    return probeKometaRoot()
+      .then((res) => {
+        if (!res || !res.kometa_installed) {
+          appendKometaStatusLine('')
+          appendKometaStatusLine('ℹ️ Remote update check skipped because Kometa is not installed.')
+          return res
+        }
+        appendKometaStatusLine('')
+        appendKometaStatusLine('🔎 Checking Kometa update status...')
+        return checkKometaUpdate(forceRefresh)
+      })
+      .catch(() => null)
   }
 
   function getKometaRollupStatus () {
@@ -1563,13 +1716,15 @@ $(document).ready(function () {
     const $runNow = $('#run-now')
     const $stopNow = $('#stop-now')
     const $runBox = $('#run-command-box')
-    const branch = $btn.data('branch') || 'master'
+    const qsBranch = $btn.data('qs-branch') || 'master'
+    const branchOverride = getKometaBranchOverride()
     const forceUpdate = $forceUpdateToggle.is(':checked')
 
     if (KOMETA_INSTALLED && !forceUpdate && !KOMETA_UPDATE_AVAILABLE) {
       $btn.prop('disabled', true).html('<i class="bi bi-arrow-repeat me-1"></i> Checking...')
       $forceUpdateToggle.prop('disabled', true)
-      checkKometaUpdate(true)
+      $kometaBranchOverride.prop('disabled', true)
+      runKometaStatusPass(true)
         .then((data) => {
           if (!data) return
           if (data.kometa_update_available) {
@@ -1584,6 +1739,7 @@ $(document).ready(function () {
         .finally(() => {
           $btn.prop('disabled', false)
           $forceUpdateToggle.prop('disabled', false)
+          $kometaBranchOverride.prop('disabled', false)
           syncUpdateButtonLabel()
         })
       return
@@ -1607,6 +1763,7 @@ $(document).ready(function () {
       : (KOMETA_INSTALLED ? 'Checking for updates...' : 'Installing...')
     $btn.prop('disabled', true).html(`<i class="bi bi-arrow-repeat me-1"></i> ${inProgressLabel}`)
     $forceUpdateToggle.prop('disabled', true)
+    $kometaBranchOverride.prop('disabled', true)
     $logBox.append('\nInitializing/Updating Kometa...\n')
     if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
 
@@ -1627,6 +1784,7 @@ $(document).ready(function () {
       $stopNow.prop('disabled', false)
       $btn.prop('disabled', false)
       $forceUpdateToggle.prop('disabled', false)
+      $kometaBranchOverride.prop('disabled', false)
       syncUpdateButtonLabel()
       updateRunNowState()
       if (postUpdateLabel) {
@@ -1638,7 +1796,7 @@ $(document).ready(function () {
     fetch('/update-kometa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ branch, force: forceUpdate })
+      body: JSON.stringify({ branch: qsBranch, branch_override: branchOverride, force: forceUpdate })
     })
       .then(async res => {
         const data = await res.json()
@@ -1696,6 +1854,14 @@ $(document).ready(function () {
   $forceUpdateToggle.on('change', function () {
     if (!KOMETA_UPDATING) syncUpdateButtonLabel()
   })
+  $kometaBranchOverride.on('change', function () {
+    saveKometaBranchOverride()
+    syncKometaBranchOverrideWarning()
+    if (!KOMETA_UPDATING) runKometaStatusPass(true)
+  })
+  loadSavedKometaBranchOverride()
+  syncKometaBranchOverrideWarning()
+  syncKometaSourceStatus()
   syncUpdateButtonLabel()
   syncKometaRollupBadge()
 
@@ -2259,9 +2425,9 @@ $(document).ready(function () {
   hideRunCommandSectionUntilValidated()
   checkKometaStatus()
 
-  // First-run: only probe local install state. Heavy prepare is user-driven.
+  // First-run: clear and replay a single current Kometa status pass.
   if (document.getElementById('kometa-validation-log')) {
-    probeKometaRoot()
+    runKometaStatusPass(false)
   }
 
   if (kometaActionsCollapse) {

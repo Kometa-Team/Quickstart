@@ -10239,6 +10239,8 @@ def probe_kometa_root():
 def check_kometa_update():
     payload = request.get_json(silent=True) or {}
     root_path = str(payload.get("path", "")).strip()
+    branch_override_raw = payload.get("branch_override")
+    branch_override = helpers.normalize_kometa_branch_override(branch_override_raw)
     logs = []
 
     def log(msg):
@@ -10248,6 +10250,10 @@ def check_kometa_update():
     if not root_path:
         log("❌ No path provided.")
         return jsonify(success=False, error="No path provided.", log=logs), 400
+
+    if branch_override_raw and not branch_override:
+        log(f"❌ Invalid Kometa branch override: {branch_override_raw}")
+        return jsonify(success=False, error="Invalid Kometa branch override.", log=logs), 400
 
     p = _resolve_user_dir(root_path)
     if not p:
@@ -10292,10 +10298,36 @@ def check_kometa_update():
             200,
         )
 
-    update_info = helpers.get_cached_kometa_update(p, force_refresh=helpers.booler(payload.get("force", False)))
+    if branch_override:
+        log(f"⚠️ Kometa branch override selected: {branch_override}")
+    else:
+        log("ℹ️ Kometa branch selection: auto")
+
+    update_info = helpers.get_cached_kometa_update(
+        p,
+        force_refresh=helpers.booler(payload.get("force", False)),
+        branch_override=branch_override,
+    )
     local_version = update_info.get("local_version") or state["kometa_version"]
     remote_version = update_info.get("remote_version") or ""
+    remote_branch = update_info.get("branch") or "nightly"
+    local_branch = update_info.get("local_branch") or "unknown"
+    local_sha = update_info.get("local_sha") or ""
+    remote_sha = update_info.get("remote_sha") or ""
+    comparison_basis = update_info.get("comparison_basis") or "version"
+    remote_version_url = helpers.GITHUB_BASE_URL + f"/{remote_branch}/VERSION"
+    log(f"🌐 Remote VERSION source: {remote_version_url}")
+    log(f"ℹ️ Installed Kometa branch metadata: {local_branch}")
+    if local_sha:
+        log(f"🔎 Local Kometa SHA: {local_sha[:12]}")
+    if remote_sha:
+        log(f"🔎 Remote Kometa SHA: {remote_sha[:12]}")
+    log(f"ℹ️ Update comparison basis: {comparison_basis}")
+    if update_info.get("cached"):
+        log("ℹ️ Using cached Kometa update lookup.")
     if update_info.get("update_available"):
+        if update_info.get("branch_mismatch"):
+            log(f"⚠️ Installed branch '{local_branch}' differs from selected branch '{remote_branch}'.")
         log(f"⬆️ Update available: {local_version} → {remote_version}")
     else:
         log(f"✅ Kometa is up to date: {local_version}")
@@ -10328,11 +10360,19 @@ def update_kometa():
 
         # (optional) allow the caller to pass qs branch; otherwise detect from repo
         data = request.get_json(silent=True) or {}
+        branch_override_raw = data.get("branch_override")
+        branch_override = helpers.normalize_kometa_branch_override(branch_override_raw)
+        if branch_override_raw and not branch_override:
+            return jsonify({"success": False, "error": "Invalid Kometa branch override.", "log": ["❌ Invalid Kometa branch override."]}), 400
         qs_branch = data.get("branch") or helpers.detect_git_branch(app.root_path)
-        kometa_branch = "master" if qs_branch == "master" else "nightly"
+        kometa_branch = branch_override or ("master" if qs_branch == "master" else "nightly")
         force_update = helpers.booler(data.get("force", False))
 
         logs.append(f"🔎 Quickstart branch: {qs_branch}")
+        if branch_override:
+            logs.append(f"⚠️ Kometa branch override selected: {branch_override}")
+        else:
+            logs.append("ℹ️ Kometa branch selection: auto")
         logs.append(f"⚙️ Kometa branch selected: {kometa_branch} (ZIP mode)")
         if force_update:
             logs.append("Force update enabled.")
