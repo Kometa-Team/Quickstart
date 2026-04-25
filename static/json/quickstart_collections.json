@@ -13356,33 +13356,6 @@
             "tooltip": "This number determines where this collection appears in the Plex Collections page. Lower numbers/characters based on ascii are placed earlier."
           },
           {
-            "key": "use_anidb",
-            "label": "AniDB Popular",
-            "tooltip": "Collection of the most Popular Anime on AniDB.",
-            "type": "toggle",
-            "default": true
-          },
-          {
-            "key": "radarr_add_missing_anidb",
-            "label": "Add missing items to Radarr",
-            "tooltip": "Add missing items to Radarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_anidb",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_commonsense",
             "label": "Common Sense Selection",
             "tooltip": "Collection of Common Sense Selection Movies/Shows.",
@@ -13414,7 +13387,10 @@
             "label": "Metacritic Must See Movies",
             "tooltip": "Collection of Metacritic Must See Movies.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "radarr_add_missing_metacritic",
@@ -13427,21 +13403,14 @@
             ]
           },
           {
-            "key": "sonarr_add_missing_metacritic",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_stevenlu",
             "label": "StevenLu's Popular Movies",
             "tooltip": "Collection of StevenLu's Popular Movies.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "radarr_add_missing_stevenlu",
@@ -13454,21 +13423,14 @@
             ]
           },
           {
-            "key": "sonarr_add_missing_stevenlu",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
-            ]
-          },
-          {
             "key": "use_pirated",
             "label": "Top 10 Pirated Movies of the Week",
             "tooltip": "Collection of the Top 10 Pirated Movies of the Week.",
             "type": "toggle",
-            "default": true
+            "default": true,
+            "media_types": [
+              "movie"
+            ]
           },
           {
             "key": "radarr_add_missing_pirated",
@@ -13478,16 +13440,6 @@
             "type": "toggle",
             "media_types": [
               "movie"
-            ]
-          },
-          {
-            "key": "sonarr_add_missing_pirated",
-            "label": "Add missing items to Sonarr",
-            "tooltip": "Add missing items to Sonarr can generate a lot of internet traffic and disk space issues depending on the number of items missing in your library. <br> <b>Use with caution.</b> ",
-            "tooltip_variant": "danger",
-            "type": "toggle",
-            "media_types": [
-              "show"
             ]
           },
           {

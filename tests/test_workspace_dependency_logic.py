@@ -5,8 +5,6 @@ TRAKT_COLLECTION_KEY = "sho-library_tv-collection_trakt"
 OMDB_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_content_rating_update_omdb"
 MDBLIST_ATTRIBUTE_KEY = "mov-library_movies-attribute_mass_user_rating_update_mdb_tomatoes"
 ANIDB_ATTRIBUTE_KEY = "sho-library_anime-attribute_mass_original_title_update_anidb_official"
-ANIDB_COLLECTION_KEY = "sho-library_anime-collection_use_anidb"
-ANIDB_TEMPLATE_COLLECTION_KEY = "sho-library_anime-template_collection_other_chart_use_anidb"
 RADARR_ATTRIBUTE_KEY = "mov-library_movies-attribute_radarr_add_all"
 RADARR_CUSTOM_KEY = "mov-library_movies-attribute_radarr_remove_by_tag_custom"
 RADARR_COLLECTION_KEY = "mov-library_movies-collection_radarr_add_missing_best"
@@ -14,7 +12,7 @@ RADARR_TEMPLATE_COLLECTION_KEY = "mov-library_movies-template_collection_oscars_
 SONARR_ATTRIBUTE_KEY = "sho-library_tv-attribute_sonarr_add_all"
 SONARR_CUSTOM_KEY = "sho-library_tv-attribute_sonarr_remove_by_tag_custom"
 SONARR_COLLECTION_KEY = "sho-library_tv-collection_sonarr_add_missing_best"
-SONARR_TEMPLATE_COLLECTION_KEY = "sho-library_tv-template_collection_other_chart_sonarr_add_missing_anidb"
+SONARR_TEMPLATE_COLLECTION_KEY = "sho-library_tv-template_collection_other_chart_sonarr_add_missing_commonsense"
 MAL_COLLECTION_KEY = "mov-library_anime-collection_myanimelist"
 MDBLIST_OVERLAY_ENABLED_KEY = "mov-library_movies-movie-overlay_ratings"
 MDBLIST_OVERLAY_IMAGE_KEY = "mov-library_movies-movie-template_overlay_ratings[rating1_image]"
@@ -198,26 +196,6 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
             True,
             "mass_genre_update order includes anidb_3_0",
             id="anidb_order_enabled",
-        ),
-        pytest.param(
-            "_libraries_data_anidb_dependency_reasons",
-            {
-                "sho-library_anime-library": "Anime Shows",
-                ANIDB_COLLECTION_KEY: True,
-            },
-            True,
-            "AniDB Popular collection enabled",
-            id="anidb_collection_enabled",
-        ),
-        pytest.param(
-            "_libraries_data_anidb_dependency_reasons",
-            {
-                "sho-library_anime-library": "Anime Shows",
-                ANIDB_TEMPLATE_COLLECTION_KEY: True,
-            },
-            True,
-            "AniDB Popular collection enabled",
-            id="anidb_template_collection_enabled",
         ),
         pytest.param(
             "_libraries_data_anidb_dependency_reasons",
@@ -1185,48 +1163,6 @@ def test_libraries_anidb_dependency_hint_endpoint_returns_reasons(client, monkey
     assert any("mass_genre_update order includes anidb_rating" in reason for reason in payload["reasons"])
 
 
-def test_libraries_anidb_dependency_hint_endpoint_collection_returns_reasons(client, monkeypatch, qs_module):
-    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
-
-    resp = client.post(
-        "/libraries_anidb_dependency_hint",
-        json={
-            "source_library_id": "sho-library_anime",
-            "source_payload": {
-                "sho-library_anime-library": "Anime Shows",
-                ANIDB_COLLECTION_KEY: "true",
-            },
-        },
-    )
-
-    assert resp.status_code == 200
-    payload = resp.get_json()
-    assert payload["success"] is True
-    assert payload["required"] is True
-    assert any("AniDB Popular collection enabled" in reason for reason in payload["reasons"])
-
-
-def test_libraries_anidb_dependency_hint_endpoint_template_collection_returns_reasons(client, monkeypatch, qs_module):
-    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
-
-    resp = client.post(
-        "/libraries_anidb_dependency_hint",
-        json={
-            "source_library_id": "sho-library_anime",
-            "source_payload": {
-                "sho-library_anime-library": "Anime Shows",
-                ANIDB_TEMPLATE_COLLECTION_KEY: "true",
-            },
-        },
-    )
-
-    assert resp.status_code == 200
-    payload = resp.get_json()
-    assert payload["success"] is True
-    assert payload["required"] is True
-    assert any("AniDB Popular collection enabled" in reason for reason in payload["reasons"])
-
-
 def test_libraries_anidb_dependency_hint_endpoint_overlay_returns_reasons(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda _target: {"libraries": {}})
 
@@ -1370,7 +1306,7 @@ def test_libraries_sonarr_dependency_hint_endpoint_template_collection_returns_r
     payload = resp.get_json()
     assert payload["success"] is True
     assert payload["required"] is True
-    assert any("sonarr_add_missing_anidb enabled" in reason for reason in payload["reasons"])
+    assert any("sonarr_add_missing_commonsense enabled" in reason for reason in payload["reasons"])
 
 
 def test_libraries_sonarr_dependency_hint_endpoint_disabled_payload_returns_empty(client, monkeypatch, qs_module):

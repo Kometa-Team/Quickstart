@@ -176,8 +176,6 @@ QS_MAL_REQUIRED_STEP_KEY = "140-mal"
 QS_TAUTULLI_DEP_COLLECTION_IDS = {"collection_tautulli"}
 QS_TRAKT_DEP_COLLECTION_IDS = {"collection_trakt"}
 QS_MAL_DEP_COLLECTION_IDS = {"collection_myanimelist"}
-QS_ANIDB_DEP_COLLECTION_IDS = {"collection_use_anidb"}
-QS_ANIDB_DEP_TEMPLATE_COLLECTION_IDS = {"use_anidb"}
 QS_OMDB_DEP_SOURCE_PREFIXES = ("omdb",)
 QS_MDBLIST_DEP_SOURCE_PREFIXES = ("mdb",)
 QS_ANIDB_DEP_SOURCE_PREFIXES = ("anidb",)
@@ -643,23 +641,11 @@ def _libraries_data_anidb_dependency_reasons(libraries_data):
         libraries_data,
         QS_ANIDB_DEP_SOURCE_PREFIXES,
     )
-    collection_reasons = _libraries_data_collection_dependency_reasons(
-        libraries_data,
-        QS_ANIDB_DEP_COLLECTION_IDS,
-        "AniDB Popular collection enabled",
-    )
-    template_collection_reasons = _libraries_data_template_collection_dependency_reasons(
-        libraries_data,
-        QS_ANIDB_DEP_TEMPLATE_COLLECTION_IDS,
-        "AniDB Popular collection enabled",
-    )
     overlay_reasons = _libraries_data_overlay_rating_dependency_reasons(
         libraries_data,
         QS_ANIDB_OVERLAY_IMAGE_VALUES,
     )
-    merged_reasons = attribute_reasons + [reason for reason in collection_reasons if reason not in attribute_reasons]
-    merged_reasons += [reason for reason in template_collection_reasons if reason not in merged_reasons]
-    return merged_reasons + [reason for reason in overlay_reasons if reason not in merged_reasons]
+    return attribute_reasons + [reason for reason in overlay_reasons if reason not in attribute_reasons]
 
 
 def _libraries_data_radarr_dependency_reasons(libraries_data):
