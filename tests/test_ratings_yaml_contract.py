@@ -13,6 +13,11 @@ def _template_vars_from_yaml(yaml_content):
     return ratings_entry.get("template_variables", {})
 
 
+def _parsed_yaml(yaml_content):
+    parser = YAML(typ="safe", pure=True)
+    return parser.load(yaml_content)
+
+
 def _build_library_payload(template_vars):
     data = {
         "mov-library_movies-library": "Movies",
@@ -201,3 +206,25 @@ def test_generated_playlist_files_get_header_without_legacy_playlist_page(monkey
     assert "#==================== Playlists ====================#" in yaml_content
     assert "playlist_files:" in yaml_content
     assert "- Movies" in yaml_content
+
+
+def test_playlist_files_follow_library_output_order(monkeypatch, qs_module):
+    payload = {
+        "validated": True,
+        "libraries": {
+            "sho-library_zshows-library": "Z Shows",
+            "sho-library_zshows-playlist": "true",
+            "mov-library_amovies-library": "A Movies",
+            "mov-library_amovies-playlist": "true",
+            "mov-library_bmovies-library": "B Movies",
+            "mov-library_bmovies-playlist": "true",
+        },
+    }
+
+    parsed = _parsed_yaml(_run_build_config_with_payload(qs_module, monkeypatch, payload))
+
+    library_order = list(parsed["libraries"].keys())
+    playlist_order = parsed["playlist_files"][0]["template_variables"]["libraries"]
+
+    assert library_order == ["A Movies", "B Movies", "Z Shows"]
+    assert playlist_order == library_order

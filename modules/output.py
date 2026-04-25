@@ -141,13 +141,38 @@ def _format_playlist_files(libraries_list):
     }
 
 
-def _playlist_libraries_from_library_toggles(nested_libraries_data):
+def _ordered_selected_libraries(selected_names, ordered_library_names):
+    if not selected_names:
+        return []
+
+    ordered = []
+    seen = set()
+
+    for library_name in ordered_library_names or []:
+        if library_name in selected_names and library_name not in seen:
+            ordered.append(library_name)
+            seen.add(library_name)
+
+    for library_name in selected_names:
+        if library_name not in seen:
+            ordered.append(library_name)
+            seen.add(library_name)
+
+    return ordered
+
+
+def _library_names_in_output_order(libraries_section):
+    if isinstance(libraries_section, dict) and isinstance(libraries_section.get("libraries"), dict):
+        return list(libraries_section["libraries"].keys())
+    return []
+
+
+def _playlist_libraries_from_library_toggles(nested_libraries_data, ordered_library_names=None):
     if not isinstance(nested_libraries_data, dict):
         return False, []
 
     has_playlist_toggle = any(isinstance(key, str) and key.endswith("-playlist") for key in nested_libraries_data)
     playlist_libraries = []
-    seen = set()
 
     for key, value in nested_libraries_data.items():
         if not isinstance(key, str) or not key.endswith("-library"):
@@ -159,11 +184,10 @@ def _playlist_libraries_from_library_toggles(nested_libraries_data):
         if include_playlist is not True:
             continue
         library_name = str(value).strip()
-        if library_name and library_name not in seen:
+        if library_name:
             playlist_libraries.append(library_name)
-            seen.add(library_name)
 
-    return has_playlist_toggle, playlist_libraries
+    return has_playlist_toggle, _ordered_selected_libraries(playlist_libraries, ordered_library_names)
 
 
 def _legacy_playlist_libraries_from_settings():
@@ -177,22 +201,20 @@ def _legacy_playlist_libraries_from_settings():
     return [item.strip() for item in str(raw_libraries or "").split(",") if item.strip()]
 
 
-def _legacy_playlist_libraries_for_selected_libraries(nested_libraries_data):
+def _legacy_playlist_libraries_for_selected_libraries(nested_libraries_data, ordered_library_names=None):
     legacy_names = set(_legacy_playlist_libraries_from_settings())
     if not legacy_names or not isinstance(nested_libraries_data, dict):
         return []
 
     selected_libraries = []
-    seen = set()
     for key, value in nested_libraries_data.items():
         if not isinstance(key, str) or not key.endswith("-library"):
             continue
         library_name = str(value or "").strip()
-        if library_name and library_name in legacy_names and library_name not in seen:
+        if library_name and library_name in legacy_names:
             selected_libraries.append(library_name)
-            seen.add(library_name)
 
-    return selected_libraries
+    return _ordered_selected_libraries(selected_libraries, ordered_library_names)
 
 
 def _coerce_string_list(values):
@@ -2357,14 +2379,21 @@ def build_config(header_style="standard", config_name=None):
             show_top_level,
         )
         config_data["libraries"] = libraries_section
-        has_playlist_toggle, playlist_libraries = _playlist_libraries_from_library_toggles(nested_libraries_data)
+        ordered_library_names = _library_names_in_output_order(libraries_section)
+        has_playlist_toggle, playlist_libraries = _playlist_libraries_from_library_toggles(
+            nested_libraries_data,
+            ordered_library_names=ordered_library_names,
+        )
         if has_playlist_toggle:
             if playlist_libraries:
                 config_data["playlist_files"] = _format_playlist_files(playlist_libraries)
             else:
                 config_data.pop("playlist_files", None)
         else:
-            legacy_playlist_libraries = _legacy_playlist_libraries_for_selected_libraries(nested_libraries_data)
+            legacy_playlist_libraries = _legacy_playlist_libraries_for_selected_libraries(
+                nested_libraries_data,
+                ordered_library_names=ordered_library_names,
+            )
             if legacy_playlist_libraries:
                 config_data["playlist_files"] = _format_playlist_files(legacy_playlist_libraries)
         if app.config["QS_DEBUG"]:
