@@ -305,7 +305,7 @@ def test_mal_dependency_reason_cases(qs_module, libraries_data, expected_require
                 SONARR_TEMPLATE_COLLECTION_KEY: True,
             },
             True,
-            "sonarr_add_missing_anidb enabled",
+            "sonarr_add_missing_commonsense enabled",
             id="sonarr_template_collection_enabled",
         ),
         pytest.param(
@@ -478,7 +478,7 @@ def test_workspace_status_route_returns_all_dependency_reasons(client, monkeypat
                     TAUTULLI_COLLECTION_KEY: True,
                     OMDB_ATTRIBUTE_KEY: True,
                     MDBLIST_ATTRIBUTE_KEY: True,
-                    ANIDB_TEMPLATE_COLLECTION_KEY: True,
+                    ANIDB_ATTRIBUTE_KEY: True,
                     RADARR_TEMPLATE_COLLECTION_KEY: True,
                     SONARR_TEMPLATE_COLLECTION_KEY: True,
                     TRAKT_COLLECTION_KEY: True,

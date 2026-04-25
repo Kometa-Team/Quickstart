@@ -2678,11 +2678,18 @@ $(document).ready(function () {
   // Keep the run area hidden until Kometa validation completes.
   hideRunCommandSectionUntilValidated()
   checkKometaStatus()
-
-  // First-run: clear and replay a single current Kometa status pass.
-  if (document.getElementById('kometa-validation-log')) {
-    runKometaStatusPass(false)
-  }
+    .catch(() => null)
+    .finally(() => {
+      if (!document.getElementById('kometa-validation-log')) return
+      if (KOMETA_STATUS === 'running') return
+      runKometaStatusPass(false)
+        .finally(() => {
+          const stage = getFinalGateState().stage
+          if (stage === 'todo' || stage === 'freshness') return
+          if (KOMETA_STATUS === 'running' || KOMETA_UPDATING || KOMETA_VALIDATION_IN_PROGRESS) return
+          validateKometaRoot({ appendStatus: true })
+        })
+    })
 
   if (kometaActionsCollapse) {
     kometaActionsCollapse.addEventListener('show.bs.collapse', () => {
