@@ -27,6 +27,9 @@ let logscanPollCounter = 0
 let finalLogscanAnalyzeTriggered = false
 let lastRunProgressPayload = null
 const KOMETA_BRANCH_OVERRIDE_STORAGE_KEY = 'qs-kometa-branch-override'
+let kometaUpdatePollInterval = null
+let kometaUpdateJobId = null
+let kometaUpdateLogIndex = 0
 
 const _qsEnvEl = document.getElementById('qs-env')
 const runningOn = (_qsEnvEl && _qsEnvEl.dataset.runningOn) ? _qsEnvEl.dataset.runningOn : ''
@@ -67,6 +70,7 @@ $(document).ready(function () {
   const $kometaBranchOverride = $('#kometa-branch-override')
   const $kometaBranchSelection = $('#kometa-branch-selection')
   const $kometaEffectiveBranch = $('#kometa-effective-branch')
+  const $kometaUpdatePhaseBadge = $('#kometa-update-phase-badge')
   const $kometaLocalVersionStatus = $('#kometa-local-version-status')
   const $kometaRemoteVersionStatus = $('#kometa-remote-version-status')
   const $kometaVersionSourceUrl = $('#kometa-version-source-url')
@@ -105,6 +109,7 @@ $(document).ready(function () {
   let kometaRemoteVersionStatus = ''
   let kometaRemoteVersionChecked = false
   let kometaRemoteVersionSkipped = false
+  let kometaUpdatePhaseStatus = 'idle'
 
   function readMetaFlag (id, datasetKey, attrKey) {
     const el = document.getElementById(id)
@@ -270,6 +275,7 @@ $(document).ready(function () {
     updateConfigOutputHeaderBadges()
     updateRunCommandHeaderBadge()
     updateLogscanHeaderBadge()
+    syncKometaBranchRollupBadge()
   }
 
   function getFinalGateState () {
@@ -517,10 +523,12 @@ $(document).ready(function () {
   }
   updateHeaderStyleLabel(headerSelect ? headerSelect.value : '')
   $('#open-kometa-actions-button').on('click', function () {
+    if (KOMETA_STATUS === 'running') return
     if (!kometaActionsCollapse || typeof bootstrap === 'undefined' || !bootstrap.Collapse) return
     bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).show()
   })
   $('#open-kometa-actions-panel-button').on('click', function () {
+    if (KOMETA_STATUS === 'running') return
     if (!kometaActionsCollapse || typeof bootstrap === 'undefined' || !bootstrap.Collapse) return
     bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).show()
   })
@@ -694,6 +702,10 @@ $(document).ready(function () {
     if (!showYAML) {
       title = 'Fix validation before building the run command'
       message = 'Resolve the current validation issues first. The run command will appear after the config validates cleanly.'
+      showButton = false
+    } else if (KOMETA_STATUS === 'running') {
+      title = 'Kometa is currently running'
+      message = 'Run output and stop controls are active below. Prepare Kometa is locked until the current run finishes.'
       showButton = false
     } else if (KOMETA_UPDATING) {
       title = 'Kometa update in progress'
@@ -901,9 +913,10 @@ $(document).ready(function () {
     if (checkbox.length) checkbox.on('change', buildCommand)
   })
 
-  function validateKometaRoot () {
+  function validateKometaRoot (options = {}) {
     if (KOMETA_VALIDATION_IN_PROGRESS) return
     KOMETA_VALIDATION_IN_PROGRESS = true
+    setKometaUpdatePhaseBadge('validating')
     if (typeof showNavigationLoadingOverlay === 'function') {
       showNavigationLoadingOverlay('kometa-check')
     }
@@ -916,11 +929,19 @@ $(document).ready(function () {
     const configName = $out.data('config-filename')
     const defaultRootPosix = ($out.data('kometa-root-default') || '').toString().trim()
     const defaultRootDisplay = ($out.data('kometa-root-default-display') || defaultRootPosix)
+    const appendStatus = Boolean(options.appendStatus)
 
-    $logBox.text(
-      '🔄 Please wait while we validate your Kometa installation...\n' +
-      'This may take a few seconds as we verify the folder structure, Python environment, and Kometa information.\n\n'
-    )
+    if (appendStatus) {
+      $logBox.append(
+        '\n🔄 Re-validating Kometa after update...\n' +
+        'This may take a few seconds as we verify the folder structure, Python environment, and Kometa information.\n\n'
+      )
+    } else {
+      $logBox.text(
+        '🔄 Please wait while we validate your Kometa installation...\n' +
+        'This may take a few seconds as we verify the folder structure, Python environment, and Kometa information.\n\n'
+      )
+    }
     if ($spinner.length) $spinner.show()
     $runNow.prop('disabled', true)
 
@@ -977,9 +998,11 @@ $(document).ready(function () {
             hideRunCommandSectionUntilValidated()
             $runNow.prop('disabled', true)
           }
+          if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge(KOMETA_VALIDATED ? 'ready' : 'idle')
         } else {
           KOMETA_INSTALLED = false
           KOMETA_VALIDATED = false
+          if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('failed')
           hideRunCommandSectionUntilValidated()
           $runNow.prop('disabled', true)
         }
@@ -997,6 +1020,7 @@ $(document).ready(function () {
           KOMETA_INSTALLED = false
         }
         KOMETA_VALIDATED = false
+        if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('failed')
         hideRunCommandSectionUntilValidated()
         $runNow.prop('disabled', true)
         if ($spinner.length) $spinner.hide()
@@ -1243,19 +1267,130 @@ $(document).ready(function () {
 
     $kometaVersionSourceUrl.text(getKometaVersionSourceUrlValue(effective))
     $kometaZipSourceUrl.text(getKometaZipSourceUrlValue(effective))
+    syncKometaBranchRollupBadge()
   }
 
-  function setKometaStatusLog (lines) {
+  function setKometaUpdatePhaseBadge (phase) {
+    if (!$kometaUpdatePhaseBadge.length) return
+
+    const phaseMap = {
+      idle: { label: 'Idle', klass: 'text-bg-secondary' },
+      checking: { label: 'Checking', klass: 'text-bg-info' },
+      queued: { label: 'Starting', klass: 'text-bg-primary' },
+      downloading: { label: 'Downloading', klass: 'text-bg-primary' },
+      extracting: { label: 'Extracting', klass: 'text-bg-warning' },
+      preserving: { label: 'Preserving data', klass: 'text-bg-warning' },
+      venv: { label: 'Preparing venv', klass: 'text-bg-info' },
+      dependencies: { label: 'Installing deps', klass: 'text-bg-warning' },
+      validating: { label: 'Validating', klass: 'text-bg-info' },
+      ready: { label: 'Ready', klass: 'text-bg-success' },
+      failed: { label: 'Failed', klass: 'text-bg-danger' }
+    }
+
+    const normalized = Object.prototype.hasOwnProperty.call(phaseMap, phase) ? phase : 'idle'
+    const next = phaseMap[normalized]
+    kometaUpdatePhaseStatus = normalized
+    $kometaUpdatePhaseBadge
+      .removeClass('text-bg-secondary text-bg-info text-bg-primary text-bg-warning text-bg-success text-bg-danger')
+      .addClass(next.klass)
+      .text(next.label)
+  }
+
+  function inferKometaUpdatePhaseFromLine (line) {
+    const text = String(line || '').trim()
+    if (!text) return null
+    const lower = text.toLowerCase()
+
+    if (
+      lower.startsWith('❌') ||
+      lower.includes(' update failed') ||
+      lower.includes('error occurred during kometa update') ||
+      lower.includes('aborting extraction') ||
+      lower.includes('failed to fetch kometa update progress')
+    ) {
+      return 'failed'
+    }
+    if (
+      lower.includes('kometa root validated successfully') ||
+      lower.includes('kometa root is valid and ready') ||
+      lower.includes('kometa update completed successfully') ||
+      lower.includes('kometa is already up to date') ||
+      lower.includes('kometa updated via zip')
+    ) {
+      return 'ready'
+    }
+    if (
+      lower.includes('re-validating kometa after update') ||
+      lower.includes('please wait while we validate') ||
+      lower.includes('validate your kometa installation')
+    ) {
+      return 'validating'
+    }
+    if (lower.includes('installing requirements') || lower.includes('upgrading pip')) {
+      return 'dependencies'
+    }
+    if (
+      lower.includes('creating virtual environment') ||
+      lower.includes('existing kometa-venv looks invalid') ||
+      lower.includes('venv python') ||
+      lower.includes('pyvenv.cfg')
+    ) {
+      return 'venv'
+    }
+    if (
+      lower.includes('backed up kometa logs/cache') ||
+      lower.includes('restored kometa logs/cache') ||
+      lower.includes('kometa backup')
+    ) {
+      return 'preserving'
+    }
+    if (
+      (lower.includes('removed ') && lower.includes('existing entr')) ||
+      lower.includes('removing existing kometa contents') ||
+      lower.includes('existing path still present after cleanup') ||
+      lower.includes('extracted version file') ||
+      lower.includes('extracted to:')
+    ) {
+      return 'extracting'
+    }
+    if (lower.includes('downloading ') && lower.includes('.zip')) {
+      return 'downloading'
+    }
+    if (
+      lower.includes('resolving upstream sha') ||
+      (lower.includes('upstream ') && lower.includes(' sha')) ||
+      lower.includes('refreshing kometa status') ||
+      lower.includes('checking kometa') ||
+      lower.includes('kometa branch selected') ||
+      lower.includes('quickstart branch:') ||
+      lower.includes('remote version source') ||
+      lower.includes('kometa branch override selected') ||
+      lower.includes('kometa branch selection: auto')
+    ) {
+      return 'checking'
+    }
+
+    return null
+  }
+
+  function updateKometaUpdatePhaseFromLine (line) {
+    const phase = inferKometaUpdatePhaseFromLine(line)
+    if (phase) setKometaUpdatePhaseBadge(phase)
+  }
+
+  function setKometaStatusLog (lines, phase = null) {
     const $logBox = $('#kometa-validation-log')
     const text = Array.isArray(lines) ? lines.join('\n') : String(lines || '')
     $logBox.text(text ? `${text}\n` : '')
     if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
+    if (phase) setKometaUpdatePhaseBadge(phase)
   }
 
   function appendKometaStatusLine (line) {
     const $logBox = $('#kometa-validation-log')
     $logBox.append(`${line}\n`)
     if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
+    updateKometaUpdatePhaseFromLine(line)
   }
 
   function syncKometaBranchOverrideWarning () {
@@ -1288,20 +1423,56 @@ $(document).ready(function () {
       '',
       '🔍 Checking Kometa path and local install state...'
     ]
-    setKometaStatusLog(lines)
+    setKometaStatusLog(lines, 'checking')
     invalidateKometaUpdateStatus()
     return probeKometaRoot()
       .then((res) => {
         if (!res || !res.kometa_installed) {
           appendKometaStatusLine('')
           appendKometaStatusLine('ℹ️ Remote update check skipped because Kometa is not installed.')
+          if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('idle')
           return res
         }
         appendKometaStatusLine('')
         appendKometaStatusLine('🔎 Checking Kometa update status...')
         return checkKometaUpdate(forceRefresh)
       })
-      .catch(() => null)
+      .then((result) => {
+        if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge(KOMETA_INSTALLED ? 'ready' : 'idle')
+        return result
+      })
+      .catch(() => {
+        if (!KOMETA_UPDATING) setKometaUpdatePhaseBadge('failed')
+        return null
+      })
+  }
+
+  function stopKometaUpdatePolling () {
+    if (kometaUpdatePollInterval) {
+      clearInterval(kometaUpdatePollInterval)
+      kometaUpdatePollInterval = null
+    }
+  }
+
+  function pollKometaUpdateProgress () {
+    if (!kometaUpdateJobId) return Promise.resolve(null)
+    return fetch(`/update-kometa-progress?job_id=${encodeURIComponent(kometaUpdateJobId)}&since=${encodeURIComponent(String(kometaUpdateLogIndex))}`)
+      .then(async res => {
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to fetch Kometa update progress.')
+        return data
+      })
+      .then(data => {
+        if (data.phase === 'queued') setKometaUpdatePhaseBadge('queued')
+        if (data.phase === 'error') setKometaUpdatePhaseBadge('failed')
+        const lines = Array.isArray(data.lines) ? data.lines : []
+        lines.forEach(line => appendKometaStatusLine(line))
+        if (typeof data.next_index === 'number') kometaUpdateLogIndex = data.next_index
+        if (data.done) {
+          stopKometaUpdatePolling()
+        }
+        return data
+      })
   }
 
   function getKometaRollupStatus () {
@@ -1331,6 +1502,25 @@ $(document).ready(function () {
     badge.classList.add(`qs-validation-rollup-badge--${state}`)
   }
 
+  function syncKometaBranchRollupBadge () {
+    const badge = document.getElementById('kometa-branch-rollup-badge')
+    if (!badge) return
+
+    const selected = getKometaBranchOverride()
+    const effective = getEffectiveKometaBranch()
+    const label = (selected || 'auto').toUpperCase()
+
+    badge.textContent = label
+    badge.classList.remove('text-bg-secondary', 'text-bg-warning', 'text-dark')
+    if (selected) {
+      badge.classList.add('text-bg-warning', 'text-dark')
+      badge.setAttribute('title', `Kometa branch override selected: ${selected}. Effective branch: ${effective}.`)
+    } else {
+      badge.classList.add('text-bg-secondary')
+      badge.setAttribute('title', `Kometa branch mode: auto. Effective branch: ${effective}.`)
+    }
+  }
+
   if (kometaActionsCollapse) {
     kometaActionsCollapse.addEventListener('shown.bs.collapse', syncKometaUpdateAttention)
     kometaActionsCollapse.addEventListener('hidden.bs.collapse', syncKometaUpdateAttention)
@@ -1346,6 +1536,13 @@ $(document).ready(function () {
     if (isRunning) {
       kometaActionsToggle.classList.add('collapsed')
       kometaActionsToggle.setAttribute('aria-expanded', 'false')
+      kometaActionsToggle.setAttribute('title', 'Kometa is running. Prepare Kometa is locked until the run finishes.')
+      kometaActionsToggle.disabled = true
+      kometaActionsToggle.classList.add('disabled')
+    } else {
+      kometaActionsToggle.removeAttribute('title')
+      kometaActionsToggle.disabled = false
+      kometaActionsToggle.classList.remove('disabled')
     }
   }
 
@@ -1390,6 +1587,7 @@ $(document).ready(function () {
     const accordion = $('#run-command-output-accordion')
     const box = $('#run-command-box')
 
+    clearRunCommandPlaceholderState()
     accordion.removeClass('d-none')
     $('#run-command-output-collapse').addClass('show')
     $('#run-command-output-heading .accordion-button').removeClass('collapsed').attr('aria-expanded', 'true')
@@ -1749,8 +1947,10 @@ $(document).ready(function () {
     KOMETA_VALIDATED = false
     KOMETA_UPDATE_CHECK_SKIPPED = false
     KOMETA_UPDATE_CHECK_COMPLETED = false
+    setKometaUpdatePhaseBadge('queued')
     syncKometaRollupBadge()
     hideRunCommandSectionUntilValidated()
+    syncFinalAccordionRollups()
     const prevRunNowHtml = $runNow.html()
     const prevRunNowDisabled = $runNow.prop('disabled')
 
@@ -1778,6 +1978,9 @@ $(document).ready(function () {
     let postUpdateLabel = null
     const cleanupUI = () => {
       clearInterval(heartbeatId)
+      stopKometaUpdatePolling()
+      kometaUpdateJobId = null
+      kometaUpdateLogIndex = 0
       KOMETA_UPDATING = false
       $runBox.removeClass('opacity-50 position-relative')
       $runNow.prop('disabled', prevRunNowDisabled).html(prevRunNowHtml)
@@ -1787,6 +1990,7 @@ $(document).ready(function () {
       $kometaBranchOverride.prop('disabled', false)
       syncUpdateButtonLabel()
       updateRunNowState()
+      syncFinalAccordionRollups()
       if (postUpdateLabel) {
         $btn.html(postUpdateLabel)
         setTimeout(syncUpdateButtonLabel, 6000)
@@ -1796,23 +2000,73 @@ $(document).ready(function () {
     fetch('/update-kometa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ branch: qsBranch, branch_override: branchOverride, force: forceUpdate })
+      body: JSON.stringify({ branch: qsBranch, branch_override: branchOverride, force: forceUpdate, background: true })
     })
       .then(async res => {
         const data = await res.json()
         if (res.status === 409) {
+          setKometaUpdatePhaseBadge('failed')
           showToast('warning', data.error || 'Kometa is running; stop it before updating.')
           $logBox.append(`${data.error || 'Update blocked: Kometa running.'}\n`)
           if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
           return { success: false, log: data.log || [], blocked: true }
         }
+        if (!res.ok) {
+          throw new Error(data.error || 'Kometa update failed to start.')
+        }
         return data
       })
       .then(data => {
         if (!data) return
-        if (Array.isArray(data.log)) {
-          data.log.forEach(line => $logBox.append(`${line}\n`))
-          if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
+        if (data.success && data.job_id) {
+          kometaUpdateJobId = data.job_id
+          kometaUpdateLogIndex = 0
+          stopKometaUpdatePolling()
+          const finalize = (progress) => {
+            if (!progress || !progress.done) return false
+            KOMETA_LOCAL_CHECK_COMPLETED = false
+            KOMETA_UPDATE_AVAILABLE = false
+            $('#kometa-update-box').addClass('d-none')
+            syncUpdateButtonLabel()
+            const elapsed = formatElapsed(Date.now() - startTs)
+            if (progress.update_success) {
+              if (progress.up_to_date) {
+                showToast('info', 'Kometa is already up to date.')
+                postUpdateLabel = '<i class="bi bi-check-circle me-1"></i> Up to date'
+                appendKometaStatusLine('Kometa is already up to date.')
+                setKometaUpdatePhaseBadge('ready')
+              } else {
+                showToast('success', `Kometa update completed in ${elapsed}.`)
+                appendKometaStatusLine('Kometa update completed successfully.')
+                setKometaUpdatePhaseBadge('validating')
+              }
+              validateKometaRoot({ appendStatus: true })
+            } else {
+              showToast('error', 'Kometa update failed.')
+              appendKometaStatusLine('Kometa update failed.')
+              setKometaUpdatePhaseBadge('failed')
+              validateKometaRoot({ appendStatus: true })
+            }
+            cleanupUI()
+            syncKometaRollupBadge()
+            return true
+          }
+          return pollKometaUpdateProgress()
+            .then(progress => {
+              if (finalize(progress)) return
+              kometaUpdatePollInterval = setInterval(() => {
+                pollKometaUpdateProgress()
+                  .then(finalize)
+                  .catch(err => {
+                    console.error(err)
+                    appendKometaStatusLine(`❌ ${err.message || 'Failed to fetch Kometa update progress.'}`)
+                    setKometaUpdatePhaseBadge('failed')
+                    stopKometaUpdatePolling()
+                    cleanupUI()
+                    syncKometaRollupBadge()
+                  })
+              }, 800)
+            })
         }
         if (data.success) {
           KOMETA_LOCAL_CHECK_COMPLETED = false
@@ -1829,11 +2083,11 @@ $(document).ready(function () {
             $logBox.append('Kometa update completed successfully.\n')
           }
           if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
-          validateKometaRoot()
+          validateKometaRoot({ appendStatus: true })
         } else if (!data.blocked) {
           showToast('error', data.error || 'Kometa update failed.')
           $logBox.append('Kometa update failed.\n')
-          validateKometaRoot()
+          validateKometaRoot({ appendStatus: true })
           if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
         }
       })
@@ -1841,9 +2095,8 @@ $(document).ready(function () {
         console.error(err)
         showToast('error', 'Error during Kometa update.')
         $logBox.append('Error occurred during Kometa update.\n')
+        setKometaUpdatePhaseBadge('failed')
         if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
-      })
-      .finally(() => {
         cleanupUI()
         syncKometaRollupBadge()
       })
@@ -1862,6 +2115,7 @@ $(document).ready(function () {
   loadSavedKometaBranchOverride()
   syncKometaBranchOverrideWarning()
   syncKometaSourceStatus()
+  setKometaUpdatePhaseBadge(kometaUpdatePhaseStatus)
   syncUpdateButtonLabel()
   syncKometaRollupBadge()
 
@@ -2434,6 +2688,12 @@ $(document).ready(function () {
     kometaActionsCollapse.addEventListener('show.bs.collapse', () => {
       const stage = getFinalGateState().stage
       if (stage === 'todo' || stage === 'freshness') return
+      if (KOMETA_STATUS === 'running') {
+        if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
+          bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).hide()
+        }
+        return
+      }
       if (!KOMETA_INSTALLED || KOMETA_VALIDATED || KOMETA_VALIDATION_IN_PROGRESS || KOMETA_UPDATING) return
       validateKometaRoot()
     })
@@ -2441,6 +2701,10 @@ $(document).ready(function () {
 
   if (runCommandCollapse) {
     runCommandCollapse.addEventListener('show.bs.collapse', () => {
+      if (KOMETA_STATUS === 'running') {
+        clearRunCommandPlaceholderState()
+        return
+      }
       if (!KOMETA_VALIDATED) {
         setRunCommandPlaceholderState()
       }

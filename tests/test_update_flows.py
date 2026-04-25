@@ -227,7 +227,7 @@ def test_update_kometa_branch_override_uses_selected_branch(client, monkeypatch,
     monkeypatch.setattr(helpers, "detect_git_branch", lambda *_: "master", raising=False)
     captured = {"branch": None}
 
-    def fake_update(_config_root, branch="nightly", force=False):
+    def fake_update(_config_root, branch="nightly", force=False, logs=None):
         captured["branch"] = branch
         return {"success": True, "log": ["ok"], "up_to_date": False}
 
@@ -294,6 +294,37 @@ def test_extract_zip_bytes_replaces_existing_contents(isolated_config_dir):
     assert (dest_dir / "VERSION").read_text(encoding="utf-8").strip() == "9.9.9-develop1"
     assert any("Removing existing Kometa contents" in line for line in logs)
     assert any("Extracted VERSION file: 9.9.9-develop1" in line for line in logs)
+
+
+def test_extract_zip_bytes_aborts_when_existing_directory_cannot_be_removed(isolated_config_dir, monkeypatch):
+    dest_dir = isolated_config_dir / "kometa"
+    blocked_dir = dest_dir / ".github"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    blocked_dir.mkdir(parents=True, exist_ok=True)
+    (blocked_dir / "stale.txt").write_text("stale", encoding="utf-8")
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("Kometa-develop/VERSION", "9.9.9-develop1")
+        zf.writestr("Kometa-develop/kometa.py", "# stub")
+
+    real_rmtree = helpers.shutil.rmtree
+
+    def fake_rmtree(path, *args, **kwargs):
+        if str(path) == str(blocked_dir):
+            raise PermissionError("blocked")
+        return real_rmtree(path, *args, **kwargs)
+
+    monkeypatch.setattr(helpers.shutil, "rmtree", fake_rmtree)
+
+    logs = []
+    ok = helpers._extract_zip_bytes(buf.getvalue(), dest_dir, logs)
+
+    assert ok is False
+    assert blocked_dir.exists()
+    assert not (dest_dir / "VERSION").exists()
+    assert any("Failed to remove existing path" in line and ".github" in line for line in logs)
+    assert any("Kometa directory is not empty after cleanup" in line for line in logs)
 
 
 def test_perform_kometa_update_zip_only_writes_branch_metadata(tmp_path, monkeypatch):

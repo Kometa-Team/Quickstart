@@ -61,6 +61,8 @@ from typing import Dict, Any
 # A very simple in-memory progress store
 CLONE_PROGRESS: Dict[str, Dict[str, Any]] = {}
 ACTIVE_TEST_LIB_JOB: Dict[str, Any] = {}
+KOMETA_UPDATE_PROGRESS: Dict[str, Dict[str, Any]] = {}
+ACTIVE_KOMETA_UPDATE_JOB: Dict[str, Any] = {}
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
 LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "data": None}
@@ -10354,7 +10356,6 @@ def update_kometa():
     if helpers.is_kometa_running():
         pid = helpers.get_kometa_pid()
         return jsonify({"success": False, "error": f"Kometa is currently running (PID {pid}). Stop it before updating."}), 409
-    logs = []
     try:
         cfg_dir = helpers.CONFIG_DIR
 
@@ -10367,7 +10368,79 @@ def update_kometa():
         qs_branch = data.get("branch") or helpers.detect_git_branch(app.root_path)
         kometa_branch = branch_override or ("master" if qs_branch == "master" else "nightly")
         force_update = helpers.booler(data.get("force", False))
+        background = data.get("background") is True
 
+        if background:
+            active_job_id = ACTIVE_KOMETA_UPDATE_JOB.get("job_id")
+            if active_job_id:
+                info = KOMETA_UPDATE_PROGRESS.get(active_job_id) or {}
+                phase = info.get("phase")
+                if phase and phase not in ["done", "error"]:
+                    return (
+                        jsonify(success=True, active=True, existing_job=True, job_id=active_job_id, phase=phase),
+                        200,
+                    )
+                ACTIVE_KOMETA_UPDATE_JOB.clear()
+
+            job_id = str(uuid.uuid4())
+            KOMETA_UPDATE_PROGRESS[job_id] = {
+                "phase": "queued",
+                "lines": [],
+                "done": False,
+                "success": False,
+                "up_to_date": False,
+                "skipped": False,
+                "force": force_update,
+                "qs_branch": qs_branch,
+                "kometa_branch": kometa_branch,
+            }
+            ACTIVE_KOMETA_UPDATE_JOB["job_id"] = job_id
+            ACTIVE_KOMETA_UPDATE_JOB["started_at"] = time.time()
+
+            def worker():
+                progress = KOMETA_UPDATE_PROGRESS[job_id]
+
+                class _ProgressLog(list):
+                    def append(self_inner, item):
+                        super().append(item)
+                        progress["lines"].append(item)
+
+                logs = _ProgressLog()
+                progress["phase"] = "running"
+                logs.append(f"🔎 Quickstart branch: {qs_branch}")
+                if branch_override:
+                    logs.append(f"⚠️ Kometa branch override selected: {branch_override}")
+                else:
+                    logs.append("ℹ️ Kometa branch selection: auto")
+                logs.append(f"⚙️ Kometa branch selected: {kometa_branch} (ZIP mode)")
+                if force_update:
+                    logs.append("Force update enabled.")
+
+                try:
+                    result = helpers.perform_kometa_update_zip_only(cfg_dir, branch=kometa_branch, force=force_update, logs=logs)
+                    try:
+                        helpers.invalidate_cached_kometa_update(cfg_dir)
+                    except Exception:
+                        pass
+                    progress["success"] = bool(result.get("success", False))
+                    progress["up_to_date"] = bool(result.get("up_to_date", False))
+                    progress["skipped"] = bool(result.get("skipped", False))
+                    progress["phase"] = "done" if progress["success"] else "error"
+                    progress["done"] = True
+                except Exception as e:
+                    progress["lines"].append("Exception during Kometa update.")
+                    helpers.ts_log(f"Kometa update failed: {e}", level="ERROR")
+                    progress["phase"] = "error"
+                    progress["done"] = True
+                    progress["success"] = False
+                finally:
+                    if ACTIVE_KOMETA_UPDATE_JOB.get("job_id") == job_id:
+                        ACTIVE_KOMETA_UPDATE_JOB.clear()
+
+            threading.Thread(target=worker, daemon=True).start()
+            return jsonify(success=True, active=True, job_id=job_id, phase="queued"), 200
+
+        logs = []
         logs.append(f"🔎 Quickstart branch: {qs_branch}")
         if branch_override:
             logs.append(f"⚠️ Kometa branch override selected: {branch_override}")
@@ -10377,19 +10450,18 @@ def update_kometa():
         if force_update:
             logs.append("Force update enabled.")
 
-        result = helpers.perform_kometa_update_zip_only(cfg_dir, branch=kometa_branch, force=force_update)
+        result = helpers.perform_kometa_update_zip_only(cfg_dir, branch=kometa_branch, force=force_update, logs=logs)
         try:
             helpers.invalidate_cached_kometa_update(cfg_dir)
         except Exception:
             pass
-        logs.extend(result.get("log", []))
         status = 200 if result.get("success") else 500
 
         return (
             jsonify(
                 {
                     "success": result.get("success", False),
-                    "log": logs,
+                    "log": list(logs),
                     "qs_branch": qs_branch,
                     "kometa_branch": kometa_branch,
                     "up_to_date": result.get("up_to_date", False),
@@ -10402,8 +10474,37 @@ def update_kometa():
 
     except Exception as e:
         helpers.ts_log(f"Kometa update failed: {e}", level="ERROR")
-        logs.append("Exception during Kometa update.")
-        return jsonify({"success": False, "log": logs}), 500
+        return jsonify({"success": False, "log": ["Exception during Kometa update."]}), 500
+
+
+@app.route("/update-kometa-progress", methods=["GET"])
+def update_kometa_progress():
+    job_id = request.args.get("job_id", "").strip()
+    since = request.args.get("since", "0").strip()
+    if not job_id:
+        return jsonify(success=False, error="Missing job_id."), 400
+    info = KOMETA_UPDATE_PROGRESS.get(job_id)
+    if not info:
+        return jsonify(success=False, error="Unknown job_id."), 404
+    try:
+        start_idx = max(int(since or "0"), 0)
+    except ValueError:
+        start_idx = 0
+    lines = list(info.get("lines") or [])
+    return jsonify(
+        success=True,
+        job_id=job_id,
+        phase=info.get("phase"),
+        done=bool(info.get("done")),
+        update_success=bool(info.get("success")),
+        up_to_date=bool(info.get("up_to_date")),
+        skipped=bool(info.get("skipped")),
+        force=bool(info.get("force")),
+        qs_branch=info.get("qs_branch"),
+        kometa_branch=info.get("kometa_branch"),
+        lines=lines[start_idx:],
+        next_index=len(lines),
+    )
 
 
 def _normalize_test_libraries_path(raw_path, base_dir):

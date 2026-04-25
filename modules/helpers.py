@@ -1822,6 +1822,34 @@ def _cleanup_kometa_backup(backup_dir: Path, logs: list[str]):
         logs.append(f"? Failed to remove Kometa backup: {e}")
 
 
+def _clear_directory_contents(dest_dir: Path, logs: list[str]) -> bool:
+    logs.append(f"🧹 Removing existing Kometa contents from: {dest_dir}")
+    removed_count = 0
+    failed_paths = []
+
+    for child in list(dest_dir.iterdir()):
+        try:
+            if child.is_file() or child.is_symlink():
+                child.unlink()
+            else:
+                shutil.rmtree(child)
+            removed_count += 1
+        except Exception as e:
+            failed_paths.append((child, e))
+            logs.append(f"❌ Failed to remove existing path: {child} ({e})")
+
+    leftovers = list(dest_dir.iterdir())
+    if leftovers:
+        for leftover in leftovers:
+            if all(str(leftover) != str(path) for path, _err in failed_paths):
+                logs.append(f"❌ Existing path still present after cleanup: {leftover}")
+        logs.append("❌ Aborting extraction because the Kometa directory is not empty after cleanup.")
+        return False
+
+    logs.append(f"🧹 Removed {removed_count} existing entr{'y' if removed_count == 1 else 'ies'}.")
+    return True
+
+
 def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> bool:
     try:
         _ensure_dir(dest_dir)
@@ -1836,16 +1864,8 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> boo
             with tempfile.TemporaryDirectory(dir=tmp_base) as td:
                 tmp_root = Path(td) / root_name
                 zf.extractall(Path(td))
-                # Wipe current contents (keep dest_dir itself)
-                logs.append(f"🧹 Removing existing Kometa contents from: {dest_dir}")
-                removed_count = 0
-                for child in dest_dir.iterdir():
-                    removed_count += 1
-                    if child.is_file() or child.is_symlink():
-                        child.unlink(missing_ok=True)
-                    else:
-                        shutil.rmtree(child, ignore_errors=True)
-                logs.append(f"🧹 Removed {removed_count} existing entr{'y' if removed_count == 1 else 'ies'}.")
+                if not _clear_directory_contents(dest_dir, logs):
+                    return False
                 # Copy over
                 for item in tmp_root.iterdir():
                     target = dest_dir / item.name
@@ -2001,14 +2021,14 @@ def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str]) -> bool:
     return True
 
 
-def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "nightly", force: bool = False):
+def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "nightly", force: bool = False, logs=None):
     """
     Update Kometa by downloading/extracting the branch ZIP into:
         {config_root}/kometa
     Uses upstream commit SHA to skip when up-to-date unless force is True.
     Works identically for local, PyInstaller, and Docker installs.
     """
-    logs = []
+    logs = logs if logs is not None else []
     try:
         config_root = Path(config_root).resolve()
         kometa_dir = config_root / "kometa"

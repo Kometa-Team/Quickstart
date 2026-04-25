@@ -192,6 +192,28 @@
           <div class="qs-main-page-header">
             <div class="qs-main-page-topline">
               <div class="qs-main-page-eyebrow">Quickstart</div>
+              <div class="qs-main-page-status-pills">
+                <div id="qs-running-badge" class="d-none">
+                  <span class="badge rounded-pill text-bg-success px-3 py-2">
+                    <i class="bi bi-play-circle me-1"></i> Kometa running
+                  </span>
+                </div>
+                <div id="qs-maintenance-badge" class="d-none">
+                  <span class="badge rounded-pill text-bg-warning text-dark px-3 py-2">
+                    <i class="bi bi-pause-circle me-1"></i> Kometa paused for Plex maintenance
+                  </span>
+                </div>
+                <div id="qs-maintenance-unavailable-badge" class="d-none">
+                  <span class="badge rounded-pill text-bg-warning text-dark px-3 py-2">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Plex maintenance window unavailable
+                  </span>
+                </div>
+                <div id="qs-queued-badge" class="d-none">
+                  <span class="badge rounded-pill text-bg-info text-dark px-3 py-2">
+                    <i class="bi bi-hourglass-split me-1"></i> Kometa start queued
+                  </span>
+                </div>
+              </div>
             </div>
             <h2 class="qs-main-page-title">{{ page_info['title'] }}</h2>
             <div class="qs-main-page-meta">
