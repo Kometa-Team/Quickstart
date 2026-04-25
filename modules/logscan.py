@@ -2388,7 +2388,7 @@ class LogscanAnalyzer:
             return "metadata"
         return None
 
-    def extract_progress(self, content, library_list=None, selected_libraries=None, previous=None, run_started_at=None):
+    def extract_progress(self, content, library_list=None, selected_libraries=None, previous=None, run_started_at=None, now_ts=None, is_running=False):
         library_entries = []
         if library_list:
             for entry in library_list:
@@ -2521,6 +2521,13 @@ class LogscanAnalyzer:
         lines = content.splitlines()
 
         effective_started_at = run_started_at
+        effective_now = now_ts
+        if effective_now is not None:
+            try:
+                if effective_now.tzinfo is not None:
+                    effective_now = effective_now.astimezone().replace(tzinfo=None)
+            except Exception:
+                effective_now = None
         if effective_started_at is None:
             marker_re = re.compile(r"\[Quickstart\]\s+Run marker:\s+started=([^\s]+)")
             for line in lines:
@@ -2922,15 +2929,16 @@ class LogscanAnalyzer:
                 _finish_phase(name, phase_key, last_ts)
 
         current_phase_elapsed = None
-        if current_library and last_ts:
+        live_reference_ts = effective_now if is_running and effective_now is not None else last_ts
+        if current_library and live_reference_ts:
             open_phase = phase_open.get(current_library)
             if open_phase:
                 start_ts = phase_start.get((current_library, open_phase))
                 if start_ts:
                     effective_start = start_ts
-                    if last_log_cutoff and start_ts < last_log_cutoff:
+                    if last_log_cutoff and start_ts < last_log_cutoff and live_reference_ts > last_log_cutoff:
                         effective_start = last_log_cutoff
-                    delta = max(0, int((last_ts - effective_start).total_seconds()))
+                    delta = max(0, int((live_reference_ts - effective_start).total_seconds()))
                     base = 0
                     if current_library in library_durations:
                         base = int(library_durations[current_library].get(open_phase, 0) or 0)
@@ -2943,15 +2951,17 @@ class LogscanAnalyzer:
                 preparation_locked = True
         elif not preparation_locked and preparation_seconds is None:
             prep_start = effective_started_at or first_log_ts
-            if prep_start and last_ts and last_ts > prep_start:
-                preparation_elapsed_seconds = max(0, int((last_ts - prep_start).total_seconds()))
+            prep_reference_ts = effective_now if is_running and effective_now is not None else last_ts
+            if prep_start and prep_reference_ts and prep_reference_ts > prep_start:
+                preparation_elapsed_seconds = max(0, int((prep_reference_ts - prep_start).total_seconds()))
 
         playlist_elapsed_seconds = None
-        if playlist_running and last_ts and playlist_started_at:
+        playlist_reference_ts = effective_now if is_running and effective_now is not None else last_ts
+        if playlist_running and playlist_reference_ts and playlist_started_at:
             effective_start = playlist_started_at
-            if last_log_cutoff and playlist_started_at < last_log_cutoff:
+            if last_log_cutoff and playlist_started_at < last_log_cutoff and playlist_reference_ts > last_log_cutoff:
                 effective_start = last_log_cutoff
-            delta = max(0, int((last_ts - effective_start).total_seconds()))
+            delta = max(0, int((playlist_reference_ts - effective_start).total_seconds()))
             playlist_elapsed_seconds = playlist_total_seconds + delta
 
         if finished_run_seen:

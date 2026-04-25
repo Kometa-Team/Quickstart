@@ -1,4 +1,5 @@
 import copy
+from datetime import datetime
 import gzip
 import os
 import time
@@ -745,6 +746,64 @@ def test_logscan_progress_tracks_libraries(client, isolated_config_dir, monkeypa
     statuses = {entry["name"]: entry["status"] for entry in payload["libraries"]}
     assert statuses["Movies"] == "Done"
     assert statuses["TV Shows"] == "In progress"
+
+
+def test_logscan_progress_cached_running_payload_keeps_live_elapsed(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta.log"
+    log_path.write_text("still running\n", encoding="utf-8")
+    stats = log_path.stat()
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: True)
+    monkeypatch.setattr(qs_module, "_load_progress_config", lambda *_args, **_kwargs: {})
+
+    started_at = "2026-04-24T21:00:00"
+    phase_started_at = "2026-04-24T21:05:00"
+    playlist_started_at = "2026-04-24T21:10:00"
+    qs_module.LOGSCAN_PROGRESS_CACHE.update(
+        {
+            "mtime": stats.st_mtime,
+            "size": stats.st_size,
+            "data": {
+                "current_library": "Movies",
+                "phase_current": "collections",
+                "phase_starts": {"Movies||collections": phase_started_at},
+                "libraries": [{"name": "Movies", "type": "movie", "status": "In progress", "durations": {"collections": 12}}],
+                "playlist_running": True,
+                "playlist_started_at": playlist_started_at,
+                "playlist_total_seconds": 5,
+                "preparation_seconds": None,
+                "preparation_elapsed_seconds": None,
+                "run_started_at": started_at,
+            },
+        }
+    )
+    with qs_module.RUN_CONTEXT_LOCK:
+        qs_module.RUN_CONTEXT["started_at"] = datetime.fromisoformat(started_at)
+        qs_module.RUN_CONTEXT["selected_libraries"] = ["Movies"]
+        qs_module.RUN_CONTEXT["config_path"] = None
+        qs_module.RUN_CONTEXT["run_mode"] = "all"
+        qs_module.RUN_CONTEXT["stop_requested_at"] = None
+
+    class _FakeDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            fixed = cls(2026, 4, 24, 21, 15, 0)
+            if tz is not None:
+                return fixed.replace(tzinfo=tz)
+            return fixed
+
+    monkeypatch.setattr(qs_module, "datetime", _FakeDateTime)
+
+    resp = client.get("/logscan/progress")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["preparation_elapsed_seconds"] == 900
+    assert payload["current_phase_elapsed_seconds"] == 612
+    assert payload["playlist_elapsed_seconds"] == 305
 
 
 def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, monkeypatch, qs_module):

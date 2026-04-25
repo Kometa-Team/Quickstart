@@ -7692,6 +7692,54 @@ def logscan_progress():
 
         cached = LOGSCAN_PROGRESS_CACHE
 
+        def _coerce_progress_datetime(value):
+            if not value:
+                return None
+            try:
+                ts = value if isinstance(value, datetime) else datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+                if ts.tzinfo is not None:
+                    ts = ts.astimezone().replace(tzinfo=None)
+                return ts
+            except Exception:
+                return None
+
+        def refresh_live_progress_elapsed(data, running, started_at):
+            if not isinstance(data, dict) or not running:
+                return data
+            data = deepcopy(data)
+            now_ts = datetime.now()
+
+            prep_locked = data.get("preparation_seconds")
+            if not isinstance(prep_locked, (int, float)):
+                prep_start = _coerce_progress_datetime(started_at)
+                if prep_start and now_ts > prep_start:
+                    data["preparation_elapsed_seconds"] = max(0, int((now_ts - prep_start).total_seconds()))
+
+            current_library = data.get("current_library")
+            phase_current = data.get("phase_current")
+            phase_starts = data.get("phase_starts") or {}
+            if current_library and phase_current and isinstance(phase_starts, dict):
+                phase_key = f"{current_library}||{phase_current}"
+                start_ts = _coerce_progress_datetime(phase_starts.get(phase_key))
+                if start_ts:
+                    base = 0
+                    for entry in data.get("libraries") or []:
+                        if entry.get("name") == current_library:
+                            durations = entry.get("durations") or {}
+                            if isinstance(durations.get(phase_current), (int, float)):
+                                base = int(durations.get(phase_current) or 0)
+                            break
+                    data["current_phase_elapsed_seconds"] = base + max(0, int((now_ts - start_ts).total_seconds()))
+
+            if data.get("playlist_running"):
+                playlist_started_at = _coerce_progress_datetime(data.get("playlist_started_at"))
+                if playlist_started_at:
+                    playlist_total = data.get("playlist_total_seconds")
+                    base = int(playlist_total or 0) if isinstance(playlist_total, (int, float)) else 0
+                    data["playlist_elapsed_seconds"] = base + max(0, int((now_ts - playlist_started_at).total_seconds()))
+
+            return data
+
         def normalize_progress_for_stopped(data, running, stopped_requested):
             if not isinstance(data, dict) or running:
                 return data
@@ -7729,6 +7777,7 @@ def logscan_progress():
 
         if log_stats and cached.get("mtime") == log_stats.st_mtime and cached.get("size") == log_stats.st_size:
             data = cached.get("data") or {}
+            data = refresh_live_progress_elapsed(data, running, started_at)
             data = normalize_progress_for_stopped(data, running, stopped_requested)
             return jsonify(data)
 
@@ -7747,6 +7796,8 @@ def logscan_progress():
             selected_libraries=selected,
             previous=LOGSCAN_PROGRESS_CACHE.get("data"),
             run_started_at=started_at,
+            now_ts=datetime.now(timezone.utc),
+            is_running=running,
         )
         phase_order = _get_progress_run_order(config_data=config_data)
         allowed_phases = phase_order or ["operations", "metadata", "collections", "overlays"]
