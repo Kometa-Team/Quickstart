@@ -60,6 +60,8 @@ MAX_LOG_BACKUPS = 10
 RESTART_NOTICE_FILE = os.path.join(CONFIG_DIR, ".restart_notice.json")
 PLEX_DISCOVERY_CACHE_TTL_SECONDS = int(os.environ.get("QS_PLEX_DISCOVERY_CACHE_TTL_SECONDS", "300"))
 _PLEX_DISCOVERY_CACHE = {}
+KOMETA_UPDATE_CACHE_TTL_SECONDS = int(os.environ.get("QS_KOMETA_UPDATE_CACHE_TTL_SECONDS", "600"))
+_KOMETA_UPDATE_CACHE = {}
 
 
 def _plex_discovery_cache_key(kind, plex_url, plex_token):
@@ -116,6 +118,60 @@ def set_cached_plex_refresh(plex_url, plex_token, payload):
 
 def clear_plex_discovery_cache():
     _PLEX_DISCOVERY_CACHE.clear()
+
+
+def _kometa_update_cache_key(kometa_root, branch, local_version):
+    try:
+        root = str(Path(kometa_root).resolve())
+    except Exception:
+        root = str(kometa_root or "")
+    return root, str(branch or "").strip(), str(local_version or "").strip()
+
+
+def get_cached_kometa_update(kometa_root=None, force_refresh=False):
+    branch = get_kometa_branch()
+    local_version = get_kometa_local_version(kometa_root)
+    key = _kometa_update_cache_key(kometa_root or ".", branch, local_version)
+
+    if not force_refresh:
+        entry = _KOMETA_UPDATE_CACHE.get(key)
+        if entry:
+            age = time.monotonic() - entry.get("created_at", 0)
+            if age <= KOMETA_UPDATE_CACHE_TTL_SECONDS:
+                payload = copy.deepcopy(entry.get("payload") or {})
+                payload["cached"] = True
+                return payload
+            _KOMETA_UPDATE_CACHE.pop(key, None)
+
+    payload = check_kometa_update(kometa_root)
+    if isinstance(payload, dict):
+        payload = copy.deepcopy(payload)
+        payload["cached"] = False
+        _KOMETA_UPDATE_CACHE[key] = {
+            "created_at": time.monotonic(),
+            "payload": copy.deepcopy(payload),
+        }
+        return payload
+    return {
+        "local_version": local_version,
+        "remote_version": None,
+        "branch": branch,
+        "update_available": False,
+        "cached": False,
+    }
+
+
+def invalidate_cached_kometa_update(kometa_root=None):
+    if kometa_root is None:
+        _KOMETA_UPDATE_CACHE.clear()
+        return
+    try:
+        target_root = str(Path(kometa_root).resolve())
+    except Exception:
+        target_root = str(kometa_root or "")
+    for key in list(_KOMETA_UPDATE_CACHE.keys()):
+        if key[0] == target_root:
+            _KOMETA_UPDATE_CACHE.pop(key, None)
 
 
 def normalize_id(name, existing_ids):

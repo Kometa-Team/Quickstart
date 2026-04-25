@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark" data-theme="{{ config.get('QS_THEME', 'kometa') }}">
+<html lang="en" data-bs-theme="dark" data-theme="{{ config.get('QS_THEME', 'kometa') }}"
+  data-qs-template="{{ page_info.get('template_name', '') if page_info else '' }}">
 
 <head>
   <meta charset="UTF-8" />

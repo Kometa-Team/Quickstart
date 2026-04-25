@@ -155,7 +155,9 @@ const QS_NAV_LOADING_QUOTES = [
   'Loading… your expectations may vary.',
   'Please wait… our developers are dancing while waiting too.',
   'You’re not stuck, the page is just contemplating existence.',
-  'This text is taking longer to write than the page.'
+  'This text is taking longer to write than the page.',
+  'It\'s only typing...',
+  'That\'s a fixable problem...'
 ]
 
 let qsNavLoadingQuoteTimer = null

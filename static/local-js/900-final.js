@@ -6,8 +6,9 @@ let KOMETA_VALIDATED = false
 let KOMETA_VALIDATION_IN_PROGRESS = false
 let KOMETA_UPDATE_AVAILABLE = false
 let KOMETA_UPDATE_CHECK_SKIPPED = false
+let KOMETA_UPDATE_CHECK_COMPLETED = false
 let KOMETA_INSTALLED = false
-let KOMETA_CHECK_COMPLETED = false
+let KOMETA_LOCAL_CHECK_COMPLETED = false
 // Polling handles (hoist to top so all handlers see them safely)
 let kometaInterval = null
 let kometaStatusInterval = null
@@ -89,6 +90,7 @@ $(document).ready(function () {
   const kometaActionsHeading = document.getElementById('kometa-actions-heading')
   const kometaActionsCollapse = document.getElementById('kometa-actions-collapse')
   const kometaActionsToggle = document.getElementById('kometa-actions-toggle')
+  const runCommandCollapse = document.getElementById('run-command-output-collapse')
   let headerStyleSubmitting = false
 
   function readMetaFlag (id, datasetKey, attrKey) {
@@ -501,6 +503,14 @@ $(document).ready(function () {
     headerSelect.addEventListener('change', () => setActiveGridCard(headerSelect.value))
   }
   updateHeaderStyleLabel(headerSelect ? headerSelect.value : '')
+  $('#open-kometa-actions-button').on('click', function () {
+    if (!kometaActionsCollapse || typeof bootstrap === 'undefined' || !bootstrap.Collapse) return
+    bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).show()
+  })
+  $('#open-kometa-actions-panel-button').on('click', function () {
+    if (!kometaActionsCollapse || typeof bootstrap === 'undefined' || !bootstrap.Collapse) return
+    bootstrap.Collapse.getOrCreateInstance(kometaActionsCollapse, { toggle: false }).show()
+  })
 
   function updateLibraryVisibility (mainOption) {
     const librarySection = $('#library-multiselect').closest('.mb-2')
@@ -653,6 +663,58 @@ $(document).ready(function () {
   function isRunCommandValid () {
     const cmd = $('#run-command-output').text().trim()
     return Boolean(cmd) && !cmd.startsWith('??')
+  }
+
+  function setRunCommandPlaceholderState () {
+    const $panel = $('#run-command-panel-message')
+    const $panelTitle = $('#run-command-panel-title')
+    const $panelText = $('#run-command-panel-text')
+    const $panelButton = $('#open-kometa-actions-panel-button')
+    const $box = $('#run-command-box')
+
+    if (!$panel.length) return
+
+    let title = 'Run command is not ready yet'
+    let message = 'Open Prepare Kometa to install, validate, or update the local Kometa setup before running.'
+    let showButton = true
+
+    if (!showYAML) {
+      title = 'Fix validation before building the run command'
+      message = 'Resolve the current validation issues first. The run command will appear after the config validates cleanly.'
+      showButton = false
+    } else if (KOMETA_UPDATING) {
+      title = 'Kometa update in progress'
+      message = 'Wait for the current install or update to finish. The run command will appear automatically afterward.'
+    } else if (KOMETA_VALIDATION_IN_PROGRESS) {
+      title = 'Preparing Kometa'
+      message = 'Quickstart is validating the Kometa folder and environment now. The run command will appear automatically when ready.'
+    } else if (!KOMETA_LOCAL_CHECK_COMPLETED) {
+      title = 'Checking Kometa state'
+      message = 'Quickstart is probing the local Kometa path. Wait for that check to finish, then prepare Kometa if needed.'
+      showButton = false
+    } else if (!KOMETA_INSTALLED) {
+      title = 'Install Kometa to build the run command'
+      message = 'Kometa is not installed in the selected path yet. Open Prepare Kometa to install it first.'
+    } else if (!KOMETA_VALIDATED) {
+      title = 'Validate Kometa to build the run command'
+      message = 'Next step: open Prepare Kometa, let Quickstart validate the Kometa folder and environment, then this command will be generated here.'
+    }
+
+    $panelTitle.text(title)
+    $panelText.text(message)
+    $panelButton.toggleClass('d-none', !showButton)
+    $panel.removeClass('d-none')
+    $box.addClass('d-none').removeClass('fade-in')
+  }
+
+  function clearRunCommandPlaceholderState () {
+    $('#run-command-panel-message').addClass('d-none')
+    $('#run-command-placeholder').addClass('d-none')
+    $('#open-kometa-actions-button').addClass('d-none')
+    $('#run-command-box').removeClass('d-none')
+    $('#run-command-box .form-label').removeClass('d-none')
+    $('#run-command-box pre').removeClass('d-none')
+    $('#copy-command').removeClass('d-none')
   }
 
   function updateRunNowState () {
@@ -856,39 +918,13 @@ $(document).ready(function () {
       // ✅ send the *normalized* path to the backend
       data: JSON.stringify({ path: defaultRootPosix, config_name: configName }),
       success: (res) => {
-        KOMETA_CHECK_COMPLETED = true
+        KOMETA_LOCAL_CHECK_COMPLETED = true
         if (Array.isArray(res.log)) res.log.forEach(line => $logBox.append(`${line}\n`))
 
         if (res.success) {
           KOMETA_INSTALLED = true
           $logBox.append('✅ Kometa root validated successfully.\n')
           if (res.kometa_version) $logBox.append(`📦 Local Kometa version: ${res.kometa_version}\n`)
-
-          if (res.kometa_update_check_skipped) {
-            KOMETA_UPDATE_CHECK_SKIPPED = true
-            KOMETA_UPDATE_AVAILABLE = false
-            $('#kometa-update-box').addClass('d-none')
-            syncUpdateButtonLabel()
-          } else if (res.remote_version && res.local_version) {
-            KOMETA_UPDATE_CHECK_SKIPPED = false
-            const hadUpdate = KOMETA_UPDATE_AVAILABLE
-            if (res.kometa_update_available) {
-              KOMETA_UPDATE_AVAILABLE = true
-              $logBox.append(`⬆️ Update available: ${res.local_version} → ${res.remote_version}\n`)
-              $('#kometa-update-box').removeClass('d-none')
-              $('#kometa-local-version').text(res.local_version)
-              $('#kometa-remote-version').text(res.remote_version)
-              syncUpdateButtonLabel()
-              if (!hadUpdate) {
-                showToast('warning', `Kometa update available: ${res.local_version} → ${res.remote_version}.`)
-              }
-            } else {
-              KOMETA_UPDATE_AVAILABLE = false
-              $logBox.append('✅ Kometa is up to date.\n')
-              $('#kometa-update-box').addClass('d-none')
-              syncUpdateButtonLabel()
-            }
-          }
 
           // ✅ Prefer display paths for UI; keep posix for internal if needed
           const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || defaultRootDisplay)
@@ -936,10 +972,11 @@ $(document).ready(function () {
         }
 
         if ($spinner.length) $spinner.hide()
+        syncUpdateButtonLabel()
         syncKometaRollupBadge()
       },
       error: (xhr) => {
-        KOMETA_CHECK_COMPLETED = true
+        KOMETA_LOCAL_CHECK_COMPLETED = true
         const msg = xhr?.responseJSON?.error || 'The Kometa root path is invalid or inaccessible. Please try again.'
         $logBox.append(`❌ ${msg}\n`)
         const lowered = String(msg || '').toLowerCase()
@@ -962,6 +999,106 @@ $(document).ready(function () {
         }
       }
     })
+  }
+
+  function probeKometaRoot () {
+    const $logBox = $('#kometa-validation-log')
+    const $out = $('#run-command-output')
+    const defaultRootPosix = ($out.data('kometa-root-default') || '').toString().trim()
+    const defaultRootDisplay = ($out.data('kometa-root-default-display') || defaultRootPosix)
+    if (!defaultRootPosix) return
+
+    $logBox.text('🔍 Checking Kometa path and local install state...\n\n')
+
+    $.ajax({
+      type: 'POST',
+      url: '/probe-kometa-root',
+      contentType: 'application/json',
+      data: JSON.stringify({ path: defaultRootPosix }),
+      success: (res) => {
+        KOMETA_LOCAL_CHECK_COMPLETED = true
+        KOMETA_INSTALLED = !!res.kometa_installed
+        if (Array.isArray(res.log)) res.log.forEach(line => $logBox.append(`${line}\n`))
+
+        const kometaRootDisplay = (res.kometa_root_display || res.kometa_root || defaultRootDisplay)
+        const venvPythonDisplay = (res.venv_python_display || res.venv_python || 'python3')
+        const kometaRootPosix = (res.kometa_root || defaultRootPosix)
+        const venvPythonPosix = (res.venv_python || venvPythonDisplay)
+
+        $out.data('kometa-root', kometaRootDisplay)
+        $out.data('venv-python', venvPythonDisplay)
+        $out.data('kometa-root-posix', kometaRootPosix)
+        $out.data('venv-python-posix', venvPythonPosix)
+        $('#kometa-install-path').text(kometaRootDisplay)
+
+        if (!KOMETA_INSTALLED) {
+          KOMETA_VALIDATED = false
+          hideRunCommandSectionUntilValidated()
+        }
+
+        syncUpdateButtonLabel()
+        syncKometaRollupBadge()
+      },
+      error: (xhr) => {
+        KOMETA_LOCAL_CHECK_COMPLETED = true
+        KOMETA_INSTALLED = false
+        KOMETA_VALIDATED = false
+        const msg = xhr?.responseJSON?.error || 'Unable to probe the Kometa path.'
+        $logBox.append(`❌ ${msg}\n`)
+        hideRunCommandSectionUntilValidated()
+        syncUpdateButtonLabel()
+        syncKometaRollupBadge()
+      }
+    })
+  }
+
+  function checkKometaUpdate (forceRefresh = false) {
+    const $logBox = $('#kometa-validation-log')
+    const $out = $('#run-command-output')
+    const defaultRootPosix = ($out.data('kometa-root-default') || '').toString().trim()
+    if (!defaultRootPosix) return Promise.resolve(null)
+
+    $logBox.append('\n🔎 Checking Kometa update status...\n')
+    if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
+
+    return fetch('/check-kometa-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: defaultRootPosix, force: forceRefresh })
+    })
+      .then(async res => {
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Failed to check Kometa update status.')
+        return data
+      })
+      .then(data => {
+        KOMETA_LOCAL_CHECK_COMPLETED = true
+        KOMETA_INSTALLED = !!data.kometa_installed
+        KOMETA_UPDATE_CHECK_COMPLETED = !!data.update_check_completed
+        KOMETA_UPDATE_CHECK_SKIPPED = !!data.kometa_update_check_skipped
+        KOMETA_UPDATE_AVAILABLE = !!data.kometa_update_available
+        if (Array.isArray(data.log)) data.log.forEach(line => $logBox.append(`${line}\n`))
+
+        if (data.local_version && data.remote_version && data.kometa_update_available) {
+          $('#kometa-update-box').removeClass('d-none')
+          $('#kometa-local-version').text(data.local_version)
+          $('#kometa-remote-version').text(data.remote_version)
+        } else {
+          $('#kometa-update-box').addClass('d-none')
+        }
+
+        syncUpdateButtonLabel()
+        syncKometaRollupBadge()
+        if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
+        return data
+      })
+      .catch(err => {
+        $logBox.append(`❌ ${err.message || 'Failed to check Kometa update status.'}\n`)
+        syncUpdateButtonLabel()
+        syncKometaRollupBadge()
+        if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
+        throw err
+      })
   }
 
   if ($('#run-command-output').length > 0) {
@@ -1017,8 +1154,11 @@ $(document).ready(function () {
   function getKometaRollupStatus () {
     if (KOMETA_UPDATING) return { state: 'unknown', label: 'Updating...' }
     if (KOMETA_VALIDATION_IN_PROGRESS) return { state: 'unknown', label: 'Checking...' }
-    if (!KOMETA_CHECK_COMPLETED) return { state: 'unknown', label: 'Not checked' }
+    if (!KOMETA_LOCAL_CHECK_COMPLETED) return { state: 'unknown', label: 'Not checked' }
     if (!KOMETA_INSTALLED) return { state: 'error', label: 'Install needed' }
+    if (!KOMETA_UPDATE_CHECK_COMPLETED) {
+      return { state: KOMETA_VALIDATED ? 'ok' : 'warn', label: KOMETA_VALIDATED ? 'Prepared' : 'Prepare needed' }
+    }
     if (KOMETA_UPDATE_CHECK_SKIPPED) return { state: 'unknown', label: 'Skipped while running' }
     if (KOMETA_UPDATE_AVAILABLE) return { state: 'warn', label: 'Update available' }
     return { state: 'ok', label: 'Up to date' }
@@ -1086,11 +1226,10 @@ $(document).ready(function () {
 
   function hideRunCommandSectionUntilValidated () {
     const accordion = $('#run-command-output-accordion')
-    const box = $('#run-command-box')
-    accordion.addClass('d-none')
+    accordion.removeClass('d-none')
     $('#run-command-output-collapse').removeClass('show')
     $('#run-command-output-heading .accordion-button').addClass('collapsed').attr('aria-expanded', 'false')
-    box.removeClass('fade-in').addClass('d-none') // Hide instantly
+    setRunCommandPlaceholderState()
     $('#run-now').prop('disabled', true).html('<i class="bi bi-hourglass-split me-1"></i> Waiting...')
   }
 
@@ -1108,6 +1247,7 @@ $(document).ready(function () {
   }
 
   function showRunCommandSectionAfterValidated () {
+    clearRunCommandPlaceholderState()
     revealRunCommandSection()
     $('#run-now').html('<i class="bi bi-play-fill me-1"></i> Run Now')
     try { buildCommand() } catch (_) {}
@@ -1400,7 +1540,7 @@ $(document).ready(function () {
     const label = force
       ? (KOMETA_INSTALLED ? 'Force Update Kometa' : 'Force Install Kometa')
       : (KOMETA_INSTALLED
-          ? (KOMETA_UPDATE_AVAILABLE ? 'Update Available' : 'Check for Kometa Updates')
+          ? (KOMETA_UPDATE_AVAILABLE ? 'Update Available' : (KOMETA_UPDATE_CHECK_COMPLETED ? 'Up to date' : 'Check for Kometa Updates'))
           : 'Install Kometa')
     return `<i class="bi bi-arrow-clockwise me-1"></i> ${label}`
   }
@@ -1426,9 +1566,33 @@ $(document).ready(function () {
     const branch = $btn.data('branch') || 'master'
     const forceUpdate = $forceUpdateToggle.is(':checked')
 
+    if (KOMETA_INSTALLED && !forceUpdate && !KOMETA_UPDATE_AVAILABLE) {
+      $btn.prop('disabled', true).html('<i class="bi bi-arrow-repeat me-1"></i> Checking...')
+      $forceUpdateToggle.prop('disabled', true)
+      checkKometaUpdate(true)
+        .then((data) => {
+          if (!data) return
+          if (data.kometa_update_available) {
+            showToast('warning', `Kometa update available: ${data.local_version} → ${data.remote_version}.`)
+          } else if (!data.kometa_update_check_skipped) {
+            showToast('success', 'Kometa is already up to date.')
+          }
+        })
+        .catch(() => {
+          showToast('error', 'Failed to check Kometa update status.')
+        })
+        .finally(() => {
+          $btn.prop('disabled', false)
+          $forceUpdateToggle.prop('disabled', false)
+          syncUpdateButtonLabel()
+        })
+      return
+    }
+
     KOMETA_UPDATING = true
     KOMETA_VALIDATED = false
     KOMETA_UPDATE_CHECK_SKIPPED = false
+    KOMETA_UPDATE_CHECK_COMPLETED = false
     syncKometaRollupBadge()
     hideRunCommandSectionUntilValidated()
     const prevRunNowHtml = $runNow.html()
@@ -1493,6 +1657,7 @@ $(document).ready(function () {
           if ($logBox[0]) $logBox[0].scrollTop = $logBox[0].scrollHeight
         }
         if (data.success) {
+          KOMETA_LOCAL_CHECK_COMPLETED = false
           KOMETA_UPDATE_AVAILABLE = false
           $('#kometa-update-box').addClass('d-none')
           syncUpdateButtonLabel()
@@ -2094,9 +2259,26 @@ $(document).ready(function () {
   hideRunCommandSectionUntilValidated()
   checkKometaStatus()
 
-  // First-run: validate Kometa root once the log box is present.
-  if (document.getElementById('kometa-validation-log') && getFinalGateState().stage !== 'todo' && getFinalGateState().stage !== 'freshness') {
-    validateKometaRoot()
+  // First-run: only probe local install state. Heavy prepare is user-driven.
+  if (document.getElementById('kometa-validation-log')) {
+    probeKometaRoot()
+  }
+
+  if (kometaActionsCollapse) {
+    kometaActionsCollapse.addEventListener('show.bs.collapse', () => {
+      const stage = getFinalGateState().stage
+      if (stage === 'todo' || stage === 'freshness') return
+      if (!KOMETA_INSTALLED || KOMETA_VALIDATED || KOMETA_VALIDATION_IN_PROGRESS || KOMETA_UPDATING) return
+      validateKometaRoot()
+    })
+  }
+
+  if (runCommandCollapse) {
+    runCommandCollapse.addEventListener('show.bs.collapse', () => {
+      if (!KOMETA_VALIDATED) {
+        setRunCommandPlaceholderState()
+      }
+    })
   }
 
   if (document.getElementById('header-style')) {

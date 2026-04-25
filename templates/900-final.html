@@ -366,7 +366,7 @@
       <h2 class="accordion-header" id="kometa-actions-heading">
         <button id="kometa-actions-toggle" class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
           data-bs-target="#kometa-actions-collapse" aria-expanded="false" aria-controls="kometa-actions-collapse">
-          Prepare Kometa Install / Update
+            Prepare Kometa
           <span id="kometa-update-rollup-badge" class="badge ms-2 qs-validation-rollup-badge qs-validation-rollup-badge--unknown">
             Not checked
           </span>
@@ -378,7 +378,7 @@
           <div id="kometa-actions">
             <div class="alert alert-secondary mb-0">
               <div class="small text-muted mb-2">
-                Validate the local Kometa folder and apply updates before starting a run.
+                  Install, validate, or update the local Kometa setup before starting a run.
               </div>
               <div class="mb-2">
                 Kometa will be installed/updated in:
@@ -650,7 +650,25 @@
         <div id="run-command-output-collapse" class="accordion-collapse collapse"
           aria-labelledby="run-command-output-heading" data-bs-parent="#run-command-output-accordion">
           <div class="accordion-body">
+            <div id="run-command-panel-message" class="alert alert-secondary mb-3" role="status">
+              <div class="fw-semibold mb-1" id="run-command-panel-title">Run command is not ready yet</div>
+              <div class="small mb-2" id="run-command-panel-text">
+                Open Prepare Kometa to install, validate, or update the local Kometa setup before running.
+              </div>
+              <button type="button" id="open-kometa-actions-panel-button" class="btn btn-outline-info btn-sm">
+                Open Prepare Kometa
+              </button>
+            </div>
             <div id="run-command-box" class="position-relative border rounded bg-body-tertiary p-3 d-none">
+              <div id="run-command-placeholder" class="alert alert-secondary mb-3 d-none" role="status">
+                <div class="fw-semibold mb-1" id="run-command-placeholder-title">Run command is not ready yet</div>
+                <div class="small mb-2" id="run-command-placeholder-message">
+                  Open Prepare Kometa to install, validate, or update the local Kometa setup before running.
+                </div>
+                <button type="button" id="open-kometa-actions-button" class="btn btn-outline-info btn-sm">
+                  Open Prepare Kometa
+                </button>
+              </div>
               <p class="form-label">Command</p>
               <pre class="mb-0 text-wrap" style="white-space: pre-wrap; word-break: break-word;">
 {% set running_on = version_info.running_on | default('') %}
@@ -664,9 +682,9 @@
       data-kometa-root-default-display="{{ kometa_default_display }}">
 </code>
 </pre>
-              <button type="button" id="copy-command"
-                class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 d-flex align-items-center gap-2">
-                <i class="bi bi-files" id="copy-icon"></i>
+                <button type="button" id="copy-command"
+                  class="btn btn-outline-secondary btn-sm position-absolute top-0 end-0 m-2 d-flex align-items-center gap-2">
+                  <i class="bi bi-files" id="copy-icon"></i>
                 <span id="copy-text">Copy</span>
               </button>
               {% if incomplete_resume_hint %}

@@ -10092,21 +10092,6 @@ def validate_kometa_root():
 
     log("✅ Kometa root is valid and ready.")
 
-    kometa_update_check_skipped = helpers.is_kometa_running()
-    if kometa_update_check_skipped:
-        kometa_update_info = {
-            "local_version": kometa_version,
-            "remote_version": "",
-            "update_available": False,
-        }
-        log("ℹ️ Kometa is currently running; update check skipped.")
-    else:
-        kometa_update_info = helpers.check_kometa_update(p)
-        if kometa_update_info["update_available"]:
-            log(f"⬆️ Update available: {kometa_update_info['local_version']} → {kometa_update_info['remote_version']}")
-        else:
-            log(f"✅ Kometa is up to date: {kometa_update_info['local_version']}")
-
     return (
         jsonify(
             success=True,
@@ -10117,14 +10102,128 @@ def validate_kometa_root():
             kometa_root_display=kometa_root_display,
             venv_python_display=str(python_bin),
             kometa_version=kometa_version,
-            local_version=kometa_update_info["local_version"],
-            remote_version=kometa_update_info["remote_version"],
-            kometa_update_available=kometa_update_info["update_available"],
-            kometa_update_check_skipped=kometa_update_check_skipped,
             log=logs,
         ),
         200,
     )
+
+
+def _probe_kometa_root_state(path_obj):
+    p = Path(path_obj)
+    kometa_root_posix = p.as_posix()
+    kometa_root_display = str(p)
+    is_windows = sys.platform.startswith("win")
+    venv_dir = p / "kometa-venv"
+    bin_dir = venv_dir / ("Scripts" if is_windows else "bin")
+    python_bin = bin_dir / ("python.exe" if is_windows else "python")
+    version_path = p / "VERSION"
+    kometa_py = p / "kometa.py"
+    requirements = p / "requirements.txt"
+    config_dir = p / "config"
+    version_value = "Unknown"
+    if version_path.exists():
+        try:
+            version_value = version_path.read_text(encoding="utf-8").strip() or "Unknown"
+        except Exception:
+            version_value = "Unknown"
+
+    return {
+        "kometa_root": kometa_root_posix,
+        "kometa_root_display": kometa_root_display,
+        "venv_python": python_bin.as_posix(),
+        "venv_python_display": str(python_bin),
+        "kometa_version": version_value,
+        "root_exists": p.exists(),
+        "config_dir_exists": config_dir.exists(),
+        "kometa_installed": kometa_py.exists() and requirements.exists(),
+        "venv_exists": venv_dir.exists(),
+        "venv_python_exists": python_bin.exists(),
+        "kometa_running": helpers.is_kometa_running(),
+    }
+
+
+@app.route("/probe-kometa-root", methods=["POST"])
+def probe_kometa_root():
+    payload = request.get_json(silent=True) or {}
+    root_path = str(payload.get("path", "")).strip()
+    logs = []
+
+    def log(msg):
+        print(msg, file=sys.stderr)
+        logs.append(msg)
+
+    if not root_path:
+        log("❌ No path provided.")
+        return jsonify(success=False, error="No path provided.", log=logs), 400
+
+    p = _resolve_user_dir(root_path)
+    if not p:
+        log("❌ Invalid path provided.")
+        return jsonify(success=False, error="Invalid path provided.", log=logs), 400
+
+    session["kometa_root"] = p.as_posix()
+    app.config["KOMETA_ROOT"] = str(p)
+
+    state = _probe_kometa_root_state(p)
+    log(f"🔍 Probing Kometa path: {state['kometa_root_display']}")
+    if not state["root_exists"]:
+        log("ℹ️ Kometa root does not exist yet. Install required.")
+    elif not state["kometa_installed"]:
+        log("ℹ️ Kometa files not found yet. Install required.")
+    else:
+        log("✅ Kometa files detected locally.")
+        if state["kometa_version"]:
+            log(f"📦 Local Kometa version: {state['kometa_version']}")
+        if state["venv_python_exists"]:
+            log(f"🐍 Kometa venv python detected at: {state['venv_python_display']}")
+        else:
+            log("ℹ️ Kometa venv python not present yet. Prepare step still needed.")
+    if state["kometa_running"]:
+        log("ℹ️ Kometa is currently running.")
+
+    return jsonify(success=True, log=logs, **state), 200
+
+
+@app.route("/check-kometa-update", methods=["POST"])
+def check_kometa_update():
+    payload = request.get_json(silent=True) or {}
+    root_path = str(payload.get("path", "")).strip()
+    logs = []
+
+    def log(msg):
+        print(msg, file=sys.stderr)
+        logs.append(msg)
+
+    if not root_path:
+        log("❌ No path provided.")
+        return jsonify(success=False, error="No path provided.", log=logs), 400
+
+    p = _resolve_user_dir(root_path)
+    if not p:
+        log("❌ Invalid path provided.")
+        return jsonify(success=False, error="Invalid path provided.", log=logs), 400
+
+    session["kometa_root"] = p.as_posix()
+    app.config["KOMETA_ROOT"] = str(p)
+
+    state = _probe_kometa_root_state(p)
+    if not state["kometa_installed"]:
+        log("ℹ️ Kometa is not installed yet; update check skipped.")
+        return jsonify(success=True, log=logs, update_check_completed=False, kometa_update_check_skipped=False, local_version=state["kometa_version"], remote_version="", kometa_update_available=False, cached=False, **state), 200
+
+    if state["kometa_running"]:
+        log("ℹ️ Kometa is currently running; update check skipped.")
+        return jsonify(success=True, log=logs, update_check_completed=True, kometa_update_check_skipped=True, local_version=state["kometa_version"], remote_version="", kometa_update_available=False, cached=False, **state), 200
+
+    update_info = helpers.get_cached_kometa_update(p, force_refresh=helpers.booler(payload.get("force", False)))
+    local_version = update_info.get("local_version") or state["kometa_version"]
+    remote_version = update_info.get("remote_version") or ""
+    if update_info.get("update_available"):
+        log(f"⬆️ Update available: {local_version} → {remote_version}")
+    else:
+        log(f"✅ Kometa is up to date: {local_version}")
+
+    return jsonify(success=True, log=logs, update_check_completed=True, kometa_update_check_skipped=False, local_version=local_version, remote_version=remote_version, kometa_update_available=bool(update_info.get("update_available")), cached=bool(update_info.get("cached")), **state), 200
 
 
 @app.route("/update-kometa", methods=["POST"])
@@ -10149,6 +10248,10 @@ def update_kometa():
             logs.append("Force update enabled.")
 
         result = helpers.perform_kometa_update_zip_only(cfg_dir, branch=kometa_branch, force=force_update)
+        try:
+            helpers.invalidate_cached_kometa_update(cfg_dir)
+        except Exception:
+            pass
         logs.extend(result.get("log", []))
         status = 200 if result.get("success") else 500
 
