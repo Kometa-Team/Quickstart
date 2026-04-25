@@ -10260,11 +10260,37 @@ def check_kometa_update():
     state = _probe_kometa_root_state(p)
     if not state["kometa_installed"]:
         log("ℹ️ Kometa is not installed yet; update check skipped.")
-        return jsonify(success=True, log=logs, update_check_completed=False, kometa_update_check_skipped=False, local_version=state["kometa_version"], remote_version="", kometa_update_available=False, cached=False, **state), 200
+        return (
+            jsonify(
+                success=True,
+                log=logs,
+                update_check_completed=False,
+                kometa_update_check_skipped=False,
+                local_version=state["kometa_version"],
+                remote_version="",
+                kometa_update_available=False,
+                cached=False,
+                **state,
+            ),
+            200,
+        )
 
     if state["kometa_running"]:
         log("ℹ️ Kometa is currently running; update check skipped.")
-        return jsonify(success=True, log=logs, update_check_completed=True, kometa_update_check_skipped=True, local_version=state["kometa_version"], remote_version="", kometa_update_available=False, cached=False, **state), 200
+        return (
+            jsonify(
+                success=True,
+                log=logs,
+                update_check_completed=True,
+                kometa_update_check_skipped=True,
+                local_version=state["kometa_version"],
+                remote_version="",
+                kometa_update_available=False,
+                cached=False,
+                **state,
+            ),
+            200,
+        )
 
     update_info = helpers.get_cached_kometa_update(p, force_refresh=helpers.booler(payload.get("force", False)))
     local_version = update_info.get("local_version") or state["kometa_version"]
@@ -10274,7 +10300,20 @@ def check_kometa_update():
     else:
         log(f"✅ Kometa is up to date: {local_version}")
 
-    return jsonify(success=True, log=logs, update_check_completed=True, kometa_update_check_skipped=False, local_version=local_version, remote_version=remote_version, kometa_update_available=bool(update_info.get("update_available")), cached=bool(update_info.get("cached")), **state), 200
+    return (
+        jsonify(
+            success=True,
+            log=logs,
+            update_check_completed=True,
+            kometa_update_check_skipped=False,
+            local_version=local_version,
+            remote_version=remote_version,
+            kometa_update_available=bool(update_info.get("update_available")),
+            cached=bool(update_info.get("cached")),
+            **state,
+        ),
+        200,
+    )
 
 
 @app.route("/update-kometa", methods=["POST"])
