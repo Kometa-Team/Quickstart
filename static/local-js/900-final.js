@@ -2682,7 +2682,7 @@ $(document).ready(function () {
     .finally(() => {
       if (!document.getElementById('kometa-validation-log')) return
       if (KOMETA_STATUS === 'running') return
-      runKometaStatusPass(false)
+      Promise.resolve(runKometaStatusPass(false))
         .finally(() => {
           const stage = getFinalGateState().stage
           if (stage === 'todo' || stage === 'freshness') return
