@@ -1770,10 +1770,7 @@ def _write_quickstart_run_marker(kometa_root, config_name=None):
         qs_branch = version_info.get("branch") or "unknown"
         safe_config = (config_name or "default").strip() or "default"
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        marker = (
-            f"[Quickstart] Run marker: started={timestamp} "
-            f"config={safe_config} quickstart={qs_version} branch={qs_branch} maintenance_markers=1"
-        )
+        marker = f"[Quickstart] Run marker: started={timestamp} " f"config={safe_config} quickstart={qs_version} branch={qs_branch} maintenance_markers=1"
         _append_quickstart_meta_log_line(kometa_root, marker)
     except Exception:
         pass

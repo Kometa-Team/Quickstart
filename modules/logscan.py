@@ -3088,8 +3088,7 @@ class LogscanAnalyzer:
             return summary
 
         marker_re = re.compile(
-            r"\[Quickstart\]\s+Maintenance marker:\s+event=(paused|resumed)\s+at=([^\s]+)"
-            r"(?:\s+local_at=([^\s]+))?(?:\s+window=([^\s]+))?(?:\s+paused_seconds=(\d+))?",
+            r"\[Quickstart\]\s+Maintenance marker:\s+event=(paused|resumed)\s+at=([^\s]+)" r"(?:\s+local_at=([^\s]+))?(?:\s+window=([^\s]+))?(?:\s+paused_seconds=(\d+))?",
             re.IGNORECASE,
         )
         open_pause_at = None
