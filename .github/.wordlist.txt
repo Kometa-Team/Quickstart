@@ -36,6 +36,7 @@ PyQt
 pytest
 quickstart
 Radarr
+reingests
 Reingest
 repo
 scm
