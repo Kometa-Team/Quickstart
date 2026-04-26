@@ -3166,6 +3166,10 @@ class LogscanAnalyzer:
             "longest_gap_seconds": 0,
             "longest_gap_started_at": None,
             "longest_gap_ended_at": None,
+            "longest_gap_start_line": None,
+            "longest_gap_end_line": None,
+            "longest_gap_last_line": None,
+            "longest_gap_first_line": None,
             "gaps_over_300": 0,
             "gaps_over_900": 0,
             "gaps_over_1800": 0,
@@ -3176,12 +3180,18 @@ class LogscanAnalyzer:
 
         capabilities = self.extract_quickstart_marker_capabilities(content)
         maintenance_supported = bool(capabilities.get("maintenance_markers"))
-        timestamps = []
-        for line in content.splitlines():
+        timestamp_entries = []
+        for line_number, line in enumerate(content.splitlines(), start=1):
             line_ts = self._parse_log_timestamp(line)
             if line_ts is not None:
-                timestamps.append(line_ts)
-        if len(timestamps) < 2:
+                timestamp_entries.append(
+                    {
+                        "timestamp": line_ts,
+                        "line_number": line_number,
+                        "line": line.strip(),
+                    }
+                )
+        if len(timestamp_entries) < 2:
             if maintenance_supported:
                 summary["longest_gap_maintenance_overlap"] = "none"
             return summary
@@ -3212,7 +3222,11 @@ class LogscanAnalyzer:
 
         longest_start = None
         longest_end = None
-        for previous_ts, current_ts in zip(timestamps, timestamps[1:]):
+        longest_previous_entry = None
+        longest_current_entry = None
+        for previous_entry, current_entry in zip(timestamp_entries, timestamp_entries[1:]):
+            previous_ts = previous_entry["timestamp"]
+            current_ts = current_entry["timestamp"]
             gap_seconds = max(0, int((current_ts - previous_ts).total_seconds()))
             if gap_seconds <= 0:
                 continue
@@ -3226,10 +3240,18 @@ class LogscanAnalyzer:
                 summary["longest_gap_seconds"] = gap_seconds
                 longest_start = previous_ts
                 longest_end = current_ts
+                longest_previous_entry = previous_entry
+                longest_current_entry = current_entry
 
         if longest_start is not None and longest_end is not None:
             summary["longest_gap_started_at"] = longest_start.isoformat()
             summary["longest_gap_ended_at"] = longest_end.isoformat()
+            if longest_previous_entry:
+                summary["longest_gap_start_line"] = longest_previous_entry.get("line_number")
+                summary["longest_gap_last_line"] = longest_previous_entry.get("line")
+            if longest_current_entry:
+                summary["longest_gap_end_line"] = longest_current_entry.get("line_number")
+                summary["longest_gap_first_line"] = longest_current_entry.get("line")
             overlap = False
             for interval_start, interval_end in maintenance_intervals:
                 if interval_end is None:

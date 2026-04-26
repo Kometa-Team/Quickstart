@@ -155,6 +155,10 @@ def test_logscan_trends_returns_maintenance_summary_for_saved_runs(client, isola
                 "longest_gap_seconds": 1200,
                 "longest_gap_started_at": "2026-04-23T01:00:00",
                 "longest_gap_ended_at": "2026-04-23T01:20:00",
+                "longest_gap_start_line": 1842,
+                "longest_gap_end_line": 1843,
+                "longest_gap_last_line": "[2026-04-23 01:00:00,000] [operations.py:100] [INFO] | Working before gap |",
+                "longest_gap_first_line": "[2026-04-23 01:20:00,000] [operations.py:101] [INFO] | Working after gap |",
                 "gaps_over_300": 2,
                 "gaps_over_900": 1,
                 "gaps_over_1800": 0,
@@ -173,6 +177,8 @@ def test_logscan_trends_returns_maintenance_summary_for_saved_runs(client, isola
     assert row["maintenance_summary"]["pause_seconds"] == 300
     assert row["maintenance_summary"]["window"] == "01:00-02:00"
     assert row["quiet_period_summary"]["longest_gap_seconds"] == 1200
+    assert row["quiet_period_summary"]["longest_gap_start_line"] == 1842
+    assert row["quiet_period_summary"]["longest_gap_end_line"] == 1843
     assert row["quiet_period_summary"]["gaps_over_900"] == 1
     assert row["quiet_period_summary"]["longest_gap_maintenance_overlap"] == "confirmed"
 

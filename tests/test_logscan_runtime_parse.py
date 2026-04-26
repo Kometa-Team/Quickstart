@@ -117,6 +117,10 @@ def test_analyze_content_extracts_quickstart_maintenance_summary():
         "longest_gap_seconds": 300,
         "longest_gap_started_at": "2026-04-18T10:10:00",
         "longest_gap_ended_at": "2026-04-18T10:15:00",
+        "longest_gap_start_line": 2,
+        "longest_gap_end_line": 5,
+        "longest_gap_last_line": "[2026-04-18 10:10:00,000] [kometa.py:100] [INFO] | Resumed Work |",
+        "longest_gap_first_line": "[2026-04-18 10:15:00,000] [kometa.py:522] [INFO] |                                            Finished Run                                            |",
         "gaps_over_300": 1,
         "gaps_over_900": 0,
         "gaps_over_1800": 0,
@@ -142,6 +146,8 @@ def test_analyze_content_marks_quiet_period_overlap_as_confirmed_when_gap_matche
     quiet_summary = result["summary"]["quiet_period_summary"]
 
     assert quiet_summary["longest_gap_seconds"] == 1200
+    assert quiet_summary["longest_gap_start_line"] == 2
+    assert quiet_summary["longest_gap_end_line"] == 5
     assert quiet_summary["gaps_over_300"] == 2
     assert quiet_summary["gaps_over_900"] == 1
     assert quiet_summary["longest_gap_maintenance_overlap"] == "confirmed"
@@ -162,6 +168,8 @@ def test_analyze_content_marks_historical_quiet_period_overlap_as_unknown_withou
     quiet_summary = result["summary"]["quiet_period_summary"]
 
     assert quiet_summary["longest_gap_seconds"] == 1200
+    assert quiet_summary["longest_gap_start_line"] == 1
+    assert quiet_summary["longest_gap_end_line"] == 2
     assert quiet_summary["gaps_over_300"] == 2
     assert quiet_summary["gaps_over_900"] == 1
     assert quiet_summary["longest_gap_maintenance_overlap"] == "unknown"

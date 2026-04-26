@@ -388,11 +388,25 @@ $(document).ready(function () {
       longestGapSeconds: Number.isFinite(summary.longest_gap_seconds) ? summary.longest_gap_seconds : 0,
       longestGapStartedAt: summary.longest_gap_started_at || '',
       longestGapEndedAt: summary.longest_gap_ended_at || '',
+      longestGapStartLine: Number.isFinite(summary.longest_gap_start_line) ? summary.longest_gap_start_line : null,
+      longestGapEndLine: Number.isFinite(summary.longest_gap_end_line) ? summary.longest_gap_end_line : null,
+      longestGapLastLine: summary.longest_gap_last_line || '',
+      longestGapFirstLine: summary.longest_gap_first_line || '',
       gapsOver300: Number.isFinite(summary.gaps_over_300) ? summary.gaps_over_300 : 0,
       gapsOver900: Number.isFinite(summary.gaps_over_900) ? summary.gaps_over_900 : 0,
       gapsOver1800: Number.isFinite(summary.gaps_over_1800) ? summary.gaps_over_1800 : 0,
       maintenanceOverlap: summary.longest_gap_maintenance_overlap || 'unknown'
     }
+  }
+
+  function getQuietPeriodOutcome (run, summary) {
+    if (run && run.is_incomplete) return 'incomplete'
+    const finishedAt = run && run.finished_at ? Date.parse(run.finished_at) : NaN
+    const longestGapEndedAt = summary && summary.longestGapEndedAt ? Date.parse(summary.longestGapEndedAt) : NaN
+    if (Number.isFinite(finishedAt) && Number.isFinite(longestGapEndedAt) && finishedAt === longestGapEndedAt) {
+      return 'completed'
+    }
+    return 'resumed'
   }
 
   function getQuietPeriodSortValue (run) {
@@ -421,7 +435,13 @@ $(document).ready(function () {
       detailParts.push(`Maintenance overlap: ${summary.maintenanceOverlap}`)
     }
     const title = detailParts.join(' | ')
-    return `<span title="${escapeHtml(title)}">${escapeHtml(parts.join(' • '))}</span>`
+    return `
+      <div class="logscan-action-stack">
+        <span title="${escapeHtml(title)}">${escapeHtml(parts.join(' • '))}</span>
+        <button type="button" class="btn nav-button btn-sm logscan-action-btn logscan-quiet-period-details"
+          data-run-key="${escapeHtml(String(run && run.run_key ? run.run_key : ''))}">Open</button>
+      </div>
+    `
   }
 
   function getCountsTotal (run) {
@@ -2524,6 +2544,56 @@ $(document).ready(function () {
     }
   }
 
+  function showQuietPeriodDetails (runKey) {
+    const run = allTableRuns.find(entry => entry && entry.run_key === runKey)
+    const summary = getQuietPeriodSummary(run)
+    if (!run || summary.longestGapSeconds <= 0) return
+    if ($runDetailsTitle.length) {
+      $runDetailsTitle.text('Quiet Period Details')
+    }
+    if ($runDetailsBody.length) {
+      const longestGap = formatSeconds(summary.longestGapSeconds)
+      const startedAt = formatTimestamp(summary.longestGapStartedAt) || 'n/a'
+      const endedAt = formatTimestamp(summary.longestGapEndedAt) || 'n/a'
+      const lineWindow = summary.longestGapStartLine && summary.longestGapEndLine
+        ? `${summary.longestGapStartLine} → ${summary.longestGapEndLine}`
+        : 'n/a'
+      const outcome = getQuietPeriodOutcome(run, summary)
+      const counts = []
+      if (summary.gapsOver300 > 0) counts.push(`>5m: ${summary.gapsOver300}`)
+      if (summary.gapsOver900 > 0) counts.push(`>15m: ${summary.gapsOver900}`)
+      if (summary.gapsOver1800 > 0) counts.push(`>30m: ${summary.gapsOver1800}`)
+      const beforeLine = summary.longestGapLastLine
+        ? `<pre class="small mb-0"><code>${escapeHtml(summary.longestGapLastLine)}</code></pre>`
+        : '<div class="small text-muted">Unavailable</div>'
+      const afterLine = summary.longestGapFirstLine
+        ? `<pre class="small mb-0"><code>${escapeHtml(summary.longestGapFirstLine)}</code></pre>`
+        : '<div class="small text-muted">Unavailable</div>'
+      $runDetailsBody.html(`
+        <div class="mb-3">
+          <div class="fw-semibold mb-2">Summary</div>
+          <div class="small text-muted">Longest quiet period: ${escapeHtml(longestGap)}</div>
+          <div class="small text-muted">Window: ${escapeHtml(startedAt)} to ${escapeHtml(endedAt)}</div>
+          <div class="small text-muted">Lines: ${escapeHtml(lineWindow)}</div>
+          <div class="small text-muted">Maintenance overlap: ${escapeHtml(summary.maintenanceOverlap || 'unknown')}</div>
+          <div class="small text-muted">Run outcome: ${escapeHtml(outcome)}</div>
+          <div class="small text-muted">Gap counts: ${escapeHtml(counts.join(' • ') || 'Longest gap only')}</div>
+        </div>
+        <div class="mb-3">
+          <div class="fw-semibold mb-1">Last line before gap</div>
+          ${beforeLine}
+        </div>
+        <div>
+          <div class="fw-semibold mb-1">First line after gap</div>
+          ${afterLine}
+        </div>
+      `)
+    }
+    if (runDetailsModalEl) {
+      bootstrap.Modal.getOrCreateInstance(runDetailsModalEl).show()
+    }
+  }
+
   function fetchRuns (options = {}) {
     const suppressStatus = options && options.suppressStatus
     const rawLimit = String($limit.val() || '25').toLowerCase()
@@ -2956,6 +3026,10 @@ $(document).ready(function () {
   $tableBody.on('click', '[data-section-details="1"]', function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
     showSectionDetails(runKey)
+  })
+  $tableBody.on('click', '.logscan-quiet-period-details', function () {
+    const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
+    showQuietPeriodDetails(runKey)
   })
   $('#logscan-trends-table thead').on('click', '.logscan-sort-button', function () {
     const key = $(this).data('sort')
