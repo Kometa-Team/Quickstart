@@ -125,6 +125,28 @@ def test_analyze_content_extracts_quickstart_maintenance_summary():
         "gaps_over_900": 0,
         "gaps_over_1800": 0,
         "longest_gap_maintenance_overlap": "none",
+        "longest_unexplained_gap_seconds": 300,
+        "longest_unexplained_gap_started_at": "2026-04-18T10:10:00",
+        "longest_unexplained_gap_ended_at": "2026-04-18T10:15:00",
+        "longest_unexplained_gap_start_line": 2,
+        "longest_unexplained_gap_end_line": 5,
+        "longest_unexplained_gap_last_line": "[2026-04-18 10:10:00,000] [kometa.py:100] [INFO] | Resumed Work |",
+        "longest_unexplained_gap_first_line": "[2026-04-18 10:15:00,000] [kometa.py:522] [INFO] |                                            Finished Run                                            |",
+        "longest_unexplained_gap_maintenance_overlap": "none",
+        "confirmed_maintenance_gaps_over_300": 0,
+        "unexplained_gaps_over_300": 1,
+        "notable_gaps": [
+            {
+                "gap_seconds": 300,
+                "started_at": "2026-04-18T10:10:00",
+                "ended_at": "2026-04-18T10:15:00",
+                "start_line": 2,
+                "end_line": 5,
+                "last_line": "[2026-04-18 10:10:00,000] [kometa.py:100] [INFO] | Resumed Work |",
+                "first_line": "[2026-04-18 10:15:00,000] [kometa.py:522] [INFO] |                                            Finished Run                                            |",
+                "maintenance_overlap": "none",
+            }
+        ],
     }
 
 
@@ -148,6 +170,11 @@ def test_analyze_content_marks_quiet_period_overlap_as_confirmed_when_gap_matche
     assert quiet_summary["longest_gap_seconds"] == 1200
     assert quiet_summary["longest_gap_start_line"] == 2
     assert quiet_summary["longest_gap_end_line"] == 5
+    assert quiet_summary["longest_unexplained_gap_seconds"] == 300
+    assert quiet_summary["longest_unexplained_gap_start_line"] == 5
+    assert quiet_summary["longest_unexplained_gap_end_line"] == 6
+    assert quiet_summary["confirmed_maintenance_gaps_over_300"] == 1
+    assert quiet_summary["unexplained_gaps_over_300"] == 1
     assert quiet_summary["gaps_over_300"] == 2
     assert quiet_summary["gaps_over_900"] == 1
     assert quiet_summary["longest_gap_maintenance_overlap"] == "confirmed"
@@ -170,6 +197,8 @@ def test_analyze_content_marks_historical_quiet_period_overlap_as_unknown_withou
     assert quiet_summary["longest_gap_seconds"] == 1200
     assert quiet_summary["longest_gap_start_line"] == 1
     assert quiet_summary["longest_gap_end_line"] == 2
+    assert quiet_summary["longest_unexplained_gap_seconds"] == 1200
+    assert quiet_summary["unexplained_gaps_over_300"] == 2
     assert quiet_summary["gaps_over_300"] == 2
     assert quiet_summary["gaps_over_900"] == 1
     assert quiet_summary["longest_gap_maintenance_overlap"] == "unknown"

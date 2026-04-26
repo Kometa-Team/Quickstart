@@ -163,6 +163,17 @@ def test_logscan_trends_returns_maintenance_summary_for_saved_runs(client, isola
                 "gaps_over_900": 1,
                 "gaps_over_1800": 0,
                 "longest_gap_maintenance_overlap": "confirmed",
+                "longest_unexplained_gap_seconds": 420,
+                "longest_unexplained_gap_started_at": "2026-04-23T03:10:00",
+                "longest_unexplained_gap_ended_at": "2026-04-23T03:17:00",
+                "longest_unexplained_gap_start_line": 2110,
+                "longest_unexplained_gap_end_line": 2111,
+                "longest_unexplained_gap_last_line": "[2026-04-23 03:10:00,000] [operations.py:200] [INFO] | Before unexplained gap |",
+                "longest_unexplained_gap_first_line": "[2026-04-23 03:17:00,000] [operations.py:201] [INFO] | After unexplained gap |",
+                "longest_unexplained_gap_maintenance_overlap": "none",
+                "confirmed_maintenance_gaps_over_300": 1,
+                "unexplained_gaps_over_300": 1,
+                "notable_gaps": [],
             },
         }
     )
@@ -179,6 +190,8 @@ def test_logscan_trends_returns_maintenance_summary_for_saved_runs(client, isola
     assert row["quiet_period_summary"]["longest_gap_seconds"] == 1200
     assert row["quiet_period_summary"]["longest_gap_start_line"] == 1842
     assert row["quiet_period_summary"]["longest_gap_end_line"] == 1843
+    assert row["quiet_period_summary"]["longest_unexplained_gap_seconds"] == 420
+    assert row["quiet_period_summary"]["confirmed_maintenance_gaps_over_300"] == 1
     assert row["quiet_period_summary"]["gaps_over_900"] == 1
     assert row["quiet_period_summary"]["longest_gap_maintenance_overlap"] == "confirmed"
 

@@ -395,7 +395,18 @@ $(document).ready(function () {
       gapsOver300: Number.isFinite(summary.gaps_over_300) ? summary.gaps_over_300 : 0,
       gapsOver900: Number.isFinite(summary.gaps_over_900) ? summary.gaps_over_900 : 0,
       gapsOver1800: Number.isFinite(summary.gaps_over_1800) ? summary.gaps_over_1800 : 0,
-      maintenanceOverlap: summary.longest_gap_maintenance_overlap || 'unknown'
+      maintenanceOverlap: summary.longest_gap_maintenance_overlap || 'unknown',
+      longestUnexplainedGapSeconds: Number.isFinite(summary.longest_unexplained_gap_seconds) ? summary.longest_unexplained_gap_seconds : 0,
+      longestUnexplainedGapStartedAt: summary.longest_unexplained_gap_started_at || '',
+      longestUnexplainedGapEndedAt: summary.longest_unexplained_gap_ended_at || '',
+      longestUnexplainedGapStartLine: Number.isFinite(summary.longest_unexplained_gap_start_line) ? summary.longest_unexplained_gap_start_line : null,
+      longestUnexplainedGapEndLine: Number.isFinite(summary.longest_unexplained_gap_end_line) ? summary.longest_unexplained_gap_end_line : null,
+      longestUnexplainedGapLastLine: summary.longest_unexplained_gap_last_line || '',
+      longestUnexplainedGapFirstLine: summary.longest_unexplained_gap_first_line || '',
+      longestUnexplainedGapOverlap: summary.longest_unexplained_gap_maintenance_overlap || 'unknown',
+      confirmedMaintenanceGapsOver300: Number.isFinite(summary.confirmed_maintenance_gaps_over_300) ? summary.confirmed_maintenance_gaps_over_300 : 0,
+      unexplainedGapsOver300: Number.isFinite(summary.unexplained_gaps_over_300) ? summary.unexplained_gaps_over_300 : 0,
+      notableGaps: Array.isArray(summary.notable_gaps) ? summary.notable_gaps : []
     }
   }
 
@@ -410,7 +421,7 @@ $(document).ready(function () {
   }
 
   function getQuietPeriodSortValue (run) {
-    return getQuietPeriodSummary(run).longestGapSeconds
+    return getQuietPeriodSummary(run).longestUnexplainedGapSeconds
   }
 
   function renderQuietPeriodCell (run) {
@@ -418,21 +429,30 @@ $(document).ready(function () {
     if (summary.longestGapSeconds <= 0) {
       return '<span class="text-muted">No gaps</span>'
     }
-    const parts = [`Longest ${formatSeconds(summary.longestGapSeconds)}`]
-    if (summary.gapsOver900 > 0) {
-      parts.push(`${summary.gapsOver900}x>15m`)
-    } else if (summary.gapsOver300 > 0) {
-      parts.push(`${summary.gapsOver300}x>5m`)
+    const parts = []
+    if (summary.longestUnexplainedGapSeconds > 0) {
+      parts.push(`Unexplained ${formatSeconds(summary.longestUnexplainedGapSeconds)}`)
+    } else {
+      parts.push('No unexplained gaps')
+    }
+    if (summary.longestGapSeconds > 0 && summary.longestGapSeconds !== summary.longestUnexplainedGapSeconds && summary.maintenanceOverlap === 'confirmed') {
+      parts.push(`Maint ${formatSeconds(summary.longestGapSeconds)}`)
+    }
+    if (summary.unexplainedGapsOver300 > 0) {
+      parts.push(`${summary.unexplainedGapsOver300} unexplained`)
     }
     const detailParts = []
+    if (summary.longestUnexplainedGapStartedAt && summary.longestUnexplainedGapEndedAt) {
+      detailParts.push(`Longest unexplained: ${summary.longestUnexplainedGapStartedAt} -> ${summary.longestUnexplainedGapEndedAt}`)
+    }
     if (summary.longestGapStartedAt && summary.longestGapEndedAt) {
-      detailParts.push(`Gap: ${summary.longestGapStartedAt} -> ${summary.longestGapEndedAt}`)
+      detailParts.push(`Longest overall: ${summary.longestGapStartedAt} -> ${summary.longestGapEndedAt}`)
     }
     if (summary.gapsOver1800 > 0) {
       detailParts.push(`>30m: ${summary.gapsOver1800}`)
     }
-    if (summary.maintenanceOverlap) {
-      detailParts.push(`Maintenance overlap: ${summary.maintenanceOverlap}`)
+    if (summary.confirmedMaintenanceGapsOver300 > 0) {
+      detailParts.push(`Maintenance gaps: ${summary.confirmedMaintenanceGapsOver300}`)
     }
     const title = detailParts.join(' | ')
     return `
@@ -1520,7 +1540,7 @@ $(document).ready(function () {
           ${renderRunCardCell('Counts', 'W warnings, E errors, T tracebacks, M movies, S shows, Ep episodes, Tot total library items.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
           ${renderRunCardCell('Kometa', 'Version detected for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
           ${renderRunCardCell('Maintenance', 'Quickstart maintenance pauses recorded in meta.log for this run.', renderMaintenanceSummaryCell(run))}
-          ${renderRunCardCell('Quiet periods', 'Longest delays between timestamped Kometa log lines for this run.', renderQuietPeriodCell(run))}
+          ${renderRunCardCell('Quiet periods', 'Emphasizes the longest unexplained delay between timestamped Kometa log lines, with maintenance-related gaps available in the details view.', renderQuietPeriodCell(run))}
           ${renderRunCardCell('Section runtimes', 'Runtime totals parsed per Kometa section.', sectionCell)}
           ${renderRunCardCell('Log size', 'Current on-disk size of the resolved log file when available, otherwise the ingested size.', escapeHtml(formatBytes(sizeBytes)))}
           ${renderRunCardCell('Log', 'Download the source log for this run. Archived plain logs can also be compressed, and archived logs can be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
@@ -2552,40 +2572,110 @@ $(document).ready(function () {
       $runDetailsTitle.text('Quiet Period Details')
     }
     if ($runDetailsBody.length) {
-      const longestGap = formatSeconds(summary.longestGapSeconds)
-      const startedAt = formatTimestamp(summary.longestGapStartedAt) || 'n/a'
-      const endedAt = formatTimestamp(summary.longestGapEndedAt) || 'n/a'
-      const lineWindow = summary.longestGapStartLine && summary.longestGapEndLine
-        ? `${summary.longestGapStartLine} → ${summary.longestGapEndLine}`
-        : 'n/a'
-      const outcome = getQuietPeriodOutcome(run, summary)
+      const renderGapBlock = (title, gapSeconds, startedAtRaw, endedAtRaw, startLine, endLine, overlap, lastLine, firstLine) => {
+        if (!(gapSeconds > 0)) {
+          return `
+            <div class="mb-3">
+              <div class="fw-semibold mb-1">${escapeHtml(title)}</div>
+              <div class="small text-muted">None detected.</div>
+            </div>
+          `
+        }
+        const startedAt = formatTimestamp(startedAtRaw) || 'n/a'
+        const endedAt = formatTimestamp(endedAtRaw) || 'n/a'
+        const lineWindow = startLine && endLine ? `${startLine} → ${endLine}` : 'n/a'
+        const beforeLine = lastLine
+          ? `<pre class="small mb-0"><code>${escapeHtml(lastLine)}</code></pre>`
+          : '<div class="small text-muted">Unavailable</div>'
+        const afterLine = firstLine
+          ? `<pre class="small mb-0"><code>${escapeHtml(firstLine)}</code></pre>`
+          : '<div class="small text-muted">Unavailable</div>'
+        return `
+          <div class="mb-3">
+            <div class="fw-semibold mb-1">${escapeHtml(title)}</div>
+            <div class="small text-muted">Duration: ${escapeHtml(formatSeconds(gapSeconds))}</div>
+            <div class="small text-muted">Window: ${escapeHtml(startedAt)} to ${escapeHtml(endedAt)}</div>
+            <div class="small text-muted">Lines: ${escapeHtml(lineWindow)}</div>
+            <div class="small text-muted">Maintenance overlap: ${escapeHtml(overlap || 'unknown')}</div>
+          </div>
+          <div class="mb-3">
+            <div class="fw-semibold mb-1">Last line before gap</div>
+            ${beforeLine}
+          </div>
+          <div class="mb-3">
+            <div class="fw-semibold mb-1">First line after gap</div>
+            ${afterLine}
+          </div>
+        `
+      }
+      const outcome = getQuietPeriodOutcome(run, {
+        longestGapEndedAt: summary.longestUnexplainedGapEndedAt || summary.longestGapEndedAt
+      })
       const counts = []
-      if (summary.gapsOver300 > 0) counts.push(`>5m: ${summary.gapsOver300}`)
-      if (summary.gapsOver900 > 0) counts.push(`>15m: ${summary.gapsOver900}`)
-      if (summary.gapsOver1800 > 0) counts.push(`>30m: ${summary.gapsOver1800}`)
-      const beforeLine = summary.longestGapLastLine
-        ? `<pre class="small mb-0"><code>${escapeHtml(summary.longestGapLastLine)}</code></pre>`
-        : '<div class="small text-muted">Unavailable</div>'
-      const afterLine = summary.longestGapFirstLine
-        ? `<pre class="small mb-0"><code>${escapeHtml(summary.longestGapFirstLine)}</code></pre>`
-        : '<div class="small text-muted">Unavailable</div>'
+      if (summary.gapsOver300 > 0) counts.push(`All >5m: ${summary.gapsOver300}`)
+      if (summary.gapsOver900 > 0) counts.push(`All >15m: ${summary.gapsOver900}`)
+      if (summary.gapsOver1800 > 0) counts.push(`All >30m: ${summary.gapsOver1800}`)
+      counts.push(`Confirmed maintenance: ${summary.confirmedMaintenanceGapsOver300}`)
+      counts.push(`Unexplained: ${summary.unexplainedGapsOver300}`)
+      const notableRows = summary.notableGaps.length
+        ? summary.notableGaps.map(gap => {
+          const gapWindow = `${formatTimestamp(gap.started_at) || gap.started_at} to ${formatTimestamp(gap.ended_at) || gap.ended_at}`
+          const lineWindow = gap.start_line && gap.end_line ? `${gap.start_line} → ${gap.end_line}` : 'n/a'
+          return `
+              <tr>
+                <td>${escapeHtml(formatSeconds(gap.gap_seconds))}</td>
+                <td>${escapeHtml(gapWindow)}</td>
+                <td>${escapeHtml(lineWindow)}</td>
+                <td>${escapeHtml(gap.maintenance_overlap || 'unknown')}</td>
+              </tr>
+            `
+        }).join('')
+        : '<tr><td colspan="4" class="text-muted">No notable gaps recorded.</td></tr>'
       $runDetailsBody.html(`
         <div class="mb-3">
           <div class="fw-semibold mb-2">Summary</div>
-          <div class="small text-muted">Longest quiet period: ${escapeHtml(longestGap)}</div>
-          <div class="small text-muted">Window: ${escapeHtml(startedAt)} to ${escapeHtml(endedAt)}</div>
-          <div class="small text-muted">Lines: ${escapeHtml(lineWindow)}</div>
-          <div class="small text-muted">Maintenance overlap: ${escapeHtml(summary.maintenanceOverlap || 'unknown')}</div>
+          <div class="small text-muted">Longest unexplained quiet period: ${escapeHtml(formatSeconds(summary.longestUnexplainedGapSeconds) || 'n/a')}</div>
+          <div class="small text-muted">Longest overall quiet period: ${escapeHtml(formatSeconds(summary.longestGapSeconds) || 'n/a')}</div>
           <div class="small text-muted">Run outcome: ${escapeHtml(outcome)}</div>
           <div class="small text-muted">Gap counts: ${escapeHtml(counts.join(' • ') || 'Longest gap only')}</div>
         </div>
-        <div class="mb-3">
-          <div class="fw-semibold mb-1">Last line before gap</div>
-          ${beforeLine}
-        </div>
+        ${renderGapBlock(
+          'Longest unexplained quiet period',
+          summary.longestUnexplainedGapSeconds,
+          summary.longestUnexplainedGapStartedAt,
+          summary.longestUnexplainedGapEndedAt,
+          summary.longestUnexplainedGapStartLine,
+          summary.longestUnexplainedGapEndLine,
+          summary.longestUnexplainedGapOverlap,
+          summary.longestUnexplainedGapLastLine,
+          summary.longestUnexplainedGapFirstLine
+        )}
+        ${renderGapBlock(
+          'Longest overall quiet period',
+          summary.longestGapSeconds,
+          summary.longestGapStartedAt,
+          summary.longestGapEndedAt,
+          summary.longestGapStartLine,
+          summary.longestGapEndLine,
+          summary.maintenanceOverlap,
+          summary.longestGapLastLine,
+          summary.longestGapFirstLine
+        )}
         <div>
-          <div class="fw-semibold mb-1">First line after gap</div>
-          ${afterLine}
+          <div class="fw-semibold mb-2">Notable quiet periods (&gt;5m)</div>
+          <div class="table-responsive">
+            <table class="table table-dark table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Duration</th>
+                  <th>Window</th>
+                  <th>Lines</th>
+                  <th>Overlap</th>
+                </tr>
+              </thead>
+              <tbody>${notableRows}</tbody>
+            </table>
+          </div>
         </div>
       `)
     }

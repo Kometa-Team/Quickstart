@@ -3174,6 +3174,17 @@ class LogscanAnalyzer:
             "gaps_over_900": 0,
             "gaps_over_1800": 0,
             "longest_gap_maintenance_overlap": "unknown",
+            "longest_unexplained_gap_seconds": 0,
+            "longest_unexplained_gap_started_at": None,
+            "longest_unexplained_gap_ended_at": None,
+            "longest_unexplained_gap_start_line": None,
+            "longest_unexplained_gap_end_line": None,
+            "longest_unexplained_gap_last_line": None,
+            "longest_unexplained_gap_first_line": None,
+            "longest_unexplained_gap_maintenance_overlap": "unknown",
+            "confirmed_maintenance_gaps_over_300": 0,
+            "unexplained_gaps_over_300": 0,
+            "notable_gaps": [],
         }
         if not content:
             return summary
@@ -3220,10 +3231,31 @@ class LogscanAnalyzer:
         if open_start is not None:
             maintenance_intervals.append((open_start, None))
 
+        def _get_gap_overlap(start_ts, end_ts):
+            overlap = False
+            for interval_start, interval_end in maintenance_intervals:
+                if interval_end is None:
+                    if end_ts > interval_start:
+                        overlap = True
+                        break
+                    continue
+                if start_ts < interval_end and end_ts > interval_start:
+                    overlap = True
+                    break
+            if overlap:
+                return "confirmed"
+            if maintenance_supported:
+                return "none"
+            return "unknown"
+
         longest_start = None
         longest_end = None
         longest_previous_entry = None
         longest_current_entry = None
+        longest_unexplained_start = None
+        longest_unexplained_end = None
+        longest_unexplained_previous_entry = None
+        longest_unexplained_current_entry = None
         for previous_entry, current_entry in zip(timestamp_entries, timestamp_entries[1:]):
             previous_ts = previous_entry["timestamp"]
             current_ts = current_entry["timestamp"]
@@ -3236,12 +3268,35 @@ class LogscanAnalyzer:
                 summary["gaps_over_900"] += 1
             if gap_seconds >= 1800:
                 summary["gaps_over_1800"] += 1
+            overlap_label = _get_gap_overlap(previous_ts, current_ts)
+            gap_detail = {
+                "gap_seconds": gap_seconds,
+                "started_at": previous_ts.isoformat(),
+                "ended_at": current_ts.isoformat(),
+                "start_line": previous_entry.get("line_number"),
+                "end_line": current_entry.get("line_number"),
+                "last_line": previous_entry.get("line"),
+                "first_line": current_entry.get("line"),
+                "maintenance_overlap": overlap_label,
+            }
+            if gap_seconds >= 300:
+                summary["notable_gaps"].append(gap_detail)
+                if overlap_label == "confirmed":
+                    summary["confirmed_maintenance_gaps_over_300"] += 1
+                else:
+                    summary["unexplained_gaps_over_300"] += 1
             if gap_seconds > summary["longest_gap_seconds"]:
                 summary["longest_gap_seconds"] = gap_seconds
                 longest_start = previous_ts
                 longest_end = current_ts
                 longest_previous_entry = previous_entry
                 longest_current_entry = current_entry
+            if overlap_label != "confirmed" and gap_seconds > summary["longest_unexplained_gap_seconds"]:
+                summary["longest_unexplained_gap_seconds"] = gap_seconds
+                longest_unexplained_start = previous_ts
+                longest_unexplained_end = current_ts
+                longest_unexplained_previous_entry = previous_entry
+                longest_unexplained_current_entry = current_entry
 
         if longest_start is not None and longest_end is not None:
             summary["longest_gap_started_at"] = longest_start.isoformat()
@@ -3252,20 +3307,22 @@ class LogscanAnalyzer:
             if longest_current_entry:
                 summary["longest_gap_end_line"] = longest_current_entry.get("line_number")
                 summary["longest_gap_first_line"] = longest_current_entry.get("line")
-            overlap = False
-            for interval_start, interval_end in maintenance_intervals:
-                if interval_end is None:
-                    if longest_end > interval_start:
-                        overlap = True
-                        break
-                    continue
-                if longest_start < interval_end and longest_end > interval_start:
-                    overlap = True
-                    break
-            if overlap:
-                summary["longest_gap_maintenance_overlap"] = "confirmed"
-            elif maintenance_supported:
-                summary["longest_gap_maintenance_overlap"] = "none"
+            summary["longest_gap_maintenance_overlap"] = _get_gap_overlap(longest_start, longest_end)
+
+        if longest_unexplained_start is not None and longest_unexplained_end is not None:
+            summary["longest_unexplained_gap_started_at"] = longest_unexplained_start.isoformat()
+            summary["longest_unexplained_gap_ended_at"] = longest_unexplained_end.isoformat()
+            if longest_unexplained_previous_entry:
+                summary["longest_unexplained_gap_start_line"] = longest_unexplained_previous_entry.get("line_number")
+                summary["longest_unexplained_gap_last_line"] = longest_unexplained_previous_entry.get("line")
+            if longest_unexplained_current_entry:
+                summary["longest_unexplained_gap_end_line"] = longest_unexplained_current_entry.get("line_number")
+                summary["longest_unexplained_gap_first_line"] = longest_unexplained_current_entry.get("line")
+            summary["longest_unexplained_gap_maintenance_overlap"] = _get_gap_overlap(
+                longest_unexplained_start, longest_unexplained_end
+            )
+        elif maintenance_supported and summary["longest_gap_seconds"] > 0:
+            summary["longest_unexplained_gap_maintenance_overlap"] = "none"
 
         return summary
 
