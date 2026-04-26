@@ -9578,18 +9578,12 @@ def _run_logscan_startup_migration(app_in, required_level, completed_level):
         if result.get("success"):
             _set_logscan_migration_level_done(required_level)
             helpers.ts_log(
-                (
-                    f"Completed Analytics migration level {required_level}. "
-                    f"Persisted {LOGSCAN_MIGRATION_LEVEL_DONE_ENV}={required_level}."
-                ),
+                (f"Completed Analytics migration level {required_level}. " f"Persisted {LOGSCAN_MIGRATION_LEVEL_DONE_ENV}={required_level}."),
                 level="INFO",
             )
         else:
             helpers.ts_log(
-                (
-                    f"Analytics migration level {required_level} did not complete: "
-                    f"{result.get('error', 'Unknown error')}."
-                ),
+                (f"Analytics migration level {required_level} did not complete: " f"{result.get('error', 'Unknown error')}."),
                 level="WARNING",
             )
         return result
@@ -9611,24 +9605,16 @@ def _start_pending_logscan_startup_migration(app_in):
         completed_level = state.get("completed_level", 0)
         if reason == "disabled":
             helpers.ts_log(
-                (
-                    f"Skipping startup Analytics migration because "
-                    f"{LOGSCAN_STARTUP_MIGRATIONS_ENV}=0."
-                ),
+                (f"Skipping startup Analytics migration because " f"{LOGSCAN_STARTUP_MIGRATIONS_ENV}=0."),
                 level="INFO",
             )
         elif reason == "waiting_for_logs":
             helpers.ts_log(
-                (
-                    f"Deferring Analytics migration level {required_level} until Kometa "
-                    "log files exist. This is expected on a first-time Quickstart setup."
-                ),
+                (f"Deferring Analytics migration level {required_level} until Kometa " "log files exist. This is expected on a first-time Quickstart setup."),
                 level="INFO",
             )
         elif required_level > 0 and completed_level >= required_level:
-            helpers.ts_log(
-                f"Analytics migration level {required_level} already applied.", level="DEBUG"
-            )
+            helpers.ts_log(f"Analytics migration level {required_level} already applied.", level="DEBUG")
         return state
 
     started_at = datetime.now(timezone.utc).isoformat()
