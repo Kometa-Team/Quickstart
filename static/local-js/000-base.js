@@ -706,15 +706,6 @@ function qsHandleLogscanReingestStatus (data) {
     badge.title = currentFile
       ? `${prefix}${suffix} is running. Current file: ${currentFile}. Open Analytics.`
       : `${prefix}${suffix} is running. Open Analytics.`
-
-    if (typeof showToast === 'function' && (previousStatus !== 'running' || previousJobId !== jobId)) {
-      showToast(
-        'info',
-        trigger === 'startup_migration'
-          ? `Startup Analytics migration${suffix} is rebuilding trends in the background.`
-          : 'Analytics reingest is running in the background.'
-      )
-    }
   } else if (status === 'error') {
     badge.classList.remove('d-none')
     if (label) {
@@ -722,15 +713,9 @@ function qsHandleLogscanReingestStatus (data) {
     }
     setBadgeTone('text-bg-danger')
     badge.title = data && data.error ? `Analytics reingest failed: ${data.error}` : 'Analytics reingest failed. Open Analytics.'
-    if (typeof showToast === 'function' && previousStatus === 'running') {
-      showToast('danger', data && data.error ? data.error : 'Analytics reingest failed.')
-    }
   } else {
     badge.classList.add('d-none')
     badge.title = 'Open Analytics'
-    if (typeof showToast === 'function' && previousStatus === 'running' && status === 'complete') {
-      showToast('success', trigger === 'startup_migration' ? 'Startup Analytics migration complete.' : 'Analytics reingest complete.')
-    }
   }
 
   qsLastLogscanReingestStatus = status
