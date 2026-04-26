@@ -3318,9 +3318,7 @@ class LogscanAnalyzer:
             if longest_unexplained_current_entry:
                 summary["longest_unexplained_gap_end_line"] = longest_unexplained_current_entry.get("line_number")
                 summary["longest_unexplained_gap_first_line"] = longest_unexplained_current_entry.get("line")
-            summary["longest_unexplained_gap_maintenance_overlap"] = _get_gap_overlap(
-                longest_unexplained_start, longest_unexplained_end
-            )
+            summary["longest_unexplained_gap_maintenance_overlap"] = _get_gap_overlap(longest_unexplained_start, longest_unexplained_end)
         elif maintenance_supported and summary["longest_gap_seconds"] > 0:
             summary["longest_unexplained_gap_maintenance_overlap"] = "none"
 
