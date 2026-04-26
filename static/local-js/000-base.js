@@ -547,6 +547,9 @@ const QS_MAINTENANCE_TOAST_INTERVAL_MS = 45000
 let qsLastMaintenanceToastAt = 0
 let qsLastMaintenancePaused = false
 let qsLastQueuedStartedAt = null
+const QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS = 15000
+let qsLastLogscanReingestStatus = 'idle'
+let qsLastLogscanReingestJobId = null
 
 function qsFormatLocalTime () {
   const now = new Date()
@@ -668,6 +671,74 @@ function qsHandleMaintenanceStatus (data) {
 window.QS_handleMaintenanceStatus = qsHandleMaintenanceStatus
 window.QS_formatTimestamp = qsFormatTimestamp
 
+function qsHandleLogscanReingestStatus (data) {
+  const badge = document.getElementById('qs-logscan-reingest-badge')
+  if (!badge) return
+  const label = badge.querySelector('span')
+  const status = String((data && data.status) || 'idle').trim().toLowerCase()
+  const trigger = data && data.trigger === 'startup_migration' ? 'startup_migration' : 'manual'
+  const migrationLevel = Number.isFinite(data && data.migration_level) ? data.migration_level : null
+  const jobId = String((data && data.job_id) || '').trim() || null
+  const currentFile = String((data && data.current_file) || '').trim()
+  const previousStatus = qsLastLogscanReingestStatus
+  const previousJobId = qsLastLogscanReingestJobId
+
+  const setBadgeTone = (...classes) => {
+    if (!label) return
+    label.classList.remove('text-bg-primary', 'text-bg-info', 'text-bg-warning', 'text-bg-danger', 'text-dark')
+    label.classList.add(...classes)
+  }
+
+  if (status === 'running') {
+    badge.classList.remove('d-none')
+    const prefix = trigger === 'startup_migration' ? 'Startup Analytics migration' : 'Analytics reingest'
+    const suffix = migrationLevel ? ` (level ${migrationLevel})` : ''
+    if (label) {
+      label.innerHTML = trigger === 'startup_migration'
+        ? `<i class="bi bi-arrow-repeat me-1"></i> ${prefix}${suffix}`
+        : '<i class="bi bi-arrow-repeat me-1"></i> Analytics reingest running'
+    }
+    if (trigger === 'startup_migration') {
+      setBadgeTone('text-bg-warning', 'text-dark')
+    } else {
+      setBadgeTone('text-bg-primary')
+    }
+    badge.title = currentFile
+      ? `${prefix}${suffix} is running. Current file: ${currentFile}. Open Analytics.`
+      : `${prefix}${suffix} is running. Open Analytics.`
+
+    if (typeof showToast === 'function' && (previousStatus !== 'running' || previousJobId !== jobId)) {
+      showToast(
+        'info',
+        trigger === 'startup_migration'
+          ? `Startup Analytics migration${suffix} is rebuilding trends in the background.`
+          : 'Analytics reingest is running in the background.'
+      )
+    }
+  } else if (status === 'error') {
+    badge.classList.remove('d-none')
+    if (label) {
+      label.innerHTML = '<i class="bi bi-exclamation-octagon me-1"></i> Analytics reingest failed'
+    }
+    setBadgeTone('text-bg-danger')
+    badge.title = data && data.error ? `Analytics reingest failed: ${data.error}` : 'Analytics reingest failed. Open Analytics.'
+    if (typeof showToast === 'function' && previousStatus === 'running') {
+      showToast('danger', data && data.error ? data.error : 'Analytics reingest failed.')
+    }
+  } else {
+    badge.classList.add('d-none')
+    badge.title = 'Open Analytics'
+    if (typeof showToast === 'function' && previousStatus === 'running' && status === 'complete') {
+      showToast('success', trigger === 'startup_migration' ? 'Startup Analytics migration complete.' : 'Analytics reingest complete.')
+    }
+  }
+
+  qsLastLogscanReingestStatus = status
+  qsLastLogscanReingestJobId = jobId
+}
+
+window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
+
 ;(function qsMaintenancePoll () {
   const poll = () => {
     fetch('/kometa-status')
@@ -678,6 +749,17 @@ window.QS_formatTimestamp = qsFormatTimestamp
   // Slight delay to avoid racing early page initialization
   setTimeout(poll, 1200)
   setInterval(poll, QS_MAINTENANCE_TOAST_INTERVAL_MS)
+})()
+
+;(function qsLogscanReingestPoll () {
+  const poll = () => {
+    fetch('/logscan/trends/reingest/status')
+      .then(res => res.json())
+      .then(data => qsHandleLogscanReingestStatus(data))
+      .catch(() => {})
+  }
+  setTimeout(poll, 1800)
+  setInterval(poll, QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS)
 })()
 
 function getValidatedInput () {

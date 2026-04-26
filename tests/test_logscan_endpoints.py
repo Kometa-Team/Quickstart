@@ -960,3 +960,86 @@ def test_logscan_reingest_ingests_gzip_archived_log(client, isolated_config_dir,
     assert payload["success"] is True
     assert payload["ingested"] >= 1
     assert payload["skipped_incomplete"] == 0
+
+
+def test_logscan_startup_migration_defers_without_logs(isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setenv(qs_module.LOGSCAN_STARTUP_MIGRATIONS_ENV, "1")
+    monkeypatch.setenv(qs_module.LOGSCAN_MIGRATION_LEVEL_DONE_ENV, "0")
+    monkeypatch.setattr(qs_module, "REQUIRED_LOGSCAN_MIGRATION_LEVEL", 4)
+
+    state = qs_module._get_pending_logscan_startup_migration()
+
+    assert state["should_run"] is False
+    assert state["reason"] == "waiting_for_logs"
+    assert state["required_level"] == 4
+    assert state["completed_level"] == 0
+
+
+def test_logscan_startup_migration_runs_when_level_pending(isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    (log_dir / "meta-1.log").write_text("placeholder", encoding="utf-8")
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setenv(qs_module.LOGSCAN_STARTUP_MIGRATIONS_ENV, "1")
+    monkeypatch.setenv(qs_module.LOGSCAN_MIGRATION_LEVEL_DONE_ENV, "1")
+    monkeypatch.setattr(qs_module, "REQUIRED_LOGSCAN_MIGRATION_LEVEL", 3)
+
+    state = qs_module._get_pending_logscan_startup_migration()
+
+    assert state["should_run"] is True
+    assert state["reason"] == "pending"
+    assert state["required_level"] == 3
+    assert state["completed_level"] == 1
+    assert state["candidate_files"] >= 1
+
+
+def test_run_logscan_startup_migration_persists_completed_level(monkeypatch, qs_module):
+    updates = {}
+    monkeypatch.setenv(qs_module.LOGSCAN_MIGRATION_LEVEL_DONE_ENV, "0")
+    monkeypatch.setattr(
+        qs_module.helpers,
+        "update_env_variable",
+        lambda key, value: updates.__setitem__(key, value),
+    )
+    monkeypatch.setattr(
+        qs_module.helpers,
+        "ts_log",
+        lambda *_args, **_kwargs: None,
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_perform_logscan_reingest",
+        lambda reset, job_id=None, update_state=True: {"success": True, "ingested": 2},
+    )
+
+    result = qs_module._run_logscan_startup_migration(qs_module.app, required_level=5, completed_level=0)
+
+    assert result["success"] is True
+    assert updates[qs_module.LOGSCAN_MIGRATION_LEVEL_DONE_ENV] == "5"
+    assert os.environ[qs_module.LOGSCAN_MIGRATION_LEVEL_DONE_ENV] == "5"
+
+
+def test_logscan_reingest_route_conflict_returns_active_job_metadata(client, monkeypatch, qs_module):
+    qs_module._reset_logscan_reingest_state()
+    qs_module._update_logscan_reingest_state(
+        status="running",
+        job_id="startup-logscan-migration",
+        trigger="startup_migration",
+        migration_level=6,
+    )
+    acquired = qs_module.logscan_ingest_lock.acquire(blocking=False)
+    assert acquired is True
+    try:
+        resp = client.post("/logscan/trends/reingest", json={"reset": False, "background": True})
+    finally:
+        qs_module.logscan_ingest_lock.release()
+        qs_module._reset_logscan_reingest_state()
+
+    assert resp.status_code == 409
+    payload = resp.get_json()
+    assert payload["job_id"] == "startup-logscan-migration"
+    assert payload["trigger"] == "startup_migration"
+    assert payload["migration_level"] == 6

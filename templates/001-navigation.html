@@ -193,26 +193,36 @@
             <div class="qs-main-page-topline">
               <div class="qs-main-page-eyebrow">Quickstart</div>
               <div class="qs-main-page-status-pills">
-                <div id="qs-running-badge" class="d-none">
+                <a id="qs-running-badge" class="d-none qs-header-status-pill" href="{{ url_for('step', name='900-final') }}"
+                  title="Open Final Validation">
                   <span class="badge rounded-pill text-bg-success px-3 py-2">
                     <i class="bi bi-play-circle me-1"></i> Kometa running
                   </span>
-                </div>
-                <div id="qs-maintenance-badge" class="d-none">
+                </a>
+                <a id="qs-maintenance-badge" class="d-none qs-header-status-pill" href="{{ url_for('step', name='900-final') }}"
+                  title="Open Final Validation">
                   <span class="badge rounded-pill text-bg-warning text-dark px-3 py-2">
                     <i class="bi bi-pause-circle me-1"></i> Kometa paused for Plex maintenance
                   </span>
-                </div>
-                <div id="qs-maintenance-unavailable-badge" class="d-none">
+                </a>
+                <a id="qs-maintenance-unavailable-badge" class="d-none qs-header-status-pill" href="{{ url_for('step', name='900-final') }}"
+                  title="Open Final Validation">
                   <span class="badge rounded-pill text-bg-warning text-dark px-3 py-2">
                     <i class="bi bi-exclamation-triangle me-1"></i> Plex maintenance window unavailable
                   </span>
-                </div>
-                <div id="qs-queued-badge" class="d-none">
+                </a>
+                <a id="qs-queued-badge" class="d-none qs-header-status-pill" href="{{ url_for('step', name='900-final') }}"
+                  title="Open Final Validation">
                   <span class="badge rounded-pill text-bg-info text-dark px-3 py-2">
                     <i class="bi bi-hourglass-split me-1"></i> Kometa start queued
                   </span>
-                </div>
+                </a>
+                <a id="qs-logscan-reingest-badge" class="d-none qs-header-status-pill" href="{{ url_for('logscan_trends_page') }}"
+                  title="Open Analytics">
+                  <span class="badge rounded-pill text-bg-primary px-3 py-2">
+                    <i class="bi bi-arrow-repeat me-1"></i> Analytics reingest running
+                  </span>
+                </a>
               </div>
             </div>
             <h2 class="qs-main-page-title">{{ page_info['title'] }}</h2>

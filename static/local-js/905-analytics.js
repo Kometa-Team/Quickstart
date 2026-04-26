@@ -90,6 +90,7 @@ $(document).ready(function () {
   const sortState = { key: 'finished_at', dir: 'desc' }
   let lastIngestState = null
   let analyticsPrefs = null
+  const defaultReingestButtonLabel = $reingest.text().trim() || 'Reingest logs'
 
   function escapeHtml (value) {
     return String(value || '')
@@ -2160,6 +2161,11 @@ $(document).ready(function () {
     if ($status.length) $status.text(message)
   }
 
+  function setReingestButtonLabel (label) {
+    if (!$reingest.length) return
+    $reingest.text(label || defaultReingestButtonLabel)
+  }
+
   function setProgressVisible (visible) {
     if (!$progress.length) return
     if (visible) {
@@ -2321,11 +2327,13 @@ $(document).ready(function () {
     ].join(' | ')
     lastIngestState = data
     renderIngestHealth(lastIngestState)
-    updateStatus(`Reingest complete. ${summary}`)
+    const isStartupMigration = data && data.trigger === 'startup_migration'
+    updateStatus(`${isStartupMigration ? 'Startup Analytics migration complete.' : 'Reingest complete.'} ${summary}`)
     fetchRuns({ suppressStatus: true })
     setMissingDownloadVisible(Boolean(data.missing_people_log_ready), data.missing_people_unique)
     setProgressVisible(false)
     setControlsDisabled(false)
+    setReingestButtonLabel(defaultReingestButtonLabel)
   }
 
   function stopReingestPolling () {
@@ -2334,6 +2342,7 @@ $(document).ready(function () {
       reingestPollTimer = null
     }
     reingestJobId = null
+    setReingestButtonLabel(defaultReingestButtonLabel)
   }
 
   function fetchReingestStatus (jobId) {
@@ -2342,9 +2351,19 @@ $(document).ready(function () {
       .then(res => res.json().then(data => ({ ok: res.ok, data })))
       .then(({ ok, data }) => {
         if (!ok || !data) return
+        if (typeof window.QS_handleLogscanReingestStatus === 'function') {
+          window.QS_handleLogscanReingestStatus(data)
+        }
         if (data.status === 'running') {
+          const isStartupMigration = data.trigger === 'startup_migration'
+          const migrationLevel = Number.isFinite(data.migration_level) ? data.migration_level : null
           updateProgressFromState(data)
-          updateStatus('Reingesting logs...')
+          updateStatus(
+            isStartupMigration
+              ? `Startup Analytics migration is rebuilding trends${migrationLevel ? ` (level ${migrationLevel})` : ''}. Reingest controls are locked until it finishes.`
+              : 'Reingesting logs...'
+          )
+          setReingestButtonLabel(isStartupMigration ? 'Startup migration running...' : 'Reingest running...')
           if (!reingestPollTimer) {
             reingestJobId = data.job_id || jobId || null
             setProgressVisible(true)
@@ -2363,6 +2382,7 @@ $(document).ready(function () {
           updateStatus(data.error || 'Reingest failed.')
           setProgressVisible(false)
           setControlsDisabled(false)
+          setReingestButtonLabel(defaultReingestButtonLabel)
         }
       })
       .catch(err => {
@@ -2375,6 +2395,7 @@ $(document).ready(function () {
     reingestJobId = jobId || null
     setProgressVisible(true)
     setControlsDisabled(true)
+    setReingestButtonLabel('Reingest running...')
     fetchReingestStatus(reingestJobId)
     reingestPollTimer = setInterval(() => fetchReingestStatus(reingestJobId), 1500)
   }
@@ -2529,7 +2550,7 @@ $(document).ready(function () {
         loadPreferences()
           .then(() => {
             applyFiltersAndRender()
-            if (!suppressStatus) {
+            if (!suppressStatus && (!lastIngestState || lastIngestState.status !== 'running')) {
               updateStatus(`Last updated: ${formatTimestamp(new Date().toISOString())}`)
             }
           })

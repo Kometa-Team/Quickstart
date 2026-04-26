@@ -2266,6 +2266,14 @@ logscan_reingest_state = {
     "job_id": None,
 }
 
+# Bump this integer when a release needs a one-time Analytics reset + log reingest
+# on startup. Quickstart persists the highest successful level to config/.env so
+# skipped releases still catch up automatically.
+REQUIRED_LOGSCAN_MIGRATION_LEVEL = 1
+LOGSCAN_STARTUP_MIGRATIONS_ENV = "QS_LOGSCAN_STARTUP_MIGRATIONS"
+LOGSCAN_MIGRATION_LEVEL_DONE_ENV = "QS_LOGSCAN_MIGRATION_LEVEL_DONE"
+LOGSCAN_STARTUP_MIGRATION_JOB_ID = "startup-logscan-migration"
+
 session_ttl = _get_session_lifetime_seconds()
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(seconds=session_ttl)
 app.config["SESSION_REFRESH_EACH_REQUEST"] = True
@@ -7951,6 +7959,8 @@ def _reset_logscan_reingest_state():
             {
                 "status": "idle",
                 "job_id": None,
+                "trigger": None,
+                "migration_level": None,
             }
         )
 
@@ -9495,6 +9505,167 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         logscan_ingest_lock.release()
 
 
+def _logscan_startup_migrations_enabled():
+    raw = str(os.getenv(LOGSCAN_STARTUP_MIGRATIONS_ENV, "1") or "").strip().lower()
+    return raw not in {"0", "false", "no", "off"}
+
+
+def _get_logscan_migration_level_done():
+    raw = str(os.getenv(LOGSCAN_MIGRATION_LEVEL_DONE_ENV, "0") or "").strip()
+    try:
+        return max(0, int(raw))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _set_logscan_migration_level_done(level):
+    normalized = str(max(0, int(level)))
+    helpers.update_env_variable(LOGSCAN_MIGRATION_LEVEL_DONE_ENV, normalized)
+    os.environ[LOGSCAN_MIGRATION_LEVEL_DONE_ENV] = normalized
+
+
+def _get_pending_logscan_startup_migration():
+    enabled = _logscan_startup_migrations_enabled()
+    completed_level = _get_logscan_migration_level_done()
+    required_level = max(0, int(REQUIRED_LOGSCAN_MIGRATION_LEVEL or 0))
+    state = {
+        "enabled": enabled,
+        "completed_level": completed_level,
+        "required_level": required_level,
+        "should_run": False,
+        "reason": "up_to_date",
+    }
+    if not enabled:
+        state["reason"] = "disabled"
+        return state
+    if required_level <= 0:
+        state["reason"] = "not_configured"
+        return state
+    if completed_level >= required_level:
+        state["reason"] = "up_to_date"
+        return state
+    kometa_root = helpers.get_kometa_root_path()
+    log_dir = kometa_root / "config" / "logs"
+    if not log_dir.exists():
+        state["reason"] = "waiting_for_logs"
+        return state
+    candidate_files = _get_logscan_log_files(log_dir=log_dir, include_archive=True)
+    if not candidate_files:
+        state["reason"] = "waiting_for_logs"
+        return state
+    state["should_run"] = True
+    state["reason"] = "pending"
+    state["candidate_files"] = len(candidate_files)
+    return state
+
+
+def _run_logscan_startup_migration(app_in, required_level, completed_level):
+    helpers.ts_log(
+        (
+            f"Starting one-time Analytics migration level {required_level} "
+            f"(completed level: {completed_level}). Quickstart will reset stored "
+            "trend data and reingest Kometa logs in the background."
+        ),
+        level="INFO",
+    )
+    try:
+        with app_in.app_context():
+            result = _perform_logscan_reingest(
+                reset=True,
+                job_id=LOGSCAN_STARTUP_MIGRATION_JOB_ID,
+                update_state=True,
+            )
+        if result.get("success"):
+            _set_logscan_migration_level_done(required_level)
+            helpers.ts_log(
+                (
+                    f"Completed Analytics migration level {required_level}. "
+                    f"Persisted {LOGSCAN_MIGRATION_LEVEL_DONE_ENV}={required_level}."
+                ),
+                level="INFO",
+            )
+        else:
+            helpers.ts_log(
+                (
+                    f"Analytics migration level {required_level} did not complete: "
+                    f"{result.get('error', 'Unknown error')}."
+                ),
+                level="WARNING",
+            )
+        return result
+    except Exception as exc:
+        _update_logscan_reingest_state(
+            status="error",
+            error=f"Startup Analytics migration failed: {exc}",
+            finished_at=datetime.now(timezone.utc).isoformat(),
+        )
+        helpers.ts_log(f"Startup Analytics migration failed: {exc}", level="ERROR")
+        return {"success": False, "error": str(exc)}
+
+
+def _start_pending_logscan_startup_migration(app_in):
+    state = _get_pending_logscan_startup_migration()
+    if not state.get("should_run"):
+        reason = state.get("reason")
+        required_level = state.get("required_level", 0)
+        completed_level = state.get("completed_level", 0)
+        if reason == "disabled":
+            helpers.ts_log(
+                (
+                    f"Skipping startup Analytics migration because "
+                    f"{LOGSCAN_STARTUP_MIGRATIONS_ENV}=0."
+                ),
+                level="INFO",
+            )
+        elif reason == "waiting_for_logs":
+            helpers.ts_log(
+                (
+                    f"Deferring Analytics migration level {required_level} until Kometa "
+                    "log files exist. This is expected on a first-time Quickstart setup."
+                ),
+                level="INFO",
+            )
+        elif required_level > 0 and completed_level >= required_level:
+            helpers.ts_log(
+                f"Analytics migration level {required_level} already applied.", level="DEBUG"
+            )
+        return state
+
+    started_at = datetime.now(timezone.utc).isoformat()
+    _update_logscan_reingest_state(
+        status="running",
+        job_id=LOGSCAN_STARTUP_MIGRATION_JOB_ID,
+        trigger="startup_migration",
+        migration_level=state["required_level"],
+        started_at=started_at,
+        finished_at=None,
+        total=0,
+        scanned=0,
+        ingested=0,
+        duplicates=0,
+        skipped_incomplete=0,
+        skipped_invalid=0,
+        errors=0,
+        current_file=None,
+        missing_people_unique=0,
+        missing_people_logs=0,
+        missing_people_log_ready=False,
+        missing_people_log_lines=0,
+        sample_incomplete=[],
+        sample_errors=[],
+    )
+    thread = threading.Thread(
+        target=_run_logscan_startup_migration,
+        args=(app_in, state["required_level"], state["completed_level"]),
+        daemon=True,
+        name="logscan-startup-migration",
+    )
+    thread.start()
+    state["started"] = True
+    state["job_id"] = LOGSCAN_STARTUP_MIGRATION_JOB_ID
+    return state
+
+
 def _run_logscan_reingest_job(job_id, reset):
     try:
         with app.app_context():
@@ -9525,7 +9696,19 @@ def logscan_trends_reingest():
     reset = data.get("reset") is True
     background = data.get("background") is True
     if logscan_ingest_lock.locked():
-        return jsonify({"error": "Reingest already running."}), 409
+        snapshot = _logscan_reingest_snapshot()
+        return (
+            jsonify(
+                {
+                    "error": "Reingest already running.",
+                    "job_id": snapshot.get("job_id"),
+                    "status": snapshot.get("status") or "running",
+                    "trigger": snapshot.get("trigger"),
+                    "migration_level": snapshot.get("migration_level"),
+                }
+            ),
+            409,
+        )
     if background:
         snapshot = _logscan_reingest_snapshot()
         if snapshot.get("status") == "running":
@@ -9535,6 +9718,8 @@ def logscan_trends_reingest():
                         "error": "Reingest already running.",
                         "job_id": snapshot.get("job_id"),
                         "status": snapshot.get("status"),
+                        "trigger": snapshot.get("trigger"),
+                        "migration_level": snapshot.get("migration_level"),
                     }
                 ),
                 409,
@@ -11266,6 +11451,8 @@ if __name__ == "__main__":
 
     maintenance_thread = threading.Thread(target=_maintenance_guard_loop, args=(app,), daemon=True)
     maintenance_thread.start()
+
+    _start_pending_logscan_startup_migration(app)
 
     def get_lan_ip():
         try:

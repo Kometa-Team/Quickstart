@@ -4734,6 +4734,27 @@ body {
     display: flex;
 }
 
+.qs-header-status-pill {
+    display: flex;
+    text-decoration: none;
+}
+
+.qs-header-status-pill:hover,
+.qs-header-status-pill:focus {
+    text-decoration: none;
+}
+
+.qs-header-status-pill .badge {
+    transition: transform 0.16s ease, filter 0.16s ease, box-shadow 0.16s ease;
+}
+
+.qs-header-status-pill:hover .badge,
+.qs-header-status-pill:focus .badge {
+    transform: translateY(-1px);
+    filter: brightness(1.03);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-primary) 36%, transparent);
+}
+
 .qs-main-page-title {
     margin: 0.08rem 0 0.1rem;
     font-size: clamp(1.45rem, 1.22rem + 0.7vw, 2rem);

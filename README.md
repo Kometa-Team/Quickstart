@@ -84,6 +84,26 @@ This reduces the chance of Plex background maintenance colliding with long Komet
 - **Stable run tracking:** Runs are deduped with a stable `run_key` and cached in `config/cache/logscan/ingest_cache.json`.
 - **Missing people requests:** Deduped output is written to `config/cache/logscan/meta_people_missing.log` (metadata in `meta_people_missing.json`).
 - **UI helpers:** Sortable table headers, config filter, analytics breakdowns, and per-run “Report” recommendations.
+- **Startup migrations:** Quickstart can perform a one-time Analytics reset + reingest on startup when a release needs historical log data rebuilt for a new feature.
+
+#### Startup Analytics Migrations
+
+Quickstart supports versioned one-time Analytics migrations for releases that need existing `meta*.log*` history reprocessed without requiring you to open the Analytics page manually.
+
+- `QS_LOGSCAN_STARTUP_MIGRATIONS=1`
+  Default is enabled. Set this to `0` in `config/.env` if you need to temporarily suppress automatic startup migrations.
+- `QS_LOGSCAN_MIGRATION_LEVEL_DONE=0`
+  Quickstart writes this value back to `config/.env` after a startup migration succeeds. It records the highest migration level already applied on that installation.
+- `REQUIRED_LOGSCAN_MIGRATION_LEVEL`
+  This is a code constant in `quickstart.py`. Release builds bump this integer when they need a one-time reset + reingest for a new Analytics capability.
+
+How it works:
+
+- On startup, Quickstart compares `QS_LOGSCAN_MIGRATION_LEVEL_DONE` with the code's `REQUIRED_LOGSCAN_MIGRATION_LEVEL`.
+- If the completed level is lower, Quickstart starts a background Analytics migration that resets trend data and reingests all available Kometa logs.
+- If a user skips releases, the higher required level still triggers the migration automatically on the next startup.
+- If this is a first-time Quickstart setup and no Kometa logs exist yet, Quickstart defers the migration instead of marking it complete. The migration remains pending until logs exist on a future startup.
+- If a reingest is already running, Analytics reconnects to the active job instead of starting a second one.
 
 ### Logscan Analyzer & Analytics Page
 - **Logscan Analyzer:** Parses Kometa `meta.log` files to surface errors, run summaries, and missing items.
@@ -135,6 +155,7 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
   - [Automatic Updates](#automatic-updates)
   - [Themes \& Personalization](#themes--personalization)
   - [Analytics](#analytics)
+    - [Startup Analytics Migrations](#startup-analytics-migrations)
   - [Logscan Analyzer \& Analytics Page](#logscan-analyzer--analytics-page)
   - [Import Existing Config](#import-existing-config)
   - [Quickstart Scope](#quickstart-scope)
