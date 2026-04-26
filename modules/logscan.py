@@ -71,6 +71,7 @@ class LogscanAnalyzer:
         self.current_kometa_version = None
         self.kometa_newest_version = None
         self.run_time = None
+        self.started_at = None
         self.finished_at = None
         self.plex_timeout = None
         self.checkfiles_flg = None
@@ -782,6 +783,9 @@ class LogscanAnalyzer:
         parsed_run_time = self._parse_run_time_from_line(run_time_line)
         if parsed_run_time and run_time_is_final:
             self.run_time = parsed_run_time
+            start_match = re.search(r"Start Time:\s*(.*?)\s+Finished:", run_time_line)
+            if start_match:
+                self.started_at = start_match.group(1).strip()
             timestamp_match = re.search(r"\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),", run_time_line)
             if timestamp_match:
                 self.finished_at = timestamp_match.group(1).strip()
@@ -2222,6 +2226,15 @@ class LogscanAnalyzer:
             return parsed.strftime("%Y-%m-%d %H:%M:%S")
         return finished_at
 
+    def _normalize_started_at(self, started_at):
+        parsed = self._parse_finished_datetime(started_at)
+        now = datetime.now()
+        if parsed and parsed > now + timedelta(days=1):
+            parsed = None
+        if parsed:
+            return parsed.strftime("%Y-%m-%d %H:%M:%S")
+        return started_at
+
     def _parse_hms_to_seconds(self, value):
         if not value:
             return None
@@ -3042,6 +3055,199 @@ class LogscanAnalyzer:
         match = re.search(r"\[Quickstart\]\s+Run marker:.*", content)
         return match.group(0) if match else None
 
+    def extract_quickstart_marker_capabilities(self, content):
+        capabilities = {"maintenance_markers": False}
+        marker = self.extract_quickstart_marker(content)
+        if not marker:
+            return capabilities
+        if re.search(r"\bmaintenance_markers=1\b", marker):
+            capabilities["maintenance_markers"] = True
+        return capabilities
+
+    def _parse_log_timestamp(self, line):
+        if not line or not line.startswith("["):
+            return None
+        match = re.match(r"\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d{3}\]", line)
+        if not match:
+            return None
+        try:
+            return datetime.strptime(match.group(1), "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            return None
+
+    def extract_maintenance_summary(self, content):
+        summary = {
+            "had_pause": False,
+            "pause_count": 0,
+            "pause_seconds": 0,
+            "open_pause": False,
+            "window": None,
+            "events": [],
+        }
+        if not content:
+            return summary
+
+        marker_re = re.compile(
+            r"\[Quickstart\]\s+Maintenance marker:\s+event=(paused|resumed)\s+at=([^\s]+)"
+            r"(?:\s+local_at=([^\s]+))?(?:\s+window=([^\s]+))?(?:\s+paused_seconds=(\d+))?",
+            re.IGNORECASE,
+        )
+        open_pause_at = None
+        open_pause_window = None
+        open_pause_local_at = None
+
+        for line in content.splitlines():
+            match = marker_re.search(line)
+            if not match:
+                continue
+            event = str(match.group(1) or "").strip().lower()
+            raw_ts = str(match.group(2) or "").strip()
+            local_at = str(match.group(3) or "").strip() or None
+            window = str(match.group(4) or "").strip() or None
+            paused_seconds_raw = match.group(5)
+            event_ts = None
+            try:
+                event_ts = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
+                if event_ts.tzinfo is not None:
+                    event_ts = event_ts.astimezone(timezone.utc)
+            except Exception:
+                event_ts = None
+            paused_seconds = None
+            if paused_seconds_raw is not None:
+                try:
+                    paused_seconds = max(0, int(paused_seconds_raw))
+                except Exception:
+                    paused_seconds = None
+
+            summary["events"].append(
+                {
+                    "event": event,
+                    "at": raw_ts,
+                    "local_at": local_at,
+                    "window": window,
+                    "paused_seconds": paused_seconds,
+                }
+            )
+            if window:
+                summary["window"] = window
+
+            if event == "paused":
+                summary["had_pause"] = True
+                summary["pause_count"] += 1
+                open_pause_at = event_ts
+                open_pause_window = window
+                open_pause_local_at = local_at
+                continue
+
+            if event == "resumed":
+                summary["had_pause"] = True
+                if paused_seconds is None and open_pause_at and event_ts:
+                    try:
+                        paused_seconds = max(0, int((event_ts - open_pause_at).total_seconds()))
+                    except Exception:
+                        paused_seconds = None
+                if paused_seconds is not None:
+                    summary["pause_seconds"] += paused_seconds
+                open_pause_at = None
+                open_pause_window = None
+                open_pause_local_at = None
+
+        if open_pause_at is not None:
+            summary["open_pause"] = True
+            summary["had_pause"] = True
+            if not summary["window"] and open_pause_window:
+                summary["window"] = open_pause_window
+            if summary["events"] and not summary["events"][-1].get("local_at") and open_pause_local_at:
+                summary["events"][-1]["local_at"] = open_pause_local_at
+
+        return summary
+
+    def extract_quiet_period_summary(self, content, maintenance_summary=None):
+        summary = {
+            "longest_gap_seconds": 0,
+            "longest_gap_started_at": None,
+            "longest_gap_ended_at": None,
+            "gaps_over_300": 0,
+            "gaps_over_900": 0,
+            "gaps_over_1800": 0,
+            "longest_gap_maintenance_overlap": "unknown",
+        }
+        if not content:
+            return summary
+
+        capabilities = self.extract_quickstart_marker_capabilities(content)
+        maintenance_supported = bool(capabilities.get("maintenance_markers"))
+        timestamps = []
+        for line in content.splitlines():
+            line_ts = self._parse_log_timestamp(line)
+            if line_ts is not None:
+                timestamps.append(line_ts)
+        if len(timestamps) < 2:
+            if maintenance_supported:
+                summary["longest_gap_maintenance_overlap"] = "none"
+            return summary
+
+        maintenance_summary = maintenance_summary if isinstance(maintenance_summary, dict) else {}
+        maintenance_intervals = []
+        open_start = None
+        for event in maintenance_summary.get("events") or []:
+            if not isinstance(event, dict):
+                continue
+            local_at = str(event.get("local_at") or "").strip()
+            event_name = str(event.get("event") or "").strip().lower()
+            event_ts = None
+            if local_at:
+                try:
+                    event_ts = datetime.fromisoformat(local_at)
+                except Exception:
+                    event_ts = None
+            if event_ts is None:
+                continue
+            if event_name == "paused":
+                open_start = event_ts
+            elif event_name == "resumed" and open_start is not None:
+                maintenance_intervals.append((open_start, event_ts))
+                open_start = None
+        if open_start is not None:
+            maintenance_intervals.append((open_start, None))
+
+        longest_start = None
+        longest_end = None
+        for previous_ts, current_ts in zip(timestamps, timestamps[1:]):
+            gap_seconds = max(0, int((current_ts - previous_ts).total_seconds()))
+            if gap_seconds <= 0:
+                continue
+            if gap_seconds >= 300:
+                summary["gaps_over_300"] += 1
+            if gap_seconds >= 900:
+                summary["gaps_over_900"] += 1
+            if gap_seconds >= 1800:
+                summary["gaps_over_1800"] += 1
+            if gap_seconds > summary["longest_gap_seconds"]:
+                summary["longest_gap_seconds"] = gap_seconds
+                longest_start = previous_ts
+                longest_end = current_ts
+
+        if longest_start is not None and longest_end is not None:
+            summary["longest_gap_started_at"] = longest_start.isoformat()
+            summary["longest_gap_ended_at"] = longest_end.isoformat()
+            overlap = False
+            for interval_start, interval_end in maintenance_intervals:
+                if interval_end is None:
+                    if longest_end > interval_start:
+                        overlap = True
+                        break
+                    continue
+                if longest_start < interval_end and longest_end > interval_start:
+                    overlap = True
+                    break
+            if overlap:
+                summary["longest_gap_maintenance_overlap"] = "confirmed"
+            elif maintenance_supported:
+                summary["longest_gap_maintenance_overlap"] = "none"
+
+        return summary
+
     def extract_config_line_count(self, content):
         if not content:
             return 0
@@ -3195,6 +3401,7 @@ class LogscanAnalyzer:
         command_signature=None,
         section_runtimes=None,
     ):
+        started_at = self._normalize_started_at(self.started_at)
         finished_at = self.finished_at
         if not finished_at and finished_runs:
             last_run = finished_runs[-1]
@@ -3242,6 +3449,7 @@ class LogscanAnalyzer:
 
         return {
             "run_key": run_key,
+            "started_at": started_at,
             "finished_at": finished_at,
             "run_time_seconds": run_time_seconds,
             "run_complete": run_complete,
@@ -3264,6 +3472,7 @@ class LogscanAnalyzer:
         self.reset_server_versions()
         self.checkfiles_flg = None
         self.run_time = None
+        self.started_at = None
         self.finished_at = None
         self.plex_timeout = None
         self.current_kometa_version = None
@@ -3298,6 +3507,8 @@ class LogscanAnalyzer:
         config_line_count = self.extract_config_line_count(raw_content)
         cache_line_count = sum(1 for line in raw_content.splitlines() if "from Cache" in line)
         library_counts = self.extract_library_counts(cleaned_content)
+        maintenance_summary = self.extract_maintenance_summary(raw_content)
+        quiet_period_summary = self.extract_quiet_period_summary(raw_content, maintenance_summary=maintenance_summary)
 
         missing_people = []
         missing_people_message = None
@@ -3338,6 +3549,8 @@ class LogscanAnalyzer:
             summary["analysis_counts"] = analysis_counts
             summary["quickstart_run_marker"] = bool(quickstart_marker)
             summary["library_counts"] = library_counts
+            summary["maintenance_summary"] = maintenance_summary
+            summary["quiet_period_summary"] = quiet_period_summary
             summary["config_line_count"] = config_line_count
             summary["cache_line_count"] = cache_line_count
         if summary and not summary.get("run_complete"):

@@ -156,6 +156,7 @@ def get_last_used_config_name():
 def log_runs_table_create():
     return """CREATE TABLE IF NOT EXISTS log_runs (
         run_key TEXT PRIMARY KEY,
+        started_at TEXT,
         finished_at TEXT,
         run_time_seconds INTEGER,
         kometa_version TEXT,
@@ -176,6 +177,9 @@ def log_runs_table_create():
         trace_count INTEGER,
         analysis_counts TEXT,
         library_counts TEXT,
+        maintenance_summary TEXT,
+        maintenance_had_pause INTEGER,
+        quiet_period_summary TEXT,
         quickstart_run_marker INTEGER,
         config_line_count INTEGER,
         cache_line_count INTEGER,
@@ -194,6 +198,7 @@ def _ensure_log_runs_columns(cursor):
         if name:
             existing.add(name)
     columns = {
+        "started_at": "TEXT",
         "config_name": "TEXT",
         "config_hash": "TEXT",
         "run_command": "TEXT",
@@ -202,6 +207,9 @@ def _ensure_log_runs_columns(cursor):
         "recommendations": "TEXT",
         "analysis_counts": "TEXT",
         "library_counts": "TEXT",
+        "maintenance_summary": "TEXT",
+        "maintenance_had_pause": "INTEGER",
+        "quiet_period_summary": "TEXT",
         "quickstart_run_marker": "INTEGER",
         "config_line_count": "INTEGER",
         "cache_line_count": "INTEGER",
@@ -232,6 +240,13 @@ def save_log_run(summary, recommendations=None):
     library_counts = summary.get("library_counts")
     if isinstance(library_counts, dict):
         library_counts = json.dumps(library_counts, ensure_ascii=True)
+    maintenance_summary = summary.get("maintenance_summary")
+    if isinstance(maintenance_summary, dict):
+        maintenance_summary = json.dumps(maintenance_summary, ensure_ascii=True)
+    maintenance_had_pause = 1 if (summary.get("maintenance_had_pause") or (summary.get("maintenance_summary") or {}).get("had_pause")) else 0
+    quiet_period_summary = summary.get("quiet_period_summary")
+    if isinstance(quiet_period_summary, dict):
+        quiet_period_summary = json.dumps(quiet_period_summary, ensure_ascii=True)
     quickstart_run_marker = 1 if summary.get("quickstart_run_marker") else 0
     config_line_count = summary.get("config_line_count")
     cache_line_count = summary.get("cache_line_count")
@@ -242,6 +257,7 @@ def save_log_run(summary, recommendations=None):
             cursor.execute(
                 """INSERT OR IGNORE INTO log_runs (
                     run_key,
+                    started_at,
                     finished_at,
                     run_time_seconds,
                     kometa_version,
@@ -262,13 +278,17 @@ def save_log_run(summary, recommendations=None):
                     trace_count,
                     analysis_counts,
                     library_counts,
+                    maintenance_summary,
+                    maintenance_had_pause,
+                    quiet_period_summary,
                     quickstart_run_marker,
                     config_line_count,
                     cache_line_count,
                     created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     run_key,
+                    summary.get("started_at"),
                     summary.get("finished_at"),
                     summary.get("run_time_seconds"),
                     summary.get("kometa_version"),
@@ -289,6 +309,9 @@ def save_log_run(summary, recommendations=None):
                     counts.get("trace", 0),
                     analysis_counts,
                     library_counts,
+                    maintenance_summary,
+                    maintenance_had_pause,
+                    quiet_period_summary,
                     quickstart_run_marker,
                     config_line_count,
                     cache_line_count,
@@ -340,6 +363,19 @@ def _decode_log_run_row(row):
             decoded["library_counts"] = json.loads(library_counts)
         except json.JSONDecodeError:
             decoded["library_counts"] = None
+    maintenance_summary = decoded.get("maintenance_summary")
+    if isinstance(maintenance_summary, str):
+        try:
+            decoded["maintenance_summary"] = json.loads(maintenance_summary)
+        except json.JSONDecodeError:
+            decoded["maintenance_summary"] = None
+    quiet_period_summary = decoded.get("quiet_period_summary")
+    if isinstance(quiet_period_summary, str):
+        try:
+            decoded["quiet_period_summary"] = json.loads(quiet_period_summary)
+        except json.JSONDecodeError:
+            decoded["quiet_period_summary"] = None
+    decoded["maintenance_had_pause"] = bool(decoded.get("maintenance_had_pause"))
     decoded["quickstart_run_marker"] = bool(decoded.get("quickstart_run_marker"))
     return decoded
 
@@ -350,11 +386,12 @@ def get_log_runs(limit=100):
         with closing(connection.cursor()) as cursor:
             _ensure_log_runs_columns(cursor)
             cursor.execute(
-                """SELECT run_key, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
+                """SELECT run_key, started_at, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
                           config_name, config_hash, run_command, command_signature, section_runtimes,
                           recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
                           error_count, critical_count, trace_count, analysis_counts, library_counts,
-                          quickstart_run_marker, config_line_count, cache_line_count, created_at
+                          maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker,
+                          config_line_count, cache_line_count, created_at
                    FROM log_runs
                    ORDER BY created_at DESC
                    LIMIT ?""",
@@ -372,11 +409,12 @@ def get_log_run(run_key):
         with closing(connection.cursor()) as cursor:
             _ensure_log_runs_columns(cursor)
             cursor.execute(
-                """SELECT run_key, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
+                """SELECT run_key, started_at, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
                           config_name, config_hash, run_command, command_signature, section_runtimes,
                           recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
                           error_count, critical_count, trace_count, analysis_counts, library_counts,
-                          quickstart_run_marker, config_line_count, cache_line_count, created_at
+                          maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker,
+                          config_line_count, cache_line_count, created_at
                    FROM log_runs
                    WHERE run_key == ?
                    LIMIT 1""",

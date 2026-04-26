@@ -22,6 +22,7 @@ def test_analyze_content_marks_complete_for_day_runtime():
     summary = result.get("summary")
     assert isinstance(summary, dict)
     assert summary.get("run_complete") is True
+    assert summary.get("started_at") == "2026-04-13 07:16:22"
     assert summary.get("run_time_seconds") == (1 * 24 * 3600) + (2 * 3600) + (20 * 60) + 31
 
 
@@ -69,3 +70,98 @@ def test_extract_progress_playlist_runtime_when_logged_from_playlists_module():
     progress = analyzer.extract_progress(content, library_list=[{"name": "Movies", "type": "movie"}])
     assert progress.get("playlist_total_seconds") == 7
     assert progress.get("playlists_detected") is True
+
+
+def test_analyze_content_extracts_quickstart_maintenance_summary():
+    analyzer = LogscanAnalyzer()
+    content = "\n".join(
+        [
+            "[Quickstart] Run marker: started=2026-04-18T10:00:00Z config=demo quickstart=1.0.0 branch=develop maintenance_markers=1",
+            "[2026-04-18 10:10:00,000] [kometa.py:100] [INFO] | Resumed Work |",
+            "[Quickstart] Maintenance marker: event=paused at=2026-04-18T10:05:00Z local_at=2026-04-18T10:05:00 window=01:00-02:00",
+            "[Quickstart] Maintenance marker: event=resumed at=2026-04-18T10:10:00Z local_at=2026-04-18T10:10:00 window=01:00-02:00 paused_seconds=300",
+            "[2026-04-18 10:15:00,000] [kometa.py:522] [INFO] |                                            Finished Run                                            |",
+            "[2026-04-18 10:15:00,000] [kometa.py:522] [INFO] |   Start Time: 10:00:00 2026-04-18     Finished: 10:15:00 2026-04-18     Run Time: 0:15:00   |",
+        ]
+    )
+
+    result = analyzer.analyze_content(content, include_people_scan=False)
+    summary = result.get("summary")
+
+    assert isinstance(summary, dict)
+    assert summary.get("run_complete") is True
+    assert summary.get("maintenance_summary") == {
+        "had_pause": True,
+        "pause_count": 1,
+        "pause_seconds": 300,
+        "open_pause": False,
+        "window": "01:00-02:00",
+        "events": [
+            {
+                "event": "paused",
+                "at": "2026-04-18T10:05:00Z",
+                "local_at": "2026-04-18T10:05:00",
+                "window": "01:00-02:00",
+                "paused_seconds": None,
+            },
+            {
+                "event": "resumed",
+                "at": "2026-04-18T10:10:00Z",
+                "local_at": "2026-04-18T10:10:00",
+                "window": "01:00-02:00",
+                "paused_seconds": 300,
+            },
+        ],
+    }
+    assert summary.get("quiet_period_summary") == {
+        "longest_gap_seconds": 300,
+        "longest_gap_started_at": "2026-04-18T10:10:00",
+        "longest_gap_ended_at": "2026-04-18T10:15:00",
+        "gaps_over_300": 1,
+        "gaps_over_900": 0,
+        "gaps_over_1800": 0,
+        "longest_gap_maintenance_overlap": "none",
+    }
+
+
+def test_analyze_content_marks_quiet_period_overlap_as_confirmed_when_gap_matches_maintenance():
+    analyzer = LogscanAnalyzer()
+    content = "\n".join(
+        [
+            "[Quickstart] Run marker: started=2026-04-18T10:00:00Z config=demo quickstart=1.0.0 branch=develop maintenance_markers=1",
+            "[2026-04-18 10:00:00,000] [kometa.py:100] [INFO] | Starting Run |",
+            "[Quickstart] Maintenance marker: event=paused at=2026-04-18T10:05:00Z local_at=2026-04-18T10:05:00 window=01:00-02:00",
+            "[Quickstart] Maintenance marker: event=resumed at=2026-04-18T10:20:00Z local_at=2026-04-18T10:20:00 window=01:00-02:00 paused_seconds=900",
+            "[2026-04-18 10:20:00,000] [kometa.py:101] [INFO] | Resumed Work |",
+            "[2026-04-18 10:25:00,000] [kometa.py:522] [INFO] |                                            Finished Run                                            |",
+            "[2026-04-18 10:25:00,000] [kometa.py:522] [INFO] |   Start Time: 10:00:00 2026-04-18     Finished: 10:25:00 2026-04-18     Run Time: 0:25:00   |",
+        ]
+    )
+
+    result = analyzer.analyze_content(content, include_people_scan=False)
+    quiet_summary = result["summary"]["quiet_period_summary"]
+
+    assert quiet_summary["longest_gap_seconds"] == 1200
+    assert quiet_summary["gaps_over_300"] == 2
+    assert quiet_summary["gaps_over_900"] == 1
+    assert quiet_summary["longest_gap_maintenance_overlap"] == "confirmed"
+
+
+def test_analyze_content_marks_historical_quiet_period_overlap_as_unknown_without_capability_marker():
+    analyzer = LogscanAnalyzer()
+    content = "\n".join(
+        [
+            "[2026-04-18 10:00:00,000] [kometa.py:100] [INFO] | Starting Run |",
+            "[2026-04-18 10:20:00,000] [kometa.py:101] [INFO] | Working |",
+            "[2026-04-18 10:25:00,000] [kometa.py:522] [INFO] |                                            Finished Run                                            |",
+            "[2026-04-18 10:25:00,000] [kometa.py:522] [INFO] |   Start Time: 10:00:00 2026-04-18     Finished: 10:25:00 2026-04-18     Run Time: 0:25:00   |",
+        ]
+    )
+
+    result = analyzer.analyze_content(content, include_people_scan=False)
+    quiet_summary = result["summary"]["quiet_period_summary"]
+
+    assert quiet_summary["longest_gap_seconds"] == 1200
+    assert quiet_summary["gaps_over_300"] == 2
+    assert quiet_summary["gaps_over_900"] == 1
+    assert quiet_summary["longest_gap_maintenance_overlap"] == "unknown"

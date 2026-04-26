@@ -83,7 +83,7 @@ def test_kometa_status_reconnects_pid_file(tmp_path, client, monkeypatch, qs_mod
     assert pid_file.read_text().strip() == "2222"
 
 
-def test_maintenance_guard_pause_and_resume(monkeypatch, qs_module):
+def test_maintenance_guard_pause_and_resume(tmp_path, monkeypatch, qs_module):
     _reset_maintenance_state(qs_module)
     qs_module._clear_pending_kometa_start()
 
@@ -93,6 +93,7 @@ def test_maintenance_guard_pause_and_resume(monkeypatch, qs_module):
     monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (60, 120, "01:00-02:00"))
     monkeypatch.setattr(qs_module, "_get_maintenance_window_from_db", lambda: (60, 120, "01:00-02:00"))
     monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: active_flag["value"])
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: tmp_path)
     monkeypatch.setattr(qs_module.psutil, "Process", lambda pid: _FakePsutilProc(pid))
     monkeypatch.setattr(qs_module, "_suspend_process_tree", lambda *_: True)
     monkeypatch.setattr(qs_module, "_resume_process_tree", lambda *_: True)
@@ -120,3 +121,9 @@ def test_maintenance_guard_pause_and_resume(monkeypatch, qs_module):
         assert qs_module.MAINTENANCE_STATE["paused"] is False
         assert qs_module.MAINTENANCE_STATE["paused_since"] is None
         assert qs_module.MAINTENANCE_STATE["window"] == "01:00-02:00"
+
+    meta_log = tmp_path / "config" / "logs" / "meta.log"
+    assert meta_log.exists()
+    marker_lines = meta_log.read_text(encoding="utf-8").splitlines()
+    assert any("[Quickstart] Maintenance marker: event=paused" in line for line in marker_lines)
+    assert any("[Quickstart] Maintenance marker: event=resumed" in line for line in marker_lines)

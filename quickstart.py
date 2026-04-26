@@ -1724,6 +1724,10 @@ def _maintenance_guard_loop(app_in):
                     if _suspend_process_tree(proc):
                         window_label = f" ({window_str})" if window_str else ""
                         helpers.ts_log(f"Kometa paused due to Plex maintenance window{window_label}.", level="INFO")
+                        try:
+                            _write_quickstart_maintenance_marker(helpers.get_kometa_root_path(), "paused", window=window_str)
+                        except Exception:
+                            pass
                         with MAINTENANCE_STATE_LOCK:
                             MAINTENANCE_STATE["paused"] = True
                             MAINTENANCE_STATE["paused_since"] = datetime.now(timezone.utc).isoformat()
@@ -1731,10 +1735,29 @@ def _maintenance_guard_loop(app_in):
 
             with MAINTENANCE_STATE_LOCK:
                 was_paused = MAINTENANCE_STATE["paused"]
+                paused_since = MAINTENANCE_STATE["paused_since"]
             if was_paused:
                 if _resume_process_tree(proc):
                     window_label = f" ({window_str})" if window_str else ""
                     helpers.ts_log(f"Plex maintenance ended{window_label}. Kometa resumed.", level="INFO")
+                    paused_seconds = None
+                    if paused_since:
+                        try:
+                            paused_at = datetime.fromisoformat(str(paused_since).replace("Z", "+00:00"))
+                            if paused_at.tzinfo is None:
+                                paused_at = paused_at.replace(tzinfo=timezone.utc)
+                            paused_seconds = max(0, int((datetime.now(timezone.utc) - paused_at).total_seconds()))
+                        except Exception:
+                            paused_seconds = None
+                    try:
+                        _write_quickstart_maintenance_marker(
+                            helpers.get_kometa_root_path(),
+                            "resumed",
+                            window=window_str,
+                            paused_seconds=paused_seconds,
+                        )
+                    except Exception:
+                        pass
                     with MAINTENANCE_STATE_LOCK:
                         MAINTENANCE_STATE["paused"] = False
                         MAINTENANCE_STATE["paused_since"] = None
@@ -1742,19 +1765,50 @@ def _maintenance_guard_loop(app_in):
 
 def _write_quickstart_run_marker(kometa_root, config_name=None):
     try:
-        log_dir = Path(kometa_root) / "config" / "logs"
-        log_dir.mkdir(parents=True, exist_ok=True)
-        log_path = log_dir / "meta.log"
         version_info = app.config.get("VERSION_CHECK") or {}
         qs_version = version_info.get("local_version") or "unknown"
         qs_branch = version_info.get("branch") or "unknown"
         safe_config = (config_name or "default").strip() or "default"
-        timestamp = datetime.now(timezone.utc).isoformat()
-        marker = f"[Quickstart] Run marker: started={timestamp} " f"config={safe_config} quickstart={qs_version} branch={qs_branch}"
-        with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
-            handle.write(marker + "\n")
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        marker = (
+            f"[Quickstart] Run marker: started={timestamp} "
+            f"config={safe_config} quickstart={qs_version} branch={qs_branch} maintenance_markers=1"
+        )
+        _append_quickstart_meta_log_line(kometa_root, marker)
     except Exception:
         pass
+
+
+def _append_quickstart_meta_log_line(kometa_root, line):
+    if not line:
+        return False
+    try:
+        log_dir = Path(kometa_root) / "config" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_path = log_dir / "meta.log"
+        with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
+            handle.write(str(line).rstrip() + "\n")
+        return True
+    except Exception:
+        return False
+
+
+def _write_quickstart_maintenance_marker(kometa_root, event, window=None, paused_seconds=None):
+    event_name = str(event or "").strip().lower()
+    if event_name not in {"paused", "resumed"}:
+        return False
+    local_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    parts = [
+        "[Quickstart] Maintenance marker:",
+        f"event={event_name}",
+        f"at={datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
+        f"local_at={local_at}",
+    ]
+    if window:
+        parts.append(f"window={str(window).strip()}")
+    if event_name == "resumed" and isinstance(paused_seconds, (int, float)):
+        parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
+    return _append_quickstart_meta_log_line(kometa_root, " ".join(parts))
 
 
 def _schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20):
@@ -8025,7 +8079,7 @@ def _classify_logscan_file_location(path, log_dir=None):
         pass
     try:
         resolved.relative_to(live_dir)
-        return "live"
+        return "live" if resolved.name.lower() == "meta.log" else "archive"
     except ValueError:
         pass
     return "other"
@@ -8567,6 +8621,7 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
 
     return {
         "run_key": run_key,
+        "started_at": summary.get("started_at"),
         "finished_at": summary.get("finished_at"),
         "run_time_seconds": summary.get("run_time_seconds"),
         "kometa_version": summary.get("kometa_version"),
@@ -8588,6 +8643,9 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         "trace_count": counts.get("trace", 0),
         "analysis_counts": summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {},
         "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
+        "maintenance_summary": summary.get("maintenance_summary") if isinstance(summary.get("maintenance_summary"), dict) else {},
+        "maintenance_had_pause": bool((summary.get("maintenance_summary") or {}).get("had_pause")),
+        "quiet_period_summary": summary.get("quiet_period_summary") if isinstance(summary.get("quiet_period_summary"), dict) else {},
         "quickstart_run_marker": bool(summary.get("quickstart_run_marker")),
         "config_line_count": summary.get("config_line_count"),
         "cache_line_count": summary.get("cache_line_count"),
@@ -8634,6 +8692,7 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
     )
     return {
         "run_key": run_key,
+        "started_at": summary.get("started_at"),
         "finished_at": summary.get("finished_at"),
         "run_time_seconds": summary.get("run_time_seconds"),
         "kometa_version": summary.get("kometa_version"),
@@ -8655,6 +8714,9 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
         "trace_count": counts.get("trace", 0),
         "analysis_counts": summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {},
         "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
+        "maintenance_summary": summary.get("maintenance_summary") if isinstance(summary.get("maintenance_summary"), dict) else {},
+        "maintenance_had_pause": bool((summary.get("maintenance_summary") or {}).get("had_pause")),
+        "quiet_period_summary": summary.get("quiet_period_summary") if isinstance(summary.get("quiet_period_summary"), dict) else {},
         "quickstart_run_marker": bool(summary.get("quickstart_run_marker")),
         "config_line_count": summary.get("config_line_count"),
         "cache_line_count": summary.get("cache_line_count"),
@@ -8690,6 +8752,7 @@ def _build_incomplete_log_fallback(log_path, cache_entry=None, config_name=None)
     created_at = cache_entry.get("updated_at") or _iso_from_mtime(mtime)
     return {
         "run_key": run_key,
+        "started_at": None,
         "finished_at": None,
         "run_time_seconds": None,
         "kometa_version": "",
@@ -8711,6 +8774,9 @@ def _build_incomplete_log_fallback(log_path, cache_entry=None, config_name=None)
         "trace_count": 0,
         "analysis_counts": {},
         "library_counts": {},
+        "maintenance_summary": {},
+        "maintenance_had_pause": False,
+        "quiet_period_summary": {},
         "quickstart_run_marker": False,
         "config_line_count": None,
         "cache_line_count": None,
@@ -9057,6 +9123,38 @@ def _archive_rotated_logs(log_dir):
     return archived
 
 
+def _archive_rotated_log_and_update_cache(path, cache_logs, archive_dir, run_key=None, run_complete=False):
+    try:
+        source_path = Path(path).resolve()
+    except Exception:
+        return None
+    if source_path.name.lower() == "meta.log":
+        return None
+    archived_path = _archive_log_file(source_path, archive_dir, log_dir=source_path.parent)
+    if not archived_path:
+        return None
+    try:
+        archived_stats = archived_path.stat()
+        archived_key = str(archived_path.resolve())
+    except Exception:
+        return None
+    source_key = str(source_path)
+    existing_entry = cache_logs.get(source_key, {}) if isinstance(cache_logs, dict) else {}
+    if not isinstance(existing_entry, dict):
+        existing_entry = {}
+    updated_entry = dict(existing_entry)
+    updated_entry["mtime"] = archived_stats.st_mtime
+    updated_entry["size"] = archived_stats.st_size
+    updated_entry["run_complete"] = bool(run_complete)
+    updated_entry["updated_at"] = datetime.now(timezone.utc).isoformat()
+    if run_key:
+        updated_entry["run_key"] = run_key
+    if isinstance(cache_logs, dict):
+        cache_logs.pop(source_key, None)
+        cache_logs[archived_key] = updated_entry
+    return archived_path
+
+
 def _prune_logscan_archive(archive_dir):
     keep_limit = app.config.get("QS_KOMETA_LOG_KEEP", 0)
     if keep_limit <= 0:
@@ -9199,6 +9297,16 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 summary = result.get("summary") if isinstance(result, dict) else None
                 if not summary:
                     skipped_invalid += 1
+                    if path.parent.resolve() == log_dir.resolve() and path.name.lower() != "meta.log":
+                        archived_path = _archive_rotated_log_and_update_cache(
+                            path,
+                            cache_logs,
+                            archive_dir,
+                            run_key=cached_run_key,
+                            run_complete=False,
+                        )
+                        if archived_path:
+                            cache_dirty = True
                     continue
                 if not summary.get("run_complete"):
                     skipped_incomplete += 1
@@ -9215,6 +9323,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                         "updated_at": datetime.now(timezone.utc).isoformat(),
                         "summary": {
                             "run_key": summary.get("run_key"),
+                            "started_at": summary.get("started_at"),
                             "finished_at": summary.get("finished_at"),
                             "run_time_seconds": summary.get("run_time_seconds"),
                             "kometa_version": summary.get("kometa_version"),
@@ -9228,6 +9337,8 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                             "log_counts": summary.get("log_counts") if isinstance(summary.get("log_counts"), dict) else {},
                             "analysis_counts": summary.get("analysis_counts") if isinstance(summary.get("analysis_counts"), dict) else {},
                             "library_counts": summary.get("library_counts") if isinstance(summary.get("library_counts"), dict) else {},
+                            "maintenance_summary": summary.get("maintenance_summary") if isinstance(summary.get("maintenance_summary"), dict) else {},
+                            "quiet_period_summary": summary.get("quiet_period_summary") if isinstance(summary.get("quiet_period_summary"), dict) else {},
                             "quickstart_run_marker": bool(summary.get("quickstart_run_marker")),
                             "config_line_count": summary.get("config_line_count"),
                             "cache_line_count": summary.get("cache_line_count"),
@@ -9236,6 +9347,16 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                         "recommendations": incomplete_recommendations,
                     }
                     cache_dirty = True
+                    if path.parent.resolve() == log_dir.resolve() and path.name.lower() != "meta.log":
+                        archived_path = _archive_rotated_log_and_update_cache(
+                            path,
+                            cache_logs,
+                            archive_dir,
+                            run_key=summary.get("run_key"),
+                            run_complete=False,
+                        )
+                        if archived_path:
+                            cache_dirty = True
                     continue
                 missing_people = result.get("missing_people") if isinstance(result, dict) else None
                 if missing_people:

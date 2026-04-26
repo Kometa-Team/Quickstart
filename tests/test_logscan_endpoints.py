@@ -136,6 +136,47 @@ def test_logscan_trends_includes_archive_storage_and_run_file_metadata(client, i
     assert payload["runs"][0]["log_resolved_size"] == len(log_bytes)
 
 
+def test_logscan_trends_returns_maintenance_summary_for_saved_runs(client, isolated_config_dir, qs_module):
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-maint-1",
+            "finished_at": "2026-04-23T10:00:00Z",
+            "config_name": "demo",
+            "created_at": "2026-04-23T10:00:00Z",
+            "maintenance_summary": {
+                "had_pause": True,
+                "pause_count": 1,
+                "pause_seconds": 300,
+                "open_pause": False,
+                "window": "01:00-02:00",
+                "events": [],
+            },
+            "quiet_period_summary": {
+                "longest_gap_seconds": 1200,
+                "longest_gap_started_at": "2026-04-23T01:00:00",
+                "longest_gap_ended_at": "2026-04-23T01:20:00",
+                "gaps_over_300": 2,
+                "gaps_over_900": 1,
+                "gaps_over_1800": 0,
+                "longest_gap_maintenance_overlap": "confirmed",
+            },
+        }
+    )
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    row = payload["runs"][0]
+    assert row["maintenance_had_pause"] is True
+    assert row["maintenance_summary"]["had_pause"] is True
+    assert row["maintenance_summary"]["pause_count"] == 1
+    assert row["maintenance_summary"]["pause_seconds"] == 300
+    assert row["maintenance_summary"]["window"] == "01:00-02:00"
+    assert row["quiet_period_summary"]["longest_gap_seconds"] == 1200
+    assert row["quiet_period_summary"]["gaps_over_900"] == 1
+    assert row["quiet_period_summary"]["longest_gap_maintenance_overlap"] == "confirmed"
+
+
 def test_logscan_trends_does_not_bind_historical_run_to_live_log(client, isolated_config_dir, monkeypatch, qs_module):
     kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
     log_dir = kometa_root / "config" / "logs"
@@ -614,6 +655,17 @@ def test_archive_finished_live_meta_log_if_idle_moves_live_file_and_cache(isolat
     assert archived.suffixes[-2:] == [".log", ".gz"]
 
 
+def test_classify_rotated_log_in_live_dir_as_archive(isolated_config_dir, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    rotated_path = log_dir / "meta-2.log"
+    rotated_path.write_text("stale rotated log\n", encoding="utf-8")
+
+    assert qs_module._classify_logscan_file_location(rotated_path, log_dir=log_dir) == "archive"
+    assert qs_module._classify_logscan_file_location(log_dir / "meta.log", log_dir=log_dir) == "live"
+
+
 def test_normalize_logscan_archive_filenames_renames_legacy_files_and_updates_cache(isolated_config_dir, monkeypatch, qs_module):
     archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
     archive_dir.mkdir(parents=True, exist_ok=True)
@@ -833,6 +885,50 @@ def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, m
     assert payload["success"] is True
     assert payload["ingested"] >= 1
     assert payload["skipped_incomplete"] == 0
+
+
+def test_logscan_reingest_archives_incomplete_rotated_live_log(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
+    log_dir = kometa_root / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / "meta-2.log"
+    log_path.write_text("incomplete rotated log\n", encoding="utf-8")
+    saved = {}
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        qs_module.logscan.LogscanAnalyzer,
+        "analyze_content",
+        lambda self, *_args, **_kwargs: {
+            "summary": {
+                "run_key": "run-incomplete-rotated-1",
+                "run_complete": False,
+            },
+            "recommendations": [],
+        },
+    )
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda cache: saved.__setitem__("cache", copy.deepcopy(cache)))
+
+    resp = client.post("/logscan/trends/reingest", json={"reset": True})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["skipped_incomplete"] == 1
+    assert not log_path.exists()
+
+    archived_paths = list(archive_dir.glob("*.log.gz"))
+    assert len(archived_paths) == 1
+    archived_path = archived_paths[0]
+    assert archived_path.exists()
+
+    saved_cache = saved["cache"]["logs"]
+    assert str(log_path.resolve()) not in saved_cache
+    assert str(archived_path.resolve()) in saved_cache
+    assert saved_cache[str(archived_path.resolve())]["run_complete"] is False
+    assert saved_cache[str(archived_path.resolve())]["run_key"] == "run-incomplete-rotated-1"
 
 
 def test_logscan_reingest_ingests_gzip_archived_log(client, isolated_config_dir, monkeypatch, qs_module):

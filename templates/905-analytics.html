@@ -155,6 +155,7 @@
         <label class="small text-muted" for="logscan-table-sort-key">Sort by</label>
         <select id="logscan-table-sort-key" class="form-select form-select-sm w-auto">
           <option value="status">Status</option>
+          <option value="started_at">Started</option>
           <option value="finished_at" selected>Finished</option>
           <option value="run_time_seconds">Runtime</option>
           <option value="config_name">Config</option>
@@ -170,6 +171,8 @@
           <option value="library_episodes">Episodes</option>
           <option value="library_total">Total items</option>
           <option value="kometa_version">Kometa</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="quiet_periods">Quiet periods</option>
           <option value="section_runtimes">Section runtimes</option>
           <option value="log_resolved_size">Log size</option>
           <option value="recommendations_count">Report</option>
@@ -199,6 +202,16 @@
               </th>
               <th>
                 <span class="text-nowrap">Status</span>
+              </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="started_at"
+                  title="Sort by started timestamp" aria-label="Sort by started timestamp">
+                  Started
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
               </th>
               <th>
                 <button type="button" class="logscan-sort-button is-desc" data-sort="finished_at"
@@ -281,6 +294,26 @@
                 </button>
               </th>
               <th>
+                <button type="button" class="logscan-sort-button" data-sort="maintenance"
+                  title="Sort by maintenance pauses" aria-label="Sort by maintenance pauses">
+                  Maintenance
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
+                <button type="button" class="logscan-sort-button" data-sort="quiet_periods"
+                  title="Sort by longest quiet period" aria-label="Sort by longest quiet period">
+                  Quiet Periods
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
                 <button type="button" class="logscan-sort-button" data-sort="section_runtimes"
                   title="Sort by section runtimes" aria-label="Sort by section runtimes">
                   Section Runtimes
@@ -315,7 +348,7 @@
           </thead>
           <tbody>
             <tr>
-              <td colspan="14" class="text-muted">Loading runs...</td>
+              <td colspan="17" class="text-muted">Loading runs...</td>
             </tr>
           </tbody>
         </table>
@@ -461,32 +494,32 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-daily-runs" data-pref-group="panels" data-pref-key="daily_runs">
                     <label class="form-check-label" for="logscan-pref-daily-runs">Daily runs</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-issue-trends" data-pref-group="panels" data-pref-key="issue_trends">
                     <label class="form-check-label" for="logscan-pref-issue-trends">Issue trends</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-library-inventory" data-pref-group="panels" data-pref-key="library_inventory">
                     <label class="form-check-label" for="logscan-pref-library-inventory">Library inventory</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-runtime-distribution" data-pref-group="panels" data-pref-key="runtime_distribution">
                     <label class="form-check-label" for="logscan-pref-runtime-distribution">Runtime distribution</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-summary" data-pref-group="panels" data-pref-key="summary">
                     <label class="form-check-label" for="logscan-pref-summary">Summary + ingest health</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-counts-mix" data-pref-group="panels" data-pref-key="counts_mix">
                     <label class="form-check-label" for="logscan-pref-counts-mix">Log levels + cache</label>
                   </div>
@@ -506,7 +539,7 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-people-posters" data-pref-group="issues" data-pref-key="people_posters">
                     <label class="form-check-label" for="logscan-pref-people-posters">Missing people posters</label>
                   </div>
@@ -526,77 +559,77 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-anidb-auth" data-pref-group="issues" data-pref-key="anidb_auth">
                     <label class="form-check-label" for="logscan-pref-anidb-auth">AniDB auth errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-flixpatrol-errors" data-pref-group="issues" data-pref-key="flixpatrol_errors">
                     <label class="form-check-label" for="logscan-pref-flixpatrol-errors">FlixPatrol errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-flixpatrol-paywall" data-pref-group="issues" data-pref-key="flixpatrol_paywall">
                     <label class="form-check-label" for="logscan-pref-flixpatrol-paywall">FlixPatrol paywall</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-lsio-errors" data-pref-group="issues" data-pref-key="lsio_errors">
                     <label class="form-check-label" for="logscan-pref-lsio-errors">LSIO errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-mal-connection-errors" data-pref-group="issues" data-pref-key="mal_connection_errors">
                     <label class="form-check-label" for="logscan-pref-mal-connection-errors">MAL connection errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-mdblist-api-limit-errors" data-pref-group="issues" data-pref-key="mdblist_api_limit_errors">
                     <label class="form-check-label" for="logscan-pref-mdblist-api-limit-errors">MDBList API limit</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-mdblist-attr-errors" data-pref-group="issues" data-pref-key="mdblist_attr_errors">
                     <label class="form-check-label" for="logscan-pref-mdblist-attr-errors">MDBList attribute errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-mdblist-errors" data-pref-group="issues" data-pref-key="mdblist_errors">
                     <label class="form-check-label" for="logscan-pref-mdblist-errors">MDBList errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-omdb-api-limit-errors" data-pref-group="issues" data-pref-key="omdb_api_limit_errors">
                     <label class="form-check-label" for="logscan-pref-omdb-api-limit-errors">OMDb API limit</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-omdb-errors" data-pref-group="issues" data-pref-key="omdb_errors">
                     <label class="form-check-label" for="logscan-pref-omdb-errors">OMDb errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-tautulli-apikey-errors" data-pref-group="issues" data-pref-key="tautulli_apikey_errors">
                     <label class="form-check-label" for="logscan-pref-tautulli-apikey-errors">Tautulli API key errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-tautulli-url-errors" data-pref-group="issues" data-pref-key="tautulli_url_errors">
                     <label class="form-check-label" for="logscan-pref-tautulli-url-errors">Tautulli URL errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-tmdb-api-errors" data-pref-group="issues" data-pref-key="tmdb_api_errors">
                     <label class="form-check-label" for="logscan-pref-tmdb-api-errors">TMDb API errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-tmdb-fail-errors" data-pref-group="issues" data-pref-key="tmdb_fail_errors">
                     <label class="form-check-label" for="logscan-pref-tmdb-fail-errors">TMDb connection failures</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-trakt-connection-errors" data-pref-group="issues" data-pref-key="trakt_connection_errors">
                     <label class="form-check-label" for="logscan-pref-trakt-connection-errors">Trakt connection errors</label>
                   </div>
@@ -616,42 +649,42 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-config-bad-version" data-pref-group="issues" data-pref-key="config_bad_version">
                     <label class="form-check-label" for="logscan-pref-config-bad-version">Bad version found</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-config-api-blank" data-pref-group="issues" data-pref-key="config_api_blank">
                     <label class="form-check-label" for="logscan-pref-config-api-blank">Blank API keys</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-config-cache-false" data-pref-group="issues" data-pref-key="config_cache_false">
                     <label class="form-check-label" for="logscan-pref-config-cache-false">Cache false warnings</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-config-delete-unmanaged" data-pref-group="issues" data-pref-key="config_delete_unmanaged">
                     <label class="form-check-label" for="logscan-pref-config-delete-unmanaged">Delete unmanaged warnings</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-config-mass-update" data-pref-group="issues" data-pref-key="config_mass_update">
                     <label class="form-check-label" for="logscan-pref-config-mass-update">Mass update warnings</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-config-missing-path" data-pref-group="issues" data-pref-key="config_missing_path">
                     <label class="form-check-label" for="logscan-pref-config-missing-path">Missing paths</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-config-other-award" data-pref-group="issues" data-pref-key="config_other_award">
                     <label class="form-check-label" for="logscan-pref-config-other-award">Other awards errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-config-to-be-configured" data-pref-group="issues" data-pref-key="config_to_be_configured">
                     <label class="form-check-label" for="logscan-pref-config-to-be-configured">"To be configured" builders</label>
                   </div>
@@ -671,22 +704,22 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-plex-library-errors" data-pref-group="issues" data-pref-key="plex_library_errors">
                     <label class="form-check-label" for="logscan-pref-plex-library-errors">Plex library errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-plex-regex-errors" data-pref-group="issues" data-pref-key="plex_regex_errors">
                     <label class="form-check-label" for="logscan-pref-plex-regex-errors">Plex regex errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-plex-rounding-errors" data-pref-group="issues" data-pref-key="plex_rounding_errors">
                     <label class="form-check-label" for="logscan-pref-plex-rounding-errors">Plex rounding errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-plex-url-errors" data-pref-group="issues" data-pref-key="plex_url_errors">
                     <label class="form-check-label" for="logscan-pref-plex-url-errors">Plex URL errors</label>
                   </div>
@@ -706,52 +739,52 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-metadata-attribute-errors" data-pref-group="issues" data-pref-key="metadata_attribute_errors">
                     <label class="form-check-label" for="logscan-pref-metadata-attribute-errors">Metadata attribute errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-metadata-load-errors" data-pref-group="issues" data-pref-key="metadata_load_errors">
                     <label class="form-check-label" for="logscan-pref-metadata-load-errors">Metadata load errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-overlay-apply-errors" data-pref-group="issues" data-pref-key="overlay_apply_errors">
                     <label class="form-check-label" for="logscan-pref-overlay-apply-errors">Overlay apply errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-overlay-font-missing" data-pref-group="issues" data-pref-key="overlay_font_missing">
                     <label class="form-check-label" for="logscan-pref-overlay-font-missing">Overlay font missing</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-overlay-image-missing" data-pref-group="issues" data-pref-key="overlay_image_missing">
                     <label class="form-check-label" for="logscan-pref-overlay-image-missing">Overlay image missing</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-overlay-level-errors" data-pref-group="issues" data-pref-key="overlay_level_errors">
                     <label class="form-check-label" for="logscan-pref-overlay-level-errors">Overlay level errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-overlay-load-errors" data-pref-group="issues" data-pref-key="overlay_load_errors">
                     <label class="form-check-label" for="logscan-pref-overlay-load-errors">Overlay load errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-overlays-bloat" data-pref-group="issues" data-pref-key="overlays_bloat">
                     <label class="form-check-label" for="logscan-pref-overlays-bloat">Overlays bloat warnings</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-playlist-errors" data-pref-group="issues" data-pref-key="playlist_errors">
                     <label class="form-check-label" for="logscan-pref-playlist-errors">Playlist errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-playlist-load-errors" data-pref-group="issues" data-pref-key="playlist_load_errors">
                     <label class="form-check-label" for="logscan-pref-playlist-load-errors">Playlist load errors</label>
                   </div>
@@ -771,17 +804,17 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-convert-issues" data-pref-group="issues" data-pref-key="convert_issues">
                     <label class="form-check-label" for="logscan-pref-convert-issues">Convert errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-image-corrupt" data-pref-group="issues" data-pref-key="image_corrupt">
                     <label class="form-check-label" for="logscan-pref-image-corrupt">Corrupt images</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-image-size" data-pref-group="issues" data-pref-key="image_size">
                     <label class="form-check-label" for="logscan-pref-image-size">Image size warnings</label>
                   </div>
@@ -801,17 +834,17 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-runtime-checkfiles" data-pref-group="issues" data-pref-key="runtime_checkfiles">
                     <label class="form-check-label" for="logscan-pref-runtime-checkfiles">checkFiles flagged</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-runtime-run-order" data-pref-group="issues" data-pref-key="runtime_run_order">
                     <label class="form-check-label" for="logscan-pref-runtime-run-order">Run order errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-runtime-timeout" data-pref-group="issues" data-pref-key="runtime_timeout">
                     <label class="form-check-label" for="logscan-pref-runtime-timeout">Timeout errors</label>
                   </div>
@@ -831,17 +864,17 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-update-git" data-pref-group="issues" data-pref-key="update_git">
                     <label class="form-check-label" for="logscan-pref-update-git">Kometa git errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-update-kometa" data-pref-group="issues" data-pref-key="update_kometa">
                     <label class="form-check-label" for="logscan-pref-update-kometa">New Kometa version</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-update-plexapi" data-pref-group="issues" data-pref-key="update_plexapi">
                     <label class="form-check-label" for="logscan-pref-update-plexapi">New PlexAPI version</label>
                   </div>
@@ -861,22 +894,22 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-platform-db-cache" data-pref-group="issues" data-pref-key="platform_db_cache">
                     <label class="form-check-label" for="logscan-pref-platform-db-cache">DB cache recommendation</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-platform-kometa-time" data-pref-group="issues" data-pref-key="platform_kometa_time">
                     <label class="form-check-label" for="logscan-pref-platform-kometa-time">Kometa time recommendation</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-platform-memory" data-pref-group="issues" data-pref-key="platform_memory">
                     <label class="form-check-label" for="logscan-pref-platform-memory">Memory recommendation</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-platform-wsl" data-pref-group="issues" data-pref-key="platform_wsl">
                     <label class="form-check-label" for="logscan-pref-platform-wsl">WSL detected</label>
                   </div>
@@ -896,22 +929,22 @@
               <div class="accordion-body">
                 <div class="logscan-pref-list">
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-anidb-69" data-pref-group="issues" data-pref-key="anidb_69">
                     <label class="form-check-label" for="logscan-pref-anidb-69">AniDB 69 errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-misc-internal-server" data-pref-group="issues" data-pref-key="misc_internal_server">
                     <label class="form-check-label" for="logscan-pref-misc-internal-server">Internal server errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-misc-pmm-legacy" data-pref-group="issues" data-pref-key="misc_pmm_legacy">
                     <label class="form-check-label" for="logscan-pref-misc-pmm-legacy">Legacy PMM errors</label>
                   </div>
                   <div class="form-check form-switch">
-                    <input class="form-check-input logscan-pref-input" type="checkbox" role="switch"
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-misc-no-items" data-pref-group="issues" data-pref-key="misc_no_items">
                     <label class="form-check-label" for="logscan-pref-misc-no-items">No items found</label>
                   </div>

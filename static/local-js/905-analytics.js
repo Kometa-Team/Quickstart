@@ -299,6 +299,12 @@ $(document).ready(function () {
     return created || 'n/a'
   }
 
+  function getDisplayStarted (run) {
+    if (!run) return 'n/a'
+    const started = formatTimestamp(run.started_at)
+    return started || 'n/a'
+  }
+
   function getSectionTotal (sectionRuntimes) {
     if (!sectionRuntimes || typeof sectionRuntimes !== 'object') return 0
     return Object.values(sectionRuntimes).reduce((sum, value) => {
@@ -326,6 +332,95 @@ $(document).ready(function () {
       return `Displayed from section runtimes (${formatSeconds(parts.sectionTotal)}) because the parsed run total was ${formatSeconds(parts.raw)}. Reingest logs after this update to refresh stored run totals.`
     }
     return 'Total run time parsed from the Kometa run summary.'
+  }
+
+  function getMaintenanceSummary (run) {
+    const summary = run && run.maintenance_summary && typeof run.maintenance_summary === 'object'
+      ? run.maintenance_summary
+      : {}
+    return {
+      hadPause: Boolean(run && run.maintenance_had_pause) || Boolean(summary.had_pause),
+      pauseCount: Number.isFinite(summary.pause_count) ? summary.pause_count : 0,
+      pauseSeconds: Number.isFinite(summary.pause_seconds) ? summary.pause_seconds : 0,
+      openPause: Boolean(summary.open_pause),
+      window: summary.window || '',
+      events: Array.isArray(summary.events) ? summary.events : []
+    }
+  }
+
+  function getMaintenanceSortValue (run) {
+    const summary = getMaintenanceSummary(run)
+    if (!summary.hadPause) return 0
+    const seconds = Number.isFinite(summary.pauseSeconds) ? summary.pauseSeconds : 0
+    const count = Number.isFinite(summary.pauseCount) ? summary.pauseCount : 0
+    return (seconds * 100) + count + (summary.openPause ? 1 : 0)
+  }
+
+  function renderMaintenanceSummaryCell (run) {
+    const summary = getMaintenanceSummary(run)
+    if (!summary.hadPause) {
+      return '<span class="text-muted">No pause</span>'
+    }
+    const parts = [`Paused ${summary.pauseCount || 1}x`]
+    if (summary.pauseSeconds > 0) {
+      parts.push(formatSeconds(summary.pauseSeconds))
+    }
+    if (summary.openPause) {
+      parts.push('open')
+    }
+    const detailParts = []
+    if (summary.window) {
+      detailParts.push(`Window: ${summary.window}`)
+    }
+    if (summary.events.length) {
+      detailParts.push(`Events: ${summary.events.map(event => event.event).join(', ')}`)
+    }
+    const title = detailParts.join(' | ')
+    return `<span title="${escapeHtml(title)}">${escapeHtml(parts.join(' • '))}</span>`
+  }
+
+  function getQuietPeriodSummary (run) {
+    const summary = run && run.quiet_period_summary && typeof run.quiet_period_summary === 'object'
+      ? run.quiet_period_summary
+      : {}
+    return {
+      longestGapSeconds: Number.isFinite(summary.longest_gap_seconds) ? summary.longest_gap_seconds : 0,
+      longestGapStartedAt: summary.longest_gap_started_at || '',
+      longestGapEndedAt: summary.longest_gap_ended_at || '',
+      gapsOver300: Number.isFinite(summary.gaps_over_300) ? summary.gaps_over_300 : 0,
+      gapsOver900: Number.isFinite(summary.gaps_over_900) ? summary.gaps_over_900 : 0,
+      gapsOver1800: Number.isFinite(summary.gaps_over_1800) ? summary.gaps_over_1800 : 0,
+      maintenanceOverlap: summary.longest_gap_maintenance_overlap || 'unknown'
+    }
+  }
+
+  function getQuietPeriodSortValue (run) {
+    return getQuietPeriodSummary(run).longestGapSeconds
+  }
+
+  function renderQuietPeriodCell (run) {
+    const summary = getQuietPeriodSummary(run)
+    if (summary.longestGapSeconds <= 0) {
+      return '<span class="text-muted">No gaps</span>'
+    }
+    const parts = [`Longest ${formatSeconds(summary.longestGapSeconds)}`]
+    if (summary.gapsOver900 > 0) {
+      parts.push(`${summary.gapsOver900}x>15m`)
+    } else if (summary.gapsOver300 > 0) {
+      parts.push(`${summary.gapsOver300}x>5m`)
+    }
+    const detailParts = []
+    if (summary.longestGapStartedAt && summary.longestGapEndedAt) {
+      detailParts.push(`Gap: ${summary.longestGapStartedAt} -> ${summary.longestGapEndedAt}`)
+    }
+    if (summary.gapsOver1800 > 0) {
+      detailParts.push(`>30m: ${summary.gapsOver1800}`)
+    }
+    if (summary.maintenanceOverlap) {
+      detailParts.push(`Maintenance overlap: ${summary.maintenanceOverlap}`)
+    }
+    const title = detailParts.join(' | ')
+    return `<span title="${escapeHtml(title)}">${escapeHtml(parts.join(' • '))}</span>`
   }
 
   function getCountsTotal (run) {
@@ -1279,7 +1374,7 @@ $(document).ready(function () {
     $tablePrev.prop('disabled', tablePage <= 1 || total === 0)
     $tableNext.prop('disabled', tablePage >= pageCount || total === 0)
     if (!total) {
-      $tableBody.html('<tr><td colspan="14" class="text-muted">No runs match the current filters.</td></tr>')
+      $tableBody.html('<tr><td colspan="17" class="text-muted">No runs match the current filters.</td></tr>')
       return
     }
     sectionDetailsByRunKey.clear()
@@ -1341,6 +1436,7 @@ $(document).ready(function () {
       const isSelectable = isRunSelectable(run)
       const isSelected = isSelectable && selectedRunKeys.has(runKey)
       const statusDisplay = run.is_incomplete ? 'Incomplete' : 'Complete'
+      const startedDisplay = escapeHtml(getDisplayStarted(run))
       const finishedDisplay = escapeHtml(getDisplayFinished(run))
       const sizeBytes = typeof run.log_resolved_size === 'number'
         ? run.log_resolved_size
@@ -1393,6 +1489,7 @@ $(document).ready(function () {
             </span>
           `, 'class="logscan-select-cell"')}
           ${renderRunCardCell('Status', 'Complete runs are included in charts. Incomplete logs are shown here for investigation and file management.', escapeHtml(statusDisplay), run.is_incomplete ? 'class="text-nowrap text-warning fw-semibold"' : 'class="text-nowrap text-success fw-semibold"')}
+          ${renderRunCardCell('Started', 'Timestamp parsed from the Start Time value in the completed Kometa run summary.', startedDisplay, 'class="text-nowrap"')}
           ${renderRunCardCell('Finished', 'Timestamp of the run finishing. Incomplete logs are shown here for investigation only and are excluded from charts.', finishedDisplay, 'class="text-nowrap"')}
           ${renderRunCardCell('Runtime', getRuntimeHelpText(run), escapeHtml(formatSeconds(runtimeParts.effective)))}
           ${renderRunCardCell('Config', 'Config name detected for the run.', escapeHtml(run.config_name || 'default'))}
@@ -1401,6 +1498,8 @@ $(document).ready(function () {
           ${renderRunCardCell('Command', 'Sanitized Kometa command line.', `<span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span>`)}
           ${renderRunCardCell('Counts', 'W warnings, E errors, T tracebacks, M movies, S shows, Ep episodes, Tot total library items.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
           ${renderRunCardCell('Kometa', 'Version detected for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
+          ${renderRunCardCell('Maintenance', 'Quickstart maintenance pauses recorded in meta.log for this run.', renderMaintenanceSummaryCell(run))}
+          ${renderRunCardCell('Quiet periods', 'Longest delays between timestamped Kometa log lines for this run.', renderQuietPeriodCell(run))}
           ${renderRunCardCell('Section runtimes', 'Runtime totals parsed per Kometa section.', sectionCell)}
           ${renderRunCardCell('Log size', 'Current on-disk size of the resolved log file when available, otherwise the ingested size.', escapeHtml(formatBytes(sizeBytes)))}
           ${renderRunCardCell('Log', 'Download the source log for this run. Archived plain logs can also be compressed, and archived logs can be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
@@ -1827,6 +1926,12 @@ $(document).ready(function () {
     switch (key) {
       case 'status':
         return run && run.is_incomplete ? 1 : 0
+      case 'started_at':
+        if (run && run.started_at) {
+          const parsed = new Date(run.started_at)
+          if (!Number.isNaN(parsed.getTime())) return parsed.getTime()
+        }
+        return null
       case 'finished_at':
         return getSortTimestamp(run)
       case 'run_time_seconds':
@@ -1855,6 +1960,10 @@ $(document).ready(function () {
         return getRunLibraryTotals(run).total
       case 'kometa_version':
         return run.kometa_version || ''
+      case 'maintenance':
+        return getMaintenanceSortValue(run)
+      case 'quiet_periods':
+        return getQuietPeriodSortValue(run)
       case 'section_runtimes':
         return getSectionTotal(run.section_runtimes)
       case 'log_resolved_size':
@@ -2442,7 +2551,7 @@ $(document).ready(function () {
         if ($tablePageInfo.length) $tablePageInfo.text('No rows')
         $tablePrev.prop('disabled', true)
         $tableNext.prop('disabled', true)
-        $tableBody.html('<tr><td colspan="14" class="text-muted">Unable to load runs.</td></tr>')
+        $tableBody.html('<tr><td colspan="17" class="text-muted">Unable to load runs.</td></tr>')
         updateSelectionSummary()
       })
   }
