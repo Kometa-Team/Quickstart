@@ -2349,8 +2349,9 @@ document.addEventListener('DOMContentLoaded', function () {
       try {
         let done = false
         while (!done) {
-          const prog = await fetch(`/clone-test-libraries-progress?job_id=${encodeURIComponent(jobId)}`).then(r => r.json())
-          if (!prog.success) throw new Error(prog.message || 'Progress error')
+          const jobRes = await fetch(`/background-jobs/${encodeURIComponent(jobId)}`).then(r => r.json())
+          if (!jobRes.success || !jobRes.job) throw new Error(jobRes.error || jobRes.message || 'Progress error')
+          const prog = jobRes.job
 
           const phase = prog.phase
           if (phase === 'download') {
@@ -2478,10 +2479,10 @@ document.addEventListener('DOMContentLoaded', function () {
       setProgress(40, 'Resuming download…', { indeterminate: true })
       startElapsedTimer(Number.isFinite(startedAtMs) ? startedAtMs : undefined)
 
-      fetch(`/clone-test-libraries-progress?job_id=${encodeURIComponent(jobId)}`)
+      fetch(`/background-jobs/${encodeURIComponent(jobId)}`)
         .then(r => r.json())
         .then(data => {
-          if (!data.success) throw new Error(data.message || 'Unknown job')
+          if (!data.success || !data.job) throw new Error(data.error || data.message || 'Unknown job')
           return pollJob(jobId)
         })
         .catch(() => {
@@ -2498,14 +2499,14 @@ document.addEventListener('DOMContentLoaded', function () {
     if (stored.jobId && !running) {
       resumeJob(stored.jobId, stored.startedAt)
     } else {
-      fetch('/clone-test-libraries-active')
+      fetch('/background-jobs/active?job_type=test_library_install')
         .then(r => r.json())
         .then(data => {
-          if (!data.success || !data.active || !data.job_id || running) return
-          const startedAtSec = Number(data.started_at)
+          if (!data.success || !data.active || !data.job || !data.job.job_id || running) return
+          const startedAtSec = Number(data.job.started_epoch)
           const startedAtMs = Number.isFinite(startedAtSec) ? startedAtSec * 1000 : undefined
-          storeJob(data.job_id, startedAtMs)
-          resumeJob(data.job_id, startedAtMs)
+          storeJob(data.job.job_id, startedAtMs)
+          resumeJob(data.job.job_id, startedAtMs)
         })
         .catch(() => {})
     }

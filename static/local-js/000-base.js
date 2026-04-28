@@ -550,6 +550,9 @@ let qsLastQueuedStartedAt = null
 const QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS = 15000
 let qsLastLogscanReingestStatus = 'idle'
 let qsLastLogscanReingestJobId = null
+const QS_BACKGROUND_JOBS_POLL_INTERVAL_MS = 10000
+let qsLatestKometaStatus = null
+let qsActiveBackgroundJobs = []
 
 function qsFormatLocalTime () {
   const now = new Date()
@@ -573,8 +576,277 @@ function qsFormatTimestamp (value) {
   return `${yyyy}-${MM}-${dd} ${hh}:${mm}:${ss}`
 }
 
+function qsFormatElapsedLabel (seconds) {
+  if (!Number.isFinite(Number(seconds))) return ''
+  const total = Math.max(0, Math.floor(Number(seconds)))
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const secs = total % 60
+  const parts = []
+  if (hours) parts.push(`${hours}h`)
+  parts.push(`${minutes}m`)
+  parts.push(`${String(secs).padStart(2, '0')}s`)
+  return parts.join(' ')
+}
+
+function qsBuildKometaActiveWorkEntry () {
+  const data = qsLatestKometaStatus
+  if (!data || typeof data !== 'object') return null
+
+  const windowLabel = String(data.maintenance_window || '').trim()
+  const href = '/step/900-final'
+
+  if (data.window_unavailable) {
+    const since = data.window_unavailable_since ? `Since ${qsFormatTimestamp(data.window_unavailable_since)}` : 'Maintenance window unavailable'
+    return {
+      key: 'kometa-window-unavailable',
+      title: 'Kometa start blocked',
+      chip: 'Waiting',
+      state: 'warn',
+      meta: windowLabel ? `${since} • Window ${windowLabel}` : since,
+      href,
+      titleAttr: windowLabel
+        ? `Kometa start is blocked because the configured Plex maintenance window ${windowLabel} is unavailable.`
+        : 'Kometa start is blocked because the configured Plex maintenance window is unavailable.'
+    }
+  }
+
+  if (data.pending_start) {
+    const requested = data.pending_requested_at ? `Requested ${qsFormatTimestamp(data.pending_requested_at)}` : 'Queued for next available window'
+    return {
+      key: 'kometa-queued',
+      title: 'Kometa queued',
+      chip: 'Queued',
+      state: 'warn',
+      meta: windowLabel ? `${requested} • Window ${windowLabel}` : requested,
+      href,
+      titleAttr: windowLabel
+        ? `Kometa will start automatically when the maintenance window ${windowLabel} opens.`
+        : 'Kometa start has been queued.'
+    }
+  }
+
+  if (data.maintenance_paused) {
+    const pausedSince = data.maintenance_paused_since ? `Paused ${qsFormatTimestamp(data.maintenance_paused_since)}` : 'Paused for Plex maintenance'
+    return {
+      key: 'kometa-paused',
+      title: 'Kometa run',
+      chip: 'Paused',
+      state: 'warn',
+      meta: windowLabel ? `${pausedSince} • Window ${windowLabel}` : pausedSince,
+      href,
+      titleAttr: windowLabel
+        ? `Kometa is paused for Plex maintenance during ${windowLabel}.`
+        : 'Kometa is paused for Plex maintenance.'
+    }
+  }
+
+  if (String(data.status || '').trim().toLowerCase() === 'running') {
+    const elapsed = qsFormatElapsedLabel(data.elapsed_seconds)
+    return {
+      key: 'kometa-running',
+      title: 'Kometa run',
+      chip: 'Running',
+      state: 'unknown',
+      meta: elapsed ? `Elapsed ${elapsed}` : 'Kometa is currently running.',
+      href,
+      titleAttr: elapsed ? `Kometa has been running for ${elapsed}.` : 'Kometa is currently running.'
+    }
+  }
+
+  return null
+}
+
+function qsGetBackgroundJobLabel (job) {
+  const jobType = String(job && job.job_type ? job.job_type : '').trim()
+  const trigger = String(job && job.trigger ? job.trigger : '').trim()
+  if (jobType === 'logscan_reingest') {
+    return trigger === 'startup_migration' ? 'Analytics migration' : 'Analytics reingest'
+  }
+  if (jobType === 'kometa_update') return 'Kometa update'
+  if (jobType === 'test_library_install') return 'Test library install'
+  return jobType ? jobType.replaceAll('_', ' ') : 'Background job'
+}
+
+function qsGetBackgroundJobBadgeClasses (job) {
+  const state = qsGetBackgroundJobState(job)
+  if (state === 'error') return 'text-bg-danger'
+  if (state === 'warn') return 'text-bg-warning text-dark'
+  return 'text-bg-primary'
+}
+
+function qsGetBackgroundJobState (job) {
+  const status = String(job && job.status ? job.status : '').trim().toLowerCase()
+  if (status === 'error') return 'error'
+  if (status === 'queued') return 'warn'
+  if (status === 'complete') return 'ok'
+  return 'unknown'
+}
+
+function qsGetBackgroundJobChip (job) {
+  const status = String(job && job.status ? job.status : '').trim().toLowerCase()
+  if (status === 'error') return 'Failed'
+  if (status === 'queued') return 'Queued'
+
+  const phase = String(job && job.phase ? job.phase : '').trim().toLowerCase()
+  if (phase === 'download') return 'Downloading'
+  if (phase === 'extract') return 'Extracting'
+  if (phase === 'finalize') return 'Finalizing'
+  if (phase === 'done') return 'Done'
+  if (phase === 'running') return 'Running'
+  if (phase === 'queued') return 'Queued'
+  if (phase === 'error') return 'Failed'
+  if (phase === 'reingesting') return 'Reingesting'
+  if (phase === 'starting') return 'Starting'
+  if (phase === 'validating') return 'Validating'
+  return status === 'complete' ? 'Done' : 'Running'
+}
+
+function qsGetBackgroundJobMeta (job) {
+  if (!job || typeof job !== 'object') return ''
+
+  const parts = []
+  const pct = Number(job.pct)
+  const text = String(job.text || '').trim()
+  const currentFile = String(job.current_file || '').trim()
+  const summary = job.summary && typeof job.summary === 'object' ? job.summary : {}
+
+  if (text) parts.push(text)
+  if (currentFile) parts.push(`File ${currentFile}`)
+
+  if (Number.isFinite(pct)) {
+    parts.push(`${Math.max(0, Math.min(100, Math.round(pct)))}%`)
+  } else if (Number.isFinite(Number(summary.scanned)) && Number.isFinite(Number(summary.total))) {
+    parts.push(`Scanned ${Number(summary.scanned)}/${Number(summary.total)}`)
+  } else if (Number.isFinite(Number(job.scanned)) && Number.isFinite(Number(job.total))) {
+    parts.push(`Scanned ${Number(job.scanned)}/${Number(job.total)}`)
+  }
+
+  return parts.filter(Boolean).slice(0, 3).join(' • ')
+}
+
+function qsBuildBackgroundJobEntries () {
+  if (!Array.isArray(qsActiveBackgroundJobs)) return []
+  return qsActiveBackgroundJobs
+    .filter(job => job && typeof job === 'object')
+    .map((job) => {
+      const label = qsGetBackgroundJobLabel(job)
+      const chip = qsGetBackgroundJobChip(job)
+      const meta = qsGetBackgroundJobMeta(job)
+      const href = String(job.target_page || '').trim() || '#'
+      return {
+        key: `job-${job.job_id || label}`,
+        jobId: String(job.job_id || '').trim() || null,
+        title: label,
+        chip,
+        state: qsGetBackgroundJobState(job),
+        badgeClasses: qsGetBackgroundJobBadgeClasses(job),
+        meta: meta || 'In progress.',
+        href,
+        titleAttr: meta ? `${label}: ${meta}` : label
+      }
+    })
+}
+
+function qsComputeActiveWorkRollupState (entries) {
+  if (!Array.isArray(entries) || !entries.length) return 'ok'
+  if (entries.some(entry => entry.state === 'error')) return 'error'
+  if (entries.some(entry => entry.state === 'warn')) return 'warn'
+  return 'unknown'
+}
+
+function qsRenderActiveWorkCard () {
+  const group = document.querySelector('[data-qs-active-work]')
+  if (!group) return
+
+  const indicator = group.querySelector('[data-qs-active-work-indicator]')
+  const count = group.querySelector('[data-qs-active-work-count]')
+  const state = group.querySelector('[data-qs-active-work-state]')
+  const list = group.querySelector('[data-qs-active-work-list]')
+  const empty = group.querySelector('[data-qs-active-work-empty]')
+  const summary = group.querySelector('.qs-step-group-summary')
+
+  if (!indicator || !count || !state || !list) return
+
+  const entries = []
+  const kometaEntry = qsBuildKometaActiveWorkEntry()
+  if (kometaEntry) entries.push(kometaEntry)
+  entries.push(...qsBuildBackgroundJobEntries())
+
+  const rollupState = qsComputeActiveWorkRollupState(entries)
+  const activeCount = entries.length
+  const idle = activeCount === 0
+
+  qsApplyIndicatorState(indicator, 'qs-step-group-state', rollupState)
+
+  count.textContent = idle ? 'Idle' : (activeCount === 1 ? '1 active' : `${activeCount} active`)
+  count.title = idle ? 'No active work.' : `${activeCount} active item${activeCount === 1 ? '' : 's'}`
+
+  if (summary) {
+    summary.title = idle ? 'Active Work: idle' : `Active Work: ${activeCount} active item${activeCount === 1 ? '' : 's'}`
+  }
+
+  state.textContent = idle
+    ? 'No active work.'
+    : activeCount === 1
+      ? '1 active item is running.'
+      : `${activeCount} active items are running.`
+
+  list.classList.toggle('d-none', idle)
+
+  if (empty) {
+    empty.classList.toggle('d-none', !idle)
+  }
+
+  if (idle) {
+    return
+  }
+
+  list.innerHTML = entries.map((entry) => {
+    const hrefAttr = entry.href && entry.href !== '#'
+      ? ` href="${escapeHtml(entry.href)}"`
+      : ' href="#"'
+    const titleAttr = entry.titleAttr ? ` title="${escapeHtml(entry.titleAttr)}"` : ''
+    const targetLabelAttr = ` data-qs-target-label="${escapeHtml(entry.title)}"`
+    return `
+      <a class="qs-active-work-item qs-active-work-item--${escapeHtml(entry.state)}"${hrefAttr}${titleAttr}${targetLabelAttr}>
+        <div class="qs-active-work-item-head">
+          <span class="qs-active-work-item-title">${escapeHtml(entry.title)}</span>
+          <span class="qs-active-work-chip qs-active-work-chip--${escapeHtml(entry.state)}">${escapeHtml(entry.chip)}</span>
+        </div>
+        <div class="qs-active-work-item-meta">${escapeHtml(entry.meta || '')}</div>
+      </a>`
+  }).join('')
+}
+
+function qsRenderBackgroundJobPills () {
+  const container = document.querySelector('[data-qs-background-job-pills]')
+  if (!container) return
+
+  const entries = qsBuildBackgroundJobEntries().slice(0, 4)
+  if (!entries.length) {
+    container.innerHTML = ''
+    return
+  }
+
+  container.innerHTML = entries.map((entry) => {
+    const hrefAttr = entry.href && entry.href !== '#'
+      ? ` href="${escapeHtml(entry.href)}"`
+      : ' href="#"'
+    const titleAttr = entry.titleAttr ? ` title="${escapeHtml(entry.titleAttr)}"` : ''
+    const targetLabelAttr = ` data-qs-target-label="${escapeHtml(entry.title)}"`
+    return `
+      <a class="qs-header-status-pill qs-background-job-pill"${hrefAttr}${titleAttr}${targetLabelAttr}>
+        <span class="badge rounded-pill ${escapeHtml(entry.badgeClasses || 'text-bg-primary')} px-3 py-2">
+          <i class="bi bi-arrow-repeat me-1"></i> ${escapeHtml(entry.title)}
+        </span>
+      </a>`
+  }).join('')
+}
+
 function qsHandleMaintenanceStatus (data) {
-  if (typeof showToast !== 'function' || !data) return
+  if (!data) return
+  qsLatestKometaStatus = data
   const paused = Boolean(data.maintenance_paused)
   const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
   const nowLabel = qsFormatLocalTime()
@@ -616,7 +888,7 @@ function qsHandleMaintenanceStatus (data) {
         label.innerHTML = `<i class="bi bi-pause-circle me-1"></i> Kometa paused for Plex maintenance${windowLabel}`
       }
     }
-    if (!qsLastMaintenanceToastAt || (now - qsLastMaintenanceToastAt) >= QS_MAINTENANCE_TOAST_INTERVAL_MS) {
+    if (typeof showToast === 'function' && (!qsLastMaintenanceToastAt || (now - qsLastMaintenanceToastAt) >= QS_MAINTENANCE_TOAST_INTERVAL_MS)) {
       showToast('warning', `Kometa paused for Plex maintenance${windowLabel} at ${nowLabel}. It will resume automatically when maintenance ends.`)
       qsLastMaintenanceToastAt = now
     }
@@ -624,7 +896,9 @@ function qsHandleMaintenanceStatus (data) {
     if (badge) {
       badge.classList.add('d-none')
     }
-    showToast('success', `Plex maintenance ended at ${nowLabel}. Kometa resumed.`)
+    if (typeof showToast === 'function') {
+      showToast('success', `Plex maintenance ended at ${nowLabel}. Kometa resumed.`)
+    }
     qsLastMaintenanceToastAt = 0
   } else if (badge) {
     badge.classList.add('d-none')
@@ -660,66 +934,26 @@ function qsHandleMaintenanceStatus (data) {
   if (data.queued_started_at) {
     if (!qsLastQueuedStartedAt || qsLastQueuedStartedAt !== data.queued_started_at) {
       const startedLabel = qsFormatTimestamp(data.queued_started_at)
-      showToast('success', `Kometa started from queued request at ${startedLabel}.`)
+      if (typeof showToast === 'function') {
+        showToast('success', `Kometa started from queued request at ${startedLabel}.`)
+      }
       qsLastQueuedStartedAt = data.queued_started_at
     }
   }
 
   qsLastMaintenancePaused = paused
+  qsRenderActiveWorkCard()
 }
 
 window.QS_handleMaintenanceStatus = qsHandleMaintenanceStatus
 window.QS_formatTimestamp = qsFormatTimestamp
 
 function qsHandleLogscanReingestStatus (data) {
-  const badge = document.getElementById('qs-logscan-reingest-badge')
-  if (!badge) return
-  const label = badge.querySelector('span')
   const status = String((data && data.status) || 'idle').trim().toLowerCase()
-  const trigger = data && data.trigger === 'startup_migration' ? 'startup_migration' : 'manual'
-  const migrationLevel = Number.isFinite(data && data.migration_level) ? data.migration_level : null
   const jobId = String((data && data.job_id) || '').trim() || null
-  const currentFile = String((data && data.current_file) || '').trim()
-  const previousStatus = qsLastLogscanReingestStatus
-  const previousJobId = qsLastLogscanReingestJobId
-
-  const setBadgeTone = (...classes) => {
-    if (!label) return
-    label.classList.remove('text-bg-primary', 'text-bg-info', 'text-bg-warning', 'text-bg-danger', 'text-dark')
-    label.classList.add(...classes)
-  }
-
-  if (status === 'running') {
-    badge.classList.remove('d-none')
-    const prefix = trigger === 'startup_migration' ? 'Startup Analytics migration' : 'Analytics reingest'
-    const suffix = migrationLevel ? ` (level ${migrationLevel})` : ''
-    if (label) {
-      label.innerHTML = trigger === 'startup_migration'
-        ? `<i class="bi bi-arrow-repeat me-1"></i> ${prefix}${suffix}`
-        : '<i class="bi bi-arrow-repeat me-1"></i> Analytics reingest running'
-    }
-    if (trigger === 'startup_migration') {
-      setBadgeTone('text-bg-warning', 'text-dark')
-    } else {
-      setBadgeTone('text-bg-primary')
-    }
-    badge.title = currentFile
-      ? `${prefix}${suffix} is running. Current file: ${currentFile}. Open Analytics.`
-      : `${prefix}${suffix} is running. Open Analytics.`
-  } else if (status === 'error') {
-    badge.classList.remove('d-none')
-    if (label) {
-      label.innerHTML = '<i class="bi bi-exclamation-octagon me-1"></i> Analytics reingest failed'
-    }
-    setBadgeTone('text-bg-danger')
-    badge.title = data && data.error ? `Analytics reingest failed: ${data.error}` : 'Analytics reingest failed. Open Analytics.'
-  } else {
-    badge.classList.add('d-none')
-    badge.title = 'Open Analytics'
-  }
-
   qsLastLogscanReingestStatus = status
   qsLastLogscanReingestJobId = jobId
+  qsRenderActiveWorkCard()
 }
 
 window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
@@ -746,6 +980,35 @@ window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
   setTimeout(poll, 1800)
   setInterval(poll, QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS)
 })()
+
+;(function qsBackgroundJobsPoll () {
+  const poll = () => {
+    fetch('/background-jobs/active')
+      .then(res => res.json())
+      .then((data) => {
+        qsActiveBackgroundJobs = Array.isArray(data && data.jobs) ? data.jobs : []
+        qsRenderActiveWorkCard()
+        qsRenderBackgroundJobPills()
+      })
+      .catch(() => {})
+  }
+  setTimeout(poll, 1500)
+  setInterval(poll, QS_BACKGROUND_JOBS_POLL_INTERVAL_MS)
+})()
+
+document.addEventListener('click', (event) => {
+  const link = event.target.closest('.qs-active-work-item[href], .qs-header-status-pill[href]')
+  if (!link) return
+  const href = String(link.getAttribute('href') || '').trim()
+  if (!href || href === '#') return
+  if (event.defaultPrevented) return
+  if (event.button !== 0) return
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+  if (String(link.getAttribute('target') || '').trim() === '_blank') return
+
+  const targetLabel = String(link.dataset.qsTargetLabel || link.textContent || '').trim()
+  showNavigationLoadingOverlay('status-link', targetLabel)
+})
 
 function getValidatedInput () {
   const form = document.getElementById('configForm') || document.getElementById('final-form') || document

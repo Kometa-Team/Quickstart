@@ -84,6 +84,8 @@ def test_update_kometa_conflict_when_running(client, monkeypatch):
     assert resp.status_code == 409
     payload = resp.get_json()
     assert payload["success"] is False
+    assert payload["blocked_by"] == "kometa_run"
+    assert payload["pid"] == 1234
     assert "Kometa is currently running" in payload["error"]
 
 
@@ -240,6 +242,71 @@ def test_update_kometa_branch_override_uses_selected_branch(client, monkeypatch,
     assert payload["kometa_branch"] == "develop"
     assert captured["branch"] == "develop"
     assert any("Kometa branch override selected: develop" in line for line in payload["log"])
+
+
+def test_background_jobs_active_and_status_routes(client, qs_module):
+    job = qs_module._create_background_job(
+        "test_library_install",
+        trigger="manual",
+        phase="download",
+        status="running",
+        pct=25,
+        text="Downloading zip…",
+        started_epoch=123.0,
+    )
+
+    active_resp = client.get("/background-jobs/active")
+    assert active_resp.status_code == 200
+    active_payload = active_resp.get_json()
+    assert active_payload["success"] is True
+    assert any(item["job_id"] == job["job_id"] for item in active_payload["jobs"])
+
+    filtered_resp = client.get("/background-jobs/active", query_string={"job_type": "test_library_install"})
+    assert filtered_resp.status_code == 200
+    filtered_payload = filtered_resp.get_json()
+    assert filtered_payload["success"] is True
+    assert filtered_payload["active"] is True
+    assert filtered_payload["job"]["job_id"] == job["job_id"]
+
+    status_resp = client.get(f"/background-jobs/{job['job_id']}")
+    assert status_resp.status_code == 200
+    status_payload = status_resp.get_json()
+    assert status_payload["success"] is True
+    assert status_payload["job"]["phase"] == "download"
+    assert status_payload["job"]["pct"] == 25
+    qs_module._complete_background_job(job["job_id"])
+
+
+def test_clone_test_libraries_routes_use_shared_background_job(client, qs_module):
+    job = qs_module._create_background_job(
+        "test_library_install",
+        trigger="manual",
+        phase="download",
+        status="running",
+        pct=40,
+        text="Downloading zip…",
+        downloaded=2048,
+        total=4096,
+        started_epoch=456.0,
+    )
+
+    progress_resp = client.get("/clone-test-libraries-progress", query_string={"job_id": job["job_id"]})
+    assert progress_resp.status_code == 200
+    progress_payload = progress_resp.get_json()
+    assert progress_payload["success"] is True
+    assert progress_payload["phase"] == "download"
+    assert progress_payload["downloaded"] == 2048
+    assert progress_payload["total"] == 4096
+
+    active_resp = client.get("/clone-test-libraries-active")
+    assert active_resp.status_code == 200
+    active_payload = active_resp.get_json()
+    assert active_payload["success"] is True
+    assert active_payload["active"] is True
+    assert active_payload["job_id"] == job["job_id"]
+    assert active_payload["started_at"] == 456.0
+    assert active_payload["progress"]["pct"] == 40
+    qs_module._complete_background_job(job["job_id"])
 
 
 def test_get_upstream_sha_non_200(monkeypatch):

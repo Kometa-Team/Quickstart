@@ -166,6 +166,24 @@
                 </div>
               </div>
             </div>
+            <details class="qs-step-group qs-active-work-group" data-qs-active-work>
+              <summary class="qs-step-group-summary" title="Active Work" aria-label="Background jobs and active process work">
+                <span>Active Work</span>
+                <span class="qs-step-group-summary-right">
+                  <span class="qs-step-group-state qs-step-group-state--ok" data-qs-active-work-indicator>
+                    <i class="bi bi-check-lg" aria-hidden="true"></i>
+                  </span>
+                  <span class="qs-active-work-count" data-qs-active-work-count>Idle</span>
+                  <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                </span>
+              </summary>
+              <div class="qs-active-work-panel">
+                <div class="qs-active-work-state" data-qs-active-work-state>No active work.</div>
+                <div class="qs-active-work-list" data-qs-active-work-list>
+                  <div class="qs-active-work-empty" data-qs-active-work-empty>No active work.</div>
+                </div>
+              </div>
+            </details>
             <div class="qs-step-groups">
               {{ workspace.step_group('Required', 'required', template_list, required_keys, page_info, step_statuses, section_statuses, open_state=required_open) }}
               {{ workspace.step_group('Optional', 'optional', template_list, optional_ns.keys, page_info, step_statuses, section_statuses, open_state=optional_open) }}
@@ -217,12 +235,7 @@
                     <i class="bi bi-hourglass-split me-1"></i> Kometa start queued
                   </span>
                 </a>
-                <a id="qs-logscan-reingest-badge" class="d-none qs-header-status-pill" href="{{ url_for('logscan_trends_page') }}"
-                  title="Open Analytics">
-                  <span class="badge rounded-pill text-bg-primary px-3 py-2">
-                    <i class="bi bi-arrow-repeat me-1"></i> Analytics reingest running
-                  </span>
-                </a>
+                <div class="qs-background-job-pill-list" data-qs-background-job-pills></div>
               </div>
             </div>
             <h2 class="qs-main-page-title">{{ page_info['title'] }}</h2>

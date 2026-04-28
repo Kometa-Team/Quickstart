@@ -1456,22 +1456,27 @@ $(document).ready(function () {
 
   function pollKometaUpdateProgress () {
     if (!kometaUpdateJobId) return Promise.resolve(null)
-    return fetch(`/update-kometa-progress?job_id=${encodeURIComponent(kometaUpdateJobId)}&since=${encodeURIComponent(String(kometaUpdateLogIndex))}`)
+    return fetch(`/background-jobs/${encodeURIComponent(kometaUpdateJobId)}?since=${encodeURIComponent(String(kometaUpdateLogIndex))}`)
       .then(async res => {
         const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch Kometa update progress.')
+        if (!res.ok || !data.success || !data.job) throw new Error(data.error || 'Failed to fetch Kometa update progress.')
         return data
       })
       .then(data => {
-        if (data.phase === 'queued') setKometaUpdatePhaseBadge('queued')
-        if (data.phase === 'error') setKometaUpdatePhaseBadge('failed')
+        const job = data.job || {}
+        if (job.phase === 'queued') setKometaUpdatePhaseBadge('queued')
+        if (job.phase === 'error') setKometaUpdatePhaseBadge('failed')
         const lines = Array.isArray(data.lines) ? data.lines : []
         lines.forEach(line => appendKometaStatusLine(line))
         if (typeof data.next_index === 'number') kometaUpdateLogIndex = data.next_index
         if (data.done) {
           stopKometaUpdatePolling()
         }
-        return data
+        return Object.assign({}, job, {
+          lines,
+          next_index: data.next_index,
+          done: data.done
+        })
       })
   }
 

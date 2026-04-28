@@ -30,6 +30,26 @@ def test_start_kometa_starts_outside_maintenance(client, monkeypatch, qs_module)
     assert data["pid"] == 4321
 
 
+def test_start_kometa_blocked_when_kometa_update_running(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module, "_find_running_kometa_process", lambda: None)
+    monkeypatch.setattr(
+        qs_module,
+        "_get_active_background_job",
+        lambda job_type: {"job_id": "job-123", "job_type": job_type, "phase": "extract", "status": "running"} if job_type == "kometa_update" else None,
+    )
+
+    resp = client.post("/start-kometa", json={"command": "python kometa.py"})
+    assert resp.status_code == 409
+    data = resp.get_json()
+    assert data["status"] == "blocked"
+    assert data["blocked_by"] == "kometa_update"
+    assert data["job_id"] == "job-123"
+    assert data["phase"] == "extract"
+    assert "Cannot start Kometa while a Kometa update is running." in data["error"]
+
+
 def test_stop_kometa_no_pid(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
     monkeypatch.setattr(qs_module, "_find_running_kometa_processes", lambda: [])

@@ -58,11 +58,33 @@ from flask_session import Session
 from modules import validations, output, persistence, helpers, database, logscan, importer, path_validation, url_validation
 from typing import Dict, Any
 
-# A very simple in-memory progress store
-CLONE_PROGRESS: Dict[str, Dict[str, Any]] = {}
-ACTIVE_TEST_LIB_JOB: Dict[str, Any] = {}
-KOMETA_UPDATE_PROGRESS: Dict[str, Dict[str, Any]] = {}
-ACTIVE_KOMETA_UPDATE_JOB: Dict[str, Any] = {}
+# Shared in-memory background job store
+BACKGROUND_JOBS: Dict[str, Dict[str, Any]] = {}
+ACTIVE_BACKGROUND_JOBS: Dict[str, str] = {}
+BACKGROUND_JOBS_LOCK = threading.Lock()
+JOB_TARGET_PAGES = {
+    "logscan_reingest": "/logscan-trends",
+    "kometa_update": "/step/900-final",
+    "test_library_install": "/step/001-start",
+}
+ACTIVE_WORK_POLICIES = {
+    "kometa_run": [
+        {
+            "kind": "job",
+            "id": "kometa_update",
+            "message": "Cannot start Kometa while a Kometa update is running.",
+            "target_page": JOB_TARGET_PAGES.get("kometa_update"),
+        }
+    ],
+    "kometa_update": [
+        {
+            "kind": "process",
+            "id": "kometa_run",
+            "message": "Cannot update Kometa while Kometa is running.",
+            "target_page": JOB_TARGET_PAGES.get("kometa_update"),
+        }
+    ],
+}
 LOG_STATS_CACHE = {"mtime": None, "size": None, "stats": None}
 LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
 LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "data": None}
@@ -122,6 +144,172 @@ VALIDATION_REASON_LABELS = {
     "account_locked": "Account locked",
     "validation_error": "Validation error",
 }
+
+
+def _copy_background_job(job):
+    if not isinstance(job, dict):
+        return None
+    copied = dict(job)
+    if isinstance(copied.get("summary"), dict):
+        copied["summary"] = dict(copied["summary"])
+    if isinstance(copied.get("meta"), dict):
+        copied["meta"] = dict(copied["meta"])
+    if isinstance(copied.get("logs"), list):
+        copied["logs"] = list(copied["logs"])
+    return copied
+
+
+def _create_background_job(job_type, job_id=None, trigger="manual", phase="queued", status="running", target_page=None, **extra):
+    normalized_type = str(job_type or "").strip()
+    if not normalized_type:
+        raise ValueError("job_type is required")
+    normalized_job_id = str(job_id or uuid.uuid4()).strip()
+    payload = {
+        "job_id": normalized_job_id,
+        "job_type": normalized_type,
+        "trigger": str(trigger or "manual").strip() or "manual",
+        "status": str(status or "running").strip() or "running",
+        "phase": str(phase or "").strip() or None,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "finished_at": None,
+        "target_page": target_page or JOB_TARGET_PAGES.get(normalized_type),
+        "summary": {},
+        "meta": {},
+    }
+    payload.update(extra)
+    with BACKGROUND_JOBS_LOCK:
+        BACKGROUND_JOBS[normalized_job_id] = payload
+        if payload["status"] in {"queued", "running"}:
+            ACTIVE_BACKGROUND_JOBS[normalized_type] = normalized_job_id
+    return _copy_background_job(payload)
+
+
+def _get_background_job(job_id):
+    normalized_job_id = str(job_id or "").strip()
+    if not normalized_job_id:
+        return None
+    with BACKGROUND_JOBS_LOCK:
+        payload = BACKGROUND_JOBS.get(normalized_job_id)
+        return _copy_background_job(payload)
+
+
+def _get_active_background_job(job_type):
+    normalized_type = str(job_type or "").strip()
+    if not normalized_type:
+        return None
+    with BACKGROUND_JOBS_LOCK:
+        job_id = ACTIVE_BACKGROUND_JOBS.get(normalized_type)
+        payload = BACKGROUND_JOBS.get(job_id) if job_id else None
+        return _copy_background_job(payload)
+
+
+def _get_active_background_jobs():
+    with BACKGROUND_JOBS_LOCK:
+        jobs = []
+        for job_id in ACTIVE_BACKGROUND_JOBS.values():
+            payload = BACKGROUND_JOBS.get(job_id)
+            if payload:
+                jobs.append(_copy_background_job(payload))
+        return jobs
+
+
+def _update_background_job(job_id, **updates):
+    normalized_job_id = str(job_id or "").strip()
+    if not normalized_job_id:
+        return None
+    with BACKGROUND_JOBS_LOCK:
+        payload = BACKGROUND_JOBS.get(normalized_job_id)
+        if not payload:
+            return None
+        payload.update(updates)
+        job_type = payload.get("job_type")
+        status = str(payload.get("status") or "").strip().lower()
+        if job_type:
+            if status in {"queued", "running"}:
+                ACTIVE_BACKGROUND_JOBS[job_type] = normalized_job_id
+            elif ACTIVE_BACKGROUND_JOBS.get(job_type) == normalized_job_id:
+                ACTIVE_BACKGROUND_JOBS.pop(job_type, None)
+        return _copy_background_job(payload)
+
+
+def _clear_active_background_job(job_type, job_id=None):
+    normalized_type = str(job_type or "").strip()
+    normalized_job_id = str(job_id or "").strip() or None
+    if not normalized_type:
+        return
+    with BACKGROUND_JOBS_LOCK:
+        active_job_id = ACTIVE_BACKGROUND_JOBS.get(normalized_type)
+        if normalized_job_id and active_job_id != normalized_job_id:
+            return
+        ACTIVE_BACKGROUND_JOBS.pop(normalized_type, None)
+
+
+def _ensure_background_job(job_type, job_id=None, create_if_missing=False, **defaults):
+    normalized_type = str(job_type or "").strip()
+    if not normalized_type:
+        return None
+    candidate_id = str(job_id or "").strip() or None
+    if candidate_id:
+        existing = _get_background_job(candidate_id)
+        if existing:
+            return existing
+    active = _get_active_background_job(normalized_type)
+    if active:
+        return active
+    if not create_if_missing:
+        return None
+    return _create_background_job(normalized_type, job_id=candidate_id, **defaults)
+
+
+def _complete_background_job(job_id, phase="done", summary=None, **updates):
+    payload = {"status": "complete", "phase": phase, "finished_at": datetime.now(timezone.utc).isoformat()}
+    if summary is not None:
+        payload["summary"] = summary
+    payload.update(updates)
+    return _update_background_job(job_id, **payload)
+
+
+def _fail_background_job(job_id, error, phase="error", **updates):
+    payload = {
+        "status": "error",
+        "phase": phase,
+        "error": str(error or "Unknown error"),
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+    }
+    payload.update(updates)
+    return _update_background_job(job_id, **payload)
+
+
+def _get_active_work_blocker(subject):
+    normalized_subject = str(subject or "").strip()
+    if not normalized_subject:
+        return None
+
+    for rule in ACTIVE_WORK_POLICIES.get(normalized_subject, []):
+        kind = str(rule.get("kind") or "").strip().lower()
+        identifier = str(rule.get("id") or "").strip()
+        if not identifier:
+            continue
+
+        if kind == "job":
+            active_job = _get_active_background_job(identifier)
+            if active_job:
+                blocker = dict(rule)
+                blocker["job"] = active_job
+                blocker["blocked_by"] = identifier
+                blocker["status"] = active_job.get("status")
+                blocker["phase"] = active_job.get("phase")
+                blocker["job_id"] = active_job.get("job_id")
+                return blocker
+        elif kind == "process" and identifier == "kometa_run":
+            if helpers.is_kometa_running():
+                pid = helpers.get_kometa_pid()
+                blocker = dict(rule)
+                blocker["blocked_by"] = identifier
+                blocker["pid"] = pid
+                return blocker
+
+    return None
 VALIDATION_KEY_SUGGESTIONS = {
     "settings": {
         "playlist_sync_to_user": "playlist_sync_to_users",
@@ -7230,6 +7418,21 @@ def start_kometa():
                 payload["started_at"] = started_at
             return jsonify(payload), 400
 
+    blocker = _get_active_work_blocker("kometa_run")
+    if blocker:
+        job = blocker.get("job") if isinstance(blocker.get("job"), dict) else {}
+        payload = {
+            "error": blocker.get("message") or "Cannot start Kometa right now.",
+            "status": "blocked",
+            "blocked_by": blocker.get("blocked_by"),
+            "target_page": blocker.get("target_page"),
+        }
+        if job.get("job_id"):
+            payload["job_id"] = job.get("job_id")
+        if job.get("phase"):
+            payload["phase"] = job.get("phase")
+        return jsonify(payload), 409
+
     _update_run_context(command)
 
     start_min, end_min, window_str = _get_maintenance_window_live()
@@ -7944,16 +8147,46 @@ def logscan_trends_reset():
 
 def _logscan_reingest_snapshot():
     with logscan_reingest_lock:
+        active = _get_active_background_job("logscan_reingest")
+        if active:
+            return active
+        last_job_id = logscan_reingest_state.get("job_id")
+        if last_job_id:
+            payload = _get_background_job(last_job_id)
+            if payload:
+                return payload
         return dict(logscan_reingest_state)
 
 
 def _update_logscan_reingest_state(**updates):
     with logscan_reingest_lock:
+        job_id = str(updates.get("job_id") or logscan_reingest_state.get("job_id") or "").strip() or None
+        status = str(updates.get("status") or "").strip().lower()
+        create_if_missing = bool(job_id or status in {"queued", "running", "complete", "error"})
+        payload = _ensure_background_job(
+            "logscan_reingest",
+            job_id=job_id,
+            create_if_missing=create_if_missing,
+            trigger=str(updates.get("trigger") or "manual").strip() or "manual",
+            phase=str(updates.get("phase") or "queued").strip() or "queued",
+            status=status or "running",
+            target_page=JOB_TARGET_PAGES.get("logscan_reingest"),
+        )
+        if payload:
+            next_job_id = payload.get("job_id")
+            shared_updates = dict(updates)
+            shared_updates.pop("job_id", None)
+            payload = _update_background_job(next_job_id, **shared_updates) or payload
+            logscan_reingest_state.clear()
+            logscan_reingest_state.update(payload)
+            return
         logscan_reingest_state.update(updates)
 
 
 def _reset_logscan_reingest_state():
     with logscan_reingest_lock:
+        job_id = logscan_reingest_state.get("job_id")
+        _clear_active_background_job("logscan_reingest", job_id=job_id)
         logscan_reingest_state.clear()
         logscan_reingest_state.update(
             {
@@ -9676,6 +9909,40 @@ def logscan_trends_reingest_status():
     return jsonify(snapshot)
 
 
+@app.route("/background-jobs/active", methods=["GET"])
+def background_jobs_active():
+    job_type = str(request.args.get("job_type", "") or request.args.get("type", "")).strip()
+    if job_type:
+        active = _get_active_background_job(job_type)
+        return jsonify(success=True, active=bool(active), job=active)
+    jobs = sorted(
+        _get_active_background_jobs(),
+        key=lambda job: str(job.get("started_at") or ""),
+        reverse=True,
+    )
+    return jsonify(success=True, jobs=jobs)
+
+
+@app.route("/background-jobs/<job_id>", methods=["GET"])
+def background_job_status(job_id):
+    job = _get_background_job(job_id)
+    if not job:
+        return jsonify(success=False, error="Unknown job_id."), 404
+    since = request.args.get("since", "0").strip()
+    try:
+        start_idx = max(int(since or "0"), 0)
+    except ValueError:
+        start_idx = 0
+    logs = list(job.get("logs") or [])
+    return jsonify(
+        success=True,
+        job=job,
+        lines=logs[start_idx:],
+        next_index=len(logs),
+        done=job.get("status") in {"complete", "error"},
+    )
+
+
 @app.route("/logscan/trends/reingest", methods=["POST"])
 def logscan_trends_reingest():
     data = request.get_json(silent=True) or {}
@@ -10641,10 +10908,17 @@ def check_kometa_update():
 
 @app.route("/update-kometa", methods=["POST"])
 def update_kometa():
-    # hard-stop if Kometa is currently running
-    if helpers.is_kometa_running():
-        pid = helpers.get_kometa_pid()
-        return jsonify({"success": False, "error": f"Kometa is currently running (PID {pid}). Stop it before updating."}), 409
+    blocker = _get_active_work_blocker("kometa_update")
+    if blocker:
+        pid = blocker.get("pid")
+        target_page = blocker.get("target_page")
+        return jsonify({
+            "success": False,
+            "error": f"Kometa is currently running (PID {pid}). Stop it before updating.",
+            "blocked_by": blocker.get("blocked_by"),
+            "pid": pid,
+            "target_page": target_page,
+        }), 409
     try:
         cfg_dir = helpers.CONFIG_DIR
 
@@ -10660,42 +10934,45 @@ def update_kometa():
         background = data.get("background") is True
 
         if background:
-            active_job_id = ACTIVE_KOMETA_UPDATE_JOB.get("job_id")
-            if active_job_id:
-                info = KOMETA_UPDATE_PROGRESS.get(active_job_id) or {}
-                phase = info.get("phase")
+            active = _get_active_background_job("kometa_update")
+            if active:
+                phase = active.get("phase")
                 if phase and phase not in ["done", "error"]:
                     return (
-                        jsonify(success=True, active=True, existing_job=True, job_id=active_job_id, phase=phase),
+                        jsonify(success=True, active=True, existing_job=True, job_id=active.get("job_id"), phase=phase),
                         200,
                     )
-                ACTIVE_KOMETA_UPDATE_JOB.clear()
+                _clear_active_background_job("kometa_update", job_id=active.get("job_id"))
 
-            job_id = str(uuid.uuid4())
-            KOMETA_UPDATE_PROGRESS[job_id] = {
-                "phase": "queued",
-                "lines": [],
-                "done": False,
-                "success": False,
-                "up_to_date": False,
-                "skipped": False,
-                "force": force_update,
-                "qs_branch": qs_branch,
-                "kometa_branch": kometa_branch,
-            }
-            ACTIVE_KOMETA_UPDATE_JOB["job_id"] = job_id
-            ACTIVE_KOMETA_UPDATE_JOB["started_at"] = time.time()
+            job = _create_background_job(
+                "kometa_update",
+                trigger="manual",
+                phase="queued",
+                status="running",
+                target_page=JOB_TARGET_PAGES.get("kometa_update"),
+                logs=[],
+                done=False,
+                success=False,
+                up_to_date=False,
+                skipped=False,
+                force=force_update,
+                qs_branch=qs_branch,
+                kometa_branch=kometa_branch,
+                started_epoch=time.time(),
+            )
+            job_id = job["job_id"]
 
             def worker():
-                progress = KOMETA_UPDATE_PROGRESS[job_id]
-
                 class _ProgressLog(list):
                     def append(self_inner, item):
                         super().append(item)
-                        progress["lines"].append(item)
+                        current = _get_background_job(job_id) or {}
+                        lines = list(current.get("logs") or [])
+                        lines.append(item)
+                        _update_background_job(job_id, logs=lines)
 
                 logs = _ProgressLog()
-                progress["phase"] = "running"
+                _update_background_job(job_id, phase="running", status="running")
                 logs.append(f"🔎 Quickstart branch: {qs_branch}")
                 if branch_override:
                     logs.append(f"⚠️ Kometa branch override selected: {branch_override}")
@@ -10711,20 +10988,30 @@ def update_kometa():
                         helpers.invalidate_cached_kometa_update(cfg_dir)
                     except Exception:
                         pass
-                    progress["success"] = bool(result.get("success", False))
-                    progress["up_to_date"] = bool(result.get("up_to_date", False))
-                    progress["skipped"] = bool(result.get("skipped", False))
-                    progress["phase"] = "done" if progress["success"] else "error"
-                    progress["done"] = True
+                    if result.get("success", False):
+                        _complete_background_job(
+                            job_id,
+                            phase="done",
+                            success=True,
+                            done=True,
+                            up_to_date=bool(result.get("up_to_date", False)),
+                            skipped=bool(result.get("skipped", False)),
+                        )
+                    else:
+                        _fail_background_job(
+                            job_id,
+                            "Kometa update failed.",
+                            done=True,
+                            success=False,
+                            up_to_date=bool(result.get("up_to_date", False)),
+                            skipped=bool(result.get("skipped", False)),
+                        )
                 except Exception as e:
-                    progress["lines"].append("Exception during Kometa update.")
+                    logs.append("Exception during Kometa update.")
                     helpers.ts_log(f"Kometa update failed: {e}", level="ERROR")
-                    progress["phase"] = "error"
-                    progress["done"] = True
-                    progress["success"] = False
+                    _fail_background_job(job_id, e, done=True, success=False)
                 finally:
-                    if ACTIVE_KOMETA_UPDATE_JOB.get("job_id") == job_id:
-                        ACTIVE_KOMETA_UPDATE_JOB.clear()
+                    _clear_active_background_job("kometa_update", job_id=job_id)
 
             threading.Thread(target=worker, daemon=True).start()
             return jsonify(success=True, active=True, job_id=job_id, phase="queued"), 200
@@ -10772,19 +11059,19 @@ def update_kometa_progress():
     since = request.args.get("since", "0").strip()
     if not job_id:
         return jsonify(success=False, error="Missing job_id."), 400
-    info = KOMETA_UPDATE_PROGRESS.get(job_id)
+    info = _get_background_job(job_id)
     if not info:
         return jsonify(success=False, error="Unknown job_id."), 404
     try:
         start_idx = max(int(since or "0"), 0)
     except ValueError:
         start_idx = 0
-    lines = list(info.get("lines") or [])
+    lines = list(info.get("logs") or [])
     return jsonify(
         success=True,
         job_id=job_id,
         phase=info.get("phase"),
-        done=bool(info.get("done")),
+        done=bool(info.get("done")) or info.get("status") in {"complete", "error"},
         update_success=bool(info.get("success")),
         up_to_date=bool(info.get("up_to_date")),
         skipped=bool(info.get("skipped")),
@@ -11007,8 +11294,7 @@ def update_test_libraries_settings():
 @app.route("/clone-test-libraries-start", methods=["POST"])
 def clone_test_libraries_start():
     """
-    Starts a background job to download and install plex_test_libraries,
-    reporting rich progress via CLONE_PROGRESS[job_id].
+    Starts a background job to download and install plex_test_libraries.
 
     Progress payload shapes by phase:
       download: {"phase":"download","pct":<int|None>,"text":str,"downloaded":int,"total":int}
@@ -11033,24 +11319,23 @@ def clone_test_libraries_start():
             message="Target path exists but does not look like test libraries. Choose an empty folder or one containing test libraries.",
         )
 
-    # Ensure CLONE_PROGRESS dict exists
-    try:
-        _ = CLONE_PROGRESS
-    except NameError:
-        # Create if missing (keeps function drop-in friendly)
-        globals()["CLONE_PROGRESS"] = {}
-    # If a job is already running, return it so other clients can follow along
-    active_job_id = ACTIVE_TEST_LIB_JOB.get("job_id")
-    if active_job_id:
-        info = CLONE_PROGRESS.get(active_job_id) or {}
-        phase = info.get("phase")
+    active = _get_active_background_job("test_library_install")
+    if active:
+        phase = active.get("phase")
         if phase and phase not in ["done", "error"]:
-            return jsonify(success=True, job_id=active_job_id, existing_job=True, started_at=ACTIVE_TEST_LIB_JOB.get("started_at"))
-        ACTIVE_TEST_LIB_JOB.clear()
-    job_id = str(uuid.uuid4())
-    CLONE_PROGRESS[job_id] = {"phase": "queued", "pct": 0, "text": "Queued..."}
-    ACTIVE_TEST_LIB_JOB["job_id"] = job_id
-    ACTIVE_TEST_LIB_JOB["started_at"] = time.time()
+            return jsonify(success=True, job_id=active.get("job_id"), existing_job=True, started_at=active.get("started_epoch"))
+        _clear_active_background_job("test_library_install", job_id=active.get("job_id"))
+    job = _create_background_job(
+        "test_library_install",
+        trigger="manual",
+        phase="queued",
+        status="running",
+        target_page=JOB_TARGET_PAGES.get("test_library_install"),
+        pct=0,
+        text="Queued...",
+        started_epoch=time.time(),
+    )
+    job_id = job["job_id"]
 
     def worker():
         zip_url = "https://github.com/chazlarson/plex-test-libraries/archive/refs/heads/main.zip"
@@ -11059,6 +11344,9 @@ def clone_test_libraries_start():
         estimated = False
         estimated_note = ""
         fallback_total = 5 * 1024 * 1024 * 1024  # 5 GiB
+
+        def set_job_progress(**state):
+            _update_background_job(job_id, status="running", **state)
 
         try:
             # Best-effort SHA for UI banner
@@ -11117,15 +11405,15 @@ def clone_test_libraries_start():
                 estimated = True
                 estimated_note = "fallback"
 
-            CLONE_PROGRESS[job_id] = {
-                "phase": "download",
-                "pct": 0 if total_size else None,  # None => indeterminate until we know size
-                "text": "Downloading zip…",
-                "downloaded": 0,
-                "total": total_size,
-                "estimated": estimated,
-                "estimated_note": estimated_note,
-            }
+            set_job_progress(
+                phase="download",
+                pct=0 if total_size else None,  # None => indeterminate until we know size
+                text="Downloading zip…",
+                downloaded=0,
+                total=total_size,
+                estimated=estimated,
+                estimated_note=estimated_note,
+            )
 
             ok, msg = _ensure_rw_dir(tmp_root)
             if not ok:
@@ -11151,11 +11439,10 @@ def clone_test_libraries_start():
                     if not total_size:
                         try:
                             total_size = int(r.headers.get("Content-Length", "0") or 0)
-                            CLONE_PROGRESS[job_id]["total"] = total_size
                             if total_size:
                                 estimated = False
-                                CLONE_PROGRESS[job_id]["estimated"] = False
-                                CLONE_PROGRESS[job_id]["estimated_note"] = ""
+                                estimated_note = ""
+                            set_job_progress(total=total_size, estimated=estimated, estimated_note=estimated_note)
                         except Exception:
                             total_size = 0
 
@@ -11172,19 +11459,25 @@ def clone_test_libraries_start():
                                 pct = None
                                 if total_size:
                                     pct = int(downloaded * 100 / total_size)
-                                CLONE_PROGRESS[job_id] = {
-                                    "phase": "download",
-                                    "pct": pct,
-                                    "text": "Downloading zip…",
-                                    "downloaded": downloaded,
-                                    "total": total_size,
-                                    "estimated": estimated,
-                                    "estimated_note": estimated_note,
-                                }
+                                set_job_progress(
+                                    phase="download",
+                                    pct=pct,
+                                    text="Downloading zip…",
+                                    downloaded=downloaded,
+                                    total=total_size,
+                                    estimated=estimated,
+                                    estimated_note=estimated_note,
+                                )
                                 last_push = now
 
                 # Extract with per-file progress
-                CLONE_PROGRESS[job_id] = {"phase": "extract", "pct": 0, "text": "Extracting…", "files_done": 0, "files_total": 0}
+                set_job_progress(
+                    phase="extract",
+                    pct=0,
+                    text="Extracting…",
+                    files_done=0,
+                    files_total=0,
+                )
                 with zipfile.ZipFile(zip_path, "r") as zip_ref:
                     members = zip_ref.infolist()
                     total_files = len(members) or 1
@@ -11198,19 +11491,19 @@ def clone_test_libraries_start():
                         now = time.time()
                         if (now - last_push) > 0.2 or files_done == total_files:
                             pct = int(files_done * 100 / total_files)
-                            CLONE_PROGRESS[job_id] = {
-                                "phase": "extract",
-                                "pct": pct,
-                                "text": f"Extracting… {files_done}/{total_files} files",
-                                "files_done": files_done,
-                                "files_total": total_files,
-                            }
+                            set_job_progress(
+                                phase="extract",
+                                pct=pct,
+                                text=f"Extracting… {files_done}/{total_files} files",
+                                files_done=files_done,
+                                files_total=total_files,
+                            )
                             last_push = now
 
                 extracted_dir = os.path.join(tmpdir, "plex-test-libraries-main")
 
                 # Finalize (replace folder)
-                CLONE_PROGRESS[job_id] = {"phase": "finalize", "pct": 95, "text": "Finalizing…"}
+                set_job_progress(phase="finalize", pct=95, text="Finalizing…")
                 if os.path.exists(target_path):
                     if not _safe_to_replace_test_libraries(target_path):
                         raise RuntimeError("Target path exists but does not look like test libraries. Choose an empty folder or one containing test libraries.")
@@ -11229,32 +11522,33 @@ def clone_test_libraries_start():
                 if platform.system() in ["Linux", "Darwin"]:
                     subprocess.run(["chmod", "-R", "777", target_path], check=False)
 
-                CLONE_PROGRESS[job_id] = {
-                    "phase": "done",
-                    "pct": 100,
-                    "text": "Installed/updated successfully.",
-                    "target_path": resolved_path,
-                }
-                if ACTIVE_TEST_LIB_JOB.get("job_id") == job_id:
-                    ACTIVE_TEST_LIB_JOB.clear()
+                _complete_background_job(
+                    job_id,
+                    phase="done",
+                    success=True,
+                    pct=100,
+                    text="Installed/updated successfully.",
+                    target_path=resolved_path,
+                )
 
         except Exception as e:
-            CLONE_PROGRESS[job_id] = {
-                "phase": "error",
-                "pct": 0,
-                "text": f"Error: {str(e)}",
-            }
-            if ACTIVE_TEST_LIB_JOB.get("job_id") == job_id:
-                ACTIVE_TEST_LIB_JOB.clear()
+            _fail_background_job(
+                job_id,
+                e,
+                phase="error",
+                success=False,
+                pct=0,
+                text=f"Error: {str(e)}",
+            )
 
     threading.Thread(target=worker, daemon=True).start()
-    return jsonify(success=True, job_id=job_id, started_at=ACTIVE_TEST_LIB_JOB.get("started_at"))
+    return jsonify(success=True, job_id=job_id, started_at=job.get("started_epoch"))
 
 
 @app.route("/clone-test-libraries-progress", methods=["GET"])
 def clone_test_libraries_progress():
     job_id = request.args.get("job_id", "")
-    info = CLONE_PROGRESS.get(job_id)
+    info = _get_background_job(job_id)
     if not info:
         return jsonify(success=False, message="Unknown job_id"), 404
 
@@ -11267,21 +11561,22 @@ def clone_test_libraries_progress():
 
 @app.route("/clone-test-libraries-active", methods=["GET"])
 def clone_test_libraries_active():
-    job_id = ACTIVE_TEST_LIB_JOB.get("job_id")
-    if not job_id:
+    active = _get_active_background_job("test_library_install")
+    if not active:
         return jsonify(success=True, active=False)
 
-    info = CLONE_PROGRESS.get(job_id) or {}
+    job_id = active.get("job_id")
+    info = _get_background_job(job_id) or {}
     phase = info.get("phase")
     if phase in ["done", "error"]:
-        ACTIVE_TEST_LIB_JOB.clear()
+        _clear_active_background_job("test_library_install", job_id=job_id)
         return jsonify(success=True, active=False)
 
     return jsonify(
         success=True,
         active=True,
         job_id=job_id,
-        started_at=ACTIVE_TEST_LIB_JOB.get("started_at"),
+        started_at=info.get("started_epoch"),
         progress=info,
     )
 
