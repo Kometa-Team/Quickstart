@@ -1,3 +1,17 @@
+{% macro nav_label(template_key, name) -%}
+{% if template_key == '900-final' %}
+Kometa
+{% elif template_key == '915-imagemaid' %}
+ImageMaid
+{% elif template_key == '905-analytics' %}
+Analytics
+{% elif template_key == '910-sponsor' %}
+Sponsor
+{% else %}
+{{ name }}
+{% endif %}
+{%- endmacro %}
+
 {% macro status_icon(status, state_class='qs-step-link-state') -%}
 {% set state = status if status in ['unknown', 'ok', 'warn', 'error'] else 'warn' %}
 <span class="{{ state_class }} {{ state_class }}--{{ state }}" aria-hidden="true">
@@ -29,15 +43,12 @@
   {% if not step_state %}
     {% set step_state = 'ok' if is_validated else 'warn' %}
   {% endif %}
-  {% if name == 'Final Validation' %}
-  <li><hr class="dropdown-divider"></li>
-  {% endif %}
   <li>
     <a class="dropdown-item {% if template_key == page_info['template_name'] %}active{% endif %}"
       data-step-key="{{ template_key }}"
       href="javascript:void(0);" onclick="jumpTo('{{ template_key }}')">
       {{ status_icon(step_state, 'qs-step-dropdown-state') }}
-      {{ name }}
+      {{ nav_label(template_key, name) }}
     </a>
   </li>
   {% if name == 'Start' %}
@@ -51,15 +62,17 @@
 {% set step_state = (step_statuses.get(template_key) if step_statuses else 'warn') %}
 <button type="button" class="qs-step-link {% if template_key == page_info['template_name'] %}is-active{% endif %}"
   data-step-key="{{ template_key }}"
-  onclick="jumpTo('{{ template_key }}')" title="{{ name }}">
-  <span class="qs-step-link-short">{{ name[0] }}</span>
-  <span class="qs-step-link-label">{{ name }}</span>
+  onclick="jumpTo('{{ template_key }}')" title="{{ nav_label(template_key, name) }}">
+  {% set label = nav_label(template_key, name) %}
+  <span class="qs-step-link-short">{{ label[0] }}</span>
+  <span class="qs-step-link-label">{{ label }}</span>
   {{ status_icon(step_state, 'qs-step-link-state') }}
 </button>
 {%- endmacro %}
 
 {% macro step_group(title, group_key, template_list, allowed_keys, page_info, step_statuses, section_statuses, open_state=True) -%}
-{% set group_state = (section_statuses.get(group_key) if section_statuses else 'warn') %}
+{% set semantic_group = 'required' if group_key == 'required' else 'optional' if group_key == 'optional' else 'review' %}
+{% set group_state = (section_statuses.get(semantic_group) if section_statuses else 'warn') %}
 <details class="qs-step-group qs-step-group--{{ group_state }}" data-step-group="{{ group_key }}" {% if open_state %}open{% endif %}>
   <summary class="qs-step-group-summary" title="{{ title }}">
     <span>{{ title }}</span>
@@ -91,35 +104,47 @@
     </div>
   </div>
 
-  <div class="qs-sidebar-control-group">
-    <button type="button" class="btn nav-button qs-sidebar-support"
-      data-bs-toggle="modal" data-bs-target="#supportInfoModal" title="Support info for Quickstart">
-      <i class="bi bi-life-preserver"></i><span class="qs-sidebar-text">Support</span>
-    </button>
-    <button type="button" class="btn nav-button qs-sidebar-settings"
-      id="quickstart-settings-btn" data-bs-toggle="modal" data-bs-target="#quickstartSettingsModal"
-      data-current-port="{{ page_info.running_port }}" data-current-debug="{{ 'true' if page_info.qs_debug else 'false' }}"
-      data-current-theme="{{ page_info.qs_theme }}" data-current-optimize-defaults="{{ 'true' if page_info.qs_optimize_defaults else 'false' }}"
-      data-current-config-history="{{ page_info.qs_config_history }}" data-current-log-keep="{{ page_info.qs_kometa_log_keep }}"
-      data-current-test-libs-path="{{ page_info.qs_test_libs_path }}"
-      data-current-test-libs-tmp="{{ page_info.qs_test_libs_tmp }}"
-      data-current-session-lifetime="{{ page_info.qs_session_lifetime_days }}"
-      data-current-session-dir="{{ page_info.qs_flask_session_dir }}"
-      data-quickstart-root="{{ page_info.quickstart_root }}"
-      title="Quickstart settings">
-      <i class="bi bi-gear-fill"></i><span class="qs-sidebar-text">Settings</span>
-    </button>
-    <button type="button" class="btn nav-button config-badge-button qs-sidebar-config"
-      data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}" title="Switch config">
-      <i class="bi bi-folder2-open qs-sidebar-config-icon" aria-hidden="true"></i>
-      <span class="qs-sidebar-text qs-sidebar-config-label">CONFIG</span>
-    </button>
-    <button type="button" class="btn nav-button qs-sidebar-validate" id="qs-sidebar-validate-all"
-      data-qs-validate-all title="Validate ALL configured services">
-      <i class="bi bi-check2-circle"></i><span class="qs-sidebar-text">Validate All</span>
-      <span class="spinner-border spinner-border-sm ms-1 d-none qs-validate-all-spinner" role="status" aria-hidden="true"></span>
-    </button>
-  </div>
+  <details class="qs-step-group qs-sidebar-utility-group">
+    <summary class="qs-step-group-summary" title="Utilities">
+      <span>Utilities</span>
+      <span class="qs-step-group-summary-right">
+        <span class="qs-step-group-state qs-step-group-state--ok" aria-hidden="true">
+          <i class="bi bi-tools"></i>
+        </span>
+        <i class="bi bi-chevron-down" aria-hidden="true"></i>
+      </span>
+    </summary>
+    <div class="qs-sidebar-control-group qs-sidebar-control-grid">
+      <button type="button" class="btn nav-button qs-sidebar-support"
+        data-bs-toggle="modal" data-bs-target="#supportInfoModal" title="Support info for Quickstart">
+        <i class="bi bi-life-preserver"></i><span class="qs-sidebar-text">Support</span>
+      </button>
+      <button type="button" class="btn nav-button qs-sidebar-settings"
+        id="quickstart-settings-btn" data-bs-toggle="modal" data-bs-target="#quickstartSettingsModal"
+        data-current-port="{{ page_info.running_port }}" data-current-debug="{{ 'true' if page_info.qs_debug else 'false' }}"
+        data-current-theme="{{ page_info.qs_theme }}" data-current-optimize-defaults="{{ 'true' if page_info.qs_optimize_defaults else 'false' }}"
+        data-current-config-history="{{ page_info.qs_config_history }}" data-current-log-keep="{{ page_info.qs_kometa_log_keep }}"
+        data-current-imagemaid-log-keep="{{ page_info.qs_imagemaid_log_keep }}"
+        data-current-test-libs-path="{{ page_info.qs_test_libs_path }}"
+        data-current-test-libs-tmp="{{ page_info.qs_test_libs_tmp }}"
+        data-current-session-lifetime="{{ page_info.qs_session_lifetime_days }}"
+        data-current-session-dir="{{ page_info.qs_flask_session_dir }}"
+        data-quickstart-root="{{ page_info.quickstart_root }}"
+        title="Quickstart settings">
+        <i class="bi bi-gear-fill"></i><span class="qs-sidebar-text">Settings</span>
+      </button>
+      <button type="button" class="btn nav-button config-badge-button qs-sidebar-config"
+        data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}" title="Switch config">
+        <i class="bi bi-folder2-open qs-sidebar-config-icon" aria-hidden="true"></i>
+        <span class="qs-sidebar-text qs-sidebar-config-label">Config</span>
+      </button>
+      <button type="button" class="btn nav-button qs-sidebar-validate" id="qs-sidebar-validate-all"
+        data-qs-validate-all title="Validate ALL configured services">
+        <i class="bi bi-check2-circle"></i><span class="qs-sidebar-text">Validate All</span>
+        <span class="spinner-border spinner-border-sm ms-1 d-none qs-validate-all-spinner" role="status" aria-hidden="true"></span>
+      </button>
+    </div>
+  </details>
 </div>
 {%- endmacro %}
 
@@ -134,8 +159,8 @@
     {% endif %}
 
     {% if hide_step_nav %}
-    <a class="btn nav-button" href="/step/900-final" title="Back to Final Validation">
-      <i class="fa fa-arrow-left"></i> Back to Final
+    <a class="btn nav-button" href="/step/900-final" title="Back to Kometa">
+      <i class="fa fa-arrow-left"></i> Back to Kometa
     </a>
     {% if page_info.get('show_jump_to') %}
     <div class="dropdown mx-auto">

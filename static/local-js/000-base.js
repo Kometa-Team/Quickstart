@@ -1325,7 +1325,7 @@ function qsApplyGroupMembership (requiredKeys, optionalKeys, reviewKeys) {
     optional: document.querySelector('.qs-step-group[data-step-group="optional"] .qs-step-group-list'),
     review: document.querySelector('.qs-step-group[data-step-group="review"] .qs-step-group-list')
   }
-  if (!groups.required || !groups.optional || !groups.review) return
+  if (!groups.required || !groups.optional) return
 
   const currentStepKey = qsGetCurrentStepKey()
   const currentStepLinkBeforeMove = currentStepKey
@@ -1343,6 +1343,7 @@ function qsApplyGroupMembership (requiredKeys, optionalKeys, reviewKeys) {
   })
 
   const appendInOrder = (listEl, keys) => {
+    if (!listEl) return
     keys.forEach((key) => {
       const stepLink = stepMap[key]
       if (!stepLink) return
@@ -1360,7 +1361,6 @@ function qsApplyGroupMembership (requiredKeys, optionalKeys, reviewKeys) {
   let currentGroupKey = ''
   if (currentStepKey) {
     if (requiredKeys.includes(currentStepKey)) currentGroupKey = 'required'
-    else if (reviewKeys.includes(currentStepKey)) currentGroupKey = 'review'
     else if (optionalKeys.includes(currentStepKey)) currentGroupKey = 'optional'
   }
 
@@ -1731,6 +1731,7 @@ function qsApplyWorkspaceStatus (payload) {
   }
 
   qsApplySectionStatuses(payload.section_statuses)
+  qsRefreshSectionRollups()
   qsApplyReadinessStrip(payload.readiness || {})
   qsRecalculateReadinessFromSidebar()
   updateValidationCallouts()
@@ -3655,6 +3656,11 @@ document.addEventListener('DOMContentLoaded', () => {
       section.dataset.qsSidebar = shouldCollapse ? 'collapsed' : 'expanded'
       toggleBtn.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true')
       toggleBtn.title = shouldCollapse ? 'Expand sidebar' : 'Collapse sidebar'
+      if (shouldCollapse) {
+        section.querySelectorAll('.qs-sidebar-utility-group[open]').forEach((details) => {
+          details.open = false
+        })
+      }
       if (persist) {
         window.localStorage.setItem(sidebarStorageKey, shouldCollapse ? '1' : '0')
       }

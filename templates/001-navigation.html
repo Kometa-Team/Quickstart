@@ -4,6 +4,9 @@
   {% set hide_step_nav = page_info.get('hide_step_nav', False) %}
   {% set required_keys = required_keys if required_keys is defined else ['001-start', '010-plex', '020-tmdb', '025-libraries', '150-settings'] %}
   {% set review_keys = review_keys if review_keys is defined else ['900-final', '905-analytics', '910-sponsor', '915-imagemaid'] %}
+  {% set app_keys = ['900-final', '915-imagemaid'] %}
+  {% set insight_keys = ['905-analytics'] %}
+  {% set other_keys = ['910-sponsor'] %}
   {% if optional_keys is defined %}
   {% set optional_ns = namespace(keys=optional_keys) %}
   {% else %}
@@ -18,7 +21,9 @@
   {% set current_template = page_info['template_name'] %}
   {% set required_open = current_template in required_keys %}
   {% set optional_open = current_template in optional_ns.keys %}
-  {% set review_open = current_template in review_keys %}
+  {% set apps_open = current_template in app_keys %}
+  {% set insights_open = current_template in insight_keys %}
+  {% set other_open = current_template in other_keys %}
   {% set tautulli_reasons = tautulli_requirement_reasons if tautulli_requirement_reasons is defined else [] %}
   {% set omdb_reasons = omdb_requirement_reasons if omdb_requirement_reasons is defined else [] %}
   {% set mdblist_reasons = mdblist_requirement_reasons if mdblist_requirement_reasons is defined else [] %}
@@ -185,9 +190,11 @@
               </div>
             </details>
             <div class="qs-step-groups">
-              {{ workspace.step_group('Required', 'required', template_list, required_keys, page_info, step_statuses, section_statuses, open_state=required_open) }}
-              {{ workspace.step_group('Optional', 'optional', template_list, optional_ns.keys, page_info, step_statuses, section_statuses, open_state=optional_open) }}
-              {{ workspace.step_group('Review', 'review', template_list, review_keys, page_info, step_statuses, section_statuses, open_state=review_open) }}
+              {{ workspace.step_group('Setup', 'required', template_list, required_keys, page_info, step_statuses, section_statuses, open_state=required_open) }}
+              {{ workspace.step_group('Optional Services', 'optional', template_list, optional_ns.keys, page_info, step_statuses, section_statuses, open_state=optional_open) }}
+              {{ workspace.step_group('Apps', 'apps', template_list, app_keys, page_info, step_statuses, section_statuses, open_state=apps_open) }}
+              {{ workspace.step_group('Insights', 'insights', template_list, insight_keys, page_info, step_statuses, section_statuses, open_state=insights_open) }}
+              {{ workspace.step_group('Other', 'other', template_list, other_keys, page_info, step_statuses, section_statuses, open_state=other_open) }}
             </div>
             <div class="qs-step-list qs-step-list--compact" role="list">
               {% for file, name in template_list %}

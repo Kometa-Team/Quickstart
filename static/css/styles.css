@@ -4017,6 +4017,26 @@ body {
     white-space: nowrap;
 }
 
+.qs-sidebar-utility-group {
+    margin-top: 0.25rem;
+}
+
+.qs-sidebar-utility-group .qs-step-group-summary {
+    font-size: 0.64rem;
+}
+
+.qs-sidebar-control-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.45rem;
+    padding: 0.45rem 0.4rem 0.4rem;
+}
+
+.qs-sidebar-control-grid .btn {
+    width: 100%;
+    justify-content: flex-start;
+}
+
 .qs-sidebar-config {
     gap: 0.3rem;
 }
@@ -5242,7 +5262,8 @@ body {
 
     .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-brand,
     .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-text,
-    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-step-actions {
+    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-step-actions,
+    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-utility-group {
         display: none;
     }
 
