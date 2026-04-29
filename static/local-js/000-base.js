@@ -552,6 +552,7 @@ let qsLastLogscanReingestStatus = 'idle'
 let qsLastLogscanReingestJobId = null
 const QS_BACKGROUND_JOBS_POLL_INTERVAL_MS = 10000
 let qsLatestKometaStatus = null
+let qsLatestImageMaidStatus = null
 let qsActiveBackgroundJobs = []
 
 function qsFormatLocalTime () {
@@ -657,6 +658,23 @@ function qsBuildKometaActiveWorkEntry () {
   return null
 }
 
+function qsBuildImageMaidActiveWorkEntry () {
+  const data = qsLatestImageMaidStatus
+  if (!data || typeof data !== 'object') return null
+  if (String(data.status || '').trim().toLowerCase() !== 'running') return null
+
+  const elapsed = qsFormatElapsedLabel(data.elapsed_seconds)
+  return {
+    key: 'imagemaid-running',
+    title: 'ImageMaid run',
+    chip: 'Running',
+    state: 'unknown',
+    meta: elapsed ? `Elapsed ${elapsed}` : 'ImageMaid is currently running.',
+    href: '/step/915-imagemaid',
+    titleAttr: elapsed ? `ImageMaid has been running for ${elapsed}.` : 'ImageMaid is currently running.'
+  }
+}
+
 function qsGetBackgroundJobLabel (job) {
   const jobType = String(job && job.job_type ? job.job_type : '').trim()
   const trigger = String(job && job.trigger ? job.trigger : '').trim()
@@ -664,6 +682,7 @@ function qsGetBackgroundJobLabel (job) {
     return trigger === 'startup_migration' ? 'Analytics migration' : 'Analytics reingest'
   }
   if (jobType === 'kometa_update') return 'Kometa update'
+  if (jobType === 'imagemaid_update') return 'ImageMaid update'
   if (jobType === 'test_library_install') return 'Test library install'
   return jobType ? jobType.replaceAll('_', ' ') : 'Background job'
 }
@@ -771,6 +790,8 @@ function qsRenderActiveWorkCard () {
   const entries = []
   const kometaEntry = qsBuildKometaActiveWorkEntry()
   if (kometaEntry) entries.push(kometaEntry)
+  const imageMaidEntry = qsBuildImageMaidActiveWorkEntry()
+  if (imageMaidEntry) entries.push(imageMaidEntry)
   entries.push(...qsBuildBackgroundJobEntries())
 
   const rollupState = qsComputeActiveWorkRollupState(entries)
@@ -943,10 +964,31 @@ function qsHandleMaintenanceStatus (data) {
 
   qsLastMaintenancePaused = paused
   qsRenderActiveWorkCard()
+  document.dispatchEvent(new CustomEvent('qs:maintenance-status', { detail: data }))
 }
 
 window.QS_handleMaintenanceStatus = qsHandleMaintenanceStatus
 window.QS_formatTimestamp = qsFormatTimestamp
+
+function qsHandleImageMaidStatus (data) {
+  qsLatestImageMaidStatus = data
+  const badge = document.getElementById('qs-imagemaid-running-badge')
+  if (badge) {
+    if (data && String(data.status || '').trim().toLowerCase() === 'running') {
+      const elapsed = typeof data.elapsed_seconds === 'number' ? qsFormatElapsedLabel(data.elapsed_seconds) : ''
+      badge.classList.remove('d-none')
+      const label = badge.querySelector('span')
+      if (label) {
+        label.innerHTML = `<i class="bi bi-images me-1"></i> ImageMaid running${elapsed ? ` (${escapeHtml(elapsed)})` : ''}`
+      }
+    } else {
+      badge.classList.add('d-none')
+    }
+  }
+  qsRenderActiveWorkCard()
+}
+
+window.QS_handleImageMaidStatus = qsHandleImageMaidStatus
 
 function qsHandleLogscanReingestStatus (data) {
   const status = String((data && data.status) || 'idle').trim().toLowerCase()
@@ -979,6 +1021,17 @@ window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
   }
   setTimeout(poll, 1800)
   setInterval(poll, QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS)
+})()
+
+;(function qsImageMaidPoll () {
+  const poll = () => {
+    fetch('/imagemaid-status')
+      .then(res => res.json())
+      .then(data => qsHandleImageMaidStatus(data))
+      .catch(() => {})
+  }
+  setTimeout(poll, 1600)
+  setInterval(poll, QS_MAINTENANCE_TOAST_INTERVAL_MS)
 })()
 
 ;(function qsBackgroundJobsPoll () {

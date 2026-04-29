@@ -3,7 +3,7 @@
   {% set qs_is_docker = version_info and version_info.running_on and ('Docker' in version_info.running_on) %}
   {% set hide_step_nav = page_info.get('hide_step_nav', False) %}
   {% set required_keys = required_keys if required_keys is defined else ['001-start', '010-plex', '020-tmdb', '025-libraries', '150-settings'] %}
-  {% set review_keys = review_keys if review_keys is defined else ['900-final', '905-analytics', '910-sponsor'] %}
+  {% set review_keys = review_keys if review_keys is defined else ['900-final', '905-analytics', '910-sponsor', '915-imagemaid'] %}
   {% if optional_keys is defined %}
   {% set optional_ns = namespace(keys=optional_keys) %}
   {% else %}
@@ -233,6 +233,12 @@
                   title="Open Final Validation">
                   <span class="badge rounded-pill text-bg-info text-dark px-3 py-2">
                     <i class="bi bi-hourglass-split me-1"></i> Kometa start queued
+                  </span>
+                </a>
+                <a id="qs-imagemaid-running-badge" class="d-none qs-header-status-pill" href="{{ url_for('step', name='915-imagemaid') }}"
+                  title="Open ImageMaid">
+                  <span class="badge rounded-pill text-bg-success px-3 py-2">
+                    <i class="bi bi-images me-1"></i> ImageMaid running
                   </span>
                 </a>
                 <div class="qs-background-job-pill-list" data-qs-background-job-pills></div>

@@ -1,0 +1,321 @@
+{% extends "000-base.html" %}
+{% block content %}
+{% include "001-navigation.html" %}
+{% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+
+<div id="imagemaid-page-meta"
+  data-root="{{ page_info.imagemaid_root | default('', true) | e }}"
+  data-validated="{{ 'true' if page_info.imagemaid_validated else 'false' }}"
+  data-branch="{{ page_info.imagemaid_branch_override | default('', true) | e }}"
+  data-supports-no-verify-ssl="{{ 'true' if page_info.imagemaid_supports_no_verify_ssl else 'false' }}"
+  data-supports-overlays-only="{{ 'true' if page_info.imagemaid_supports_overlays_only else 'false' }}"></div>
+
+<div class="modal fade" id="imagemaid-move-confirm-modal" tabindex="-1" aria-labelledby="imagemaidMoveConfirmLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imagemaidMoveConfirmLabel">Run ImageMaid in move mode?</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Move mode renames and relocates Plex metadata images into the ImageMaid Restore folder.
+        <div class="small text-muted mt-2" id="imagemaid-move-confirm-detail">Quickstart will show the exact restore folder before you run.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning" id="confirm-imagemaid-move-run">Run move mode</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="imagemaid-stop-confirm-modal" tabindex="-1" aria-labelledby="imagemaidStopConfirmLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-light">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imagemaidStopConfirmLabel">Stop ImageMaid?</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to stop the current ImageMaid run? This will terminate the process and clear the PID.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirm-stop-imagemaid">Stop ImageMaid</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="alert alert-warning" role="alert">
+  <div class="fw-semibold mb-1">ImageMaid changes Plex image storage.</div>
+  <div class="small">
+    Start with <code>report</code> mode. <code>move</code> and <code>restore</code> modify Plex metadata files, so make sure Kometa is idle before you run ImageMaid.
+  </div>
+  <div class="small mt-2">
+    Reference: <a href="https://kometa.wiki/en/nightly/kometa/scripts/imagemaid/" target="_blank" rel="noopener noreferrer">ImageMaid wiki</a>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-5">
+    <div class="card bg-dark-subtle border-secondary h-100">
+      <div class="card-body">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+          <div>
+            <h5 class="mb-1">Prepare ImageMaid</h5>
+            <div class="small text-muted">Install, validate, or update the local ImageMaid setup before running it.</div>
+          </div>
+          <span id="imagemaid-install-state" class="badge text-bg-secondary">Not checked</span>
+        </div>
+
+        <div class="mb-3">
+          ImageMaid will be installed/updated in:
+          <code id="imagemaid-install-path">{{ page_info.imagemaid_root | default('', true) }}</code>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label form-label-sm mb-1" for="imagemaid_branch_override">ImageMaid Branch</label>
+          <select class="form-select" id="imagemaid_branch_override" name="imagemaid_branch_override">
+            <option value="" {% if not data['imagemaid']['branch_override'] %}selected{% endif %}>Auto (default)</option>
+            <option value="master" {% if data['imagemaid']['branch_override'] == 'master' %}selected{% endif %}>master</option>
+            <option value="develop" {% if data['imagemaid']['branch_override'] == 'develop' %}selected{% endif %}>develop</option>
+          </select>
+        </div>
+
+        <div id="imagemaid-branch-override-warning" class="alert alert-warning small py-2 px-3 mb-2 d-none" role="alert">
+          Branch override is enabled. This bypasses Quickstart's default ImageMaid branch selection and will install or check the selected branch directly.
+        </div>
+
+        <div class="alert alert-light border small py-2 px-3 mb-3" role="status">
+          <div><strong>Selection:</strong> <span id="imagemaid-branch-selection">Auto</span></div>
+          <div><strong>Effective branch:</strong> <code id="imagemaid-effective-branch">develop</code></div>
+          <div><strong>Update phase:</strong> <span id="imagemaid-update-phase-badge" class="badge text-bg-secondary">Idle</span></div>
+          <div><strong>Local version:</strong> <span id="imagemaid-local-version-status">Unknown</span></div>
+          <div><strong>Remote version:</strong> <span id="imagemaid-remote-version-status">Not checked</span></div>
+          <div><strong>Local branch:</strong> <span id="imagemaid-local-branch-status">Unknown</span></div>
+          <div><strong>Local SHA:</strong> <span id="imagemaid-local-sha-status">Unknown</span></div>
+          <div><strong>Remote SHA:</strong> <span id="imagemaid-remote-sha-status">Not checked</span></div>
+          <div><strong>ImageMaid branch source:</strong> <code id="imagemaid-branch-source-url"></code></div>
+          <div><strong>ImageMaid ZIP source:</strong> <code id="imagemaid-zip-source-url"></code></div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+          <button type="button" class="btn btn-primary btn-sm" id="update-imagemaid-btn">
+            <i class="bi bi-arrow-clockwise me-1"></i> Check for ImageMaid Updates
+          </button>
+          <div class="form-check form-switch small">
+            <input class="form-check-input" type="checkbox" id="force-update-imagemaid">
+            <label class="form-check-label" for="force-update-imagemaid">Force update</label>
+          </div>
+        </div>
+
+        <div class="form-text text-muted mt-1 mb-2" id="imagemaid-install-summary">Probe ImageMaid to load the current local state.</div>
+        <div id="imagemaid-update-box" class="alert alert-warning mt-2 mb-2 d-none" role="alert">
+          Update available: local <span id="imagemaid-local-version-inline"></span> / <span id="imagemaid-local-sha-inline"></span> -> remote <span id="imagemaid-remote-version-inline"></span> / <span id="imagemaid-remote-sha-inline"></span>.
+          Click "Update Available" to apply it.
+        </div>
+        <pre id="imagemaid-install-log" class="bg-black text-light small rounded p-3 mb-0" style="min-height: 220px; max-height: 320px; overflow:auto;">No ImageMaid probe yet.</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-7">
+    <div class="card bg-dark-subtle border-secondary h-100">
+      <div class="card-body">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+          <div>
+            <h5 class="mb-1">Configure ImageMaid</h5>
+            <div class="small text-muted">Quickstart reuses your saved Plex URL/token. Plex path validation happens here.</div>
+          </div>
+          <span id="imagemaid-validation-badge" class="badge text-bg-secondary">Not validated</span>
+        </div>
+
+        <div class="alert {% if page_info.plex_valid %}alert-success{% else %}alert-warning{% endif %} py-2 small" id="imagemaid-plex-prereq">
+          Plex page validation:
+          <strong>{% if page_info.plex_valid %}Ready{% else %}Required before ImageMaid can run{% endif %}</strong>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-lg-7">
+            <label class="form-label" for="imagemaid_plex_path">Plex path</label>
+            <input type="text" class="form-control" id="imagemaid_plex_path" name="imagemaid_plex_path" data-path-rule="imagemaid_plex_path"
+              value="{{ data['imagemaid']['plex_path'] | default('', true) }}">
+            <div class="form-text">Point to the Plex config directory containing <code>Cache</code>, <code>Metadata</code>, and <code>Plug-in Support</code>.</div>
+          </div>
+          <div class="col-12 col-lg-5">
+            <label class="form-label" for="imagemaid_mode">Mode</label>
+            <select class="form-select" id="imagemaid_mode" name="imagemaid_mode">
+              <option value="report" {% if page_info.imagemaid_mode == 'report' %}selected{% endif %}>report</option>
+              <option value="move" {% if page_info.imagemaid_mode == 'move' %}selected{% endif %}>move</option>
+              <option value="restore" {% if page_info.imagemaid_mode == 'restore' %}selected{% endif %}>restore</option>
+              <option value="clear" {% if page_info.imagemaid_mode == 'clear' %}selected{% endif %}>clear</option>
+              <option value="remove" {% if page_info.imagemaid_mode == 'remove' %}selected{% endif %}>remove</option>
+              <option value="nothing" {% if page_info.imagemaid_mode == 'nothing' %}selected{% endif %}>nothing</option>
+            </select>
+          </div>
+
+          <div class="col-12">
+            <div id="imagemaid-mode-help" class="alert alert-secondary small py-2 px-3 mb-0" role="status">
+              <div class="fw-semibold" id="imagemaid-mode-help-title">Report mode</div>
+              <div id="imagemaid-mode-help-text">ImageMaid will report metadata image changes without moving or deleting them.</div>
+              <div id="imagemaid-mode-help-detail" class="mt-1 text-muted"></div>
+            </div>
+          </div>
+
+          <div class="col-6 col-lg-3">
+            <label class="form-label" for="imagemaid_timeout">Timeout</label>
+            <input type="number" class="form-control" id="imagemaid_timeout" name="imagemaid_timeout"
+              value="{{ data['imagemaid']['timeout'] | default('600', true) }}" min="1" step="1">
+          </div>
+          <div class="col-6 col-lg-3">
+            <label class="form-label" for="imagemaid_sleep">Sleep</label>
+            <input type="number" class="form-control" id="imagemaid_sleep" name="imagemaid_sleep"
+              value="{{ data['imagemaid']['sleep'] | default('60', true) }}" min="1" step="1">
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-12 col-lg-6">
+            <div class="border rounded p-3 h-100">
+              <div class="fw-semibold small text-uppercase text-muted mb-2">Database</div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="imagemaid_local_db" name="imagemaid_local_db"
+                  {% if data['imagemaid']['local_db'] %}checked{% endif %}>
+                <label class="form-check-label" for="imagemaid_local_db">Copy local Plex DB</label>
+              </div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="imagemaid_use_existing" name="imagemaid_use_existing"
+                  {% if data['imagemaid']['use_existing'] %}checked{% endif %}>
+                <label class="form-check-label" for="imagemaid_use_existing">Use existing DB if fresh</label>
+              </div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="imagemaid_ignore_running" name="imagemaid_ignore_running"
+                  {% if data['imagemaid']['ignore_running'] %}checked{% endif %}>
+                <label class="form-check-label" for="imagemaid_ignore_running">Ignore local DB running lock</label>
+              </div>
+              <div class="form-text mt-2">
+                Local DB copy can miss active Plex writes. ImageMaid checks the Plex database running lock unless you enable
+                <code>Ignore local DB running lock</code>. Quickstart does not force-flush Plex's SQLite DB through PlexAPI, so
+                leaving local copy off is the safer option while Plex is active.
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-lg-6">
+            <div class="border rounded p-3 h-100">
+              <div class="fw-semibold small text-uppercase text-muted mb-2">Operations</div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="imagemaid_photo_transcoder" name="imagemaid_photo_transcoder"
+                  {% if data['imagemaid']['photo_transcoder'] %}checked{% endif %}>
+                <label class="form-check-label" for="imagemaid_photo_transcoder">PhotoTranscoder cleanup</label>
+              </div>
+              <div class="form-check form-switch mb-2 {% if not page_info.imagemaid_supports_no_verify_ssl %}d-none{% endif %}" id="imagemaid-no-verify-ssl-row">
+                <input class="form-check-input" type="checkbox" id="imagemaid_no_verify_ssl" name="imagemaid_no_verify_ssl"
+                  {% if data['imagemaid']['no_verify_ssl'] %}checked{% endif %}>
+                <label class="form-check-label" for="imagemaid_no_verify_ssl">No Verify SSL</label>
+              </div>
+              <div class="form-check form-switch mb-2 {% if not page_info.imagemaid_supports_overlays_only %}d-none{% endif %}" id="imagemaid-overlays-only-row">
+                <input class="form-check-input" type="checkbox" id="imagemaid_overlays_only" name="imagemaid_overlays_only"
+                  {% if data['imagemaid']['overlays_only'] %}checked{% endif %}>
+                <label class="form-check-label" for="imagemaid_overlays_only">Overlays Only</label>
+              </div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="imagemaid_empty_trash" name="imagemaid_empty_trash"
+                  {% if data['imagemaid']['empty_trash'] %}checked{% endif %}>
+                <label class="form-check-label" for="imagemaid_empty_trash">Empty Trash</label>
+              </div>
+              <div class="form-check form-switch mb-2">
+                <input class="form-check-input" type="checkbox" id="imagemaid_clean_bundles" name="imagemaid_clean_bundles"
+                  {% if data['imagemaid']['clean_bundles'] %}checked{% endif %}>
+                <label class="form-check-label" for="imagemaid_clean_bundles">Clean Bundles</label>
+              </div>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="imagemaid_optimize_db" name="imagemaid_optimize_db"
+                  {% if data['imagemaid']['optimize_db'] %}checked{% endif %}>
+                <label class="form-check-label" for="imagemaid_optimize_db">Optimize DB</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="border rounded p-3">
+              <div class="fw-semibold small text-uppercase text-muted mb-2">Logging</div>
+              <div class="row g-2">
+                <div class="col-12 col-sm-6">
+                  <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" id="imagemaid_trace" name="imagemaid_trace"
+                    {% if data['imagemaid']['trace'] %}checked{% endif %}>
+                    <label class="form-check-label text-nowrap" for="imagemaid_trace">Trace</label>
+                  </div>
+                </div>
+                <div class="col-12 col-sm-6">
+                  <div class="form-check form-switch mb-0">
+                  <input class="form-check-input" type="checkbox" id="imagemaid_log_requests" name="imagemaid_log_requests"
+                    {% if data['imagemaid']['log_requests'] %}checked{% endif %}>
+                    <label class="form-check-label text-nowrap" for="imagemaid_log_requests">Log requests</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mt-3 align-items-center">
+          <button type="button" class="btn btn-success btn-sm" id="validate-imagemaid-btn">
+            <i class="bi bi-check2-circle me-1"></i> Validate ImageMaid
+          </button>
+          <span class="small text-muted align-self-center fw-semibold" id="imagemaid-validation-status">Validate ImageMaid after entering the Plex data path.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card bg-dark-subtle border-secondary">
+      <div class="card-body">
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+          <div>
+            <h5 class="mb-1">Run ImageMaid</h5>
+            <div class="small text-muted">Quickstart builds the command from the saved form. The preview redacts saved Plex credentials.</div>
+          </div>
+          <div class="d-flex flex-wrap gap-2 justify-content-end">
+            <span id="imagemaid-maintenance-page-badge" class="badge text-bg-warning d-none">
+              <i class="bi bi-pause-circle me-1"></i><span>Blocked by Plex maintenance</span>
+            </span>
+            <span id="imagemaid-run-state" class="badge text-bg-secondary">Idle</span>
+          </div>
+        </div>
+
+        <div id="imagemaid-run-gate" class="alert alert-secondary mb-3" role="status">
+          <div class="fw-semibold mb-1" id="imagemaid-run-gate-title">Prepare ImageMaid first</div>
+          <div class="small mb-0" id="imagemaid-run-gate-text">Install or prepare ImageMaid before Quickstart can build the run command.</div>
+        </div>
+
+        <div id="imagemaid-run-surface" class="d-none">
+          <label class="form-label small text-uppercase text-muted" for="imagemaid-command-preview">Command preview</label>
+          <textarea id="imagemaid-command-preview" class="form-control font-monospace mb-3" rows="4" readonly>Preview unavailable until the page validates.</textarea>
+
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <button type="button" class="btn btn-success" id="run-imagemaid-btn">
+              <i class="bi bi-play-fill me-1"></i> Run ImageMaid
+            </button>
+            <button type="button" class="btn btn-danger" id="stop-imagemaid-btn" disabled>
+              <i class="bi bi-stop-fill me-1"></i> Stop ImageMaid
+            </button>
+          </div>
+
+          <div class="small text-muted mb-2" id="imagemaid-run-status">ImageMaid is not running.</div>
+          <pre id="imagemaid-run-log" class="bg-black text-light small rounded p-3 mb-0" style="min-height: 220px; max-height: 360px; overflow:auto;">No ImageMaid log loaded.</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="small text-muted mt-3">
+  ImageMaid analytics ingestion will use native ImageMaid logs from <code>config/imagemaid/config/logs</code>.
+</div>
+
+</form>
+{% endblock %}

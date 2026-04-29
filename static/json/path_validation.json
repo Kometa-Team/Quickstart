@@ -99,6 +99,16 @@
       "ui": {
         "hint_docker": "Running in Docker? Use container paths like /config/..."
       }
+    },
+    {
+      "id": "imagemaid_plex_path",
+      "label": "ImageMaid Plex Path",
+      "mode": "output_dir",
+      "allow_relative": false,
+      "must_exist": false,
+      "ui": {
+        "hint_docker": "Running in Docker? Use the Plex config directory mounted inside the container."
+      }
     }
   ]
 }

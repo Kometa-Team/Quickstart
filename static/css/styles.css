@@ -1934,6 +1934,20 @@ label {
     opacity: 0.6;
 }
 
+.qs-readonly-display[readonly] {
+    background-color: var(--theme-bg-dark);
+    border-color: var(--theme-border);
+    color: var(--theme-text);
+    cursor: default;
+    box-shadow: none;
+}
+
+.qs-readonly-display[readonly]:focus {
+    border-color: var(--theme-border);
+    box-shadow: none;
+    outline: none;
+}
+
 
 .btn.disabled,
 .btn:disabled,

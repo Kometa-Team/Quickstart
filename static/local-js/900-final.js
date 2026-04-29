@@ -75,6 +75,7 @@ $(document).ready(function () {
   const $kometaRemoteVersionStatus = $('#kometa-remote-version-status')
   const $kometaVersionSourceUrl = $('#kometa-version-source-url')
   const $kometaZipSourceUrl = $('#kometa-zip-source-url')
+  const $kometaMaintenancePageBadge = $('#kometa-maintenance-page-badge')
   const $runStatusRow = $('#run-status-row')
   const $runStatusTimer = $('#run-status-timer')
   const $runStatusMetrics = $('#run-status-metrics')
@@ -110,6 +111,35 @@ $(document).ready(function () {
   let kometaRemoteVersionChecked = false
   let kometaRemoteVersionSkipped = false
   let kometaUpdatePhaseStatus = 'idle'
+
+  function syncKometaMaintenancePageBadge (data) {
+    if (!$kometaMaintenancePageBadge.length) return
+    const paused = Boolean(data && data.maintenance_paused)
+    const pending = Boolean(data && data.pending_start)
+    const active = Boolean(data && data.maintenance_active)
+    const windowLabel = data && data.maintenance_window ? ` (${data.maintenance_window})` : ''
+    let label = ''
+
+    if (paused) {
+      label = `Paused for Plex maintenance${windowLabel}`
+    } else if (pending) {
+      label = `Queued for Plex maintenance${windowLabel}`
+    } else if (active) {
+      label = `Plex maintenance active${windowLabel}`
+    }
+
+    if (label) {
+      $kometaMaintenancePageBadge.removeClass('d-none')
+      const textEl = $kometaMaintenancePageBadge.find('span').last()
+      if (textEl.length) textEl.text(label)
+    } else {
+      $kometaMaintenancePageBadge.addClass('d-none')
+    }
+  }
+
+  document.addEventListener('qs:maintenance-status', function (event) {
+    syncKometaMaintenancePageBadge(event.detail || null)
+  })
 
   function readMetaFlag (id, datasetKey, attrKey) {
     const el = document.getElementById(id)

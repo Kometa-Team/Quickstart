@@ -34,6 +34,9 @@ STRING_FIELDS = {"apikey", "token", "username", "password"}
 GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/Kometa"
 GITHUB_API_BRANCH = "https://api.github.com/repos/kometa-team/Kometa/branches/{branch}"
 GITHUB_ZIP_URL = "https://codeload.github.com/kometa-team/Kometa/zip/refs/heads/{branch}"
+IMAGEMAID_GITHUB_BASE_URL = "https://raw.githubusercontent.com/Kometa-Team/ImageMaid"
+IMAGEMAID_GITHUB_API_BRANCH = "https://api.github.com/repos/kometa-team/ImageMaid/branches/{branch}"
+IMAGEMAID_GITHUB_ZIP_URL = "https://codeload.github.com/kometa-team/ImageMaid/zip/refs/heads/{branch}"
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif", "bmp"}
 FONT_EXTENSIONS = {".ttf", ".otf"}
@@ -63,6 +66,40 @@ _PLEX_DISCOVERY_CACHE = {}
 KOMETA_UPDATE_CACHE_TTL_SECONDS = int(os.environ.get("QS_KOMETA_UPDATE_CACHE_TTL_SECONDS", "600"))
 _KOMETA_UPDATE_CACHE = {}
 KOMETA_BRANCH_OVERRIDES = {"master", "develop", "nightly"}
+IMAGEMAID_UPDATE_CACHE_TTL_SECONDS = int(os.environ.get("QS_IMAGEMAID_UPDATE_CACHE_TTL_SECONDS", "600"))
+_IMAGEMAID_UPDATE_CACHE = {}
+IMAGEMAID_BRANCH_OVERRIDES = {"master", "develop"}
+
+
+def detect_git_branch(repo_root=None, default="develop"):
+    root = Path(repo_root or get_app_root()).resolve()
+
+    if Repo is not None:
+        try:
+            repo = Repo(root, search_parent_directories=True)
+            branch_name = str(repo.active_branch.name or "").strip()
+            if branch_name:
+                return branch_name
+        except Exception:
+            pass
+
+    git_bin = shutil.which("git")
+    if git_bin:
+        try:
+            result = subprocess.run(
+                [git_bin, "rev-parse", "--abbrev-ref", "HEAD"],
+                cwd=str(root),
+                capture_output=True,
+                text=True,
+                shell=False,
+            )
+            branch_name = (result.stdout or "").strip()
+            if result.returncode == 0 and branch_name:
+                return branch_name
+        except Exception:
+            pass
+
+    return default
 
 
 def _plex_discovery_cache_key(kind, plex_url, plex_token):
@@ -188,6 +225,78 @@ def invalidate_cached_kometa_update(kometa_root=None):
     for key in list(_KOMETA_UPDATE_CACHE.keys()):
         if key[0] == target_root:
             _KOMETA_UPDATE_CACHE.pop(key, None)
+
+
+def _imagemaid_update_cache_key(imagemaid_root, branch, local_version=None, local_sha=None, local_branch=None):
+    try:
+        root = str(Path(imagemaid_root).resolve())
+    except Exception:
+        root = str(imagemaid_root or "")
+    return root, str(branch or "").strip(), str(local_version or "").strip(), str(local_sha or "").strip(), str(local_branch or "").strip()
+
+
+def normalize_imagemaid_branch_override(value):
+    branch = str(value or "").strip().lower()
+    return branch if branch in IMAGEMAID_BRANCH_OVERRIDES else ""
+
+
+def resolve_imagemaid_update_branch(branch_override=None):
+    branch = normalize_imagemaid_branch_override(branch_override)
+    if branch:
+        return branch
+    qs_branch = detect_git_branch(get_app_root())
+    return "master" if qs_branch == "master" else "develop"
+
+
+def get_cached_imagemaid_update(imagemaid_root=None, force_refresh=False, branch_override=None):
+    branch = resolve_imagemaid_update_branch(branch_override)
+    local_version = get_imagemaid_local_version(imagemaid_root)
+    local_sha = get_imagemaid_local_sha(imagemaid_root)
+    local_branch = get_imagemaid_local_branch(imagemaid_root)
+    key = _imagemaid_update_cache_key(imagemaid_root or ".", branch, local_version=local_version, local_sha=local_sha, local_branch=local_branch)
+
+    if not force_refresh:
+        entry = _IMAGEMAID_UPDATE_CACHE.get(key)
+        if entry:
+            age = time.monotonic() - entry.get("created_at", 0)
+            if age <= IMAGEMAID_UPDATE_CACHE_TTL_SECONDS:
+                payload = copy.deepcopy(entry.get("payload") or {})
+                payload["cached"] = True
+                return payload
+            _IMAGEMAID_UPDATE_CACHE.pop(key, None)
+
+    payload = check_imagemaid_update(imagemaid_root, branch_override=branch_override)
+    if isinstance(payload, dict):
+        payload = copy.deepcopy(payload)
+        payload["cached"] = False
+        _IMAGEMAID_UPDATE_CACHE[key] = {
+            "created_at": time.monotonic(),
+            "payload": copy.deepcopy(payload),
+        }
+        return payload
+    return {
+        "local_version": local_version,
+        "local_sha": local_sha,
+        "local_branch": local_branch,
+        "remote_version": None,
+        "remote_sha": None,
+        "branch": branch,
+        "update_available": False,
+        "cached": False,
+    }
+
+
+def invalidate_cached_imagemaid_update(imagemaid_root=None):
+    if imagemaid_root is None:
+        _IMAGEMAID_UPDATE_CACHE.clear()
+        return
+    try:
+        target_root = str(Path(imagemaid_root).resolve())
+    except Exception:
+        target_root = str(imagemaid_root or "")
+    for key in list(_IMAGEMAID_UPDATE_CACHE.keys()):
+        if key[0] == target_root:
+            _IMAGEMAID_UPDATE_CACHE.pop(key, None)
 
 
 def normalize_id(name, existing_ids):
@@ -581,6 +690,8 @@ def user_visible_name(raw_name):
         formatted_name = "Final Validation"
     elif raw_name == "analytics":
         formatted_name = "Analytics"
+    elif raw_name == "imagemaid":
+        formatted_name = "ImageMaid"
     else:
         if "-" in raw_name:
             formatted_name = raw_name.replace("-", " ").title()
@@ -1281,6 +1392,87 @@ def get_kometa_remote_sha(branch="nightly"):
     return _get_upstream_sha(branch, [])
 
 
+def get_imagemaid_root_path() -> Path:
+    base = None
+    if has_app_context():
+        base = app.config.get("IMAGEMAID_ROOT")
+    if not base and has_request_context():
+        base = session.get("imagemaid_root")
+    if not base:
+        base = os.path.join(CONFIG_DIR, "imagemaid")
+    return Path(os.path.normpath(base)).resolve()
+
+
+def get_imagemaid_local_sha(imagemaid_root=None):
+    if imagemaid_root is None:
+        imagemaid_root = get_imagemaid_root_path()
+    else:
+        imagemaid_root = Path(imagemaid_root)
+    return _read_text(imagemaid_root / ".imagemaid_sha")
+
+
+def get_imagemaid_local_version(imagemaid_root=None):
+    if imagemaid_root is None:
+        imagemaid_root = get_imagemaid_root_path()
+    else:
+        imagemaid_root = Path(imagemaid_root)
+    version_path = imagemaid_root / "VERSION"
+    if version_path.exists():
+        return version_path.read_text(encoding="utf-8").strip()
+    return "unknown"
+
+
+def get_imagemaid_local_branch(imagemaid_root=None):
+    if imagemaid_root is None:
+        imagemaid_root = get_imagemaid_root_path()
+    else:
+        imagemaid_root = Path(imagemaid_root)
+    return normalize_imagemaid_branch_override(_read_text(imagemaid_root / ".imagemaid_branch"))
+
+
+def get_imagemaid_remote_sha(branch="develop"):
+    return _get_upstream_sha(branch, [], api_url_template=IMAGEMAID_GITHUB_API_BRANCH, label="ImageMaid")
+
+
+def get_imagemaid_remote_version(branch="develop"):
+    url = f"{IMAGEMAID_GITHUB_BASE_URL}/{branch}/VERSION"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        return response.text.strip()
+    except requests.RequestException:
+        return None
+
+
+def check_imagemaid_update(imagemaid_root=None, branch_override=None):
+    branch = resolve_imagemaid_update_branch(branch_override)
+    local_version = get_imagemaid_local_version(imagemaid_root)
+    local_sha = get_imagemaid_local_sha(imagemaid_root)
+    local_branch = get_imagemaid_local_branch(imagemaid_root)
+    remote_version = get_imagemaid_remote_version(branch)
+    remote_sha = get_imagemaid_remote_sha(branch)
+    branch_mismatch = bool(local_branch and local_branch != branch)
+
+    if local_sha and remote_sha:
+        update_available = branch_mismatch or (local_sha != remote_sha)
+        comparison_basis = "sha"
+    else:
+        update_available = branch_mismatch or bool(remote_version and remote_version != local_version)
+        comparison_basis = "version"
+
+    return {
+        "local_version": local_version,
+        "local_sha": local_sha,
+        "local_branch": local_branch,
+        "remote_version": remote_version,
+        "remote_sha": remote_sha,
+        "branch": branch,
+        "branch_mismatch": branch_mismatch,
+        "comparison_basis": comparison_basis,
+        "update_available": update_available,
+    }
+
+
 def check_kometa_update(kometa_root=None, branch_override=None):
     branch = resolve_kometa_update_branch(branch_override)
     local_version = get_kometa_local_version(kometa_root)
@@ -1720,10 +1912,13 @@ def _write_text(p: Path, s: str):
     p.write_text(s, encoding="utf-8")
 
 
-def _get_upstream_sha(branch: str, logs: list[str]) -> str | None:
+def _get_upstream_sha(branch: str, logs: list[str], api_url_template: str = GITHUB_API_BRANCH, label: str = "Kometa") -> str | None:
     try:
-        url = GITHUB_API_BRANCH.format(branch=branch)
-        logs.append(f"🔎 Resolving upstream SHA from: {url}")
+        url = api_url_template.format(branch=branch)
+        if label == "Kometa":
+            logs.append(f"🔎 Resolving upstream SHA from: {url}")
+        else:
+            logs.append(f"🔎 Resolving upstream {label} SHA from: {url}")
         r = requests.get(url, timeout=20)
         if r.status_code != 200:
             logs.append(f"❌ GitHub API {r.status_code} for {url}")
@@ -1739,10 +1934,13 @@ def _get_upstream_sha(branch: str, logs: list[str]) -> str | None:
         return None
 
 
-def _download_zip(branch: str, logs: list[str]) -> bytes | None:
+def _download_zip(branch: str, logs: list[str], zip_url_template: str = GITHUB_ZIP_URL, label: str = "Kometa") -> bytes | None:
     try:
-        url = GITHUB_ZIP_URL.format(branch=branch)
-        logs.append(f"📥 Downloading {branch}.zip from: {url}")
+        url = zip_url_template.format(branch=branch)
+        if label == "Kometa":
+            logs.append(f"📥 Downloading {branch}.zip from: {url}")
+        else:
+            logs.append(f"📥 Downloading {label} {branch}.zip from: {url}")
         r = requests.get(url, timeout=60)
         if r.status_code != 200:
             logs.append(f"❌ ZIP download failed ({r.status_code})")
@@ -1822,8 +2020,8 @@ def _cleanup_kometa_backup(backup_dir: Path, logs: list[str]):
         logs.append(f"? Failed to remove Kometa backup: {e}")
 
 
-def _clear_directory_contents(dest_dir: Path, logs: list[str]) -> bool:
-    logs.append(f"🧹 Removing existing Kometa contents from: {dest_dir}")
+def _clear_directory_contents(dest_dir: Path, logs: list[str], label: str = "Kometa") -> bool:
+    logs.append(f"🧹 Removing existing {label} contents from: {dest_dir}")
     removed_count = 0
     failed_paths = []
 
@@ -1843,14 +2041,14 @@ def _clear_directory_contents(dest_dir: Path, logs: list[str]) -> bool:
         for leftover in leftovers:
             if all(str(leftover) != str(path) for path, _err in failed_paths):
                 logs.append(f"❌ Existing path still present after cleanup: {leftover}")
-        logs.append("❌ Aborting extraction because the Kometa directory is not empty after cleanup.")
+        logs.append(f"❌ Aborting extraction because the {label} directory is not empty after cleanup.")
         return False
 
     logs.append(f"🧹 Removed {removed_count} existing entr{'y' if removed_count == 1 else 'ies'}.")
     return True
 
 
-def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> bool:
+def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str], label: str = "Kometa") -> bool:
     try:
         _ensure_dir(dest_dir)
         with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
@@ -1864,7 +2062,7 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> boo
             with tempfile.TemporaryDirectory(dir=tmp_base) as td:
                 tmp_root = Path(td) / root_name
                 zf.extractall(Path(td))
-                if not _clear_directory_contents(dest_dir, logs):
+                if not _clear_directory_contents(dest_dir, logs, label=label):
                     return False
                 # Copy over
                 for item in tmp_root.iterdir():
@@ -1885,7 +2083,7 @@ def _extract_zip_bytes(zip_bytes: bytes, dest_dir: Path, logs: list[str]) -> boo
         return False
 
 
-def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
+def _ensure_venv(kometa_dir: Path, logs: list[str], venv_name: str = "kometa-venv") -> tuple[Path, Path] | None:
     """
     Create (if missing) and validate a venv at <kometa_dir>/kometa-venv.
     Returns (python_bin, pip_bin) or None on failure.
@@ -1893,7 +2091,7 @@ def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
     import shutil, time
 
     is_windows = os.name == "nt"
-    venv_dir = kometa_dir / "kometa-venv"
+    venv_dir = kometa_dir / venv_name
 
     def _venv_ok() -> bool:
         # A valid venv should have pyvenv.cfg and a python binary
@@ -1926,7 +2124,7 @@ def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
     # Create venv if needed
     if not venv_dir.exists() or not _venv_ok():
         if venv_dir.exists() and not _venv_ok():
-            logs.append("⚠️ Existing kometa-venv looks invalid; recreating…")
+            logs.append(f"⚠️ Existing {venv_name} looks invalid; recreating…")
             try:
                 shutil.rmtree(venv_dir, ignore_errors=True)
             except Exception as e:
@@ -1987,7 +2185,7 @@ def _ensure_venv(kometa_dir: Path, logs: list[str]) -> tuple[Path, Path] | None:
     return python_bin, pip_bin
 
 
-def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str]) -> bool:
+def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str], requirements_file: str = "requirements.txt") -> bool:
     is_windows = os.name == "nt"
 
     logs.append("⬆️ Upgrading pip…")
@@ -2006,7 +2204,7 @@ def _pip_install(python_bin: Path, kometa_dir: Path, logs: list[str]) -> bool:
 
     logs.append("📦 Installing requirements…")
     p = subprocess.run(
-        [str(python_bin), "-m", "pip", "install", "--no-cache-dir", "--upgrade", "-r", "requirements.txt"],
+        [str(python_bin), "-m", "pip", "install", "--no-cache-dir", "--upgrade", "-r", requirements_file],
         capture_output=True,
         text=True,
         cwd=str(kometa_dir),
@@ -2084,6 +2282,57 @@ def perform_kometa_update_zip_only(config_root: str | Path, branch: str = "night
         return {"success": False, "log": logs}
 
 
+def perform_imagemaid_update_zip_only(config_root: str | Path, branch: str = "develop", force: bool = False, logs=None):
+    """
+    Update ImageMaid by downloading/extracting the branch ZIP into:
+        {config_root}/imagemaid
+    Uses upstream commit SHA to skip when up-to-date unless force is True.
+    """
+    logs = logs if logs is not None else []
+    try:
+        config_root = Path(config_root).resolve()
+        imagemaid_dir = config_root / "imagemaid"
+        sha_file = imagemaid_dir / ".imagemaid_sha"
+        branch_file = imagemaid_dir / ".imagemaid_branch"
+
+        logs.append(f"⚙️ ZIP updater → ImageMaid branch '{branch}'")
+        _ensure_dir(imagemaid_dir)
+
+        upstream_sha = _get_upstream_sha(branch, logs, api_url_template=IMAGEMAID_GITHUB_API_BRANCH, label="ImageMaid")
+        if not upstream_sha:
+            return {"success": False, "log": logs}
+
+        local_sha = _read_text(sha_file)
+        if local_sha == upstream_sha and not force:
+            logs.append("✅ ImageMaid is up to date (SHA matches). Skipping download.")
+            return {"success": True, "log": logs, "up_to_date": True, "skipped": True}
+        if force:
+            logs.append("Force update requested; proceeding without SHA match check.")
+
+        zip_bytes = _download_zip(branch, logs, zip_url_template=IMAGEMAID_GITHUB_ZIP_URL, label="ImageMaid")
+        if not zip_bytes:
+            return {"success": False, "log": logs}
+
+        if not _extract_zip_bytes(zip_bytes, imagemaid_dir, logs, label="ImageMaid"):
+            return {"success": False, "log": logs}
+
+        res = _ensure_venv(imagemaid_dir, logs, venv_name="imagemaid-venv")
+        if not res:
+            return {"success": False, "log": logs}
+        python_bin, _pip_bin_unused = res
+        if not _pip_install(python_bin, imagemaid_dir, logs):
+            return {"success": False, "log": logs}
+
+        _write_text(sha_file, upstream_sha)
+        _write_text(branch_file, branch)
+        logs.append("✅ ImageMaid updated via ZIP.")
+        return {"success": True, "log": logs}
+
+    except Exception as e:
+        logs.append(f"❌ Exception: {e}")
+        return {"success": False, "log": logs}
+
+
 def get_kometa_root_path() -> Path:
     """
     Resolve the Kometa root folder consistently.
@@ -2100,6 +2349,42 @@ def get_kometa_root_path() -> Path:
     if not base:
         base = os.path.join(CONFIG_DIR, "kometa")
     return Path(os.path.normpath(base)).resolve()
+
+
+def get_imagemaid_pid_file():
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    return os.path.join(CONFIG_DIR, "imagemaid.pid")
+
+
+def get_imagemaid_launch_log_file():
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    return os.path.join(CONFIG_DIR, "imagemaid-launch.log")
+
+
+def get_imagemaid_pid():
+    pid_file = get_imagemaid_pid_file()
+    if os.path.exists(pid_file):
+        try:
+            with open(pid_file, "r", encoding="utf-8") as f:
+                return int(f.read().strip())
+        except Exception:
+            return None
+    return None
+
+
+def is_imagemaid_running():
+    pid = get_imagemaid_pid()
+    if not pid:
+        return False
+    try:
+        proc = psutil.Process(pid)
+        return proc.is_running() and "imagemaid.py" in " ".join(proc.cmdline())
+    except psutil.NoSuchProcess:
+        try:
+            os.remove(get_imagemaid_pid_file())
+        except Exception:
+            pass
+        return False
 
 
 def get_custom_fonts_dir() -> Path:

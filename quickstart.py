@@ -66,9 +66,16 @@ JOB_TARGET_PAGES = {
     "logscan_reingest": "/logscan-trends",
     "kometa_update": "/step/900-final",
     "test_library_install": "/step/001-start",
+    "imagemaid_update": "/step/915-imagemaid",
 }
 ACTIVE_WORK_POLICIES = {
     "kometa_run": [
+        {
+            "kind": "process",
+            "id": "imagemaid_run",
+            "message": "Cannot start Kometa while ImageMaid is running.",
+            "target_page": JOB_TARGET_PAGES.get("imagemaid_update"),
+        },
         {
             "kind": "job",
             "id": "kometa_update",
@@ -82,6 +89,28 @@ ACTIVE_WORK_POLICIES = {
             "id": "kometa_run",
             "message": "Cannot update Kometa while Kometa is running.",
             "target_page": JOB_TARGET_PAGES.get("kometa_update"),
+        }
+    ],
+    "imagemaid_run": [
+        {
+            "kind": "process",
+            "id": "kometa_run",
+            "message": "Cannot start ImageMaid while Kometa is running.",
+            "target_page": JOB_TARGET_PAGES.get("kometa_update"),
+        },
+        {
+            "kind": "job",
+            "id": "imagemaid_update",
+            "message": "Cannot start ImageMaid while an ImageMaid update is running.",
+            "target_page": JOB_TARGET_PAGES.get("imagemaid_update"),
+        },
+    ],
+    "imagemaid_update": [
+        {
+            "kind": "process",
+            "id": "imagemaid_run",
+            "message": "Cannot update ImageMaid while ImageMaid is running.",
+            "target_page": JOB_TARGET_PAGES.get("imagemaid_update"),
         }
     ],
 }
@@ -301,13 +330,19 @@ def _get_active_work_blocker(subject):
                 blocker["phase"] = active_job.get("phase")
                 blocker["job_id"] = active_job.get("job_id")
                 return blocker
-        elif kind == "process" and identifier == "kometa_run":
-            if helpers.is_kometa_running():
-                pid = helpers.get_kometa_pid()
-                blocker = dict(rule)
-                blocker["blocked_by"] = identifier
-                blocker["pid"] = pid
-                return blocker
+        elif kind == "process":
+            process_lookup = {
+                "kometa_run": (helpers.is_kometa_running, helpers.get_kometa_pid),
+                "imagemaid_run": (helpers.is_imagemaid_running, helpers.get_imagemaid_pid),
+            }
+            resolver = process_lookup.get(identifier)
+            if resolver:
+                is_running, get_pid = resolver
+                if is_running():
+                    blocker = dict(rule)
+                    blocker["blocked_by"] = identifier
+                    blocker["pid"] = get_pid()
+                    return blocker
 
     return None
 VALIDATION_KEY_SUGGESTIONS = {
@@ -316,7 +351,7 @@ VALIDATION_KEY_SUGGESTIONS = {
     }
 }
 QS_REQUIRED_STEP_KEYS = ["001-start", "010-plex", "020-tmdb", "025-libraries", "150-settings"]
-QS_REVIEW_STEP_KEYS = ["900-final", "905-analytics", "910-sponsor"]
+QS_REVIEW_STEP_KEYS = ["900-final", "905-analytics", "910-sponsor", "915-imagemaid"]
 QS_VALIDATION_STEP_KEYS = {
     "010-plex",
     "020-tmdb",
@@ -1669,6 +1704,33 @@ def _find_running_kometa_process():
     return procs[0] if procs else None
 
 
+def _find_running_imagemaid_processes():
+    imagemaid_root = None
+    try:
+        imagemaid_root = str(helpers.get_imagemaid_root_path())
+    except Exception:
+        imagemaid_root = None
+    matches = []
+    for proc in psutil.process_iter(["pid", "cmdline", "create_time"]):
+        try:
+            cmdline = proc.info.get("cmdline") or []
+            joined = " ".join(cmdline)
+        except Exception:
+            continue
+        if "imagemaid.py" not in joined:
+            continue
+        has_root = bool(imagemaid_root and imagemaid_root in joined)
+        create_time = proc.info.get("create_time") or 0
+        matches.append((has_root, create_time, proc))
+    matches.sort(key=lambda item: (1 if item[0] else 0, item[1]), reverse=True)
+    return [entry[2] for entry in matches]
+
+
+def _find_running_imagemaid_process():
+    procs = _find_running_imagemaid_processes()
+    return procs[0] if procs else None
+
+
 def _stop_process_tree(proc):
     try:
         children = proc.children(recursive=True)
@@ -1746,6 +1808,73 @@ def _launch_kometa_command(command, config_name=None):
     return True, proc.pid
 
 
+def _launch_imagemaid_command(command, mode=None):
+    if not command:
+        return False, "No command provided"
+
+    imagemaid_root = helpers.get_imagemaid_root_path()
+    is_win = sys.platform.startswith("win")
+    venv_python = imagemaid_root / "imagemaid-venv" / ("Scripts" if is_win else "bin") / ("python.exe" if is_win else "python3")
+    imagemaid_py = imagemaid_root / "imagemaid.py"
+
+    if not imagemaid_py.exists():
+        return False, f"imagemaid.py not found at: {imagemaid_py}"
+    if not venv_python.exists():
+        return False, f"ImageMaid venv python not found at: {venv_python}"
+
+    if isinstance(command, (list, tuple)):
+        command_parts = [str(part) for part in command]
+    else:
+        command_parts = shlex.split(command, posix=not is_win)
+        cleaned = []
+        for part in command_parts:
+            text = str(part)
+            if len(text) >= 2 and text[0] == text[-1] and text[0] in {"'", '"'}:
+                text = text[1:-1]
+            cleaned.append(text)
+        command_parts = cleaned
+
+    if command_parts and os.path.basename(command_parts[0]).lower() in {"python", "python3", "python.exe"}:
+        command_parts[0] = str(venv_python)
+    else:
+        command_parts.insert(0, str(venv_python))
+
+    if not any(p.endswith("imagemaid.py") for p in command_parts):
+        command_parts.insert(1, str(imagemaid_py))
+
+    helpers.ts_log(f"argv={command_parts!r}", level="DEBUG")
+    launch_log_path = Path(helpers.get_imagemaid_launch_log_file())
+    launch_log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with launch_log_path.open("w", encoding="utf-8", errors="replace") as launch_log:
+        launch_log.write(f"[Quickstart] ImageMaid launch started at {datetime.now().isoformat()}\n")
+        launch_log.flush()
+
+        proc = subprocess.Popen(
+            command_parts,
+            cwd=str(imagemaid_root),
+            stdout=launch_log,
+            stderr=subprocess.STDOUT,
+            start_new_session=True,
+        )
+
+        time.sleep(1.0)
+        return_code = proc.poll()
+        if return_code is not None:
+            launch_log.flush()
+            try:
+                os.remove(helpers.get_imagemaid_pid_file())
+            except Exception:
+                pass
+            return False, f"ImageMaid exited immediately with code {return_code}. Review the run log for details."
+
+    with open(helpers.get_imagemaid_pid_file(), "w", encoding="utf-8") as f:
+        f.write(str(proc.pid))
+
+    _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=mode)
+    return True, proc.pid
+
+
 def _extract_selected_libraries(command):
     if not command:
         return None, None
@@ -1798,6 +1927,7 @@ def _update_run_context(command):
         RUN_CONTEXT["run_option"] = run_option
         RUN_CONTEXT["selected_libraries"] = selected
         RUN_CONTEXT["run_mode"] = run_mode
+        RUN_CONTEXT["config_name"] = session.get("config_name")
         RUN_CONTEXT["config_path"] = str(config_path) if config_path else None
         RUN_CONTEXT["started_at"] = datetime.now()
         RUN_CONTEXT["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -1978,6 +2108,21 @@ def _append_quickstart_meta_log_line(kometa_root, line):
         return False
 
 
+def _append_quickstart_imagemaid_log_line(imagemaid_root, line, log_path=None):
+    if not line:
+        return False
+    try:
+        root = Path(imagemaid_root)
+        log_dir = root / "config" / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        target = Path(log_path) if log_path else (log_dir / "imagemaid.log")
+        with target.open("a", encoding="utf-8", errors="ignore") as handle:
+            handle.write(str(line).rstrip() + "\n")
+        return True
+    except Exception:
+        return False
+
+
 def _write_quickstart_maintenance_marker(kometa_root, event, window=None, paused_seconds=None):
     event_name = str(event or "").strip().lower()
     if event_name not in {"paused", "resumed"}:
@@ -1994,6 +2139,84 @@ def _write_quickstart_maintenance_marker(kometa_root, event, window=None, paused
     if event_name == "resumed" and isinstance(paused_seconds, (int, float)):
         parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
     return _append_quickstart_meta_log_line(kometa_root, " ".join(parts))
+
+
+def _write_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, log_path=None):
+    try:
+        version_info = app.config.get("VERSION_CHECK") or {}
+        qs_version = version_info.get("local_version") or "unknown"
+        qs_branch = version_info.get("branch") or "unknown"
+        safe_mode = (mode or "report").strip().lower() or "report"
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        marker = (
+            f"[Quickstart] Run marker: started={timestamp} "
+            f"config=imagemaid quickstart={qs_version} branch={qs_branch} "
+            f"tool=imagemaid mode={safe_mode}"
+        )
+        return _append_quickstart_imagemaid_log_line(imagemaid_root, marker, log_path=log_path)
+    except Exception:
+        return False
+
+
+def _write_quickstart_stop_marker(kometa_root, config_name=None, reason="user_stop"):
+    try:
+        version_info = app.config.get("VERSION_CHECK") or {}
+        qs_version = version_info.get("local_version") or "unknown"
+        qs_branch = version_info.get("branch") or "unknown"
+        safe_config = (config_name or "default").strip() or "default"
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        marker = (
+            f"[Quickstart] Run event: event=stopped at={timestamp} "
+            f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
+            f"tool=kometa reason={str(reason or 'user_stop').strip() or 'user_stop'}"
+        )
+        return _append_quickstart_meta_log_line(kometa_root, marker)
+    except Exception:
+        return False
+
+
+def _write_quickstart_imagemaid_stop_marker(imagemaid_root, mode=None, log_path=None, reason="user_stop"):
+    try:
+        version_info = app.config.get("VERSION_CHECK") or {}
+        qs_version = version_info.get("local_version") or "unknown"
+        qs_branch = version_info.get("branch") or "unknown"
+        safe_mode = (mode or "report").strip().lower() or "report"
+        timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        marker = (
+            f"[Quickstart] Run event: event=stopped at={timestamp} "
+            f"config=imagemaid quickstart={qs_version} branch={qs_branch} "
+            f"tool=imagemaid mode={safe_mode} reason={str(reason or 'user_stop').strip() or 'user_stop'}"
+        )
+        return _append_quickstart_imagemaid_log_line(imagemaid_root, marker, log_path=log_path)
+    except Exception:
+        return False
+
+
+def _write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=None, window=None, log_path=None):
+    event_name = str(event or "").strip().lower()
+    if event_name not in {"blocked_start"}:
+        return False
+    try:
+        version_info = app.config.get("VERSION_CHECK") or {}
+        qs_version = version_info.get("local_version") or "unknown"
+        qs_branch = version_info.get("branch") or "unknown"
+        safe_mode = (mode or "report").strip().lower() or "report"
+        local_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        parts = [
+            "[Quickstart] Maintenance marker:",
+            f"event={event_name}",
+            f"at={datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
+            f"local_at={local_at}",
+            "tool=imagemaid",
+            f"mode={safe_mode}",
+            f"quickstart={qs_version}",
+            f"branch={qs_branch}",
+        ]
+        if window:
+            parts.append(f"window={str(window).strip()}")
+        return _append_quickstart_imagemaid_log_line(imagemaid_root, " ".join(parts), log_path=log_path)
+    except Exception:
+        return False
 
 
 def _schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20):
@@ -2570,6 +2793,7 @@ RUN_CONTEXT = {
     "selected_libraries": None,
     "run_option": None,
     "run_mode": "all",
+    "config_name": None,
     "config_path": None,
     "started_at": None,
     "updated_at": None,
@@ -5514,6 +5738,16 @@ def step(name):
     step_statuses = workspace_status.get("step_statuses", {})
     section_statuses = workspace_status.get("section_statuses", {})
 
+    if name == "915-imagemaid":
+        imagemaid_section = data.get("imagemaid", {}) if isinstance(data.get("imagemaid"), dict) else {}
+        imagemaid_state = _probe_imagemaid_root_state(helpers.get_imagemaid_root_path())
+        page_info["imagemaid_root"] = str(helpers.get_imagemaid_root_path())
+        page_info["imagemaid_branch_override"] = helpers.normalize_imagemaid_branch_override(imagemaid_section.get("branch_override"))
+        page_info["imagemaid_mode"] = str(imagemaid_section.get("mode") or "report").strip().lower() or "report"
+        page_info["imagemaid_validated"] = helpers.booler(data.get("validated", False))
+        page_info["imagemaid_supports_no_verify_ssl"] = bool(imagemaid_state.get("supports_no_verify_ssl"))
+        page_info["imagemaid_supports_overlays_only"] = bool(imagemaid_state.get("supports_overlays_only"))
+
     if name == "900-final":
         validation_meta = []
         validation_bulk_rollup = None
@@ -7471,6 +7705,7 @@ def stop_kometa():
 
         with RUN_CONTEXT_LOCK:
             RUN_CONTEXT["stop_requested_at"] = datetime.now(timezone.utc).isoformat()
+            run_config_name = RUN_CONTEXT.get("config_name")
 
         not_kometa = []
         alive_after = []
@@ -7488,6 +7723,10 @@ def stop_kometa():
         except Exception:
             pass
         KOMETA_CPU_CACHE.pop(pid, None)
+        try:
+            _write_quickstart_stop_marker(helpers.get_kometa_root_path(), config_name=run_config_name, reason="user_stop")
+        except Exception:
+            pass
 
         if alive_after:
             alive_pids = ", ".join(str(p.pid) for p in alive_after if p is not None)
@@ -7500,6 +7739,10 @@ def stop_kometa():
         # Process already gone; just clean up PID file
         try:
             os.remove(pid_file)
+        except Exception:
+            pass
+        try:
+            _write_quickstart_stop_marker(helpers.get_kometa_root_path(), config_name=session.get("config_name"), reason="process_missing")
         except Exception:
             pass
         return jsonify({"warning": "Process not found. Cleaned up PID file."}), 200
@@ -11083,6 +11326,860 @@ def update_kometa_progress():
     )
 
 
+def _probe_imagemaid_root_state(path_obj):
+    p = Path(path_obj)
+    imagemaid_root_posix = p.as_posix()
+    imagemaid_root_display = str(p)
+    is_windows = sys.platform.startswith("win")
+    venv_dir = p / "imagemaid-venv"
+    bin_dir = venv_dir / ("Scripts" if is_windows else "bin")
+    python_bin = bin_dir / ("python.exe" if is_windows else "python3")
+    if not python_bin.exists():
+        python_bin = bin_dir / ("python.exe" if is_windows else "python")
+    imagemaid_py = p / "imagemaid.py"
+    requirements = p / "requirements.txt"
+    config_dir = p / "config"
+    capabilities = _get_imagemaid_supported_options(p)
+
+    return {
+        "imagemaid_root": imagemaid_root_posix,
+        "imagemaid_root_display": imagemaid_root_display,
+        "venv_python": python_bin.as_posix(),
+        "venv_python_display": str(python_bin),
+        "root_exists": p.exists(),
+        "config_dir_exists": config_dir.exists(),
+        "imagemaid_installed": imagemaid_py.exists() and requirements.exists(),
+        "venv_exists": venv_dir.exists(),
+        "venv_python_exists": python_bin.exists(),
+        "imagemaid_running": helpers.is_imagemaid_running(),
+        "local_version": helpers.get_imagemaid_local_version(p) or "",
+        "local_sha": helpers.get_imagemaid_local_sha(p) or "",
+        "local_branch": helpers.get_imagemaid_local_branch(p) or "",
+        "supports_no_verify_ssl": bool(capabilities.get("no_verify_ssl")),
+        "supports_overlays_only": bool(capabilities.get("overlays_only")),
+    }
+
+
+def _imagemaid_settings_to_form_payload(payload):
+    if not isinstance(payload, dict):
+        return {}
+    keys = [
+        "branch_override",
+        "plex_path",
+        "mode",
+        "timeout",
+        "sleep",
+        "photo_transcoder",
+        "empty_trash",
+        "clean_bundles",
+        "optimize_db",
+        "local_db",
+        "use_existing",
+        "ignore_running",
+        "trace",
+        "log_requests",
+        "no_verify_ssl",
+        "overlays_only",
+    ]
+    form_payload = {}
+    for key in keys:
+        if key in payload:
+            form_payload[f"imagemaid_{key}"] = payload.get(key)
+    return form_payload
+
+
+def _get_imagemaid_settings_section():
+    settings = persistence.retrieve_settings("915-imagemaid") or {}
+    section = settings.get("imagemaid", {}) if isinstance(settings, dict) else {}
+    if not isinstance(section, dict):
+        section = {}
+    return settings, section
+
+
+def _persist_imagemaid_validation(section_data, is_valid, reason=None, details=None):
+    config_name = persistence.ensure_session_config_name()
+    stored_validated, user_entered, stored_payload = database.retrieve_section_data(config_name, "imagemaid")
+    payload = stored_payload if isinstance(stored_payload, dict) else {}
+    payload["imagemaid"] = section_data if isinstance(section_data, dict) else {}
+    if is_valid:
+        payload["validated_at"] = utc_now_iso()
+        payload["validation_status"] = "validated"
+        payload.pop("validation_reason", None)
+        payload.pop("validation_details", None)
+        payload["validation_updated_at"] = utc_now_iso()
+        database.save_section_data(
+            name=config_name,
+            section="imagemaid",
+            validated=True,
+            user_entered=True,
+            data=payload,
+        )
+        return payload
+
+    existing_validated_at = payload.get("validated_at")
+    if existing_validated_at:
+        payload["validated_at"] = existing_validated_at
+    payload["validation_status"] = "failed"
+    payload["validation_reason"] = reason
+    payload["validation_details"] = details
+    payload["validation_updated_at"] = utc_now_iso()
+    database.save_section_data(
+        name=config_name,
+        section="imagemaid",
+        validated=False,
+        user_entered=True,
+        data=payload,
+    )
+    return payload
+
+
+def _get_imagemaid_supported_options(imagemaid_root=None):
+    root = Path(imagemaid_root or helpers.get_imagemaid_root_path())
+    script_path = root / "imagemaid.py"
+    try:
+        text = script_path.read_text(encoding="utf-8", errors="replace")
+    except Exception:
+        return {"no_verify_ssl": False, "overlays_only": False}
+
+    lowered = text.lower()
+    return {
+        "no_verify_ssl": ('"env": "no_verify_ssl"' in lowered) or ('"key": "no-verify-ssl"' in lowered) or ("--no-verify-ssl" in lowered),
+        "overlays_only": ('"env": "overlays_only"' in lowered) or ('"key": "overlays-only"' in lowered) or ("--overlays-only" in lowered),
+    }
+
+
+def _validate_imagemaid_plex_path(path_value, require_transcoder=False):
+    resolved = _resolve_user_dir(path_value)
+    required_label = "Plex path must point to the Plex config directory containing Cache, Metadata, and Plug-in Support."
+    if not resolved:
+        return False, "invalid_paths", f"{required_label} Use an absolute path."
+    if not resolved.exists() or not resolved.is_dir():
+        return False, "invalid_paths", f"{required_label} The selected path does not exist or is not a directory."
+
+    required_dirs = ["Metadata", "Plug-in Support"]
+    missing = [name for name in required_dirs if not (resolved / name).exists()]
+    if missing:
+        return False, "invalid_paths", f"{required_label} The selected folder is missing: {', '.join(missing)}."
+
+    if require_transcoder and not (resolved / "Cache" / "PhotoTranscoder").exists():
+        return False, "invalid_paths", f"{required_label} PhotoTranscoder cleanup also requires Cache\\PhotoTranscoder."
+
+    return True, None, None
+
+
+def _quote_cli_value(value):
+    text = str(value or "")
+    escaped = text.replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _build_imagemaid_command_parts(section_data, plex_url, plex_token, imagemaid_root=None, redact=False):
+    imagemaid_root = Path(imagemaid_root or helpers.get_imagemaid_root_path())
+    capabilities = _get_imagemaid_supported_options(imagemaid_root)
+    is_win = sys.platform.startswith("win")
+    python_bin = imagemaid_root / "imagemaid-venv" / ("Scripts" if is_win else "bin") / ("python.exe" if is_win else "python3")
+    if not python_bin.exists():
+        python_bin = imagemaid_root / "imagemaid-venv" / ("Scripts" if is_win else "bin") / ("python.exe" if is_win else "python")
+    script_path = imagemaid_root / "imagemaid.py"
+
+    parts = [str(python_bin), str(script_path)]
+    parts.extend(["--url", "(saved Plex URL)" if redact else str(plex_url or "")])
+    parts.extend(["--token", "(saved Plex token)" if redact else str(plex_token or "")])
+
+    plex_path = str(section_data.get("plex_path") or "").strip()
+    if plex_path:
+        parts.extend(["--plex", plex_path])
+
+    mode = str(section_data.get("mode") or "report").strip().lower() or "report"
+    parts.extend(["--mode", mode])
+
+    bool_flags = {
+        "photo_transcoder": "--photo-transcoder",
+        "empty_trash": "--empty-trash",
+        "clean_bundles": "--clean-bundles",
+        "optimize_db": "--optimize-db",
+        "local_db": "--local",
+        "use_existing": "--existing",
+        "ignore_running": "--ignore",
+        "trace": "--trace",
+        "log_requests": "--log-requests",
+    }
+    if capabilities.get("no_verify_ssl"):
+        bool_flags["no_verify_ssl"] = "--no-verify-ssl"
+    if capabilities.get("overlays_only"):
+        bool_flags["overlays_only"] = "--overlays-only"
+    for key, flag in bool_flags.items():
+        if helpers.booler(section_data.get(key)):
+            parts.append(flag)
+
+    timeout_value = str(section_data.get("timeout") or "").strip()
+    if timeout_value:
+        parts.extend(["--timeout", timeout_value])
+    sleep_value = str(section_data.get("sleep") or "").strip()
+    if sleep_value:
+        parts.extend(["--sleep", sleep_value])
+
+    return parts
+
+
+def _build_imagemaid_command(section_data, plex_url, plex_token, imagemaid_root=None, redact=False):
+    parts = _build_imagemaid_command_parts(
+        section_data,
+        plex_url,
+        plex_token,
+        imagemaid_root=imagemaid_root,
+        redact=redact,
+    )
+    return subprocess.list2cmdline(parts)
+
+
+def _validate_imagemaid_settings(section_data):
+    mode = str(section_data.get("mode") or "report").strip().lower() or "report"
+    valid_modes = {"report", "move", "restore", "clear", "remove", "nothing"}
+    if mode not in valid_modes:
+        return False, "invalid_mode", f"ImageMaid mode must be one of: {', '.join(sorted(valid_modes))}."
+
+    plex_settings = persistence.retrieve_settings("010-plex") or {}
+    if not helpers.booler(plex_settings.get("validated", False)):
+        return False, "missing_plex_validation", "Validate the Plex page before running ImageMaid."
+    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    if not plex_url or not plex_token:
+        return False, "missing_credentials", "Saved Plex URL/token are required."
+    valid_path, reason, details = _validate_imagemaid_plex_path(
+        section_data.get("plex_path"),
+        require_transcoder=helpers.booler(section_data.get("photo_transcoder")),
+    )
+    if not valid_path:
+        return False, reason, details
+
+    resolved_plex_path = _resolve_user_dir(section_data.get("plex_path"))
+    restore_dir = resolved_plex_path / "ImageMaid Restore" if resolved_plex_path else None
+    if mode in {"restore", "clear"} and restore_dir and not restore_dir.exists():
+        return False, "missing_restore_dir", f"{mode.capitalize()} mode expects the ImageMaid Restore folder at: {restore_dir}"
+
+    return True, None, None
+
+
+def _get_latest_imagemaid_log_path():
+    log_dir = helpers.get_imagemaid_root_path() / "config" / "logs"
+    if not log_dir.exists():
+        return None
+    candidates = sorted(log_dir.glob("*.log"), key=lambda path: path.stat().st_mtime, reverse=True)
+    return candidates[0] if candidates else None
+
+
+def _read_text_tail(path, max_lines=200):
+    with Path(path).open("r", encoding="utf-8", errors="replace") as handle:
+        return "".join(deque(handle, maxlen=max_lines))
+
+
+def _sanitize_imagemaid_log_tail(text):
+    content = str(text or "")
+    if not content:
+        return content
+    lines = content.splitlines()
+    filtered = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if (
+            line.startswith("Exception ignored in: <function _ExecutorManagerThread.__init__.<locals>.weakref_cb")
+            and i + 3 < len(lines)
+            and lines[i + 1] == "Traceback (most recent call last):"
+            and "concurrent" in lines[i + 2]
+            and "process.py" in lines[i + 2]
+            and "AttributeError: 'NoneType' object has no attribute 'debug'" in lines[i + 3]
+        ):
+            i += 4
+            continue
+        filtered.append(line)
+        i += 1
+    return "\n".join(filtered).strip("\n")
+
+
+@app.route("/probe-imagemaid-root", methods=["POST"])
+def probe_imagemaid_root():
+    payload = request.get_json(silent=True) or {}
+    root_path = str(payload.get("path", "")).strip()
+    branch_override = helpers.normalize_imagemaid_branch_override(payload.get("branch_override"))
+    logs = []
+
+    def log(msg):
+        print(msg, file=sys.stderr)
+        logs.append(msg)
+
+    if not root_path:
+        root_path = str(helpers.get_imagemaid_root_path())
+
+    p = _resolve_user_dir(root_path)
+    if not p:
+        log("❌ Invalid path provided.")
+        return jsonify(success=False, error="Invalid path provided.", log=logs), 400
+
+    session["imagemaid_root"] = p.as_posix()
+    app.config["IMAGEMAID_ROOT"] = str(p)
+
+    state = _probe_imagemaid_root_state(p)
+    effective_branch = helpers.resolve_imagemaid_update_branch(branch_override)
+    log(f"🔍 Probing ImageMaid path: {state['imagemaid_root_display']}")
+    if not state["root_exists"]:
+        log("ℹ️ ImageMaid root does not exist yet. Install required.")
+    elif not state["imagemaid_installed"]:
+        log("ℹ️ ImageMaid files not found yet. Install required.")
+    else:
+        log("✅ ImageMaid files detected locally.")
+        if state["local_branch"]:
+            log(f"🌿 Local ImageMaid branch metadata: {state['local_branch']}")
+        if state["local_sha"]:
+            log(f"🔎 Local ImageMaid SHA: {state['local_sha'][:12]}")
+        if state["venv_python_exists"]:
+            log(f"🐍 ImageMaid venv python detected at: {state['venv_python_display']}")
+        else:
+            log("ℹ️ ImageMaid venv python not present yet. Prepare step still needed.")
+    if state["imagemaid_running"]:
+        log("ℹ️ ImageMaid is currently running.")
+
+    return jsonify(
+        success=True,
+        log=logs,
+        effective_branch=effective_branch,
+        branch_source_url=f"{helpers.IMAGEMAID_GITHUB_BASE_URL}/{effective_branch}",
+        zip_source_url=helpers.IMAGEMAID_GITHUB_ZIP_URL.format(branch=effective_branch),
+        **state,
+    ), 200
+
+
+@app.route("/check-imagemaid-update", methods=["POST"])
+def check_imagemaid_update():
+    payload = request.get_json(silent=True) or {}
+    root_path = str(payload.get("path", "")).strip()
+    branch_override_raw = payload.get("branch_override")
+    branch_override = helpers.normalize_imagemaid_branch_override(branch_override_raw)
+    branch = helpers.resolve_imagemaid_update_branch(branch_override)
+    logs = []
+
+    def log(msg):
+        print(msg, file=sys.stderr)
+        logs.append(msg)
+
+    if not root_path:
+        root_path = str(helpers.get_imagemaid_root_path())
+
+    if branch_override_raw and not branch_override:
+        log(f"❌ Invalid ImageMaid branch override: {branch_override_raw}")
+        return jsonify(success=False, error="Invalid ImageMaid branch override.", log=logs), 400
+
+    p = _resolve_user_dir(root_path)
+    if not p:
+        log("❌ Invalid path provided.")
+        return jsonify(success=False, error="Invalid path provided.", log=logs), 400
+
+    session["imagemaid_root"] = p.as_posix()
+    app.config["IMAGEMAID_ROOT"] = str(p)
+
+    state = _probe_imagemaid_root_state(p)
+    if not state["imagemaid_installed"]:
+        log("ℹ️ ImageMaid is not installed yet; update check skipped.")
+        response = dict(state)
+        response.update(
+            success=True,
+            log=logs,
+            update_check_completed=False,
+            imagemaid_update_available=False,
+            imagemaid_update_check_skipped=False,
+            cached=False,
+            effective_branch=branch,
+            remote_version="",
+            remote_sha="",
+            branch_mismatch=False,
+            branch_source_url=f"{helpers.IMAGEMAID_GITHUB_BASE_URL}/{branch}",
+            zip_source_url=helpers.IMAGEMAID_GITHUB_ZIP_URL.format(branch=branch),
+        )
+        return jsonify(response), 200
+
+    if state["imagemaid_running"]:
+        log("ℹ️ ImageMaid is currently running; update check skipped.")
+        response = dict(state)
+        response.update(
+            success=True,
+            log=logs,
+            update_check_completed=True,
+            imagemaid_update_check_skipped=True,
+            imagemaid_update_available=False,
+            cached=False,
+            effective_branch=branch,
+            remote_version="",
+            remote_sha="",
+            branch_mismatch=False,
+            branch_source_url=f"{helpers.IMAGEMAID_GITHUB_BASE_URL}/{branch}",
+            zip_source_url=helpers.IMAGEMAID_GITHUB_ZIP_URL.format(branch=branch),
+        )
+        return jsonify(response), 200
+
+    if branch_override:
+        log(f"⚠️ ImageMaid branch override selected: {branch_override}")
+    else:
+        log("ℹ️ ImageMaid branch selection: auto")
+
+    update_info = helpers.get_cached_imagemaid_update(
+        p,
+        force_refresh=helpers.booler(payload.get("force", False)),
+        branch_override=branch_override,
+    )
+    remote_branch = update_info.get("branch") or "develop"
+    local_version = update_info.get("local_version") or state.get("local_version") or "unknown"
+    local_branch = update_info.get("local_branch") or "unknown"
+    local_sha = update_info.get("local_sha") or ""
+    remote_version = update_info.get("remote_version") or ""
+    remote_sha = update_info.get("remote_sha") or ""
+    log(f"🌐 Remote ImageMaid branch source: {helpers.IMAGEMAID_GITHUB_BASE_URL}/{remote_branch}")
+    if local_version:
+        log(f"ℹ️ Installed ImageMaid version: {local_version}")
+    if remote_version:
+        log(f"🌐 Remote ImageMaid version: {remote_version}")
+    log(f"ℹ️ Installed ImageMaid branch metadata: {local_branch}")
+    if local_sha:
+        log(f"🔎 Local ImageMaid SHA: {local_sha[:12]}")
+    if remote_sha:
+        log(f"🔎 Remote ImageMaid SHA: {remote_sha[:12]}")
+    if update_info.get("cached"):
+        log("ℹ️ Using cached ImageMaid update lookup.")
+    if update_info.get("update_available"):
+        if update_info.get("branch_mismatch"):
+            log(f"⚠️ Installed branch '{local_branch}' differs from selected branch '{remote_branch}'.")
+        log("⬆️ ImageMaid update available.")
+    else:
+        log("✅ ImageMaid is up to date.")
+
+    response = dict(state)
+    response.update(
+        success=True,
+        log=logs,
+        update_check_completed=True,
+        imagemaid_update_check_skipped=False,
+        imagemaid_update_available=bool(update_info.get("update_available")),
+        cached=bool(update_info.get("cached")),
+        effective_branch=remote_branch,
+        local_version=local_version,
+        local_branch=local_branch,
+        local_sha=local_sha,
+        remote_version=remote_version,
+        remote_sha=remote_sha,
+        branch_mismatch=bool(update_info.get("branch_mismatch")),
+        branch_source_url=f"{helpers.IMAGEMAID_GITHUB_BASE_URL}/{remote_branch}",
+        zip_source_url=helpers.IMAGEMAID_GITHUB_ZIP_URL.format(branch=remote_branch),
+    )
+    return jsonify(response), 200
+
+
+@app.route("/update-imagemaid", methods=["POST"])
+def update_imagemaid():
+    blocker = _get_active_work_blocker("imagemaid_update")
+    if blocker:
+        return jsonify({
+            "success": False,
+            "error": blocker.get("message") or "ImageMaid is currently running.",
+            "blocked_by": blocker.get("blocked_by"),
+            "pid": blocker.get("pid"),
+            "target_page": blocker.get("target_page"),
+        }), 409
+
+    try:
+        cfg_dir = helpers.CONFIG_DIR
+        data = request.get_json(silent=True) or {}
+        branch_override_raw = data.get("branch_override")
+        branch_override = helpers.normalize_imagemaid_branch_override(branch_override_raw)
+        if branch_override_raw and not branch_override:
+            return jsonify({"success": False, "error": "Invalid ImageMaid branch override.", "log": ["❌ Invalid ImageMaid branch override."]}), 400
+
+        imagemaid_branch = branch_override or helpers.resolve_imagemaid_update_branch()
+        force_update = helpers.booler(data.get("force", False))
+        background = data.get("background") is True
+
+        if background:
+            active = _get_active_background_job("imagemaid_update")
+            if active:
+                phase = active.get("phase")
+                if phase and phase not in ["done", "error"]:
+                    return jsonify(success=True, active=True, existing_job=True, job_id=active.get("job_id"), phase=phase), 200
+                _clear_active_background_job("imagemaid_update", job_id=active.get("job_id"))
+
+            job = _create_background_job(
+                "imagemaid_update",
+                trigger="manual",
+                phase="queued",
+                status="running",
+                target_page=JOB_TARGET_PAGES.get("imagemaid_update"),
+                logs=[],
+                done=False,
+                success=False,
+                up_to_date=False,
+                skipped=False,
+                force=force_update,
+                imagemaid_branch=imagemaid_branch,
+                started_epoch=time.time(),
+            )
+            job_id = job["job_id"]
+
+            def worker():
+                class _ProgressLog(list):
+                    def append(self_inner, item):
+                        super().append(item)
+                        current = _get_background_job(job_id) or {}
+                        lines = list(current.get("logs") or [])
+                        lines.append(item)
+                        _update_background_job(job_id, logs=lines)
+
+                logs = _ProgressLog()
+                _update_background_job(job_id, phase="running", status="running")
+                if branch_override:
+                    logs.append(f"⚠️ ImageMaid branch override selected: {branch_override}")
+                else:
+                    logs.append("ℹ️ ImageMaid branch selection: auto")
+                logs.append(f"⚙️ ImageMaid branch selected: {imagemaid_branch} (ZIP mode)")
+                if force_update:
+                    logs.append("Force update enabled.")
+
+                try:
+                    result = helpers.perform_imagemaid_update_zip_only(cfg_dir, branch=imagemaid_branch, force=force_update, logs=logs)
+                    try:
+                        helpers.invalidate_cached_imagemaid_update(Path(cfg_dir) / "imagemaid")
+                    except Exception:
+                        pass
+                    if result.get("success", False):
+                        _complete_background_job(job_id, phase="done", success=True, done=True, up_to_date=bool(result.get("up_to_date", False)), skipped=bool(result.get("skipped", False)))
+                    else:
+                        _fail_background_job(job_id, "ImageMaid update failed.", done=True, success=False, up_to_date=bool(result.get("up_to_date", False)), skipped=bool(result.get("skipped", False)))
+                except Exception as e:
+                    logs.append("Exception during ImageMaid update.")
+                    helpers.ts_log(f"ImageMaid update failed: {e}", level="ERROR")
+                    _fail_background_job(job_id, e, done=True, success=False)
+                finally:
+                    _clear_active_background_job("imagemaid_update", job_id=job_id)
+
+            threading.Thread(target=worker, daemon=True).start()
+            return jsonify(success=True, active=True, job_id=job_id, phase="queued"), 200
+
+        logs = []
+        if branch_override:
+            logs.append(f"⚠️ ImageMaid branch override selected: {branch_override}")
+        else:
+            logs.append("ℹ️ ImageMaid branch selection: auto")
+        logs.append(f"⚙️ ImageMaid branch selected: {imagemaid_branch} (ZIP mode)")
+        if force_update:
+            logs.append("Force update enabled.")
+
+        result = helpers.perform_imagemaid_update_zip_only(cfg_dir, branch=imagemaid_branch, force=force_update, logs=logs)
+        try:
+            helpers.invalidate_cached_imagemaid_update(Path(cfg_dir) / "imagemaid")
+        except Exception:
+            pass
+        status = 200 if result.get("success") else 500
+
+        return jsonify({
+            "success": result.get("success", False),
+            "log": list(logs),
+            "imagemaid_branch": imagemaid_branch,
+            "up_to_date": result.get("up_to_date", False),
+            "skipped": result.get("skipped", False),
+            "force": force_update,
+        }), status
+    except Exception as e:
+        helpers.ts_log(f"ImageMaid update failed: {e}", level="ERROR")
+        return jsonify({"success": False, "log": ["Exception during ImageMaid update."]}), 500
+
+
+@app.route("/update-imagemaid-progress", methods=["GET"])
+def update_imagemaid_progress():
+    job_id = request.args.get("job_id", "").strip()
+    since = request.args.get("since", "0").strip()
+    if not job_id:
+        return jsonify(success=False, error="Missing job_id."), 400
+    info = _get_background_job(job_id)
+    if not info:
+        return jsonify(success=False, error="Unknown job_id."), 404
+    try:
+        start_idx = max(int(since or "0"), 0)
+    except ValueError:
+        start_idx = 0
+    lines = list(info.get("logs") or [])
+    return jsonify(
+        success=True,
+        job_id=job_id,
+        phase=info.get("phase"),
+        done=bool(info.get("done")) or info.get("status") in {"complete", "error"},
+        update_success=bool(info.get("success")),
+        up_to_date=bool(info.get("up_to_date")),
+        skipped=bool(info.get("skipped")),
+        force=bool(info.get("force")),
+        imagemaid_branch=info.get("imagemaid_branch"),
+        lines=lines[start_idx:],
+        next_index=len(lines),
+    )
+
+
+@app.route("/validate-imagemaid", methods=["POST"])
+def validate_imagemaid():
+    payload = request.get_json(silent=True) or {}
+    form_payload = _imagemaid_settings_to_form_payload(payload)
+    if form_payload:
+        persistence.save_settings("915-imagemaid", form_payload)
+
+    settings, section_data = _get_imagemaid_settings_section()
+    is_valid, reason, details = _validate_imagemaid_settings(section_data)
+    _persist_imagemaid_validation(section_data, is_valid, reason=reason, details=details)
+
+    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    preview_command = _build_imagemaid_command(section_data, plex_url or "", plex_token or "", redact=True)
+    return jsonify(success=is_valid, validated=is_valid, reason=reason, details=details, command_preview=preview_command), (200 if is_valid else 400)
+
+
+@app.route("/autosave-imagemaid", methods=["POST"])
+def autosave_imagemaid():
+    payload = request.get_json(silent=True) or {}
+    form_payload = _imagemaid_settings_to_form_payload(payload)
+    if form_payload:
+        persistence.save_settings("915-imagemaid", form_payload)
+
+    settings, section_data = _get_imagemaid_settings_section()
+    if helpers.booler(settings.get("validated", False)):
+        _persist_imagemaid_validation(
+            section_data,
+            False,
+            reason="config_changed",
+            details="Configuration changed. Validate ImageMaid again.",
+        )
+
+    return jsonify(success=True, validated=False)
+
+
+@app.route("/start-imagemaid", methods=["POST"])
+def start_imagemaid():
+    payload = request.get_json(silent=True) or {}
+    form_payload = _imagemaid_settings_to_form_payload(payload)
+    if form_payload:
+        persistence.save_settings("915-imagemaid", form_payload)
+
+    if helpers.is_imagemaid_running():
+        pid = helpers.get_imagemaid_pid()
+        try:
+            proc = psutil.Process(pid)
+            started_at = datetime.fromtimestamp(proc.create_time()).isoformat()
+            return jsonify({"error": f"ImageMaid is already running (PID: {pid}) since {started_at}.", "status": "running", "pid": pid, "started_at": started_at}), 400
+        except Exception:
+            return jsonify({"error": f"ImageMaid is already running (PID: {pid}).", "status": "running", "pid": pid}), 400
+    else:
+        proc = _find_running_imagemaid_process()
+        if proc:
+            try:
+                with open(helpers.get_imagemaid_pid_file(), "w", encoding="utf-8") as f:
+                    f.write(str(proc.pid))
+                started_at = datetime.fromtimestamp(proc.create_time()).isoformat()
+            except Exception:
+                started_at = None
+            payload = {"error": f"ImageMaid is already running (PID: {proc.pid}).", "status": "running", "pid": proc.pid}
+            if started_at:
+                payload["started_at"] = started_at
+            return jsonify(payload), 400
+
+    blocker = _get_active_work_blocker("imagemaid_run")
+    if blocker:
+        job = blocker.get("job") if isinstance(blocker.get("job"), dict) else {}
+        response = {
+            "error": blocker.get("message") or "Cannot start ImageMaid right now.",
+            "status": "blocked",
+            "blocked_by": blocker.get("blocked_by"),
+            "target_page": blocker.get("target_page"),
+        }
+        if blocker.get("pid"):
+            response["pid"] = blocker.get("pid")
+        if job.get("job_id"):
+            response["job_id"] = job.get("job_id")
+        if job.get("phase"):
+            response["phase"] = job.get("phase")
+        return jsonify(response), 409
+
+    settings, section_data = _get_imagemaid_settings_section()
+    is_valid, reason, details = _validate_imagemaid_settings(section_data)
+    _persist_imagemaid_validation(section_data, is_valid, reason=reason, details=details)
+    if not is_valid:
+        return jsonify({"error": details or "ImageMaid settings are not valid.", "status": "invalid", "reason": reason}), 400
+
+    start_min, end_min, window_str = _get_maintenance_window_live()
+    if start_min is None or end_min is None:
+        start_min, end_min, window_str = _get_maintenance_window_from_db()
+    if _is_within_maintenance_window(datetime.now(), start_min, end_min):
+        try:
+            _write_quickstart_imagemaid_maintenance_marker(
+                helpers.get_imagemaid_root_path(),
+                "blocked_start",
+                mode=section_data.get("mode"),
+                window=window_str,
+                log_path=_get_latest_imagemaid_log_path(),
+            )
+        except Exception:
+            pass
+        window_label = f" ({window_str})" if window_str else ""
+        return (
+            jsonify(
+                {
+                    "error": f"ImageMaid cannot start during the Plex maintenance window{window_label}.",
+                    "status": "maintenance_blocked",
+                    "maintenance_window": window_str,
+                }
+            ),
+            409,
+        )
+
+    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    command = _build_imagemaid_command_parts(section_data, plex_url, plex_token, redact=False)
+    ok, result = _launch_imagemaid_command(command, mode=section_data.get("mode"))
+    if ok:
+        return jsonify({"status": "ImageMaid started", "pid": result, "command_preview": _build_imagemaid_command(section_data, plex_url, plex_token, redact=True)})
+    code = 500
+    if isinstance(result, str):
+        lowered = result.lower()
+        if lowered.startswith("imagemaid.py not found"):
+            code = 404
+        elif "exited immediately" in lowered or "finished immediately" in lowered:
+            code = 400
+    return jsonify({"error": result}), code
+
+
+@app.route("/stop-imagemaid", methods=["POST"])
+def stop_imagemaid():
+    pid = helpers.get_imagemaid_pid()
+    pid_file = helpers.get_imagemaid_pid_file()
+
+    if not pid:
+        procs = _find_running_imagemaid_processes()
+        if not procs:
+            return jsonify({"warning": "No active ImageMaid PID"}), 200
+    else:
+        proc = _find_running_imagemaid_process()
+        procs = [proc] if proc is not None else []
+
+    try:
+        if not procs:
+            return jsonify({"warning": "No active ImageMaid process found."}), 200
+
+        _settings, section_data = _get_imagemaid_settings_section()
+        imagemaid_mode = section_data.get("mode") if isinstance(section_data, dict) else None
+        not_imagemaid = []
+        alive_after = []
+        for proc in procs:
+            cmdline = " ".join(proc.cmdline() or [])
+            if "imagemaid.py" not in cmdline:
+                not_imagemaid.append(proc.pid)
+                continue
+            alive_after.extend(_stop_process_tree(proc))
+
+        try:
+            os.remove(pid_file)
+        except Exception:
+            pass
+        try:
+            _write_quickstart_imagemaid_stop_marker(
+                helpers.get_imagemaid_root_path(),
+                mode=imagemaid_mode,
+                log_path=_get_latest_imagemaid_log_path(),
+                reason="user_stop",
+            )
+        except Exception:
+            pass
+
+        if alive_after:
+            alive_pids = ", ".join(str(p.pid) for p in alive_after if p is not None)
+            return jsonify({"warning": f"ImageMaid stop requested, but some processes are still running: {alive_pids}"}), 200
+        if not_imagemaid:
+            return jsonify({"warning": f"Cleaned PID file. Non-ImageMaid PIDs detected: {', '.join(map(str, not_imagemaid))}"}), 200
+        return jsonify({"success": True, "message": "ImageMaid stopped and cleaned up."}), 200
+    except psutil.NoSuchProcess:
+        try:
+            os.remove(pid_file)
+        except Exception:
+            pass
+        try:
+            _settings, section_data = _get_imagemaid_settings_section()
+            imagemaid_mode = section_data.get("mode") if isinstance(section_data, dict) else None
+            _write_quickstart_imagemaid_stop_marker(
+                helpers.get_imagemaid_root_path(),
+                mode=imagemaid_mode,
+                log_path=_get_latest_imagemaid_log_path(),
+                reason="process_missing",
+            )
+        except Exception:
+            pass
+        return jsonify({"warning": "Process not found. Cleaned up PID file."}), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to stop ImageMaid: {str(e)}"}), 500
+
+
+@app.route("/imagemaid-status", methods=["GET"])
+def imagemaid_status():
+    pid = helpers.get_imagemaid_pid()
+    if not pid:
+        proc = _find_running_imagemaid_process()
+        if proc:
+            try:
+                with open(helpers.get_imagemaid_pid_file(), "w", encoding="utf-8") as f:
+                    f.write(str(proc.pid))
+                pid = proc.pid
+            except Exception:
+                pid = None
+    if not pid:
+        return jsonify(status="not started")
+
+    try:
+        proc = psutil.Process(pid)
+        if proc.is_running() and proc.status() != psutil.STATUS_ZOMBIE:
+            cmdline = " ".join(proc.cmdline() or [])
+            if "imagemaid.py" in cmdline:
+                started_at_ts = proc.create_time()
+                started_at = datetime.fromtimestamp(started_at_ts).isoformat()
+                elapsed_seconds = max(0, int(time.time() - started_at_ts))
+                return jsonify(status="running", pid=pid, started_at=started_at, started_at_ts=started_at_ts, elapsed_seconds=elapsed_seconds)
+        try:
+            rc = proc.wait(timeout=0.1)
+        except psutil.TimeoutExpired:
+            rc = None
+        finally:
+            try:
+                os.remove(helpers.get_imagemaid_pid_file())
+            except Exception:
+                pass
+        return jsonify(status="done", return_code=rc if rc is not None else -1)
+    except psutil.NoSuchProcess:
+        try:
+            os.remove(helpers.get_imagemaid_pid_file())
+        except Exception:
+            pass
+        return jsonify(status="not started")
+
+
+@app.route("/tail-imagemaid-log", methods=["GET"])
+def tail_imagemaid_log():
+    latest_log = _get_latest_imagemaid_log_path()
+    launch_log = Path(helpers.get_imagemaid_launch_log_file())
+
+    path = latest_log if latest_log and Path(latest_log).exists() else None
+    if path is None and launch_log.exists():
+        path = launch_log
+
+    if not path or not Path(path).exists():
+        return jsonify({"error": "No ImageMaid log found."}), 404
+    try:
+        text = _sanitize_imagemaid_log_tail(_read_text_tail(path))
+        return jsonify({
+            "success": True,
+            "path": str(path),
+            "is_launch_log": Path(path) == launch_log,
+            "text": text,
+        })
+    except Exception as e:
+        return jsonify({"error": f"Failed to read ImageMaid log: {e}"}), 500
+
+
 def _normalize_test_libraries_path(raw_path, base_dir):
     value = str(raw_path or "").strip().strip('"').strip("'")
     if not value:
@@ -11542,7 +12639,45 @@ def clone_test_libraries_start():
             )
 
     threading.Thread(target=worker, daemon=True).start()
-    return jsonify(success=True, job_id=job_id, started_at=job.get("started_epoch"))
+
+
+def _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, timeout_seconds=20):
+    root = Path(imagemaid_root)
+    log_dir = root / "config" / "logs"
+    initial = {}
+    if log_dir.exists():
+        for path in log_dir.glob("*.log"):
+            try:
+                stat = path.stat()
+                initial[str(path)] = (stat.st_mtime, stat.st_size)
+            except OSError:
+                continue
+
+    def worker():
+        deadline = time.time() + timeout_seconds
+        while time.time() < deadline:
+            try:
+                if log_dir.exists():
+                    candidates = sorted(log_dir.glob("*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+                    for path in candidates:
+                        try:
+                            stat = path.stat()
+                        except OSError:
+                            continue
+                        prev = initial.get(str(path))
+                        if prev is None:
+                            if stat.st_size > 0:
+                                _write_quickstart_imagemaid_run_marker(root, mode=mode, log_path=path)
+                                return
+                        elif (stat.st_mtime, stat.st_size) != prev and stat.st_size > 0:
+                            _write_quickstart_imagemaid_run_marker(root, mode=mode, log_path=path)
+                            return
+            except Exception:
+                pass
+            time.sleep(0.5)
+        _write_quickstart_imagemaid_run_marker(root, mode=mode)
+
+    threading.Thread(target=worker, daemon=True).start()
 
 
 @app.route("/clone-test-libraries-progress", methods=["GET"])

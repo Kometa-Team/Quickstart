@@ -89,6 +89,19 @@ def test_update_kometa_conflict_when_running(client, monkeypatch):
     assert "Kometa is currently running" in payload["error"]
 
 
+def test_update_imagemaid_conflict_when_running(client, monkeypatch):
+    monkeypatch.setattr(helpers, "is_imagemaid_running", lambda: True)
+    monkeypatch.setattr(helpers, "get_imagemaid_pid", lambda: 4321)
+
+    resp = client.post("/update-imagemaid", json={})
+    assert resp.status_code == 409
+    payload = resp.get_json()
+    assert payload["success"] is False
+    assert payload["blocked_by"] == "imagemaid_run"
+    assert payload["pid"] == 4321
+    assert "Cannot update ImageMaid while ImageMaid is running." in payload["error"]
+
+
 def test_update_kometa_failure_result(client, monkeypatch, qs_module):
     monkeypatch.setattr(helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(helpers, "detect_git_branch", lambda *_: "master", raising=False)
@@ -116,6 +129,21 @@ def test_check_kometa_update_not_installed_returns_install_needed(client, isolat
     assert payload["kometa_installed"] is False
     assert payload["update_check_completed"] is False
     assert payload["kometa_update_available"] is False
+
+
+def test_check_imagemaid_update_not_installed_returns_install_needed(client, isolated_config_dir):
+    imagemaid_root = isolated_config_dir / "imagemaid-missing"
+    imagemaid_root.mkdir(parents=True, exist_ok=True)
+
+    resp = client.post("/check-imagemaid-update", json={"path": str(imagemaid_root)})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["imagemaid_installed"] is False
+    assert payload["update_check_completed"] is False
+    assert payload["imagemaid_update_available"] is False
+    assert payload["local_version"] == "unknown"
+    assert payload["remote_version"] == ""
 
 
 def test_check_kometa_update_installed_uses_cached_lookup(client, isolated_config_dir, monkeypatch):
@@ -150,6 +178,42 @@ def test_check_kometa_update_installed_uses_cached_lookup(client, isolated_confi
     assert payload["remote_version"] == "1.0.1"
     assert any("Remote VERSION source" in line for line in payload["log"])
     assert any("Using cached Kometa update lookup." in line for line in payload["log"])
+
+
+def test_check_imagemaid_update_installed_uses_cached_lookup(client, isolated_config_dir, monkeypatch):
+    imagemaid_root = isolated_config_dir / "imagemaid-installed"
+    imagemaid_root.mkdir(parents=True, exist_ok=True)
+    (imagemaid_root / "imagemaid.py").write_text("# stub", encoding="utf-8")
+    (imagemaid_root / "requirements.txt").write_text("requests\n", encoding="utf-8")
+    (imagemaid_root / "VERSION").write_text("2.3.1-build9", encoding="utf-8")
+
+    monkeypatch.setattr(helpers, "is_imagemaid_running", lambda: False)
+    monkeypatch.setattr(
+        helpers,
+        "get_cached_imagemaid_update",
+        lambda *_args, **_kwargs: {
+            "local_version": "2.3.1-build9",
+            "local_branch": "develop",
+            "local_sha": "abc123develop",
+            "remote_version": "2.3.1-build10",
+            "remote_sha": "def456develop",
+            "update_available": True,
+            "cached": True,
+            "branch": "develop",
+        },
+    )
+
+    resp = client.post("/check-imagemaid-update", json={"path": str(imagemaid_root)})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["imagemaid_installed"] is True
+    assert payload["update_check_completed"] is True
+    assert payload["imagemaid_update_available"] is True
+    assert payload["cached"] is True
+    assert payload["local_version"] == "2.3.1-build9"
+    assert payload["remote_version"] == "2.3.1-build10"
+    assert any("Using cached ImageMaid update lookup." in line for line in payload["log"])
 
 
 def test_check_kometa_update_branch_override_uses_selected_branch(client, isolated_config_dir, monkeypatch):
@@ -242,6 +306,26 @@ def test_update_kometa_branch_override_uses_selected_branch(client, monkeypatch,
     assert payload["kometa_branch"] == "develop"
     assert captured["branch"] == "develop"
     assert any("Kometa branch override selected: develop" in line for line in payload["log"])
+
+
+def test_update_imagemaid_branch_override_uses_selected_branch(client, monkeypatch, qs_module):
+    monkeypatch.setattr(helpers, "is_imagemaid_running", lambda: False)
+    monkeypatch.setattr(helpers, "resolve_imagemaid_update_branch", lambda *_: "develop")
+    captured = {"branch": None}
+
+    def fake_update(_config_root, branch="develop", force=False, logs=None):
+        captured["branch"] = branch
+        return {"success": True, "log": ["ok"], "up_to_date": False}
+
+    monkeypatch.setattr(helpers, "perform_imagemaid_update_zip_only", fake_update)
+
+    resp = client.post("/update-imagemaid", json={"branch_override": "master", "force": False})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["imagemaid_branch"] == "master"
+    assert captured["branch"] == "master"
+    assert any("ImageMaid branch override selected: master" in line for line in payload["log"])
 
 
 def test_background_jobs_active_and_status_routes(client, qs_module):
