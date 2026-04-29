@@ -38,6 +38,7 @@ Sponsor
   <li><hr class="dropdown-divider"></li>
   {% for file, name in template_list %}
   {% set template_key = file.rsplit('.', 1)[0] %}
+  {% set label = nav_label(template_key, name) | trim %}
   {% set is_validated = jump_to_validations and jump_to_validations.get(template_key) %}
   {% set step_state = (step_statuses.get(template_key) if step_statuses else none) %}
   {% if not step_state %}
@@ -48,7 +49,7 @@ Sponsor
       data-step-key="{{ template_key }}"
       href="javascript:void(0);" onclick="jumpTo('{{ template_key }}')">
       {{ status_icon(step_state, 'qs-step-dropdown-state') }}
-      {{ nav_label(template_key, name) }}
+      {{ label }}
     </a>
   </li>
   {% if name == 'Start' %}
@@ -60,11 +61,11 @@ Sponsor
 
 {% macro step_link(template_key, name, page_info, step_statuses) -%}
 {% set step_state = (step_statuses.get(template_key) if step_statuses else 'warn') %}
+{% set label = nav_label(template_key, name) | trim %}
 <button type="button" class="qs-step-link {% if template_key == page_info['template_name'] %}is-active{% endif %}"
   data-step-key="{{ template_key }}"
-  onclick="jumpTo('{{ template_key }}')" title="{{ nav_label(template_key, name) }}">
-  {% set label = nav_label(template_key, name) %}
-  <span class="qs-step-link-short">{{ label[0] }}</span>
+  onclick="jumpTo('{{ template_key }}')" title="{{ label }}">
+  <span class="qs-step-link-short">{{ label[:1] }}</span>
   <span class="qs-step-link-label">{{ label }}</span>
   {{ status_icon(step_state, 'qs-step-link-state') }}
 </button>
@@ -104,8 +105,8 @@ Sponsor
     </div>
   </div>
 
-  <details class="qs-step-group qs-sidebar-utility-group">
-    <summary class="qs-step-group-summary" title="Utilities">
+  <div class="qs-step-group qs-sidebar-utility-group" data-qs-utility-open="false">
+    <button type="button" class="qs-step-group-summary qs-sidebar-utility-toggle" title="Utilities" aria-expanded="false">
       <span>Utilities</span>
       <span class="qs-step-group-summary-right">
         <span class="qs-step-group-state qs-step-group-state--ok" aria-hidden="true">
@@ -113,8 +114,8 @@ Sponsor
         </span>
         <i class="bi bi-chevron-down" aria-hidden="true"></i>
       </span>
-    </summary>
-    <div class="qs-sidebar-control-group qs-sidebar-control-grid">
+    </button>
+    <div class="qs-sidebar-utility-list qs-sidebar-control-group qs-sidebar-control-grid d-none" data-qs-utility-panel>
       <button type="button" class="btn nav-button qs-sidebar-support"
         data-bs-toggle="modal" data-bs-target="#supportInfoModal" title="Support info for Quickstart">
         <i class="bi bi-life-preserver"></i><span class="qs-sidebar-text">Support</span>
@@ -144,7 +145,7 @@ Sponsor
         <span class="spinner-border spinner-border-sm ms-1 d-none qs-validate-all-spinner" role="status" aria-hidden="true"></span>
       </button>
     </div>
-  </details>
+  </div>
 </div>
 {%- endmacro %}
 

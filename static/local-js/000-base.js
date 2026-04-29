@@ -3650,16 +3650,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const section = document.querySelector('.qs-workspace-section')
     const toggleBtn = document.getElementById('qs-sidebar-toggle')
     if (!section || !toggleBtn) return
+    const utilityGroup = section.querySelector('.qs-sidebar-utility-group')
+    const utilityToggle = utilityGroup ? utilityGroup.querySelector('.qs-sidebar-utility-toggle') : null
+    const utilityPanel = utilityGroup ? utilityGroup.querySelector('[data-qs-utility-panel]') : null
+
+    function setUtilityOpen (open) {
+      if (!utilityGroup || !utilityToggle || !utilityPanel) return
+      const shouldOpen = Boolean(open)
+      utilityGroup.dataset.qsUtilityOpen = shouldOpen ? 'true' : 'false'
+      utilityToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false')
+      utilityPanel.classList.toggle('d-none', !shouldOpen)
+      utilityPanel.style.display = shouldOpen ? 'grid' : 'none'
+    }
 
     function setSidebarState (collapsed, persist) {
+      const wasCollapsed = section.dataset.qsSidebar === 'collapsed'
       const shouldCollapse = Boolean(collapsed) && !isMobileViewport()
       section.dataset.qsSidebar = shouldCollapse ? 'collapsed' : 'expanded'
       toggleBtn.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true')
       toggleBtn.title = shouldCollapse ? 'Expand sidebar' : 'Collapse sidebar'
-      if (shouldCollapse) {
-        section.querySelectorAll('.qs-sidebar-utility-group[open]').forEach((details) => {
-          details.open = false
-        })
+      if (shouldCollapse && !wasCollapsed) {
+        setUtilityOpen(false)
       }
       if (persist) {
         window.localStorage.setItem(sidebarStorageKey, shouldCollapse ? '1' : '0')
@@ -3672,9 +3683,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const isCollapsed = section.dataset.qsSidebar === 'collapsed'
         setSidebarState(!isCollapsed, true)
       })
+      if (utilityToggle) {
+        utilityToggle.addEventListener('click', () => {
+          const isOpen = utilityGroup?.dataset?.qsUtilityOpen === 'true'
+          setUtilityOpen(!isOpen)
+        })
+      }
     }
 
     const saved = window.localStorage.getItem(sidebarStorageKey) === '1'
+    const utilityInitialized = utilityGroup?.dataset?.qsUtilityInitialized === 'true'
+    const currentUtilityOpen = utilityGroup?.dataset?.qsUtilityOpen === 'true'
+    const initialUtilityOpen = utilityInitialized ? currentUtilityOpen : !saved
+    setUtilityOpen(initialUtilityOpen)
+    if (utilityGroup) {
+      utilityGroup.dataset.qsUtilityInitialized = 'true'
+    }
     setSidebarState(saved, false)
   }
 

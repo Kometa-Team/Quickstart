@@ -4025,11 +4025,23 @@ body {
     font-size: 0.64rem;
 }
 
+.qs-sidebar-utility-toggle {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: inherit;
+}
+
 .qs-sidebar-control-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 0.45rem;
     padding: 0.45rem 0.4rem 0.4rem;
+}
+
+.qs-sidebar-utility-list {
+    display: grid;
+    gap: 0.45rem;
 }
 
 .qs-sidebar-control-grid .btn {
@@ -4546,6 +4558,10 @@ body {
 }
 
 .qs-step-group[open] .qs-step-group-summary .bi-chevron-down {
+    transform: rotate(180deg);
+}
+
+.qs-sidebar-utility-group[data-qs-utility-open="true"] .qs-step-group-summary .bi-chevron-down {
     transform: rotate(180deg);
 }
 
@@ -5262,8 +5278,7 @@ body {
 
     .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-brand,
     .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-text,
-    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-step-actions,
-    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-utility-group {
+    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-step-actions {
         display: none;
     }
 
@@ -5411,6 +5426,15 @@ body {
         justify-content: center;
     }
 
+    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-utility-group .qs-step-group-summary-right {
+        min-height: 1.75rem;
+    }
+
+    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-utility-group .qs-step-group-summary .qs-step-group-state {
+        width: 1.62rem;
+        height: 1.62rem;
+    }
+
     .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-active-work-count {
         display: none;
     }
@@ -5462,6 +5486,16 @@ body {
     }
 
     .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-step-group:not([open]) .qs-step-group-list {
+        display: none;
+    }
+
+    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-utility-group[data-qs-utility-open="true"] .qs-sidebar-utility-list {
+        display: grid;
+        padding: 0.34rem;
+        gap: 0.32rem;
+    }
+
+    .qs-workspace-section[data-qs-sidebar="collapsed"] .qs-sidebar-utility-group[data-qs-utility-open="false"] .qs-sidebar-utility-list {
         display: none;
     }
 

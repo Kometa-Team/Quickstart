@@ -44,6 +44,7 @@ from flask import (
     send_file,
     send_from_directory,
     abort,
+    has_request_context,
 )
 from waitress import serve
 from ruamel.yaml import YAML
@@ -1901,7 +1902,7 @@ def _extract_selected_libraries(command):
     return run_option, selected
 
 
-def _update_run_context(command):
+def _update_run_context(command, config_name=None):
     run_option, selected = _extract_selected_libraries(command)
     config_path = None
     run_mode = "all"
@@ -1927,7 +1928,9 @@ def _update_run_context(command):
         RUN_CONTEXT["run_option"] = run_option
         RUN_CONTEXT["selected_libraries"] = selected
         RUN_CONTEXT["run_mode"] = run_mode
-        RUN_CONTEXT["config_name"] = session.get("config_name")
+        if config_name is None and has_request_context():
+            config_name = session.get("config_name")
+        RUN_CONTEXT["config_name"] = config_name
         RUN_CONTEXT["config_path"] = str(config_path) if config_path else None
         RUN_CONTEXT["started_at"] = datetime.now()
         RUN_CONTEXT["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -2014,7 +2017,7 @@ def _maintenance_guard_loop(app_in):
                 if pending and not active and start_min is not None and end_min is not None:
                     pending = _pop_pending_kometa_start()
                     if pending:
-                        _update_run_context(pending.get("command"))
+                        _update_run_context(pending.get("command"), config_name=pending.get("config_name"))
                         ok, result = _launch_kometa_command(pending.get("command"), pending.get("config_name"))
                         if ok:
                             helpers.ts_log("Kometa started after Plex maintenance window ended.", level="INFO")
@@ -8797,6 +8800,9 @@ def _build_logscan_archive_filename(path, stats=None, counter=None, preferred_su
         if stem.endswith(suffix_part):
             stem = stem[: -len(suffix_part)]
     stem = re.sub(r"-\d{8}-\d{6}Z-\d+(?:-\d+)?$", "", stem)
+    tool_name = _detect_logscan_tool_from_path(path)
+    if tool_name == "kometa":
+        stem = re.sub(r"^meta-\d+$", "meta", stem, flags=re.IGNORECASE)
     stem = re.sub(r"[^A-Za-z0-9_-]+", "-", stem).strip("-").lower() or "log"
     base_name = f"{stem}-{timestamp}-{size}"
     if counter and counter > 1:

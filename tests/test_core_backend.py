@@ -69,24 +69,30 @@ def test_update_quickstart_settings_supports_independent_imagemaid_log_retention
     from modules import helpers
 
     writes = {}
+    original_kometa_keep = qs_module.app.config.get("QS_KOMETA_LOG_KEEP", 0)
+    original_imagemaid_keep = qs_module.app.config.get("QS_IMAGEMAID_LOG_KEEP", 0)
 
     def fake_update_env_variable(key, value):
         writes[key] = value
 
     monkeypatch.setattr(helpers, "update_env_variable", fake_update_env_variable)
-    resp = client.post(
-        "/update-quickstart-settings",
-        json={"kometa_log_keep": 7, "imagemaid_log_keep": 3},
-    )
-    assert resp.status_code == 200
-    payload = resp.get_json()
-    assert payload["success"] is True
-    assert payload["kometa_log_keep"] == 7
-    assert payload["imagemaid_log_keep"] == 3
-    assert qs_module.app.config["QS_KOMETA_LOG_KEEP"] == 7
-    assert qs_module.app.config["QS_IMAGEMAID_LOG_KEEP"] == 3
-    assert writes["QS_KOMETA_LOG_KEEP"] == "7"
-    assert writes["QS_IMAGEMAID_LOG_KEEP"] == "3"
+    try:
+        resp = client.post(
+            "/update-quickstart-settings",
+            json={"kometa_log_keep": 7, "imagemaid_log_keep": 3},
+        )
+        assert resp.status_code == 200
+        payload = resp.get_json()
+        assert payload["success"] is True
+        assert payload["kometa_log_keep"] == 7
+        assert payload["imagemaid_log_keep"] == 3
+        assert qs_module.app.config["QS_KOMETA_LOG_KEEP"] == 7
+        assert qs_module.app.config["QS_IMAGEMAID_LOG_KEEP"] == 3
+        assert writes["QS_KOMETA_LOG_KEEP"] == "7"
+        assert writes["QS_IMAGEMAID_LOG_KEEP"] == "3"
+    finally:
+        qs_module.app.config["QS_KOMETA_LOG_KEEP"] = original_kometa_keep
+        qs_module.app.config["QS_IMAGEMAID_LOG_KEEP"] = original_imagemaid_keep
 
 
 def test_validate_plex_invalid_url(client):
