@@ -65,6 +65,30 @@ def test_step_rejects_invalid_path_payload(client, isolated_config_dir):
     assert user_entered is False
 
 
+def test_update_quickstart_settings_supports_independent_imagemaid_log_retention(client, qs_module, isolated_config_dir, monkeypatch):
+    from modules import helpers
+
+    writes = {}
+
+    def fake_update_env_variable(key, value):
+        writes[key] = value
+
+    monkeypatch.setattr(helpers, "update_env_variable", fake_update_env_variable)
+    resp = client.post(
+        "/update-quickstart-settings",
+        json={"kometa_log_keep": 7, "imagemaid_log_keep": 3},
+    )
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["kometa_log_keep"] == 7
+    assert payload["imagemaid_log_keep"] == 3
+    assert qs_module.app.config["QS_KOMETA_LOG_KEEP"] == 7
+    assert qs_module.app.config["QS_IMAGEMAID_LOG_KEEP"] == 3
+    assert writes["QS_KOMETA_LOG_KEEP"] == "7"
+    assert writes["QS_IMAGEMAID_LOG_KEEP"] == "3"
+
+
 def test_validate_plex_invalid_url(client):
     resp = client.post("/validate_plex", json={"plex_url": "not-a-url", "plex_token": "x"})
     assert resp.status_code == 400

@@ -35,6 +35,8 @@ $(document).ready(function () {
   const $progressText = $('#logscan-trends-progress-text')
   const $limit = $('#logscan-trends-limit')
   const $configFilter = $('#logscan-trends-config-filter')
+  const $toolFilter = $('#logscan-trends-tool-filter')
+  const $toolSwitchButtons = $('.logscan-tool-switch [data-tool-filter-value]')
   const $commandFilter = $('#logscan-trends-command-filter')
   const $resetFilters = $('#logscan-trends-reset-filters')
   const $dateStart = $('#logscan-trends-date-start')
@@ -90,6 +92,7 @@ $(document).ready(function () {
   const sortState = { key: 'finished_at', dir: 'desc' }
   let lastIngestState = null
   let analyticsPrefs = null
+  let toolFilterInitialized = false
   const defaultReingestButtonLabel = $reingest.text().trim() || 'Reingest logs'
 
   function escapeHtml (value) {
@@ -211,8 +214,26 @@ $(document).ready(function () {
     if (!command) return ''
     const tokens = tokenizeCommand(command)
     if (!tokens.length) return ''
+    let baseCommand = 'kometa.py'
     let startIndex = tokens.findIndex(token => /kometa\.py$/i.test(token))
-    if (startIndex < 0) startIndex = -1
+    const imagemaidIndex = tokens.findIndex(token => /imagemaid(?:\.py)?$/i.test(token))
+    if (imagemaidIndex >= 0 && (startIndex < 0 || imagemaidIndex < startIndex)) {
+      baseCommand = 'imagemaid'
+      startIndex = imagemaidIndex
+    } else if (startIndex >= 0) {
+      baseCommand = 'kometa.py'
+    } else if (tokens[0] && !String(tokens[0]).startsWith('-')) {
+      startIndex = 0
+      if (/imagemaid(?:\.py)?$/i.test(tokens[0])) {
+        baseCommand = 'imagemaid'
+      } else if (/kometa\.py$/i.test(tokens[0])) {
+        baseCommand = 'kometa.py'
+      } else {
+        baseCommand = String(tokens[0])
+      }
+    } else {
+      startIndex = -1
+    }
     const args = tokens.slice(startIndex + 1)
     const groups = []
     for (let i = 0; i < args.length; i += 1) {
@@ -245,7 +266,7 @@ $(document).ready(function () {
       if (!bKey) return -1
       return aKey.localeCompare(bKey)
     })
-    const parts = ['kometa.py']
+    const parts = [baseCommand]
     groups.forEach(group => {
       if (group.flag) {
         if (group.value) {
@@ -263,11 +284,30 @@ $(document).ready(function () {
     return parts.join(' ').trim()
   }
 
+  function getDefaultToolFilterValue (tools) {
+    if (Array.isArray(tools) && tools.includes('kometa')) return 'kometa'
+    if (Array.isArray(tools) && tools.length === 1) return tools[0]
+    return ''
+  }
+
   function getRunCommandValue (run) {
     if (!run) return ''
     if (run.run_command) return normalizeRunCommand(run.run_command)
-    if (run.command_signature) return normalizeRunCommand(`kometa.py ${run.command_signature}`)
+    if (run.command_signature) {
+      const toolName = getRunToolName(run)
+      const baseCommand = toolName === 'imagemaid' ? 'imagemaid' : 'kometa.py'
+      return normalizeRunCommand(`${baseCommand} ${run.command_signature}`)
+    }
     return ''
+  }
+
+  function getRunToolName (run) {
+    if (!run) return 'kometa'
+    return String(run.tool_name || 'kometa').trim().toLowerCase() || 'kometa'
+  }
+
+  function getRunToolLabel (run) {
+    return getRunToolName(run) === 'imagemaid' ? 'ImageMaid' : 'Kometa'
   }
 
   function getRunDateKey (run) {
@@ -332,7 +372,7 @@ $(document).ready(function () {
     if (parts.raw > 0 && parts.sectionTotal > parts.raw + 60) {
       return `Displayed from section runtimes (${formatSeconds(parts.sectionTotal)}) because the parsed run total was ${formatSeconds(parts.raw)}. Reingest logs after this update to refresh stored run totals.`
     }
-    return 'Total run time parsed from the Kometa run summary.'
+    return 'Total run time parsed from the run summary.'
   }
 
   function getMaintenanceSummary (run) {
@@ -1157,19 +1197,25 @@ $(document).ready(function () {
 
   function renderArchiveStorageSummary (storage) {
     if (!$tablePolicy.length) return
-    const keepLimit = storage && Number.isFinite(storage.keep_limit)
-      ? storage.keep_limit
+    const kometaKeepLimit = storage && Number.isFinite(storage.kometa_keep_limit)
+      ? storage.kometa_keep_limit
       : (parseInt(window.QS_KOMETA_LOG_KEEP || '0', 10) || 0)
-    const retentionLabel = storage && storage.retention_label
-      ? storage.retention_label
-      : (keepLimit > 0 ? `Keep last ${keepLimit} archived logs` : 'Keep all archived logs')
+    const imagemaidKeepLimit = storage && Number.isFinite(storage.imagemaid_keep_limit)
+      ? storage.imagemaid_keep_limit
+      : (parseInt(window.QS_IMAGEMAID_LOG_KEEP || '0', 10) || 0)
+    const kometaRetentionLabel = storage && storage.kometa_retention_label
+      ? storage.kometa_retention_label
+      : (kometaKeepLimit > 0 ? `Keep last ${kometaKeepLimit} archived logs` : 'Keep all archived logs')
+    const imagemaidRetentionLabel = storage && storage.imagemaid_retention_label
+      ? storage.imagemaid_retention_label
+      : (imagemaidKeepLimit > 0 ? `Keep last ${imagemaidKeepLimit} archived logs` : 'Keep all archived logs')
     const archivedFiles = storage && Number.isFinite(storage.archived_files) ? storage.archived_files : 0
     const archivedBytes = storage && Number.isFinite(storage.archived_bytes) ? storage.archived_bytes : 0
     const extraArchivedFiles = storage && Number.isFinite(storage.extra_archived_files) ? storage.extra_archived_files : 0
     const extraArchivedBytes = storage && Number.isFinite(storage.extra_archived_bytes) ? storage.extra_archived_bytes : 0
     const fileLabel = archivedFiles === 1 ? 'file' : 'files'
     const lines = [
-      `Archived log retention: ${retentionLabel}`,
+      `Archived log retention: Kometa: ${kometaRetentionLabel} | ImageMaid: ${imagemaidRetentionLabel}`,
       `Tracked archived log storage: ${formatBytes(archivedBytes)} across ${archivedFiles} ${fileLabel}`
     ]
     if (extraArchivedFiles > 0) {
@@ -1415,7 +1461,7 @@ $(document).ready(function () {
     $tablePrev.prop('disabled', tablePage <= 1 || total === 0)
     $tableNext.prop('disabled', tablePage >= pageCount || total === 0)
     if (!total) {
-      $tableBody.html('<tr><td colspan="17" class="text-muted">No runs match the current filters.</td></tr>')
+      $tableBody.html('<tr><td colspan="18" class="text-muted">No runs match the current filters.</td></tr>')
       return
     }
     sectionDetailsByRunKey.clear()
@@ -1469,6 +1515,7 @@ $(document).ready(function () {
       }
       sectionCell += `<span class="logscan-section-summary">${escapeHtml(sectionSummary)}</span>`
       sectionCell += '</div>'
+      const toolLabel = getRunToolLabel(run)
       let kometaDisplay = run.kometa_version || 'n/a'
       if (run.kometa_version && run.kometa_newest_version && run.kometa_version !== run.kometa_newest_version) {
         kometaDisplay = `${run.kometa_version} -> ${run.kometa_newest_version}`
@@ -1530,18 +1577,19 @@ $(document).ready(function () {
             </span>
           `, 'class="logscan-select-cell"')}
           ${renderRunCardCell('Status', 'Complete runs are included in charts. Incomplete logs are shown here for investigation and file management.', escapeHtml(statusDisplay), run.is_incomplete ? 'class="text-nowrap text-warning fw-semibold"' : 'class="text-nowrap text-success fw-semibold"')}
-          ${renderRunCardCell('Started', 'Timestamp parsed from the Start Time value in the completed Kometa run summary.', startedDisplay, 'class="text-nowrap"')}
+          ${renderRunCardCell('Started', 'Timestamp parsed from the stored run start marker or run summary.', startedDisplay, 'class="text-nowrap"')}
           ${renderRunCardCell('Finished', 'Timestamp of the run finishing. Incomplete logs are shown here for investigation only and are excluded from charts.', finishedDisplay, 'class="text-nowrap"')}
           ${renderRunCardCell('Runtime', getRuntimeHelpText(run), escapeHtml(formatSeconds(runtimeParts.effective)))}
           ${renderRunCardCell('Config', 'Config name detected for the run.', escapeHtml(run.config_name || 'default'))}
+          ${renderRunCardCell('Tool', 'Tool that produced this run.', escapeHtml(toolLabel))}
           ${renderRunCardCell('Config lines', 'Non-comment lines captured from the redacted config output.', escapeHtml(String(configLineCount)))}
           ${renderRunCardCell('Cache lines', 'Number of log lines that include "from Cache".', escapeHtml(String(cacheLineCount)))}
-          ${renderRunCardCell('Command', 'Sanitized Kometa command line.', `<span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span>`)}
+          ${renderRunCardCell('Command', 'Sanitized command line captured for the run.', `<span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span>`)}
           ${renderRunCardCell('Counts', 'W warnings, E errors, T tracebacks, M movies, S shows, Ep episodes, Tot total library items.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
-          ${renderRunCardCell('Kometa', 'Version detected for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
+          ${renderRunCardCell('Version', 'Detected tool version for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
           ${renderRunCardCell('Maintenance', 'Quickstart maintenance pauses recorded in meta.log for this run.', renderMaintenanceSummaryCell(run))}
-          ${renderRunCardCell('Quiet periods', 'Emphasizes the longest unexplained delay between timestamped Kometa log lines, with maintenance-related gaps available in the details view.', renderQuietPeriodCell(run))}
-          ${renderRunCardCell('Section runtimes', 'Runtime totals parsed per Kometa section.', sectionCell)}
+          ${renderRunCardCell('Quiet periods', 'Emphasizes the longest unexplained delay between timestamped run log lines, with maintenance-related gaps available in the details view.', renderQuietPeriodCell(run))}
+          ${renderRunCardCell('Section runtimes', 'Runtime totals parsed per run section when available.', sectionCell)}
           ${renderRunCardCell('Log size', 'Current on-disk size of the resolved log file when available, otherwise the ingested size.', escapeHtml(formatBytes(sizeBytes)))}
           ${renderRunCardCell('Log', 'Download the source log for this run. Archived plain logs can also be compressed, and archived logs can be deleted here.', `<div class="logscan-action-stack">${logActions.join('')}</div>`)}
           ${renderRunCardCell('Report', run.is_incomplete ? 'Open recommendations and diagnostics captured for this incomplete log.' : 'Open the recommendations recorded for the run.', `
@@ -1979,6 +2027,8 @@ $(document).ready(function () {
         return getEffectiveRunTimeSeconds(run)
       case 'config_name':
         return normalizeConfigName(run.config_name)
+      case 'tool_name':
+        return getRunToolName(run)
       case 'command_signature':
         return getRunCommandValue(run)
       case 'counts':
@@ -2146,6 +2196,7 @@ $(document).ready(function () {
   function getFilterState () {
     return {
       config: $configFilter.val() || '',
+      tool: $toolFilter.val() || '',
       command: $commandFilter.val() || '',
       library: $libraryFilter.val() || '',
       start: $dateStart.val() || '',
@@ -2156,6 +2207,7 @@ $(document).ready(function () {
   function filterRuns (runs, state) {
     return runs.filter(run => {
       if (state.config && normalizeConfigName(run.config_name) !== state.config) return false
+      if (state.tool && getRunToolName(run) !== state.tool) return false
       if (state.command && getRunCommandValue(run) !== state.command) return false
       if (state.start || state.end) {
         const dateKey = getRunDateKey(run)
@@ -2168,10 +2220,48 @@ $(document).ready(function () {
   function updateFilterOptions (state) {
     let changed = false
     changed = updateConfigFilter(filterRuns(allTableRuns, { ...state, config: '' })) || changed
+    changed = updateToolFilter(filterRuns(allTableRuns, { ...state, tool: '' })) || changed
     changed = updateCommandFilter(filterRuns(allTableRuns, { ...state, command: '' })) || changed
     changed = updateDateRangeInputs(filterRuns(allTableRuns, { ...state, start: '', end: '' }), state) || changed
     changed = updateLibraryFilter(filterRuns(allRuns, { ...state, library: '' })) || changed
     return changed
+  }
+
+  function updateToolFilter (runs) {
+    if (!$toolFilter.length) return false
+    const selected = $toolFilter.val() || ''
+    const tools = Array.from(new Set(runs.map(run => getRunToolName(run)))).sort()
+    const options = ['<option value="">All tools</option>']
+    tools.forEach(tool => {
+      const label = tool === 'imagemaid' ? 'ImageMaid' : 'Kometa'
+      options.push(`<option value="${escapeHtml(tool)}">${escapeHtml(label)}</option>`)
+    })
+    $toolFilter.html(options.join(''))
+    let nextValue = selected && tools.includes(selected) ? selected : ''
+    if (!toolFilterInitialized) {
+      nextValue = getDefaultToolFilterValue(tools)
+      toolFilterInitialized = true
+    }
+    $toolFilter.val(nextValue)
+    syncToolSwitch(tools, nextValue)
+    return nextValue !== selected
+  }
+
+  function syncToolSwitch (tools, selectedValue) {
+    if (!$toolSwitchButtons.length) return
+    const availableTools = new Set(Array.isArray(tools) ? tools : [])
+    const activeValue = typeof selectedValue === 'string' ? selectedValue : ($toolFilter.val() || '')
+    $toolSwitchButtons.each(function () {
+      const $button = $(this)
+      const value = String($button.attr('data-tool-filter-value') || '')
+      const isAvailable = value === '' || availableTools.has(value)
+      $button.toggleClass('d-none', value !== '' && !isAvailable)
+      $button.prop('disabled', !isAvailable)
+      $button.toggleClass('active', activeValue === value)
+      const label = value === 'imagemaid' ? 'ImageMaid' : (value === 'kometa' ? 'Kometa' : 'All')
+      $button.attr('aria-pressed', activeValue === value ? 'true' : 'false')
+      $button.attr('title', `Show ${label} analytics`)
+    })
   }
 
   function applyFiltersAndRender () {
@@ -2287,6 +2377,7 @@ $(document).ready(function () {
     $tablePrev.prop('disabled', disabled || tablePage <= 1 || currentTableRuns.length === 0)
     $tableNext.prop('disabled', disabled || tablePage >= Math.max(1, Math.ceil(currentTableRuns.length / getTablePageSize())) || currentTableRuns.length === 0)
     $configFilter.prop('disabled', disabled)
+    $toolFilter.prop('disabled', disabled)
     $commandFilter.prop('disabled', disabled)
     $dateStart.prop('disabled', disabled)
     $dateEnd.prop('disabled', disabled)
@@ -2732,7 +2823,7 @@ $(document).ready(function () {
         if ($tablePageInfo.length) $tablePageInfo.text('No rows')
         $tablePrev.prop('disabled', true)
         $tableNext.prop('disabled', true)
-        $tableBody.html('<tr><td colspan="17" class="text-muted">Unable to load runs.</td></tr>')
+        $tableBody.html('<tr><td colspan="18" class="text-muted">Unable to load runs.</td></tr>')
         updateSelectionSummary()
       })
   }
@@ -2963,6 +3054,20 @@ $(document).ready(function () {
     tablePage = 1
     loadPreferences().then(() => applyFiltersAndRender())
   })
+  $toolFilter.on('change', function () {
+    tablePage = 1
+    const tools = $toolFilter.find('option').map(function () { return $(this).val() }).get().filter(Boolean)
+    syncToolSwitch(tools, $toolFilter.val() || '')
+    applyFiltersAndRender()
+  })
+  $toolSwitchButtons.on('click', function () {
+    const value = String($(this).attr('data-tool-filter-value') || '')
+    if ($toolFilter.val() === value) return
+    $toolFilter.val(value)
+    tablePage = 1
+    syncToolSwitch($toolFilter.find('option').map(function () { return $(this).val() }).get().filter(Boolean), value)
+    applyFiltersAndRender()
+  })
   $commandFilter.on('change', function () {
     tablePage = 1
     applyFiltersAndRender()
@@ -2994,6 +3099,7 @@ $(document).ready(function () {
     $limit.val('500')
     tablePage = 1
     $configFilter.val('')
+    $toolFilter.val(getDefaultToolFilterValue($toolFilter.find('option').map(function () { return $(this).val() }).get().filter(Boolean)))
     $commandFilter.val('')
     $libraryFilter.val('')
     $dateStart.val('')

@@ -2737,6 +2737,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const optimizeInput = document.getElementById('quickstart-settings-optimize')
   const historyInput = document.getElementById('quickstart-settings-config-history')
   const logKeepInput = document.getElementById('quickstart-settings-log-keep')
+  const imagemaidLogKeepInput = document.getElementById('quickstart-settings-imagemaid-log-keep')
   const testLibsTmpInput = document.getElementById('quickstart-settings-test-libs-tmp')
   const testLibsPathInput = document.getElementById('quickstart-settings-test-libs-path')
   const sessionLifetimeInput = document.getElementById('quickstart-settings-session-lifetime')
@@ -2790,6 +2791,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const raw = (triggerBtn && triggerBtn.dataset.currentLogKeep)
       ? triggerBtn.dataset.currentLogKeep
       : window.QS_KOMETA_LOG_KEEP
+    const parsed = Number.parseInt(raw, 10)
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
+  }
+
+  function getCurrentImageMaidLogKeep () {
+    const raw = (triggerBtn && triggerBtn.dataset.currentImagemaidLogKeep)
+      ? triggerBtn.dataset.currentImagemaidLogKeep
+      : window.QS_IMAGEMAID_LOG_KEEP
     const parsed = Number.parseInt(raw, 10)
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0
   }
@@ -2859,6 +2868,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (optimizeInput) optimizeInput.checked = getCurrentOptimizeDefaults()
     if (historyInput) historyInput.value = getCurrentConfigHistory()
     if (logKeepInput) logKeepInput.value = getCurrentLogKeep()
+    if (imagemaidLogKeepInput) imagemaidLogKeepInput.value = getCurrentImageMaidLogKeep()
     if (testLibsTmpInput) testLibsTmpInput.value = getCurrentTestLibsTmp()
     if (testLibsPathInput) testLibsPathInput.value = getCurrentTestLibsPath()
     if (sessionLifetimeInput) sessionLifetimeInput.value = getCurrentSessionLifetimeDays()
@@ -2930,6 +2940,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let desiredHistory = currentHistory
       const currentLogKeep = getCurrentLogKeep()
       let desiredLogKeep = currentLogKeep
+      const currentImageMaidLogKeep = getCurrentImageMaidLogKeep()
+      let desiredImageMaidLogKeep = currentImageMaidLogKeep
       const currentSessionLifetime = getCurrentSessionLifetimeDays()
       const currentSessionDir = getCurrentSessionDir()
       if (historyInput) {
@@ -2960,6 +2972,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (desiredLogKeep !== currentLogKeep) {
           payload.kometa_log_keep = desiredLogKeep
+        }
+      }
+      if (imagemaidLogKeepInput) {
+        const rawImageMaidLogKeep = imagemaidLogKeepInput.value.trim()
+        if (!/^\d+$/.test(rawImageMaidLogKeep)) {
+          setStatus('ImageMaid log retention must be a non-negative number.', true)
+          return
+        }
+        desiredImageMaidLogKeep = Number(rawImageMaidLogKeep)
+        if (desiredImageMaidLogKeep < 0) {
+          setStatus('ImageMaid log retention must be a non-negative number.', true)
+          return
+        }
+        if (desiredImageMaidLogKeep !== currentImageMaidLogKeep) {
+          payload.imagemaid_log_keep = desiredImageMaidLogKeep
         }
       }
       if (sessionLifetimeInput) {
@@ -3085,6 +3112,11 @@ document.addEventListener('DOMContentLoaded', () => {
             window.QS_KOMETA_LOG_KEEP = logKeepFlag
             if (triggerBtn) triggerBtn.dataset.currentLogKeep = String(logKeepFlag)
           }
+          if (typeof payload.imagemaid_log_keep !== 'undefined') {
+            const imagemaidLogKeepFlag = Number(payload.imagemaid_log_keep)
+            window.QS_IMAGEMAID_LOG_KEEP = imagemaidLogKeepFlag
+            if (triggerBtn) triggerBtn.dataset.currentImagemaidLogKeep = String(imagemaidLogKeepFlag)
+          }
           if (typeof data.session_lifetime_days !== 'undefined' || typeof payload.session_lifetime_days !== 'undefined') {
             const lifetimeFlag = Number(
               (typeof data.session_lifetime_days !== 'undefined') ? data.session_lifetime_days : payload.session_lifetime_days
@@ -3140,6 +3172,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const logKeepFlag = Number(payload.kometa_log_keep)
           window.QS_KOMETA_LOG_KEEP = logKeepFlag
           if (triggerBtn) triggerBtn.dataset.currentLogKeep = String(logKeepFlag)
+        }
+        if (typeof payload.imagemaid_log_keep !== 'undefined') {
+          const imagemaidLogKeepFlag = Number(payload.imagemaid_log_keep)
+          window.QS_IMAGEMAID_LOG_KEEP = imagemaidLogKeepFlag
+          if (triggerBtn) triggerBtn.dataset.currentImagemaidLogKeep = String(imagemaidLogKeepFlag)
         }
         if (typeof data.session_lifetime_days !== 'undefined' || typeof payload.session_lifetime_days !== 'undefined') {
           const lifetimeFlag = Number(

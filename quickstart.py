@@ -2605,6 +2605,10 @@ try:
     app.config["QS_KOMETA_LOG_KEEP"] = max(0, int(str(os.getenv("QS_KOMETA_LOG_KEEP", "0")).strip()))
 except (TypeError, ValueError):
     app.config["QS_KOMETA_LOG_KEEP"] = 0
+try:
+    app.config["QS_IMAGEMAID_LOG_KEEP"] = max(0, int(str(os.getenv("QS_IMAGEMAID_LOG_KEEP", "0")).strip()))
+except (TypeError, ValueError):
+    app.config["QS_IMAGEMAID_LOG_KEEP"] = 0
 default_test_libs_path = os.path.join(helpers.CONFIG_DIR, "plex_test_libraries")
 default_test_libs_tmp = os.path.join(helpers.CONFIG_DIR, "tmp")
 app.config["QS_TEST_LIBS_PATH"] = os.getenv("QS_TEST_LIBS_PATH", default_test_libs_path).strip() or default_test_libs_path
@@ -3632,6 +3636,7 @@ def _build_logscan_resolution_context(log_dir=None, include_candidate_files=True
                     "mtime": float(stats.st_mtime),
                     "size": int(stats.st_size),
                     "run_key": entry.get("run_key"),
+                    "tool_name": _normalize_logscan_tool_name(entry.get("tool_name") or _detect_logscan_tool_from_path(path, log_dir=log_dir)),
                 }
             )
 
@@ -3648,6 +3653,7 @@ def _build_logscan_resolution_context(log_dir=None, include_candidate_files=True
                     "mtime": float(stats.st_mtime),
                     "size": int(stats.st_size),
                     "location": _classify_logscan_file_location(path, log_dir=log_dir),
+                    "tool_name": _detect_logscan_tool_from_path(path, log_dir=log_dir),
                 }
             )
     return {"cache_entries": cache_entries, "candidate_files": candidate_files}
@@ -3681,6 +3687,7 @@ def _find_logscan_cache_entry_for_run(run_key):
             "mtime": mtime,
             "size": size,
             "run_key": entry.get("run_key"),
+            "tool_name": _normalize_logscan_tool_name(entry.get("tool_name") or _detect_logscan_tool_from_path(path)),
         }
     return None
 
@@ -3690,8 +3697,9 @@ def _match_logscan_run_to_file(run_record, context=None, log_dir=None, allow_liv
         return None
     context = context or _build_logscan_resolution_context(log_dir=log_dir)
     run_key = run_record.get("run_key")
+    run_tool_name = _normalize_logscan_tool_name(run_record.get("tool_name"))
     if run_key:
-        cache_matches = [entry for entry in context.get("cache_entries", []) if entry.get("run_key") == run_key]
+        cache_matches = [entry for entry in context.get("cache_entries", []) if entry.get("run_key") == run_key and _normalize_logscan_tool_name(entry.get("tool_name")) == run_tool_name]
         if cache_matches:
             cache_matches.sort(key=lambda entry: entry.get("mtime", 0), reverse=True)
             match = cache_matches[0]
@@ -3707,6 +3715,8 @@ def _match_logscan_run_to_file(run_record, context=None, log_dir=None, allow_liv
     target_size = run_record.get("log_size")
     candidates = []
     for entry in context.get("candidate_files", []):
+        if _normalize_logscan_tool_name(entry.get("tool_name")) != run_tool_name:
+            continue
         if not allow_live_fallback and entry.get("location") == "live":
             continue
         size_matches = target_size is not None and entry.get("size") == target_size
@@ -3742,12 +3752,16 @@ def _match_logscan_run_to_file(run_record, context=None, log_dir=None, allow_liv
 def _resolve_logscan_run_log_info(run_key, run_record=None, context=None):
     if not run_key:
         return None
+    run_tool_name = _normalize_logscan_tool_name(run_record.get("tool_name")) if isinstance(run_record, dict) else None
     cache_matches = []
     if isinstance(context, dict):
-        cache_matches = [entry for entry in context.get("cache_entries", []) if entry.get("run_key") == run_key]
+        cache_matches = [
+            entry for entry in context.get("cache_entries", [])
+            if entry.get("run_key") == run_key and (not run_tool_name or _normalize_logscan_tool_name(entry.get("tool_name")) == run_tool_name)
+        ]
     else:
         direct_match = _find_logscan_cache_entry_for_run(run_key)
-        if direct_match:
+        if direct_match and (not run_tool_name or _normalize_logscan_tool_name(direct_match.get("tool_name")) == run_tool_name):
             cache_matches = [direct_match]
     if cache_matches:
         cache_matches.sort(key=lambda entry: entry.get("mtime", 0), reverse=True)
@@ -3800,6 +3814,8 @@ def _resolve_logscan_run_archive_action_info(run_key, prefer_uncompressed=False)
     run_key = str(run_key or "").strip()
     if not run_key:
         return None
+    run_record = database.get_log_run(run_key)
+    run_tool_name = _normalize_logscan_tool_name(run_record.get("tool_name")) if isinstance(run_record, dict) else None
     ingest_cache = _load_logscan_ingest_cache()
     cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
     if isinstance(cache_logs, dict):
@@ -3815,6 +3831,8 @@ def _resolve_logscan_run_archive_action_info(run_key, prefer_uncompressed=False)
                 continue
             location = _classify_logscan_file_location(path)
             if location != "archive":
+                continue
+            if run_tool_name and _normalize_logscan_tool_name(entry.get("tool_name") or _detect_logscan_tool_from_path(path)) != run_tool_name:
                 continue
             try:
                 stats = path.stat()
@@ -3900,7 +3918,8 @@ def _compress_logscan_run_artifact(run_key):
     if _is_logscan_gzip_path(source_path):
         return False, {"error": "Archived log is already compressed.", "run_key": run_key}, 409
 
-    archive_dir = _get_logscan_archive_dir()
+    tool_name = _normalize_logscan_tool_name((target_run or {}).get("tool_name") or _detect_logscan_tool_from_path(source_path))
+    archive_dir = _get_logscan_archive_dir(tool_name)
     compressed_path = _archive_log_file(source_path, archive_dir)
     if not compressed_path or not compressed_path.exists():
         return False, {"error": "Failed to compress archived log.", "run_key": run_key}, 500
@@ -3917,6 +3936,7 @@ def _compress_logscan_run_artifact(run_key):
             "run_key": run_key,
             "run_complete": not bool(incomplete_run),
         }
+    cache_entry["tool_name"] = tool_name
     try:
         compressed_stats = compressed_path.stat()
         cache_entry["mtime"] = compressed_stats.st_mtime
@@ -5422,6 +5442,7 @@ def step(name):
     page_info["qs_optimize_defaults"] = app.config.get("QS_OPTIMIZE_DEFAULTS", True)
     page_info["qs_config_history"] = app.config.get("QS_CONFIG_HISTORY", 0)
     page_info["qs_kometa_log_keep"] = app.config.get("QS_KOMETA_LOG_KEEP", 0)
+    page_info["qs_imagemaid_log_keep"] = app.config.get("QS_IMAGEMAID_LOG_KEEP", 0)
     page_info["qs_session_lifetime_days"] = app.config.get("QS_SESSION_LIFETIME_DAYS", 30)
     page_info["qs_flask_session_dir"] = app.config.get("QS_FLASK_SESSION_DIR", "")
     _, test_libs_path, test_libs_tmp, _, _ = _resolve_test_libraries_paths(helpers.get_app_root())
@@ -8447,10 +8468,49 @@ def _get_logscan_cache_dir():
     return cache_dir
 
 
-def _get_logscan_archive_dir():
-    archive_dir = _get_logscan_cache_dir() / "archive"
+def _normalize_logscan_tool_name(tool_name):
+    normalized = str(tool_name or "kometa").strip().lower()
+    return "imagemaid" if normalized == "imagemaid" else "kometa"
+
+
+def _get_logscan_live_dir(tool_name="kometa", log_dir=None):
+    normalized = _normalize_logscan_tool_name(tool_name)
+    if normalized == "imagemaid":
+        return helpers.get_imagemaid_root_path() / "config" / "logs"
+    return Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs"
+
+
+def _get_logscan_archive_dir(tool_name="kometa"):
+    normalized = _normalize_logscan_tool_name(tool_name)
+    base_archive_dir = _get_logscan_cache_dir() / "archive"
+    archive_dir = base_archive_dir if normalized == "kometa" else base_archive_dir / normalized
     archive_dir.mkdir(parents=True, exist_ok=True)
     return archive_dir
+
+
+def _detect_logscan_tool_from_path(path, log_dir=None):
+    if not path:
+        return "kometa"
+    try:
+        resolved = Path(path).resolve()
+    except Exception:
+        return "kometa"
+    imagemaid_live_dir = _get_logscan_live_dir("imagemaid").resolve()
+    imagemaid_archive_dir = _get_logscan_archive_dir("imagemaid").resolve()
+    kometa_live_dir = _get_logscan_live_dir("kometa", log_dir=log_dir).resolve()
+    kometa_archive_dir = _get_logscan_archive_dir("kometa").resolve()
+    for tool_name, base_dir in (
+        ("imagemaid", imagemaid_archive_dir),
+        ("imagemaid", imagemaid_live_dir),
+        ("kometa", kometa_archive_dir),
+        ("kometa", kometa_live_dir),
+    ):
+        try:
+            resolved.relative_to(base_dir)
+            return tool_name
+        except ValueError:
+            continue
+    return "kometa"
 
 
 def _is_logscan_gzip_path(path):
@@ -8481,6 +8541,248 @@ def _iter_logscan_text_lines(path, encoding="utf-8", errors="replace"):
             yield line
 
 
+def _parse_imagemaid_runtime_seconds(runtime_text):
+    text = str(runtime_text or "").strip()
+    if not text:
+        return None
+    analyzer = logscan.LogscanAnalyzer()
+    try:
+        delta = analyzer._parse_run_time_from_line(f"Run Time: {text}")
+    except Exception:
+        delta = None
+    if delta is None:
+        return None
+    return int(delta.total_seconds())
+
+
+def _extract_imagemaid_error_lines(lines):
+    errors = []
+    in_error_report = False
+    for raw_line in lines:
+        line = str(raw_line or "")
+        if "Error Report" in line:
+            in_error_report = True
+            continue
+        if in_error_report and "ImageMaid Summary" in line:
+            break
+        if not in_error_report:
+            continue
+        stripped = line.strip().strip("|").strip()
+        if not stripped or stripped.startswith("="):
+            continue
+        if "Generic Errors:" in stripped:
+            continue
+        if "Error" not in stripped:
+            continue
+        errors.append(stripped)
+    return errors
+
+
+def _build_imagemaid_recommendations(summary, error_lines=None, completion_reason=None):
+    recommendations = []
+    completion_reason = str(completion_reason or "").strip().lower()
+    if completion_reason == "user_stop":
+        recommendations.append(
+            {
+                "first_line": "ImageMaid run stopped by user",
+                "message": "Quickstart recorded an explicit stop request for this ImageMaid run.",
+            }
+        )
+    elif completion_reason == "maintenance_blocked_start":
+        window = ""
+        maintenance_summary = summary.get("maintenance_summary") if isinstance(summary, dict) else {}
+        if isinstance(maintenance_summary, dict):
+            events = maintenance_summary.get("events")
+            if isinstance(events, list) and events:
+                window = str((events[0] or {}).get("window") or "").strip()
+        suffix = f" during the Plex maintenance window ({window})" if window else " during the Plex maintenance window"
+        recommendations.append(
+            {
+                "first_line": "ImageMaid start blocked by Plex maintenance",
+                "message": f"Quickstart did not start ImageMaid{suffix}.",
+            }
+        )
+    elif completion_reason and completion_reason != "completed":
+        recommendations.append(
+            {
+                "first_line": "ImageMaid run appears incomplete",
+                "message": f"Quickstart detected an incomplete ImageMaid run with reason: {completion_reason}.",
+            }
+        )
+    if error_lines:
+        recommendations.append(
+            {
+                "first_line": "ImageMaid reported errors",
+                "message": "\n".join(error_lines[:8]),
+            }
+        )
+    return recommendations
+
+
+def _analyze_imagemaid_log_content(content, log_path=None):
+    if not content:
+        return None
+    path = Path(log_path) if log_path else None
+    try:
+        stats = path.stat() if path and path.exists() else None
+    except Exception:
+        stats = None
+    lines = content.splitlines()
+    run_marker_pattern = re.compile(
+        r"\[Quickstart\]\s+Run marker:\s+started=([^\s]+)\s+config=([^\s]+).*?\btool=imagemaid\b(?:\s+mode=([^\s]+))?",
+        re.IGNORECASE,
+    )
+    stop_pattern = re.compile(
+        r"\[Quickstart\]\s+Run event:\s+event=stopped\s+at=([^\s]+)\s+config=([^\s]+).*?\btool=imagemaid\b(?:\s+mode=([^\s]+))?(?:\s+reason=([^\s]+))?",
+        re.IGNORECASE,
+    )
+    blocked_pattern = re.compile(
+        r"\[Quickstart\]\s+Maintenance marker:\s+event=blocked_start\s+at=([^\s]+).*?\btool=imagemaid\b(?:\s+mode=([^\s]+))?.*?(?:\s+window=([^\s]+))?",
+        re.IGNORECASE,
+    )
+    timestamp_pattern = re.compile(r"^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),")
+    total_runtime_pattern = re.compile(r"\|\s*Total Runtime\s*\|\s*(.*?)\s*\|?$", re.IGNORECASE)
+
+    started_at = None
+    config_name = "imagemaid"
+    mode = ""
+    stop_at = None
+    stop_reason = ""
+    blocked_at = None
+    blocked_window = ""
+    finished_at = None
+    run_time_seconds = None
+    warning_count = 0
+    error_count = 0
+    trace_count = 0
+    quickstart_run_marker = False
+
+    for line in lines:
+        if "[WARNING]" in line:
+            warning_count += 1
+        if "[ERROR]" in line:
+            error_count += 1
+        if "Traceback" in line:
+            trace_count += 1
+
+        if not quickstart_run_marker:
+            marker_match = run_marker_pattern.search(line)
+            if marker_match:
+                started_at = marker_match.group(1)
+                config_name = marker_match.group(2) or config_name
+                mode = marker_match.group(3) or mode
+                quickstart_run_marker = True
+
+        stop_match = stop_pattern.search(line)
+        if stop_match:
+            stop_at = stop_match.group(1)
+            config_name = stop_match.group(2) or config_name
+            mode = stop_match.group(3) or mode
+            stop_reason = stop_match.group(4) or stop_reason or "user_stop"
+
+        blocked_match = blocked_pattern.search(line)
+        if blocked_match:
+            blocked_at = blocked_match.group(1)
+            mode = blocked_match.group(2) or mode
+            blocked_window = blocked_match.group(3) or blocked_window
+
+        if "ImageMaid Finished" in line:
+            timestamp_match = timestamp_pattern.search(line)
+            if timestamp_match:
+                finished_at = timestamp_match.group(1)
+
+        runtime_match = total_runtime_pattern.search(line)
+        if runtime_match:
+            parsed_runtime = _parse_imagemaid_runtime_seconds(runtime_match.group(1))
+            if parsed_runtime is not None:
+                run_time_seconds = parsed_runtime
+
+        if not mode and "Running in " in line and " Mode" in line:
+            mode_match = re.search(r"Running in\s+([A-Za-z]+)\s+Mode", line, re.IGNORECASE)
+            if mode_match:
+                mode = (mode_match.group(1) or "").strip().lower()
+
+    completion_reason = "completed"
+    run_complete = bool(finished_at and run_time_seconds is not None)
+    if not run_complete:
+        if stop_at:
+            completion_reason = stop_reason or "user_stop"
+            finished_at = finished_at or stop_at
+        elif blocked_at:
+            completion_reason = "maintenance_blocked_start"
+            finished_at = finished_at or blocked_at
+        else:
+            completion_reason = "unknown_incomplete"
+
+    maintenance_events = []
+    if blocked_at:
+        maintenance_events.append(
+            {
+                "event": "blocked_start",
+                "at": blocked_at,
+                "local_at": "",
+                "window": blocked_window or "",
+                "paused_seconds": None,
+            }
+        )
+    maintenance_summary = {
+        "had_pause": False,
+        "pause_count": 0,
+        "pause_seconds": 0,
+        "open_pause": False,
+        "window": blocked_window or "",
+        "events": maintenance_events,
+    }
+    error_lines = _extract_imagemaid_error_lines(lines)
+    if error_lines and error_count == 0:
+        error_count = len(error_lines)
+    mode = (mode or "report").strip().lower() or "report"
+    command_signature = f"--mode {mode}"
+    run_command = f"imagemaid {command_signature}"
+    timestamp_seed = started_at or finished_at or (stats.st_mtime if stats else 0)
+    run_key_seed = f"imagemaid|{timestamp_seed}|{mode}|{path.name if path else 'imagemaid.log'}"
+    created_at = finished_at or started_at or _iso_from_mtime(stats.st_mtime if stats else None)
+    summary = {
+        "run_key": hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest(),
+        "tool_name": "imagemaid",
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "run_time_seconds": run_time_seconds,
+        "kometa_version": helpers.get_imagemaid_local_version() or "",
+        "kometa_newest_version": "",
+        "config_name": config_name or "imagemaid",
+        "config_hash": None,
+        "run_command": run_command,
+        "command_signature": command_signature,
+        "section_runtimes": {},
+        "log_size": int(stats.st_size) if stats else None,
+        "log_counts": {
+            "debug": 0,
+            "info": 0,
+            "warning": warning_count,
+            "error": error_count,
+            "critical": 0,
+            "trace": trace_count,
+        },
+        "analysis_counts": {
+            "imagemaid_error_lines": len(error_lines),
+        },
+        "library_counts": {},
+        "maintenance_summary": maintenance_summary,
+        "maintenance_had_pause": False,
+        "quiet_period_summary": {},
+        "quickstart_run_marker": quickstart_run_marker,
+        "config_line_count": None,
+        "cache_line_count": None,
+        "created_at": created_at,
+        "run_complete": run_complete,
+        "completion_reason": completion_reason,
+        "imagemaid_mode": mode,
+    }
+    recommendations = _build_imagemaid_recommendations(summary, error_lines=error_lines, completion_reason=completion_reason)
+    return {"summary": summary, "recommendations": recommendations}
+
+
 def _build_logscan_archive_filename(path, stats=None, counter=None, preferred_suffix=None):
     path = Path(path)
     if stats is None:
@@ -8490,7 +8792,13 @@ def _build_logscan_archive_filename(path, stats=None, counter=None, preferred_su
     suffix = preferred_suffix or "".join(path.suffixes)
     if not suffix:
         suffix = ".log"
-    base_name = f"meta-{timestamp}-{size}"
+    stem = path.name
+    for suffix_part in path.suffixes:
+        if stem.endswith(suffix_part):
+            stem = stem[: -len(suffix_part)]
+    stem = re.sub(r"-\d{8}-\d{6}Z-\d+(?:-\d+)?$", "", stem)
+    stem = re.sub(r"[^A-Za-z0-9_-]+", "-", stem).strip("-").lower() or "log"
+    base_name = f"{stem}-{timestamp}-{size}"
     if counter and counter > 1:
         base_name = f"{base_name}-{counter}"
     return f"{base_name}{suffix}"
@@ -8511,27 +8819,31 @@ def _build_logscan_archive_destination(path, archive_dir, stats=None, preferred_
         counter += 1
 
 
-def _iter_logscan_candidate_files(log_dir=None, include_archive=True, include_compressed=False):
-    log_dir = Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs"
-    archive_dir = _get_logscan_archive_dir() if include_archive else None
+def _iter_logscan_candidate_files(log_dir=None, include_archive=True, include_compressed=False, tool_name=None):
+    tool_names = [_normalize_logscan_tool_name(tool_name)] if tool_name else ["kometa", "imagemaid"]
     log_files = []
-    dirs = [log_dir]
-    if include_archive and archive_dir:
-        dirs.append(archive_dir)
-    for base_dir in dirs:
-        if not base_dir.exists():
-            continue
-        for path in base_dir.glob("*meta*.log*"):
-            if not path.is_file():
+    for current_tool in tool_names:
+        live_dir = _get_logscan_live_dir(current_tool, log_dir=log_dir if current_tool == "kometa" else None)
+        archive_dir = _get_logscan_archive_dir(current_tool) if include_archive else None
+        dirs = [live_dir]
+        if include_archive and archive_dir:
+            dirs.append(archive_dir)
+        patterns = ["*meta*.log*"] if current_tool == "kometa" else ["*.log*"]
+        for base_dir in dirs:
+            if not base_dir.exists():
                 continue
-            suffixes = [suffix.lower() for suffix in path.suffixes]
-            if suffixes and suffixes[-1] in (".zip", ".7z"):
-                continue
-            if not include_compressed and suffixes and suffixes[-1] == ".gz":
-                continue
-            if ".log" not in path.name.lower():
-                continue
-            log_files.append(path)
+            for pattern in patterns:
+                for path in base_dir.glob(pattern):
+                    if not path.is_file():
+                        continue
+                    suffixes = [suffix.lower() for suffix in path.suffixes]
+                    if suffixes and suffixes[-1] in (".zip", ".7z"):
+                        continue
+                    if not include_compressed and suffixes and suffixes[-1] == ".gz":
+                        continue
+                    if ".log" not in path.name.lower():
+                        continue
+                    log_files.append(path)
 
     def _mtime(value):
         try:
@@ -8553,18 +8865,21 @@ def _classify_logscan_file_location(path, log_dir=None):
         resolved = Path(path).resolve()
     except Exception:
         return "missing"
-    live_dir = (Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs").resolve()
-    archive_dir = _get_logscan_archive_dir().resolve()
-    try:
-        resolved.relative_to(archive_dir)
-        return "archive"
-    except ValueError:
-        pass
-    try:
-        resolved.relative_to(live_dir)
-        return "live" if resolved.name.lower() == "meta.log" else "archive"
-    except ValueError:
-        pass
+    for tool_name in ("kometa", "imagemaid"):
+        live_dir = _get_logscan_live_dir(tool_name, log_dir=log_dir if tool_name == "kometa" else None).resolve()
+        archive_dir = _get_logscan_archive_dir(tool_name).resolve()
+        try:
+            resolved.relative_to(archive_dir)
+            return "archive"
+        except ValueError:
+            pass
+        try:
+            resolved.relative_to(live_dir)
+            if tool_name == "kometa":
+                return "live" if resolved.name.lower() == "meta.log" else "archive"
+            return "live"
+        except ValueError:
+            pass
     return "other"
 
 
@@ -8574,6 +8889,15 @@ def _format_archived_log_retention_label(keep_limit):
     if keep_limit == 1:
         return "Keep last 1 archived log"
     return f"Keep last {keep_limit} archived logs"
+
+
+def _get_logscan_keep_limit(tool_name="kometa"):
+    normalized = _normalize_logscan_tool_name(tool_name)
+    config_key = "QS_IMAGEMAID_LOG_KEEP" if normalized == "imagemaid" else "QS_KOMETA_LOG_KEEP"
+    try:
+        return max(0, int(app.config.get(config_key, 0) or 0))
+    except (TypeError, ValueError):
+        return 0
 
 
 def _get_logscan_archive_storage_summary(all_runs=None, incomplete_runs=None, context=None):
@@ -8612,7 +8936,8 @@ def _get_logscan_archive_storage_summary(all_runs=None, incomplete_runs=None, co
     tracked_archived_files = len(tracked_paths)
     extra_archived_files = max(0, total_archived_files - tracked_archived_files)
     extra_archived_bytes = max(0, total_archived_bytes - tracked_bytes)
-    keep_limit = int(app.config.get("QS_KOMETA_LOG_KEEP", 0) or 0)
+    kometa_keep_limit = _get_logscan_keep_limit("kometa")
+    imagemaid_keep_limit = _get_logscan_keep_limit("imagemaid")
     return {
         "archived_bytes": tracked_bytes,
         "archived_files": tracked_archived_files,
@@ -8620,8 +8945,12 @@ def _get_logscan_archive_storage_summary(all_runs=None, incomplete_runs=None, co
         "disk_archived_files": total_archived_files,
         "extra_archived_files": extra_archived_files,
         "extra_archived_bytes": extra_archived_bytes,
-        "keep_limit": keep_limit,
-        "retention_label": _format_archived_log_retention_label(keep_limit),
+        "keep_limit": kometa_keep_limit,
+        "retention_label": f"Kometa: {_format_archived_log_retention_label(kometa_keep_limit)} | ImageMaid: {_format_archived_log_retention_label(imagemaid_keep_limit)}",
+        "kometa_keep_limit": kometa_keep_limit,
+        "imagemaid_keep_limit": imagemaid_keep_limit,
+        "kometa_retention_label": _format_archived_log_retention_label(kometa_keep_limit),
+        "imagemaid_retention_label": _format_archived_log_retention_label(imagemaid_keep_limit),
         "compression_ready": True,
     }
 
@@ -8691,8 +9020,6 @@ def _remove_logscan_ingest_cache_entries(run_key=None, raw_path=None):
 
 
 def _normalize_logscan_archive_filenames(archive_dir=None):
-    archive_dir = Path(archive_dir) if archive_dir else _get_logscan_archive_dir()
-    archive_dir.mkdir(parents=True, exist_ok=True)
     ingest_cache = _load_logscan_ingest_cache()
     cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
     if not isinstance(cache_logs, dict):
@@ -8707,7 +9034,10 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
             continue
         try:
             stats = path.stat()
-            target = _build_logscan_archive_destination(path, archive_dir, stats=stats)
+            current_tool = _detect_logscan_tool_from_path(path)
+            target_archive_dir = Path(archive_dir) if archive_dir else _get_logscan_archive_dir(current_tool)
+            target_archive_dir.mkdir(parents=True, exist_ok=True)
+            target = _build_logscan_archive_destination(path, target_archive_dir, stats=stats)
             if target.resolve() == path.resolve():
                 skipped += 1
                 continue
@@ -9151,6 +9481,7 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
     path = Path(log_path)
     cache_entry = cache_entry if isinstance(cache_entry, dict) else {}
     summary = cache_entry.get("summary") if isinstance(cache_entry.get("summary"), dict) else {}
+    tool_name = _normalize_logscan_tool_name(summary.get("tool_name") or cache_entry.get("tool_name"))
     recommendations = cache_entry.get("recommendations")
     if not isinstance(recommendations, list):
         recommendations = []
@@ -9169,12 +9500,15 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
     created_at = summary.get("created_at")
     if not created_at:
         created_at = cache_entry.get("updated_at") or _iso_from_mtime(mtime)
-    original_command = _inject_config_path_for_command(
-        summary.get("run_command") or "",
-        config_name=summary.get("config_name") or config_name,
-    )
+    original_command = summary.get("run_command") or ""
+    if tool_name == "kometa":
+        original_command = _inject_config_path_for_command(
+            original_command,
+            config_name=summary.get("config_name") or config_name,
+        )
     return {
         "run_key": run_key,
+        "tool_name": tool_name,
         "started_at": summary.get("started_at"),
         "finished_at": summary.get("finished_at"),
         "run_time_seconds": summary.get("run_time_seconds"),
@@ -9221,6 +9555,7 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
 def _build_incomplete_log_fallback(log_path, cache_entry=None, config_name=None):
     path = Path(log_path)
     cache_entry = cache_entry if isinstance(cache_entry, dict) else {}
+    tool_name = _normalize_logscan_tool_name(cache_entry.get("tool_name"))
     try:
         stats = path.stat()
         mtime = stats.st_mtime
@@ -9235,6 +9570,7 @@ def _build_incomplete_log_fallback(log_path, cache_entry=None, config_name=None)
     created_at = cache_entry.get("updated_at") or _iso_from_mtime(mtime)
     return {
         "run_key": run_key,
+        "tool_name": tool_name,
         "started_at": None,
         "finished_at": None,
         "run_time_seconds": None,
@@ -9334,6 +9670,8 @@ def _get_logscan_incomplete_run(run_key, config_name=None):
             return None
         if isinstance(entry.get("summary"), dict):
             return _build_incomplete_run_from_cache_entry(path, cache_entry=entry, config_name=config_name)
+        if _normalize_logscan_tool_name(entry.get("tool_name")) != "kometa":
+            return _build_incomplete_log_fallback(path, cache_entry=entry, config_name=config_name)
         parsed = _analyze_incomplete_log_for_resume(path, cache_entry=entry, config_name=config_name)
         if parsed:
             return parsed
@@ -9354,6 +9692,8 @@ def _get_incomplete_resume_runs(limit=25, config_name=None):
     candidates = []
     for path_key, entry in cache_logs.items():
         if not isinstance(entry, dict):
+            continue
+        if _normalize_logscan_tool_name(entry.get("tool_name")) != "kometa":
             continue
         try:
             path = Path(path_key).resolve()
@@ -9443,7 +9783,9 @@ def _logscan_needs_reingest(cache_logs, log_dir):
 def _logscan_ingest_health(log_dir=None):
     log_dir = Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs"
     log_dir_exists = log_dir.exists()
-    log_files = _get_logscan_log_files(log_dir=log_dir, include_archive=True) if log_dir_exists else []
+    imagemaid_log_dir = _get_logscan_live_dir("imagemaid")
+    imagemaid_dir_exists = imagemaid_log_dir.exists()
+    log_files = _get_logscan_log_files(log_dir=log_dir, include_archive=True) if (log_dir_exists or imagemaid_dir_exists) else []
     ingest_cache = _load_logscan_ingest_cache()
     cache_logs = ingest_cache["logs"]
     missing = []
@@ -9452,10 +9794,15 @@ def _logscan_ingest_health(log_dir=None):
     complete = 0
     pending_active = False
     latest_updated = None
-    is_running = helpers.is_kometa_running()
+    kometa_running = helpers.is_kometa_running()
+    imagemaid_running = helpers.is_imagemaid_running()
 
     for path in log_files:
-        if is_running and path.name.lower() == "meta.log":
+        tool_name = _detect_logscan_tool_from_path(path, log_dir=log_dir)
+        if tool_name == "kometa" and kometa_running and path.name.lower() == "meta.log":
+            pending_active = True
+            continue
+        if tool_name == "imagemaid" and imagemaid_running and _classify_logscan_file_location(path, log_dir=log_dir) == "live":
             pending_active = True
             continue
         entry = cache_logs.get(str(path.resolve()))
@@ -9478,7 +9825,7 @@ def _logscan_ingest_health(log_dir=None):
 
     return {
         "source": "health",
-        "log_dir_missing": not log_dir_exists,
+        "log_dir_missing": not log_dir_exists and not imagemaid_dir_exists,
         "total": total,
         "tracked": tracked,
         "complete": complete,
@@ -9629,6 +9976,7 @@ def _archive_rotated_log_and_update_cache(path, cache_logs, archive_dir, run_key
     updated_entry["mtime"] = archived_stats.st_mtime
     updated_entry["size"] = archived_stats.st_size
     updated_entry["run_complete"] = bool(run_complete)
+    updated_entry["tool_name"] = _detect_logscan_tool_from_path(source_path)
     updated_entry["updated_at"] = datetime.now(timezone.utc).isoformat()
     if run_key:
         updated_entry["run_key"] = run_key
@@ -9639,14 +9987,15 @@ def _archive_rotated_log_and_update_cache(path, cache_logs, archive_dir, run_key
 
 
 def _prune_logscan_archive(archive_dir):
-    keep_limit = app.config.get("QS_KOMETA_LOG_KEEP", 0)
+    tool_name = _detect_logscan_tool_from_path(Path(archive_dir))
+    keep_limit = _get_logscan_keep_limit(tool_name)
     if keep_limit <= 0:
         return 0
     archive_dir = Path(archive_dir)
     if not archive_dir.exists():
         return 0
     candidates = []
-    for path in archive_dir.glob("*meta*.log*"):
+    for path in archive_dir.glob("*.log*"):
         if not path.is_file():
             continue
         suffixes = [suffix.lower() for suffix in path.suffixes]
@@ -9731,21 +10080,23 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         cache_logs = ingest_cache["logs"]
 
         kometa_root = helpers.get_kometa_root_path()
-        log_dir = kometa_root / "config" / "logs"
-        if not log_dir.exists():
-            message = f"Log folder not found at: {log_dir}"
+        kometa_log_dir = kometa_root / "config" / "logs"
+        imagemaid_log_dir = _get_logscan_live_dir("imagemaid")
+        if not kometa_log_dir.exists() and not imagemaid_log_dir.exists():
+            message = f"Log folders not found at: {kometa_log_dir} or {imagemaid_log_dir}"
             if update_state:
                 _update_logscan_reingest_state(status="error", error=message, finished_at=datetime.now(timezone.utc).isoformat())
             return {"success": False, "error": message}
 
-        log_files = _get_logscan_log_files(log_dir=log_dir, include_archive=True)
+        log_files = _get_logscan_log_files(log_dir=kometa_log_dir, include_archive=True)
         total_files = len(log_files)
         if update_state:
             _update_logscan_reingest_state(total=total_files)
 
         analyzer = logscan.LogscanAnalyzer()
-        if log_files:
-            analyzer.preload_people_index(log_files[0])
+        preload_path = next((path for path in log_files if _detect_logscan_tool_from_path(path, log_dir=kometa_log_dir) == "kometa"), None)
+        if preload_path:
+            analyzer.preload_people_index(preload_path)
         ingested = 0
         duplicates = 0
         skipped_incomplete = 0
@@ -9760,7 +10111,6 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
         sample_incomplete = []
         sample_errors = []
 
-        archive_dir = _get_logscan_archive_dir()
         for idx, path in enumerate(log_files, start=1):
             if update_state:
                 _update_logscan_reingest_state(current_file=path.name, scanned=max(0, idx - 1))
@@ -9770,17 +10120,23 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 cached_entry = cache_logs.get(cache_key, {})
                 cached_run_key = cached_entry.get("run_key")
                 skip_save_if_cached = cached_entry.get("run_complete") is True and cached_run_key
+                tool_name = _detect_logscan_tool_from_path(path, log_dir=kometa_log_dir)
+                live_dir = _get_logscan_live_dir(tool_name, log_dir=kometa_log_dir if tool_name == "kometa" else None)
+                archive_dir = _get_logscan_archive_dir(tool_name)
 
                 content = _read_logscan_text(path, encoding="utf-8", errors="replace")
-                result = analyzer.analyze_content(
-                    content,
-                    log_path=path,
-                    include_people_scan=True,
-                )
+                if tool_name == "imagemaid":
+                    result = _analyze_imagemaid_log_content(content, log_path=path)
+                else:
+                    result = analyzer.analyze_content(
+                        content,
+                        log_path=path,
+                        include_people_scan=True,
+                    )
                 summary = result.get("summary") if isinstance(result, dict) else None
                 if not summary:
                     skipped_invalid += 1
-                    if path.parent.resolve() == log_dir.resolve() and path.name.lower() != "meta.log":
+                    if path.parent.resolve() == live_dir.resolve() and path.name.lower() != "meta.log":
                         archived_path = _archive_rotated_log_and_update_cache(
                             path,
                             cache_logs,
@@ -9802,10 +10158,12 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                         "mtime": stats.st_mtime,
                         "size": stats.st_size,
                         "run_key": summary.get("run_key"),
+                        "tool_name": tool_name,
                         "run_complete": False,
                         "updated_at": datetime.now(timezone.utc).isoformat(),
                         "summary": {
                             "run_key": summary.get("run_key"),
+                            "tool_name": tool_name,
                             "started_at": summary.get("started_at"),
                             "finished_at": summary.get("finished_at"),
                             "run_time_seconds": summary.get("run_time_seconds"),
@@ -9830,7 +10188,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                         "recommendations": incomplete_recommendations,
                     }
                     cache_dirty = True
-                    if path.parent.resolve() == log_dir.resolve() and path.name.lower() != "meta.log":
+                    if path.parent.resolve() == live_dir.resolve() and path.name.lower() != "meta.log":
                         archived_path = _archive_rotated_log_and_update_cache(
                             path,
                             cache_logs,
@@ -9841,7 +10199,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                         if archived_path:
                             cache_dirty = True
                     continue
-                missing_people = result.get("missing_people") if isinstance(result, dict) else None
+                missing_people = result.get("missing_people") if tool_name == "kometa" and isinstance(result, dict) else None
                 if missing_people:
                     missing_people_logs += 1
                     missing_people_unique.update({name.lower() for name in missing_people})
@@ -9871,12 +10229,18 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                     "mtime": stats.st_mtime,
                     "size": stats.st_size,
                     "run_key": summary.get("run_key"),
+                    "tool_name": tool_name,
                     "run_complete": True,
                     "updated_at": datetime.now(timezone.utc).isoformat(),
                 }
                 cache_dirty = True
-                if path.parent.resolve() == log_dir.resolve():
-                    archived_path = _archive_log_file(path, archive_dir, log_dir=log_dir)
+                should_archive_live = (
+                    path.parent.resolve() == live_dir.resolve() and
+                    not (tool_name == "kometa" and path.name.lower() == "meta.log") and
+                    not (tool_name == "imagemaid" and helpers.is_imagemaid_running())
+                )
+                if should_archive_live:
+                    archived_path = _archive_log_file(path, archive_dir, log_dir=live_dir)
                     if archived_path:
                         try:
                             archived_stats = archived_path.stat()
@@ -9884,6 +10248,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                                 "mtime": archived_stats.st_mtime,
                                 "size": archived_stats.st_size,
                                 "run_key": summary.get("run_key"),
+                                "tool_name": tool_name,
                                 "run_complete": True,
                                 "updated_at": datetime.now(timezone.utc).isoformat(),
                             }
@@ -10266,6 +10631,7 @@ def logscan_trends_page():
         "qs_optimize_defaults": app.config.get("QS_OPTIMIZE_DEFAULTS", True),
         "qs_config_history": app.config.get("QS_CONFIG_HISTORY", 0),
         "qs_kometa_log_keep": app.config.get("QS_KOMETA_LOG_KEEP", 0),
+        "qs_imagemaid_log_keep": app.config.get("QS_IMAGEMAID_LOG_KEEP", 0),
         "qs_session_lifetime_days": app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
         "qs_flask_session_dir": app.config.get("QS_FLASK_SESSION_DIR", ""),
         "shutdown_nonce": session["shutdown_nonce"],
@@ -10578,6 +10944,17 @@ def update_quickstart_settings():
         if log_keep_value is not None and log_keep_value < 0:
             errors.append("Kometa log retention must be a non-negative number.")
 
+    imagemaid_log_keep_raw = data.get("imagemaid_log_keep")
+    imagemaid_log_keep_value = None
+    if imagemaid_log_keep_raw is not None:
+        try:
+            imagemaid_log_keep_value = int(str(imagemaid_log_keep_raw).strip())
+        except (TypeError, ValueError):
+            errors.append("ImageMaid log retention must be a non-negative number.")
+            imagemaid_log_keep_value = None
+        if imagemaid_log_keep_value is not None and imagemaid_log_keep_value < 0:
+            errors.append("ImageMaid log retention must be a non-negative number.")
+
     session_lifetime_raw = data.get("session_lifetime_days")
     session_lifetime_value = None
     if session_lifetime_raw is not None:
@@ -10647,6 +11024,11 @@ def update_quickstart_settings():
         app.config["QS_KOMETA_LOG_KEEP"] = log_keep_value
         changes_applied = True
 
+    if imagemaid_log_keep_value is not None and imagemaid_log_keep_value != app.config.get("QS_IMAGEMAID_LOG_KEEP", 0):
+        helpers.update_env_variable("QS_IMAGEMAID_LOG_KEEP", str(imagemaid_log_keep_value))
+        app.config["QS_IMAGEMAID_LOG_KEEP"] = imagemaid_log_keep_value
+        changes_applied = True
+
     if session_lifetime_value is not None and session_lifetime_value != app.config.get("QS_SESSION_LIFETIME_DAYS", 30):
         helpers.update_env_variable("QS_SESSION_LIFETIME_DAYS", str(session_lifetime_value))
         app.config["QS_SESSION_LIFETIME_DAYS"] = session_lifetime_value
@@ -10698,6 +11080,7 @@ def update_quickstart_settings():
             optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
             config_history=app.config.get("QS_CONFIG_HISTORY", 0),
             kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
+            imagemaid_log_keep=app.config.get("QS_IMAGEMAID_LOG_KEEP", 0),
             session_lifetime_days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
             session_dir=app.config.get("QS_FLASK_SESSION_DIR", ""),
         )
@@ -10713,6 +11096,7 @@ def update_quickstart_settings():
             optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
             config_history=app.config.get("QS_CONFIG_HISTORY", 0),
             kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
+            imagemaid_log_keep=app.config.get("QS_IMAGEMAID_LOG_KEEP", 0),
             session_lifetime_days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
             session_dir=app.config.get("QS_FLASK_SESSION_DIR", ""),
         )
@@ -10726,6 +11110,7 @@ def update_quickstart_settings():
         optimize_defaults=app.config.get("QS_OPTIMIZE_DEFAULTS", True),
         config_history=app.config.get("QS_CONFIG_HISTORY", 0),
         kometa_log_keep=app.config.get("QS_KOMETA_LOG_KEEP", 0),
+        imagemaid_log_keep=app.config.get("QS_IMAGEMAID_LOG_KEEP", 0),
         session_lifetime_days=app.config.get("QS_SESSION_LIFETIME_DAYS", 30),
         session_dir=app.config.get("QS_FLASK_SESSION_DIR", ""),
     )

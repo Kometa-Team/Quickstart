@@ -7,7 +7,7 @@
     <div class="logscan-control-shell">
       <div class="logscan-control-copy">
         <p class="text-muted small mb-0">
-          Recent Kometa runs parsed from <code>config/kometa/config/logs/meta.log</code>. Tokens and secrets are excluded.
+          Recent Kometa and ImageMaid runs parsed from their Quickstart-managed logs. Tokens and secrets are excluded.
         </p>
       </div>
       <div class="logscan-control-grid">
@@ -30,6 +30,15 @@
         <select id="logscan-trends-config-filter" class="form-select form-select-sm w-auto logscan-control-field"
           title="Filter visuals by tracked config.">
           <option value="">All configs</option>
+        </select>
+        <div class="btn-group btn-group-sm logscan-tool-switch" role="group" aria-label="Tool switch">
+          <button type="button" class="btn nav-button" data-tool-filter-value="kometa">Kometa</button>
+          <button type="button" class="btn nav-button" data-tool-filter-value="imagemaid">ImageMaid</button>
+          <button type="button" class="btn nav-button" data-tool-filter-value="">All</button>
+        </div>
+        <select id="logscan-trends-tool-filter" class="form-select form-select-sm w-auto logscan-control-field d-none"
+          title="Filter visuals by tool.">
+          <option value="">All tools</option>
         </select>
         <select id="logscan-trends-command-filter" class="form-select form-select-sm w-auto logscan-control-field"
           title="Filter visuals by run command.">
@@ -159,6 +168,7 @@
           <option value="finished_at" selected>Finished</option>
           <option value="run_time_seconds">Runtime</option>
           <option value="config_name">Config</option>
+          <option value="tool_name">Tool</option>
           <option value="config_line_count">Config lines</option>
           <option value="cache_line_count">Cache lines</option>
           <option value="command_signature">Command</option>
@@ -170,7 +180,7 @@
           <option value="library_shows">Shows</option>
           <option value="library_episodes">Episodes</option>
           <option value="library_total">Total items</option>
-          <option value="kometa_version">Kometa</option>
+          <option value="kometa_version">Version</option>
           <option value="maintenance">Maintenance</option>
           <option value="quiet_periods">Quiet periods</option>
           <option value="section_runtimes">Section runtimes</option>
@@ -244,6 +254,16 @@
                 </button>
               </th>
               <th>
+                <button type="button" class="logscan-sort-button" data-sort="tool_name"
+                  title="Sort by tool" aria-label="Sort by tool">
+                  Tool
+                  <span class="logscan-sort-icons" aria-hidden="true">
+                    <span class="logscan-sort-up"></span>
+                    <span class="logscan-sort-down"></span>
+                  </span>
+                </button>
+              </th>
+              <th>
                 <button type="button" class="logscan-sort-button" data-sort="config_line_count"
                   title="Sort by config line count" aria-label="Sort by config line count">
                   Config lines
@@ -285,8 +305,8 @@
               </th>
               <th>
                 <button type="button" class="logscan-sort-button" data-sort="kometa_version"
-                  title="Sort by Kometa version" aria-label="Sort by Kometa version">
-                  Kometa
+                  title="Sort by detected version" aria-label="Sort by detected version">
+                  Version
                   <span class="logscan-sort-icons" aria-hidden="true">
                     <span class="logscan-sort-up"></span>
                     <span class="logscan-sort-down"></span>
