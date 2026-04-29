@@ -656,8 +656,7 @@ $(document).ready(function () {
           els.runLog.text((body && body.error) || 'No ImageMaid log found yet.')
           return
         }
-        const prefix = body.is_launch_log ? '[Quickstart launch log]\n' : ''
-        els.runLog.text(prefix + (body.text || 'ImageMaid log is empty.'))
+        els.runLog.text(body.text || 'ImageMaid log is empty.')
         els.runLog.scrollTop(els.runLog[0].scrollHeight)
       })
       .catch(() => {

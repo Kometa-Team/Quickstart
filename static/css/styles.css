@@ -420,6 +420,13 @@ html[data-theme="dark"] body {
     flex: 0 0 auto;
 }
 
+#logscan-trends-progress-text {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
 code {
     font-size: 0.875em;
     color: var(--theme-primary);

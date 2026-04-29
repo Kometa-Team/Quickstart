@@ -8394,11 +8394,14 @@ def logscan_trends_recommendations():
     if not run_key:
         return jsonify({"error": "run_key required"}), 400
     recommendations = database.get_log_run_recommendations(run_key)
+    run_record = database.get_log_run(run_key)
     if not recommendations:
         incomplete_run = _get_logscan_incomplete_run(run_key)
         if incomplete_run:
             recommendations = incomplete_run.get("recommendations") if isinstance(incomplete_run.get("recommendations"), list) else []
-    return jsonify({"run_key": run_key, "recommendations": recommendations})
+            if not run_record:
+                run_record = incomplete_run
+    return jsonify({"run_key": run_key, "recommendations": recommendations, "run": run_record})
 
 
 @app.route("/logscan/trends/reset", methods=["POST"])
@@ -8485,10 +8488,16 @@ def _get_logscan_live_dir(tool_name="kometa", log_dir=None):
     return Path(log_dir) if log_dir else helpers.get_kometa_root_path() / "config" / "logs"
 
 
+def _get_logscan_archive_root_dir():
+    archive_root = _get_logscan_cache_dir() / "archive"
+    archive_root.mkdir(parents=True, exist_ok=True)
+    return archive_root
+
+
 def _get_logscan_archive_dir(tool_name="kometa"):
     normalized = _normalize_logscan_tool_name(tool_name)
-    base_archive_dir = _get_logscan_cache_dir() / "archive"
-    archive_dir = base_archive_dir if normalized == "kometa" else base_archive_dir / normalized
+    base_archive_dir = _get_logscan_archive_root_dir()
+    archive_dir = base_archive_dir / normalized
     archive_dir.mkdir(parents=True, exist_ok=True)
     return archive_dir
 
@@ -8500,10 +8509,13 @@ def _detect_logscan_tool_from_path(path, log_dir=None):
         resolved = Path(path).resolve()
     except Exception:
         return "kometa"
+    if "imagemaid" in resolved.name.lower():
+        return "imagemaid"
     imagemaid_live_dir = _get_logscan_live_dir("imagemaid").resolve()
     imagemaid_archive_dir = _get_logscan_archive_dir("imagemaid").resolve()
     kometa_live_dir = _get_logscan_live_dir("kometa", log_dir=log_dir).resolve()
     kometa_archive_dir = _get_logscan_archive_dir("kometa").resolve()
+    legacy_archive_dir = _get_logscan_archive_root_dir().resolve()
     for tool_name, base_dir in (
         ("imagemaid", imagemaid_archive_dir),
         ("imagemaid", imagemaid_live_dir),
@@ -8515,6 +8527,11 @@ def _detect_logscan_tool_from_path(path, log_dir=None):
             return tool_name
         except ValueError:
             continue
+    try:
+        resolved.relative_to(legacy_archive_dir)
+        return "imagemaid" if "imagemaid" in resolved.name.lower() else "kometa"
+    except ValueError:
+        pass
     return "kometa"
 
 
@@ -8581,6 +8598,19 @@ def _extract_imagemaid_error_lines(lines):
             continue
         errors.append(stripped)
     return errors
+
+
+def _parse_imagemaid_bytes(text):
+    value = str(text or "").strip()
+    if not value:
+        return None
+    match = re.match(r"^(\d+)\s+Bytes?$", value, re.IGNORECASE)
+    if match:
+        try:
+            return int(match.group(1))
+        except (TypeError, ValueError):
+            return None
+    return None
 
 
 def _build_imagemaid_recommendations(summary, error_lines=None, completion_reason=None):
@@ -8656,11 +8686,37 @@ def _analyze_imagemaid_log_content(content, log_path=None):
     blocked_at = None
     blocked_window = ""
     finished_at = None
+    finished_seen = False
     run_time_seconds = None
     warning_count = 0
     error_count = 0
     trace_count = 0
     quickstart_run_marker = False
+    local_version = ""
+    run_command_text = ""
+    photo_scan_runtime = None
+    photo_remove_runtime = None
+    photo_found_files = 0
+    photo_removed_files = 0
+    photo_recovered_bytes = 0
+    generic_error_lines = []
+    database_downloaded_new = False
+    database_download_failed = False
+    database_section_seen = False
+    photo_transcoder_enabled = False
+    empty_trash_enabled = False
+    clean_bundles_enabled = False
+    optimize_db_enabled = False
+    local_db_enabled = False
+    use_existing_enabled = False
+    no_verify_ssl_enabled = False
+    overlays_only_enabled = False
+    current_runtime_section = ""
+    operation_started = {
+        "empty_trash": False,
+        "clean_bundles": False,
+        "optimize_db": False,
+    }
 
     for line in lines:
         if "[WARNING]" in line:
@@ -8669,6 +8725,9 @@ def _analyze_imagemaid_log_content(content, log_path=None):
             error_count += 1
         if "Traceback" in line:
             trace_count += 1
+        stripped_line = line.strip().strip("|").strip()
+        if stripped_line and "Error:" in stripped_line and stripped_line not in generic_error_lines:
+            generic_error_lines.append(stripped_line)
 
         if not quickstart_run_marker:
             marker_match = run_marker_pattern.search(line)
@@ -8692,6 +8751,7 @@ def _analyze_imagemaid_log_content(content, log_path=None):
             blocked_window = blocked_match.group(3) or blocked_window
 
         if "ImageMaid Finished" in line:
+            finished_seen = True
             timestamp_match = timestamp_pattern.search(line)
             if timestamp_match:
                 finished_at = timestamp_match.group(1)
@@ -8706,6 +8766,84 @@ def _analyze_imagemaid_log_content(content, log_path=None):
             mode_match = re.search(r"Running in\s+([A-Za-z]+)\s+Mode", line, re.IGNORECASE)
             if mode_match:
                 mode = (mode_match.group(1) or "").strip().lower()
+
+        version_match = re.search(r"\|\s*Version:\s*([^\s|]+)", line, re.IGNORECASE)
+        if version_match and not local_version:
+            local_version = str(version_match.group(1) or "").strip()
+
+        command_match = re.search(r"\|\s*Run Command:\s*(.*?)\s*\|?$", line, re.IGNORECASE)
+        if command_match and not run_command_text:
+            run_command_text = str(command_match.group(1) or "").strip()
+
+        if "Downloading Database via the Plex API" in line:
+            database_section_seen = True
+        if "Downloaded New Database" in line:
+            database_downloaded_new = True
+        if "Database File Could not Downloaded" in line:
+            database_download_failed = True
+
+        if "PhotoTranscoder set to True" in line:
+            photo_transcoder_enabled = True
+        if "--photo-transcoder" in line:
+            photo_transcoder_enabled = True
+        if "--empty-trash" in line:
+            empty_trash_enabled = True
+        if "--clean-bundles" in line:
+            clean_bundles_enabled = True
+        if "--optimize-db" in line:
+            optimize_db_enabled = True
+        if "--local" in line:
+            local_db_enabled = True
+        if "--existing" in line:
+            use_existing_enabled = True
+        if "--no-verify-ssl" in line:
+            no_verify_ssl_enabled = True
+        if "--overlays-only" in line:
+            overlays_only_enabled = True
+
+        if "Empty Trash Plex Operation Started" in line:
+            operation_started["empty_trash"] = True
+            empty_trash_enabled = True
+        if "Clean Bundles Plex Operation Started" in line:
+            operation_started["clean_bundles"] = True
+            clean_bundles_enabled = True
+        if "Optimize DB Plex Operation Started" in line:
+            operation_started["optimize_db"] = True
+            optimize_db_enabled = True
+
+        if "Scanning for PhotoTranscoder Images" in line or "Scanning Complete:" in line:
+            current_runtime_section = "photo_scan"
+        elif "Removing PhotoTranscoder Images" in line or "Remove Complete:" in line:
+            current_runtime_section = "photo_remove"
+
+        found_match = re.search(r"Found\s+(\d+)\s+PhotoTranscoder Images to Remove", line, re.IGNORECASE)
+        if found_match:
+            try:
+                photo_found_files = int(found_match.group(1))
+            except (TypeError, ValueError):
+                pass
+        removed_match = re.search(r"Removed\s+(\d+)\s+PhotoTranscoder Images", line, re.IGNORECASE)
+        if removed_match:
+            try:
+                photo_removed_files = int(removed_match.group(1))
+            except (TypeError, ValueError):
+                pass
+        bytes_match = re.search(r"Space Recovered:\s*(.*?)\s*\|?$", line, re.IGNORECASE)
+        if bytes_match:
+            parsed_bytes = _parse_imagemaid_bytes(bytes_match.group(1))
+            if parsed_bytes is not None:
+                photo_recovered_bytes = parsed_bytes
+        runtime_line_match = re.search(r"\|\s*Runtime:\s*(.*?)\s*\|?$", line, re.IGNORECASE)
+        if runtime_line_match:
+            parsed_runtime = _parse_imagemaid_runtime_seconds(runtime_line_match.group(1))
+            if parsed_runtime is not None:
+                if current_runtime_section == "photo_scan":
+                    photo_scan_runtime = parsed_runtime
+                elif current_runtime_section == "photo_remove":
+                    photo_remove_runtime = parsed_runtime
+
+    if finished_seen and not finished_at:
+        finished_at = _iso_from_mtime(stats.st_mtime if stats else None)
 
     completion_reason = "completed"
     run_complete = bool(finished_at and run_time_seconds is not None)
@@ -8739,27 +8877,64 @@ def _analyze_imagemaid_log_content(content, log_path=None):
         "events": maintenance_events,
     }
     error_lines = _extract_imagemaid_error_lines(lines)
+    if generic_error_lines:
+        for item in generic_error_lines:
+            if item not in error_lines:
+                error_lines.append(item)
     if error_lines and error_count == 0:
         error_count = len(error_lines)
+    if run_complete and (error_count > 0 or error_lines):
+        completion_reason = "completed_with_errors"
     mode = (mode or "report").strip().lower() or "report"
     command_signature = f"--mode {mode}"
-    run_command = f"imagemaid {command_signature}"
+    run_command = run_command_text or f"imagemaid {command_signature}"
     timestamp_seed = started_at or finished_at or (stats.st_mtime if stats else 0)
     run_key_seed = f"imagemaid|{timestamp_seed}|{mode}|{path.name if path else 'imagemaid.log'}"
     created_at = finished_at or started_at or _iso_from_mtime(stats.st_mtime if stats else None)
+    section_runtimes = {}
+    if photo_scan_runtime is not None:
+        section_runtimes["photo_transcoder_scan"] = photo_scan_runtime
+    if photo_remove_runtime is not None:
+        section_runtimes["photo_transcoder_remove"] = photo_remove_runtime
+    analysis_counts = {
+        "imagemaid_error_lines": len(error_lines),
+        "imagemaid_database_seen": int(database_section_seen),
+        "imagemaid_database_downloaded_new": int(database_downloaded_new),
+        "imagemaid_database_download_failed": int(database_download_failed),
+        "imagemaid_photo_found_files": photo_found_files,
+        "imagemaid_photo_removed_files": photo_removed_files,
+        "imagemaid_photo_recovered_bytes": photo_recovered_bytes,
+        "imagemaid_empty_trash_enabled": int(empty_trash_enabled),
+        "imagemaid_clean_bundles_enabled": int(clean_bundles_enabled),
+        "imagemaid_optimize_db_enabled": int(optimize_db_enabled),
+        "imagemaid_photo_transcoder_enabled": int(photo_transcoder_enabled),
+        "imagemaid_local_db_enabled": int(local_db_enabled),
+        "imagemaid_use_existing_enabled": int(use_existing_enabled),
+        "imagemaid_no_verify_ssl_enabled": int(no_verify_ssl_enabled),
+        "imagemaid_overlays_only_enabled": int(overlays_only_enabled),
+        "imagemaid_empty_trash_started": int(operation_started["empty_trash"]),
+        "imagemaid_clean_bundles_started": int(operation_started["clean_bundles"]),
+        "imagemaid_optimize_db_started": int(operation_started["optimize_db"]),
+        "imagemaid_enabled_operation_count": int(database_section_seen)
+        + int(photo_transcoder_enabled)
+        + int(empty_trash_enabled)
+        + int(clean_bundles_enabled)
+        + int(optimize_db_enabled),
+        "imagemaid_completed_with_errors": int(completion_reason == "completed_with_errors"),
+    }
     summary = {
         "run_key": hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest(),
         "tool_name": "imagemaid",
         "started_at": started_at,
         "finished_at": finished_at,
         "run_time_seconds": run_time_seconds,
-        "kometa_version": helpers.get_imagemaid_local_version() or "",
+        "kometa_version": local_version or helpers.get_imagemaid_local_version() or "",
         "kometa_newest_version": "",
         "config_name": config_name or "imagemaid",
         "config_hash": None,
         "run_command": run_command,
         "command_signature": command_signature,
-        "section_runtimes": {},
+        "section_runtimes": section_runtimes,
         "log_size": int(stats.st_size) if stats else None,
         "log_counts": {
             "debug": 0,
@@ -8769,9 +8944,7 @@ def _analyze_imagemaid_log_content(content, log_path=None):
             "critical": 0,
             "trace": trace_count,
         },
-        "analysis_counts": {
-            "imagemaid_error_lines": len(error_lines),
-        },
+        "analysis_counts": analysis_counts,
         "library_counts": {},
         "maintenance_summary": maintenance_summary,
         "maintenance_had_pause": False,
@@ -8801,10 +8974,11 @@ def _build_logscan_archive_filename(path, stats=None, counter=None, preferred_su
     for suffix_part in path.suffixes:
         if stem.endswith(suffix_part):
             stem = stem[: -len(suffix_part)]
-    stem = re.sub(r"-\d{8}-\d{6}Z-\d+(?:-\d+)?$", "", stem)
     tool_name = _detect_logscan_tool_from_path(path)
     if tool_name == "kometa":
-        stem = re.sub(r"^meta-\d+$", "meta", stem, flags=re.IGNORECASE)
+        stem = "meta"
+    elif tool_name == "imagemaid":
+        stem = "imagemaid"
     stem = re.sub(r"[^A-Za-z0-9_-]+", "-", stem).strip("-").lower() or "log"
     base_name = f"{stem}-{timestamp}-{size}"
     if counter and counter > 1:
@@ -8836,6 +9010,8 @@ def _iter_logscan_candidate_files(log_dir=None, include_archive=True, include_co
         dirs = [live_dir]
         if include_archive and archive_dir:
             dirs.append(archive_dir)
+        if include_archive and current_tool == "kometa":
+            dirs.append(_get_logscan_archive_root_dir())
         patterns = ["*meta*.log*"] if current_tool == "kometa" else ["*.log*"]
         for base_dir in dirs:
             if not base_dir.exists():
@@ -8873,6 +9049,7 @@ def _classify_logscan_file_location(path, log_dir=None):
         resolved = Path(path).resolve()
     except Exception:
         return "missing"
+    legacy_archive_dir = _get_logscan_archive_root_dir().resolve()
     for tool_name in ("kometa", "imagemaid"):
         live_dir = _get_logscan_live_dir(tool_name, log_dir=log_dir if tool_name == "kometa" else None).resolve()
         archive_dir = _get_logscan_archive_dir(tool_name).resolve()
@@ -8888,6 +9065,11 @@ def _classify_logscan_file_location(path, log_dir=None):
             return "live"
         except ValueError:
             pass
+    try:
+        resolved.relative_to(legacy_archive_dir)
+        return "archive"
+    except ValueError:
+        pass
     return "other"
 
 
@@ -9064,20 +9246,15 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
     return {"renamed": renamed, "skipped": skipped, "errors": errors}
 
 
-logscan_archive_flag = os.getenv("QS_LOGSCAN_ARCHIVE_NAMING_DONE", "").strip().lower()
-if logscan_archive_flag not in {"1", "true", "yes"}:
-    logscan_archive_result = _normalize_logscan_archive_filenames()
-    if logscan_archive_result.get("renamed"):
-        helpers.ts_log(
-            f"Normalized {logscan_archive_result['renamed']} archived Kometa log file(s) to the canonical naming scheme.",
-            level="INFO",
-        )
-    if logscan_archive_result.get("errors"):
-        for msg in logscan_archive_result["errors"]:
-            helpers.ts_log(msg, level="WARNING")
-    else:
-        helpers.update_env_variable("QS_LOGSCAN_ARCHIVE_NAMING_DONE", "1")
-        os.environ["QS_LOGSCAN_ARCHIVE_NAMING_DONE"] = "1"
+logscan_archive_result = _normalize_logscan_archive_filenames()
+if logscan_archive_result.get("renamed"):
+    helpers.ts_log(
+        f"Normalized {logscan_archive_result['renamed']} archived log file(s) to the canonical archive layout.",
+        level="INFO",
+    )
+if logscan_archive_result.get("errors"):
+    for msg in logscan_archive_result["errors"]:
+        helpers.ts_log(msg, level="WARNING")
 
 
 def _normalize_cli_whitespace(command):
@@ -10242,8 +10419,9 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                     "updated_at": datetime.now(timezone.utc).isoformat(),
                 }
                 cache_dirty = True
+                is_live_source = path.parent.resolve() == live_dir.resolve()
                 should_archive_live = (
-                    path.parent.resolve() == live_dir.resolve() and
+                    is_live_source and
                     not (tool_name == "kometa" and path.name.lower() == "meta.log") and
                     not (tool_name == "imagemaid" and helpers.is_imagemaid_running())
                 )
@@ -12553,11 +12731,7 @@ def imagemaid_status():
 @app.route("/tail-imagemaid-log", methods=["GET"])
 def tail_imagemaid_log():
     latest_log = _get_latest_imagemaid_log_path()
-    launch_log = Path(helpers.get_imagemaid_launch_log_file())
-
     path = latest_log if latest_log and Path(latest_log).exists() else None
-    if path is None and launch_log.exists():
-        path = launch_log
 
     if not path or not Path(path).exists():
         return jsonify({"error": "No ImageMaid log found."}), 404
@@ -12566,7 +12740,6 @@ def tail_imagemaid_log():
         return jsonify({
             "success": True,
             "path": str(path),
-            "is_launch_log": Path(path) == launch_log,
             "text": text,
         })
     except Exception as e:

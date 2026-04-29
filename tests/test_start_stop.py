@@ -271,7 +271,7 @@ def test_autosave_imagemaid_persists_settings(client):
     assert saved["imagemaid"]["photo_transcoder"] is True
 
 
-def test_tail_imagemaid_log_prefers_runtime_log_over_launch_log(client, isolated_config_dir, monkeypatch, qs_module):
+def test_tail_imagemaid_log_reads_runtime_log_only(client, isolated_config_dir, monkeypatch, qs_module):
     imagemaid_root = isolated_config_dir / "imagemaid"
     log_dir = imagemaid_root / "config" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -279,37 +279,25 @@ def test_tail_imagemaid_log_prefers_runtime_log_over_launch_log(client, isolated
 
     regular_log = log_dir / "imagemaid.log"
     regular_log.write_text("[2026-04-28 20:17:00,274] [imagemaid.py:453] [INFO] runtime log line\n", encoding="utf-8")
-    launch_log = isolated_config_dir / "imagemaid-launch.log"
-    launch_log.write_text("usage: imagemaid.py\nSystemExit: 2\n", encoding="utf-8")
-    os.utime(launch_log, None)
-
-    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_launch_log_file", lambda: str(launch_log))
 
     resp = client.get("/tail-imagemaid-log")
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["success"] is True
-    assert data["is_launch_log"] is False
     assert "runtime log line" in data["text"]
-    assert "SystemExit: 2" not in data["text"]
+    assert data["path"].endswith("imagemaid.log")
 
 
-def test_tail_imagemaid_log_falls_back_to_launch_log_when_runtime_log_missing(client, isolated_config_dir, monkeypatch, qs_module):
+def test_tail_imagemaid_log_returns_404_when_runtime_log_missing(client, isolated_config_dir, qs_module):
     imagemaid_root = isolated_config_dir / "imagemaid"
     log_dir = imagemaid_root / "config" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     qs_module.app.config["IMAGEMAID_ROOT"] = str(imagemaid_root)
 
-    launch_log = isolated_config_dir / "imagemaid-launch.log"
-    launch_log.write_text("usage: imagemaid.py\nSystemExit: 2\n", encoding="utf-8")
-    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_launch_log_file", lambda: str(launch_log))
-
     resp = client.get("/tail-imagemaid-log")
-    assert resp.status_code == 200
+    assert resp.status_code == 404
     data = resp.get_json()
-    assert data["success"] is True
-    assert data["is_launch_log"] is True
-    assert "SystemExit: 2" in data["text"]
+    assert "No ImageMaid log found." in data["error"]
 
 
 def test_tail_imagemaid_log_hides_executor_shutdown_noise(client, isolated_config_dir, monkeypatch, qs_module):
@@ -327,9 +315,6 @@ def test_tail_imagemaid_log_hides_executor_shutdown_noise(client, isolated_confi
         "AttributeError: 'NoneType' object has no attribute 'debug'\n",
         encoding="utf-8",
     )
-    launch_log = isolated_config_dir / "imagemaid-launch.log"
-    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_launch_log_file", lambda: str(launch_log))
-
     resp = client.get("/tail-imagemaid-log")
     assert resp.status_code == 200
     data = resp.get_json()

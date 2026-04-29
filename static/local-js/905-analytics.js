@@ -2324,7 +2324,7 @@ $(document).ready(function () {
       `Errors: ${errors}`
     ]
     if (state.current_file) {
-      pieces.unshift(`Processing: ${state.current_file}`)
+      pieces.unshift(`Processing: ${formatProcessingFileLabel(state.current_file)}`)
     }
     if ($progressText.length) {
       $progressText.text(pieces.join(' | '))
@@ -2335,6 +2335,16 @@ $(document).ready(function () {
     if (!modalEl) return
     const instance = bootstrap.Modal.getInstance(modalEl)
     if (instance) instance.hide()
+  }
+
+  function formatProcessingFileLabel (value) {
+    const text = String(value || '').trim()
+    if (!text) return ''
+    if (text.length <= 96) return text
+    const extMatch = text.match(/(\.log(?:\.gz)?)$/i)
+    const ext = extMatch ? extMatch[1] : ''
+    const suffixLength = ext ? Math.max(24, ext.length + 20) : 24
+    return `${text.slice(0, 56)}…${text.slice(-suffixLength)}`
   }
 
   function setButtonSpinner ($button, text) {
@@ -2575,6 +2585,40 @@ $(document).ready(function () {
     return escapeHtml(message).replaceAll('\n', '<br>')
   }
 
+  function buildImagemaidDetailsBlock (run) {
+    if (!run || getRunToolName(run) !== 'imagemaid') return ''
+    const counts = run.analysis_counts && typeof run.analysis_counts === 'object' ? run.analysis_counts : {}
+    const modeMatch = String(run.command_signature || '').match(/--mode\s+([a-z]+)/i)
+    const mode = modeMatch ? modeMatch[1].toLowerCase() : 'report'
+    const operations = []
+    if (counts.imagemaid_database_seen) operations.push('Database')
+    if (counts.imagemaid_photo_transcoder_enabled) operations.push('PhotoTranscoder')
+    if (counts.imagemaid_empty_trash_enabled) operations.push('Empty Trash')
+    if (counts.imagemaid_clean_bundles_enabled) operations.push('Clean Bundles')
+    if (counts.imagemaid_optimize_db_enabled) operations.push('Optimize DB')
+    const facts = [
+      `Mode: ${escapeHtml(mode)}`,
+      `Completion: ${escapeHtml(String(run.completion_reason || (run.is_incomplete ? 'unknown_incomplete' : 'completed')).replaceAll('_', ' '))}`,
+      `Operations: ${escapeHtml(operations.length ? operations.join(', ') : 'None detected')}`,
+      `Database download: ${counts.imagemaid_database_downloaded_new ? 'Downloaded new database' : (counts.imagemaid_database_download_failed ? 'Failed to download database' : 'No download recorded')}`,
+      `PhotoTranscoder files found: ${escapeHtml(String(counts.imagemaid_photo_found_files || 0))}`,
+      `PhotoTranscoder files removed: ${escapeHtml(String(counts.imagemaid_photo_removed_files || 0))}`,
+      `PhotoTranscoder bytes recovered: ${escapeHtml(formatBytes(counts.imagemaid_photo_recovered_bytes || 0))}`
+    ]
+    const sectionLines = buildSectionDetails(run.section_runtimes, getRunTimeParts(run).effective)
+    if (sectionLines.length) {
+      facts.push(`Parsed timings: ${escapeHtml(sectionLines.join(' | '))}`)
+    }
+    return `
+      <div class="mb-3">
+        <div class="fw-semibold mb-1">ImageMaid Details</div>
+        <div class="small text-muted">
+          ${facts.map(line => `<div>${line}</div>`).join('')}
+        </div>
+      </div>
+    `
+  }
+
   function showRunDetails (runKey) {
     if (!runKey) return
     if ($runDetailsBody.length) {
@@ -2595,10 +2639,11 @@ $(document).ready(function () {
           }
           return
         }
+        const detailsBlock = buildImagemaidDetailsBlock(data && data.run)
         const recs = Array.isArray(data.recommendations) ? data.recommendations : []
         if (!recs.length) {
           if ($runDetailsBody.length) {
-            $runDetailsBody.text('No recommendations recorded for this run.')
+            $runDetailsBody.html(detailsBlock || 'No recommendations recorded for this run.')
           }
           return
         }
@@ -2613,7 +2658,7 @@ $(document).ready(function () {
           `
         })
         if ($runDetailsBody.length) {
-          $runDetailsBody.html(blocks.join(''))
+          $runDetailsBody.html(`${detailsBlock}${blocks.join('')}`)
         }
       })
       .catch(() => {

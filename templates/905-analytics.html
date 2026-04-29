@@ -379,7 +379,7 @@
 
 <div class="modal fade" id="logscan-reingest-modal" tabindex="-1" aria-labelledby="logscan-reingest-title"
   aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-dialog modal-dialog-centered logscan-confirm-modal-dialog">
     <div class="modal-content bg-dark text-light border-secondary">
       <div class="modal-header">
         <h5 class="modal-title" id="logscan-reingest-title">Reingest Logs</h5>
@@ -387,8 +387,13 @@
           aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        This will scan all <code>*meta*.log</code> files in <code>config/kometa/config/logs</code> and rebuild trends.
-        Missing people entries are deduped and saved to <code>config/cache/logscan/meta_people_missing.log</code>.
+        <p class="mb-2">This rebuilds Analytics from Quickstart-managed runtime and archived logs.</p>
+        <div class="small text-muted">
+          <div>Kometa runtime logs: <code>config/kometa/config/logs</code></div>
+          <div>ImageMaid runtime logs: <code>config/imagemaid/config/logs</code></div>
+          <div>Archived logs: <code>config/cache/logscan/archive/kometa</code> and <code>config/cache/logscan/archive/imagemaid</code></div>
+          <div class="mt-2">Missing people entries are deduped and saved to <code>config/cache/logscan/meta_people_missing.log</code>.</div>
+        </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn nav-button btn-sm" data-bs-dismiss="modal">Cancel</button>
