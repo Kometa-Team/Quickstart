@@ -39,7 +39,7 @@ def _template_list():
         ("130-trakt.html", "Trakt"),
         ("140-mal.html", "MyAnimeList"),
         ("150-settings.html", "Settings"),
-        ("900-final.html", "Final Validation"),
+        ("900-kometa.html", "Kometa"),
     ]
 
 

@@ -687,7 +687,9 @@ def user_visible_name(raw_name):
     elif raw_name == "libraries":
         formatted_name = "Libraries"
     elif raw_name == "final":
-        formatted_name = "Final Validation"
+        formatted_name = "Kometa"
+    elif raw_name == "kometa":
+        formatted_name = "Kometa"
     elif raw_name == "analytics":
         formatted_name = "Analytics"
     elif raw_name == "imagemaid":

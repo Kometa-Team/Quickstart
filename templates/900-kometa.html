@@ -69,7 +69,7 @@
   {% if final_gate.stage == 'todo' %}
   <div class="fw-semibold mb-1 qs-final-gate-title">Resolve setup tasks first</div>
   <div class="qs-final-gate-copy">
-    Final validation is blocked by {{ final_gate.todo_count }} workspace task{{ '' if final_gate.todo_count == 1 else 's' }}. Open the cards below to finish setup.
+    Kometa is blocked by {{ final_gate.todo_count }} workspace task{{ '' if final_gate.todo_count == 1 else 's' }}. Open the cards below to finish setup.
   </div>
   {% if final_gate.dependency_cards %}
   <div class="qs-final-todo-grid mt-3">
@@ -176,7 +176,7 @@
         </div>
         {% set bulk_pages = ['010-plex','020-tmdb','025-libraries','030-tautulli','040-github','050-omdb','060-mdblist','070-notifiarr','080-gotify','085-ntfy','090-webhooks','100-anidb','110-radarr','120-sonarr','150-settings','130-trakt','140-mal'] %}
         {% set interactive_pages = [] %}
-        {% set nonservice_pages = ['001-start','900-final','910-sponsor','905-analytics'] %}
+        {% set nonservice_pages = ['001-start','900-kometa','910-sponsor','905-analytics'] %}
         <div class="table-responsive" data-qs-sticky-first="true">
           <table class="table table-sm table-dark table-striped align-middle mb-0">
             <thead>

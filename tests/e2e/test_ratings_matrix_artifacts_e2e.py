@@ -1056,7 +1056,7 @@ def _run_build_config_with_payload(qs_module, monkeypatch, payload):
         return original_retrieve_settings(section)
 
     monkeypatch.setattr(qs_module.output.persistence, "retrieve_settings", fake_retrieve_settings)
-    with qs_module.app.test_request_context("/step/900-final"):
+    with qs_module.app.test_request_context("/step/900-kometa"):
         session["config_name"] = "pytest_ratings_matrix_artifacts"
         validated, _validation_error, _config_data, yaml_content, _validation_errors = qs_module.output.build_config(
             header_style="single line",

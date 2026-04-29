@@ -1,5 +1,5 @@
 {% macro nav_label(template_key, name) -%}
-{% if template_key == '900-final' %}
+{% if template_key == '900-kometa' %}
 Kometa
 {% elif template_key == '915-imagemaid' %}
 ImageMaid
@@ -160,7 +160,7 @@ Sponsor
     {% endif %}
 
     {% if hide_step_nav %}
-    <a class="btn nav-button" href="/step/900-final" title="Back to Kometa">
+    <a class="btn nav-button" href="/step/900-kometa" title="Back to Kometa">
       <i class="fa fa-arrow-left"></i> Back to Kometa
     </a>
     {% if page_info.get('show_jump_to') %}

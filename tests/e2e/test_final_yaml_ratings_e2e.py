@@ -145,7 +145,7 @@ def test_final_yaml_contains_expected_ratings_overlay(page, live_server, monkeyp
 
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
 
-    page.goto(f"{live_server}/step/900-final", wait_until="domcontentloaded")
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
     yaml_text = page.locator("#final-yaml").input_value()
     assert yaml_text
 
@@ -188,7 +188,7 @@ def test_final_yaml_bottom_center_horizontal_ratings_use_non_negative_vertical_o
 
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
 
-    page.goto(f"{live_server}/step/900-final", wait_until="domcontentloaded")
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
     yaml_text = page.locator("#final-yaml").input_value()
     assert yaml_text
 
@@ -233,7 +233,7 @@ def test_final_yaml_preserves_left_top_negative_rating_offset_without_mutating_s
 
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
 
-    page.goto(f"{live_server}/step/900-final", wait_until="domcontentloaded")
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
     yaml_text = page.locator("#final-yaml").input_value()
     assert yaml_text
 
@@ -272,7 +272,7 @@ def test_final_yaml_preserves_single_slot_nudged_horizontal_offset_without_paddi
 
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
 
-    page.goto(f"{live_server}/step/900-final", wait_until="domcontentloaded")
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
     yaml_text = page.locator("#final-yaml").input_value()
     assert yaml_text
 

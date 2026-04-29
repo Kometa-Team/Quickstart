@@ -87,7 +87,7 @@ def test_run_now_queued_toast(page, live_server, monkeypatch, qs_module):
         lambda route: route.fulfill(status=202, json={"status": "queued", "maintenance_window": "01:00-02:00"}),
     )
 
-    page.goto(f"{live_server}/step/900-final", wait_until="domcontentloaded")
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
 
     _wait_for_run_now_enabled(page)
     run_now = page.locator("#run-now")
@@ -118,7 +118,7 @@ def test_stop_modal_and_state_reset(page, live_server, monkeypatch, qs_module):
     page.route("**/start-kometa", lambda route: route.fulfill(status=200, json={"status": "Kometa started", "pid": 111}))
     page.route("**/stop-kometa", lambda route: route.fulfill(status=200, json={"success": True, "message": "Kometa stopped"}))
 
-    page.goto(f"{live_server}/step/900-final", wait_until="domcontentloaded")
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
 
     _wait_for_run_now_enabled(page)
     run_now = page.locator("#run-now")
@@ -172,7 +172,7 @@ def test_reconnect_after_refresh_shows_running(page, live_server, monkeypatch, q
         ),
     )
 
-    page.goto(f"{live_server}/step/900-final", wait_until="domcontentloaded")
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
     stop_btn = page.locator("#stop-now")
     run_now = page.locator("#run-now")
     expect(stop_btn).to_be_visible()
@@ -284,7 +284,7 @@ def test_queued_run_auto_start_toast(page, live_server, monkeypatch, qs_module):
 
     page.route("**/kometa-status", handle_status)
 
-    page.goto(f"{live_server}/step/900-final", wait_until="domcontentloaded")
+    page.goto(f"{live_server}/step/900-kometa", wait_until="domcontentloaded")
     _wait_for_run_now_enabled(page)
     run_now = page.locator("#run-now")
     run_now.click()

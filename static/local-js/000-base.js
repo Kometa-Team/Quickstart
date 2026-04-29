@@ -595,7 +595,7 @@ function qsBuildKometaActiveWorkEntry () {
   if (!data || typeof data !== 'object') return null
 
   const windowLabel = String(data.maintenance_window || '').trim()
-  const href = '/step/900-final'
+  const href = '/step/900-kometa'
 
   if (data.window_unavailable) {
     const since = data.window_unavailable_since ? `Since ${qsFormatTimestamp(data.window_unavailable_since)}` : 'Maintenance window unavailable'
@@ -1862,7 +1862,7 @@ function qsApplyBulkValidationResults (results, summary) {
   }
 
   const finalState = qsBulkSummaryState(summary)
-  qsUpdateStepIndicators('900-final', finalState === 'unknown' ? 'warn' : finalState)
+  qsUpdateStepIndicators('900-kometa', finalState === 'unknown' ? 'warn' : finalState)
   qsRefreshSectionRollups()
   qsRecalculateReadinessFromSidebar()
   qsApplyValidationRollupBadge(summary)
@@ -2623,7 +2623,7 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (getCurrentTemplateKey() !== '900-final') return
+  if (getCurrentTemplateKey() !== '900-kometa') return
   runQuickstartUpdateCheck({ silent: true }).catch(() => {
     // Keep final-page update checks non-intrusive; manual checks report errors.
   })

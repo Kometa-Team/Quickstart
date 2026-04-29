@@ -62,7 +62,7 @@ def test_build_latest_incomplete_resume_hint_exposes_explanation(monkeypatch, qs
         ],
     )
 
-    with qs_module.app.test_request_context("/step/900-final"):
+    with qs_module.app.test_request_context("/step/900-kometa"):
         session["config_name"] = "testcfg"
         hint = qs_module._build_latest_incomplete_resume_hint()
 

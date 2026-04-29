@@ -3049,7 +3049,7 @@ $(document).ready(function () {
     if (getFinalGateState().autoValidate && window.QSBulkValidation && typeof window.QSBulkValidation.run === 'function') {
       window.QSBulkValidation.run({ source: 'final-freshness', silentToast: true })
         .then(() => {
-          showToast('info', 'Validate All complete. Refreshing final validation...')
+          showToast('info', 'Validate All complete. Refreshing Kometa...')
           setTimeout(() => window.location.reload(), 300)
         })
         .catch(() => {})

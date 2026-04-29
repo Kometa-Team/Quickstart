@@ -65,7 +65,7 @@ ACTIVE_BACKGROUND_JOBS: Dict[str, str] = {}
 BACKGROUND_JOBS_LOCK = threading.Lock()
 JOB_TARGET_PAGES = {
     "logscan_reingest": "/logscan-trends",
-    "kometa_update": "/step/900-final",
+    "kometa_update": "/step/900-kometa",
     "test_library_install": "/step/001-start",
     "imagemaid_update": "/step/915-imagemaid",
 }
@@ -135,7 +135,7 @@ PENDING_KOMETA_START = {"command": None, "config_name": None, "requested_at": No
 PENDING_KOMETA_START_LOCK = threading.Lock()
 
 VALIDATION_DOC_BASE = "/step/"
-VALIDATION_DOC_FALLBACK = "/step/900-final"
+VALIDATION_DOC_FALLBACK = "/step/900-kometa"
 VALIDATION_DOCS = {
     "settings": f"{VALIDATION_DOC_BASE}150-settings",
     "libraries": f"{VALIDATION_DOC_BASE}025-libraries",
@@ -352,7 +352,7 @@ VALIDATION_KEY_SUGGESTIONS = {
     }
 }
 QS_REQUIRED_STEP_KEYS = ["001-start", "010-plex", "020-tmdb", "025-libraries", "150-settings"]
-QS_REVIEW_STEP_KEYS = ["900-final", "905-analytics", "910-sponsor", "915-imagemaid"]
+QS_REVIEW_STEP_KEYS = ["900-kometa", "905-analytics", "910-sponsor", "915-imagemaid"]
 QS_VALIDATION_STEP_KEYS = {
     "010-plex",
     "020-tmdb",
@@ -1284,7 +1284,7 @@ def _derive_step_status(template_key, group, section_rows, config_exists):
     if template_key == "001-start":
         return "ok" if config_exists else "error"
 
-    if template_key == "900-final":
+    if template_key == "900-kometa":
         return "warn"
 
     if template_key in {"905-analytics", "910-sponsor"}:
@@ -1425,7 +1425,7 @@ def _build_workspace_status_context(config_name, template_list, available_config
 
     step_statuses = {}
     for template_key in template_keys:
-        if template_key == "900-final":
+        if template_key == "900-kometa":
             continue
         if template_key in required_keys:
             group = "required"
@@ -1434,8 +1434,8 @@ def _build_workspace_status_context(config_name, template_list, available_config
         else:
             group = "review"
         step_statuses[template_key] = _derive_step_status(template_key, group, section_rows, config_exists)
-    if "900-final" in template_keys:
-        step_statuses["900-final"] = _derive_live_final_validation_status(step_statuses, template_keys)
+    if "900-kometa" in template_keys:
+        step_statuses["900-kometa"] = _derive_live_final_validation_status(step_statuses, template_keys)
 
     required_rollup = _worst_status(step_statuses.get(key, "warn") for key in required_keys) if required_keys else "ok"
     review_rollup = _worst_status(step_statuses.get(key, "ok") for key in review_keys) if review_keys else "ok"
@@ -5369,6 +5369,8 @@ def step(name):
     page_info = {}
     header_style = "single_line"  # Default to 'single_line' font
     save_error = None
+    if name == "900-final":
+        return redirect(url_for("step", name="900-kometa"), code=302)
     persistence.ensure_session_config_name()
     previous_config = session.get("config_name")
 
@@ -5554,7 +5556,7 @@ def step(name):
     settings_needs_user_refresh = name == "150-settings" and not has_cached_user_list and has_plex_credentials
 
     # --- Refresh Plex data if needed ---
-    should_refresh_plex = name in ["010-plex", "025-libraries", "900-final"] or config_changed or settings_needs_user_refresh
+    should_refresh_plex = name in ["010-plex", "025-libraries", "900-kometa"] or config_changed or settings_needs_user_refresh
     if should_refresh_plex:
         if all_libraries.get("validated") or settings_needs_user_refresh:
             if settings_needs_user_refresh and app.config["QS_DEBUG"]:
@@ -5678,7 +5680,7 @@ def step(name):
     plex_data["tmp_music_libraries"] = plex_data.get("tmp_music_libraries", "").split(",") if isinstance(plex_data.get("tmp_music_libraries"), str) else []
     plex_data["tmp_user_list"] = plex_data.get("tmp_user_list", "").split(",") if isinstance(plex_data.get("tmp_user_list"), str) else []
 
-    # Ensure correct rendering for the final validation page
+    # Ensure correct rendering for the Kometa page
     config_name = session.get("config_name") or page_info.get("config_name", "default")
     if app.config["QS_DEBUG"]:
         helpers.ts_log(f"Start render_template for {name}", level="DEBUG")
@@ -5772,7 +5774,7 @@ def step(name):
         page_info["imagemaid_supports_no_verify_ssl"] = bool(imagemaid_state.get("supports_no_verify_ssl"))
         page_info["imagemaid_supports_overlays_only"] = bool(imagemaid_state.get("supports_overlays_only"))
 
-    if name == "900-final":
+    if name == "900-kometa":
         validation_meta = []
         validation_bulk_rollup = None
         validation_bulk_rollup_at = None
@@ -5900,7 +5902,7 @@ def step(name):
             library_dropdown = movie_libraries + show_libraries
 
         html = render_template(
-            "900-final.html",
+            "900-kometa.html",
             page_info=page_info,
             data=data,
             yaml_content=yaml_content,
@@ -5942,7 +5944,7 @@ def step(name):
 
         end_time = time.perf_counter()
         if app.config["QS_DEBUG"]:
-            helpers.ts_log(f"Rendered 900-final.html in {end_time - start_time:.2f} seconds", level="PROFILE")
+            helpers.ts_log(f"Rendered 900-kometa.html in {end_time - start_time:.2f} seconds", level="PROFILE")
         return html
 
     else:
@@ -6629,7 +6631,7 @@ def download():
             download_name="config.yml",
         )
     flash("No configuration to download", "danger")
-    return redirect(url_for("step", page="900-final"))
+    return redirect(url_for("step", name="900-kometa"))
 
 
 @app.route("/download_redacted")
@@ -6665,7 +6667,7 @@ def download_redacted():
             download_name="config_redacted.yml",
         )
     flash("No configuration to download", "danger")
-    return redirect(url_for("step", page="900-final"))
+    return redirect(url_for("step", name="900-kometa"))
 
 
 @app.route("/validate_gotify", methods=["POST"])

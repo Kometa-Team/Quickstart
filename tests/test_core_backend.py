@@ -246,7 +246,7 @@ def test_yaml_generation_sets_session_and_redacts(client, isolated_config_dir, m
     with client.session_transaction() as sess:
         sess["config_name"] = "pytest_yaml"
 
-    resp = client.get("/step/900-final")
+    resp = client.get("/step/900-kometa")
     assert resp.status_code == 200
 
     with client.session_transaction() as sess:
@@ -282,7 +282,7 @@ def test_yaml_generation_missing_sections_shows_error(client, isolated_config_di
     with client.session_transaction() as sess:
         sess["config_name"] = "pytest_yaml_missing"
 
-    resp = client.get("/step/900-final")
+    resp = client.get("/step/900-kometa")
     assert resp.status_code == 200
     assert b"Missing sections" in resp.data
 
@@ -307,7 +307,7 @@ def test_final_page_todo_gate_skips_config_generation(client, isolated_config_di
     with client.session_transaction() as sess:
         sess["config_name"] = "pytest_final_todo_gate"
 
-    resp = client.get("/step/900-final")
+    resp = client.get("/step/900-kometa")
     assert resp.status_code == 200
     assert b"Resolve setup tasks first" in resp.data
     assert b"Validation status" not in resp.data
@@ -335,7 +335,7 @@ def test_final_page_stale_bulk_gate_skips_config_generation(client, isolated_con
     with client.session_transaction() as sess:
         sess["config_name"] = "pytest_final_stale_gate"
 
-    resp = client.get("/step/900-final")
+    resp = client.get("/step/900-kometa")
     assert resp.status_code == 200
     assert b"Validation is stale" in resp.data
     assert b'data-auto-validate="true"' in resp.data
