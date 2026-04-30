@@ -22,9 +22,17 @@ $(document).ready(function () {
   let moveConfirmModal = null
   let stopConfirmModal = null
   let autosaveTimer = null
+  let imagemaidAutosaveInFlight = false
+  let imagemaidAutosavePending = false
   let imagemaidStartupDeadline = 0
   let lastImageMaidMode = String($('#imagemaid_mode').val() || 'report').trim().toLowerCase()
   let restoreFolderModeConflict = false
+  let imagemaidProbeInFlight = false
+  let imagemaidUpdateCheckInFlight = false
+  let imagemaidUpdateProgressInFlight = false
+  let imagemaidValidationInFlight = false
+  let imagemaidStatusInFlight = false
+  let imagemaidLogInFlight = false
 
   const moveModalEl = document.getElementById('imagemaid-move-confirm-modal')
   if (moveModalEl && typeof bootstrap !== 'undefined') {
@@ -446,12 +454,29 @@ $(document).ready(function () {
   function queueAutosave () {
     if (autosaveTimer) clearTimeout(autosaveTimer)
     autosaveTimer = setTimeout(() => {
+      if (imagemaidAutosaveInFlight) {
+        imagemaidAutosavePending = true
+        return
+      }
+      imagemaidAutosaveInFlight = true
       fetch('/autosave-imagemaid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(collectPayload())
-      }).catch(() => {})
+      })
+        .catch(() => {})
+        .finally(() => {
+          imagemaidAutosaveInFlight = false
+          if (imagemaidAutosavePending) {
+            imagemaidAutosavePending = false
+            queueAutosave()
+          }
+        })
     }, 300)
+  }
+
+  function shouldPollImageMaidPage () {
+    return !document.hidden
   }
 
   function setRunState (state, message) {
@@ -501,6 +526,8 @@ $(document).ready(function () {
   }
 
   function probeRoot () {
+    if (imagemaidProbeInFlight || !shouldPollImageMaidPage()) return Promise.resolve(null)
+    imagemaidProbeInFlight = true
     setInstallState('running', 'Probing local ImageMaid root...')
     return fetch('/probe-imagemaid-root', {
       method: 'POST',
@@ -527,9 +554,14 @@ $(document).ready(function () {
       .catch(() => {
         setInstallState('error', 'ImageMaid probe failed.')
       })
+      .finally(() => {
+        imagemaidProbeInFlight = false
+      })
   }
 
   function checkForImageMaidUpdate (forceRefresh = false) {
+    if (imagemaidUpdateCheckInFlight || !shouldPollImageMaidPage()) return Promise.resolve(null)
+    imagemaidUpdateCheckInFlight = true
     setInstallState('running', 'Checking ImageMaid update status...')
     setUpdatePhase('text-bg-primary', 'Checking')
     return fetch('/check-imagemaid-update', {
@@ -573,10 +605,14 @@ $(document).ready(function () {
         setUpdatePhase('text-bg-danger', 'Error')
         return null
       })
+      .finally(() => {
+        imagemaidUpdateCheckInFlight = false
+      })
   }
 
   function pollUpdateProgress () {
-    if (!updateJobId) return
+    if (!updateJobId || imagemaidUpdateProgressInFlight || !shouldPollImageMaidPage()) return
+    imagemaidUpdateProgressInFlight = true
     fetch(`/update-imagemaid-progress?job_id=${encodeURIComponent(updateJobId)}&since=${updateLogIndex}`)
       .then(async (res) => ({ ok: res.ok, body: await res.json() }))
       .then(({ ok, body }) => {
@@ -606,6 +642,9 @@ $(document).ready(function () {
         }
       })
       .catch(() => {})
+      .finally(() => {
+        imagemaidUpdateProgressInFlight = false
+      })
   }
 
   function startUpdate (force) {
@@ -645,11 +684,13 @@ $(document).ready(function () {
   }
 
   function validateImageMaid () {
+    if (imagemaidValidationInFlight) return Promise.resolve(false)
     if (window.PathValidation && typeof PathValidation.validateAll === 'function' && !PathValidation.validateAll(document)) {
       setValidationState('error', 'Fix the highlighted path issues first.')
       return Promise.resolve(false)
     }
 
+    imagemaidValidationInFlight = true
     setValidationState('running', 'Validating ImageMaid configuration...')
     return fetch('/validate-imagemaid', {
       method: 'POST',
@@ -681,10 +722,16 @@ $(document).ready(function () {
         setValidationState('error', 'ImageMaid validation failed.')
         return false
       })
+      .finally(() => {
+        imagemaidValidationInFlight = false
+      })
   }
 
-  function loadLog () {
-    fetch('/tail-imagemaid-log')
+  function loadLog (force = false) {
+    if (imagemaidLogInFlight) return Promise.resolve(null)
+    if (!force && (!shouldPollImageMaidPage() || (!imagemaidRunning && !imagemaidStarting))) return Promise.resolve(null)
+    imagemaidLogInFlight = true
+    return fetch('/tail-imagemaid-log')
       .then(async (res) => ({ ok: res.ok, body: await res.json() }))
       .then(({ ok, body }) => {
         if (!ok || !body.success) {
@@ -697,10 +744,16 @@ $(document).ready(function () {
       .catch(() => {
         els.runLog.text('Failed to load the ImageMaid log.')
       })
+      .finally(() => {
+        imagemaidLogInFlight = false
+      })
   }
 
-  function updateStatus () {
-    fetch('/imagemaid-status')
+  function updateStatus (force = false) {
+    if (imagemaidStatusInFlight) return Promise.resolve(null)
+    if (!force && !shouldPollImageMaidPage()) return Promise.resolve(null)
+    imagemaidStatusInFlight = true
+    return fetch('/imagemaid-status')
       .then(async (res) => ({ ok: res.ok, body: await res.json() }))
       .then(({ ok, body }) => {
         if (!ok) return
@@ -711,14 +764,14 @@ $(document).ready(function () {
         if (status === 'running') {
           const elapsed = typeof body.elapsed_seconds === 'number' ? `Elapsed ${body.elapsed_seconds}s.` : 'ImageMaid is currently running.'
           setRunState('running', elapsed)
-          loadLog()
+          loadLog(true)
           return
         }
         if (status === 'starting') {
           imagemaidStartupDeadline = Date.now() + 10000
           const elapsed = typeof body.elapsed_seconds === 'number' ? `ImageMaid is still starting (${body.elapsed_seconds}s).` : 'ImageMaid is still starting.'
           setRunState('starting', elapsed)
-          loadLog()
+          loadLog(true)
           return
         }
         if (imagemaidStarting && Date.now() < imagemaidStartupDeadline) {
@@ -728,12 +781,15 @@ $(document).ready(function () {
         }
         if (status === 'done') {
           setRunState('idle', 'ImageMaid finished.')
-          loadLog()
+          loadLog(true)
           return
         }
         setRunState('idle', 'ImageMaid is not running.')
       })
       .catch(() => {})
+      .finally(() => {
+        imagemaidStatusInFlight = false
+      })
   }
 
   function submitRun () {
@@ -764,15 +820,15 @@ $(document).ready(function () {
           if (body && body.error) {
             els.runLog.text(body.error)
           }
-          loadLog()
+          loadLog(true)
           showToast('error', body.error || 'ImageMaid failed to start.')
           return
         }
         imagemaidStartupDeadline = Date.now() + 10000
         setRunState('starting', body.status || 'ImageMaid started.')
         showToast('success', 'ImageMaid started.')
-        updateStatus()
-        loadLog()
+        updateStatus(true)
+        loadLog(true)
       })
       .catch(() => {
         setRunState('error', 'ImageMaid failed to start.')
@@ -792,8 +848,8 @@ $(document).ready(function () {
           return
         }
         showToast('success', body.message || body.warning || 'ImageMaid stop requested.')
-        updateStatus()
-        loadLog()
+        updateStatus(true)
+        loadLog(true)
       })
       .catch(() => {
         if (stopConfirmModal) stopConfirmModal.hide()
@@ -886,8 +942,13 @@ $(document).ready(function () {
   syncUpdateButtonLabel()
   setValidationState(imagemaidValidated ? 'ok' : 'idle', String(els.validationStatus.text() || '').trim())
   probeRoot()
-  updateStatus()
-  loadLog()
-  setInterval(updateStatus, 5000)
-  setInterval(loadLog, 8000)
+  updateStatus(true)
+  loadLog(true)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      updateStatus(true)
+      loadLog(true)
+    }
+  })
+  setInterval(() => updateStatus(), 7000)
 })

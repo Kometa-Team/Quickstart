@@ -3664,6 +3664,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewportQuery = window.matchMedia('(min-width: 800px)')
   const rootEl = document.documentElement
   const sidebarStorageKey = 'qs_sidebar_collapsed'
+  const utilityStorageKey = 'qs_sidebar_utility_open'
   let sidebarBound = false
   const mainSlotSelector = '[data-qs-workspace-slot]'
   const modalPanelSelectors = [
@@ -3695,13 +3696,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const utilityToggle = utilityGroup ? utilityGroup.querySelector('.qs-sidebar-utility-toggle') : null
     const utilityPanel = utilityGroup ? utilityGroup.querySelector('[data-qs-utility-panel]') : null
 
-    function setUtilityOpen (open) {
+    function setUtilityOpen (open, persist = false) {
       if (!utilityGroup || !utilityToggle || !utilityPanel) return
       const shouldOpen = Boolean(open)
       utilityGroup.dataset.qsUtilityOpen = shouldOpen ? 'true' : 'false'
       utilityToggle.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false')
       utilityPanel.classList.toggle('d-none', !shouldOpen)
       utilityPanel.style.display = shouldOpen ? 'grid' : 'none'
+      if (persist) {
+        window.localStorage.setItem(utilityStorageKey, shouldOpen ? '1' : '0')
+      }
     }
 
     function setSidebarState (collapsed, persist) {
@@ -3727,15 +3731,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (utilityToggle) {
         utilityToggle.addEventListener('click', () => {
           const isOpen = utilityGroup?.dataset?.qsUtilityOpen === 'true'
-          setUtilityOpen(!isOpen)
+          setUtilityOpen(!isOpen, true)
         })
       }
     }
 
     const saved = window.localStorage.getItem(sidebarStorageKey) === '1'
+    const savedUtilityState = window.localStorage.getItem(utilityStorageKey)
     const utilityInitialized = utilityGroup?.dataset?.qsUtilityInitialized === 'true'
     const currentUtilityOpen = utilityGroup?.dataset?.qsUtilityOpen === 'true'
-    const initialUtilityOpen = utilityInitialized ? currentUtilityOpen : !saved
+    const initialUtilityOpen = utilityInitialized
+      ? currentUtilityOpen
+      : savedUtilityState === '1'
     setUtilityOpen(initialUtilityOpen)
     if (utilityGroup) {
       utilityGroup.dataset.qsUtilityInitialized = 'true'

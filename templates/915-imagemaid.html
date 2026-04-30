@@ -47,10 +47,13 @@
   </div>
 </div>
 
-<div class="alert alert-warning" role="alert">
-  <div class="fw-semibold mb-1">ImageMaid changes Plex image storage.</div>
+<div class="alert qs-imagemaid-intro-alert" role="alert">
+  <div class="fw-semibold mb-1">ImageMaid removes Plex poster and background files that were uploaded by you or by other tools, but are no longer in use.</div>
   <div class="small">
-    Start with <code>report</code> mode. <code>move</code> and <code>restore</code> modify Plex metadata files, so make sure Kometa is idle before you run ImageMaid.
+    Modes: <code>report</code> previews unused images, <code>move</code> sends them to the ImageMaid Restore folder, <code>restore</code> puts those images back into Plex, <code>clear</code> empties the ImageMaid Restore folder, <code>remove</code> is effectively <code>move</code> and <code>clear</code> in one step so you cannot use <code>restore</code> afterward, and <code>nothing</code> skips image cleanup.
+  </div>
+  <div class="small mt-2">
+    Start with <code>report</code> if you want to review what ImageMaid would act on before choosing another mode.
   </div>
   <div class="small mt-2">
     Reference: <a href="https://kometa.wiki/en/nightly/kometa/scripts/imagemaid/" target="_blank" rel="noopener noreferrer">ImageMaid wiki</a>

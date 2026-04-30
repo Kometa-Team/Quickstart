@@ -84,6 +84,7 @@ $(document).ready(function () {
   let pendingCompressRun = null
   let reingestPollTimer = null
   let reingestJobId = null
+  let autoReingestTriggered = false
   let allRuns = []
   let allIncompleteRuns = []
   let allTableRuns = []
@@ -2925,6 +2926,34 @@ $(document).ready(function () {
       })
   }
 
+  function maybeStartAutoReingest (ingestHealth) {
+    if (autoReingestTriggered) return
+    if (!ingestHealth || !ingestHealth.needs_reingest) return
+    autoReingestTriggered = true
+    updateStatus('Refreshing trends in the background...')
+    fetch('/logscan/trends/reingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reset: false, background: true })
+    })
+      .then(res => res.json().then(data => ({ ok: res.ok, status: res.status, data })))
+      .then(({ ok, status, data }) => {
+        if (ok && data && data.job_id) {
+          startReingestPolling(data.job_id)
+          return
+        }
+        if (status === 409 && data && data.job_id) {
+          startReingestPolling(data.job_id)
+          return
+        }
+        autoReingestTriggered = false
+      })
+      .catch(err => {
+        console.error(err)
+        autoReingestTriggered = false
+      })
+  }
+
   function showSectionDetails (runKey) {
     const payload = sectionDetailsByRunKey.get(runKey)
     if (!payload) return
@@ -3105,6 +3134,7 @@ $(document).ready(function () {
             if (!suppressStatus && (!lastIngestState || lastIngestState.status !== 'running')) {
               updateStatus(`Last updated: ${formatTimestamp(new Date().toISOString())}`)
             }
+            maybeStartAutoReingest(data && data.ingest_health)
           })
       })
       .catch(err => {

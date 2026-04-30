@@ -8381,7 +8381,6 @@ def logscan_progress():
 @app.route("/logscan/trends", methods=["GET"])
 def logscan_trends():
     try:
-        _ingest_completed_live_logs("kometa")
         _ingest_completed_live_logs("imagemaid")
         _archive_finished_live_meta_log_if_idle()
     except Exception:
@@ -9336,8 +9335,10 @@ def _get_logscan_log_files(log_dir=None, include_archive=True):
     return _iter_logscan_candidate_files(log_dir=log_dir, include_archive=include_archive, include_compressed=True)
 
 
-def _logscan_cache_entry_matches(path, cache_entry=None, stats=None):
-    if not isinstance(cache_entry, dict) or cache_entry.get("run_complete") is not True:
+def _logscan_cache_entry_matches(path, cache_entry=None, stats=None, require_complete=False):
+    if not isinstance(cache_entry, dict):
+        return False
+    if require_complete and cache_entry.get("run_complete") is not True:
         return False
     try:
         stats = stats or Path(path).stat()
@@ -10355,11 +10356,32 @@ def _logscan_ingest_health(log_dir=None):
 def _start_logscan_auto_reingest(log_dir):
     if logscan_ingest_lock.locked():
         return False
-
-    def _runner():
-        _perform_logscan_reingest(reset=False, job_id=None, update_state=False)
-
-    thread = threading.Thread(target=_runner, daemon=True)
+    snapshot = _logscan_reingest_snapshot()
+    if snapshot.get("status") == "running":
+        return False
+    job_id = secrets.token_urlsafe(8)
+    _update_logscan_reingest_state(
+        status="running",
+        job_id=job_id,
+        trigger="auto",
+        started_at=datetime.now(timezone.utc).isoformat(),
+        finished_at=None,
+        total=0,
+        scanned=0,
+        ingested=0,
+        duplicates=0,
+        skipped_incomplete=0,
+        skipped_invalid=0,
+        errors=0,
+        current_file=None,
+        missing_people_unique=0,
+        missing_people_logs=0,
+        missing_people_log_ready=False,
+        missing_people_log_lines=0,
+        sample_incomplete=[],
+        sample_errors=[],
+    )
+    thread = threading.Thread(target=_run_logscan_reingest_job, args=(job_id, False), daemon=True, name="logscan-auto-reingest")
     thread.start()
     return True
 
@@ -10411,12 +10433,28 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
             else:
                 result = analyzer.analyze_content(content, log_path=path, include_people_scan=False)
             summary = result.get("summary") if isinstance(result, dict) else None
-            if not isinstance(summary, dict) or not summary.get("run_complete"):
+            recommendations = result.get("recommendations") if isinstance(result, dict) else None
+            if not isinstance(recommendations, list):
+                recommendations = []
+            if not isinstance(summary, dict):
+                continue
+            if not summary.get("run_complete"):
+                cache_logs[cache_key] = {
+                    "mtime": stats.st_mtime,
+                    "size": stats.st_size,
+                    "run_key": summary.get("run_key"),
+                    "tool_name": tool_name,
+                    "run_complete": False,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                    "summary": summary,
+                    "recommendations": recommendations,
+                }
+                cache_dirty = True
                 continue
 
             cached_run_key = cached_entry.get("run_key")
             if not (cached_entry.get("run_complete") is True and cached_run_key == summary.get("run_key")):
-                if database.save_log_run(summary, recommendations=result.get("recommendations")):
+                if database.save_log_run(summary, recommendations=recommendations):
                     ingested += 1
 
             cache_logs[cache_key] = {

@@ -3490,6 +3490,21 @@ div#loading {
     text-decoration: underline;
 }
 
+.qs-imagemaid-intro-alert {
+    background: linear-gradient(180deg, rgba(75, 138, 255, 0.14), rgba(75, 138, 255, 0.08));
+    border: 1px solid rgba(96, 165, 250, 0.32);
+    color: #d7e8ff;
+}
+
+.qs-imagemaid-intro-alert a {
+    color: #9fc4ff;
+}
+
+.qs-imagemaid-intro-alert a:hover,
+.qs-imagemaid-intro-alert a:focus {
+    color: #c7ddff;
+}
+
 .bulk-delete-list {
     max-height: 240px;
     overflow-y: auto;
