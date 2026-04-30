@@ -15,6 +15,7 @@ Emby
 exe
 executables
 https
+ImageMaid
 Jellyfin
 jQuery
 kometa
