@@ -38,6 +38,34 @@
     </div>
   </div>
 </div>
+<div class="modal fade" id="imageMaidInfoModal" tabindex="-1" aria-labelledby="imageMaidInfoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="imageMaidInfoModalLabel">ImageMaid Overview</h1>
+      </div>
+      <div class="modal-body">
+        <p>ImageMaid is a companion cleanup script for Plex metadata. It is designed to help reclaim space from old custom posters, backgrounds, and related image files without forcing a full Plex metadata reset.</p>
+
+        <p>Quickstart focuses on the most common setup pieces from the ImageMaid wiki: choosing a mode, supplying the Plex path, deciding how to access the Plex database, and enabling optional cleanup actions.</p>
+
+        <p><strong>What Quickstart helps you manage</strong></p>
+        <p class="mb-2"><code>report</code> previews changes, <code>move</code> stages removable files into the restore area, and <code>restore</code> brings staged files back. Quickstart also exposes optional operations like PhotoTranscoder cleanup, Empty Trash, Clean Bundles, and Optimize DB.</p>
+
+        <p><strong>What ImageMaid needs</strong></p>
+        <p class="mb-2">The key requirement is your Plex data path, meaning the directory that contains folders such as <code>Cache</code>, <code>Metadata</code>, and <code>Plug-in Support</code>. For database access, ImageMaid can either connect with your Plex URL and token or copy the local database from that Plex path.</p>
+
+        <p><strong>Recommended usage</strong></p>
+        <p class="mb-0">The wiki recommends not running ImageMaid while tools like Kometa or TitleCardMaker are actively changing posters. If you use the local Plex database, Plex should be idle first so the selected artwork state is fully written to disk.</p>
+
+        <p class="mt-3 mb-0">Read the full <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/scripts/imagemaid/" target="_blank" rel="noreferrer">ImageMaid wiki page</a> for install details, scheduling, and the complete option list.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="modal fade" id="Modal2" tabindex="-1" aria-labelledby="Modal2Label" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
     <div class="modal-content">

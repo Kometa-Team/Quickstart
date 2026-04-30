@@ -704,6 +704,9 @@ $(document).ready(function () {
       .then(async (res) => ({ ok: res.ok, body: await res.json() }))
       .then(({ ok, body }) => {
         if (!ok) return
+        if (typeof window.QS_handleImageMaidStatus === 'function') {
+          window.QS_handleImageMaidStatus(body)
+        }
         const status = String(body.status || '').trim().toLowerCase()
         if (status === 'running') {
           const elapsed = typeof body.elapsed_seconds === 'number' ? `Elapsed ${body.elapsed_seconds}s.` : 'ImageMaid is currently running.'

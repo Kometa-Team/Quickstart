@@ -3451,6 +3451,45 @@ div#loading {
     cursor: help;
 }
 
+.start-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.78rem;
+    color: var(--theme-primary);
+    font-weight: 700;
+}
+
+.start-side-note,
+.start-app-card {
+    border: 1px solid var(--theme-border);
+    border-radius: 0.9rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem;
+}
+
+.start-side-note-emphasis {
+    background:
+        linear-gradient(180deg, rgba(255, 193, 7, 0.08), rgba(255, 193, 7, 0.02)),
+        rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 193, 7, 0.24);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 0 1px rgba(255, 193, 7, 0.05);
+}
+
+.start-link-row {
+    display: flex;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.start-link-row a {
+    text-decoration: none;
+}
+
+.start-link-row a:hover,
+.start-link-row a:focus {
+    text-decoration: underline;
+}
+
 .bulk-delete-list {
     max-height: 240px;
     overflow-y: auto;

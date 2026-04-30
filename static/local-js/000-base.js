@@ -550,10 +550,22 @@ let qsLastQueuedStartedAt = null
 const QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS = 15000
 let qsLastLogscanReingestStatus = 'idle'
 let qsLastLogscanReingestJobId = null
-const QS_BACKGROUND_JOBS_POLL_INTERVAL_MS = 10000
+const QS_BACKGROUND_JOBS_POLL_INTERVAL_MS = 15000
+const qsCurrentTemplate = String(window.QS_CURRENT_TEMPLATE || document.documentElement.dataset.qsTemplate || '').trim()
+const qsSkipMaintenancePoll = qsCurrentTemplate === '900-kometa'
+const qsSkipImageMaidPoll = qsCurrentTemplate === '915-imagemaid'
+const qsSkipLogscanReingestPoll = qsCurrentTemplate === '905-analytics'
 let qsLatestKometaStatus = null
 let qsLatestImageMaidStatus = null
 let qsActiveBackgroundJobs = []
+let qsMaintenancePollInFlight = false
+let qsLogscanReingestPollInFlight = false
+let qsImageMaidPollInFlight = false
+let qsBackgroundJobsPollInFlight = false
+
+function qsShouldPollBackgroundState () {
+  return !document.hidden
+}
 
 function qsFormatLocalTime () {
   const now = new Date()
@@ -596,8 +608,11 @@ function qsBuildKometaActiveWorkEntry () {
 
   const windowLabel = String(data.maintenance_window || '').trim()
   const href = '/step/900-kometa'
+  const status = String(data.status || '').trim().toLowerCase()
+  const running = status === 'running'
+  const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || !running)
 
-  if (data.window_unavailable) {
+  if (unavailableBlocksWork) {
     const since = data.window_unavailable_since ? `Since ${qsFormatTimestamp(data.window_unavailable_since)}` : 'Maintenance window unavailable'
     return {
       key: 'kometa-window-unavailable',
@@ -642,7 +657,7 @@ function qsBuildKometaActiveWorkEntry () {
     }
   }
 
-  if (String(data.status || '').trim().toLowerCase() === 'running') {
+  if (running) {
     const elapsed = qsFormatElapsedLabel(data.elapsed_seconds)
     return {
       key: 'kometa-running',
@@ -870,6 +885,9 @@ function qsHandleMaintenanceStatus (data) {
   qsLatestKometaStatus = data
   const paused = Boolean(data.maintenance_paused)
   const windowLabel = data.maintenance_window ? ` (${data.maintenance_window})` : ''
+  const status = String(data.status || '').trim().toLowerCase()
+  const running = status === 'running'
+  const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || paused || !running)
   const nowLabel = qsFormatLocalTime()
   const now = Date.now()
   const badge = document.getElementById('qs-maintenance-badge')
@@ -940,7 +958,7 @@ function qsHandleMaintenanceStatus (data) {
   }
 
   if (unavailableBadge) {
-    if (data.window_unavailable) {
+    if (unavailableBlocksWork) {
       const sinceLabel = data.window_unavailable_since ? ` (since ${qsFormatTimestamp(data.window_unavailable_since)})` : ''
       const label = unavailableBadge.querySelector('span')
       unavailableBadge.classList.remove('d-none')
@@ -1001,11 +1019,17 @@ function qsHandleLogscanReingestStatus (data) {
 window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
 
 ;(function qsMaintenancePoll () {
+  if (qsSkipMaintenancePoll) return
   const poll = () => {
+    if (!qsShouldPollBackgroundState() || qsMaintenancePollInFlight) return
+    qsMaintenancePollInFlight = true
     fetch('/kometa-status')
       .then(res => res.json())
       .then(data => qsHandleMaintenanceStatus(data))
       .catch(() => {})
+      .finally(() => {
+        qsMaintenancePollInFlight = false
+      })
   }
   // Slight delay to avoid racing early page initialization
   setTimeout(poll, 1200)
@@ -1013,22 +1037,34 @@ window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
 })()
 
 ;(function qsLogscanReingestPoll () {
+  if (qsSkipLogscanReingestPoll) return
   const poll = () => {
+    if (!qsShouldPollBackgroundState() || qsLogscanReingestPollInFlight) return
+    qsLogscanReingestPollInFlight = true
     fetch('/logscan/trends/reingest/status')
       .then(res => res.json())
       .then(data => qsHandleLogscanReingestStatus(data))
       .catch(() => {})
+      .finally(() => {
+        qsLogscanReingestPollInFlight = false
+      })
   }
   setTimeout(poll, 1800)
   setInterval(poll, QS_LOGSCAN_REINGEST_POLL_INTERVAL_MS)
 })()
 
 ;(function qsImageMaidPoll () {
+  if (qsSkipImageMaidPoll) return
   const poll = () => {
+    if (!qsShouldPollBackgroundState() || qsImageMaidPollInFlight) return
+    qsImageMaidPollInFlight = true
     fetch('/imagemaid-status')
       .then(res => res.json())
       .then(data => qsHandleImageMaidStatus(data))
       .catch(() => {})
+      .finally(() => {
+        qsImageMaidPollInFlight = false
+      })
   }
   setTimeout(poll, 1600)
   setInterval(poll, QS_MAINTENANCE_TOAST_INTERVAL_MS)
@@ -1036,6 +1072,8 @@ window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
 
 ;(function qsBackgroundJobsPoll () {
   const poll = () => {
+    if (!qsShouldPollBackgroundState() || qsBackgroundJobsPollInFlight) return
+    qsBackgroundJobsPollInFlight = true
     fetch('/background-jobs/active')
       .then(res => res.json())
       .then((data) => {
@@ -1044,6 +1082,9 @@ window.QS_handleLogscanReingestStatus = qsHandleLogscanReingestStatus
         qsRenderBackgroundJobPills()
       })
       .catch(() => {})
+      .finally(() => {
+        qsBackgroundJobsPollInFlight = false
+      })
   }
   setTimeout(poll, 1500)
   setInterval(poll, QS_BACKGROUND_JOBS_POLL_INTERVAL_MS)

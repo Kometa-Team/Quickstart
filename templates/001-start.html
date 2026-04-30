@@ -12,10 +12,48 @@
           </i>
         </div>
         <div class="form-text" id="pin-info">
-          <p class="fs-5">Quickstart is a Web UI that will guide you through creating a Configuration File for Kometa.</p>
-          <p class="fs-5"><a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">Click here</a> for a more in-depth
-            explanation and example of what Quickstart does</p>
-          <p class="fs-5">To use Quickstart, you will need at least a Plex URL & Token, and a TMDb API Key.</p>
+          <div class="start-eyebrow mb-2">One workspace, many tools</div>
+          <div class="row g-3 align-items-stretch">
+            <div class="col-lg-7">
+              <h3 class="mb-2">Build Kometa configs and keep ImageMaid settings per config.</h3>
+              <p class="fs-5 mb-2">Quickstart is a local workspace for Kometa and ImageMaid. Each config profile can keep its own wizard progress, generated Kometa YAML, and ImageMaid settings.</p>
+              <p class="fs-5 mb-0">Use separate config names for production, testing, or cleanup workflows when the ImageMaid mode, Plex path, or optional actions need to differ.</p>
+            </div>
+            <div class="col-lg-5">
+              <div class="start-side-note start-side-note-emphasis h-100">
+                <div class="fw-semibold mb-2">Before you begin</div>
+                <div class="small text-muted mb-2">Quickstart runs locally and keeps your data on this machine.</div>
+                <div class="small text-muted">Minimum inputs for the Kometa flow: Plex URL, Plex token, and a TMDb API key.</div>
+                <div class="small text-muted mt-2">Use the left sidebar as your workspace map. Required steps stay grouped near the top, optional integrations and review pages follow underneath.</div>
+                <div class="small text-muted mt-2">You can jump directly between sections at any time, and the active config profile on this page is the profile the sidebar pages will read and update.</div>
+                <div class="small text-muted mt-2">Review the config profile section below, choose or create the profile you want to work in, then move into Plex/TMDb setup or open ImageMaid directly.</div>
+              </div>
+            </div>
+          </div>
+          <div class="row g-3 mt-1">
+            <div class="col-lg-6">
+              <div class="start-app-card h-100">
+                <div class="fw-semibold mb-2">Kometa workflow</div>
+                <p class="small text-muted mb-2">Connect Plex and metadata services, choose libraries, and generate a Quickstart-managed Kometa config.</p>
+                <div class="small text-muted">Recommended for first runs: use the test libraries below before touching your main libraries.</div>
+                <div class="small text-muted mt-2 start-link-row">
+                  <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">More info...</a>
+                  <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/" target="_blank" rel="noreferrer">Wiki</a>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="start-app-card h-100">
+                <div class="fw-semibold mb-2">ImageMaid workflow</div>
+                <p class="small text-muted mb-2">Store ImageMaid mode, Plex path, and cleanup flags per config, then validate and run it from Quickstart.</p>
+                <div class="small text-muted">Best entered after Plex is validated so the same active config profile carries both Kometa and ImageMaid state.</div>
+                <div class="small text-muted mt-2 start-link-row">
+                  <a href="#" data-bs-toggle="modal" data-bs-target="#imageMaidInfoModal">More info...</a>
+                  <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/scripts/imagemaid/" target="_blank" rel="noreferrer">Wiki</a>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="accordion mt-3" id="test-lib-accordion">
             <div class="accordion-item">
               <h2 class="accordion-header" id="test-lib-accordion-heading">
@@ -95,20 +133,6 @@
               </div>
             </div>
           </div>
-          <div class="card border-secondary mt-3">
-            <div class="card-body py-3">
-              <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <div>
-                  <div class="fw-semibold">Optional Tool: ImageMaid</div>
-                  <div class="small text-muted">Prepare and run ImageMaid from the Review section after Plex is configured.</div>
-                </div>
-                <a class="btn btn-outline-info btn-sm" href="{{ url_for('step', name='915-imagemaid') }}">
-                  Open ImageMaid
-                </a>
-              </div>
-            </div>
-          </div>
-          <p class="fs-5">Review the Config Data section below and navigate to the next section when you are ready to begin.</p>
         </div>
       </div>
     </div>
@@ -119,9 +143,7 @@
     <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
       <div>
         <h6 class="mb-1">Config Data</h6>
-        <p class="small text-muted mb-0">The config name below is used for saving your config and progress within the Quickstart database. You
-          can change it if you wish before getting started, or choose one of your previously-created configs from the
-          drop-down.</p>
+        <p class="small text-muted mb-0">The config name below scopes saved wizard progress, generated Kometa output references, and per-config ImageMaid settings. Create a new profile here or switch to an existing one from the drop-down.</p>
       </div>
     </div>
 

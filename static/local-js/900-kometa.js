@@ -26,6 +26,8 @@ let lastLogscanPayload = null
 let logscanPollCounter = 0
 let finalLogscanAnalyzeTriggered = false
 let lastRunProgressPayload = null
+let logscanAnalyzeInFlight = false
+let runProgressInFlight = false
 const KOMETA_BRANCH_OVERRIDE_STORAGE_KEY = 'qs-kometa-branch-override'
 let kometaUpdatePollInterval = null
 let kometaUpdateJobId = null
@@ -1894,6 +1896,8 @@ $(document).ready(function () {
   }
 
   function fetchRunProgress () {
+    if (runProgressInFlight) return Promise.resolve(null)
+    runProgressInFlight = true
     return fetch('/logscan/progress')
       .then(res => {
         if (!res.ok) return null
@@ -1918,6 +1922,9 @@ $(document).ready(function () {
           const container = document.getElementById('run-progress')
           if (container) container.classList.add('d-none')
         }
+      })
+      .finally(() => {
+        runProgressInFlight = false
       })
   }
 
@@ -2629,7 +2636,9 @@ $(document).ready(function () {
     if (!$logscanPanel.length) return
     logscanPollCounter += 1
     const shouldFetch = force || (logscanPollCounter % 5 === 0) || !lastLogscanPayload
-    if (!shouldFetch) return
+    if (!shouldFetch || logscanAnalyzeInFlight) return
+
+    logscanAnalyzeInFlight = true
 
     fetch('/logscan/analyze')
       .then(res => res.json())
@@ -2641,6 +2650,9 @@ $(document).ready(function () {
         console.error('Error fetching logscan analysis:', err)
         $logscanRecommendations.html('<div class="text-muted">Logscan unavailable.</div>')
         updateLogscanHeaderBadge({ error: true })
+      })
+      .finally(() => {
+        logscanAnalyzeInFlight = false
       })
   }
 
@@ -3291,7 +3303,6 @@ $(document).ready(function () {
           $stopNow.removeClass('d-none').prop('disabled', false)
           $('#run-output').removeClass('d-none')
           startPollingIfNeeded()
-          fetchKometaLog()
           return
         }
 

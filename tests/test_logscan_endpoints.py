@@ -1313,6 +1313,58 @@ def test_analyze_imagemaid_log_content_uses_first_runtime_timestamp_for_started_
     assert summary["started_at"] == "2026-04-29 15:08:28"
     assert summary["finished_at"] == "2026-04-29 15:08:35"
     assert summary["run_time_seconds"] == 5
+    assert summary["config_name"] == "unknown"
+
+
+def test_analyze_imagemaid_log_content_infers_saved_config_name(qs_module, isolated_config_dir):
+    qs_module.database.save_section_data(
+        name="demo_report",
+        section="imagemaid",
+        validated=True,
+        user_entered=True,
+        data={
+            "imagemaid": {
+                "plex_path": "P:\\plex",
+                "mode": "report",
+                "photo_transcoder": True,
+                "local_db": True,
+                "timeout": "600",
+                "sleep": "60",
+            }
+        },
+    )
+    qs_module.database.save_section_data(
+        name="demo_restore",
+        section="imagemaid",
+        validated=True,
+        user_entered=True,
+        data={
+            "imagemaid": {
+                "plex_path": "P:\\plex",
+                "mode": "restore",
+                "photo_transcoder": True,
+                "local_db": True,
+                "timeout": "600",
+                "sleep": "60",
+            }
+        },
+    )
+
+    result = qs_module._analyze_imagemaid_log_content(
+        "\n".join(
+            [
+                "[2026-04-29 21:53:15,701] [imagemaid.py:93]           [INFO]     |     Version: 1.1.1-build8 (Python 3.12.1)                                                          |",
+                "[2026-04-29 21:53:16,716] [imagemaid.py:93]           [DEBUG]    | Run Command: C:\\Quickstart\\config\\imagemaid\\imagemaid.py --url (redacted) --token (redacted) --plex P:\\plex --mode report --photo-transcoder --local --timeout 600 --sleep 60 |",
+                "[2026-04-29 21:53:16,726] [imagemaid.py:118]          [INFO]     | Running in Report Mode with PhotoTrancoder set to True                                              |",
+                "[2026-04-29 21:53:35,001] [imagemaid.py:453]          [INFO]     |======================================== ImageMaid Finished ========================================|",
+                "[2026-04-29 21:53:35,002] [imagemaid.py:453]          [INFO]     | Total Runtime      | 0:00:19                                                                       |",
+            ]
+        ),
+        log_path="imagemaid.log",
+    )
+
+    assert result is not None
+    assert result["summary"]["config_name"] == "demo_report"
 
 
 def test_logscan_reingest_archives_completed_imagemaid_runtime_log_into_imagemaid_archive(client, isolated_config_dir, monkeypatch, qs_module):

@@ -12,7 +12,7 @@ import requests
 
 # Create logger
 mylogger = logging.getLogger("logscan")
-mylogger.setLevel(logging.DEBUG)  # Set the logging level to DEBUG
+mylogger.setLevel(logging.INFO)
 
 
 # --- PMS security vulnerability helpers (non-invasive; keep existing checks as-is) ---
@@ -127,13 +127,13 @@ class LogscanAnalyzer:
             if divider_match:
                 divider = divider_match.group(1)
                 self.global_divider = divider
-                mylogger.info(f"Divider found and set to: {divider}")
+                mylogger.debug(f"Divider found and set to: {divider}")
                 return  # Exit the function once a divider is found
 
         # If no match is found for any pattern, keep existing divider or fallback
         if not getattr(self, "global_divider", None):
             self.global_divider = "="
-            mylogger.info(f"Divider not found, using default divider: {self.global_divider}")
+            mylogger.debug(f"Divider not found, using default divider: {self.global_divider}")
 
     def extract_memory_value(self, content):
         """
@@ -192,11 +192,11 @@ class LogscanAnalyzer:
             scheduled_run_time_match = re.search(pattern, content)
             if scheduled_run_time_match:
                 scheduled_run_time = scheduled_run_time_match.group(2)
-                mylogger.info(f"Scheduled run time found: {scheduled_run_time}")
+                mylogger.debug(f"Scheduled run time found: {scheduled_run_time}")
                 return scheduled_run_time
 
         # If no match is found
-        mylogger.info("Scheduled run time not found in content.")
+        mylogger.debug("Scheduled run time not found in content.")
         return None
 
     def extract_maintenance_times(self, content):
@@ -208,10 +208,10 @@ class LogscanAnalyzer:
         if maintenance_times_match:
             start_time = maintenance_times_match.group(1)
             end_time = maintenance_times_match.group(2)
-            mylogger.info(f"Scheduled maintenance times found: Start time: {start_time}, End time: {end_time}")
+            mylogger.debug(f"Scheduled maintenance times found: Start time: {start_time}, End time: {end_time}")
             return start_time, end_time
         else:
-            mylogger.info("Scheduled maintenance times not found in content.")
+            mylogger.debug("Scheduled maintenance times not found in content.")
             return None, None
 
     def contains_overlay_path(self, content):
@@ -1816,7 +1816,7 @@ class LogscanAnalyzer:
             # Split the message into lines and log the first line with a label
             lines = message.split("\n")
             first_line = lines[0] if lines else ""
-            mylogger.info(f"Kometa Recommendation {idx}: {first_line}")
+            mylogger.debug(f"Kometa Recommendation {idx}: {first_line}")
 
             # Append both the first line and the full recommendation message to the list
             recommendation_messages.append({"first_line": first_line, "message": message})
@@ -1964,11 +1964,6 @@ class LogscanAnalyzer:
         # Sort recommendations based on the custom key
         sorted_recommendations = sorted(recommendations, key=sort_key)
 
-        # Print or log the sorted recommendations for debugging
-        # mylogger.info("Sorted Recommendations:")
-        for rec in sorted_recommendations:
-            mylogger.info(rec.get("first_line", "No first line available"))
-
         return sorted_recommendations
 
     def extract_plex_config(self, content):
@@ -1981,7 +1976,7 @@ class LogscanAnalyzer:
         start_marker = "Plex Configuration"
         # end_markers = [" Scanning Metadata and", "Library Connection Failed"]
         end_markers = [" Scanning ", "Library Connection Failed"]
-        mylogger.info(f"extract_plex_config")
+        mylogger.debug("extract_plex_config")
 
         i = 0
         while i < len(lines):
@@ -2002,15 +1997,15 @@ class LogscanAnalyzer:
                         good_version = "1.40.3.8555-fef15d30c"
 
                         if stable_version < my_server_version < good_version:
-                            mylogger.info(
+                            mylogger.debug(
                                 f"Server Name: {my_server_name} has Version: {my_server_version}. Potential Rounding Issue because > {stable_version} and < {good_version}"
                             )
                             # Store the server version globally in a list
                             self.server_versions.append((my_server_name, my_server_version))
                         elif my_server_version >= good_version:
-                            mylogger.info(f"Server Name: {my_server_name} has Version: {my_server_version}. ALL GOOD")
+                            mylogger.debug(f"Server Name: {my_server_name} has Version: {my_server_version}. ALL GOOD")
                         else:
-                            mylogger.info(f"Server Name: {my_server_name} has Version: {my_server_version}. ALL GOOD")
+                            mylogger.debug(f"Server Name: {my_server_name} has Version: {my_server_version}. ALL GOOD")
 
             i += 1
 
@@ -2076,7 +2071,7 @@ class LogscanAnalyzer:
 
         # Log if server info extraction failed for all lines
         if not server_info:
-            mylogger.info("Failed to extract server info from config_section")
+            mylogger.debug("Failed to extract server info from config_section")
 
         return server_info, all_lines
 
