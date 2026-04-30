@@ -95,6 +95,57 @@ def test_update_quickstart_settings_supports_independent_imagemaid_log_retention
         qs_module.app.config["QS_IMAGEMAID_LOG_KEEP"] = original_imagemaid_keep
 
 
+def test_kometa_page_defaults_header_style_to_single_line(client, isolated_config_dir, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "config_valid": True,
+        },
+    )
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_, **__: (True, None, {}, "test: true\n", []))
+
+    resp = client.get("/step/900-kometa")
+    assert resp.status_code == 200
+    assert b'name="header_style" value="single line"' in resp.data
+
+
+def test_kometa_page_restores_header_style_from_kometa_section(client, isolated_config_dir, monkeypatch, qs_module):
+    monkeypatch.setattr(
+        qs_module,
+        "_build_final_gate",
+        lambda *_args, **_kwargs: {
+            "stage": "kometa",
+            "todo_count": 0,
+            "todo_blockers": [],
+            "bulk_validation_fresh": True,
+            "bulk_validation_at": qs_module.utc_now_iso(),
+            "validation_ttl_hours": 12,
+            "config_valid": True,
+        },
+    )
+    monkeypatch.setattr(qs_module.output, "build_config", lambda *_, **__: (True, None, {}, "test: true\n", []))
+
+    original_retrieve_settings = qs_module.persistence.retrieve_settings
+
+    def fake_retrieve_settings(target):
+        if target == "900-kometa":
+            return {"kometa": {"header_style": "standard"}}
+        return original_retrieve_settings(target)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", fake_retrieve_settings)
+
+    resp = client.get("/step/900-kometa")
+    assert resp.status_code == 200
+    assert b'name="header_style" value="standard"' in resp.data
+
+
 def test_validate_plex_invalid_url(client):
     resp = client.post("/validate_plex", json={"plex_url": "not-a-url", "plex_token": "x"})
     assert resp.status_code == 400

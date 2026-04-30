@@ -391,18 +391,19 @@ def get_log_runs(limit=100):
         connection.row_factory = sqlite3.Row
         with closing(connection.cursor()) as cursor:
             _ensure_log_runs_columns(cursor)
-            cursor.execute(
-                """SELECT run_key, tool_name, started_at, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
-                          config_name, config_hash, run_command, command_signature, section_runtimes,
-                          recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
-                          error_count, critical_count, trace_count, analysis_counts, library_counts,
-                          maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker,
-                          config_line_count, cache_line_count, created_at
-                   FROM log_runs
-                   ORDER BY created_at DESC
-                   LIMIT ?""",
-                (limit,),
-            )
+            query = """SELECT run_key, tool_name, started_at, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
+                              config_name, config_hash, run_command, command_signature, section_runtimes,
+                              recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
+                              error_count, critical_count, trace_count, analysis_counts, library_counts,
+                              maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker,
+                              config_line_count, cache_line_count, created_at
+                       FROM log_runs
+                       ORDER BY created_at DESC"""
+            params = ()
+            if limit is not None:
+                query += "\n                   LIMIT ?"
+                params = (limit,)
+            cursor.execute(query, params)
             rows = [_decode_log_run_row(row) for row in cursor.fetchall()]
             for row in rows:
                 row.pop("recommendations", None)

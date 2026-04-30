@@ -18,7 +18,7 @@
 
 ## ✨ Features
 
-Kometa Quickstart is more than just a YAML generator - it's a full interactive environment for configuring, validating, and running Kometa. Key features include:
+Kometa Quickstart is more than just a YAML generator - it's a full interactive environment for configuring Kometa, running built-in Kometa-Team apps, and reviewing their results. Key features include:
 
 ![Quickstart Welcome Page](static/images/readme/quickstart-welcome.png)
 
@@ -50,21 +50,29 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 
 ![Libraries Page](static/images/readme/libraries-page.png)
 
-### Final Validation Gates
-- **Fail-Fast Setup Checks:** Final Validation stops at the TODO gate when required setup work remains instead of building YAML or checking Kometa prematurely
+### Kometa Gates
+- **Fail-Fast Setup Checks:** The Kometa page stops at the TODO gate when required setup work remains instead of building YAML or checking Kometa prematurely
 - **Validation Freshness:** If bulk validation is stale, Quickstart automatically runs Validate All and refreshes workspace status before continuing
 - **Config Before Runtime:** Quickstart builds and validates the generated config before checking Kometa or showing run controls
 - **Kometa Update Guidance:** Missing Kometa is a hard blocker, while available Kometa updates are shown as guidance without blocking the run command
 
-### Built-in Kometa Runner
-- **One-Click Execution:** The final page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
+### Built-in App Runners
+
+#### Kometa
+- **One-Click Execution:** The Kometa page creates a Kometa virtual environment (if needed), installs dependencies, and runs `kometa.py` against the generated config
 - **Run Command Builder:** Dynamically builds and previews CLI commands with flags like `--run`, `--operations-only`, `--times`, etc.
 - **Process Management:** Start, stop, and monitor Kometa runs directly from the web interface
 - **Maintenance-Aware Runs:** Detects Plex maintenance windows, pauses active runs, and queues new runs until maintenance ends (with global UI badges and toasts)
 
 This reduces the chance of Plex background maintenance colliding with long Kometa runs, keeps Plex more responsive during the window, and avoids wasting time starting a run that would immediately pause.
 
-![Final Validation Runner](static/images/readme/final-validation-runner.png)
+#### ImageMaid
+- **Prepare / install / update flow:** Quickstart can install or update ImageMaid in its own managed directory before running it
+- **Mode-aware validation:** The ImageMaid page validates mode-specific requirements such as restore-folder availability before a run starts
+- **Guided run gating:** Run controls stay hidden until ImageMaid is installed and validated, with explicit guidance for the next required step
+- **Maintenance-aware start protection:** ImageMaid starts are blocked during Plex maintenance windows instead of colliding with active maintenance
+
+![Kometa Runner](static/images/readme/final-validation-runner.png)
 
 ### Live Previews & Assets
 - **Overlay Preview Generator:** Combines overlays and template variables into real-time preview images
@@ -80,10 +88,16 @@ This reduces the chance of Plex background maintenance colliding with long Komet
 - **Theme Picker:** Switch between Kometa, Plex, Jellyfin, Emby, Seerr, and more with instant apply
 
 ### Analytics
-- **Reingest & analytics:** Rebuild run history from `config/kometa/config/logs/*meta*.log*` plus archived logs in `config/cache/logscan/archive/`.
+- **Cross-app history:** Analytics tracks both Kometa and ImageMaid runs from Quickstart-managed runtime logs and archives
+- **Reingest & analytics:** Rebuild run history from:
+  - `config/kometa/config/logs`
+  - `config/imagemaid/config/logs`
+  - `config/cache/logscan/archive/kometa`
+  - `config/cache/logscan/archive/imagemaid`
 - **Stable run tracking:** Runs are deduped with a stable `run_key` and cached in `config/cache/logscan/ingest_cache.json`.
 - **Missing people requests:** Deduped output is written to `config/cache/logscan/meta_people_missing.log` (metadata in `meta_people_missing.json`).
-- **UI helpers:** Sortable table headers, config filter, analytics breakdowns, and per-run “Report” recommendations.
+- **UI helpers:** App/config/time-range filters, sortable table headers, analytics breakdowns, and per-run “Report” recommendations.
+- **Independent retention:** Kometa and ImageMaid archived logs each have their own retention setting in Quickstart Settings
 - **Startup migrations:** Quickstart can perform a one-time Analytics reset + reingest on startup when a release needs historical log data rebuilt for a new feature.
 
 #### Startup Analytics Migrations
@@ -100,14 +114,14 @@ Quickstart supports versioned one-time Analytics migrations for releases that ne
 How it works:
 
 - On startup, Quickstart compares `QS_LOGSCAN_MIGRATION_LEVEL_DONE` with the code's `REQUIRED_LOGSCAN_MIGRATION_LEVEL`.
-- If the completed level is lower, Quickstart starts a background Analytics migration that resets trend data and reingests all available Kometa logs.
+- If the completed level is lower, Quickstart starts a background Analytics migration that resets trend data and reingests all available supported runtime logs.
 - If a user skips releases, the higher required level still triggers the migration automatically on the next startup.
-- If this is a first-time Quickstart setup and no Kometa logs exist yet, Quickstart defers the migration instead of marking it complete. The migration remains pending until logs exist on a future startup.
+- If this is a first-time Quickstart setup and no supported runtime logs exist yet, Quickstart defers the migration instead of marking it complete. The migration remains pending until logs exist on a future startup.
 - If a reingest is already running, Analytics reconnects to the active job instead of starting a second one.
 
 ### Logscan Analyzer & Analytics Page
-- **Logscan Analyzer:** Parses Kometa `meta.log` files to surface errors, run summaries, and missing items.
-- **Analytics Page:** Interactive dashboard for run history, filters, and per-run recommendations.
+- **Logscan Analyzer:** Parses Quickstart-managed Kometa and ImageMaid runtime logs to surface errors, run summaries, and missing items.
+- **Analytics Page:** Interactive dashboard for cross-app run history, scope-first filters, and per-run recommendations.
 
 ![Analytics Page](static/images/readme/analytics-page.png)
 
@@ -137,7 +151,7 @@ After you confirm an import, Quickstart saves the new config, shows a compact su
 - **Local-first:** Config data is stored locally in SQLite and versioned `.yml` files in `config/`.
 - **Network access:** Quickstart only contacts external services when you validate settings or fetch remote assets.
 
-Kometa Quickstart is a guided Web UI that helps you create a Configuration File for use with Kometa.
+Kometa Quickstart is a guided Web UI that helps you create a configuration file for Kometa and run supported Kometa-Team companion apps from the same workspace.
 
 Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](https://github.com/bullmoose20), [chazlarson](https://github.com/chazlarson), and [Yozora](https://github.com/yozoraXCII) for their contributions to this tool.
 
@@ -149,8 +163,10 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
   - [Safe Playground Mode](#safe-playground-mode)
   - [Config Management \& History](#config-management--history)
   - [Guided, Validated Workflow](#guided-validated-workflow)
-  - [Final Validation Gates](#final-validation-gates)
-  - [Built-in Kometa Runner](#built-in-kometa-runner)
+  - [Kometa Gates](#kometa-gates)
+  - [Built-in App Runners](#built-in-app-runners)
+    - [Kometa](#kometa)
+    - [ImageMaid](#imagemaid)
   - [Live Previews \& Assets](#live-previews--assets)
   - [Automatic Updates](#automatic-updates)
   - [Themes \& Personalization](#themes--personalization)

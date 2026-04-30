@@ -2347,18 +2347,30 @@ div#loading {
 }
 
 .logscan-control-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.5rem;
     width: 100%;
     min-width: 0;
     max-width: 100%;
 }
 
-.logscan-control-grid > * {
+.logscan-control-grid > *,
+.logscan-filter-row > * {
     max-width: 100%;
+}
+
+.logscan-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.logscan-filter-row-actions {
+    align-items: stretch;
 }
 
 .logscan-control-field {
@@ -2369,12 +2381,21 @@ div#loading {
     flex: 0 0 auto;
 }
 
+.logscan-time-range {
+    min-width: 13rem;
+}
+
 .logscan-date-range {
     max-width: 24rem;
 }
 
 .logscan-date-range .form-control {
     min-width: 8.5rem;
+}
+
+.logscan-date-hint {
+    flex: 0 1 auto;
+    min-width: 14rem;
 }
 
 .logscan-table-header,
@@ -5649,6 +5670,17 @@ body {
         width: 100%;
     }
 
+    .logscan-filter-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        width: 100%;
+    }
+
+    .logscan-control-grid > .logscan-filter-row > .form-select,
+    .logscan-control-grid > .logscan-filter-row > .input-group,
+    .logscan-control-grid > .logscan-filter-row > .btn,
+    .logscan-control-grid > .logscan-filter-row > .small,
+    .logscan-control-grid > .logscan-filter-row > .logscan-run-count,
     .logscan-control-grid > .form-select,
     .logscan-control-grid > .input-group,
     .logscan-control-grid > .btn,

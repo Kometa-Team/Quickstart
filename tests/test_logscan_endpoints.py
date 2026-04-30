@@ -96,6 +96,25 @@ def test_logscan_trends_empty(client, isolated_config_dir):
     assert payload["archive_storage"]["imagemaid_retention_label"] == "Keep all archived logs"
 
 
+def test_logscan_trends_limit_all_returns_all_saved_runs(client, isolated_config_dir, qs_module):
+    for idx in range(3):
+        timestamp = f"2026-04-2{idx}T10:00:00Z"
+        qs_module.database.save_log_run(
+            {
+                "run_key": f"run-all-{idx}",
+                "finished_at": timestamp,
+                "config_name": "demo",
+                "created_at": timestamp,
+            }
+        )
+
+    resp = client.get("/logscan/trends?limit=all")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert len(payload["runs"]) == 3
+    assert payload["total_runs"] == 3
+
+
 def test_logscan_trends_includes_archive_storage_and_run_file_metadata(client, isolated_config_dir, monkeypatch, qs_module):
     archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
     archive_dir.mkdir(parents=True, exist_ok=True)
@@ -1199,6 +1218,7 @@ def test_logscan_reingest_ingests_imagemaid_runtime_log_with_parsed_details(clie
     imagemaid_runs = [run for run in runs if run.get("tool_name") == "imagemaid"]
     assert imagemaid_runs
     run = imagemaid_runs[0]
+    assert run["config_name"] == "demo"
     assert run["kometa_version"] == "1.1.1"
     assert run["analysis_counts"]["imagemaid_database_download_failed"] == 1
     assert run["analysis_counts"]["imagemaid_photo_recovered_bytes"] == 0
@@ -1208,6 +1228,24 @@ def test_logscan_reingest_ingests_imagemaid_runtime_log_with_parsed_details(clie
     assert run["analysis_counts"]["imagemaid_clean_bundles_enabled"] == 1
     assert run["analysis_counts"]["imagemaid_optimize_db_enabled"] == 1
     assert run["analysis_counts"]["imagemaid_completed_with_errors"] == 1
+
+
+def test_analyze_imagemaid_log_content_uses_first_runtime_timestamp_for_started_at(qs_module):
+    summary = qs_module._analyze_imagemaid_log_content(
+        "\n".join(
+            [
+                "[2026-04-29 15:08:28,897] [imagemaid.py:93]           [INFO]     |====================================================================================================|",
+                "[2026-04-29 15:08:35,001] [imagemaid.py:453]          [INFO]     |======================================== ImageMaid Finished ========================================|",
+                "[2026-04-29 15:08:35,002] [imagemaid.py:453]          [INFO]     | Total Runtime      | 0:00:05                                                                       |",
+            ]
+        ),
+        log_path="imagemaid.log",
+    )
+
+    assert summary is not None
+    assert summary["started_at"] == "2026-04-29 15:08:28"
+    assert summary["finished_at"] == "2026-04-29 15:08:35"
+    assert summary["run_time_seconds"] == 5
 
 
 def test_logscan_reingest_archives_completed_imagemaid_runtime_log_into_imagemaid_archive(client, isolated_config_dir, monkeypatch, qs_module):

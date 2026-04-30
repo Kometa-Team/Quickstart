@@ -131,6 +131,7 @@ MAINTENANCE_STATE = {
 }
 MAINTENANCE_STATE_LOCK = threading.Lock()
 MAINTENANCE_GUARD_INTERVAL = 45
+IMAGEMAID_STARTUP_GRACE_SECONDS = 10
 PENDING_KOMETA_START = {"command": None, "config_name": None, "requested_at": None}
 PENDING_KOMETA_START_LOCK = threading.Lock()
 
@@ -1809,7 +1810,7 @@ def _launch_kometa_command(command, config_name=None):
     return True, proc.pid
 
 
-def _launch_imagemaid_command(command, mode=None):
+def _launch_imagemaid_command(command, mode=None, config_name=None):
     if not command:
         return False, "No command provided"
 
@@ -1859,6 +1860,9 @@ def _launch_imagemaid_command(command, mode=None):
             start_new_session=True,
         )
 
+        with open(helpers.get_imagemaid_pid_file(), "w", encoding="utf-8") as f:
+            f.write(str(proc.pid))
+
         time.sleep(1.0)
         return_code = proc.poll()
         if return_code is not None:
@@ -1869,10 +1873,7 @@ def _launch_imagemaid_command(command, mode=None):
                 pass
             return False, f"ImageMaid exited immediately with code {return_code}. Review the run log for details."
 
-    with open(helpers.get_imagemaid_pid_file(), "w", encoding="utf-8") as f:
-        f.write(str(proc.pid))
-
-    _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=mode)
+    _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=mode, config_name=config_name)
     return True, proc.pid
 
 
@@ -2144,16 +2145,17 @@ def _write_quickstart_maintenance_marker(kometa_root, event, window=None, paused
     return _append_quickstart_meta_log_line(kometa_root, " ".join(parts))
 
 
-def _write_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, log_path=None):
+def _write_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_name=None, log_path=None):
     try:
         version_info = app.config.get("VERSION_CHECK") or {}
         qs_version = version_info.get("local_version") or "unknown"
         qs_branch = version_info.get("branch") or "unknown"
         safe_mode = (mode or "report").strip().lower() or "report"
+        safe_config = (config_name or "default").strip() or "default"
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         marker = (
             f"[Quickstart] Run marker: started={timestamp} "
-            f"config=imagemaid quickstart={qs_version} branch={qs_branch} "
+            f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
             f"tool=imagemaid mode={safe_mode}"
         )
         return _append_quickstart_imagemaid_log_line(imagemaid_root, marker, log_path=log_path)
@@ -2178,16 +2180,17 @@ def _write_quickstart_stop_marker(kometa_root, config_name=None, reason="user_st
         return False
 
 
-def _write_quickstart_imagemaid_stop_marker(imagemaid_root, mode=None, log_path=None, reason="user_stop"):
+def _write_quickstart_imagemaid_stop_marker(imagemaid_root, mode=None, config_name=None, log_path=None, reason="user_stop"):
     try:
         version_info = app.config.get("VERSION_CHECK") or {}
         qs_version = version_info.get("local_version") or "unknown"
         qs_branch = version_info.get("branch") or "unknown"
         safe_mode = (mode or "report").strip().lower() or "report"
+        safe_config = (config_name or "default").strip() or "default"
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         marker = (
             f"[Quickstart] Run event: event=stopped at={timestamp} "
-            f"config=imagemaid quickstart={qs_version} branch={qs_branch} "
+            f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
             f"tool=imagemaid mode={safe_mode} reason={str(reason or 'user_stop').strip() or 'user_stop'}"
         )
         return _append_quickstart_imagemaid_log_line(imagemaid_root, marker, log_path=log_path)
@@ -2195,7 +2198,7 @@ def _write_quickstart_imagemaid_stop_marker(imagemaid_root, mode=None, log_path=
         return False
 
 
-def _write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=None, window=None, log_path=None):
+def _write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=None, config_name=None, window=None, log_path=None):
     event_name = str(event or "").strip().lower()
     if event_name not in {"blocked_start"}:
         return False
@@ -2204,12 +2207,14 @@ def _write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=N
         qs_version = version_info.get("local_version") or "unknown"
         qs_branch = version_info.get("branch") or "unknown"
         safe_mode = (mode or "report").strip().lower() or "report"
+        safe_config = (config_name or "default").strip() or "default"
         local_at = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         parts = [
             "[Quickstart] Maintenance marker:",
             f"event={event_name}",
             f"at={datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
             f"local_at={local_at}",
+            f"config={safe_config}",
             "tool=imagemaid",
             f"mode={safe_mode}",
             f"quickstart={qs_version}",
@@ -5367,7 +5372,7 @@ def import_config_confirm():
 @app.route("/step/<name>", methods=["GET", "POST"])
 def step(name):
     page_info = {}
-    header_style = "single_line"  # Default to 'single_line' font
+    header_style = "single line"
     save_error = None
     if name == "900-final":
         return redirect(url_for("step", name="900-kometa"), code=302)
@@ -5391,7 +5396,7 @@ def step(name):
             save_error = "Invalid values: " + " ".join(validation_errors)
         else:
             persistence.save_settings(request.referrer, request.form)
-            header_style = request.form.get("header_style", "single_line")
+            header_style = request.form.get("header_style", "single line")
 
     # --- Detect config change ---
     selected_config = request.form.get("configSelector") or previous_config
@@ -5413,16 +5418,23 @@ def step(name):
     # Retrieve stored settings from DB
     saved_settings = persistence.retrieve_settings(name)  # Retrieve from DB
 
-    # Ensure we correctly access header_style from "final"
-    if "final" in saved_settings and "header_style" in saved_settings["final"]:
-        header_style = saved_settings["final"]["header_style"]
+    saved_header_style = None
+    if "kometa" in saved_settings and "header_style" in saved_settings["kometa"]:
+        saved_header_style = saved_settings["kometa"]["header_style"]
+    elif "final" in saved_settings and "header_style" in saved_settings["final"]:
+        saved_header_style = saved_settings["final"]["header_style"]
+    if saved_header_style is not None:
+        header_style = saved_header_style
+
+    if header_style == "single_line":
+        header_style = "single line"
 
     if header_style is None:
-        header_style = "single_line" if "single_line" in available_fonts else "standard"
+        header_style = "single line" if "single line" in available_fonts else "standard"
 
     # Ensure the selected font is valid
     if header_style not in available_fonts:
-        header_style = "single_line" if "single_line" in available_fonts else "standard"
+        header_style = "single line" if "single line" in available_fonts else "standard"
 
     page_info["header_style"] = header_style  # Now properly restored
 
@@ -8360,18 +8372,22 @@ def logscan_trends():
         _archive_finished_live_meta_log_if_idle()
     except Exception:
         pass
-    try:
-        limit = int(request.args.get("limit", "50"))
-    except Exception:
-        limit = 50
-    limit = max(1, min(limit, 500))
+    raw_limit = str(request.args.get("limit", "50")).strip().lower()
+    if raw_limit == "all":
+        limit = None
+    else:
+        try:
+            limit = int(raw_limit)
+        except Exception:
+            limit = 50
+        limit = max(1, min(limit, 500))
     total_runs = database.get_log_runs_count()
     ingest_health = _logscan_ingest_health()
     resolution_context = _build_logscan_resolution_context()
     runs = _annotate_logscan_runs(database.get_log_runs(limit=limit), context=resolution_context)
     incomplete_runs = _annotate_logscan_runs(_get_logscan_incomplete_runs(limit=limit), context=resolution_context)
-    all_runs = database.get_log_runs(limit=max(total_runs, 1)) if total_runs else []
-    all_incomplete_runs = _get_logscan_incomplete_runs(limit=500)
+    all_runs = database.get_log_runs(limit=None) if total_runs else []
+    all_incomplete_runs = _get_logscan_incomplete_runs(limit=None)
     return jsonify(
         {
             "runs": runs,
@@ -8672,7 +8688,7 @@ def _analyze_imagemaid_log_content(content, log_path=None):
         re.IGNORECASE,
     )
     blocked_pattern = re.compile(
-        r"\[Quickstart\]\s+Maintenance marker:\s+event=blocked_start\s+at=([^\s]+).*?\btool=imagemaid\b(?:\s+mode=([^\s]+))?.*?(?:\s+window=([^\s]+))?",
+        r"\[Quickstart\]\s+Maintenance marker:\s+event=blocked_start\s+at=([^\s]+)\s+local_at=[^\s]+\s+config=([^\s]+).*?\btool=imagemaid\b(?:\s+mode=([^\s]+))?.*?(?:\s+window=([^\s]+))?",
         re.IGNORECASE,
     )
     timestamp_pattern = re.compile(r"^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),")
@@ -8685,6 +8701,7 @@ def _analyze_imagemaid_log_content(content, log_path=None):
     stop_reason = ""
     blocked_at = None
     blocked_window = ""
+    first_timestamp = None
     finished_at = None
     finished_seen = False
     run_time_seconds = None
@@ -8719,6 +8736,9 @@ def _analyze_imagemaid_log_content(content, log_path=None):
     }
 
     for line in lines:
+        timestamp_match = timestamp_pattern.search(line)
+        if timestamp_match and not first_timestamp:
+            first_timestamp = timestamp_match.group(1)
         if "[WARNING]" in line:
             warning_count += 1
         if "[ERROR]" in line:
@@ -8747,12 +8767,12 @@ def _analyze_imagemaid_log_content(content, log_path=None):
         blocked_match = blocked_pattern.search(line)
         if blocked_match:
             blocked_at = blocked_match.group(1)
-            mode = blocked_match.group(2) or mode
-            blocked_window = blocked_match.group(3) or blocked_window
+            config_name = blocked_match.group(2) or config_name
+            mode = blocked_match.group(3) or mode
+            blocked_window = blocked_match.group(4) or blocked_window
 
         if "ImageMaid Finished" in line:
             finished_seen = True
-            timestamp_match = timestamp_pattern.search(line)
             if timestamp_match:
                 finished_at = timestamp_match.group(1)
 
@@ -8844,6 +8864,9 @@ def _analyze_imagemaid_log_content(content, log_path=None):
 
     if finished_seen and not finished_at:
         finished_at = _iso_from_mtime(stats.st_mtime if stats else None)
+
+    if not started_at and first_timestamp:
+        started_at = first_timestamp
 
     completion_reason = "completed"
     run_complete = bool(finished_at and run_time_seconds is not None)
@@ -9800,7 +9823,10 @@ def _build_incomplete_log_fallback(log_path, cache_entry=None, config_name=None)
 
 
 def _get_logscan_incomplete_runs(limit=100, config_name=None):
-    safe_limit = max(0, min(int(limit or 0), 500))
+    if limit is None:
+        safe_limit = None
+    else:
+        safe_limit = max(0, min(int(limit or 0), 1000000))
     if safe_limit == 0:
         return []
     ingest_cache = _load_logscan_ingest_cache()
@@ -9826,7 +9852,8 @@ def _get_logscan_incomplete_runs(limit=100, config_name=None):
 
     candidates.sort(key=lambda item: item[0], reverse=True)
     parsed_runs = []
-    for _, path, entry in candidates[:safe_limit]:
+    selected_candidates = candidates if safe_limit is None else candidates[:safe_limit]
+    for _, path, entry in selected_candidates:
         if isinstance(entry.get("summary"), dict):
             parsed = _build_incomplete_run_from_cache_entry(path, cache_entry=entry, config_name=config_name)
         else:
@@ -11307,7 +11334,9 @@ def header_style_preview():
     font = str(request.args.get("font", "") or "").strip()
     available_fonts = helpers.get_pyfiglet_fonts()
     if not font:
-        font = "standard"
+        font = "single line"
+    if font == "single_line":
+        font = "single line"
     if font not in available_fonts:
         return jsonify(success=False, message="Unknown header style."), 404
 
@@ -12125,6 +12154,13 @@ def _validate_imagemaid_settings(section_data):
 
     resolved_plex_path = _resolve_user_dir(section_data.get("plex_path"))
     restore_dir = resolved_plex_path / "ImageMaid Restore" if resolved_plex_path else None
+    if mode in {"report", "move", "remove"} and restore_dir and restore_dir.exists():
+        return (
+            False,
+            "restore_dir_blocks_mode",
+            f"{mode.capitalize()} mode is not allowed while the ImageMaid Restore folder exists: {restore_dir}. "
+            "Use nothing, restore, or clear while that folder is present.",
+        )
     if mode in {"restore", "clear"} and restore_dir and not restore_dir.exists():
         return False, "missing_restore_dir", f"{mode.capitalize()} mode expects the ImageMaid Restore folder at: {restore_dir}"
 
@@ -12526,6 +12562,7 @@ def autosave_imagemaid():
 
 @app.route("/start-imagemaid", methods=["POST"])
 def start_imagemaid():
+    config_name = session.get("config_name") or persistence.ensure_session_config_name()
     payload = request.get_json(silent=True) or {}
     form_payload = _imagemaid_settings_to_form_payload(payload)
     if form_payload:
@@ -12585,6 +12622,7 @@ def start_imagemaid():
                 helpers.get_imagemaid_root_path(),
                 "blocked_start",
                 mode=section_data.get("mode"),
+                config_name=config_name,
                 window=window_str,
                 log_path=_get_latest_imagemaid_log_path(),
             )
@@ -12604,7 +12642,7 @@ def start_imagemaid():
 
     plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
     command = _build_imagemaid_command_parts(section_data, plex_url, plex_token, redact=False)
-    ok, result = _launch_imagemaid_command(command, mode=section_data.get("mode"))
+    ok, result = _launch_imagemaid_command(command, mode=section_data.get("mode"), config_name=config_name)
     if ok:
         return jsonify({"status": "ImageMaid started", "pid": result, "command_preview": _build_imagemaid_command(section_data, plex_url, plex_token, redact=True)})
     code = 500
@@ -12619,6 +12657,7 @@ def start_imagemaid():
 
 @app.route("/stop-imagemaid", methods=["POST"])
 def stop_imagemaid():
+    config_name = session.get("config_name") or persistence.ensure_session_config_name()
     pid = helpers.get_imagemaid_pid()
     pid_file = helpers.get_imagemaid_pid_file()
 
@@ -12653,6 +12692,7 @@ def stop_imagemaid():
             _write_quickstart_imagemaid_stop_marker(
                 helpers.get_imagemaid_root_path(),
                 mode=imagemaid_mode,
+                config_name=config_name,
                 log_path=_get_latest_imagemaid_log_path(),
                 reason="user_stop",
             )
@@ -12676,6 +12716,7 @@ def stop_imagemaid():
             _write_quickstart_imagemaid_stop_marker(
                 helpers.get_imagemaid_root_path(),
                 mode=imagemaid_mode,
+                config_name=config_name,
                 log_path=_get_latest_imagemaid_log_path(),
                 reason="process_missing",
             )
@@ -12689,11 +12730,21 @@ def stop_imagemaid():
 @app.route("/imagemaid-status", methods=["GET"])
 def imagemaid_status():
     pid = helpers.get_imagemaid_pid()
+    pid_file = Path(helpers.get_imagemaid_pid_file())
+
+    def pid_file_age_seconds():
+        try:
+            if pid_file.exists():
+                return max(0.0, time.time() - pid_file.stat().st_mtime)
+        except Exception:
+            return None
+        return None
+
     if not pid:
         proc = _find_running_imagemaid_process()
         if proc:
             try:
-                with open(helpers.get_imagemaid_pid_file(), "w", encoding="utf-8") as f:
+                with open(pid_file, "w", encoding="utf-8") as f:
                     f.write(str(proc.pid))
                 pid = proc.pid
             except Exception:
@@ -12703,26 +12754,55 @@ def imagemaid_status():
 
     try:
         proc = psutil.Process(pid)
+        started_at_ts = None
+        elapsed_seconds = None
+        within_grace = False
+        try:
+            started_at_ts = proc.create_time()
+            elapsed_seconds = max(0, int(time.time() - started_at_ts))
+            within_grace = elapsed_seconds < IMAGEMAID_STARTUP_GRACE_SECONDS
+        except Exception:
+            age = pid_file_age_seconds()
+            if age is not None:
+                elapsed_seconds = max(0, int(age))
+                within_grace = age < IMAGEMAID_STARTUP_GRACE_SECONDS
         if proc.is_running() and proc.status() != psutil.STATUS_ZOMBIE:
-            cmdline = " ".join(proc.cmdline() or [])
+            try:
+                cmdline = " ".join(proc.cmdline() or [])
+            except Exception:
+                cmdline = ""
             if "imagemaid.py" in cmdline:
-                started_at_ts = proc.create_time()
                 started_at = datetime.fromtimestamp(started_at_ts).isoformat()
-                elapsed_seconds = max(0, int(time.time() - started_at_ts))
                 return jsonify(status="running", pid=pid, started_at=started_at, started_at_ts=started_at_ts, elapsed_seconds=elapsed_seconds)
+            if within_grace:
+                payload = {"status": "starting", "pid": pid, "elapsed_seconds": elapsed_seconds}
+                if started_at_ts is not None:
+                    payload["started_at"] = datetime.fromtimestamp(started_at_ts).isoformat()
+                    payload["started_at_ts"] = started_at_ts
+                return jsonify(payload)
         try:
             rc = proc.wait(timeout=0.1)
         except psutil.TimeoutExpired:
+            if within_grace:
+                payload = {"status": "starting", "pid": pid, "elapsed_seconds": elapsed_seconds}
+                if started_at_ts is not None:
+                    payload["started_at"] = datetime.fromtimestamp(started_at_ts).isoformat()
+                    payload["started_at_ts"] = started_at_ts
+                return jsonify(payload)
             rc = None
         finally:
-            try:
-                os.remove(helpers.get_imagemaid_pid_file())
-            except Exception:
-                pass
+            if not within_grace:
+                try:
+                    os.remove(pid_file)
+                except Exception:
+                    pass
         return jsonify(status="done", return_code=rc if rc is not None else -1)
     except psutil.NoSuchProcess:
+        age = pid_file_age_seconds()
+        if age is not None and age < IMAGEMAID_STARTUP_GRACE_SECONDS:
+            return jsonify(status="starting", pid=pid, elapsed_seconds=max(0, int(age)))
         try:
-            os.remove(helpers.get_imagemaid_pid_file())
+            os.remove(pid_file)
         except Exception:
             pass
         return jsonify(status="not started")
@@ -13207,7 +13287,7 @@ def clone_test_libraries_start():
     threading.Thread(target=worker, daemon=True).start()
 
 
-def _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, timeout_seconds=20):
+def _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_name=None, timeout_seconds=20):
     root = Path(imagemaid_root)
     log_dir = root / "config" / "logs"
     initial = {}
@@ -13233,15 +13313,15 @@ def _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, timeout
                         prev = initial.get(str(path))
                         if prev is None:
                             if stat.st_size > 0:
-                                _write_quickstart_imagemaid_run_marker(root, mode=mode, log_path=path)
+                                _write_quickstart_imagemaid_run_marker(root, mode=mode, config_name=config_name, log_path=path)
                                 return
                         elif (stat.st_mtime, stat.st_size) != prev and stat.st_size > 0:
-                            _write_quickstart_imagemaid_run_marker(root, mode=mode, log_path=path)
+                            _write_quickstart_imagemaid_run_marker(root, mode=mode, config_name=config_name, log_path=path)
                             return
             except Exception:
                 pass
             time.sleep(0.5)
-        _write_quickstart_imagemaid_run_marker(root, mode=mode)
+        _write_quickstart_imagemaid_run_marker(root, mode=mode, config_name=config_name)
 
     threading.Thread(target=worker, daemon=True).start()
 

@@ -420,7 +420,7 @@ $(document).ready(function () {
   $yamlOutput.on('input', updateYamlLineCount)
 
   function normalizeFontName (value) {
-    return String(value || '').trim()
+    return String(value || '').trim().replace(/_/g, ' ')
   }
 
   function formatHeaderStyleLabel (value) {

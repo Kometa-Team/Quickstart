@@ -36,11 +36,13 @@ $(document).ready(function () {
   const $limit = $('#logscan-trends-limit')
   const $configFilter = $('#logscan-trends-config-filter')
   const $toolFilter = $('#logscan-trends-tool-filter')
-  const $toolSwitchButtons = $('.logscan-tool-switch [data-tool-filter-value]')
+  const $timeRange = $('#logscan-trends-time-range')
   const $commandFilter = $('#logscan-trends-command-filter')
   const $resetFilters = $('#logscan-trends-reset-filters')
   const $dateStart = $('#logscan-trends-date-start')
   const $dateEnd = $('#logscan-trends-date-end')
+  const $customDateRow = $('#logscan-trends-custom-date-row')
+  const $dateHint = $('#logscan-trends-date-hint')
   const $runCount = $('#logscan-trends-count')
   const $reset = $('#logscan-trends-reset')
   const $reingest = $('#logscan-trends-reingest')
@@ -92,7 +94,6 @@ $(document).ready(function () {
   const sortState = { key: 'finished_at', dir: 'desc' }
   let lastIngestState = null
   let analyticsPrefs = null
-  let toolFilterInitialized = false
   const defaultReingestButtonLabel = $reingest.text().trim() || 'Reingest logs'
 
   function escapeHtml (value) {
@@ -285,8 +286,6 @@ $(document).ready(function () {
   }
 
   function getDefaultToolFilterValue (tools) {
-    if (Array.isArray(tools) && tools.includes('kometa')) return 'kometa'
-    if (Array.isArray(tools) && tools.length === 1) return tools[0]
     return ''
   }
 
@@ -2147,25 +2146,42 @@ $(document).ready(function () {
     return nextValue !== selected
   }
 
-  function updateDateRangeInputs (runs, state) {
-    if (!$dateStart.length || !$dateEnd.length) return false
+  function getAvailableDateBounds (runs) {
     const dates = runs.map(run => getRunDateKey(run)).filter(Boolean).sort()
     if (!dates.length) {
+      return { minDate: '', maxDate: '' }
+    }
+    return { minDate: dates[0], maxDate: dates[dates.length - 1] }
+  }
+
+  function updateDateRangeInputs (runs, state) {
+    if (!$dateStart.length || !$dateEnd.length) return false
+    const { minDate, maxDate } = getAvailableDateBounds(runs)
+    const isCustom = state.timeRange === 'custom'
+    if (!minDate || !maxDate) {
       const hadValue = $dateStart.val() || $dateEnd.val()
       $dateStart.val('')
       $dateEnd.val('')
       $dateStart.prop('disabled', true)
       $dateEnd.prop('disabled', true)
+      if ($dateHint.length) $dateHint.text('No dated runs available for the current scope.')
       return Boolean(hadValue)
     }
-    const minDate = dates[0]
-    const maxDate = dates[dates.length - 1]
-    $dateStart.prop('disabled', false)
-    $dateEnd.prop('disabled', false)
+    $dateStart.prop('disabled', !isCustom)
+    $dateEnd.prop('disabled', !isCustom)
     $dateStart.attr('min', minDate)
     $dateStart.attr('max', maxDate)
     $dateEnd.attr('min', minDate)
     $dateEnd.attr('max', maxDate)
+    if ($dateHint.length) {
+      $dateHint.text(`Available data: ${minDate} to ${maxDate}`)
+    }
+    if (!isCustom) {
+      const hadValue = $dateStart.val() || $dateEnd.val()
+      $dateStart.val('')
+      $dateEnd.val('')
+      return Boolean(hadValue)
+    }
     let start = state.start || ''
     let end = state.end || ''
     if (!start || start < minDate || start > maxDate) start = minDate
@@ -2175,6 +2191,29 @@ $(document).ready(function () {
     $dateStart.val(start)
     $dateEnd.val(end)
     return changed
+  }
+
+  function clearDateFilters () {
+    if (!$dateStart.length || !$dateEnd.length) return
+    $dateStart.val('')
+    $dateEnd.val('')
+  }
+
+  function syncDateRangeVisibility () {
+    if (!$customDateRow.length) return
+    const isCustom = ($timeRange.val() || 'all') === 'custom'
+    $customDateRow.toggleClass('d-none', !isCustom)
+  }
+
+  function getRelativeDateRangeBounds (runs, days) {
+    const { maxDate } = getAvailableDateBounds(runs)
+    if (!maxDate) return { start: '', end: '' }
+    const endDate = new Date(`${maxDate}T00:00:00`)
+    if (Number.isNaN(endDate.getTime())) return { start: '', end: '' }
+    const startDate = new Date(endDate)
+    startDate.setDate(startDate.getDate() - Math.max(0, days - 1))
+    const start = startDate.toISOString().slice(0, 10)
+    return { start, end: maxDate }
   }
 
   function updateRunCountDisplay (filtered) {
@@ -2197,6 +2236,7 @@ $(document).ready(function () {
     return {
       config: $configFilter.val() || '',
       tool: $toolFilter.val() || '',
+      timeRange: $timeRange.val() || 'all',
       command: $commandFilter.val() || '',
       library: $libraryFilter.val() || '',
       start: $dateStart.val() || '',
@@ -2205,13 +2245,23 @@ $(document).ready(function () {
   }
 
   function filterRuns (runs, state) {
+    let rangeStart = ''
+    let rangeEnd = ''
+    if (state.timeRange === 'custom') {
+      rangeStart = state.start
+      rangeEnd = state.end
+    } else if (state.timeRange === '7' || state.timeRange === '30' || state.timeRange === '90') {
+      const relative = getRelativeDateRangeBounds(runs, parseInt(state.timeRange, 10))
+      rangeStart = relative.start
+      rangeEnd = relative.end
+    }
     return runs.filter(run => {
       if (state.config && normalizeConfigName(run.config_name) !== state.config) return false
       if (state.tool && getRunToolName(run) !== state.tool) return false
       if (state.command && getRunCommandValue(run) !== state.command) return false
-      if (state.start || state.end) {
+      if (rangeStart || rangeEnd) {
         const dateKey = getRunDateKey(run)
-        if (!isDateWithinRange(dateKey, state.start, state.end)) return false
+        if (!isDateWithinRange(dateKey, rangeStart, rangeEnd)) return false
       }
       return true
     })
@@ -2222,7 +2272,7 @@ $(document).ready(function () {
     changed = updateConfigFilter(filterRuns(allTableRuns, { ...state, config: '' })) || changed
     changed = updateToolFilter(filterRuns(allTableRuns, { ...state, tool: '' })) || changed
     changed = updateCommandFilter(filterRuns(allTableRuns, { ...state, command: '' })) || changed
-    changed = updateDateRangeInputs(filterRuns(allTableRuns, { ...state, start: '', end: '' }), state) || changed
+    changed = updateDateRangeInputs(filterRuns(allTableRuns, { ...state, start: '', end: '', timeRange: 'all' }), state) || changed
     changed = updateLibraryFilter(filterRuns(allRuns, { ...state, library: '' })) || changed
     return changed
   }
@@ -2231,40 +2281,19 @@ $(document).ready(function () {
     if (!$toolFilter.length) return false
     const selected = $toolFilter.val() || ''
     const tools = Array.from(new Set(runs.map(run => getRunToolName(run)))).sort()
-    const options = ['<option value="">All tools</option>']
+    const options = ['<option value="">All apps</option>']
     tools.forEach(tool => {
       const label = tool === 'imagemaid' ? 'ImageMaid' : 'Kometa'
       options.push(`<option value="${escapeHtml(tool)}">${escapeHtml(label)}</option>`)
     })
     $toolFilter.html(options.join(''))
-    let nextValue = selected && tools.includes(selected) ? selected : ''
-    if (!toolFilterInitialized) {
-      nextValue = getDefaultToolFilterValue(tools)
-      toolFilterInitialized = true
-    }
+    const nextValue = selected && tools.includes(selected) ? selected : getDefaultToolFilterValue(tools)
     $toolFilter.val(nextValue)
-    syncToolSwitch(tools, nextValue)
     return nextValue !== selected
   }
 
-  function syncToolSwitch (tools, selectedValue) {
-    if (!$toolSwitchButtons.length) return
-    const availableTools = new Set(Array.isArray(tools) ? tools : [])
-    const activeValue = typeof selectedValue === 'string' ? selectedValue : ($toolFilter.val() || '')
-    $toolSwitchButtons.each(function () {
-      const $button = $(this)
-      const value = String($button.attr('data-tool-filter-value') || '')
-      const isAvailable = value === '' || availableTools.has(value)
-      $button.toggleClass('d-none', value !== '' && !isAvailable)
-      $button.prop('disabled', !isAvailable)
-      $button.toggleClass('active', activeValue === value)
-      const label = value === 'imagemaid' ? 'ImageMaid' : (value === 'kometa' ? 'Kometa' : 'All')
-      $button.attr('aria-pressed', activeValue === value ? 'true' : 'false')
-      $button.attr('title', `Show ${label} analytics`)
-    })
-  }
-
   function applyFiltersAndRender () {
+    syncDateRangeVisibility()
     let state = getFilterState()
     for (let i = 0; i < 2; i += 1) {
       const changed = updateFilterOptions(state)
@@ -2822,9 +2851,8 @@ $(document).ready(function () {
 
   function fetchRuns (options = {}) {
     const suppressStatus = options && options.suppressStatus
-    const rawLimit = String($limit.val() || '25').toLowerCase()
-    const parsed = parseInt(rawLimit, 10)
-    const safeLimit = Number.isFinite(parsed) ? parsed : 25
+    const rawLimit = String($limit.val() || '500').toLowerCase()
+    const safeLimit = rawLimit === 'all' ? 'all' : (Number.isFinite(parseInt(rawLimit, 10)) ? parseInt(rawLimit, 10) : 500)
     if (!suppressStatus) updateStatus('Loading trends...')
     fetch(`/logscan/trends?limit=${safeLimit}`)
       .then(res => res.json())
@@ -3101,16 +3129,12 @@ $(document).ready(function () {
   })
   $toolFilter.on('change', function () {
     tablePage = 1
-    const tools = $toolFilter.find('option').map(function () { return $(this).val() }).get().filter(Boolean)
-    syncToolSwitch(tools, $toolFilter.val() || '')
+    clearDateFilters()
     applyFiltersAndRender()
   })
-  $toolSwitchButtons.on('click', function () {
-    const value = String($(this).attr('data-tool-filter-value') || '')
-    if ($toolFilter.val() === value) return
-    $toolFilter.val(value)
+  $timeRange.on('change', function () {
     tablePage = 1
-    syncToolSwitch($toolFilter.find('option').map(function () { return $(this).val() }).get().filter(Boolean), value)
+    clearDateFilters()
     applyFiltersAndRender()
   })
   $commandFilter.on('change', function () {
@@ -3144,11 +3168,11 @@ $(document).ready(function () {
     $limit.val('500')
     tablePage = 1
     $configFilter.val('')
-    $toolFilter.val(getDefaultToolFilterValue($toolFilter.find('option').map(function () { return $(this).val() }).get().filter(Boolean)))
+    $toolFilter.val('')
+    $timeRange.val('all')
     $commandFilter.val('')
     $libraryFilter.val('')
-    $dateStart.val('')
-    $dateEnd.val('')
+    clearDateFilters()
     fetchRuns({ suppressStatus: true })
   })
   if (preferencesModalEl) {

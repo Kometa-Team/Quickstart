@@ -9,6 +9,7 @@ $(document).ready(function () {
   let imagemaidInstalled = false
   let imagemaidVenvReady = false
   let imagemaidRunning = false
+  let imagemaidStarting = false
   let imagemaidUpdateAvailable = false
   let imagemaidUpdateCheckCompleted = false
   let imagemaidUpdateCheckSkipped = false
@@ -21,6 +22,9 @@ $(document).ready(function () {
   let moveConfirmModal = null
   let stopConfirmModal = null
   let autosaveTimer = null
+  let imagemaidStartupDeadline = 0
+  let lastImageMaidMode = String($('#imagemaid_mode').val() || 'report').trim().toLowerCase()
+  let restoreFolderModeConflict = false
 
   const moveModalEl = document.getElementById('imagemaid-move-confirm-modal')
   if (moveModalEl && typeof bootstrap !== 'undefined') {
@@ -150,6 +154,15 @@ $(document).ready(function () {
       title = 'Nothing mode'
       text = 'ImageMaid will skip metadata image cleanup entirely.'
       detail = 'Only the other selected operations will run, such as PhotoTranscoder cleanup, Empty Trash, Clean Bundles, or Optimize DB.'
+    }
+
+    if (['report', 'move', 'remove'].includes(mode) && restoreFolderModeConflict) {
+      tone = 'alert-danger'
+      title = `${mode.charAt(0).toUpperCase()}${mode.slice(1)} mode blocked`
+      text = `${mode.charAt(0).toUpperCase()}${mode.slice(1)} mode is not allowed while the ImageMaid Restore folder still exists.`
+      detail = hasRestoreDirPath
+        ? `Use nothing, restore, or clear while this folder exists: ${restoreDir}`
+        : 'Use nothing, restore, or clear while the existing ImageMaid Restore folder is present.'
     }
 
     els.modeHelp.removeClass('alert-secondary alert-warning alert-danger').addClass(tone)
@@ -354,7 +367,7 @@ $(document).ready(function () {
   }
 
   function syncRunGate () {
-    if (imagemaidRunning) {
+    if (imagemaidRunning || imagemaidStarting) {
       els.runGate.addClass('d-none')
       els.runSurface.removeClass('d-none')
       return
@@ -443,18 +456,36 @@ $(document).ready(function () {
 
   function setRunState (state, message) {
     if (state === 'running') {
+      imagemaidRunning = true
+      imagemaidStarting = false
+      imagemaidStartupDeadline = 0
       setBadge(els.runState, 'text-bg-success', 'Running')
       els.runBtn.prop('disabled', true)
       els.stopBtn.prop('disabled', false)
+    } else if (state === 'starting') {
+      imagemaidRunning = false
+      imagemaidStarting = true
+      setBadge(els.runState, 'text-bg-primary', 'Starting')
+      els.runBtn.prop('disabled', true)
+      els.stopBtn.prop('disabled', false)
     } else if (state === 'blocked') {
+      imagemaidRunning = false
+      imagemaidStarting = false
+      imagemaidStartupDeadline = 0
       setBadge(els.runState, 'text-bg-warning', 'Blocked')
       els.runBtn.prop('disabled', false)
       els.stopBtn.prop('disabled', true)
     } else if (state === 'error') {
+      imagemaidRunning = false
+      imagemaidStarting = false
+      imagemaidStartupDeadline = 0
       setBadge(els.runState, 'text-bg-danger', 'Error')
       els.runBtn.prop('disabled', false)
       els.stopBtn.prop('disabled', true)
     } else {
+      imagemaidRunning = false
+      imagemaidStarting = false
+      imagemaidStartupDeadline = 0
       setBadge(els.runState, 'text-bg-secondary', 'Idle')
       els.runBtn.prop('disabled', false)
       els.stopBtn.prop('disabled', true)
@@ -628,11 +659,13 @@ $(document).ready(function () {
       .then(async (res) => ({ ok: res.ok, body: await res.json() }))
       .then(({ ok, body }) => {
         imagemaidValidated = Boolean(body && body.validated)
+        restoreFolderModeConflict = Boolean(body && body.reason === 'restore_dir_blocks_mode')
         if (body && body.command_preview) {
           els.commandPreview.val(body.command_preview)
         } else {
           updatePreviewFromPayload()
         }
+        updateModeHelp()
         if (ok && body.validated) {
           setValidationState('ok', 'ImageMaid is ready to run.')
           return true
@@ -643,6 +676,8 @@ $(document).ready(function () {
       })
       .catch(() => {
         imagemaidValidated = false
+        restoreFolderModeConflict = false
+        updateModeHelp()
         setValidationState('error', 'ImageMaid validation failed.')
         return false
       })
@@ -676,6 +711,18 @@ $(document).ready(function () {
           loadLog()
           return
         }
+        if (status === 'starting') {
+          imagemaidStartupDeadline = Date.now() + 10000
+          const elapsed = typeof body.elapsed_seconds === 'number' ? `ImageMaid is still starting (${body.elapsed_seconds}s).` : 'ImageMaid is still starting.'
+          setRunState('starting', elapsed)
+          loadLog()
+          return
+        }
+        if (imagemaidStarting && Date.now() < imagemaidStartupDeadline) {
+          const secondsLeft = Math.max(1, Math.ceil((imagemaidStartupDeadline - Date.now()) / 1000))
+          setRunState('starting', `ImageMaid is still starting. Waiting up to ${secondsLeft}s before treating startup as failed.`)
+          return
+        }
         if (status === 'done') {
           setRunState('idle', 'ImageMaid finished.')
           loadLog()
@@ -695,7 +742,8 @@ $(document).ready(function () {
       return
     }
 
-    setRunState('running', 'Starting ImageMaid...')
+    imagemaidStartupDeadline = Date.now() + 10000
+    setRunState('starting', 'Starting ImageMaid...')
     fetch('/start-imagemaid', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -717,7 +765,8 @@ $(document).ready(function () {
           showToast('error', body.error || 'ImageMaid failed to start.')
           return
         }
-        setRunState('running', body.status || 'ImageMaid started.')
+        imagemaidStartupDeadline = Date.now() + 10000
+        setRunState('starting', body.status || 'ImageMaid started.')
         showToast('success', 'ImageMaid started.')
         updateStatus()
         loadLog()
@@ -750,6 +799,10 @@ $(document).ready(function () {
   }
 
   function onConfigChanged () {
+    const currentMode = String(els.mode.val() || 'report').trim().toLowerCase()
+    const switchedToBlockedMode = lastImageMaidMode !== currentMode && ['report', 'move', 'remove'].includes(currentMode)
+    lastImageMaidMode = currentMode
+    restoreFolderModeConflict = false
     imagemaidValidated = false
     imagemaidUpdateCheckCompleted = false
     imagemaidUpdateCheckSkipped = false
@@ -773,6 +826,9 @@ $(document).ready(function () {
     updatePreviewFromPayload()
     updateModeHelp()
     queueAutosave()
+    if (switchedToBlockedMode && String($('#imagemaid_plex_path').val() || '').trim()) {
+      validateImageMaid()
+    }
   }
 
   els.updateBtn.on('click', () => {

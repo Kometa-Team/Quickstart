@@ -89,9 +89,10 @@ def test_start_imagemaid_starts_when_valid(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module, "_build_imagemaid_command", lambda *_args, **_kwargs: "python imagemaid.py --mode report")
     seen = {}
 
-    def fake_launch(command, mode=None):
+    def fake_launch(command, mode=None, config_name=None):
         seen["command"] = command
         seen["mode"] = mode
+        seen["config_name"] = config_name
         return True, 2468
 
     monkeypatch.setattr(qs_module, "_launch_imagemaid_command", fake_launch)
@@ -101,6 +102,7 @@ def test_start_imagemaid_starts_when_valid(client, monkeypatch, qs_module):
     data = resp.get_json()
     assert data["status"] == "ImageMaid started"
     assert data["pid"] == 2468
+    assert seen["config_name"]
     assert seen["mode"] == "report"
 
 
@@ -154,9 +156,42 @@ def test_start_imagemaid_blocked_during_maintenance(client, tmp_path, monkeypatc
 
     content = (log_dir / "imagemaid.log").read_text(encoding="utf-8")
     assert "[Quickstart] Maintenance marker: event=blocked_start" in content
+    assert "config=" in content
     assert "tool=imagemaid" in content
     assert "mode=restore" in content
     assert "window=01:00-02:00" in content
+
+
+def test_imagemaid_status_reports_starting_during_startup_grace(client, tmp_path, monkeypatch, qs_module):
+    pid_file = tmp_path / "imagemaid.pid"
+    pid_file.write_text("4321", encoding="utf-8")
+
+    class FakeProc:
+        def __init__(self, pid):
+            self.pid = pid
+
+        def create_time(self):
+            return qs_module.time.time() - 2
+
+        def is_running(self):
+            return True
+
+        def status(self):
+            return qs_module.psutil.STATUS_SLEEPING
+
+        def cmdline(self):
+            return []
+
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: 4321)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid_file", lambda: str(pid_file))
+    monkeypatch.setattr(qs_module, "_find_running_imagemaid_process", lambda: None)
+    monkeypatch.setattr(qs_module.psutil, "Process", FakeProc)
+
+    resp = client.get("/imagemaid-status")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "starting"
+    assert data["pid"] == 4321
 
 
 def test_validate_imagemaid_restore_requires_restore_dir(tmp_path, monkeypatch, qs_module):
@@ -197,6 +232,133 @@ def test_validate_imagemaid_clear_requires_restore_dir(tmp_path, monkeypatch, qs
     assert reason == "missing_restore_dir"
     assert "ImageMaid Restore" in details
     assert str(plex_root / "ImageMaid Restore") in details
+
+
+def test_validate_imagemaid_report_rejects_existing_restore_dir(tmp_path, monkeypatch, qs_module):
+    plex_root = tmp_path / "Plex"
+    (plex_root / "Metadata").mkdir(parents=True)
+    (plex_root / "Plug-in Support").mkdir(parents=True)
+    restore_dir = plex_root / "ImageMaid Restore"
+    restore_dir.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
+    monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
+
+    ok, reason, details = qs_module._validate_imagemaid_settings({
+        "plex_path": str(plex_root),
+        "mode": "report",
+        "photo_transcoder": False,
+    })
+
+    assert ok is False
+    assert reason == "restore_dir_blocks_mode"
+    assert "Report mode is not allowed" in details
+    assert str(restore_dir) in details
+
+
+def test_validate_imagemaid_move_rejects_existing_restore_dir(tmp_path, monkeypatch, qs_module):
+    plex_root = tmp_path / "Plex"
+    (plex_root / "Metadata").mkdir(parents=True)
+    (plex_root / "Plug-in Support").mkdir(parents=True)
+    restore_dir = plex_root / "ImageMaid Restore"
+    restore_dir.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
+    monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
+
+    ok, reason, details = qs_module._validate_imagemaid_settings({
+        "plex_path": str(plex_root),
+        "mode": "move",
+        "photo_transcoder": False,
+    })
+
+    assert ok is False
+    assert reason == "restore_dir_blocks_mode"
+    assert "Move mode is not allowed" in details
+    assert str(restore_dir) in details
+
+
+def test_validate_imagemaid_remove_rejects_existing_restore_dir(tmp_path, monkeypatch, qs_module):
+    plex_root = tmp_path / "Plex"
+    (plex_root / "Metadata").mkdir(parents=True)
+    (plex_root / "Plug-in Support").mkdir(parents=True)
+    restore_dir = plex_root / "ImageMaid Restore"
+    restore_dir.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
+    monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
+
+    ok, reason, details = qs_module._validate_imagemaid_settings({
+        "plex_path": str(plex_root),
+        "mode": "remove",
+        "photo_transcoder": False,
+    })
+
+    assert ok is False
+    assert reason == "restore_dir_blocks_mode"
+    assert "Remove mode is not allowed" in details
+    assert str(restore_dir) in details
+
+
+def test_validate_imagemaid_restore_allows_existing_restore_dir(tmp_path, monkeypatch, qs_module):
+    plex_root = tmp_path / "Plex"
+    (plex_root / "Metadata").mkdir(parents=True)
+    (plex_root / "Plug-in Support").mkdir(parents=True)
+    (plex_root / "ImageMaid Restore").mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
+    monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
+
+    ok, reason, details = qs_module._validate_imagemaid_settings({
+        "plex_path": str(plex_root),
+        "mode": "restore",
+        "photo_transcoder": False,
+    })
+
+    assert ok is True
+    assert reason is None
+    assert details is None
+
+
+def test_validate_imagemaid_nothing_allows_existing_restore_dir(tmp_path, monkeypatch, qs_module):
+    plex_root = tmp_path / "Plex"
+    (plex_root / "Metadata").mkdir(parents=True)
+    (plex_root / "Plug-in Support").mkdir(parents=True)
+    (plex_root / "ImageMaid Restore").mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
+    monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
+
+    ok, reason, details = qs_module._validate_imagemaid_settings({
+        "plex_path": str(plex_root),
+        "mode": "nothing",
+        "photo_transcoder": False,
+    })
+
+    assert ok is True
+    assert reason is None
+    assert details is None
+
+
+def test_validate_imagemaid_clear_allows_existing_restore_dir(tmp_path, monkeypatch, qs_module):
+    plex_root = tmp_path / "Plex"
+    (plex_root / "Metadata").mkdir(parents=True)
+    (plex_root / "Plug-in Support").mkdir(parents=True)
+    (plex_root / "ImageMaid Restore").mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
+    monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
+
+    ok, reason, details = qs_module._validate_imagemaid_settings({
+        "plex_path": str(plex_root),
+        "mode": "clear",
+        "photo_transcoder": False,
+    })
+
+    assert ok is True
+    assert reason is None
+    assert details is None
+
 
 
 def test_stop_kometa_no_pid(client, monkeypatch, qs_module):
@@ -365,11 +527,12 @@ def test_write_quickstart_imagemaid_run_marker_writes_runtime_log(tmp_path, qs_m
 
     qs_module.app.config["VERSION_CHECK"] = {"local_version": "0.9.16-build18", "branch": "develop"}
 
-    ok = qs_module._write_quickstart_imagemaid_run_marker(imagemaid_root, mode="restore", log_path=log_path)
+    ok = qs_module._write_quickstart_imagemaid_run_marker(imagemaid_root, mode="restore", config_name="demo", log_path=log_path)
     assert ok is True
 
     content = log_path.read_text(encoding="utf-8")
     assert "[Quickstart] Run marker:" in content
+    assert "config=demo" in content
     assert "tool=imagemaid" in content
     assert "mode=restore" in content
 
