@@ -8632,10 +8632,26 @@ def _parse_imagemaid_bytes(text):
     value = str(text or "").strip()
     if not value:
         return None
-    match = re.match(r"^(\d+)\s+Bytes?$", value, re.IGNORECASE)
+    match = re.match(r"^([\d.]+)\s*([A-Za-z]+)$", value, re.IGNORECASE)
     if match:
         try:
-            return int(match.group(1))
+            number = float(match.group(1))
+        except (TypeError, ValueError):
+            return None
+        unit = str(match.group(2) or "").strip().lower().rstrip("s")
+        multipliers = {
+            "byte": 1,
+            "b": 1,
+            "kb": 1024,
+            "mb": 1024**2,
+            "gb": 1024**3,
+            "tb": 1024**4,
+        }
+        multiplier = multipliers.get(unit)
+        if multiplier is None:
+            return None
+        try:
+            return int(number * multiplier)
         except (TypeError, ValueError):
             return None
     return None
@@ -8728,6 +8744,11 @@ def _analyze_imagemaid_log_content(content, log_path=None):
     photo_found_files = 0
     photo_removed_files = 0
     photo_recovered_bytes = 0
+    restore_scan_runtime = None
+    restore_action_runtime = None
+    restore_found_files = 0
+    restore_removed_files = 0
+    restore_recovered_bytes = 0
     generic_error_lines = []
     database_downloaded_new = False
     database_download_failed = False
@@ -8843,11 +8864,35 @@ def _analyze_imagemaid_log_content(content, log_path=None):
             operation_started["optimize_db"] = True
             optimize_db_enabled = True
 
-        if "Scanning for PhotoTranscoder Images" in line or "Scanning Complete:" in line:
+        if "Scanning ImageMaid Restore for Bloat Images to Remove" in line:
+            current_runtime_section = "restore_scan"
+        elif "Removing ImageMaid Restore Bloat Images" in line or ("Removing Complete:" in line and "ImageMaid Restore Bloat Images" in line):
+            current_runtime_section = "restore_action"
+        elif "Scanning for PhotoTranscoder Images" in line or ("Scanning Complete:" in line and "PhotoTranscoder Images" in line):
             current_runtime_section = "photo_scan"
-        elif "Removing PhotoTranscoder Images" in line or "Remove Complete:" in line:
+        elif "Removing PhotoTranscoder Images" in line or ("Remove Complete:" in line and "PhotoTranscoder Images" in line):
             current_runtime_section = "photo_remove"
 
+        restore_found_match = re.search(
+            r"Found\s+(\d+)\s+Bloat Images in the ImageMaid Directory to Remove",
+            line,
+            re.IGNORECASE,
+        )
+        if restore_found_match:
+            try:
+                restore_found_files = int(restore_found_match.group(1))
+            except (TypeError, ValueError):
+                pass
+        restore_removed_match = re.search(
+            r"Removed\s+(\d+)\s+ImageMaid Restore Bloat Images",
+            line,
+            re.IGNORECASE,
+        )
+        if restore_removed_match:
+            try:
+                restore_removed_files = int(restore_removed_match.group(1))
+            except (TypeError, ValueError):
+                pass
         found_match = re.search(r"Found\s+(\d+)\s+PhotoTranscoder Images to Remove", line, re.IGNORECASE)
         if found_match:
             try:
@@ -8864,12 +8909,19 @@ def _analyze_imagemaid_log_content(content, log_path=None):
         if bytes_match:
             parsed_bytes = _parse_imagemaid_bytes(bytes_match.group(1))
             if parsed_bytes is not None:
-                photo_recovered_bytes = parsed_bytes
+                if current_runtime_section in {"restore_scan", "restore_action"}:
+                    restore_recovered_bytes = parsed_bytes
+                elif current_runtime_section in {"photo_scan", "photo_remove"}:
+                    photo_recovered_bytes = parsed_bytes
         runtime_line_match = re.search(r"\|\s*Runtime:\s*(.*?)\s*\|?$", line, re.IGNORECASE)
         if runtime_line_match:
             parsed_runtime = _parse_imagemaid_runtime_seconds(runtime_line_match.group(1))
             if parsed_runtime is not None:
-                if current_runtime_section == "photo_scan":
+                if current_runtime_section == "restore_scan":
+                    restore_scan_runtime = parsed_runtime
+                elif current_runtime_section == "restore_action":
+                    restore_action_runtime = parsed_runtime
+                elif current_runtime_section == "photo_scan":
                     photo_scan_runtime = parsed_runtime
                 elif current_runtime_section == "photo_remove":
                     photo_remove_runtime = parsed_runtime
@@ -8927,18 +8979,31 @@ def _analyze_imagemaid_log_content(content, log_path=None):
     run_key_seed = f"imagemaid|{timestamp_seed}|{mode}|{path.name if path else 'imagemaid.log'}"
     created_at = finished_at or started_at or _iso_from_mtime(stats.st_mtime if stats else None)
     section_runtimes = {}
+    if restore_scan_runtime is not None:
+        section_runtimes["restore_dir_scan"] = restore_scan_runtime
+    if restore_action_runtime is not None:
+        section_runtimes["restore_dir_action"] = restore_action_runtime
     if photo_scan_runtime is not None:
         section_runtimes["photo_transcoder_scan"] = photo_scan_runtime
     if photo_remove_runtime is not None:
         section_runtimes["photo_transcoder_remove"] = photo_remove_runtime
+    total_found_files = restore_found_files + photo_found_files
+    total_removed_files = restore_removed_files + photo_removed_files
+    total_recovered_bytes = restore_recovered_bytes + photo_recovered_bytes
     analysis_counts = {
         "imagemaid_error_lines": len(error_lines),
         "imagemaid_database_seen": int(database_section_seen),
         "imagemaid_database_downloaded_new": int(database_downloaded_new),
         "imagemaid_database_download_failed": int(database_download_failed),
+        "imagemaid_restore_found_files": restore_found_files,
+        "imagemaid_restore_removed_files": restore_removed_files,
+        "imagemaid_restore_recovered_bytes": restore_recovered_bytes,
         "imagemaid_photo_found_files": photo_found_files,
         "imagemaid_photo_removed_files": photo_removed_files,
         "imagemaid_photo_recovered_bytes": photo_recovered_bytes,
+        "imagemaid_total_found_files": total_found_files,
+        "imagemaid_total_removed_files": total_removed_files,
+        "imagemaid_total_recovered_bytes": total_recovered_bytes,
         "imagemaid_empty_trash_enabled": int(empty_trash_enabled),
         "imagemaid_clean_bundles_enabled": int(clean_bundles_enabled),
         "imagemaid_optimize_db_enabled": int(optimize_db_enabled),

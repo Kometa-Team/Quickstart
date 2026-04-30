@@ -23,6 +23,10 @@ $(document).ready(function () {
   const $daily = $('#logscan-trends-daily')
   const $dailyRuntime = $('#logscan-trends-daily-runtime')
   const $runtime = $('#logscan-trends-runtime')
+  const $imagemaidSummary = $('#logscan-trends-imagemaid-summary')
+  const $imagemaidRecovered = $('#logscan-trends-imagemaid-recovered')
+  const $imagemaidFiles = $('#logscan-trends-imagemaid-files')
+  const $imagemaidModes = $('#logscan-trends-imagemaid-modes')
   const $counts = $('#logscan-trends-counts')
   const $countsSeries = $('#logscan-trends-counts-series')
   const $ingest = $('#logscan-trends-ingest')
@@ -122,6 +126,14 @@ $(document).ready(function () {
     if (typeof value !== 'number' || !Number.isFinite(value)) return '0'
     if (Number.isInteger(value)) return String(value)
     return value.toFixed(1).replace(/\.0$/, '')
+  }
+
+  function formatCompactNumber (value) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return '0'
+    const rounded = Math.round(value)
+    if (Math.abs(rounded) >= 1000000) return `${(rounded / 1000000).toFixed(1).replace(/\.0$/, '')}M`
+    if (Math.abs(rounded) >= 1000) return `${(rounded / 1000).toFixed(1).replace(/\.0$/, '')}K`
+    return String(rounded)
   }
 
   function formatBytes (value) {
@@ -307,6 +319,16 @@ $(document).ready(function () {
 
   function getRunToolLabel (run) {
     return getRunToolName(run) === 'imagemaid' ? 'ImageMaid' : 'Kometa'
+  }
+
+  function getImagemaidMode (run) {
+    const direct = String(run && run.imagemaid_mode ? run.imagemaid_mode : '').trim().toLowerCase()
+    if (direct) return direct
+    const signatureMatch = String(run && run.command_signature ? run.command_signature : '').match(/--mode\s+([a-z]+)/i)
+    if (signatureMatch) return String(signatureMatch[1] || '').trim().toLowerCase()
+    const commandMatch = String(run && run.run_command ? run.run_command : '').match(/--mode\s+([a-z]+)/i)
+    if (commandMatch) return String(commandMatch[1] || '').trim().toLowerCase()
+    return 'unknown'
   }
 
   function getRunDateKey (run) {
@@ -862,6 +884,10 @@ $(document).ready(function () {
   const PANEL_PREFS = [
     { key: 'summary', label: 'Summary + ingest health' },
     { key: 'daily_runs', label: 'Daily runs' },
+    { key: 'imagemaid_summary', label: 'ImageMaid summary' },
+    { key: 'imagemaid_recovered_trend', label: 'ImageMaid recovered space by day' },
+    { key: 'imagemaid_files_trend', label: 'ImageMaid files removed by day' },
+    { key: 'imagemaid_mode_mix', label: 'ImageMaid runs by mode' },
     { key: 'runtime_distribution', label: 'Runtime distribution' },
     { key: 'counts_mix', label: 'Log levels + cache' },
     { key: 'issue_trends', label: 'Issue trends' },
@@ -968,6 +994,37 @@ $(document).ready(function () {
       buckets[key].configs[config] = (buckets[key].configs[config] || 0) + 1
       buckets[key].cache_total += cacheLines
       buckets[key].cache_runs += 1
+    })
+    return buckets
+  }
+
+  function getImagemaidRuns (runs) {
+    return Array.isArray(runs)
+      ? runs.filter(run => getRunToolName(run) === 'imagemaid')
+      : []
+  }
+
+  function buildImagemaidDailyBuckets (runs) {
+    const buckets = {}
+    getImagemaidRuns(runs).forEach(run => {
+      const key = getRunDateKey(run)
+      if (!key) return
+      const counts = run && run.analysis_counts && typeof run.analysis_counts === 'object'
+        ? run.analysis_counts
+        : {}
+      if (!buckets[key]) {
+        buckets[key] = {
+          runs: 0,
+          recoveredBytes: 0,
+          removedFiles: 0,
+          modes: {}
+        }
+      }
+      buckets[key].runs += 1
+      buckets[key].recoveredBytes += Number.isFinite(counts.imagemaid_total_recovered_bytes) ? counts.imagemaid_total_recovered_bytes : 0
+      buckets[key].removedFiles += Number.isFinite(counts.imagemaid_total_removed_files) ? counts.imagemaid_total_removed_files : 0
+      const mode = getImagemaidMode(run)
+      buckets[key].modes[mode] = (buckets[key].modes[mode] || 0) + 1
     })
     return buckets
   }
@@ -1192,6 +1249,158 @@ $(document).ready(function () {
       const titleAttr = title ? ` title="${escapeHtml(title)}"` : ''
       return `<div${titleAttr}>${escapeHtml(text)}</div>`
     }).join(''))
+  }
+
+  function renderImagemaidSummary (runs) {
+    if (!$imagemaidSummary.length) return
+    const imagemaidRuns = getImagemaidRuns(runs)
+    if (!imagemaidRuns.length) {
+      $imagemaidSummary.text('No ImageMaid runs in the current filters.')
+      return
+    }
+    const totals = imagemaidRuns.reduce((acc, run) => {
+      const counts = run && run.analysis_counts && typeof run.analysis_counts === 'object'
+        ? run.analysis_counts
+        : {}
+      acc.recoveredBytes += Number.isFinite(counts.imagemaid_total_recovered_bytes) ? counts.imagemaid_total_recovered_bytes : 0
+      acc.removedFiles += Number.isFinite(counts.imagemaid_total_removed_files) ? counts.imagemaid_total_removed_files : 0
+      const mode = getImagemaidMode(run)
+      acc.modes[mode] = (acc.modes[mode] || 0) + 1
+      return acc
+    }, { recoveredBytes: 0, removedFiles: 0, modes: {} })
+    const modeEntries = Object.entries(totals.modes).sort((a, b) => b[1] - a[1])
+    const topMode = modeEntries.length ? `${modeEntries[0][0]} (${modeEntries[0][1]})` : 'n/a'
+    const avgRecovered = imagemaidRuns.length ? totals.recoveredBytes / imagemaidRuns.length : 0
+    const cards = [
+      { label: 'Runs', value: imagemaidRuns.length },
+      { label: 'Recovered', value: formatBytes(totals.recoveredBytes) },
+      { label: 'Files Removed', value: formatCompactNumber(totals.removedFiles) },
+      { label: 'Top Mode', value: topMode }
+    ]
+    const notes = [
+      `Average recovered per run: ${formatBytes(avgRecovered)}`,
+      `Modes tracked: ${modeEntries.length || 0}`
+    ]
+    $imagemaidSummary.html(`
+      <div class="logscan-kpi-grid">
+        ${cards.map(card => `
+          <div class="logscan-kpi">
+            <div class="logscan-kpi-label">${escapeHtml(card.label)}</div>
+            <div class="logscan-kpi-value">${escapeHtml(String(card.value))}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="small text-muted mt-2">${notes.map(note => `<div>${escapeHtml(note)}</div>`).join('')}</div>
+    `)
+  }
+
+  function renderImagemaidTrendChart ($el, runs, metricKey, options = {}) {
+    if (!$el.length) return
+    const imagemaidRuns = getImagemaidRuns(runs)
+    if (!imagemaidRuns.length) {
+      $el.text('No ImageMaid runs in the current filters.')
+      return
+    }
+    const buckets = buildImagemaidDailyBuckets(imagemaidRuns)
+    const days = Object.keys(buckets).sort().slice(-14)
+    if (!days.length) {
+      $el.text('No ImageMaid trend data yet.')
+      return
+    }
+    const values = days.map(day => {
+      const bucket = buckets[day] || {}
+      return Number.isFinite(bucket[metricKey]) ? bucket[metricKey] : 0
+    })
+    if (!values.some(value => value > 0)) {
+      $el.text(options.emptyText || 'No ImageMaid activity recorded for this metric yet.')
+      return
+    }
+    const maxValue = Math.max(...values, 1)
+    const rollingAvg = computeRollingAverage(values, 7)
+    const barWidth = 18
+    const gap = 10
+    const chartHeight = 120
+    const paddingTop = 6
+    const paddingBottom = 14
+    const chartAreaHeight = chartHeight - paddingTop - paddingBottom
+    const chartWidth = Math.max(1, (barWidth + gap) * days.length - gap)
+    const bars = []
+    const linePoints = []
+    days.forEach((day, index) => {
+      const x = index * (barWidth + gap)
+      const value = values[index]
+      const height = chartAreaHeight * (value / maxValue)
+      const y = paddingTop + chartAreaHeight - height
+      bars.push(`<rect x="${x}" y="${y.toFixed(2)}" width="${barWidth}" height="${height.toFixed(2)}" fill="${options.barColor || '#4cc9f0'}"></rect>`)
+      const avgValue = rollingAvg[index] || 0
+      const lineX = x + (barWidth / 2)
+      const lineY = paddingTop + (chartAreaHeight - (chartAreaHeight * (avgValue / maxValue)))
+      linePoints.push(`${lineX.toFixed(2)},${lineY.toFixed(2)}`)
+    })
+    const labels = days.map((day, index) => {
+      const displayValue = typeof options.formatValue === 'function'
+        ? options.formatValue(values[index])
+        : String(values[index])
+      return `
+        <div class="logscan-daily-label" title="${escapeHtml(day)}">
+          <span class="logscan-daily-label-date">${escapeHtml(day.slice(5))}</span>
+          <span class="logscan-daily-label-count">${escapeHtml(displayValue)}</span>
+        </div>
+      `
+    })
+    const labelStyle = `style="grid-template-columns: repeat(${days.length}, minmax(0, 1fr));"`
+    const legend = `
+      <div class="logscan-daily-legend">
+        <span class="logscan-legend-item"><span class="logscan-legend-swatch" style="background:${escapeHtml(options.barColor || '#4cc9f0')}"></span>${escapeHtml(options.seriesLabel || 'Daily total')}</span>
+        <span class="logscan-legend-item"><span class="logscan-legend-line"></span>7-day avg</span>
+      </div>
+    `
+    $el.html(`
+      <div class="logscan-library-meta">${escapeHtml(options.metaLabel || 'Last 14 days of ImageMaid activity')}</div>
+      <div class="logscan-daily-chart">
+        <svg class="logscan-daily-svg" viewBox="0 0 ${chartWidth} ${chartHeight}" preserveAspectRatio="none">
+          ${bars.join('')}
+          <polyline class="logscan-daily-line" points="${linePoints.join(' ')}"></polyline>
+        </svg>
+        <div class="logscan-daily-labels" ${labelStyle}>
+          ${labels.join('')}
+        </div>
+      </div>
+      ${legend}
+    `)
+  }
+
+  function renderImagemaidModeMix (runs) {
+    if (!$imagemaidModes.length) return
+    const imagemaidRuns = getImagemaidRuns(runs)
+    if (!imagemaidRuns.length) {
+      $imagemaidModes.text('No ImageMaid runs in the current filters.')
+      return
+    }
+    const counts = {}
+    imagemaidRuns.forEach(run => {
+      const mode = getImagemaidMode(run)
+      counts[mode] = (counts[mode] || 0) + 1
+    })
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1])
+    if (!entries.length) {
+      $imagemaidModes.text('No ImageMaid mode data yet.')
+      return
+    }
+    const maxCount = Math.max(...entries.map(([, count]) => count), 1)
+    const rows = entries.map(([mode, count]) => {
+      const pct = maxCount ? Math.round((count / maxCount) * 100) : 0
+      return `
+        <div class="logscan-histogram-row">
+          <div class="logscan-histogram-label">${escapeHtml(mode)}</div>
+          <div class="logscan-histogram-bar-wrap">
+            <div class="logscan-histogram-bar" style="width: ${pct}%"></div>
+          </div>
+          <div class="logscan-histogram-count">${count}</div>
+        </div>
+      `
+    })
+    $imagemaidModes.html(rows.join(''))
   }
 
   function renderArchiveStorageSummary (storage) {
@@ -2306,6 +2515,20 @@ $(document).ready(function () {
     updateRunCountDisplay(filtered)
     renderSummary(filtered)
     renderDaily(filtered)
+    renderImagemaidSummary(filtered)
+    renderImagemaidTrendChart($imagemaidRecovered, filtered, 'recoveredBytes', {
+      barColor: '#43aa8b',
+      seriesLabel: 'Recovered space',
+      formatValue: value => formatBytes(value),
+      metaLabel: 'Daily total recovered space from ImageMaid runs'
+    })
+    renderImagemaidTrendChart($imagemaidFiles, filtered, 'removedFiles', {
+      barColor: '#f9c74f',
+      seriesLabel: 'Files removed',
+      formatValue: value => formatCompactNumber(value),
+      metaLabel: 'Daily total files removed by ImageMaid'
+    })
+    renderImagemaidModeMix(filtered)
     renderRuntimeDistribution(filtered)
     renderCountsMix(filtered)
     renderIssueTrends(filtered)
@@ -2630,9 +2853,14 @@ $(document).ready(function () {
       `Completion: ${escapeHtml(String(run.completion_reason || (run.is_incomplete ? 'unknown_incomplete' : 'completed')).replaceAll('_', ' '))}`,
       `Operations: ${escapeHtml(operations.length ? operations.join(', ') : 'None detected')}`,
       `Database download: ${counts.imagemaid_database_downloaded_new ? 'Downloaded new database' : (counts.imagemaid_database_download_failed ? 'Failed to download database' : 'No download recorded')}`,
+      `Restore directory files found: ${escapeHtml(String(counts.imagemaid_restore_found_files || 0))}`,
+      `Restore directory files removed: ${escapeHtml(String(counts.imagemaid_restore_removed_files || 0))}`,
+      `Restore directory bytes recovered: ${escapeHtml(formatBytes(counts.imagemaid_restore_recovered_bytes || 0))}`,
       `PhotoTranscoder files found: ${escapeHtml(String(counts.imagemaid_photo_found_files || 0))}`,
       `PhotoTranscoder files removed: ${escapeHtml(String(counts.imagemaid_photo_removed_files || 0))}`,
-      `PhotoTranscoder bytes recovered: ${escapeHtml(formatBytes(counts.imagemaid_photo_recovered_bytes || 0))}`
+      `PhotoTranscoder bytes recovered: ${escapeHtml(formatBytes(counts.imagemaid_photo_recovered_bytes || 0))}`,
+      `Total files removed: ${escapeHtml(String(counts.imagemaid_total_removed_files || 0))}`,
+      `Total bytes recovered: ${escapeHtml(formatBytes(counts.imagemaid_total_recovered_bytes || 0))}`
     ]
     const sectionLines = buildSectionDetails(run.section_runtimes, getRunTimeParts(run).effective)
     if (sectionLines.length) {

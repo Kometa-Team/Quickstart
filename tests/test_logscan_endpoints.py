@@ -464,7 +464,7 @@ def test_logscan_trends_log_delete_supports_bulk_delete(client, isolated_config_
 
 
 def test_logscan_trends_log_compress_supports_bulk_compress(client, isolated_config_dir, monkeypatch, qs_module):
-    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
     archive_dir.mkdir(parents=True, exist_ok=True)
     first_log = archive_dir / "meta-bulk-1.log"
     second_log = archive_dir / "meta-bulk-2.log"
@@ -1034,7 +1034,7 @@ def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, m
 def test_logscan_reingest_archives_incomplete_rotated_live_log(client, isolated_config_dir, monkeypatch, qs_module):
     kometa_root = Path(qs_module.app.config["KOMETA_ROOT"])
     log_dir = kometa_root / "config" / "logs"
-    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
     log_dir.mkdir(parents=True, exist_ok=True)
     archive_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / "meta-2.log"
@@ -1230,8 +1230,74 @@ def test_logscan_reingest_ingests_imagemaid_runtime_log_with_parsed_details(clie
     assert run["analysis_counts"]["imagemaid_completed_with_errors"] == 1
 
 
+def test_logscan_reingest_ingests_imagemaid_clear_runtime_log_with_restore_stats(client, isolated_config_dir, monkeypatch, qs_module):
+    imagemaid_root = isolated_config_dir / "imagemaid"
+    log_dir = imagemaid_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    runtime_log = log_dir / "imagemaid.log"
+    runtime_log.write_text(
+        "\n".join(
+            [
+                "[2026-04-29 21:53:15,701] [imagemaid.py:93]           [INFO]     |====================================================================================================|",
+                "[2026-04-29 21:53:16,088] [imagemaid.py:93]           [INFO]     |     Version: 1.1.1-build8 (Python 3.12.1)                                                          |",
+                "[2026-04-29 21:53:16,716] [imagemaid.py:93]           [DEBUG]    | Run Command: C:\\Users\\bullmoose20\\Quickstart\\config\\imagemaid\\imagemaid.py --url (redacted) --token (redacted) --plex P:\\plex --mode clear --photo-transcoder --local --timeout 600 --sleep 60 |",
+                "[2026-04-29 21:53:16,726] [imagemaid.py:118]          [INFO]     | Running in Clear Mode with PhotoTrancoder set to True                                              |",
+                "[2026-04-29 21:53:16,739] [imagemaid.py:385]          [INFO]     | Scanning ImageMaid Restore for Bloat Images to Remove                                              |",
+                "[2026-04-29 22:05:43,127] [imagemaid.py:387]          [INFO]     | Scanning Complete: Found 93440 Bloat Images in the ImageMaid Directory to Remove                   |",
+                "[2026-04-29 22:05:43,128] [imagemaid.py:388]          [INFO]     | Runtime: 0:12:26                                                                                   |",
+                "[2026-04-29 22:05:43,129] [imagemaid.py:392]          [INFO]     | Removing ImageMaid Restore Bloat Images                                                            |",
+                "[2026-04-29 23:08:07,043] [imagemaid.py:401]          [INFO]     | Removing Complete: Removed 93440 ImageMaid Restore Bloat Images                                    |",
+                "[2026-04-29 23:08:07,044] [imagemaid.py:403]          [INFO]     | Space Recovered: 23.79 GBs                                                                         |",
+                "[2026-04-29 23:08:07,045] [imagemaid.py:404]          [INFO]     | Runtime: 1:02:23                                                                                   |",
+                "[2026-04-29 23:08:07,047] [imagemaid.py:415]          [INFO]     | Scanning for PhotoTranscoder Images                                                                |",
+                "[2026-04-29 23:08:08,098] [imagemaid.py:417]          [INFO]     | Scanning Complete: Found 126 PhotoTranscoder Images to Remove                                      |",
+                "[2026-04-29 23:08:08,099] [imagemaid.py:418]          [INFO]     | Runtime: 0:00:01                                                                                   |",
+                "[2026-04-29 23:08:08,100] [imagemaid.py:421]          [INFO]     | Removing PhotoTranscoder Images                                                                    |",
+                "[2026-04-29 23:08:09,311] [imagemaid.py:432]          [INFO]     | Remove Complete: Removed 126 PhotoTranscoder Images                                                |",
+                "[2026-04-29 23:08:09,312] [imagemaid.py:434]          [INFO]     | Space Recovered: 6.43 MBs                                                                          |",
+                "[2026-04-29 23:08:09,312] [imagemaid.py:435]          [INFO]     | Runtime: 0:00:01                                                                                   |",
+                "[2026-04-29 23:08:09,319] [imagemaid.py:473]          [INFO]     |======================================== ImageMaid Finished ========================================|",
+                "[2026-04-29 23:08:09,320] [imagemaid.py:473]          [INFO]     | Total Runtime      | 1:14:52                                                                       |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: imagemaid_root)
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: False)
+    monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
+
+    resp = client.post("/logscan/trends/reingest", json={"reset": True})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["ingested"] >= 1
+
+    runs = qs_module.database.get_log_runs(limit=10)
+    imagemaid_runs = [run for run in runs if run.get("tool_name") == "imagemaid"]
+    assert imagemaid_runs
+    run = imagemaid_runs[0]
+    assert run["started_at"] == "2026-04-29 21:53:15"
+    assert run["finished_at"] == "2026-04-29 23:08:09"
+    assert run["run_time_seconds"] == 4492
+    assert "--mode clear" in run["command_signature"]
+    assert run["kometa_version"] == "1.1.1-build8"
+    assert run["analysis_counts"]["imagemaid_restore_found_files"] == 93440
+    assert run["analysis_counts"]["imagemaid_restore_removed_files"] == 93440
+    assert run["analysis_counts"]["imagemaid_photo_found_files"] == 126
+    assert run["analysis_counts"]["imagemaid_photo_removed_files"] == 126
+    assert run["analysis_counts"]["imagemaid_total_removed_files"] == 93566
+    assert run["analysis_counts"]["imagemaid_restore_recovered_bytes"] == 25544317992
+    assert run["analysis_counts"]["imagemaid_photo_recovered_bytes"] == 6742343
+    assert run["analysis_counts"]["imagemaid_total_recovered_bytes"] == 25551060335
+    assert run["section_runtimes"]["restore_dir_scan"] == 746
+    assert run["section_runtimes"]["restore_dir_action"] == 3743
+    assert run["section_runtimes"]["photo_transcoder_scan"] == 1
+    assert run["section_runtimes"]["photo_transcoder_remove"] == 1
+
+
 def test_analyze_imagemaid_log_content_uses_first_runtime_timestamp_for_started_at(qs_module):
-    summary = qs_module._analyze_imagemaid_log_content(
+    result = qs_module._analyze_imagemaid_log_content(
         "\n".join(
             [
                 "[2026-04-29 15:08:28,897] [imagemaid.py:93]           [INFO]     |====================================================================================================|",
@@ -1242,7 +1308,8 @@ def test_analyze_imagemaid_log_content_uses_first_runtime_timestamp_for_started_
         log_path="imagemaid.log",
     )
 
-    assert summary is not None
+    assert result is not None
+    summary = result["summary"]
     assert summary["started_at"] == "2026-04-29 15:08:28"
     assert summary["finished_at"] == "2026-04-29 15:08:35"
     assert summary["run_time_seconds"] == 5

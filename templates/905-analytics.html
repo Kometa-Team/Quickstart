@@ -132,6 +132,36 @@
     </div>
 
     <div class="row g-3 mt-3">
+      <div class="col-lg-4" data-panel-key="imagemaid_summary">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">ImageMaid Summary</h6>
+          <div id="logscan-trends-imagemaid-summary" class="small text-muted">Loading ImageMaid summary...</div>
+        </div>
+      </div>
+      <div class="col-lg-4" data-panel-key="imagemaid_recovered_trend">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Recovered Space by Day</h6>
+          <div id="logscan-trends-imagemaid-recovered" class="small text-muted">Loading recovered space trend...</div>
+        </div>
+      </div>
+      <div class="col-lg-4" data-panel-key="imagemaid_mode_mix">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">ImageMaid Runs by Mode</h6>
+          <div id="logscan-trends-imagemaid-modes" class="small text-muted">Loading mode distribution...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+      <div class="col-12" data-panel-key="imagemaid_files_trend">
+        <div class="border border-secondary rounded p-3 h-100">
+          <h6 class="text-uppercase text-muted mb-2">Files Removed by Day</h6>
+          <div id="logscan-trends-imagemaid-files" class="small text-muted">Loading removed files trend...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3 mt-3">
       <div class="col-12" data-panel-key="counts_mix">
         <div class="border border-secondary rounded p-3 h-100">
           <h6 class="text-uppercase text-muted mb-2">Log Levels + Cache (Avg per day)</h6>
@@ -546,6 +576,26 @@
                     <input class="form-check-input logscan-pref-input" type="checkbox"
                       id="logscan-pref-issue-trends" data-pref-group="panels" data-pref-key="issue_trends">
                     <label class="form-check-label" for="logscan-pref-issue-trends">Issue trends</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
+                      id="logscan-pref-imagemaid-summary" data-pref-group="panels" data-pref-key="imagemaid_summary">
+                    <label class="form-check-label" for="logscan-pref-imagemaid-summary">ImageMaid summary</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
+                      id="logscan-pref-imagemaid-recovered-trend" data-pref-group="panels" data-pref-key="imagemaid_recovered_trend">
+                    <label class="form-check-label" for="logscan-pref-imagemaid-recovered-trend">ImageMaid recovered space by day</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
+                      id="logscan-pref-imagemaid-files-trend" data-pref-group="panels" data-pref-key="imagemaid_files_trend">
+                    <label class="form-check-label" for="logscan-pref-imagemaid-files-trend">ImageMaid files removed by day</label>
+                  </div>
+                  <div class="form-check form-switch">
+                    <input class="form-check-input logscan-pref-input" type="checkbox"
+                      id="logscan-pref-imagemaid-mode-mix" data-pref-group="panels" data-pref-key="imagemaid_mode_mix">
+                    <label class="form-check-label" for="logscan-pref-imagemaid-mode-mix">ImageMaid runs by mode</label>
                   </div>
                   <div class="form-check form-switch">
                     <input class="form-check-input logscan-pref-input" type="checkbox"
