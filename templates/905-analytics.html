@@ -77,7 +77,7 @@
             Download missing people log
           </a>
           <button id="logscan-trends-reingest" class="btn nav-button btn-sm logscan-control-action" type="button"
-            data-bs-toggle="modal" data-bs-target="#logscan-reingest-modal">Reingest logs</button>
+            data-bs-toggle="modal" data-bs-target="#logscan-reingest-modal">Reingest new logs</button>
           <button id="logscan-trends-reset" class="btn nav-button btn-sm logscan-control-action" type="button"
             data-bs-toggle="modal" data-bs-target="#logscan-reset-modal">Reset trends</button>
         </div>
@@ -401,17 +401,17 @@
   <div class="modal-dialog modal-dialog-centered logscan-confirm-modal-dialog">
     <div class="modal-content bg-dark text-light border-secondary">
       <div class="modal-header">
-        <h5 class="modal-title" id="logscan-reingest-title">Reingest Logs</h5>
+        <h5 class="modal-title" id="logscan-reingest-title">Reingest New Logs</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
           aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p class="mb-2">This rebuilds Analytics from Quickstart-managed runtime and archived logs.</p>
+        <p class="mb-2">This scans new or changed Quickstart-managed runtime and archived logs without clearing existing Analytics history.</p>
         <div class="small text-muted">
           <div>Kometa runtime logs: <code>config/kometa/config/logs</code></div>
           <div>ImageMaid runtime logs: <code>config/imagemaid/config/logs</code></div>
           <div>Archived logs: <code>config/cache/logscan/archive/kometa</code> and <code>config/cache/logscan/archive/imagemaid</code></div>
-          <div class="mt-2">Missing people entries are deduped and saved to <code>config/cache/logscan/meta_people_missing.log</code>.</div>
+          <div class="mt-2">Use <strong>Reset trends</strong> when you want a full rebuild from scratch. Missing people entries are deduped and saved to <code>config/cache/logscan/meta_people_missing.log</code>.</div>
         </div>
       </div>
       <div class="modal-footer">

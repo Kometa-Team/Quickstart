@@ -1286,6 +1286,92 @@ def test_logscan_reingest_archives_completed_imagemaid_runtime_log_into_imagemai
     assert saved_cache[str(archived_paths[0].resolve())]["tool_name"] == "imagemaid"
 
 
+def test_logscan_trends_auto_ingests_completed_imagemaid_live_log(client, isolated_config_dir, monkeypatch, qs_module):
+    imagemaid_root = isolated_config_dir / "imagemaid"
+    log_dir = imagemaid_root / "config" / "logs"
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "imagemaid"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    runtime_log = log_dir / "imagemaid.log"
+    runtime_log.write_text(
+        "\n".join(
+            [
+                "[Quickstart] Run marker: started=2026-04-29T00:32:44.827109 config=demo tool=imagemaid mode=report",
+                "[2026-04-29 15:08:35,001] [imagemaid.py:453]          [INFO]     |======================================== ImageMaid Finished ========================================|",
+                "[2026-04-29 15:08:35,002] [imagemaid.py:453]          [INFO]     | Total Runtime      | 0:00:05                                                                       |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: imagemaid_root)
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: False)
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["total_runs"] == 1
+    assert payload["runs"][0]["tool_name"] == "imagemaid"
+    assert payload["runs"][0]["config_name"] == "demo"
+    assert not runtime_log.exists()
+    assert len(list(archive_dir.glob("imagemaid-*.log.gz"))) == 1
+
+
+def test_logscan_reingest_reset_false_scans_only_delta_files(client, isolated_config_dir, monkeypatch, qs_module):
+    kometa_root = isolated_config_dir / "kometa"
+    kometa_log_dir = kometa_root / "config" / "logs"
+    kometa_log_dir.mkdir(parents=True, exist_ok=True)
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+
+    cached_path = archive_dir / "meta-20260428-120000Z-10.log"
+    cached_path.write_text("cached complete log\n", encoding="utf-8")
+    cached_stats = cached_path.stat()
+
+    imagemaid_root = isolated_config_dir / "imagemaid"
+    imagemaid_log_dir = imagemaid_root / "config" / "logs"
+    imagemaid_log_dir.mkdir(parents=True, exist_ok=True)
+    delta_path = imagemaid_log_dir / "imagemaid.log"
+    delta_path.write_text(
+        "\n".join(
+            [
+                "[Quickstart] Run marker: started=2026-04-29T00:32:44.827109 config=demo tool=imagemaid mode=report",
+                "[2026-04-29 15:08:35,001] [imagemaid.py:453]          [INFO]     |======================================== ImageMaid Finished ========================================|",
+                "[2026-04-29 15:08:35,002] [imagemaid.py:453]          [INFO]     | Total Runtime      | 0:00:05                                                                       |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_root_path", lambda: kometa_root)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: imagemaid_root)
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: False)
+    monkeypatch.setattr(qs_module.logscan.LogscanAnalyzer, "preload_people_index", lambda self, *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {
+            "version": 1,
+            "logs": {
+                str(cached_path.resolve()): {
+                    "mtime": cached_stats.st_mtime,
+                    "size": cached_stats.st_size,
+                    "run_key": "cached-run-1",
+                    "tool_name": "kometa",
+                    "run_complete": True,
+                }
+            },
+        },
+    )
+
+    resp = client.post("/logscan/trends/reingest", json={"reset": False})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["scanned"] == 1
+    assert payload["ingested"] >= 1
+
+
 def test_logscan_trends_includes_imagemaid_runs(client, isolated_config_dir, monkeypatch, qs_module):
     archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "imagemaid"
     archive_dir.mkdir(parents=True, exist_ok=True)

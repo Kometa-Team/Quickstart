@@ -5779,10 +5779,12 @@ def step(name):
     if name == "915-imagemaid":
         imagemaid_section = data.get("imagemaid", {}) if isinstance(data.get("imagemaid"), dict) else {}
         imagemaid_state = _probe_imagemaid_root_state(helpers.get_imagemaid_root_path())
+        imagemaid_section_row = database.retrieve_section_data(config_name, "imagemaid")
+        imagemaid_section_validated = helpers.booler(imagemaid_section_row[0]) if imagemaid_section_row else False
         page_info["imagemaid_root"] = str(helpers.get_imagemaid_root_path())
         page_info["imagemaid_branch_override"] = helpers.normalize_imagemaid_branch_override(imagemaid_section.get("branch_override"))
         page_info["imagemaid_mode"] = str(imagemaid_section.get("mode") or "report").strip().lower() or "report"
-        page_info["imagemaid_validated"] = helpers.booler(data.get("validated", False))
+        page_info["imagemaid_validated"] = imagemaid_section_validated
         page_info["imagemaid_supports_no_verify_ssl"] = bool(imagemaid_state.get("supports_no_verify_ssl"))
         page_info["imagemaid_supports_overlays_only"] = bool(imagemaid_state.get("supports_overlays_only"))
 
@@ -7804,6 +7806,10 @@ def kometa_status():
             except Exception:
                 pid = None
     if not pid:
+        try:
+            _ingest_completed_live_logs("kometa")
+        except Exception:
+            pass
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
             maintenance_paused = MAINTENANCE_STATE["paused"]
@@ -7893,6 +7899,10 @@ def kometa_status():
                 os.remove(helpers.get_kometa_pid_file())
             except Exception:
                 pass
+        try:
+            _ingest_completed_live_logs("kometa")
+        except Exception:
+            pass
         KOMETA_CPU_CACHE.pop(pid, None)
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
@@ -8369,6 +8379,8 @@ def logscan_progress():
 @app.route("/logscan/trends", methods=["GET"])
 def logscan_trends():
     try:
+        _ingest_completed_live_logs("kometa")
+        _ingest_completed_live_logs("imagemaid")
         _archive_finished_live_meta_log_if_idle()
     except Exception:
         pass
@@ -9063,6 +9075,41 @@ def _iter_logscan_candidate_files(log_dir=None, include_archive=True, include_co
 
 def _get_logscan_log_files(log_dir=None, include_archive=True):
     return _iter_logscan_candidate_files(log_dir=log_dir, include_archive=include_archive, include_compressed=True)
+
+
+def _logscan_cache_entry_matches(path, cache_entry=None, stats=None):
+    if not isinstance(cache_entry, dict) or cache_entry.get("run_complete") is not True:
+        return False
+    try:
+        stats = stats or Path(path).stat()
+    except Exception:
+        return False
+    cached_mtime = cache_entry.get("mtime")
+    cached_size = cache_entry.get("size")
+    try:
+        if cached_mtime is None or cached_size is None:
+            return False
+        return float(cached_mtime) == float(stats.st_mtime) and int(cached_size) == int(stats.st_size)
+    except Exception:
+        return False
+
+
+def _get_logscan_delta_files(log_dir=None, include_archive=True):
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    candidates = []
+    for path in _get_logscan_log_files(log_dir=log_dir, include_archive=include_archive):
+        cache_entry = cache_logs.get(str(path.resolve()), {})
+        if not _logscan_cache_entry_matches(path, cache_entry=cache_entry):
+            candidates.append(path)
+
+    def _mtime_desc(value):
+        try:
+            return value.stat().st_mtime
+        except Exception:
+            return 0
+
+    return sorted(candidates, key=_mtime_desc, reverse=True)
 
 
 def _classify_logscan_file_location(path, log_dir=None):
@@ -9984,12 +10031,7 @@ def _build_latest_incomplete_resume_hint():
 
 
 def _logscan_needs_reingest(cache_logs, log_dir):
-    log_files = _get_logscan_log_files(log_dir=log_dir, include_archive=True)
-    for path in log_files:
-        entry = cache_logs.get(str(path.resolve()), {})
-        if not entry or not entry.get("run_complete"):
-            return True
-    return False
+    return bool(_get_logscan_delta_files(log_dir=log_dir, include_archive=True))
 
 
 def _logscan_ingest_health(log_dir=None):
@@ -10061,6 +10103,101 @@ def _start_logscan_auto_reingest(log_dir):
     thread = threading.Thread(target=_runner, daemon=True)
     thread.start()
     return True
+
+
+def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
+    tool_name = _normalize_logscan_tool_name(tool_name)
+    if tool_name == "kometa" and helpers.is_kometa_running():
+        return {"ingested": 0, "archived": 0}
+    if tool_name == "imagemaid" and helpers.is_imagemaid_running():
+        return {"ingested": 0, "archived": 0}
+
+    live_dir = _get_logscan_live_dir(tool_name, log_dir=log_dir if tool_name == "kometa" else None)
+    if not live_dir.exists():
+        return {"ingested": 0, "archived": 0}
+
+    if tool_name == "kometa":
+        candidates = [live_dir / "meta.log"]
+    else:
+        candidates = [
+            path for path in sorted(live_dir.glob("*.log*"), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
+            if path.is_file() and ".log" in path.name.lower()
+        ]
+
+    ingest_cache = _load_logscan_ingest_cache()
+    cache_logs = ingest_cache.get("logs", {}) if isinstance(ingest_cache, dict) else {}
+    if not isinstance(cache_logs, dict):
+        cache_logs = {}
+    cache_dirty = False
+    ingested = 0
+    archived = 0
+
+    analyzer = logscan.LogscanAnalyzer()
+    archive_dir = _get_logscan_archive_dir(tool_name)
+
+    for path in candidates:
+        try:
+            path = Path(path)
+            if not path.exists() or not path.is_file():
+                continue
+            stats = path.stat()
+            cache_key = str(path.resolve())
+            cached_entry = cache_logs.get(cache_key, {})
+            if _logscan_cache_entry_matches(path, cache_entry=cached_entry, stats=stats):
+                continue
+
+            content = _read_logscan_text(path, encoding="utf-8", errors="replace")
+            if tool_name == "imagemaid":
+                result = _analyze_imagemaid_log_content(content, log_path=path)
+            else:
+                result = analyzer.analyze_content(content, log_path=path, include_people_scan=False)
+            summary = result.get("summary") if isinstance(result, dict) else None
+            if not isinstance(summary, dict) or not summary.get("run_complete"):
+                continue
+
+            cached_run_key = cached_entry.get("run_key")
+            if not (cached_entry.get("run_complete") is True and cached_run_key == summary.get("run_key")):
+                if database.save_log_run(summary, recommendations=result.get("recommendations")):
+                    ingested += 1
+
+            cache_logs[cache_key] = {
+                "mtime": stats.st_mtime,
+                "size": stats.st_size,
+                "run_key": summary.get("run_key"),
+                "tool_name": tool_name,
+                "run_complete": True,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+            cache_dirty = True
+
+            if tool_name == "kometa":
+                archived_path = _archive_log_file(path, archive_dir, log_dir=live_dir, allow_live_meta=True)
+            else:
+                archived_path = _archive_log_file(path, archive_dir, log_dir=live_dir)
+            if archived_path:
+                try:
+                    archived_stats = archived_path.stat()
+                    cache_logs.pop(cache_key, None)
+                    cache_logs[str(archived_path.resolve())] = {
+                        "mtime": archived_stats.st_mtime,
+                        "size": archived_stats.st_size,
+                        "run_key": summary.get("run_key"),
+                        "tool_name": tool_name,
+                        "run_complete": True,
+                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    cache_dirty = True
+                    archived += 1
+                except Exception:
+                    pass
+        except Exception:
+            continue
+
+    if cache_dirty:
+        ingest_cache["logs"] = cache_logs
+        _save_logscan_ingest_cache(ingest_cache)
+        _prune_logscan_archive(archive_dir)
+    return {"ingested": ingested, "archived": archived}
 
 
 def _archive_log_file(path, archive_dir, log_dir=None, allow_live_meta=False):
@@ -10300,7 +10437,11 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 _update_logscan_reingest_state(status="error", error=message, finished_at=datetime.now(timezone.utc).isoformat())
             return {"success": False, "error": message}
 
-        log_files = _get_logscan_log_files(log_dir=kometa_log_dir, include_archive=True)
+        log_files = (
+            _get_logscan_log_files(log_dir=kometa_log_dir, include_archive=True)
+            if reset
+            else _get_logscan_delta_files(log_dir=kometa_log_dir, include_archive=True)
+        )
         total_files = len(log_files)
         if update_state:
             _update_logscan_reingest_state(total=total_files)
@@ -12750,6 +12891,10 @@ def imagemaid_status():
             except Exception:
                 pid = None
     if not pid:
+        try:
+            _ingest_completed_live_logs("imagemaid")
+        except Exception:
+            pass
         return jsonify(status="not started")
 
     try:
@@ -12796,6 +12941,11 @@ def imagemaid_status():
                     os.remove(pid_file)
                 except Exception:
                     pass
+        if not within_grace:
+            try:
+                _ingest_completed_live_logs("imagemaid")
+            except Exception:
+                pass
         return jsonify(status="done", return_code=rc if rc is not None else -1)
     except psutil.NoSuchProcess:
         age = pid_file_age_seconds()

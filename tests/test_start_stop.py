@@ -411,6 +411,32 @@ def test_imagemaid_page_renders(client):
     assert "Run ImageMaid" in body
 
 
+def test_imagemaid_page_restores_persisted_validation_state(client, qs_module):
+    config_name = "pytest_imagemaid_validation_restore"
+    with client.session_transaction() as session_state:
+        session_state["config_name"] = config_name
+
+    qs_module.database.save_section_data(
+        name=config_name,
+        section="imagemaid",
+        validated=True,
+        user_entered=True,
+        data={
+            "imagemaid": {
+                "plex_path": "C:\\PlexData",
+                "mode": "report",
+            },
+            "validated_at": "2026-04-29T12:00:00Z",
+            "validation_status": "validated",
+        },
+    )
+
+    resp = client.get("/step/915-imagemaid")
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert 'data-validated="true"' in body
+
+
 def test_autosave_imagemaid_persists_settings(client):
     resp = client.post("/autosave-imagemaid", json={
         "plex_path": "C:\\PlexData",
