@@ -82,7 +82,7 @@ ACTIVE_WORK_POLICIES = {
             "id": "kometa_update",
             "message": "Cannot start Kometa while a Kometa update is running.",
             "target_page": JOB_TARGET_PAGES.get("kometa_update"),
-        }
+        },
     ],
     "kometa_update": [
         {
@@ -347,6 +347,8 @@ def _get_active_work_blocker(subject):
                     return blocker
 
     return None
+
+
 VALIDATION_KEY_SUGGESTIONS = {
     "settings": {
         "playlist_sync_to_user": "playlist_sync_to_users",
@@ -2153,11 +2155,7 @@ def _write_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_nam
         safe_mode = (mode or "report").strip().lower() or "report"
         safe_config = (config_name or "default").strip() or "default"
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        marker = (
-            f"[Quickstart] Run marker: started={timestamp} "
-            f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
-            f"tool=imagemaid mode={safe_mode}"
-        )
+        marker = f"[Quickstart] Run marker: started={timestamp} " f"config={safe_config} quickstart={qs_version} branch={qs_branch} " f"tool=imagemaid mode={safe_mode}"
         return _append_quickstart_imagemaid_log_line(imagemaid_root, marker, log_path=log_path)
     except Exception:
         return False
@@ -3707,7 +3705,9 @@ def _match_logscan_run_to_file(run_record, context=None, log_dir=None, allow_liv
     run_key = run_record.get("run_key")
     run_tool_name = _normalize_logscan_tool_name(run_record.get("tool_name"))
     if run_key:
-        cache_matches = [entry for entry in context.get("cache_entries", []) if entry.get("run_key") == run_key and _normalize_logscan_tool_name(entry.get("tool_name")) == run_tool_name]
+        cache_matches = [
+            entry for entry in context.get("cache_entries", []) if entry.get("run_key") == run_key and _normalize_logscan_tool_name(entry.get("tool_name")) == run_tool_name
+        ]
         if cache_matches:
             cache_matches.sort(key=lambda entry: entry.get("mtime", 0), reverse=True)
             match = cache_matches[0]
@@ -3764,7 +3764,8 @@ def _resolve_logscan_run_log_info(run_key, run_record=None, context=None):
     cache_matches = []
     if isinstance(context, dict):
         cache_matches = [
-            entry for entry in context.get("cache_entries", [])
+            entry
+            for entry in context.get("cache_entries", [])
             if entry.get("run_key") == run_key and (not run_tool_name or _normalize_logscan_tool_name(entry.get("tool_name")) == run_tool_name)
         ]
     else:
@@ -10401,8 +10402,7 @@ def _ingest_completed_live_logs(tool_name="kometa", log_dir=None):
         candidates = [live_dir / "meta.log"]
     else:
         candidates = [
-            path for path in sorted(live_dir.glob("*.log*"), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True)
-            if path.is_file() and ".log" in path.name.lower()
+            path for path in sorted(live_dir.glob("*.log*"), key=lambda p: p.stat().st_mtime if p.exists() else 0, reverse=True) if path.is_file() and ".log" in path.name.lower()
         ]
 
     ingest_cache = _load_logscan_ingest_cache()
@@ -10734,11 +10734,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 _update_logscan_reingest_state(status="error", error=message, finished_at=datetime.now(timezone.utc).isoformat())
             return {"success": False, "error": message}
 
-        log_files = (
-            _get_logscan_log_files(log_dir=kometa_log_dir, include_archive=True)
-            if reset
-            else _get_logscan_delta_files(log_dir=kometa_log_dir, include_archive=True)
-        )
+        log_files = _get_logscan_log_files(log_dir=kometa_log_dir, include_archive=True) if reset else _get_logscan_delta_files(log_dir=kometa_log_dir, include_archive=True)
         total_files = len(log_files)
         if update_state:
             _update_logscan_reingest_state(total=total_files)
@@ -10886,9 +10882,7 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                 cache_dirty = True
                 is_live_source = path.parent.resolve() == live_dir.resolve()
                 should_archive_live = (
-                    is_live_source and
-                    not (tool_name == "kometa" and path.name.lower() == "meta.log") and
-                    not (tool_name == "imagemaid" and helpers.is_imagemaid_running())
+                    is_live_source and not (tool_name == "kometa" and path.name.lower() == "meta.log") and not (tool_name == "imagemaid" and helpers.is_imagemaid_running())
                 )
                 if should_archive_live:
                     archived_path = _archive_log_file(path, archive_dir, log_dir=live_dir)
@@ -12193,13 +12187,18 @@ def update_kometa():
     if blocker:
         pid = blocker.get("pid")
         target_page = blocker.get("target_page")
-        return jsonify({
-            "success": False,
-            "error": f"Kometa is currently running (PID {pid}). Stop it before updating.",
-            "blocked_by": blocker.get("blocked_by"),
-            "pid": pid,
-            "target_page": target_page,
-        }), 409
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Kometa is currently running (PID {pid}). Stop it before updating.",
+                    "blocked_by": blocker.get("blocked_by"),
+                    "pid": pid,
+                    "target_page": target_page,
+                }
+            ),
+            409,
+        )
     try:
         cfg_dir = helpers.CONFIG_DIR
 
@@ -12596,8 +12595,7 @@ def _validate_imagemaid_settings(section_data):
         return (
             False,
             "restore_dir_blocks_mode",
-            f"{mode.capitalize()} mode is not allowed while the ImageMaid Restore folder exists: {restore_dir}. "
-            "Use nothing, restore, or clear while that folder is present.",
+            f"{mode.capitalize()} mode is not allowed while the ImageMaid Restore folder exists: {restore_dir}. " "Use nothing, restore, or clear while that folder is present.",
         )
     if mode in {"restore", "clear"} and restore_dir and not restore_dir.exists():
         return False, "missing_restore_dir", f"{mode.capitalize()} mode expects the ImageMaid Restore folder at: {restore_dir}"
@@ -12684,14 +12682,17 @@ def probe_imagemaid_root():
     if state["imagemaid_running"]:
         log("ℹ️ ImageMaid is currently running.")
 
-    return jsonify(
-        success=True,
-        log=logs,
-        effective_branch=effective_branch,
-        branch_source_url=f"{helpers.IMAGEMAID_GITHUB_BASE_URL}/{effective_branch}",
-        zip_source_url=helpers.IMAGEMAID_GITHUB_ZIP_URL.format(branch=effective_branch),
-        **state,
-    ), 200
+    return (
+        jsonify(
+            success=True,
+            log=logs,
+            effective_branch=effective_branch,
+            branch_source_url=f"{helpers.IMAGEMAID_GITHUB_BASE_URL}/{effective_branch}",
+            zip_source_url=helpers.IMAGEMAID_GITHUB_ZIP_URL.format(branch=effective_branch),
+            **state,
+        ),
+        200,
+    )
 
 
 @app.route("/check-imagemaid-update", methods=["POST"])
@@ -12821,13 +12822,18 @@ def check_imagemaid_update():
 def update_imagemaid():
     blocker = _get_active_work_blocker("imagemaid_update")
     if blocker:
-        return jsonify({
-            "success": False,
-            "error": blocker.get("message") or "ImageMaid is currently running.",
-            "blocked_by": blocker.get("blocked_by"),
-            "pid": blocker.get("pid"),
-            "target_page": blocker.get("target_page"),
-        }), 409
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": blocker.get("message") or "ImageMaid is currently running.",
+                    "blocked_by": blocker.get("blocked_by"),
+                    "pid": blocker.get("pid"),
+                    "target_page": blocker.get("target_page"),
+                }
+            ),
+            409,
+        )
 
     try:
         cfg_dir = helpers.CONFIG_DIR
@@ -12892,9 +12898,18 @@ def update_imagemaid():
                     except Exception:
                         pass
                     if result.get("success", False):
-                        _complete_background_job(job_id, phase="done", success=True, done=True, up_to_date=bool(result.get("up_to_date", False)), skipped=bool(result.get("skipped", False)))
+                        _complete_background_job(
+                            job_id, phase="done", success=True, done=True, up_to_date=bool(result.get("up_to_date", False)), skipped=bool(result.get("skipped", False))
+                        )
                     else:
-                        _fail_background_job(job_id, "ImageMaid update failed.", done=True, success=False, up_to_date=bool(result.get("up_to_date", False)), skipped=bool(result.get("skipped", False)))
+                        _fail_background_job(
+                            job_id,
+                            "ImageMaid update failed.",
+                            done=True,
+                            success=False,
+                            up_to_date=bool(result.get("up_to_date", False)),
+                            skipped=bool(result.get("skipped", False)),
+                        )
                 except Exception as e:
                     logs.append("Exception during ImageMaid update.")
                     helpers.ts_log(f"ImageMaid update failed: {e}", level="ERROR")
@@ -12921,14 +12936,19 @@ def update_imagemaid():
             pass
         status = 200 if result.get("success") else 500
 
-        return jsonify({
-            "success": result.get("success", False),
-            "log": list(logs),
-            "imagemaid_branch": imagemaid_branch,
-            "up_to_date": result.get("up_to_date", False),
-            "skipped": result.get("skipped", False),
-            "force": force_update,
-        }), status
+        return (
+            jsonify(
+                {
+                    "success": result.get("success", False),
+                    "log": list(logs),
+                    "imagemaid_branch": imagemaid_branch,
+                    "up_to_date": result.get("up_to_date", False),
+                    "skipped": result.get("skipped", False),
+                    "force": force_update,
+                }
+            ),
+            status,
+        )
     except Exception as e:
         helpers.ts_log(f"ImageMaid update failed: {e}", level="ERROR")
         return jsonify({"success": False, "log": ["Exception during ImageMaid update."]}), 500
@@ -13264,11 +13284,13 @@ def tail_imagemaid_log():
         return jsonify({"error": "No ImageMaid log found."}), 404
     try:
         text = _sanitize_imagemaid_log_tail(_read_text_tail(path))
-        return jsonify({
-            "success": True,
-            "path": str(path),
-            "text": text,
-        })
+        return jsonify(
+            {
+                "success": True,
+                "path": str(path),
+                "text": text,
+            }
+        )
     except Exception as e:
         return jsonify({"error": f"Failed to read ImageMaid log: {e}"}), 500
 

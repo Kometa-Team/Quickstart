@@ -202,11 +202,13 @@ def test_validate_imagemaid_restore_requires_restore_dir(tmp_path, monkeypatch, 
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
     monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
 
-    ok, reason, details = qs_module._validate_imagemaid_settings({
-        "plex_path": str(plex_root),
-        "mode": "restore",
-        "photo_transcoder": False,
-    })
+    ok, reason, details = qs_module._validate_imagemaid_settings(
+        {
+            "plex_path": str(plex_root),
+            "mode": "restore",
+            "photo_transcoder": False,
+        }
+    )
 
     assert ok is False
     assert reason == "missing_restore_dir"
@@ -222,11 +224,13 @@ def test_validate_imagemaid_clear_requires_restore_dir(tmp_path, monkeypatch, qs
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
     monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
 
-    ok, reason, details = qs_module._validate_imagemaid_settings({
-        "plex_path": str(plex_root),
-        "mode": "clear",
-        "photo_transcoder": False,
-    })
+    ok, reason, details = qs_module._validate_imagemaid_settings(
+        {
+            "plex_path": str(plex_root),
+            "mode": "clear",
+            "photo_transcoder": False,
+        }
+    )
 
     assert ok is False
     assert reason == "missing_restore_dir"
@@ -244,11 +248,13 @@ def test_validate_imagemaid_report_rejects_existing_restore_dir(tmp_path, monkey
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
     monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
 
-    ok, reason, details = qs_module._validate_imagemaid_settings({
-        "plex_path": str(plex_root),
-        "mode": "report",
-        "photo_transcoder": False,
-    })
+    ok, reason, details = qs_module._validate_imagemaid_settings(
+        {
+            "plex_path": str(plex_root),
+            "mode": "report",
+            "photo_transcoder": False,
+        }
+    )
 
     assert ok is False
     assert reason == "restore_dir_blocks_mode"
@@ -266,11 +272,13 @@ def test_validate_imagemaid_move_rejects_existing_restore_dir(tmp_path, monkeypa
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
     monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
 
-    ok, reason, details = qs_module._validate_imagemaid_settings({
-        "plex_path": str(plex_root),
-        "mode": "move",
-        "photo_transcoder": False,
-    })
+    ok, reason, details = qs_module._validate_imagemaid_settings(
+        {
+            "plex_path": str(plex_root),
+            "mode": "move",
+            "photo_transcoder": False,
+        }
+    )
 
     assert ok is False
     assert reason == "restore_dir_blocks_mode"
@@ -288,11 +296,13 @@ def test_validate_imagemaid_remove_rejects_existing_restore_dir(tmp_path, monkey
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
     monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
 
-    ok, reason, details = qs_module._validate_imagemaid_settings({
-        "plex_path": str(plex_root),
-        "mode": "remove",
-        "photo_transcoder": False,
-    })
+    ok, reason, details = qs_module._validate_imagemaid_settings(
+        {
+            "plex_path": str(plex_root),
+            "mode": "remove",
+            "photo_transcoder": False,
+        }
+    )
 
     assert ok is False
     assert reason == "restore_dir_blocks_mode"
@@ -309,11 +319,13 @@ def test_validate_imagemaid_restore_allows_existing_restore_dir(tmp_path, monkey
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
     monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
 
-    ok, reason, details = qs_module._validate_imagemaid_settings({
-        "plex_path": str(plex_root),
-        "mode": "restore",
-        "photo_transcoder": False,
-    })
+    ok, reason, details = qs_module._validate_imagemaid_settings(
+        {
+            "plex_path": str(plex_root),
+            "mode": "restore",
+            "photo_transcoder": False,
+        }
+    )
 
     assert ok is True
     assert reason is None
@@ -329,11 +341,13 @@ def test_validate_imagemaid_nothing_allows_existing_restore_dir(tmp_path, monkey
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
     monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
 
-    ok, reason, details = qs_module._validate_imagemaid_settings({
-        "plex_path": str(plex_root),
-        "mode": "nothing",
-        "photo_transcoder": False,
-    })
+    ok, reason, details = qs_module._validate_imagemaid_settings(
+        {
+            "plex_path": str(plex_root),
+            "mode": "nothing",
+            "photo_transcoder": False,
+        }
+    )
 
     assert ok is True
     assert reason is None
@@ -349,16 +363,17 @@ def test_validate_imagemaid_clear_allows_existing_restore_dir(tmp_path, monkeypa
     monkeypatch.setattr(qs_module.persistence, "retrieve_settings", lambda *_args, **_kwargs: {"validated": True})
     monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
 
-    ok, reason, details = qs_module._validate_imagemaid_settings({
-        "plex_path": str(plex_root),
-        "mode": "clear",
-        "photo_transcoder": False,
-    })
+    ok, reason, details = qs_module._validate_imagemaid_settings(
+        {
+            "plex_path": str(plex_root),
+            "mode": "clear",
+            "photo_transcoder": False,
+        }
+    )
 
     assert ok is True
     assert reason is None
     assert details is None
-
 
 
 def test_stop_kometa_no_pid(client, monkeypatch, qs_module):
@@ -438,17 +453,21 @@ def test_imagemaid_page_restores_persisted_validation_state(client, qs_module, i
 
 
 def test_autosave_imagemaid_persists_settings(client, isolated_config_dir):
-    resp = client.post("/autosave-imagemaid", json={
-        "plex_path": "C:\\PlexData",
-        "mode": "restore",
-        "trace": True,
-        "photo_transcoder": True,
-    })
+    resp = client.post(
+        "/autosave-imagemaid",
+        json={
+            "plex_path": "C:\\PlexData",
+            "mode": "restore",
+            "trace": True,
+            "photo_transcoder": True,
+        },
+    )
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["success"] is True
 
     import modules.database as database
+
     with client.session_transaction() as session_state:
         config_name = session_state.get("config_name")
     validated, user_entered, saved = database.retrieve_section_data(config_name, "imagemaid")
@@ -499,7 +518,7 @@ def test_tail_imagemaid_log_hides_executor_shutdown_noise(client, isolated_confi
         "ImageMaid Finished\n"
         "Exception ignored in: <function _ExecutorManagerThread.__init__.<locals>.weakref_cb at 0x000001F4C6F2C720>\n"
         "Traceback (most recent call last):\n"
-        "  File \"C:\\\\Users\\\\nickz\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\Lib\\\\concurrent\\\\futures\\\\process.py\", line 310, in weakref_cb\n"
+        '  File "C:\\\\Users\\\\nickz\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python312\\\\Lib\\\\concurrent\\\\futures\\\\process.py", line 310, in weakref_cb\n'
         "AttributeError: 'NoneType' object has no attribute 'debug'\n",
         encoding="utf-8",
     )
@@ -567,8 +586,7 @@ def test_get_imagemaid_supported_options_detects_optional_flags(tmp_path, qs_mod
     imagemaid_root = tmp_path / "imagemaid"
     imagemaid_root.mkdir(parents=True, exist_ok=True)
     (imagemaid_root / "imagemaid.py").write_text(
-        '"env": "NO_VERIFY_SSL"\n'
-        '"key": "overlays-only"\n',
+        '"env": "NO_VERIFY_SSL"\n' '"key": "overlays-only"\n',
         encoding="utf-8",
     )
 
@@ -583,8 +601,7 @@ def test_build_imagemaid_command_parts_only_adds_supported_optional_flags(tmp_pa
     scripts_dir.mkdir(parents=True, exist_ok=True)
     (scripts_dir / "python.exe").write_text("", encoding="utf-8")
     (imagemaid_root / "imagemaid.py").write_text(
-        '"env": "NO_VERIFY_SSL"\n'
-        '"key": "overlays-only"\n',
+        '"env": "NO_VERIFY_SSL"\n' '"key": "overlays-only"\n',
         encoding="utf-8",
     )
 
@@ -603,4 +620,6 @@ def test_build_imagemaid_command_parts_only_adds_supported_optional_flags(tmp_pa
 
     assert "--no-verify-ssl" in parts
     assert "--overlays-only" in parts
+
+
 import os
