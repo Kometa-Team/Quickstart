@@ -254,7 +254,7 @@
             <h2 class="qs-main-page-title">{{ page_info['title'] }}</h2>
             <button type="button" class="btn nav-button config-badge-button qs-main-page-config-switch qs-config-switch-trigger"
               data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}"
-              title="Switch config">
+              title="Manage Configs">
               <i class="bi bi-folder2-open qs-main-page-meta-icon" aria-hidden="true"></i>
               <span class="qs-main-page-meta-label">CONFIG:</span>
               <span class="qs-main-page-meta-value">{{ page_info.config_name }}</span>
@@ -284,34 +284,7 @@
       </div>
     </div>
 
-    <!-- Switch Config Modal -->
-    <div class="modal fade" id="configSwitchModal" tabindex="-1" aria-labelledby="configSwitchModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-secondary">
-          <div class="modal-header">
-            <h5 class="modal-title" id="configSwitchModalLabel">Switch Config</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            {% if available_configs|length > 0 %}
-            <label for="configSwitchSelect" class="form-label">Choose a config</label>
-            <select id="configSwitchSelect" class="form-select">
-              {% for name in available_configs %}
-              <option value="{{ name }}">{{ name }}</option>
-              {% endfor %}
-            </select>
-            {% else %}
-            <p class="text-muted mb-0">No saved configs yet. Create and save a config first.</p>
-            {% endif %}
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" id="configSwitchCancel" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-primary" id="configSwitchConfirm"
-              {% if available_configs|length == 0 %}disabled{% endif %}>Switch</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include "partials/_config_workspace_modal.html" %}
 
     <!-- Support Info Modal -->
     <div class="modal fade" id="supportInfoModal" tabindex="-1" aria-labelledby="supportInfoModalLabel" aria-hidden="true">

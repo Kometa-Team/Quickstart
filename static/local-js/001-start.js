@@ -76,6 +76,7 @@ function setButtonSpinner (button, text) {
 /* ============================== */
 
 document.addEventListener('DOMContentLoaded', function () {
+  const configSwitchSelect = document.getElementById('configSwitchSelect')
   const configSelector = document.getElementById('configSelector')
   const newConfigInput = document.getElementById('newConfigName')
   const saveConfigRow = document.getElementById('saveConfigRow')
@@ -177,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function updateButtonState () {
+    if (!configSelector) return
     const isAddConfig = configSelector.value === 'add_config'
     const onlyAddConfigAvailable = configSelector.options.length === 1 && isAddConfig
 
@@ -213,16 +215,48 @@ document.addEventListener('DOMContentLoaded', function () {
     })
   }
 
-  function upsertConfigOption (name) {
-    if (!configSelector || !name) return
-    const existing = Array.from(configSelector.options).find(option => option.value === name)
-    if (existing) return existing
+  function getConfigAdminSelectors () {
+    return [configSelector, configSwitchSelect].filter(Boolean)
+  }
 
-    const option = document.createElement('option')
-    option.value = name
-    option.textContent = name
-    configSelector.appendChild(option)
-    return option
+  function upsertConfigOption (name) {
+    if (!name) return null
+    const selectors = getConfigAdminSelectors()
+    let createdOption = null
+
+    selectors.forEach((select) => {
+      const existing = Array.from(select.options).find(option => option.value === name)
+      if (existing) {
+        if (!createdOption) createdOption = existing
+        return
+      }
+
+      const option = document.createElement('option')
+      option.value = name
+      option.textContent = name
+      select.appendChild(option)
+      if (!createdOption) createdOption = option
+    })
+
+    return createdOption
+  }
+
+  function setSelectedConfigOption (name) {
+    if (!name) return
+    if (configSelector) {
+      configSelector.value = name
+    }
+    if (configSwitchSelect) {
+      configSwitchSelect.value = name
+    }
+  }
+
+  function removeConfigOption (name) {
+    if (!name) return
+    getConfigAdminSelectors().forEach((select) => {
+      const optionToRemove = select.querySelector(`option[value="${name}"]`)
+      if (optionToRemove) optionToRemove.remove()
+    })
   }
 
   function refreshWorkspaceStatusNow () {
@@ -238,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function () {
     updateConfigBadge(name)
     updateHeaderConfigName(name)
     upsertConfigOption(name)
-    if (configSelector) configSelector.value = name
+    setSelectedConfigOption(name)
     updateButtonState()
     refreshWorkspaceStatusNow()
   }
@@ -260,29 +294,12 @@ document.addEventListener('DOMContentLoaded', function () {
     return data
   }
 
-  async function syncSelectedConfig () {
-    if (!configSelector) return
-    const selected = configSelector.value
-    if (!selected || selected === 'add_config') return
-
-    if (window.pageInfo && window.pageInfo.config_name === selected) {
-      applyActiveConfigUi(selected)
-      return
-    }
-
-    try {
-      const data = await activateConfig(selected)
-      applyActiveConfigUi(data.name)
-    } catch (err) {
-      showToast('error', err.message || 'Failed to switch configs.')
-    }
-  }
-
   updateButtonState()
-  configSelector.addEventListener('change', () => {
-    updateButtonState()
-    syncSelectedConfig()
-  })
+  if (configSelector) {
+    configSelector.addEventListener('change', () => {
+      updateButtonState()
+    })
+  }
 
   document.querySelectorAll('[data-action]').forEach(button => {
     button.addEventListener('click', function () {
@@ -306,8 +323,9 @@ document.addEventListener('DOMContentLoaded', function () {
   })
 
   function getAvailableConfigs () {
-    if (!configSelector) return []
-    const names = Array.from(configSelector.options)
+    const sourceSelect = configSelector || configSwitchSelect
+    if (!sourceSelect) return []
+    const names = Array.from(sourceSelect.options)
       .map(option => option.value)
       .filter(value => value && value !== 'add_config')
     return Array.from(new Set(names))
@@ -720,11 +738,15 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(() => {
           showToast('success', `Config '${selectedConfig}' deleted successfully.`)
-          const optionToRemove = configSelector.querySelector(`option[value="${selectedConfig}"]`)
-          if (optionToRemove) {
-            const nextOption = optionToRemove.nextElementSibling || optionToRemove.previousElementSibling
-            optionToRemove.remove()
-            configSelector.value = nextOption ? nextOption.value : 'add_config'
+          const nextOption = configSelector
+            ? (configSelector.querySelector(`option[value="${selectedConfig}"]`)?.nextElementSibling ||
+                configSelector.querySelector(`option[value="${selectedConfig}"]`)?.previousElementSibling)
+            : null
+          removeConfigOption(selectedConfig)
+          if (nextOption && nextOption.value) {
+            setSelectedConfigOption(nextOption.value)
+          } else if (configSelector) {
+            configSelector.value = 'add_config'
           }
           updateButtonState()
           if (configActionModal) configActionModal.hide()

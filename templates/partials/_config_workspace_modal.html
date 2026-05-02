@@ -1,0 +1,365 @@
+{% set show_new_config = page_info['config_name'] not in available_configs %}
+{% set can_merge = available_configs | length > 0 %}
+
+<div class="modal fade" id="configSwitchModal" tabindex="-1" aria-labelledby="configSwitchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-secondary">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="configSwitchModalLabel">Workspace Configs</h5>
+          <div class="small text-muted">Switch existing configs from any page, or manage saved configs below.</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="border rounded p-3 mb-3">
+          <div class="fw-semibold mb-2">Quick switch</div>
+          {% if available_configs|length > 0 %}
+          <div class="row g-2 align-items-end">
+            <div class="col-md-8">
+              <label for="configSwitchSelect" class="form-label small text-muted">Choose an existing config</label>
+              <select id="configSwitchSelect" class="form-select">
+                {% for name in available_configs %}
+                <option value="{{ name }}" {% if name == page_info.config_name %}selected{% endif %}>{{ name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-4 d-grid">
+              <button type="button" class="btn btn-primary" id="configSwitchConfirm">Switch</button>
+            </div>
+          </div>
+          <div class="small text-muted mt-2">Quickstart saves the current page before switching when needed.</div>
+          {% else %}
+          <p class="text-muted mb-0">No saved configs yet. Create one in the Manage section below.</p>
+          <button type="button" class="btn btn-primary d-none" id="configSwitchConfirm" disabled>Switch</button>
+          {% endif %}
+        </div>
+
+        <div class="border rounded p-3">
+          <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <div class="fw-semibold mb-1">Manage configs</div>
+              <div class="small text-muted">Create a new config, rename or reset an existing one, import configs, or clean up stored config artifacts.</div>
+            </div>
+          </div>
+
+          <div class="form-floating mb-2">
+            <select id="configSelector" name="configSelector" class="form-select" onchange="toggleConfigInput(this)">
+              <option value="add_config" {% if page_info['config_name'] not in available_configs %}selected{% endif %}>
+                Add Config
+              </option>
+              {% for name in available_configs %}
+              <option value="{{ name }}" {% if name==page_info['config_name'] %}selected{% endif %}>
+                {{ name }}
+              </option>
+              {% endfor %}
+            </select>
+            <label for="configSelector">Select config to manage</label>
+          </div>
+
+          <div id="newConfigInput" class="form-floating mb-2 {{ '' if show_new_config else 'd-none' }}">
+            <input type="text" id="newConfigName" name="newConfigName" class="form-control" placeholder="Enter a new config name"
+              value="{% if page_info['config_name'] not in available_configs %}{{ page_info['config_name'] }}{% else %}{{ page_info['new_config_name'] }}{% endif %}">
+            <label for="newConfigName">New Config Name</label>
+          </div>
+
+          <div id="saveConfigRow" class="d-none mb-3">
+            <button type="button" class="btn btn-primary" id="saveConfigButton" disabled>
+              <i class="bi bi-floppy me-1"></i> Save & Activate Config
+            </button>
+            <div class="small text-muted mt-1">Commits the new config to the database and resets readiness for that config.</div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-warning" id="resetConfigButton" disabled data-bs-toggle="modal"
+              data-bs-target="#configActionModal" data-action="reset">
+              <i class="bi bi-arrow-clockwise"></i> Reset
+            </button>
+
+            <button type="button" class="btn btn-secondary" id="renameConfigButton" data-bs-toggle="modal"
+              data-bs-target="#renameConfigModal">
+              <i class="bi bi-pencil-square"></i> Rename
+            </button>
+
+            <button type="button" class="btn btn-secondary" id="importConfigButton" data-bs-toggle="modal"
+              data-bs-target="#importConfigModal">
+              <i class="bi bi-upload"></i> Import Config
+            </button>
+
+            <button type="button" class="btn btn-danger" id="bulkDeleteButton" data-bs-toggle="modal"
+              data-bs-target="#bulkDeleteModal">
+              <i class="bi bi-trash3"></i> Delete Configs
+            </button>
+
+            <button type="button" class="btn btn-outline-secondary" id="orphanedArtifactsButton" data-bs-toggle="modal"
+              data-bs-target="#orphanedArtifactsModal">
+              <i class="bi bi-hdd-stack"></i> Review File Drift
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="configActionModal" tabindex="-1" aria-labelledby="configActionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger" id="configActionModalLabel">Confirm Action</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="configActionModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmConfigAction">Proceed</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-danger">
+      <div class="modal-header bg-danger text-white">
+        <h5 class="modal-title" id="bulkDeleteModalLabel">
+          <i class="bi bi-trash3 me-2"></i>Delete Configs
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2">Select one or more configs to delete. This cannot be undone.</p>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="bulkDeleteSelectAll">
+          <label class="form-check-label" for="bulkDeleteSelectAll">Select all configs</label>
+        </div>
+        <div id="bulkDeleteList" class="bulk-delete-list"></div>
+        <div class="small text-muted mt-2">Selected: <span id="bulkDeleteCount">0</span></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" autofocus>No, keep them</button>
+        <button type="button" class="btn btn-danger" id="confirmBulkDeleteButton" disabled>Delete Selected</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="orphanedArtifactsModal" tabindex="-1" aria-labelledby="orphanedArtifactsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="orphanedArtifactsModalLabel">
+          <i class="bi bi-hdd-stack me-2"></i>Review File Drift
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2">
+          These config bundles exist on disk but are not referenced by the Quickstart database. Leave any unchecked to keep them on disk.
+        </p>
+        <div class="alert alert-warning py-2 small mb-3" role="alert">
+          This tool only deletes filesystem artifacts. It does not remove anything from the database.
+        </div>
+        <div id="orphanedArtifactsStatus" class="alert alert-info d-none py-2 small" role="status"></div>
+        <div id="orphanedArtifactsSuccess" class="alert alert-success d-none py-2 small" role="status"></div>
+        <div id="orphanedArtifactsError" class="alert alert-danger d-none py-2 small" role="alert"></div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" id="orphanedArtifactsSelectAll">
+          <label class="form-check-label" for="orphanedArtifactsSelectAll">Select all orphaned config bundles</label>
+        </div>
+        <div id="orphanedArtifactsList" class="bulk-delete-list"></div>
+        <div class="small text-muted mt-2">Selected: <span id="orphanedArtifactsCount">0</span></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelOrphanedArtifactsDelete" data-bs-dismiss="modal">Keep for now</button>
+        <button type="button" class="btn btn-danger" id="confirmOrphanedArtifactsDelete" disabled>Delete Selected</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="orphanedArtifactsRestoreModal" tabindex="-1" aria-labelledby="orphanedArtifactsRestoreModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="orphanedArtifactsRestoreModalLabel">
+          <i class="bi bi-arrow-counterclockwise me-2"></i>Restore From Disk
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted mb-2">
+          Choose one saved version to restore into the Quickstart database. Versions are sorted newest first.
+        </p>
+        <div id="orphanedArtifactsRestoreStatus" class="alert alert-info d-none py-2 small" role="status"></div>
+        <div id="orphanedArtifactsRestoreSuccess" class="alert alert-success d-none py-2 small" role="status"></div>
+        <div id="orphanedArtifactsRestoreError" class="alert alert-danger d-none py-2 small" role="alert"></div>
+        <div id="orphanedArtifactsRestoreList" class="bulk-delete-list"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelOrphanedArtifactsRestore" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmOrphanedArtifactsRestore" disabled>Restore Selected Version</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="renameConfigModal" tabindex="-1" aria-labelledby="renameConfigModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="renameConfigModalLabel">Rename Config</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2 small text-muted">Current: <span id="renameConfigCurrentName"></span></div>
+        <div class="form-floating">
+          <input type="text" class="form-control" id="renameConfigNewName" placeholder="Enter a new config name">
+          <label for="renameConfigNewName">New Config Name</label>
+        </div>
+        <div class="form-text">Lowercase letters, numbers, and underscore only.</div>
+        <div id="renameConfigError" class="text-danger small mt-2 d-none"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmRenameConfig" disabled>Rename</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="importConfigModal" tabindex="-1" aria-labelledby="importConfigModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="importConfigModalLabel">Import Config</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger py-2 small mb-3" role="alert">
+          Import is experimental. Quickstart previews the file first, imports supported sections, then validates the imported config automatically.
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="importConfigFile">Config File (.yml, .yaml, or .zip)</label>
+          <input class="form-control" type="file" id="importConfigFile" accept=".yml,.yaml,.zip">
+          <div class="form-text">Zip files must contain exactly one YAML config; .ttf/.otf fonts will be imported.</div>
+        </div>
+        <div class="form-floating mb-2">
+          <input type="text" class="form-control" id="importConfigName" placeholder="Config name">
+          <label for="importConfigName">Config Name</label>
+        </div>
+        <div class="form-text">Name must be unique and use lowercase letters, numbers, and underscore only.</div>
+        <div class="border rounded p-2 mt-3" id="importModeSection">
+          <div class="small text-muted mb-1">Import Mode</div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="importMode" id="importModeNew" value="new" checked>
+            <label class="form-check-label" for="importModeNew">Create a new config from this file</label>
+          </div>
+          <div class="form-check mt-1">
+            <input class="form-check-input" type="radio" name="importMode" id="importModeMerge" value="merge" {% if not can_merge %}disabled{% endif %}>
+            <label class="form-check-label" for="importModeMerge">
+              Merge into a base config (creates a new config)
+              {% if not can_merge %}<span class="text-muted">No configs available</span>{% endif %}
+            </label>
+          </div>
+          <div class="small text-muted mt-1">Merge keeps the base config unchanged and overwrites only the sections you choose.</div>
+        </div>
+        <div id="importMergeBaseSection" class="d-none mt-3">
+          <div class="form-floating mb-2">
+            <select class="form-select" id="importMergeBaseConfig">
+              <option value="">Select a base config</option>
+              {% for name in available_configs %}
+              <option value="{{ name }}" {% if name==page_info['config_name'] %}selected{% endif %}>{{ name }}</option>
+              {% endfor %}
+            </select>
+            <label for="importMergeBaseConfig">Base Config</label>
+          </div>
+          <div class="small text-muted">A new config will be created using this base. The base config is not modified.</div>
+        </div>
+        <div id="importPlexCredentials" class="d-none mt-3">
+          <div class="alert alert-warning py-2 small mb-3" role="alert">
+            Plex credentials are required to map libraries from the import.
+          </div>
+          <div class="input-group mb-2">
+            <span class="input-group-text" style="width: 110px; justify-content: space-between;">
+              Plex URL
+            </span>
+            <input type="text" class="form-control" id="importPlexUrl" placeholder="Plex URL">
+          </div>
+          <div class="input-group mb-2">
+            <span class="input-group-text" style="width: 110px; justify-content: space-between;">
+              Plex Token
+            </span>
+            <input type="password" class="form-control" id="importPlexToken" placeholder="Plex Token">
+            <button class="btn btn-outline-secondary" type="button" id="importPlexTokenToggle" aria-label="Show or hide Plex token">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div id="importTmdbCredentials" class="d-none mt-3">
+          <div class="alert alert-warning py-2 small mb-3" role="alert">
+            TMDb API key is required to validate metadata settings from the import.
+          </div>
+          <div class="input-group mb-2">
+            <span class="input-group-text" style="width: 150px; justify-content: space-between;">
+              TMDb API Key
+            </span>
+            <input type="password" class="form-control" id="importTmdbApiKey" placeholder="TMDb API Key">
+            <button class="btn btn-outline-secondary" type="button" id="importTmdbApiKeyToggle" aria-label="Show or hide TMDb API key">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div id="importConfigError" class="text-danger small mt-2 d-none"></div>
+
+        <div id="importPreviewSection" class="d-none mt-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <h6 class="mb-0">Import Report (Preview)</h6>
+              <span class="badge text-bg-info">Dry run - not saved</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="small text-muted" id="importSummary"></span>
+              <a class="btn btn-sm btn-outline-light d-none" id="downloadImportReport" href="#" download>Download report</a>
+            </div>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+            <div class="btn-group btn-group-sm" role="group" aria-label="Import report filters" id="importReportFilters">
+              <button type="button" class="btn btn-outline-light active" data-filter="all">All</button>
+              <button type="button" class="btn btn-outline-light" data-filter="imported">Imported</button>
+              <button type="button" class="btn btn-outline-light" data-filter="not_imported">Not Imported</button>
+              <button type="button" class="btn btn-outline-light" data-filter="comments">Comments</button>
+            </div>
+            <div class="small text-muted d-none" id="importLegend"></div>
+          </div>
+          <pre class="mt-2 p-2 border rounded small bg-dark text-light" id="importReport" style="max-height: 260px; overflow: auto;"></pre>
+        </div>
+        <div id="importMergeSection" class="d-none mt-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-1">
+            <h6 class="mb-0">Merge Sections</h6>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Select merge sections">
+              <button type="button" class="btn btn-outline-light" id="importMergeSelectAll">Select All</button>
+              <button type="button" class="btn btn-outline-light" id="importMergeSelectNone">Select None</button>
+            </div>
+          </div>
+          <div class="small text-muted mb-2">Choose which sections from the import should overwrite the base config.</div>
+          <div id="importMergeSectionList" class="d-flex flex-wrap gap-2"></div>
+        </div>
+        <div id="importLibraryMappingSection" class="d-none mt-3">
+          <h6 class="mb-1">Map Libraries to Plex</h6>
+          <div class="small text-muted mb-2">These libraries were not matched to Plex. Choose a target Plex library or ignore them.</div>
+          <div id="importLibraryMappingList"></div>
+          <div class="small text-muted mt-2 d-none" id="importMappingNote">Preview counts may change after mapping and Plex validation.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-outline-secondary" id="previewImportButton">Preview Import</button>
+        <button type="button" class="btn btn-secondary d-none" id="confirmImportButton">Import</button>
+      </div>
+    </div>
+  </div>
+</div>

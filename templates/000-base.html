@@ -139,7 +139,11 @@
   </div>
 
   <script type="text/javascript"
+    src="{{ url_for('static', filename='local-js/001-start.js') }}"></script>
+  {% if page_info['template_name'] != '001-start' %}
+  <script type="text/javascript"
     src="{{ url_for('static', filename='local-js/' + page_info['template_name'] + '.js') }}"></script>
+  {% endif %}
 
   <!-- Footer -->
   <footer class="footer bg-dark text-light py-3">
