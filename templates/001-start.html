@@ -36,8 +36,7 @@
           </div>
           {% else %}
           <div class="start-ready-intro mb-3">
-            <h3 class="mb-2">This config already has workflow data saved.</h3>
-            <p class="small text-muted mb-0">Use the cards below to jump back into Kometa or ImageMaid.</p>
+            <p class="start-ready-intro-note small text-muted mb-0">Workflow data is already saved for this config. Use the cards below to jump back into Kometa or ImageMaid.</p>
           </div>
           {% endif %}
           <div class="row g-3 mt-1">
@@ -50,7 +49,7 @@
                   </span>
                 </div>
                 {% if kometa_ready %}
-                <p class="small text-muted mb-3">This config is valid for the Kometa flow. Open the final Kometa page when you want to validate, review, or generate output.</p>
+                <p class="small text-muted mb-3">This config is valid for the Kometa flow. Open the final Kometa page when you want to validate, review, download, or generate output.  You can also launch Kometa.</p>
                 {% else %}
                 <p class="small text-muted mb-3">Plex, TMDb, libraries, or final validation still need attention before this config is fully ready for Kometa.</p>
                 {% endif %}

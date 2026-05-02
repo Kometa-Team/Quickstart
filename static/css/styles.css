@@ -3471,6 +3471,11 @@ div#loading {
     max-width: 48rem;
 }
 
+.start-ready-intro-note {
+    max-width: 42rem;
+    line-height: 1.45;
+}
+
 .start-app-card {
     transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
