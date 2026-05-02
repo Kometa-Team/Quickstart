@@ -252,11 +252,13 @@
               </div>
             </div>
             <h2 class="qs-main-page-title">{{ page_info['title'] }}</h2>
-            <div class="qs-main-page-meta">
+            <button type="button" class="btn nav-button config-badge-button qs-main-page-config-switch qs-config-switch-trigger"
+              data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}"
+              title="Switch config">
               <i class="bi bi-folder2-open qs-main-page-meta-icon" aria-hidden="true"></i>
               <span class="qs-main-page-meta-label">CONFIG:</span>
               <span class="qs-main-page-meta-value">{{ page_info.config_name }}</span>
-            </div>
+            </button>
           </div>
           {% set qs_search_enabled = page_info['template_name'] in ['025-libraries', '150-settings'] %}
           {% set qs_search_scope = 'library-form-container' if page_info['template_name'] == '025-libraries' else 'configForm' %}

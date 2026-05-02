@@ -2676,10 +2676,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const select = modalEl.querySelector('#configSwitchSelect')
   const confirmBtn = modalEl.querySelector('#configSwitchConfirm')
-  const badgeBtn = document.querySelector('.config-badge-button')
+  const configTriggers = Array.from(document.querySelectorAll('.qs-config-switch-trigger'))
 
   function getCurrentConfig () {
-    return badgeBtn?.dataset.current || ''
+    return configTriggers.find(btn => btn?.dataset?.current)?.dataset.current || ''
   }
 
   async function autoSaveCurrentPageBeforeConfigSwitch (currentConfig) {
@@ -2745,9 +2745,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Failed to switch configs.')
         }
-        if (badgeBtn) {
-          badgeBtn.dataset.current = data.name || target
-        }
+        configTriggers.forEach((trigger) => {
+          if (trigger && trigger.dataset) {
+            trigger.dataset.current = data.name || target
+          }
+        })
         if (data.workspace_status && typeof qsApplyWorkspaceStatus === 'function') {
           qsApplyWorkspaceStatus(Object.assign({ success: true, config_name: data.name || target }, data.workspace_status))
         } else {

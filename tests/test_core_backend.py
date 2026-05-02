@@ -646,3 +646,42 @@ def test_list_uploaded_images_includes_builtin_guides(client):
         assert payload["status"] == "success"
         assert expected.issubset(set(payload["images"]))
         assert not ({"overlay_alignment_guide.png", "overlay_alignment_guide_episodes.png"} - expected).intersection(payload["images"])
+
+
+def test_clone_test_libraries_start_returns_job_payload_immediately(client, tmp_path, monkeypatch, qs_module):
+    target_path = tmp_path / "plex_test_libraries"
+    temp_path = tmp_path / "tmp"
+    temp_path.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setattr(
+        qs_module,
+        "_resolve_test_libraries_paths",
+        lambda _root: (str(tmp_path), str(target_path), str(temp_path), str(temp_path), str(target_path)),
+    )
+    monkeypatch.setattr(qs_module, "_paths_overlap", lambda *_args, **_kwargs: False)
+    monkeypatch.setattr(qs_module, "_safe_to_replace_test_libraries", lambda *_args, **_kwargs: True)
+
+    started = {}
+
+    class DummyThread:
+        def __init__(self, target=None, daemon=None):
+            started["target"] = target
+            started["daemon"] = daemon
+
+        def start(self):
+            started["started"] = True
+
+    monkeypatch.setattr(qs_module.threading, "Thread", DummyThread)
+
+    resp = client.post(
+        "/clone-test-libraries-start",
+        json={"quickstart_root": str(tmp_path), "use_config_dir": True},
+    )
+
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["success"] is True
+    assert payload["job_id"]
+    assert payload["started_at"]
+    assert started["started"] is True
+    assert started["daemon"] is True

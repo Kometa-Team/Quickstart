@@ -197,15 +197,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function updateConfigBadge (name) {
-    const badgeBtn = document.querySelector('.config-badge-button[data-current]')
-    if (!badgeBtn || !name) return
-    badgeBtn.dataset.current = name
-    const label = badgeBtn.querySelector('span')
-    if (!label) return
-    label.textContent = `Config: ${name}`
-    const icon = document.createElement('i')
-    icon.className = 'bi bi-chevron-down ms-1'
-    label.appendChild(icon)
+    if (!name) return
+    document.querySelectorAll('.qs-config-switch-trigger[data-current]').forEach((badgeBtn) => {
+      badgeBtn.dataset.current = name
+    })
+    document.querySelectorAll('.qs-main-page-meta-value').forEach((label) => {
+      label.textContent = name
+    })
   }
 
   function updateHeaderConfigName (name) {
@@ -1956,6 +1954,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const statusMsg = document.getElementById('test-lib-status-message')
   const cloneBtn = document.getElementById('clone-test-lib-btn')
   const purgeBtn = document.getElementById('purge-test-lib-btn')
+  const testLibAccordionItem = document.getElementById('test-lib-accordion-item')
+  const testLibSummaryRecommended = document.getElementById('test-lib-summary-recommended')
+  const testLibSummaryPill = document.getElementById('test-lib-summary-pill')
+  const testLibIntroCopyPending = document.getElementById('test-lib-intro-copy-pending')
+  const testLibIntroCopyReady = document.getElementById('test-lib-intro-copy-ready')
   const updateRow = document.getElementById('test-lib-update-row')
   const localShaEl = document.getElementById('test-lib-local-sha')
   const remoteShaEl = document.getElementById('test-lib-remote-sha')
@@ -2130,8 +2133,31 @@ document.addEventListener('DOMContentLoaded', function () {
     progTxt.textContent = ''
   }
 
+  function setTestLibSummaryState (state, text) {
+    const normalized = state === 'ready' ? 'ready' : 'pending'
+    const label = text || (normalized === 'ready' ? 'Ready' : 'Setup needed')
+    if (testLibAccordionItem) {
+      testLibAccordionItem.dataset.testLibState = normalized
+    }
+    if (testLibSummaryRecommended) {
+      testLibSummaryRecommended.classList.toggle('d-none', normalized === 'ready')
+    }
+    if (testLibSummaryPill) {
+      testLibSummaryPill.textContent = label
+      testLibSummaryPill.classList.remove('start-app-state-ready', 'start-app-state-pending')
+      testLibSummaryPill.classList.add(normalized === 'ready' ? 'start-app-state-ready' : 'start-app-state-pending')
+    }
+    if (testLibIntroCopyPending) {
+      testLibIntroCopyPending.classList.toggle('d-none', normalized === 'ready')
+    }
+    if (testLibIntroCopyReady) {
+      testLibIntroCopyReady.classList.toggle('d-none', normalized !== 'ready')
+    }
+  }
+
   function setScenarioNotFound (pathValue, opts = {}) {
     const showUnrecognized = Boolean(opts.unrecognized)
+    setTestLibSummaryState('pending', 'Setup needed')
     testLibStatus.classList.remove('d-none', 'alert-success', 'alert-danger')
     testLibStatus.classList.add('alert-warning')
     statusMsg.replaceChildren()
@@ -2159,6 +2185,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function setScenarioFoundZip (data, pathValue) {
+    setTestLibSummaryState('ready', 'Ready')
     testLibStatus.classList.remove('d-none', 'alert-warning', 'alert-danger')
     testLibStatus.classList.add('alert-success')
     statusMsg.replaceChildren()
@@ -2239,7 +2266,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (res.success) {
           showToast('success', res.message)
-          setScenarioNotFound(`<br><code>${res.message.replace('Test libraries deleted at: ', '')}</code>`)
+          setScenarioNotFound(res.message.replace('Test libraries deleted at: ', ''))
           setButtonIdle(prevText || 'Download Test Libraries')
           resetProgress()
         } else {
@@ -2400,6 +2427,7 @@ document.addEventListener('DOMContentLoaded', function () {
         await refreshStatus()
         showToast('success', 'Test libraries installed/updated successfully.')
       } catch (err) {
+        setTestLibSummaryState('pending', 'Setup needed')
         testLibStatus.classList.remove('alert-success', 'alert-warning')
         testLibStatus.classList.add('alert-danger')
         const errorStrong = document.createElement('strong')

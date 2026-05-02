@@ -1,6 +1,9 @@
 {% extends "000-base.html" %} {% block content %}
 {% include "001-navigation.html" %}
 {% include "modals/" + page_info['template_name'] + ".html" ignore missing %}
+{% set kometa_ready = step_statuses.get('900-kometa') == 'ok' %}
+{% set imagemaid_ready = step_statuses.get('915-imagemaid') == 'ok' %}
+{% set compact_workflow_cards = kometa_ready or imagemaid_ready %}
 <div class="start-hero">
     <div class="card h-100 border-secondary start-card">
       <div class="card-body">
@@ -13,6 +16,7 @@
         </div>
         <div class="form-text" id="pin-info">
           <div class="start-eyebrow mb-2">One workspace, many tools</div>
+          {% if not compact_workflow_cards %}
           <div class="row g-3 align-items-stretch">
             <div class="col-lg-7">
               <h3 class="mb-2">Build Kometa configs and keep ImageMaid settings per config.</h3>
@@ -30,44 +34,77 @@
               </div>
             </div>
           </div>
+          {% else %}
+          <div class="start-ready-intro mb-3">
+            <h3 class="mb-2">This config already has workflow data saved.</h3>
+            <p class="small text-muted mb-0">Use the cards below to jump back into Kometa or ImageMaid.</p>
+          </div>
+          {% endif %}
           <div class="row g-3 mt-1">
             <div class="col-lg-6">
-              <div class="start-app-card h-100">
-                <div class="fw-semibold mb-2">Kometa workflow</div>
-                <p class="small text-muted mb-2">Connect Plex and metadata services, choose libraries, and generate a Quickstart-managed Kometa config.</p>
-                <div class="small text-muted">Recommended for first runs: use the test libraries below before touching your main libraries.</div>
-                <div class="small text-muted mt-2 start-link-row">
-                  <a href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">More info...</a>
-                  <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/" target="_blank" rel="noreferrer">Wiki</a>
+              <div class="start-app-card start-app-card-state-{{ 'ready' if kometa_ready else 'pending' }} h-100">
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                  <div class="fw-semibold">Kometa workflow</div>
+                  <span class="start-app-state start-app-state-{{ 'ready' if kometa_ready else 'pending' }}">
+                    {{ 'Ready' if kometa_ready else 'Setup needed' }}
+                  </span>
+                </div>
+                {% if kometa_ready %}
+                <p class="small text-muted mb-3">This config is valid for the Kometa flow. Open the final Kometa page when you want to validate, review, or generate output.</p>
+                {% else %}
+                <p class="small text-muted mb-3">Plex, TMDb, libraries, or final validation still need attention before this config is fully ready for Kometa.</p>
+                {% endif %}
+                <div class="start-link-row start-link-row-buttons">
+                  <a class="btn btn-sm nav-button" href="/step/900-kometa">Open Run Page</a>
+                  <a class="btn btn-sm nav-button" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">More info...</a>
+                  <a class="btn btn-sm nav-button" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/" target="_blank" rel="noreferrer">Wiki</a>
                 </div>
               </div>
             </div>
             <div class="col-lg-6">
-              <div class="start-app-card h-100">
-                <div class="fw-semibold mb-2">ImageMaid workflow</div>
-                <p class="small text-muted mb-2">Store ImageMaid mode, Plex path, and cleanup flags per config, then validate and run it from Quickstart.</p>
-                <div class="small text-muted">Best entered after Plex is validated so the same active config profile carries both Kometa and ImageMaid state.</div>
-                <div class="small text-muted mt-2 start-link-row">
-                  <a href="#" data-bs-toggle="modal" data-bs-target="#imageMaidInfoModal">More info...</a>
-                  <a href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/scripts/imagemaid/" target="_blank" rel="noreferrer">Wiki</a>
+              <div class="start-app-card start-app-card-state-{{ 'ready' if imagemaid_ready else 'pending' }} h-100">
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                  <div class="fw-semibold">ImageMaid workflow</div>
+                  <span class="start-app-state start-app-state-{{ 'ready' if imagemaid_ready else 'pending' }}">
+                    {{ 'Ready' if imagemaid_ready else 'Setup needed' }}
+                  </span>
+                </div>
+                {% if imagemaid_ready %}
+                <p class="small text-muted mb-3">This config is valid for ImageMaid. Open the run page when you want to review the command, validate again, or launch.</p>
+                {% else %}
+                <p class="small text-muted mb-3">ImageMaid settings for this config still need validation before the run page is truly ready to launch.</p>
+                {% endif %}
+                <div class="start-link-row start-link-row-buttons">
+                  <a class="btn btn-sm nav-button" href="/step/915-imagemaid">Open Run Page</a>
+                  <a class="btn btn-sm nav-button" href="#" data-bs-toggle="modal" data-bs-target="#imageMaidInfoModal">More info...</a>
+                  <a class="btn btn-sm nav-button" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/scripts/imagemaid/" target="_blank" rel="noreferrer">Wiki</a>
                 </div>
               </div>
             </div>
           </div>
           <div class="accordion mt-3" id="test-lib-accordion">
-            <div class="accordion-item">
+            <div class="accordion-item start-status-accordion" id="test-lib-accordion-item" data-test-lib-state="pending">
               <h2 class="accordion-header" id="test-lib-accordion-heading">
                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                   data-bs-target="#test-lib-accordion-collapse" aria-expanded="false"
                   aria-controls="test-lib-accordion-collapse">
-                  Test Libraries (Recommended)
+                  <span class="start-accordion-heading-wrap">
+                    <span class="start-accordion-title">
+                      <span>Test Libraries</span>
+                      <span class="start-accordion-recommended" id="test-lib-summary-recommended">(Recommended)</span>
+                    </span>
+                    <span class="start-accordion-status-wrap">
+                      <span class="start-app-state start-app-state-pending" id="test-lib-summary-pill">Setup needed</span>
+                    </span>
+                  </span>
                 </button>
               </h2>
               <div id="test-lib-accordion-collapse" class="accordion-collapse collapse"
                 aria-labelledby="test-lib-accordion-heading" data-bs-parent="#test-lib-accordion">
                 <div class="accordion-body pt-2">
-                  <p class="fs-5">We <b>strongly</b> suggest you set up test libraries if this is your first time running
+                  <p class="fs-5" id="test-lib-intro-copy-pending">We <b>strongly</b> suggest you set up test libraries if this is your first time running
                     Quickstart/Kometa, <a href="#" data-bs-toggle="modal" data-bs-target="#Modal2">click here</a> to learn more</p>
+                  <p class="small text-muted mb-3 d-none" id="test-lib-intro-copy-ready">Test libraries are already set up for this workspace. Expand this section only if you want to review paths, update the install, or remove it.</p>
                   <div id="test-lib-status" class="alert alert-warning d-none mt-3">
                     <span id="test-lib-status-message">
                       <strong>Test media libraries not found.</strong>

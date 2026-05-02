@@ -13754,6 +13754,7 @@ def clone_test_libraries_start():
             )
 
     threading.Thread(target=worker, daemon=True).start()
+    return jsonify(success=True, job_id=job_id, started_at=job.get("started_epoch"))
 
 
 def _schedule_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_name=None, timeout_seconds=20):
