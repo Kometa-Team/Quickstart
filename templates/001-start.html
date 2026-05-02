@@ -27,7 +27,7 @@
               <div class="start-side-note start-side-note-emphasis h-100">
                 <div class="fw-semibold mb-2">Before you begin</div>
                 <div class="small text-muted mb-2">Quickstart runs locally and keeps your data on this machine.</div>
-                <div class="small text-muted">Minimum inputs for the Kometa flow: Plex URL, Plex token, and a TMDb API key.</div>
+                <div class="small text-muted">Minimum inputs for the Kometa workflow: Plex URL, Plex token, and a TMDb API key.</div>
                 <div class="small text-muted mt-2">Use the left sidebar as your workspace map. Required steps stay grouped near the top, optional integrations and review pages follow underneath.</div>
                 <div class="small text-muted mt-2">You can jump directly between sections at any time, and the active config profile on this page is the profile the sidebar pages will read and update.</div>
                 <div class="small text-muted mt-2">Review the config profile section below, choose or create the profile you want to work in, then move into Plex/TMDb setup or open ImageMaid directly.</div>
@@ -49,13 +49,13 @@
                   </span>
                 </div>
                 {% if kometa_ready %}
-                <p class="small text-muted mb-3">This config is valid for the Kometa flow. Open the final Kometa page when you want to validate, review, download, or generate output.  You can also launch Kometa.</p>
+                <p class="small text-muted mb-3">This config is valid for the Kometa workflow. Open the final Kometa page when you want to validate, review, download, or generate output.  You can also launch Kometa.</p>
                 {% else %}
                 <p class="small text-muted mb-3">Plex, TMDb, libraries, or final validation still need attention before this config is fully ready for Kometa.</p>
                 {% endif %}
                 <div class="start-link-row start-link-row-buttons">
                   <a class="btn btn-sm nav-button" href="/step/900-kometa">Open Run Page</a>
-                  <a class="btn btn-sm nav-button" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">More info...</a>
+                  <a class="btn btn-sm nav-button" href="#" data-bs-toggle="modal" data-bs-target="#exampleModal">More Info</a>
                   <a class="btn btn-sm nav-button" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/" target="_blank" rel="noreferrer">Wiki</a>
                 </div>
               </div>
@@ -75,7 +75,7 @@
                 {% endif %}
                 <div class="start-link-row start-link-row-buttons">
                   <a class="btn btn-sm nav-button" href="/step/915-imagemaid">Open Run Page</a>
-                  <a class="btn btn-sm nav-button" href="#" data-bs-toggle="modal" data-bs-target="#imageMaidInfoModal">More info...</a>
+                  <a class="btn btn-sm nav-button" href="#" data-bs-toggle="modal" data-bs-target="#imageMaidInfoModal">More Info</a>
                   <a class="btn btn-sm nav-button" href="https://kometa.wiki/en/{{ version_info.kometa_branch }}/kometa/scripts/imagemaid/" target="_blank" rel="noreferrer">Wiki</a>
                 </div>
               </div>
@@ -90,7 +90,6 @@
                   <span class="start-accordion-heading-wrap">
                     <span class="start-accordion-title">
                       <span>Test Libraries</span>
-                      <span class="start-accordion-recommended" id="test-lib-summary-recommended">(Recommended)</span>
                     </span>
                     <span class="start-accordion-status-wrap">
                       <span class="start-app-state start-app-state-pending" id="test-lib-summary-pill">Setup needed</span>

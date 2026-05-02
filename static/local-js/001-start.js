@@ -1955,7 +1955,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const cloneBtn = document.getElementById('clone-test-lib-btn')
   const purgeBtn = document.getElementById('purge-test-lib-btn')
   const testLibAccordionItem = document.getElementById('test-lib-accordion-item')
-  const testLibSummaryRecommended = document.getElementById('test-lib-summary-recommended')
   const testLibSummaryPill = document.getElementById('test-lib-summary-pill')
   const testLibIntroCopyPending = document.getElementById('test-lib-intro-copy-pending')
   const testLibIntroCopyReady = document.getElementById('test-lib-intro-copy-ready')
@@ -1967,18 +1966,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const finalPathInput = document.getElementById('test-lib-final-path')
   const savePathsBtn = document.getElementById('test-lib-paths-apply')
   const pathsStatus = document.getElementById('test-lib-paths-status')
-  const testLibAccordion = document.getElementById('test-lib-accordion-collapse')
-
-  function setTestLibAccordionExpanded (shouldExpand) {
-    if (!testLibAccordion) return
-    if (typeof bootstrap !== 'undefined' && bootstrap.Collapse) {
-      const instance = bootstrap.Collapse.getOrCreateInstance(testLibAccordion, { toggle: false })
-      if (shouldExpand) instance.show()
-      else instance.hide()
-    } else {
-      testLibAccordion.classList.toggle('show', Boolean(shouldExpand))
-    }
-  }
 
   // Progress block (existing or injected)
   let progWrap = document.getElementById('test-lib-progress')
@@ -2139,9 +2126,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (testLibAccordionItem) {
       testLibAccordionItem.dataset.testLibState = normalized
     }
-    if (testLibSummaryRecommended) {
-      testLibSummaryRecommended.classList.toggle('d-none', normalized === 'ready')
-    }
     if (testLibSummaryPill) {
       testLibSummaryPill.textContent = label
       testLibSummaryPill.classList.remove('start-app-state-ready', 'start-app-state-pending')
@@ -2181,7 +2165,6 @@ document.addEventListener('DOMContentLoaded', function () {
     cloneBtn.classList.remove('d-none')
     purgeBtn.classList.add('d-none')
     updateRow?.classList.add('d-none')
-    setTestLibAccordionExpanded(true)
   }
 
   function setScenarioFoundZip (data, pathValue) {
@@ -2215,7 +2198,6 @@ document.addEventListener('DOMContentLoaded', function () {
     } else {
       updateRow?.classList.add('d-none')
     }
-    setTestLibAccordionExpanded(false)
   }
 
   async function refreshStatus () {
