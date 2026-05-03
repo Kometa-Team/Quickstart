@@ -7,6 +7,23 @@
   {% set app_keys = ['900-kometa', '915-imagemaid'] %}
   {% set insight_keys = ['905-analytics'] %}
   {% set other_keys = ['910-sponsor'] %}
+  {% set service_icon_map = {
+    '010-plex': 'images/service-icons/plex.png',
+    '020-tmdb': 'images/service-icons/tmdb.png',
+    '030-tautulli': 'images/service-icons/tautulli.png',
+    '040-github': 'images/service-icons/github.png',
+    '050-omdb': 'images/service-icons/omdb.png',
+    '060-mdblist': 'images/service-icons/mdblist.png',
+    '070-notifiarr': 'images/service-icons/notifiarr.png',
+    '080-gotify': 'images/service-icons/gotify.png',
+    '085-ntfy': 'images/service-icons/ntfy.png',
+    '100-anidb': 'images/service-icons/anidb.png',
+    '110-radarr': 'images/service-icons/radarr.png',
+    '120-sonarr': 'images/service-icons/sonarr.png',
+    '130-trakt': 'images/service-icons/trakt.png',
+    '140-mal': 'images/service-icons/mal.png'
+  } %}
+  {% set service_icon = service_icon_map.get(page_info['template_name']) %}
   {% if optional_keys is defined %}
   {% set optional_ns = namespace(keys=optional_keys) %}
   {% else %}
@@ -251,7 +268,14 @@
                 <div class="qs-background-job-pill-list" data-qs-background-job-pills></div>
               </div>
             </div>
-            <h2 class="qs-main-page-title">{{ page_info['title'] }}</h2>
+            <h2 class="qs-main-page-title">
+              <span class="qs-main-page-title-wrap">
+                {% if service_icon %}
+                <img src="{{ url_for('static', filename=service_icon) }}" alt="" class="qs-main-page-service-mark" aria-hidden="true">
+                {% endif %}
+                <span>{{ page_info['title'] }}</span>
+              </span>
+            </h2>
             <button type="button" class="btn nav-button config-badge-button qs-main-page-config-switch qs-config-switch-trigger"
               data-bs-toggle="modal" data-bs-target="#configSwitchModal" data-current="{{ page_info.config_name }}"
               title="Manage Configs">

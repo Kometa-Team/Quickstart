@@ -8,11 +8,10 @@
     <div class="card h-100 border-secondary start-card">
       <div class="card-body">
         <div class="d-flex align-items-center justify-content-center gap-2 mb-3 start-warning">
-          <span class="text-danger fw-semibold">Read this warning</span>
-          <i class="bi bi-exclamation-circle-fill text-danger" data-bs-toggle="tooltip" data-bs-placement="top"
-            data-bs-custom-class="text-tooltip"
-            title="Quickstart is designed to be run by you, on your own machine, to ensure your data and credentials remain secure. All information entered, including credentials, is stored locally on your device, and Quickstart only communicates with third-party services to verify credentials. Kometa does not collect or share any data. We strongly advise against using a version of Quickstart hosted by someone else.">
-          </i>
+          <span class="text-danger fw-semibold">Run Quickstart only on your own machine.</span>
+          <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#startSafetyModal">
+            Why this matters
+          </button>
         </div>
         <div class="form-text" id="pin-info">
           <div class="start-eyebrow mb-2">One workspace, many tools</div>

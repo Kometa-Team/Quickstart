@@ -5175,6 +5175,21 @@ body {
     color: var(--theme-text-hover);
 }
 
+.qs-main-page-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.qs-main-page-service-mark {
+    width: 1.55rem;
+    height: 1.55rem;
+    flex: 0 0 auto;
+    border-radius: 0.42rem;
+    object-fit: contain;
+    filter: drop-shadow(0 0 0.35rem rgba(0, 0, 0, 0.24));
+}
+
 .qs-main-page-meta {
     display: flex;
     align-items: center;
