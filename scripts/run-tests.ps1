@@ -40,6 +40,20 @@ $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 $venvPython = Join-Path $repoRoot "venv\\Scripts\\python.exe"
 $python = if (Test-Path $venvPython) { $venvPython } else { "python" }
 
+function Invoke-PytestDirect {
+  param(
+    [string[]]$PytestArgs
+  )
+
+  Push-Location $repoRoot
+  try {
+    & $python -m pytest -p pytest_progress_plugin @PytestArgs
+    $script:LastPytestExitCode = $LASTEXITCODE
+  } finally {
+    Pop-Location
+  }
+}
+
 if ($Setup) {
   & (Join-Path $PSScriptRoot "setup-dev.ps1")
   if ($LASTEXITCODE -ne 0) {
@@ -202,23 +216,25 @@ if (@($E2E, $Unit, $RatingsMatrix, $RatingsArtifacts).Where({ $_ }).Count -gt 1)
 }
 
 if ($E2E) {
+  $pytestArgs = @("-m", "e2e", "-vv", "-o", "console_output_style=count")
   if ($NoCapture) {
-    & $python -m pytest -m e2e -vv -s
-  } else {
-    & $python -m pytest -m e2e -vv
+    $pytestArgs += "-s"
   }
-  exit $LASTEXITCODE
+  Invoke-PytestDirect -PytestArgs $pytestArgs
+  $exitCode = $script:LastPytestExitCode
+  exit $exitCode
 }
 
 if ($RatingsMatrix) {
   if ($resolvedRatingsMovieLibrary) { $env:RATINGS_MATRIX_MOVIE_LIBRARY = $resolvedRatingsMovieLibrary }
   if ($resolvedRatingsShowLibrary) { $env:RATINGS_MATRIX_SHOW_LIBRARY = $resolvedRatingsShowLibrary }
+  $pytestArgs = @("-m", "ratings_matrix", "-vv", "-o", "console_output_style=count")
   if ($NoCapture) {
-    & $python -m pytest -m ratings_matrix -vv -s
-  } else {
-    & $python -m pytest -m ratings_matrix -vv
+    $pytestArgs += "-s"
   }
-  exit $LASTEXITCODE
+  Invoke-PytestDirect -PytestArgs $pytestArgs
+  $exitCode = $script:LastPytestExitCode
+  exit $exitCode
 }
 
 if ($RatingsArtifacts) {
@@ -237,13 +253,10 @@ if ($RatingsArtifacts) {
   Write-Host "  slot_thresholds(one/two/three)=$env:RATINGS_MATRIX_DIFF_THRESHOLD_ONE_SLOT_PERCENT/$env:RATINGS_MATRIX_DIFF_THRESHOLD_TWO_SLOT_PERCENT/$env:RATINGS_MATRIX_DIFF_THRESHOLD_THREE_SLOT_PERCENT"
   Write-Host "  show_layer_ready_timeout_ms=$env:RATINGS_SHOW_LAYER_READY_TIMEOUT_MS show_library_load_timeout_ms=$env:RATINGS_SHOW_LIBRARY_LOAD_TIMEOUT_MS library_load_retries=$env:RATINGS_LIBRARY_LOAD_RETRIES"
   Write-Host "  movie_library=$env:RATINGS_MATRIX_MOVIE_LIBRARY show_library=$env:RATINGS_MATRIX_SHOW_LIBRARY artifact_dir=$env:RATINGS_MATRIX_ARTIFACT_DIR"
-  if ($NoCapture) {
-    & $python -m pytest -m ratings_artifacts -vv -s
-  } else {
-    # Artifacts runs are long and benefit from live progress output.
-    & $python -m pytest -m ratings_artifacts -vv -s
-  }
-  exit $LASTEXITCODE
+  $pytestArgs = @("-m", "ratings_artifacts", "-vv", "-o", "console_output_style=count", "-s")
+  Invoke-PytestDirect -PytestArgs $pytestArgs
+  $exitCode = $script:LastPytestExitCode
+  exit $exitCode
 }
 
 if ($All) {
@@ -255,32 +268,32 @@ if ($All) {
   Write-Host "All mode: running non-ratings_artifacts tests first, then ratings_artifacts last." -ForegroundColor Cyan
 
   $overallExit = 0
-
+  $phaseOneArgs = @("-o", "addopts=", "-m", "not ratings_artifacts", "-vv", "-o", "console_output_style=count")
+  $phaseTwoArgs = @("-o", "addopts=", "-m", "ratings_artifacts", "-vv", "-o", "console_output_style=count")
   if ($NoCapture) {
-    & $python -m pytest -o addopts= -m "not ratings_artifacts" -vv -s
-  } else {
-    & $python -m pytest -o addopts= -m "not ratings_artifacts" -vv
+    $phaseOneArgs += "-s"
+    $phaseTwoArgs += "-s"
   }
-  if ($LASTEXITCODE -ne 0) {
-    $overallExit = $LASTEXITCODE
+  Invoke-PytestDirect -PytestArgs $phaseOneArgs
+  $phaseOneExit = $script:LastPytestExitCode
+  if ($phaseOneExit -ne 0) {
+    $overallExit = $phaseOneExit
   }
 
-  if ($NoCapture) {
-    & $python -m pytest -o addopts= -m ratings_artifacts -vv -s
-  } else {
-    & $python -m pytest -o addopts= -m ratings_artifacts -vv
-  }
-  if ($LASTEXITCODE -ne 0) {
-    $overallExit = $LASTEXITCODE
+  Invoke-PytestDirect -PytestArgs $phaseTwoArgs
+  $phaseTwoExit = $script:LastPytestExitCode
+  if ($phaseTwoExit -ne 0) {
+    $overallExit = $phaseTwoExit
   }
 
   exit $overallExit
 }
 
 # Default: unit/integration tests (non-E2E)
+$pytestArgs = @("-m", "not e2e and not ratings_matrix", "-vv", "-o", "console_output_style=count")
 if ($NoCapture) {
-  & $python -m pytest -m "not e2e and not ratings_matrix" -vv -s
-} else {
-  & $python -m pytest -m "not e2e and not ratings_matrix" -vv
+  $pytestArgs += "-s"
 }
-exit $LASTEXITCODE
+Invoke-PytestDirect -PytestArgs $pytestArgs
+$exitCode = $script:LastPytestExitCode
+exit $exitCode
