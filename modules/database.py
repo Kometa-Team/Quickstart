@@ -7,6 +7,38 @@ from contextlib import closing
 
 from modules import helpers
 
+TRANSIENT_SECTION_KEYS = {
+    "configSelector",
+    "config_name",
+    "newConfigName",
+    "importMode",
+}
+
+
+def _strip_transient_section_keys(value):
+    changed = False
+
+    if isinstance(value, dict):
+        cleaned = {}
+        for key, item in value.items():
+            if key in TRANSIENT_SECTION_KEYS:
+                changed = True
+                continue
+            cleaned_item, item_changed = _strip_transient_section_keys(item)
+            cleaned[key] = cleaned_item
+            changed = changed or item_changed
+        return cleaned, changed
+
+    if isinstance(value, list):
+        cleaned = []
+        for item in value:
+            cleaned_item, item_changed = _strip_transient_section_keys(item)
+            cleaned.append(cleaned_item)
+            changed = changed or item_changed
+        return cleaned, changed
+
+    return value, False
+
 
 def get_database_path():
     return os.path.join(helpers.CONFIG_DIR, "quickstart.sqlite")
@@ -57,6 +89,15 @@ def retrieve_section_data(name, section):
             row = cursor.fetchone()
             if row:
                 unpickled = pickle.loads(row["data"])
+                cleaned_data, changed = _strip_transient_section_keys(unpickled)
+                if changed:
+                    cursor.execute(
+                        """UPDATE section_data
+                            SET data = ?
+                            WHERE name == ? AND section == ?""",
+                        (pickle.dumps(cleaned_data), name, section),
+                    )
+                    unpickled = cleaned_data
                 if has_app_context() and app.config["QS_DEBUG"]:
                     helpers.ts_log(f"Retrieved data for name={name}, section={section}: {unpickled}", level="DEBUG")
                 return (
@@ -81,6 +122,8 @@ def retrieve_config_sections(name):
             for row in rows:
                 try:
                     data_blob = pickle.loads(row["data"]) if row["data"] is not None else None
+                    if data_blob is not None:
+                        data_blob, _changed = _strip_transient_section_keys(data_blob)
                 except Exception:
                     data_blob = None
                 sections.append(
@@ -92,6 +135,35 @@ def retrieve_config_sections(name):
                     }
                 )
     return sections
+
+
+def sanitize_all_section_data():
+    updated = 0
+    with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
+        connection.row_factory = sqlite3.Row
+        with closing(connection.cursor()) as cursor:
+            cursor.execute(persisted_section_table_create())
+            cursor.execute("""SELECT name, section, data FROM section_data""")
+            rows = cursor.fetchall()
+            for row in rows:
+                raw_data = row["data"]
+                if raw_data is None:
+                    continue
+                try:
+                    data_blob = pickle.loads(raw_data)
+                except Exception:
+                    continue
+                cleaned_blob, changed = _strip_transient_section_keys(data_blob)
+                if not changed:
+                    continue
+                cursor.execute(
+                    """UPDATE section_data
+                        SET data = ?
+                        WHERE name == ? AND section == ?""",
+                    (pickle.dumps(cleaned_blob), row["name"], row["section"]),
+                )
+                updated += 1
+    return updated
 
 
 def retrieve_validated_map(name, sections=None):

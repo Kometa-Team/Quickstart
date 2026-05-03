@@ -78,6 +78,7 @@ function setButtonSpinner (button, text) {
 document.addEventListener('DOMContentLoaded', function () {
   const configSwitchSelect = document.getElementById('configSwitchSelect')
   const configSelector = document.getElementById('configSelector')
+  const activeConfigInput = document.getElementById('qs-active-config-input')
   const newConfigInput = document.getElementById('newConfigName')
   const saveConfigRow = document.getElementById('saveConfigRow')
   const saveConfigButton = document.getElementById('saveConfigButton')
@@ -243,6 +244,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function setSelectedConfigOption (name) {
     if (!name) return
+    if (activeConfigInput) {
+      activeConfigInput.value = name
+    }
     if (configSelector) {
       configSelector.value = name
     }

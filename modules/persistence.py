@@ -19,6 +19,13 @@ _ISO_3166_1_REGIONS = None
 _ISO_639_2_LANGUAGES = None
 _DUMMY_CONFIG_CACHE = None
 
+TRANSIENT_FORM_FIELDS = {
+    "configSelector",
+    "config_name",
+    "newConfigName",
+    "importMode",
+}
+
 
 def _get_iso_reference_lists():
     global _ISO_639_1_LANGUAGES
@@ -75,6 +82,8 @@ def clean_form_data(form_data):
     clean_data = {}
 
     for key, value in form_data.items():
+        if key in TRANSIENT_FORM_FIELDS:
+            continue
         # Handle asset_directory as a list
         if key == "asset_directory" or key.endswith("-attribute_asset_directory"):
             if isinstance(value, list):

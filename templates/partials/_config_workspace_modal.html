@@ -1,5 +1,6 @@
 {% set show_new_config = page_info['config_name'] not in available_configs %}
 {% set can_merge = available_configs | length > 0 %}
+<form id="qs-config-workspace-form" class="d-none" aria-hidden="true"></form>
 
 <div class="modal fade" id="configSwitchModal" tabindex="-1" aria-labelledby="configSwitchModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
@@ -44,7 +45,7 @@
           </div>
 
           <div class="form-floating mb-2">
-            <select id="configSelector" name="configSelector" class="form-select" onchange="toggleConfigInput(this)">
+            <select id="configSelector" name="configSelector" form="qs-config-workspace-form" class="form-select" onchange="toggleConfigInput(this)">
               <option value="add_config" {% if page_info['config_name'] not in available_configs %}selected{% endif %}>
                 Add Config
               </option>
@@ -58,7 +59,7 @@
           </div>
 
           <div id="newConfigInput" class="form-floating mb-2 {{ '' if show_new_config else 'd-none' }}">
-            <input type="text" id="newConfigName" name="newConfigName" class="form-control" placeholder="Enter a new config name"
+            <input type="text" id="newConfigName" name="newConfigName" form="qs-config-workspace-form" class="form-control" placeholder="Enter a new config name"
               value="{% if page_info['config_name'] not in available_configs %}{{ page_info['config_name'] }}{% else %}{{ page_info['new_config_name'] }}{% endif %}">
             <label for="newConfigName">New Config Name</label>
           </div>
@@ -255,11 +256,11 @@
         <div class="border rounded p-2 mt-3" id="importModeSection">
           <div class="small text-muted mb-1">Import Mode</div>
           <div class="form-check">
-            <input class="form-check-input" type="radio" name="importMode" id="importModeNew" value="new" checked>
+            <input class="form-check-input" type="radio" name="importMode" form="qs-config-workspace-form" id="importModeNew" value="new" checked>
             <label class="form-check-label" for="importModeNew">Create a new config from this file</label>
           </div>
           <div class="form-check mt-1">
-            <input class="form-check-input" type="radio" name="importMode" id="importModeMerge" value="merge" {% if not can_merge %}disabled{% endif %}>
+            <input class="form-check-input" type="radio" name="importMode" form="qs-config-workspace-form" id="importModeMerge" value="merge" {% if not can_merge %}disabled{% endif %}>
             <label class="form-check-label" for="importModeMerge">
               Merge into a base config (creates a new config)
               {% if not can_merge %}<span class="text-muted">No configs available</span>{% endif %}

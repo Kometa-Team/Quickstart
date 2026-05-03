@@ -1,4 +1,5 @@
 <form method="post" id="configForm" name="configForm">
+  <input type="hidden" id="qs-active-config-input" name="configSelector" value="{{ page_info.config_name }}">
   {% import "partials/_workspace_macros.html" as workspace %}
   {% set qs_is_docker = version_info and version_info.running_on and ('Docker' in version_info.running_on) %}
   {% set hide_step_nav = page_info.get('hide_step_nav', False) %}

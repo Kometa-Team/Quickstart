@@ -685,3 +685,74 @@ def test_clone_test_libraries_start_returns_job_payload_immediately(client, tmp_
     assert payload["started_at"]
     assert started["started"] is True
     assert started["daemon"] is True
+
+
+def test_step_post_ignores_global_config_manager_fields_in_saved_section(client, isolated_config_dir):
+    from modules import database
+
+    config_name = "pytest_leak_guard"
+    resp = client.post(
+        "/step/100-anidb",
+        data={
+            "configSelector": config_name,
+            "newConfigName": "should_not_persist",
+            "importMode": "new",
+            "language": "en",
+            "cache_expiration": "60",
+            "enable_mature": "true",
+        },
+        headers={"Referer": "http://localhost/step/100-anidb"},
+    )
+
+    assert resp.status_code in (200, 302)
+
+    validated, user_entered, data = database.retrieve_section_data(config_name, "anidb")
+    assert validated is False
+    assert user_entered is True
+    assert data["anidb"]["language"] == "en"
+    assert data["anidb"]["cache_expiration"] == 60
+    assert data["anidb"]["enable_mature"] is True
+    assert "configSelector" not in data["anidb"]
+    assert "newConfigName" not in data["anidb"]
+    assert "importMode" not in data["anidb"]
+
+
+def test_retrieve_settings_sanitizes_already_persisted_transient_fields(client, isolated_config_dir, app):
+    from modules import database, persistence
+    from flask import session
+
+    config_name = "pytest_existing_leak_guard"
+    database.save_section_data(
+        section="anidb",
+        validated=True,
+        user_entered=True,
+        name=config_name,
+        data={
+            "anidb": {
+                "configSelector": config_name,
+                "newConfigName": "should_not_persist",
+                "importMode": "new",
+                "language": "en",
+                "cache_expiration": 60,
+                "enable_mature": True,
+            },
+            "validated_at": "2026-05-03T00:00:00Z",
+        },
+    )
+
+    with app.test_request_context("/step/100-anidb"):
+        session["config_name"] = config_name
+        settings = persistence.retrieve_settings("100-anidb")
+        assert settings["anidb"]["language"] == "en"
+        assert settings["anidb"]["cache_expiration"] == 60
+        assert settings["anidb"]["enable_mature"] is True
+        assert "configSelector" not in settings["anidb"]
+        assert "newConfigName" not in settings["anidb"]
+        assert "importMode" not in settings["anidb"]
+
+    validated, user_entered, stored = database.retrieve_section_data(config_name, "anidb")
+    assert validated is True
+    assert user_entered is True
+    assert "configSelector" not in stored["anidb"]
+    assert "newConfigName" not in stored["anidb"]
+    assert "importMode" not in stored["anidb"]

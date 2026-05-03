@@ -2812,6 +2812,9 @@ RUN_CONTEXT = {
 
 # Ensure json-schema files are up to date at startup
 helpers.ensure_json_schema()
+sanitized_section_count = database.sanitize_all_section_data()
+if sanitized_section_count:
+    helpers.ts_log(f"Sanitized transient config-manager fields from {sanitized_section_count} persisted section(s).", level="INFO")
 
 parser = argparse.ArgumentParser(description="Run Quickstart Flask App")
 parser.add_argument("--port", type=int, help="Specify the port number to run the server")
