@@ -322,6 +322,26 @@ $(document).ready(function () {
     return getRunToolName(run) === 'imagemaid' ? 'ImageMaid' : 'Kometa'
   }
 
+  function getKometaStartMode (run) {
+    if (!run || getRunToolName(run) !== 'kometa') return ''
+    const mode = String(run.start_mode || '').trim().toLowerCase()
+    return ['current', 'recovery', 'logged'].includes(mode) ? mode : ''
+  }
+
+  function getKometaStartModeLabel (run) {
+    const mode = getKometaStartMode(run)
+    if (mode === 'recovery') return 'Recovery'
+    if (mode === 'logged') return 'Logged'
+    if (mode === 'current') return 'Current'
+    return ''
+  }
+
+  function renderKometaStartModeBadge (run) {
+    const label = getKometaStartModeLabel(run)
+    if (!label) return ''
+    return `<span class="badge text-bg-secondary ms-2">Start: ${escapeHtml(label)}</span>`
+  }
+
   function getImagemaidMode (run) {
     const direct = String(run && run.imagemaid_mode ? run.imagemaid_mode : '').trim().toLowerCase()
     if (direct) return direct
@@ -1733,6 +1753,7 @@ $(document).ready(function () {
       const isSelectable = isRunSelectable(run)
       const isSelected = isSelectable && selectedRunKeys.has(runKey)
       const statusDisplay = run.is_incomplete ? 'Incomplete' : 'Complete'
+      const startModeBadge = renderKometaStartModeBadge(run)
       const startedDisplay = escapeHtml(getDisplayStarted(run))
       const finishedDisplay = escapeHtml(getDisplayFinished(run))
       const sizeBytes = typeof run.log_resolved_size === 'number'
@@ -1785,7 +1806,7 @@ $(document).ready(function () {
                 aria-label="Select ${escapeHtml(runLabel)}">
             </span>
           `, 'class="logscan-select-cell"')}
-          ${renderRunCardCell('Status', 'Complete runs are included in charts. Incomplete logs are shown here for investigation and file management.', escapeHtml(statusDisplay), run.is_incomplete ? 'class="text-nowrap text-warning fw-semibold"' : 'class="text-nowrap text-success fw-semibold"')}
+          ${renderRunCardCell('Status', 'Complete runs are included in charts. Incomplete logs are shown here for investigation and file management.', `<span class="${run.is_incomplete ? 'text-warning' : 'text-success'} fw-semibold">${escapeHtml(statusDisplay)}</span>${startModeBadge}`, 'class="text-nowrap"')}
           ${renderRunCardCell('Started', 'Timestamp parsed from the stored run start marker or run summary.', startedDisplay, 'class="text-nowrap"')}
           ${renderRunCardCell('Finished', 'Timestamp of the run finishing. Incomplete logs are shown here for investigation only and are excluded from charts.', finishedDisplay, 'class="text-nowrap"')}
           ${renderRunCardCell('Runtime', getRuntimeHelpText(run), escapeHtml(formatSeconds(runtimeParts.effective)))}
@@ -2877,6 +2898,23 @@ $(document).ready(function () {
     `
   }
 
+  function buildKometaDetailsBlock (run) {
+    if (!run || getRunToolName(run) !== 'kometa') return ''
+    const startMode = getKometaStartModeLabel(run) || 'Unknown'
+    const facts = [
+      `Start mode: ${escapeHtml(startMode)}`,
+      `Completion: ${escapeHtml(String(run.completion_reason || (run.is_incomplete ? 'unknown_incomplete' : 'completed')).replaceAll('_', ' '))}`
+    ]
+    return `
+      <div class="mb-3">
+        <div class="fw-semibold mb-1">Kometa Details</div>
+        <div class="small text-muted">
+          ${facts.map(line => `<div>${line}</div>`).join('')}
+        </div>
+      </div>
+    `
+  }
+
   function showRunDetails (runKey) {
     if (!runKey) return
     if ($runDetailsBody.length) {
@@ -2897,7 +2935,7 @@ $(document).ready(function () {
           }
           return
         }
-        const detailsBlock = buildImagemaidDetailsBlock(data && data.run)
+        const detailsBlock = `${buildKometaDetailsBlock(data && data.run)}${buildImagemaidDetailsBlock(data && data.run)}`
         const recs = Array.isArray(data.recommendations) ? data.recommendations : []
         if (!recs.length) {
           if ($runDetailsBody.length) {

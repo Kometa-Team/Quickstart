@@ -254,6 +254,7 @@ def log_runs_table_create():
         maintenance_had_pause INTEGER,
         quiet_period_summary TEXT,
         quickstart_run_marker INTEGER,
+        start_mode TEXT,
         config_line_count INTEGER,
         cache_line_count INTEGER,
         created_at TEXT
@@ -285,6 +286,7 @@ def _ensure_log_runs_columns(cursor):
         "maintenance_had_pause": "INTEGER",
         "quiet_period_summary": "TEXT",
         "quickstart_run_marker": "INTEGER",
+        "start_mode": "TEXT",
         "config_line_count": "INTEGER",
         "cache_line_count": "INTEGER",
     }
@@ -323,6 +325,7 @@ def save_log_run(summary, recommendations=None):
     if isinstance(quiet_period_summary, dict):
         quiet_period_summary = json.dumps(quiet_period_summary, ensure_ascii=True)
     quickstart_run_marker = 1 if summary.get("quickstart_run_marker") else 0
+    start_mode = str(summary.get("start_mode") or "").strip().lower() or None
     config_line_count = summary.get("config_line_count")
     cache_line_count = summary.get("cache_line_count")
     with sqlite3.connect(get_database_path(), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES) as connection:
@@ -358,10 +361,11 @@ def save_log_run(summary, recommendations=None):
                     maintenance_had_pause,
                     quiet_period_summary,
                     quickstart_run_marker,
+                    start_mode,
                     config_line_count,
                     cache_line_count,
                     created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (
                     run_key,
                     tool_name,
@@ -390,6 +394,7 @@ def save_log_run(summary, recommendations=None):
                     maintenance_had_pause,
                     quiet_period_summary,
                     quickstart_run_marker,
+                    start_mode,
                     config_line_count,
                     cache_line_count,
                     summary.get("created_at"),
@@ -454,6 +459,7 @@ def _decode_log_run_row(row):
             decoded["quiet_period_summary"] = None
     decoded["maintenance_had_pause"] = bool(decoded.get("maintenance_had_pause"))
     decoded["quickstart_run_marker"] = bool(decoded.get("quickstart_run_marker"))
+    decoded["start_mode"] = str(decoded.get("start_mode") or "").strip().lower() or None
     decoded["tool_name"] = str(decoded.get("tool_name") or "kometa").strip().lower() or "kometa"
     return decoded
 
@@ -464,13 +470,13 @@ def get_log_runs(limit=100):
         with closing(connection.cursor()) as cursor:
             _ensure_log_runs_columns(cursor)
             query = """SELECT run_key, tool_name, started_at, finished_at, run_time_seconds, kometa_version, kometa_newest_version,
-                              config_name, config_hash, run_command, command_signature, section_runtimes,
-                              recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
-                              error_count, critical_count, trace_count, analysis_counts, library_counts,
-                              maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker,
-                              config_line_count, cache_line_count, created_at
-                       FROM log_runs
-                       ORDER BY created_at DESC"""
+                               config_name, config_hash, run_command, command_signature, section_runtimes,
+                               recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
+                               error_count, critical_count, trace_count, analysis_counts, library_counts,
+                               maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker, start_mode,
+                               config_line_count, cache_line_count, created_at
+                        FROM log_runs
+                        ORDER BY created_at DESC"""
             params = ()
             if limit is not None:
                 query += "\n                   LIMIT ?"
@@ -492,7 +498,7 @@ def get_log_run(run_key):
                           config_name, config_hash, run_command, command_signature, section_runtimes,
                           recommendations, log_mtime, log_size, debug_count, info_count, warning_count,
                           error_count, critical_count, trace_count, analysis_counts, library_counts,
-                          maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker,
+                          maintenance_summary, maintenance_had_pause, quiet_period_summary, quickstart_run_marker, start_mode,
                           config_line_count, cache_line_count, created_at
                    FROM log_runs
                    WHERE run_key == ?

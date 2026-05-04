@@ -1010,6 +1010,7 @@ def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, m
     log_path.write_text(
         "\n".join(
             [
+                "[Quickstart] Run marker: started=2026-04-13T07:16:22Z config=demo quickstart=1.0.0 branch=develop maintenance_markers=1 start_mode=recovery",
                 "[2026-04-14 09:37:06,901] [kometa.py:522]             [INFO]     |====================================================================================================|",
                 "[2026-04-14 09:37:06,901] [kometa.py:522]             [INFO]     |                                            Finished Run                                            |",
                 "[2026-04-14 09:37:06,901] [kometa.py:522]             [INFO]     |                                       Version: 2.3.1-build4                                        |",
@@ -1029,6 +1030,9 @@ def test_logscan_reingest_ingests_day_runtime_log(client, isolated_config_dir, m
     assert payload["success"] is True
     assert payload["ingested"] >= 1
     assert payload["skipped_incomplete"] == 0
+    runs = qs_module.database.get_log_runs(limit=10)
+    assert runs
+    assert runs[0]["start_mode"] == "recovery"
 
 
 def test_logscan_reingest_archives_incomplete_rotated_live_log(client, isolated_config_dir, monkeypatch, qs_module):
@@ -1455,6 +1459,7 @@ def test_ingest_completed_live_logs_caches_unchanged_incomplete_live_kometa_log(
                     "tool_name": "kometa",
                     "run_complete": False,
                     "config_name": "demo",
+                    "start_mode": "logged",
                     "run_command": "python kometa.py --config config/demo.yml",
                     "log_counts": {},
                     "analysis_counts": {},
@@ -1480,6 +1485,7 @@ def test_ingest_completed_live_logs_caches_unchanged_incomplete_live_kometa_log(
     assert first == {"ingested": 0, "archived": 0}
     assert str(runtime_log.resolve()) in cache["logs"]
     assert cache["logs"][str(runtime_log.resolve())]["run_complete"] is False
+    assert cache["logs"][str(runtime_log.resolve())]["summary"]["start_mode"] == "logged"
     assert analyze_calls["count"] == 1
 
     second = qs_module._ingest_completed_live_logs("kometa")
@@ -1583,6 +1589,50 @@ def test_logscan_trends_includes_imagemaid_runs(client, isolated_config_dir, mon
     assert payload["runs"]
     assert payload["runs"][0]["tool_name"] == "imagemaid"
     assert payload["runs"][0]["log_location"] == "archive"
+
+
+def test_logscan_trends_returns_kometa_start_mode(client, isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    log_path = archive_dir / "meta-20260504.log"
+    log_path.write_text("kometa archived log\n", encoding="utf-8")
+    stats = log_path.stat()
+
+    qs_module.database.save_log_run(
+        {
+            "run_key": "run-kometa-start-mode-1",
+            "tool_name": "kometa",
+            "finished_at": "2026-05-04T20:17:00Z",
+            "config_name": "demo",
+            "created_at": "2026-05-04T20:17:00Z",
+            "log_mtime": stats.st_mtime,
+            "log_size": stats.st_size,
+            "run_command": "python kometa.py --run",
+            "kometa_version": "2.3.1",
+            "start_mode": "recovery",
+        }
+    )
+    monkeypatch.setattr(
+        qs_module,
+        "_load_logscan_ingest_cache",
+        lambda: {
+            "version": 1,
+            "logs": {
+                str(log_path.resolve()): {
+                    "run_key": "run-kometa-start-mode-1",
+                    "tool_name": "kometa",
+                    "run_complete": True,
+                }
+            },
+        },
+    )
+
+    resp = client.get("/logscan/trends")
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["runs"]
+    assert payload["runs"][0]["tool_name"] == "kometa"
+    assert payload["runs"][0]["start_mode"] == "recovery"
 
 
 def test_logscan_startup_migration_defers_without_logs(isolated_config_dir, monkeypatch, qs_module):

@@ -3050,6 +3050,23 @@ class LogscanAnalyzer:
         match = re.search(r"\[Quickstart\]\s+Run marker:.*", content)
         return match.group(0) if match else None
 
+    def extract_quickstart_marker_fields(self, content):
+        marker = self.extract_quickstart_marker(content)
+        if not marker:
+            return {}
+        fields = {}
+        for match in re.finditer(r"(\w+)=([^\s]+)", marker):
+            key = str(match.group(1) or "").strip().lower()
+            value = str(match.group(2) or "").strip()
+            if key:
+                fields[key] = value
+        start_mode = str(fields.get("start_mode") or "").strip().lower()
+        if start_mode not in {"current", "recovery", "logged"}:
+            fields["start_mode"] = ""
+        else:
+            fields["start_mode"] = start_mode
+        return fields
+
     def extract_quickstart_marker_capabilities(self, content):
         capabilities = {"maintenance_markers": False}
         marker = self.extract_quickstart_marker(content)
@@ -3575,6 +3592,7 @@ class LogscanAnalyzer:
 
         analysis_counts = self.extract_analyze_issue_counts(cleaned_content)
         quickstart_marker = self.extract_quickstart_marker(raw_content)
+        quickstart_marker_fields = self.extract_quickstart_marker_fields(raw_content)
         config_line_count = self.extract_config_line_count(raw_content)
         cache_line_count = sum(1 for line in raw_content.splitlines() if "from Cache" in line)
         library_counts = self.extract_library_counts(cleaned_content)
@@ -3619,6 +3637,7 @@ class LogscanAnalyzer:
         if summary:
             summary["analysis_counts"] = analysis_counts
             summary["quickstart_run_marker"] = bool(quickstart_marker)
+            summary["start_mode"] = quickstart_marker_fields.get("start_mode") or None
             summary["library_counts"] = library_counts
             summary["maintenance_summary"] = maintenance_summary
             summary["quiet_period_summary"] = quiet_period_summary
