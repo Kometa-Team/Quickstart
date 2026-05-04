@@ -49,6 +49,7 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Settings Cog:** Quick access to runtime controls like debug mode and port changes from anywhere
 
 ![Libraries Page](static/images/readme/libraries-page.png)
+![Service Connection TODO](static/images/readme/service-connection-todo.png)
 
 ### Kometa Gates
 - **Fail-Fast Setup Checks:** The Kometa page stops at the TODO gate when required setup work remains instead of building YAML or checking Kometa prematurely
@@ -63,6 +64,7 @@ Kometa Quickstart is more than just a YAML generator - it's a full interactive e
 - **Run Command Builder:** Dynamically builds and previews CLI commands with flags like `--run`, `--operations-only`, `--times`, etc.
 - **Process Management:** Start, stop, and monitor Kometa runs directly from the web interface
 - **Maintenance-Aware Runs:** Detects Plex maintenance windows, pauses active runs, and queues new runs until maintenance ends (with global UI badges and toasts)
+- **Incomplete Run Recovery:** If a Kometa run stops early, Quickstart preserves the run context and surfaces resume or recovery guidance when it can determine the affected scope
 
 This reduces the chance of Plex background maintenance colliding with long Kometa runs, keeps Plex more responsive during the window, and avoids wasting time starting a run that would immediately pause.
 
@@ -72,7 +74,8 @@ This reduces the chance of Plex background maintenance colliding with long Komet
 - **Guided run gating:** Run controls stay hidden until ImageMaid is installed and validated, with explicit guidance for the next required step
 - **Maintenance-aware start protection:** ImageMaid starts are blocked during Plex maintenance windows instead of colliding with active maintenance
 
-![Kometa Runner](static/images/readme/final-validation-runner.png)
+![Kometa Runner](static/images/readme/kometa-runner.png)
+![ImageMaid Runner](static/images/readme/imagemaid-runner.png)
 
 ### Live Previews & Assets
 - **Overlay Preview Generator:** Combines overlays and template variables into real-time preview images
@@ -83,6 +86,7 @@ This reduces the chance of Plex background maintenance colliding with long Komet
 ### Automatic Updates
 - **Quickstart Self-Updater:** One-click update to latest master or develop branch
 - **Kometa Sync:** Option to pull and update Kometa itself (nightly/master) before running
+- **ImageMaid Sync:** Option to pull and update ImageMaid itself (develop/master) before running
 
 ### Themes & Personalization
 - **Theme Picker:** Switch between Kometa, Plex, Jellyfin, Emby, Seerr, and more with instant apply
@@ -126,7 +130,7 @@ How it works:
 ![Analytics Page](static/images/readme/analytics-page.png)
 
 ### Import Existing Config
-- **Import Config:** Launch import from the Welcome page to prefill settings, libraries, and templates.
+- **Import Config:** Launch import from `Manage Configs` in the Utilities menu to prefill settings, libraries, and templates.
 - **YAML or ZIP:** Zip files must contain exactly one YAML config; `.ttf`/`.otf` fonts in the zip will be imported.
 - **Preview required:** Quickstart always runs a preview before import and shows a line‑by‑line report (`imported / not imported`) with filters (All/Imported/Not Imported/Comments) and a downloadable report.
 - **Plex credentials prompt:** If the import contains libraries, Plex validation is required for mapping. Quickstart will prompt for Plex URL/token if none are present; if the credentials in the file fail validation, you’ll be prompted to correct them and re‑run Preview.
@@ -137,21 +141,22 @@ How it works:
 
 After you confirm an import, Quickstart saves the new config, shows a compact summary of imported sections, skipped sections, mapped libraries, and copied fonts, then runs bulk validation automatically. If validation fails for any page, Quickstart keeps the summary open with direct links to the failed pages. If validation passes, it refreshes the Welcome page with the imported config selected.
 
-![Import Config](static/images/readme/import-config.png)
+![Import Config](static/images/readme/import-config1.png)
+![Import Config](static/images/readme/import-config2.png)
 
 ### Quickstart Scope
 - **Quickstart support vs Kometa support:** The Support Info workflow is for Quickstart issues. Kometa runtime issues should be handled in Kometa support channels.
 
 ### Support & Troubleshooting
-- **Support Info (every page):** Use the Support Info button to gather system info and the Quickstart log tail.
+- **Support Info (every page):** Use the Support button in the Utilities menu to open Support Info and gather system info plus the Quickstart log tail.
 - **Redaction notice:** We attempt to redact secrets, but always review before posting.
 - **Log file:** `config/logs/quickstart.log`
 
 ### Data & Privacy (Quickstart)
 - **Local-first:** Config data is stored locally in SQLite and versioned `.yml` files in `config/`.
-- **Network access:** Quickstart only contacts external services when you validate settings or fetch remote assets.
+- **Network access:** Quickstart only contacts external services for validation, remote asset fetches, update checks, and explicit update or sync actions.
 
-Kometa Quickstart is a guided Web UI that helps you create a configuration file for Kometa and run supported Kometa-Team companion apps from the same workspace.
+Quickstart is a guided Web UI that helps you create a configuration file for Kometa and run supported Kometa-Team companion apps like ImageMaid from the same workspace.
 
 Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](https://github.com/bullmoose20), [chazlarson](https://github.com/chazlarson), and [Yozora](https://github.com/yozoraXCII) for their contributions to this tool.
 
@@ -174,6 +179,7 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
     - [Startup Analytics Migrations](#startup-analytics-migrations)
   - [Logscan Analyzer \& Analytics Page](#logscan-analyzer--analytics-page)
   - [Import Existing Config](#import-existing-config)
+    - [What happens after import?](#what-happens-after-import)
   - [Quickstart Scope](#quickstart-scope)
   - [Support \& Troubleshooting](#support--troubleshooting)
   - [Data \& Privacy (Quickstart)](#data--privacy-quickstart)
@@ -191,7 +197,10 @@ Special thanks to [meisnate12](https://github.com/meisnate12), [bullmoose20](htt
   - [Linux/Mac:](#linuxmac)
   - [Debugging \& Changing Ports](#debugging--changing-ports)
 - [Testing](#testing)
+  - [Developer Testing](#developer-testing)
 - [Appendix: Dependency Map](#appendix-dependency-map)
+  - [MyAnimeList-specific mass update operations](#myanimelist-specific-mass-update-operations)
+  - [Notes](#notes)
 
 ## Prerequisites
 
@@ -405,23 +414,25 @@ Quickstart should launch a browser automatically. If you are on a headless machi
 
 You can enable debug mode to add verbose logging to the console window.
 
-There are three ways to enable debugging:
+There are four ways to enable debugging:
 
 - Add `--debug` to your Run Command, for example: `python quickstart.py --debug`.
 
 - Open the `.env` file at the root of the Quickstart directory, and set `QS_DEBUG=1` (restart required).
 
 - Use the Quickstart system tray icon to toggle it on or off (no restart required).
-- Use the Settings cog in the UI to toggle it on or off (no restart required).
 
-Quickstart runs on port 7171 by default. You can change it in one of three ways:
+- Use the Settings button in the Utilities menu within the Web UI to toggle it on or off (no restart required).
+
+Quickstart runs on port 7171 by default. You can change it in one of four ways:
 
 - Add `--port=XXXX` to your Run Command, for example: `python quickstart.py --port=1234`
 
 - Open the `.env` file at the root of the Quickstart directory, and set `QS_PORT=XXXX` where XXXX is the port you want to run on. (restart required)
 
 - Use the Quickstart system tray icon to choose a new port (restarts automatically).
-- Use the Settings cog in the UI to choose a new port (restarts automatically).
+
+- Use the Settings button in the Utilities menu within the Web UI to choose a new port (restarts automatically).
 
 ## Testing
 
