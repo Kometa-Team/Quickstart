@@ -132,7 +132,7 @@ MAINTENANCE_STATE = {
 MAINTENANCE_STATE_LOCK = threading.Lock()
 MAINTENANCE_GUARD_INTERVAL = 45
 IMAGEMAID_STARTUP_GRACE_SECONDS = 10
-PENDING_KOMETA_START = {"command": None, "config_name": None, "requested_at": None}
+PENDING_KOMETA_START = {"command": None, "config_name": None, "requested_at": None, "start_mode": "current"}
 PENDING_KOMETA_START_LOCK = threading.Lock()
 
 VALIDATION_DOC_BASE = "/step/"
@@ -1649,11 +1649,17 @@ def _get_maintenance_window_live():
     return start_hour * 60, end_hour * 60, window_str
 
 
-def _set_pending_kometa_start(command, config_name):
+def _normalize_kometa_start_mode(raw_mode):
+    mode = str(raw_mode or "current").strip().lower()
+    return mode if mode in {"current", "recovery", "logged"} else "current"
+
+
+def _set_pending_kometa_start(command, config_name, start_mode="current"):
     with PENDING_KOMETA_START_LOCK:
         PENDING_KOMETA_START["command"] = command
         PENDING_KOMETA_START["config_name"] = config_name
         PENDING_KOMETA_START["requested_at"] = datetime.now(timezone.utc).isoformat()
+        PENDING_KOMETA_START["start_mode"] = _normalize_kometa_start_mode(start_mode)
 
 
 def _peek_pending_kometa_start():
@@ -1671,6 +1677,7 @@ def _pop_pending_kometa_start():
         PENDING_KOMETA_START["command"] = None
         PENDING_KOMETA_START["config_name"] = None
         PENDING_KOMETA_START["requested_at"] = None
+        PENDING_KOMETA_START["start_mode"] = "current"
         return pending
 
 
@@ -1679,6 +1686,7 @@ def _clear_pending_kometa_start():
         PENDING_KOMETA_START["command"] = None
         PENDING_KOMETA_START["config_name"] = None
         PENDING_KOMETA_START["requested_at"] = None
+        PENDING_KOMETA_START["start_mode"] = "current"
 
 
 def _find_running_kometa_processes():
@@ -1766,7 +1774,7 @@ def _stop_process_tree(proc):
     return alive
 
 
-def _launch_kometa_command(command, config_name=None):
+def _launch_kometa_command(command, config_name=None, start_mode="current"):
     if not command:
         return False, "No command provided"
 
@@ -1808,7 +1816,7 @@ def _launch_kometa_command(command, config_name=None):
     with open(helpers.get_kometa_pid_file(), "w", encoding="utf-8") as f:
         f.write(str(proc.pid))
 
-    _schedule_quickstart_run_marker(kometa_root, config_name)
+    _schedule_quickstart_run_marker(kometa_root, config_name, start_mode=_normalize_kometa_start_mode(start_mode))
     return True, proc.pid
 
 
@@ -1905,7 +1913,7 @@ def _extract_selected_libraries(command):
     return run_option, selected
 
 
-def _update_run_context(command, config_name=None):
+def _update_run_context(command, config_name=None, start_mode="current"):
     run_option, selected = _extract_selected_libraries(command)
     config_path = None
     run_mode = "all"
@@ -1931,6 +1939,7 @@ def _update_run_context(command, config_name=None):
         RUN_CONTEXT["run_option"] = run_option
         RUN_CONTEXT["selected_libraries"] = selected
         RUN_CONTEXT["run_mode"] = run_mode
+        RUN_CONTEXT["start_mode"] = _normalize_kometa_start_mode(start_mode)
         if config_name is None and has_request_context():
             config_name = session.get("config_name")
         RUN_CONTEXT["config_name"] = config_name
@@ -2020,8 +2029,9 @@ def _maintenance_guard_loop(app_in):
                 if pending and not active and start_min is not None and end_min is not None:
                     pending = _pop_pending_kometa_start()
                     if pending:
-                        _update_run_context(pending.get("command"), config_name=pending.get("config_name"))
-                        ok, result = _launch_kometa_command(pending.get("command"), pending.get("config_name"))
+                        start_mode = _normalize_kometa_start_mode(pending.get("start_mode"))
+                        _update_run_context(pending.get("command"), config_name=pending.get("config_name"), start_mode=start_mode)
+                        ok, result = _launch_kometa_command(pending.get("command"), pending.get("config_name"), start_mode=start_mode)
                         if ok:
                             helpers.ts_log("Kometa started after Plex maintenance window ended.", level="INFO")
                             with MAINTENANCE_STATE_LOCK:
@@ -2087,14 +2097,19 @@ def _maintenance_guard_loop(app_in):
                         MAINTENANCE_STATE["paused_since"] = None
 
 
-def _write_quickstart_run_marker(kometa_root, config_name=None):
+def _write_quickstart_run_marker(kometa_root, config_name=None, start_mode="current"):
     try:
         version_info = app.config.get("VERSION_CHECK") or {}
         qs_version = version_info.get("local_version") or "unknown"
         qs_branch = version_info.get("branch") or "unknown"
         safe_config = (config_name or "default").strip() or "default"
+        safe_start_mode = _normalize_kometa_start_mode(start_mode)
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-        marker = f"[Quickstart] Run marker: started={timestamp} " f"config={safe_config} quickstart={qs_version} branch={qs_branch} maintenance_markers=1"
+        marker = (
+            f"[Quickstart] Run marker: started={timestamp} "
+            f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
+            f"maintenance_markers=1 start_mode={safe_start_mode}"
+        )
         _append_quickstart_meta_log_line(kometa_root, marker)
     except Exception:
         pass
@@ -2225,7 +2240,7 @@ def _write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=N
         return False
 
 
-def _schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20):
+def _schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_seconds=20, start_mode="current"):
     log_path = Path(kometa_root) / "config" / "logs" / "meta.log"
     state = {"mtime": None, "size": None}
     if log_path.exists():
@@ -2244,16 +2259,16 @@ def _schedule_quickstart_run_marker(kometa_root, config_name=None, timeout_secon
                     stat = log_path.stat()
                     if state["mtime"] is None:
                         if stat.st_size > 0:
-                            _write_quickstart_run_marker(kometa_root, config_name)
+                            _write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
                             return
                     else:
                         if stat.st_mtime != state["mtime"] and stat.st_size > 0:
-                            _write_quickstart_run_marker(kometa_root, config_name)
+                            _write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
                             return
             except OSError:
                 pass
             time.sleep(0.5)
-        _write_quickstart_run_marker(kometa_root, config_name)
+        _write_quickstart_run_marker(kometa_root, config_name, start_mode=start_mode)
 
     threading.Thread(target=worker, daemon=True).start()
 
@@ -2803,6 +2818,7 @@ RUN_CONTEXT = {
     "selected_libraries": None,
     "run_option": None,
     "run_mode": "all",
+    "start_mode": "current",
     "config_name": None,
     "config_path": None,
     "started_at": None,
@@ -7673,6 +7689,7 @@ def shutdown():
 def start_kometa():
     data = request.get_json() or {}
     command = data.get("command", "").strip()
+    start_mode = _normalize_kometa_start_mode(data.get("start_mode"))
     if not command:
         return jsonify({"error": "No command provided"}), 400
 
@@ -7713,18 +7730,18 @@ def start_kometa():
             payload["phase"] = job.get("phase")
         return jsonify(payload), 409
 
-    _update_run_context(command)
+    _update_run_context(command, start_mode=start_mode)
 
     start_min, end_min, window_str = _get_maintenance_window_live()
     if start_min is None or end_min is None:
         start_min, end_min, window_str = _get_maintenance_window_from_db()
     if _is_within_maintenance_window(datetime.now(), start_min, end_min):
-        _set_pending_kometa_start(command, session.get("config_name"))
-        return jsonify({"status": "queued", "maintenance_window": window_str}), 202
+        _set_pending_kometa_start(command, session.get("config_name"), start_mode=start_mode)
+        return jsonify({"status": "queued", "maintenance_window": window_str, "start_mode": start_mode}), 202
 
-    ok, result = _launch_kometa_command(command, session.get("config_name"))
+    ok, result = _launch_kometa_command(command, session.get("config_name"), start_mode=start_mode)
     if ok:
-        return jsonify({"status": "Kometa started", "pid": result})
+        return jsonify({"status": "Kometa started", "pid": result, "start_mode": start_mode})
     code = 500
     if isinstance(result, str) and result.lower().startswith("kometa.py not found"):
         code = 404

@@ -755,11 +755,25 @@
                     {% endif %}
                   </div>
                   {% if incomplete_resume_hint.suggested_command or incomplete_resume_hint.original_command %}
-                  <button type="button" id="copy-recovery-command"
-                    class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
-                    <i class="bi bi-files" id="copy-recovery-icon"></i>
-                    <span id="copy-recovery-text">Copy</span>
-                  </button>
+                  <div class="d-flex flex-wrap align-items-center gap-2">
+                    <button type="button" id="run-recovery-command"
+                      class="btn btn-warning btn-sm d-flex align-items-center gap-2"
+                      data-context-mismatch="{{ 'true' if incomplete_resume_hint.context_mismatch else 'false' }}"
+                      data-start-mode="{{ 'recovery' if incomplete_resume_hint.suggested_command else 'logged' }}">
+                      <i class="bi bi-play-fill"></i>
+                      <span>{% if incomplete_resume_hint.suggested_command %}Run Recovery Command{% else %}Run Logged Command{% endif %}</span>
+                    </button>
+                    <button type="button" id="run-current-command"
+                      class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+                      <i class="bi bi-arrow-repeat"></i>
+                      <span>Run Current Command Instead</span>
+                    </button>
+                    <button type="button" id="copy-recovery-command"
+                      class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+                      <i class="bi bi-files" id="copy-recovery-icon"></i>
+                      <span id="copy-recovery-text">Copy</span>
+                    </button>
+                  </div>
                   {% endif %}
                 </div>
               </div>
