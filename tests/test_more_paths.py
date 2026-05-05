@@ -72,8 +72,9 @@ def test_maintenance_guard_starts_queued_run(monkeypatch, qs_module):
 
     called = {"count": 0}
 
-    def fake_launch(command, config_name):
+    def fake_launch(command, config_name, start_mode="current"):
         called["count"] += 1
+        assert start_mode == "current"
         return True, 7777
 
     monkeypatch.setattr(qs_module, "_launch_kometa_command", fake_launch)

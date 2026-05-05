@@ -2756,7 +2756,9 @@ document.addEventListener('DOMContentLoaded', () => {
           qsRefreshWorkspaceStatus({ immediate: true, configName: data.name || target })
         }
         showToast('success', `Switched to config "${data.name}".`)
-        setTimeout(() => window.location.reload(), 150)
+        const nextConfig = encodeURIComponent(data.name || target)
+        const nextUrl = `${window.location.pathname}?config_name=${nextConfig}`
+        setTimeout(() => window.location.assign(nextUrl), 150)
       } catch (err) {
         window.QS_SWITCHING_CONFIG = false
         confirmBtn.disabled = false

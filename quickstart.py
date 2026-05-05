@@ -5401,6 +5401,12 @@ def step(name):
     if name == "900-final":
         return redirect(url_for("step", name="900-kometa"), code=302)
     persistence.ensure_session_config_name()
+    requested_query_config = request.args.get("config_name")
+    if request.method == "GET" and requested_query_config:
+        normalized_query_config = helpers.normalize_config_name_for_storage(requested_query_config)
+        available_query_configs = database.get_unique_config_names() or []
+        if normalized_query_config in available_query_configs:
+            session["config_name"] = normalized_query_config
     previous_config = session.get("config_name")
 
     posted_config = request.form.get("configSelector")
