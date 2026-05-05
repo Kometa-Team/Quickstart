@@ -722,15 +722,6 @@
               {% if incomplete_resume_hint %}
               <div class="alert alert-warning mt-3 mb-2" id="incomplete-run-alert" role="alert">
                 <div class="d-flex flex-column gap-2">
-                  {% if (incomplete_resume_hint.suggested_command or incomplete_resume_hint.original_command) and not incomplete_resume_hint.scope_completed %}
-                  <div class="d-flex justify-content-end">
-                    <button type="button" id="copy-recovery-command"
-                      class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
-                      <i class="bi bi-files" id="copy-recovery-icon"></i>
-                      <span id="copy-recovery-text">Copy</span>
-                    </button>
-                  </div>
-                  {% endif %}
                   <div class="qs-incomplete-run-body">
                     <div class="fw-semibold mb-1">Previous run looks incomplete</div>
                     <div class="small mb-1">{{ incomplete_resume_hint.message }}</div>
@@ -750,22 +741,176 @@
                       Warning: this incomplete run was recorded under a different config name than the one currently loaded.
                     </div>
                     {% endif %}
+                    {% if incomplete_resume_hint.timing_summary %}
+                    <div class="qs-incomplete-run-metrics mt-2">
+                      {% if incomplete_resume_hint.timing_summary.started_at %}
+                      <div class="qs-incomplete-run-metric">
+                        <span class="qs-incomplete-run-metric-label">Started</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.timing_summary.started_at }}</span>
+                      </div>
+                      {% endif %}
+                      {% if incomplete_resume_hint.timing_summary.last_log_at %}
+                      <div class="qs-incomplete-run-metric">
+                        <span class="qs-incomplete-run-metric-label">Last log line</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.timing_summary.last_log_at }}</span>
+                      </div>
+                      {% endif %}
+                      {% if incomplete_resume_hint.timing_summary.observed_label %}
+                      <div class="qs-incomplete-run-metric">
+                        <span class="qs-incomplete-run-metric-label">Observed span</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.timing_summary.observed_label }}</span>
+                      </div>
+                      {% endif %}
+                      {% if incomplete_resume_hint.timing_summary.had_pause and incomplete_resume_hint.timing_summary.pause_label %}
+                      <div class="qs-incomplete-run-metric">
+                        <span class="qs-incomplete-run-metric-label">Maintenance pause</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.timing_summary.pause_label }}</span>
+                      </div>
+                      {% endif %}
+                      {% if incomplete_resume_hint.timing_summary.had_pause and incomplete_resume_hint.timing_summary.active_label %}
+                      <div class="qs-incomplete-run-metric">
+                        <span class="qs-incomplete-run-metric-label">Active runtime</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.timing_summary.active_label }}</span>
+                      </div>
+                      {% endif %}
+                      {% if incomplete_resume_hint.timing_summary.window %}
+                      <div class="qs-incomplete-run-metric">
+                        <span class="qs-incomplete-run-metric-label">Maintenance window</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.timing_summary.window }}</span>
+                      </div>
+                      {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if incomplete_resume_hint.maintenance_events %}
+                    <div class="small mt-2">
+                      <span class="fw-semibold">Maintenance events</span>
+                      {% for event in incomplete_resume_hint.maintenance_events %}
+                      <div class="mt-1">
+                        <span class="badge text-bg-secondary me-1">{{ event.label }}</span>
+                        <span>{{ event.at }}</span>
+                        {% if event.pause_label %}
+                        <span class="text-muted">({{ event.pause_label }})</span>
+                        {% endif %}
+                        {% if event.window %}
+                        <span class="text-muted">window {{ event.window }}</span>
+                        {% endif %}
+                      </div>
+                      {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% if incomplete_resume_hint.original_command %}
+                    <div class="small mt-3 mb-1 fw-semibold">Original logged command</div>
+                    <code class="d-block w-100 text-wrap qs-recovery-command-output qs-recovery-command-output-secondary" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.original_command }}</code>
+                    {% endif %}
                     {% if incomplete_resume_hint.suggested_command %}
-                    <div class="small mt-2 mb-1 fw-semibold">Suggested recovery command</div>
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap small mt-3 mb-1">
+                      <div class="fw-semibold">Recovery command</div>
+                      <button type="button" id="copy-recovery-command"
+                        class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+                        <i class="bi bi-files" id="copy-recovery-icon"></i>
+                        <span id="copy-recovery-text">Copy command</span>
+                      </button>
+                    </div>
                     <code id="recovery-command-output" class="d-block w-100 text-wrap qs-recovery-command-output" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.suggested_command }}</code>
-                    {% elif incomplete_resume_hint.original_command and not incomplete_resume_hint.scope_completed %}
-                    <div class="small mt-2 mb-1 fw-semibold">Last run command from log</div>
-                    <code id="recovery-command-output" class="d-block w-100 text-wrap qs-recovery-command-output" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.original_command }}</code>
                     {% elif incomplete_resume_hint.scope_completed %}
                     <div class="small mt-2 text-muted">Recovery not offered because the original scope appears fully completed.</div>
+                    {% elif incomplete_resume_hint.original_command %}
+                    <div class="small mt-3 text-muted">Recovery command could not be narrowed further, so the last logged command is shown above.</div>
+                    {% endif %}
+                    {% if incomplete_resume_hint.scope_summary %}
+                    <div class="qs-incomplete-run-metrics mt-3">
+                      {% if incomplete_resume_hint.scope_summary.completed_label %}
+                      <div class="qs-incomplete-run-metric">
+                        <span class="qs-incomplete-run-metric-label">Completed in log</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.scope_summary.completed_label }}</span>
+                      </div>
+                      {% endif %}
+                      {% if incomplete_resume_hint.scope_summary.pruned_label %}
+                      <div class="qs-incomplete-run-metric">
+                        <span class="qs-incomplete-run-metric-label">Removed from recovery</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.scope_summary.pruned_label }}</span>
+                      </div>
+                      {% endif %}
+                      {% if incomplete_resume_hint.scope_summary.recovery_scope_label and incomplete_resume_hint.suggested_command %}
+                      <div class="qs-incomplete-run-metric">
+                        <span class="qs-incomplete-run-metric-label">Recovery will run</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.scope_summary.recovery_scope_label }}</span>
+                      </div>
+                      {% endif %}
+                    </div>
+                    {% endif %}
+                    {% if incomplete_resume_hint.progress_snapshot and incomplete_resume_hint.progress_snapshot.rows %}
+                    <div class="small mt-3 mb-1 fw-semibold">Progress seen before interruption</div>
+                    {% if incomplete_resume_hint.progress_snapshot.preparation_label %}
+                    <div class="small mb-2">
+                      <span class="fw-semibold me-2">Preparation</span>
+                      <span class="badge text-bg-primary">{{ incomplete_resume_hint.progress_snapshot.preparation_label }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="table-responsive" data-qs-sticky-first="true">
+                      <table class="table table-sm table-striped mb-0 qs-incomplete-progress-table">
+                        <thead>
+                          <tr>
+                            <th>Library</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            {% for column in incomplete_resume_hint.progress_snapshot.columns %}
+                            <th class="text-end">{{ column.label }}</th>
+                            {% endfor %}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for row in incomplete_resume_hint.progress_snapshot.rows %}
+                          <tr>
+                            <td>{{ row.name }}</td>
+                            <td>{{ row.type }}</td>
+                            <td><span class="badge {{ row.status_class }}">{{ row.status }}</span></td>
+                            {% for cell in row.phase_cells %}
+                            <td class="text-end">
+                              {% if cell.label %}
+                              <span class="badge {{ 'text-bg-primary' if cell.tone == 'primary' else 'text-bg-success' }}">{{ cell.label }}</span>
+                              {% else %}
+                              <span class="text-muted small">—</span>
+                              {% endif %}
+                            </td>
+                            {% endfor %}
+                          </tr>
+                          {% endfor %}
+                        </tbody>
+                        <tfoot class="table-group-divider">
+                          <tr>
+                            <td class="fw-semibold">Total</td>
+                            <td>—</td>
+                            <td>
+                              {% if incomplete_resume_hint.progress_snapshot.total_label %}
+                              <span class="badge text-bg-success">{{ incomplete_resume_hint.progress_snapshot.total_label }}</span>
+                              {% else %}
+                              <span class="text-muted small">—</span>
+                              {% endif %}
+                            </td>
+                            {% for label in incomplete_resume_hint.progress_snapshot.footer_cells %}
+                            <td class="text-end">
+                              {% if label %}
+                              <span class="badge text-bg-success">{{ label }}</span>
+                              {% else %}
+                              <span class="text-muted small">—</span>
+                              {% endif %}
+                            </td>
+                            {% endfor %}
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
                     {% endif %}
                     {% if incomplete_resume_hint.explanation %}
-                    <div class="small mt-2 mb-1 fw-semibold">Why this suggestion</div>
-                    <ul class="small mb-1 ps-3">
-                      {% for note in incomplete_resume_hint.explanation %}
-                      <li>{{ note }}</li>
-                      {% endfor %}
-                    </ul>
+                    <details class="small mt-3">
+                      <summary class="fw-semibold">Recovery notes</summary>
+                      <ul class="small mb-1 ps-3 mt-2">
+                        {% for note in incomplete_resume_hint.explanation %}
+                        <li>{{ note }}</li>
+                        {% endfor %}
+                      </ul>
+                    </details>
                     {% endif %}
                   </div>
                 </div>

@@ -3332,6 +3332,47 @@ div#loading {
     width: 100%;
 }
 
+#incomplete-run-alert .qs-incomplete-run-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    gap: 0.6rem;
+}
+
+#incomplete-run-alert .qs-incomplete-run-metric {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid rgba(244, 191, 62, 0.22);
+    border-radius: 0.55rem;
+    background: rgba(18, 14, 4, 0.38);
+}
+
+#incomplete-run-alert .qs-incomplete-run-metric-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 214, 106, 0.82);
+}
+
+#incomplete-run-alert .qs-incomplete-run-metric-value {
+    display: block;
+    margin-top: 0.2rem;
+    color: #f5e4a8;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.qs-recovery-command-output-secondary {
+    border-color: rgba(255, 214, 102, 0.18) !important;
+    background: rgba(21, 17, 7, 0.58) !important;
+    color: #f0ddb0 !important;
+}
+
+#incomplete-run-alert .qs-incomplete-progress-table td,
+#incomplete-run-alert .qs-incomplete-progress-table th {
+    vertical-align: middle;
+}
+
 #run-recovery-command {
     background-color: #f2bf3f;
     border-color: #f2bf3f;

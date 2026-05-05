@@ -59,6 +59,10 @@ def test_build_latest_incomplete_resume_hint_exposes_explanation(monkeypatch, qs
                 "incomplete_log_name": "meta.log",
                 "config_name": "testcfg",
                 "resume_explanation": ["Reason one", "Reason two"],
+                "resume_timing_summary": {"started_at": "2026-05-05 01:00:00"},
+                "resume_scope_summary": {"completed_label": "Movies"},
+                "resume_progress_snapshot": {"rows": [{"name": "Movies"}]},
+                "resume_maintenance_events": [{"label": "Paused", "at": "2026-05-05 02:00:00"}],
             }
         ],
     )
@@ -70,6 +74,78 @@ def test_build_latest_incomplete_resume_hint_exposes_explanation(monkeypatch, qs
     assert isinstance(hint, dict)
     assert hint["log_name"] == "meta.log"
     assert hint["explanation"] == ["Reason one", "Reason two"]
+    assert hint["timing_summary"]["started_at"] == "2026-05-05 01:00:00"
+    assert hint["scope_summary"]["completed_label"] == "Movies"
+    assert hint["progress_snapshot"]["rows"][0]["name"] == "Movies"
+    assert hint["maintenance_events"][0]["label"] == "Paused"
+
+
+def test_build_incomplete_run_timing_summary_accounts_for_maintenance_pause(qs_module):
+    summary = qs_module._build_incomplete_run_timing_summary(
+        started_at="2026-05-05 01:00:00",
+        last_log_at="2026-05-05 03:30:00",
+        maintenance_summary={
+            "had_pause": True,
+            "pause_count": 1,
+            "pause_seconds": 3600,
+            "window": "02:00-05:00",
+        },
+    )
+
+    assert summary["observed_label"] == "2h 30m"
+    assert summary["pause_label"] == "1h"
+    assert summary["active_label"] == "1h 30m"
+    assert summary["window"] == "02:00-05:00"
+
+
+def test_build_incomplete_scope_summary_reports_completed_and_pruned_libraries(qs_module):
+    summary = qs_module._build_incomplete_scope_summary(
+        original_command="kometa.py --run --config <config>",
+        suggested_command='kometa.py --run --run-libraries "Movies|TV Shows" --resume "Top Picks" --config <config>',
+        progress_libraries=[
+            {"name": "Anime", "status": "Done"},
+            {"name": "Movies", "status": "In progress"},
+            {"name": "TV Shows", "status": "Pending"},
+        ],
+    )
+
+    assert summary["completed_label"] == "Anime"
+    assert summary["pruned_label"] == "Anime"
+    assert summary["recovery_scope_label"] == "Movies | TV Shows"
+
+
+def test_build_incomplete_progress_snapshot_exposes_rows_and_totals(qs_module):
+    snapshot = qs_module._build_incomplete_progress_snapshot(
+        {
+            "phase_current": "collections",
+            "current_library": "Movies",
+            "completed_count": 1,
+            "total_count": 2,
+            "current_phase_elapsed_seconds": 90,
+            "preparation_seconds": 30,
+            "libraries": [
+                {
+                    "name": "Anime",
+                    "type": "show",
+                    "status": "Done",
+                    "durations": {"operations": 120, "collections": 240},
+                },
+                {
+                    "name": "Movies",
+                    "type": "movie",
+                    "status": "In progress",
+                    "durations": {"operations": 60},
+                },
+            ],
+        },
+        last_log_at="2026-05-05 03:30:00",
+    )
+
+    assert [column["key"] for column in snapshot["columns"]] == ["operations", "collections"]
+    assert snapshot["preparation_label"] == "30s"
+    assert snapshot["rows"][0]["phase_cells"][0]["label"] == "2m"
+    assert snapshot["rows"][1]["phase_cells"][1]["label"] == "1m 30s"
+    assert snapshot["total_label"] == "7m 30s"
 
 
 def test_resume_explanation_calls_out_resume_not_used_for_operations(qs_module):

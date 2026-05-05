@@ -9853,6 +9853,241 @@ def _extract_first_log_timestamp(content):
     return match.group(1).strip()
 
 
+def _extract_last_log_timestamp(content):
+    if not content:
+        return None
+    matches = re.findall(r"^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d{3}\]", str(content), re.MULTILINE)
+    if not matches:
+        return None
+    return str(matches[-1]).strip()
+
+
+def _parse_log_display_datetime(value):
+    if not value:
+        return None
+    raw = str(value).strip()
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if parsed.tzinfo is not None:
+            parsed = parsed.astimezone().replace(tzinfo=None)
+        return parsed
+    except Exception:
+        pass
+    for fmt in ("%Y-%m-%d %H:%M:%S",):
+        try:
+            return datetime.strptime(raw, fmt)
+        except Exception:
+            continue
+    return None
+
+
+def _format_duration_brief(total_seconds):
+    if not isinstance(total_seconds, (int, float)):
+        return ""
+    seconds = max(0, int(total_seconds))
+    hours, remainder = divmod(seconds, 3600)
+    minutes, secs = divmod(remainder, 60)
+    parts = []
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes:
+        parts.append(f"{minutes}m")
+    if secs or not parts:
+        parts.append(f"{secs}s")
+    return " ".join(parts)
+
+
+def _build_incomplete_run_timing_summary(started_at=None, last_log_at=None, maintenance_summary=None):
+    summary = maintenance_summary if isinstance(maintenance_summary, dict) else {}
+    started_dt = _parse_log_display_datetime(started_at)
+    last_log_dt = _parse_log_display_datetime(last_log_at)
+    pause_seconds = int(summary.get("pause_seconds") or 0) if isinstance(summary.get("pause_seconds"), (int, float)) else 0
+    observed_seconds = None
+    active_seconds = None
+    if started_dt and last_log_dt and last_log_dt >= started_dt:
+        observed_seconds = int((last_log_dt - started_dt).total_seconds())
+        active_seconds = max(0, observed_seconds - pause_seconds)
+    return {
+        "started_at": started_at or "",
+        "last_log_at": last_log_at or "",
+        "window": summary.get("window") or "",
+        "pause_count": int(summary.get("pause_count") or 0) if isinstance(summary.get("pause_count"), (int, float)) else 0,
+        "pause_seconds": pause_seconds,
+        "pause_label": _format_duration_brief(pause_seconds) if pause_seconds else "",
+        "observed_seconds": observed_seconds,
+        "observed_label": _format_duration_brief(observed_seconds) if observed_seconds is not None else "",
+        "active_seconds": active_seconds,
+        "active_label": _format_duration_brief(active_seconds) if active_seconds is not None else "",
+        "had_pause": bool(summary.get("had_pause")),
+    }
+
+
+def _dedupe_preserve_order(values):
+    seen = set()
+    ordered = []
+    for value in values or []:
+        name = str(value or "").strip()
+        if not name:
+            continue
+        lowered = name.casefold()
+        if lowered in seen:
+            continue
+        seen.add(lowered)
+        ordered.append(name)
+    return ordered
+
+
+def _build_incomplete_scope_summary(original_command="", suggested_command="", progress_libraries=None):
+    progress_libraries = progress_libraries if isinstance(progress_libraries, list) else []
+    original_selected = _extract_selected_libraries(original_command)[1] or []
+    recovery_selected = _extract_selected_libraries(suggested_command)[1] or []
+    progress_names = _dedupe_preserve_order(entry.get("name") for entry in progress_libraries if isinstance(entry, dict))
+    completed = _dedupe_preserve_order(
+        entry.get("name")
+        for entry in progress_libraries
+        if isinstance(entry, dict) and str(entry.get("status") or "").strip() == "Done"
+    )
+
+    original_scope = _dedupe_preserve_order(original_selected or progress_names)
+    recovery_scope = _dedupe_preserve_order(recovery_selected or original_scope)
+    pruned = []
+    if original_scope and recovery_scope:
+        recovery_lookup = {name.casefold() for name in recovery_scope}
+        pruned = [name for name in original_scope if name.casefold() not in recovery_lookup]
+
+    return {
+        "original_scope": original_scope,
+        "recovery_scope": recovery_scope,
+        "completed_libraries": completed,
+        "pruned_libraries": pruned,
+        "original_scope_label": " | ".join(original_scope) if original_scope else "",
+        "recovery_scope_label": " | ".join(recovery_scope) if recovery_scope else "",
+        "completed_label": " | ".join(completed) if completed else "",
+        "pruned_label": " | ".join(pruned) if pruned else "",
+    }
+
+
+def _build_maintenance_event_rows(maintenance_summary=None):
+    summary = maintenance_summary if isinstance(maintenance_summary, dict) else {}
+    rows = []
+    for event in summary.get("events") or []:
+        if not isinstance(event, dict):
+            continue
+        event_name = str(event.get("event") or "").strip().lower()
+        if event_name not in ("paused", "resumed"):
+            continue
+        label = "Paused" if event_name == "paused" else "Resumed"
+        at_value = str(event.get("local_at") or event.get("at") or "").strip()
+        pause_label = _format_duration_brief(event.get("paused_seconds")) if isinstance(event.get("paused_seconds"), (int, float)) else ""
+        window = str(event.get("window") or "").strip()
+        rows.append(
+            {
+                "label": label,
+                "at": at_value,
+                "pause_label": pause_label,
+                "window": window,
+            }
+        )
+    return rows
+
+
+def _build_incomplete_progress_snapshot(progress=None, last_log_at=None):
+    progress = progress if isinstance(progress, dict) else {}
+    libraries = progress.get("libraries") if isinstance(progress.get("libraries"), list) else []
+    if not libraries:
+        return {}
+
+    phase_order = [
+        ("operations", "Operations"),
+        ("metadata", "Metadata"),
+        ("collections", "Collections"),
+        ("overlays", "Overlays"),
+    ]
+    current_phase = str(progress.get("phase_current") or "").strip().lower()
+    current_library = str(progress.get("current_library") or "").strip()
+    preparation_seconds = progress.get("preparation_seconds")
+    if not isinstance(preparation_seconds, (int, float)):
+        preparation_seconds = progress.get("preparation_elapsed_seconds")
+    current_phase_elapsed_seconds = progress.get("current_phase_elapsed_seconds") if isinstance(progress.get("current_phase_elapsed_seconds"), (int, float)) else None
+
+    columns = []
+    for phase_key, phase_label in phase_order:
+        include = current_phase == phase_key
+        if not include:
+            for entry in libraries:
+                durations = entry.get("durations") if isinstance(entry, dict) else {}
+                if isinstance(durations, dict) and isinstance(durations.get(phase_key), (int, float)):
+                    include = True
+                    break
+        if include:
+            columns.append({"key": phase_key, "label": phase_label})
+
+    rows = []
+    totals = {column["key"]: 0 for column in columns}
+    visible_libraries = [entry for entry in libraries if str((entry or {}).get("status") or "").strip() != "Skipped"]
+    for entry in visible_libraries:
+        name = str(entry.get("name") or "").strip()
+        status = str(entry.get("status") or "Pending").strip() or "Pending"
+        status_class = "text-bg-secondary"
+        if status == "Done":
+            status_class = "text-bg-success"
+        elif status == "In progress":
+            status_class = "text-bg-primary"
+        elif status == "Stopped":
+            status_class = "text-bg-danger"
+
+        durations = entry.get("durations") if isinstance(entry.get("durations"), dict) else {}
+        phase_cells = []
+        for column in columns:
+            phase_key = column["key"]
+            label = ""
+            tone = ""
+            seconds = durations.get(phase_key)
+            if current_library and current_phase and current_library == name and current_phase == phase_key and isinstance(current_phase_elapsed_seconds, (int, float)):
+                label = _format_duration_brief(current_phase_elapsed_seconds)
+                tone = "primary"
+            elif isinstance(seconds, (int, float)):
+                label = _format_duration_brief(seconds)
+                tone = "success"
+                totals[phase_key] = totals.get(phase_key, 0) + int(seconds or 0)
+            phase_cells.append({"label": label, "tone": tone})
+
+        rows.append(
+            {
+                "name": name,
+                "type": str(entry.get("type") or "—").strip() or "—",
+                "status": status,
+                "status_class": status_class,
+                "phase_cells": phase_cells,
+            }
+        )
+
+    total_seconds = 0
+    if isinstance(preparation_seconds, (int, float)):
+        total_seconds += int(preparation_seconds or 0)
+    for value in totals.values():
+        if isinstance(value, (int, float)):
+            total_seconds += int(value or 0)
+
+    return {
+        "columns": columns,
+        "rows": rows,
+        "completed_count": progress.get("completed_count"),
+        "total_count": progress.get("total_count"),
+        "current_library": current_library,
+        "phase_current": current_phase,
+        "last_log_at": last_log_at or "",
+        "preparation_label": _format_duration_brief(preparation_seconds) if isinstance(preparation_seconds, (int, float)) else "",
+        "footer_cells": [
+            _format_duration_brief(totals.get(column["key"])) if isinstance(totals.get(column["key"]), (int, float)) and totals.get(column["key"]) > 0 else ""
+            for column in columns
+        ],
+        "total_label": _format_duration_brief(total_seconds) if total_seconds > 0 else "",
+    }
+
+
 def _build_incomplete_resume_message(phase_current=None, current_library=None, finished_at=None):
     if phase_current and current_library:
         message = f"Run appears incomplete during {phase_current} in library '{current_library}'."
@@ -9983,6 +10218,7 @@ def _build_resume_explanation(
     current_library=None,
     current_collection=None,
     finished_at=None,
+    progress_libraries=None,
 ):
     lines = []
     if finished_at:
@@ -10055,6 +10291,11 @@ def _build_resume_explanation(
 
     if current_library:
         lines.append(f"Detected in-progress library '{current_library}', so the suggestion scopes with --run-libraries.")
+
+    if isinstance(progress_libraries, list):
+        completed_libraries = [str(entry.get("name")).strip() for entry in progress_libraries if str(entry.get("status") or "").strip() == "Done" and str(entry.get("name") or "").strip()]
+        if completed_libraries:
+            lines.append(f"Completed libraries already seen in the log: {' | '.join(completed_libraries)}.")
 
     config_path = _extract_cli_option_value(suggested_command, "--config")
     if config_path:
@@ -10141,12 +10382,20 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
     except Exception:
         current_collection = None
 
+    progress_libraries = progress.get("libraries") if isinstance(progress.get("libraries"), list) else []
+    last_log_at = _extract_last_log_timestamp(content)
+    timing_summary = _build_incomplete_run_timing_summary(
+        started_at=summary.get("started_at") or started_at_fallback,
+        last_log_at=last_log_at,
+        maintenance_summary=summary.get("maintenance_summary"),
+    )
+
     suggestions = _build_recovery_suggestions(
         original_command,
         phase_current=phase_current,
         current_library=current_library,
         current_collection=current_collection,
-        progress_libraries=progress.get("libraries"),
+        progress_libraries=progress_libraries,
     )
     primary = suggestions[0] if suggestions else ""
     scope_completed = not primary and not suggestions
@@ -10159,6 +10408,7 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
             current_library=current_library,
             current_collection=current_collection,
             finished_at=summary.get("finished_at"),
+            progress_libraries=progress_libraries,
         )
     reason = _build_incomplete_resume_message(
         phase_current=phase_current,
@@ -10185,10 +10435,18 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         run_key_seed = f"incomplete|{log_path}|{mtime or 0}"
         run_key = hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest()
     started_at = summary.get("started_at") or started_at_fallback
+    scope_summary = _build_incomplete_scope_summary(
+        original_command=original_command,
+        suggested_command=primary,
+        progress_libraries=progress_libraries,
+    )
+    progress_snapshot = _build_incomplete_progress_snapshot(progress, last_log_at=last_log_at)
+    maintenance_events = _build_maintenance_event_rows(summary.get("maintenance_summary"))
 
     return {
         "run_key": run_key,
         "started_at": started_at,
+        "last_log_at": last_log_at,
         "finished_at": summary.get("finished_at"),
         "run_time_seconds": summary.get("run_time_seconds"),
         "kometa_version": summary.get("kometa_version"),
@@ -10230,6 +10488,10 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         "resume_recommendations": suggestions,
         "resume_explanation": explanation,
         "resume_scope_completed": scope_completed,
+        "resume_timing_summary": timing_summary,
+        "resume_scope_summary": scope_summary,
+        "resume_progress_snapshot": progress_snapshot,
+        "resume_maintenance_events": maintenance_events,
     }
 
 
@@ -10541,6 +10803,10 @@ def _build_latest_incomplete_resume_hint():
         "context_mismatch": context_mismatch,
         "explanation": latest.get("resume_explanation") if isinstance(latest.get("resume_explanation"), list) else [],
         "scope_completed": bool(latest.get("resume_scope_completed")),
+        "timing_summary": latest.get("resume_timing_summary") if isinstance(latest.get("resume_timing_summary"), dict) else {},
+        "scope_summary": latest.get("resume_scope_summary") if isinstance(latest.get("resume_scope_summary"), dict) else {},
+        "progress_snapshot": latest.get("resume_progress_snapshot") if isinstance(latest.get("resume_progress_snapshot"), dict) else {},
+        "maintenance_events": latest.get("resume_maintenance_events") if isinstance(latest.get("resume_maintenance_events"), list) else [],
     }
 
 
