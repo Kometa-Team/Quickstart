@@ -2745,18 +2745,29 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Failed to switch configs.')
         }
+        const nextName = data.name || target
         configTriggers.forEach((trigger) => {
           if (trigger && trigger.dataset) {
-            trigger.dataset.current = data.name || target
+            trigger.dataset.current = nextName
           }
         })
-        if (data.workspace_status && typeof qsApplyWorkspaceStatus === 'function') {
-          qsApplyWorkspaceStatus(Object.assign({ success: true, config_name: data.name || target }, data.workspace_status))
-        } else {
-          qsRefreshWorkspaceStatus({ immediate: true, configName: data.name || target })
+        document.querySelectorAll('.qs-main-page-meta-value').forEach((node) => {
+          node.textContent = nextName
+        })
+        const activeConfigInput = document.getElementById('qs-active-config-input')
+        if (activeConfigInput) {
+          activeConfigInput.value = nextName
         }
-        showToast('success', `Switched to config "${data.name}".`)
-        const nextConfig = encodeURIComponent(data.name || target)
+        if (window.pageInfo) {
+          window.pageInfo.config_name = nextName
+        }
+        if (data.workspace_status && typeof qsApplyWorkspaceStatus === 'function') {
+          qsApplyWorkspaceStatus(Object.assign({ success: true, config_name: nextName }, data.workspace_status))
+        } else {
+          qsRefreshWorkspaceStatus({ immediate: true, configName: nextName })
+        }
+        showToast('success', `Switched to config "${nextName}".`)
+        const nextConfig = encodeURIComponent(nextName)
         const nextUrl = `${window.location.pathname}?config_name=${nextConfig}`
         setTimeout(() => window.location.assign(nextUrl), 150)
       } catch (err) {
