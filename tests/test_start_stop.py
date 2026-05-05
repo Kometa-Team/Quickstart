@@ -125,7 +125,7 @@ def test_kometa_status_includes_active_command_and_start_mode(client, monkeypatc
     monkeypatch.setattr(qs_module.psutil, "virtual_memory", lambda: _FakeVM())
 
     with qs_module.RUN_CONTEXT_LOCK:
-        qs_module.RUN_CONTEXT["command"] = "python kometa.py --collections-only --resume \"Emmys 1999\""
+        qs_module.RUN_CONTEXT["command"] = 'python kometa.py --collections-only --resume "Emmys 1999"'
         qs_module.RUN_CONTEXT["start_mode"] = "recovery"
 
     resp = client.get("/kometa-status")
@@ -133,7 +133,7 @@ def test_kometa_status_includes_active_command_and_start_mode(client, monkeypatc
     data = resp.get_json()
     assert data["status"] == "running"
     assert data["start_mode"] == "recovery"
-    assert data["active_command"] == "python kometa.py --collections-only --resume \"Emmys 1999\""
+    assert data["active_command"] == 'python kometa.py --collections-only --resume "Emmys 1999"'
 
 
 def test_start_kometa_blocked_when_kometa_update_running(client, monkeypatch, qs_module):

@@ -211,9 +211,7 @@ def test_build_recovery_suggestions_returns_no_recovery_when_pruning_leaves_zero
         phase_current="collections",
         current_library="Movies",
         current_collection="Top Picks",
-        progress_libraries=[
-            {"name": "Movies", "status": "Done"}
-        ],
+        progress_libraries=[{"name": "Movies", "status": "Done"}],
     )
 
     assert suggestions == []
@@ -283,5 +281,5 @@ def test_resume_explanation_calls_out_scope_preservation_for_full_run(qs_module)
     )
     joined = "\n".join(lines)
     assert "was not collections-only" in joined
-    assert 'keeping the original run scope' in joined
+    assert "keeping the original run scope" in joined
     assert "--collections-only" not in joined
