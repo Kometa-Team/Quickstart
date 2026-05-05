@@ -86,6 +86,56 @@ def test_start_kometa_starts_outside_maintenance_passes_start_mode(client, monke
     assert captured["start_mode"] == "recovery"
 
 
+def test_kometa_status_includes_active_command_and_start_mode(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module, "_peek_pending_kometa_start", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: 4321)
+    monkeypatch.setattr(qs_module, "_calculate_process_cpu_percent", lambda proc: 1.25)
+    monkeypatch.setattr(qs_module, "_calculate_system_cpu_percent", lambda: 4.5)
+
+    class _FakeMemInfo:
+        rss = 64 * 1024 * 1024
+
+    class _FakeVM:
+        total = 8 * 1024 * 1024 * 1024
+        available = 6 * 1024 * 1024 * 1024
+        percent = 25.0
+
+    class _FakeProc:
+        pid = 4321
+
+        def is_running(self):
+            return True
+
+        def status(self):
+            return qs_module.psutil.STATUS_RUNNING
+
+        def cmdline(self):
+            return ["python", "kometa.py", "--collections-only"]
+
+        def create_time(self):
+            return time.time() - 5
+
+        def memory_info(self):
+            return _FakeMemInfo()
+
+        def children(self, recursive=True):
+            return []
+
+    monkeypatch.setattr(qs_module.psutil, "Process", lambda pid: _FakeProc())
+    monkeypatch.setattr(qs_module.psutil, "virtual_memory", lambda: _FakeVM())
+
+    with qs_module.RUN_CONTEXT_LOCK:
+        qs_module.RUN_CONTEXT["command"] = "python kometa.py --collections-only --resume \"Emmys 1999\""
+        qs_module.RUN_CONTEXT["start_mode"] = "recovery"
+
+    resp = client.get("/kometa-status")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "running"
+    assert data["start_mode"] == "recovery"
+    assert data["active_command"] == "python kometa.py --collections-only --resume \"Emmys 1999\""
+
+
 def test_start_kometa_blocked_when_kometa_update_running(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
@@ -673,3 +723,4 @@ def test_build_imagemaid_command_parts_only_adds_supported_optional_flags(tmp_pa
 
 
 import os
+import time

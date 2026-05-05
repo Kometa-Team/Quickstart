@@ -698,7 +698,10 @@
                   Open Prepare Kometa
                 </button>
               </div>
-              <p class="form-label">Command</p>
+              <p class="form-label d-flex align-items-center gap-2 flex-wrap">
+                <span id="run-command-label">Command</span>
+                <span id="run-command-active-badge" class="badge text-bg-warning d-none">Recovery Active</span>
+              </p>
               <pre class="mb-0 text-wrap" style="white-space: pre-wrap; word-break: break-word;">
 {% set running_on = version_info.running_on | default('') %}
 {% set is_win = 'Windows' in running_on %}
@@ -718,8 +721,17 @@
               </button>
               {% if incomplete_resume_hint %}
               <div class="alert alert-warning mt-3 mb-2" id="incomplete-run-alert" role="alert">
-                <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
-                  <div class="me-2">
+                <div class="d-flex flex-column gap-2">
+                  {% if (incomplete_resume_hint.suggested_command or incomplete_resume_hint.original_command) and not incomplete_resume_hint.scope_completed %}
+                  <div class="d-flex justify-content-end">
+                    <button type="button" id="copy-recovery-command"
+                      class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
+                      <i class="bi bi-files" id="copy-recovery-icon"></i>
+                      <span id="copy-recovery-text">Copy</span>
+                    </button>
+                  </div>
+                  {% endif %}
+                  <div class="qs-incomplete-run-body">
                     <div class="fw-semibold mb-1">Previous run looks incomplete</div>
                     <div class="small mb-1">{{ incomplete_resume_hint.message }}</div>
                     <div class="small text-muted mb-1">
@@ -740,10 +752,12 @@
                     {% endif %}
                     {% if incomplete_resume_hint.suggested_command %}
                     <div class="small mt-2 mb-1 fw-semibold">Suggested recovery command</div>
-                    <code id="recovery-command-output" class="d-block text-wrap" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.suggested_command }}</code>
-                    {% elif incomplete_resume_hint.original_command %}
+                    <code id="recovery-command-output" class="d-block w-100 text-wrap qs-recovery-command-output" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.suggested_command }}</code>
+                    {% elif incomplete_resume_hint.original_command and not incomplete_resume_hint.scope_completed %}
                     <div class="small mt-2 mb-1 fw-semibold">Last run command from log</div>
-                    <code id="recovery-command-output" class="d-block text-wrap" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.original_command }}</code>
+                    <code id="recovery-command-output" class="d-block w-100 text-wrap qs-recovery-command-output" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.original_command }}</code>
+                    {% elif incomplete_resume_hint.scope_completed %}
+                    <div class="small mt-2 text-muted">Recovery not offered because the original scope appears fully completed.</div>
                     {% endif %}
                     {% if incomplete_resume_hint.explanation %}
                     <div class="small mt-2 mb-1 fw-semibold">Why this suggestion</div>
@@ -754,33 +768,19 @@
                     </ul>
                     {% endif %}
                   </div>
-                  {% if incomplete_resume_hint.suggested_command or incomplete_resume_hint.original_command %}
-                  <div class="d-flex flex-wrap align-items-center gap-2">
-                    <button type="button" id="run-recovery-command"
-                      class="btn btn-warning btn-sm d-flex align-items-center gap-2"
-                      data-context-mismatch="{{ 'true' if incomplete_resume_hint.context_mismatch else 'false' }}"
-                      data-start-mode="{{ 'recovery' if incomplete_resume_hint.suggested_command else 'logged' }}">
-                      <i class="bi bi-play-fill"></i>
-                      <span>{% if incomplete_resume_hint.suggested_command %}Run Recovery Command{% else %}Run Logged Command{% endif %}</span>
-                    </button>
-                    <button type="button" id="run-current-command"
-                      class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
-                      <i class="bi bi-arrow-repeat"></i>
-                      <span>Run Current Command Instead</span>
-                    </button>
-                    <button type="button" id="copy-recovery-command"
-                      class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
-                      <i class="bi bi-files" id="copy-recovery-icon"></i>
-                      <span id="copy-recovery-text">Copy</span>
-                    </button>
-                  </div>
-                  {% endif %}
                 </div>
               </div>
               {% endif %}
               <button id="run-now" class="btn btn-primary mt-3" disabled>
                 <i class="bi bi-play-fill me-1"></i> <span id="run-now-label">Run Now</span>
               </button>
+              {% if incomplete_resume_hint.suggested_command %}
+              <button type="button" id="run-recovery-command" class="btn btn-warning mt-3 ms-2"
+                data-context-mismatch="{{ 'true' if incomplete_resume_hint.context_mismatch else 'false' }}"
+                data-start-mode="recovery">
+                <i class="bi bi-play-fill me-1"></i> Run Recovery
+              </button>
+              {% endif %}
               <button type="button" id="stop-now" class="btn btn-danger mt-3 ms-2 d-none">
                 <i class="bi bi-stop-fill me-1"></i> Stop
               </button>

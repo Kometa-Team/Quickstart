@@ -1936,6 +1936,7 @@ def _update_run_context(command, config_name=None, start_mode="current"):
         kometa_root = helpers.get_kometa_root_path()
         config_path = _extract_kometa_config_path(parts, kometa_root)
     with RUN_CONTEXT_LOCK:
+        RUN_CONTEXT["command"] = command
         RUN_CONTEXT["run_option"] = run_option
         RUN_CONTEXT["selected_libraries"] = selected
         RUN_CONTEXT["run_mode"] = run_mode
@@ -2815,6 +2816,7 @@ shutdown_event = threading.Event()
 # Track current run context for progress UI.
 RUN_CONTEXT_LOCK = threading.Lock()
 RUN_CONTEXT = {
+    "command": None,
     "selected_libraries": None,
     "run_option": None,
     "run_mode": "all",
@@ -7818,6 +7820,9 @@ def kometa_status():
     pending = _peek_pending_kometa_start()
     pending_start = bool(pending)
     pending_requested_at = pending.get("requested_at") if pending else None
+    pending_start_mode = _normalize_kometa_start_mode(pending.get("start_mode")) if pending else "current"
+    pending_command = pending.get("command") if pending else None
+    ctx = _get_run_context()
     pid = helpers.get_kometa_pid()
     if not pid:
         proc = _find_running_kometa_process()
@@ -7852,6 +7857,8 @@ def kometa_status():
             window_unavailable_since=window_unavailable_since,
             pending_start=pending_start,
             pending_requested_at=pending_requested_at,
+            pending_start_mode=pending_start_mode,
+            pending_command=pending_command,
         )
 
     try:
@@ -7910,6 +7917,8 @@ def kometa_status():
                     window_unavailable_since=window_unavailable_since,
                     pending_start=pending_start,
                     pending_requested_at=pending_requested_at,
+                    start_mode=_normalize_kometa_start_mode(ctx.get("start_mode")),
+                    active_command=ctx.get("command"),
                 )
         # If we're here, it likely ended; try to get a return code
         try:
@@ -7947,6 +7956,8 @@ def kometa_status():
             window_unavailable_since=window_unavailable_since,
             pending_start=pending_start,
             pending_requested_at=pending_requested_at,
+            start_mode=_normalize_kometa_start_mode(ctx.get("start_mode")),
+            active_command=ctx.get("command"),
         )
     except psutil.NoSuchProcess:
         KOMETA_CPU_CACHE.pop(pid, None)
@@ -7973,6 +7984,8 @@ def kometa_status():
             window_unavailable_since=window_unavailable_since,
             pending_start=pending_start,
             pending_requested_at=pending_requested_at,
+            pending_start_mode=pending_start_mode,
+            pending_command=pending_command,
         )
 
 
@@ -9639,6 +9652,100 @@ def _quote_cli_value(value):
     return f'"{escaped}"'
 
 
+def _normalize_library_scope_values(current_library=None, library_scope=None):
+    values = []
+    seen = set()
+
+    def add_value(raw):
+        candidate = str(raw or "").strip()
+        if not candidate:
+            return
+        normalized = candidate.casefold()
+        if normalized in seen:
+            return
+        seen.add(normalized)
+        values.append(candidate)
+
+    if isinstance(library_scope, (list, tuple, set)):
+        for item in library_scope:
+            add_value(item)
+    elif library_scope:
+        if isinstance(library_scope, str) and "|" in library_scope:
+            for item in library_scope.split("|"):
+                add_value(item)
+        else:
+            add_value(library_scope)
+    elif current_library:
+        add_value(current_library)
+
+    return values
+
+
+def _build_resume_library_scope(original_command, progress_libraries=None, current_library=None, allow_current_fallback=False):
+    run_option, selected_libraries = _extract_selected_libraries(original_command)
+    progress_libraries = progress_libraries if isinstance(progress_libraries, list) else []
+
+    status_by_name = {}
+    ordered_library_names = []
+    for entry in progress_libraries:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name") or "").strip()
+        if not name:
+            continue
+        ordered_library_names.append(name)
+        status_by_name[name.casefold()] = str(entry.get("status") or "").strip()
+
+    base_scope = []
+    if isinstance(selected_libraries, list) and selected_libraries:
+        base_scope = [str(name).strip() for name in selected_libraries if str(name).strip()]
+    elif run_option != "--run-libraries":
+        base_scope = ordered_library_names[:]
+
+    remaining = []
+    seen = set()
+    for name in base_scope:
+        key = name.casefold()
+        status = status_by_name.get(key, "")
+        if status in ("Done", "Skipped"):
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        remaining.append(name)
+
+    current_name = str(current_library or "").strip()
+    if current_name:
+        current_key = current_name.casefold()
+        if current_key not in seen:
+            current_status = status_by_name.get(current_key, "")
+            current_in_base_scope = (not base_scope) or any(str(name).strip().casefold() == current_key for name in base_scope)
+            if current_in_base_scope and current_status not in ("Done", "Skipped"):
+                if current_key in status_by_name or allow_current_fallback:
+                    remaining.insert(0, current_name)
+
+    return remaining
+
+
+def _should_suppress_recovery_for_completed_scope(original_command, progress_libraries=None, current_library=None):
+    progress_libraries = progress_libraries if isinstance(progress_libraries, list) else []
+    if not progress_libraries:
+        return False
+
+    run_option, selected_libraries = _extract_selected_libraries(original_command)
+    explicit_phase = _detect_explicit_phase_from_command(original_command)
+    if explicit_phase not in ("collections", "operations", "metadata", "overlays", "playlists") and run_option != "--run-libraries":
+        return False
+
+    remaining = _build_resume_library_scope(
+        original_command,
+        progress_libraries=progress_libraries,
+        current_library=current_library,
+        allow_current_fallback=False,
+    )
+    return len(remaining) == 0
+
+
 def _resolve_config_path_for_command(config_name=None):
     normalized_name = str(config_name or "").strip().lower().replace(" ", "_")
     if not normalized_name:
@@ -9659,7 +9766,7 @@ def _inject_config_path_for_command(command, config_name=None):
     return _normalize_cli_whitespace(f"{cleaned} --config {quoted}")
 
 
-def _build_recovery_command(base_command, phase=None, current_library=None):
+def _build_recovery_command(base_command, phase=None, current_library=None, library_scope=None):
     command = _normalize_cli_whitespace(base_command)
     if not command:
         return ""
@@ -9672,7 +9779,7 @@ def _build_recovery_command(base_command, phase=None, current_library=None):
         "playlists": "--playlists-only",
     }
     mode_flags = list(phase_modes.values())
-    scoped_flags = ["--run-libraries", "--run-files", "--run-collections", "--resume"]
+    scoped_flags = ["--run-libraries", "--run-collections", "--resume"]
 
     for flag in mode_flags:
         command = _remove_cli_switch(command, flag)
@@ -9682,8 +9789,11 @@ def _build_recovery_command(base_command, phase=None, current_library=None):
     phase_flag = phase_modes.get((phase or "").strip().lower())
     if phase_flag:
         command = f"{command} {phase_flag}"
-    if current_library:
-        command = f"{command} --run-libraries {_quote_cli_value(current_library)}"
+    library_values = _normalize_library_scope_values(current_library=current_library, library_scope=library_scope)
+    if library_scope is not None and not library_values:
+        return ""
+    if library_values:
+        command = f"{command} --run-libraries {_quote_cli_value('|'.join(library_values))}"
     if not _command_has_flag(command, "--run") and not _command_has_flag(command, "--times"):
         command = f"{command} --run"
 
@@ -9693,6 +9803,26 @@ def _build_recovery_command(base_command, phase=None, current_library=None):
 def _build_collection_resume_command(base_command, current_collection=None, current_library=None):
     command = _build_recovery_command(base_command, phase="collections", current_library=current_library)
     if not command or not current_collection:
+        return ""
+    command = _remove_cli_option_with_value(command, "--resume")
+    command = f"{command} --resume {_quote_cli_value(current_collection)}"
+    return _normalize_cli_whitespace(command)
+
+
+def _build_resume_command_preserving_scope(base_command, current_collection=None, current_library=None, library_scope=None):
+    command = _normalize_cli_whitespace(base_command)
+    if not command or not current_collection:
+        return ""
+
+    explicit_phase = _detect_explicit_phase_from_command(command)
+    preserved_phase = explicit_phase if explicit_phase not in (None, "mixed") else None
+    command = _build_recovery_command(
+        command,
+        phase=preserved_phase,
+        current_library=current_library,
+        library_scope=library_scope,
+    )
+    if not command:
         return ""
     command = _remove_cli_option_with_value(command, "--resume")
     command = f"{command} --resume {_quote_cli_value(current_collection)}"
@@ -9723,34 +9853,68 @@ def _build_incomplete_resume_message(phase_current=None, current_library=None, f
     return f"{message} No Finished Run marker was found."
 
 
-def _build_recovery_suggestions(original_command, phase_current=None, current_library=None, current_collection=None):
+def _build_completed_scope_resume_message(phase_current=None, current_library=None, finished_at=None):
+    if current_library:
+        message = f"The original run scope appears fully completed through library '{current_library}'."
+    elif phase_current:
+        message = f"The original run scope appears fully completed through the {phase_current} phase."
+    else:
+        message = "The original run scope appears fully completed."
+
+    if finished_at:
+        return f"{message} Last finished marker: {finished_at}."
+    return message
+
+
+def _build_recovery_suggestions(original_command, phase_current=None, current_library=None, current_collection=None, progress_libraries=None):
     suggestions = []
     if not original_command:
         return suggestions
 
+    if _should_suppress_recovery_for_completed_scope(
+        original_command,
+        progress_libraries=progress_libraries,
+        current_library=current_library,
+    ):
+        return []
+
     phase_key = (phase_current or "").strip().lower()
+    explicit_phase = _detect_explicit_phase_from_command(original_command)
+    resume_library_scope = _build_resume_library_scope(
+        original_command,
+        progress_libraries=progress_libraries,
+        current_library=current_library,
+        allow_current_fallback=bool(phase_key == "collections" or explicit_phase == "collections"),
+    )
+    scoped_library_scope = resume_library_scope or None
+
     if phase_key == "collections" and current_collection:
         suggestions.append(
-            _build_collection_resume_command(
+            _build_resume_command_preserving_scope(
                 original_command,
                 current_collection=current_collection,
                 current_library=current_library,
+                library_scope=scoped_library_scope,
             )
         )
-        suggestions.append(
-            _build_collection_resume_command(
-                original_command,
-                current_collection=current_collection,
-                current_library=None,
+        if scoped_library_scope is not None:
+            suggestions.append(
+                _build_resume_command_preserving_scope(
+                    original_command,
+                    current_collection=current_collection,
+                    current_library=None,
+                    library_scope=None,
+                )
             )
-        )
 
-    if phase_current and current_library:
-        suggestions.append(_build_recovery_command(original_command, phase=phase_current, current_library=current_library))
-    if phase_current:
-        suggestions.append(_build_recovery_command(original_command, phase=phase_current, current_library=None))
-    if current_library:
-        suggestions.append(_build_recovery_command(original_command, phase=None, current_library=current_library))
+    phase_scope = explicit_phase if explicit_phase not in (None, "mixed") else None
+
+    if phase_scope:
+        suggestions.append(_build_recovery_command(original_command, phase=phase_scope, library_scope=scoped_library_scope))
+        if scoped_library_scope is not None:
+            suggestions.append(_build_recovery_command(original_command, phase=phase_scope, library_scope=None))
+    elif scoped_library_scope is not None:
+        suggestions.append(_build_recovery_command(original_command, phase=None, library_scope=scoped_library_scope))
     suggestions.append(_normalize_cli_whitespace(original_command))
 
     deduped = []
@@ -9821,40 +9985,56 @@ def _build_resume_explanation(
     }
     phase_key = (phase_current or "").strip().lower()
     phase_flag = phase_modes.get(phase_key)
-    if phase_flag:
-        lines.append(f"Detected active phase '{phase_key}', so the suggestion scopes to {phase_flag}.")
+    explicit_phase = _detect_explicit_phase_from_command(original_command)
+    explicit_phase_flag = phase_modes.get(explicit_phase)
+    if phase_flag and explicit_phase == phase_key:
+        lines.append(f"Original logged command already targeted {phase_key} via {phase_flag}; recovery kept that same scope.")
+    elif phase_key == "collections":
+        if explicit_phase == "collections":
+            lines.append("Detected active phase 'collections', and the original logged command was already collections-only.")
+        else:
+            lines.append("Detected active phase 'collections', but the original logged command was not collections-only; recovery kept the original run scope.")
+    elif phase_flag:
+        if explicit_phase == phase_key:
+            lines.append(f"Detected active phase '{phase_key}', and the original logged command already used {phase_flag}.")
+        elif explicit_phase in (None, "mixed"):
+            lines.append(f"Detected active phase '{phase_key}', but the original logged command was not phase-only; recovery kept the original run scope.")
+        else:
+            lines.append(f"Detected active phase '{phase_key}', while the original logged command already targeted {explicit_phase}; recovery kept the original run scope.")
     elif phase_current:
         lines.append(f"Detected phase '{phase_current}', but no phase-only flag mapping was found.")
     else:
-        explicit_phase = _detect_explicit_phase_from_command(original_command)
         if explicit_phase and explicit_phase != "mixed":
             lines.append(f"Detected explicit phase mode in the logged command: {phase_modes.get(explicit_phase, explicit_phase)}.")
         elif explicit_phase == "mixed":
             lines.append("Detected multiple phase-only flags in the logged command; mode flags were normalized.")
 
-    explicit_phase = _detect_explicit_phase_from_command(original_command)
     effective_phase = phase_key or (explicit_phase if explicit_phase not in (None, "mixed") else "")
     resume_value = _extract_cli_option_value(original_command, "--resume")
     has_resume_flag = _command_has_flag(original_command, "--resume")
+    suggested_resume = _extract_cli_option_value(suggested_command, "--resume")
+    suggested_library = _extract_cli_option_value(suggested_command, "--run-libraries")
 
     if effective_phase and effective_phase != "collections":
         lines.append(f"Kometa --resume was not used because this run is {effective_phase}-phase; --resume only applies to collections.")
-    elif effective_phase == "collections":
-        suggested_resume = _extract_cli_option_value(suggested_command, "--resume")
-        suggested_library = _extract_cli_option_value(suggested_command, "--run-libraries")
+    elif suggested_resume:
         if suggested_resume:
-            if current_collection and suggested_resume == current_collection:
-                lines.append(f'Collections phase detected; using --resume "{suggested_resume}" from latest in-progress collection activity.')
+            if explicit_phase_flag == "--collections-only":
+                if current_collection and suggested_resume == current_collection:
+                    lines.append(f'Collections-only run preserved; using --resume "{suggested_resume}" from latest in-progress collection activity.')
+                else:
+                    lines.append(f'Collections-only run preserved; suggestion uses --resume "{suggested_resume}".')
             else:
-                lines.append(f'Collections phase detected; suggestion uses --resume "{suggested_resume}".')
+                if current_collection and suggested_resume == current_collection:
+                    lines.append(f'Run was interrupted during collections, so recovery adds --resume "{suggested_resume}" while keeping the original run scope.')
+                else:
+                    lines.append(f'Recovery adds --resume "{suggested_resume}" while keeping the original run scope.')
             if suggested_library:
                 lines.append(f'Used scoped resume (--run-libraries "{suggested_library}") instead of blind resume across all libraries.')
-        elif has_resume_flag and resume_value:
-            lines.append(f"Logged command already included --resume {resume_value}; it was not auto-carried forward to avoid stale checkpoints.")
-        else:
-            lines.append("Collections phase detected. --resume can apply here, but no reliable resume checkpoint was found in this log.")
     elif has_resume_flag and resume_value:
-        lines.append(f"Logged command included --resume {resume_value}, but phase could not be confirmed as collections.")
+        lines.append(f"Logged command already included --resume {resume_value}; it was not auto-carried forward to avoid stale checkpoints.")
+    elif effective_phase == "collections" or phase_key == "collections":
+        lines.append("Collections phase was detected. --resume can apply here, but no reliable resume checkpoint was found in this log.")
     else:
         lines.append("Kometa --resume was not used because phase could not be confirmed as collections.")
 
@@ -9899,7 +10079,22 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         return None
 
     try:
-        progress = analyzer.extract_progress(content, library_list=None)
+        original_command = _inject_config_path_for_command(
+            summary.get("run_command") or "",
+            config_name=summary.get("config_name") or config_name,
+        )
+        config_path = _extract_cli_option_value(original_command, "--config")
+        config_data = _load_progress_config(config_path) if config_path else {}
+        selected_libraries = _extract_selected_libraries(original_command)[1]
+        progress = analyzer.extract_progress(
+            content,
+            library_list=_get_progress_library_list(
+                selected_libraries=selected_libraries,
+                config_path=config_path,
+                config_data=config_data,
+            ),
+            selected_libraries=selected_libraries,
+        )
     except Exception:
         progress = {}
     if not isinstance(progress, dict):
@@ -9930,30 +10125,36 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
     except Exception:
         current_collection = None
 
-    original_command = _inject_config_path_for_command(
-        summary.get("run_command") or "",
-        config_name=summary.get("config_name") or config_name,
-    )
     suggestions = _build_recovery_suggestions(
         original_command,
         phase_current=phase_current,
         current_library=current_library,
         current_collection=current_collection,
+        progress_libraries=progress.get("libraries"),
     )
     primary = suggestions[0] if suggestions else ""
-    explanation = _build_resume_explanation(
-        original_command,
-        primary,
-        phase_current=phase_current,
-        current_library=current_library,
-        current_collection=current_collection,
-        finished_at=summary.get("finished_at"),
-    )
+    scope_completed = not primary and not suggestions
+    explanation = []
+    if primary:
+        explanation = _build_resume_explanation(
+            original_command,
+            primary,
+            phase_current=phase_current,
+            current_library=current_library,
+            current_collection=current_collection,
+            finished_at=summary.get("finished_at"),
+        )
     reason = _build_incomplete_resume_message(
         phase_current=phase_current,
         current_library=current_library,
         finished_at=summary.get("finished_at"),
     )
+    if scope_completed:
+        reason = _build_completed_scope_resume_message(
+            phase_current=phase_current,
+            current_library=current_library,
+            finished_at=summary.get("finished_at"),
+        )
     counts = summary.get("log_counts") if isinstance(summary.get("log_counts"), dict) else {}
     mtime = summary.get("log_mtime")
     if not isinstance(mtime, (int, float)) and isinstance(cache_entry, dict):
@@ -10011,6 +10212,7 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         "resume_primary": primary,
         "resume_recommendations": suggestions,
         "resume_explanation": explanation,
+        "resume_scope_completed": scope_completed,
     }
 
 
@@ -10311,6 +10513,7 @@ def _build_latest_incomplete_resume_hint():
         "config_name": summary_config,
         "context_mismatch": context_mismatch,
         "explanation": latest.get("resume_explanation") if isinstance(latest.get("resume_explanation"), list) else [],
+        "scope_completed": bool(latest.get("resume_scope_completed")),
     }
 
 
