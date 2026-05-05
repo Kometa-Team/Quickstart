@@ -1320,6 +1320,87 @@ def test_analyze_imagemaid_log_content_uses_first_runtime_timestamp_for_started_
     assert summary["config_name"] == "unknown"
 
 
+def test_analyze_incomplete_kometa_log_for_resume_uses_first_runtime_timestamp_for_started_at(
+    qs_module, isolated_config_dir, monkeypatch
+):
+    log_path = isolated_config_dir / "kometa" / "config" / "logs" / "meta.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text(
+        "\n".join(
+            [
+                "[2026-04-29 15:08:28,897] [kometa.py:93] [INFO] | Starting work |",
+                "[2026-04-29 15:08:35,001] [collections.py:453] [INFO] | Running Demo Collection in Library |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    class _IncompleteAnalyzer:
+        def analyze_content(self, content, log_path=None, config_name=None, include_people_scan=False):
+            return {
+                "summary": {
+                    "run_key": "run-incomplete-kometa-1",
+                    "tool_name": "kometa",
+                    "run_complete": False,
+                    "started_at": None,
+                    "finished_at": None,
+                    "config_name": config_name or "demo",
+                    "run_command": "python kometa.py --run --config C:\\Quickstart\\config\\demo.yml",
+                    "log_size": len(content or ""),
+                },
+                "recommendations": [],
+            }
+
+        def extract_progress(self, *_args, **_kwargs):
+            return {}
+
+        def _strip_divider_wrappers(self, value):
+            return value
+
+    monkeypatch.setattr(qs_module.logscan, "LogscanAnalyzer", _IncompleteAnalyzer)
+    monkeypatch.setattr(qs_module, "_build_recovery_suggestions", lambda *_args, **_kwargs: [])
+
+    result = qs_module._analyze_incomplete_log_for_resume(log_path, config_name="demo")
+
+    assert result is not None
+    assert result["started_at"] == "2026-04-29 15:08:28"
+
+
+def test_build_incomplete_run_from_cache_entry_uses_first_runtime_timestamp_for_started_at(
+    qs_module, isolated_config_dir
+):
+    log_path = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa" / "meta-cached.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    log_path.write_text(
+        "\n".join(
+            [
+                "[2026-04-29 15:08:28,897] [kometa.py:93] [INFO] | Starting work |",
+                "[2026-04-29 15:08:35,001] [collections.py:453] [INFO] | Running Demo Collection in Library |",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    result = qs_module._build_incomplete_run_from_cache_entry(
+        log_path,
+        cache_entry={
+            "run_key": "run-incomplete-cached-1",
+            "tool_name": "kometa",
+            "run_complete": False,
+            "summary": {
+                "run_key": "run-incomplete-cached-1",
+                "tool_name": "kometa",
+                "started_at": None,
+                "config_name": "demo",
+                "run_command": "python kometa.py --run",
+            },
+        },
+        config_name="demo",
+    )
+
+    assert result["started_at"] == "2026-04-29 15:08:28"
+
+
 def test_analyze_imagemaid_log_content_infers_saved_config_name(qs_module, isolated_config_dir):
     qs_module.database.save_section_data(
         name="demo_report",

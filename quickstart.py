@@ -9844,6 +9844,15 @@ def _iso_from_mtime(value):
     return None
 
 
+def _extract_first_log_timestamp(content):
+    if not content:
+        return None
+    match = re.search(r"^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d{3}\]", str(content), re.MULTILINE)
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
 def _build_incomplete_resume_message(phase_current=None, current_library=None, finished_at=None):
     if phase_current and current_library:
         message = f"Run appears incomplete during {phase_current} in library '{current_library}'."
@@ -10063,6 +10072,7 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         content = _read_logscan_text(log_path, encoding="utf-8", errors="replace")
     except Exception:
         return None
+    started_at_fallback = _extract_first_log_timestamp(content)
 
     analyzer = logscan.LogscanAnalyzer()
     try:
@@ -10174,10 +10184,11 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
     if not run_key:
         run_key_seed = f"incomplete|{log_path}|{mtime or 0}"
         run_key = hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest()
+    started_at = summary.get("started_at") or started_at_fallback
 
     return {
         "run_key": run_key,
-        "started_at": summary.get("started_at"),
+        "started_at": started_at,
         "finished_at": summary.get("finished_at"),
         "run_time_seconds": summary.get("run_time_seconds"),
         "kometa_version": summary.get("kometa_version"),
@@ -10245,6 +10256,12 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
     created_at = summary.get("created_at")
     if not created_at:
         created_at = cache_entry.get("updated_at") or _iso_from_mtime(mtime)
+    started_at = summary.get("started_at")
+    if not started_at:
+        try:
+            started_at = _extract_first_log_timestamp(_read_logscan_text(path, encoding="utf-8", errors="replace"))
+        except Exception:
+            started_at = None
     original_command = summary.get("run_command") or ""
     if tool_name == "kometa":
         original_command = _inject_config_path_for_command(
@@ -10254,7 +10271,7 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
     return {
         "run_key": run_key,
         "tool_name": tool_name,
-        "started_at": summary.get("started_at"),
+        "started_at": started_at,
         "finished_at": summary.get("finished_at"),
         "run_time_seconds": summary.get("run_time_seconds"),
         "kometa_version": summary.get("kometa_version"),
@@ -10314,10 +10331,14 @@ def _build_incomplete_log_fallback(log_path, cache_entry=None, config_name=None)
         run_key_seed = f"incomplete|fallback|{path}|{mtime or 0}|{size or 0}"
         run_key = hashlib.sha256(run_key_seed.encode("utf-8")).hexdigest()
     created_at = cache_entry.get("updated_at") or _iso_from_mtime(mtime)
+    try:
+        started_at = _extract_first_log_timestamp(_read_logscan_text(path, encoding="utf-8", errors="replace"))
+    except Exception:
+        started_at = None
     return {
         "run_key": run_key,
         "tool_name": tool_name,
-        "started_at": None,
+        "started_at": started_at,
         "finished_at": None,
         "run_time_seconds": None,
         "kometa_version": "",
@@ -11025,6 +11046,10 @@ def _perform_logscan_reingest(reset, job_id=None, update_state=True):
                         if archived_path:
                             cache_dirty = True
                     continue
+                if not summary.get("started_at"):
+                    first_log_timestamp = _extract_first_log_timestamp(content)
+                    if first_log_timestamp:
+                        summary["started_at"] = first_log_timestamp
                 if not summary.get("run_complete"):
                     skipped_incomplete += 1
                     if len(sample_incomplete) < 5:
