@@ -31,6 +31,7 @@ let logscanAnalyzeInFlight = false
 let runProgressInFlight = false
 let activeRunCommandOverride = null
 let activeRunCommandMode = null
+let latestKometaStatusPayload = null
 const KOMETA_BRANCH_OVERRIDE_STORAGE_KEY = 'qs-kometa-branch-override'
 let kometaUpdatePollInterval = null
 let kometaUpdateJobId = null
@@ -1918,6 +1919,34 @@ $(document).ready(function () {
       }
     }
 
+    const maintenanceRow = document.getElementById('run-maintenance-row')
+    if (maintenanceRow) {
+      const statusData = latestKometaStatusPayload || {}
+      const windowLabel = statusData.maintenance_window ? ` (${statusData.maintenance_window})` : ''
+      if (statusData.maintenance_paused) {
+        let pauseLabel = 'Paused'
+        const pausedSince = statusData.maintenance_paused_since ? new Date(statusData.maintenance_paused_since) : null
+        if (pausedSince && !Number.isNaN(pausedSince.getTime())) {
+          const elapsedSeconds = Math.max(0, Math.floor((Date.now() - pausedSince.getTime()) / 1000))
+          pauseLabel = formatRunSeconds(elapsedSeconds) || 'Paused'
+        }
+        maintenanceRow.innerHTML = `
+          <span class="me-2 fw-semibold">Maintenance</span>
+          <span class="badge text-bg-warning text-dark">Paused${windowLabel}</span>
+          <span class="badge text-bg-secondary">${pauseLabel}</span>
+        `
+        maintenanceRow.classList.remove('d-none')
+      } else if (statusData.maintenance_active) {
+        maintenanceRow.innerHTML = `
+          <span class="me-2 fw-semibold">Maintenance</span>
+          <span class="badge text-bg-warning text-dark">Window Active${windowLabel}</span>
+        `
+        maintenanceRow.classList.remove('d-none')
+      } else {
+        maintenanceRow.classList.add('d-none')
+      }
+    }
+
     const allowed = Array.isArray(payload.allowed_phases) && payload.allowed_phases.length
       ? new Set(payload.allowed_phases)
       : null
@@ -2081,6 +2110,10 @@ $(document).ready(function () {
     const container = document.getElementById('run-progress')
     if (container) {
       container.classList.add('d-none')
+    }
+    const maintenanceRow = document.getElementById('run-maintenance-row')
+    if (maintenanceRow) {
+      maintenanceRow.classList.add('d-none')
     }
     if (resetCache) {
       lastRunProgressPayload = null
@@ -3393,6 +3426,7 @@ $(document).ready(function () {
     return fetch('/kometa-status')
       .then(res => res.json())
       .then(data => {
+        latestKometaStatusPayload = data || null
         KOMETA_STATUS = data.status || null
         KOMETA_PENDING_START = Boolean(data.pending_start && data.status !== 'running')
         const $updateBtn = $updateKometaBtn
@@ -3419,6 +3453,9 @@ $(document).ready(function () {
         updateRunStatus(data)
         if (typeof window.QS_handleMaintenanceStatus === 'function') {
           window.QS_handleMaintenanceStatus(data)
+        }
+        if (lastRunProgressPayload && data.status === 'running') {
+          renderRunProgress(lastRunProgressPayload)
         }
 
         if (data.pending_start && data.status !== 'running') {

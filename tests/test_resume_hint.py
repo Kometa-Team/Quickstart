@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from pathlib import Path
 import pytest
 from flask import session
 
@@ -94,8 +94,19 @@ def test_build_incomplete_run_timing_summary_accounts_for_maintenance_pause(qs_m
 
     assert summary["observed_label"] == "2h 30m"
     assert summary["pause_label"] == "1h"
+    assert summary["pause_display"] == "1h"
     assert summary["active_label"] == "1h 30m"
     assert summary["window"] == "02:00-05:00"
+
+
+def test_build_incomplete_run_timing_summary_marks_missing_maintenance_as_not_observed(qs_module):
+    summary = qs_module._build_incomplete_run_timing_summary(
+        started_at="2026-05-05 01:00:00",
+        last_log_at="2026-05-05 03:30:00",
+        maintenance_summary={},
+    )
+
+    assert summary["pause_display"] == "Not observed"
 
 
 def test_build_incomplete_scope_summary_reports_completed_and_pruned_libraries(qs_module):
@@ -139,12 +150,14 @@ def test_build_incomplete_progress_snapshot_exposes_rows_and_totals(qs_module):
             ],
         },
         last_log_at="2026-05-05 03:30:00",
+        config_data={"playlists": {"daily": {}}, "settings": {"run_order": ["operations", "metadata", "collections", "overlays"]}},
+        original_command="kometa.py --run --config <config>",
     )
 
-    assert [column["key"] for column in snapshot["columns"]] == ["operations", "collections"]
+    assert [column["key"] for column in snapshot["columns"]] == ["operations", "metadata", "collections", "overlays", "playlists"]
     assert snapshot["preparation_label"] == "30s"
     assert snapshot["rows"][0]["phase_cells"][0]["label"] == "2m"
-    assert snapshot["rows"][1]["phase_cells"][1]["label"] == "1m 30s"
+    assert snapshot["rows"][1]["phase_cells"][2]["label"] == "1m 30s"
     assert snapshot["total_label"] == "7m 30s"
 
 
@@ -330,6 +343,34 @@ def test_build_latest_incomplete_resume_hint_marks_completed_scope(monkeypatch, 
     assert isinstance(hint, dict)
     assert hint["scope_completed"] is True
     assert hint["suggested_command"] == ""
+
+
+def test_read_logscan_text_appends_live_kometa_maintenance_sidecar(tmp_path, qs_module):
+    log_dir = tmp_path / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    meta_path = log_dir / "meta.log"
+    sidecar_path = log_dir / "meta.quickstart-maintenance.log"
+    meta_path.write_text("[2026-05-05 01:00:00,000] [kometa.py:1] [INFO] | Start\n", encoding="utf-8")
+    sidecar_path.write_text("[Quickstart] Maintenance marker: event=paused at=2026-05-05T06:00:00Z local_at=2026-05-05T02:00:00 window=02:00-05:00\n", encoding="utf-8")
+
+    content = qs_module._read_logscan_text(meta_path, encoding="utf-8", errors="replace")
+
+    assert "Maintenance marker" in content
+    assert content.count("Maintenance marker") == 1
+
+
+def test_write_quickstart_maintenance_marker_falls_back_to_sidecar(monkeypatch, tmp_path, qs_module):
+    kometa_root = tmp_path
+    monkeypatch.setattr(qs_module, "_append_quickstart_meta_log_line", lambda *_args, **_kwargs: False)
+
+    ok = qs_module._write_quickstart_maintenance_marker(kometa_root, "paused", window="02:00-05:00")
+
+    assert ok is True
+    sidecar_path = qs_module._get_kometa_maintenance_sidecar_path(kometa_root)
+    assert sidecar_path.exists()
+    sidecar_text = sidecar_path.read_text(encoding="utf-8")
+    assert "event=paused" in sidecar_text
+    assert "window=02:00-05:00" in sidecar_text
 
 
 def test_resume_explanation_calls_out_scoped_resume_for_collections(qs_module):

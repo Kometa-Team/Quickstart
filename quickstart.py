@@ -2060,9 +2060,10 @@ def _maintenance_guard_loop(app_in):
                         window_label = f" ({window_str})" if window_str else ""
                         helpers.ts_log(f"Kometa paused due to Plex maintenance window{window_label}.", level="INFO")
                         try:
-                            _write_quickstart_maintenance_marker(helpers.get_kometa_root_path(), "paused", window=window_str)
+                            if not _write_quickstart_maintenance_marker(helpers.get_kometa_root_path(), "paused", window=window_str):
+                                helpers.ts_log("Failed to append Quickstart paused maintenance marker to meta.log.", level="WARNING")
                         except Exception:
-                            pass
+                            helpers.ts_log("Failed to append Quickstart paused maintenance marker to meta.log.", level="WARNING")
                         with MAINTENANCE_STATE_LOCK:
                             MAINTENANCE_STATE["paused"] = True
                             MAINTENANCE_STATE["paused_since"] = datetime.now(timezone.utc).isoformat()
@@ -2085,14 +2086,15 @@ def _maintenance_guard_loop(app_in):
                         except Exception:
                             paused_seconds = None
                     try:
-                        _write_quickstart_maintenance_marker(
+                        if not _write_quickstart_maintenance_marker(
                             helpers.get_kometa_root_path(),
                             "resumed",
                             window=window_str,
                             paused_seconds=paused_seconds,
-                        )
+                        ):
+                            helpers.ts_log("Failed to append Quickstart resumed maintenance marker to meta.log.", level="WARNING")
                     except Exception:
-                        pass
+                        helpers.ts_log("Failed to append Quickstart resumed maintenance marker to meta.log.", level="WARNING")
                     with MAINTENANCE_STATE_LOCK:
                         MAINTENANCE_STATE["paused"] = False
                         MAINTENANCE_STATE["paused_since"] = None
@@ -2111,6 +2113,7 @@ def _write_quickstart_run_marker(kometa_root, config_name=None, start_mode="curr
             f"config={safe_config} quickstart={qs_version} branch={qs_branch} "
             f"maintenance_markers=1 start_mode={safe_start_mode}"
         )
+        _reset_kometa_maintenance_sidecar(kometa_root)
         _append_quickstart_meta_log_line(kometa_root, marker)
     except Exception:
         pass
@@ -2124,6 +2127,33 @@ def _append_quickstart_meta_log_line(kometa_root, line):
         log_dir.mkdir(parents=True, exist_ok=True)
         log_path = log_dir / "meta.log"
         with log_path.open("a", encoding="utf-8", errors="ignore") as handle:
+            handle.write(str(line).rstrip() + "\n")
+        return True
+    except Exception:
+        return False
+
+
+def _get_kometa_maintenance_sidecar_path(kometa_root):
+    return Path(kometa_root) / "config" / "logs" / "meta.quickstart-maintenance.log"
+
+
+def _reset_kometa_maintenance_sidecar(kometa_root):
+    try:
+        sidecar_path = _get_kometa_maintenance_sidecar_path(kometa_root)
+        sidecar_path.parent.mkdir(parents=True, exist_ok=True)
+        sidecar_path.write_text("", encoding="utf-8")
+        return True
+    except Exception:
+        return False
+
+
+def _append_kometa_maintenance_sidecar_line(kometa_root, line):
+    if not line:
+        return False
+    try:
+        sidecar_path = _get_kometa_maintenance_sidecar_path(kometa_root)
+        sidecar_path.parent.mkdir(parents=True, exist_ok=True)
+        with sidecar_path.open("a", encoding="utf-8", errors="ignore") as handle:
             handle.write(str(line).rstrip() + "\n")
         return True
     except Exception:
@@ -2160,7 +2190,12 @@ def _write_quickstart_maintenance_marker(kometa_root, event, window=None, paused
         parts.append(f"window={str(window).strip()}")
     if event_name == "resumed" and isinstance(paused_seconds, (int, float)):
         parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
-    return _append_quickstart_meta_log_line(kometa_root, " ".join(parts))
+    line = " ".join(parts)
+    meta_ok = _append_quickstart_meta_log_line(kometa_root, line)
+    sidecar_ok = _append_kometa_maintenance_sidecar_line(kometa_root, line)
+    if not meta_ok and sidecar_ok:
+        helpers.ts_log("Quickstart maintenance marker could not be appended to meta.log; preserved in sidecar instead.", level="WARNING")
+    return bool(meta_ok or sidecar_ok)
 
 
 def _write_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_name=None, log_path=None):
@@ -8617,7 +8652,17 @@ def _read_logscan_text(path, encoding="utf-8", errors="replace"):
     if _is_logscan_gzip_path(path):
         with gzip.open(path, "rt", encoding=encoding, errors=errors) as handle:
             return handle.read()
-    return path.read_text(encoding=encoding, errors=errors)
+    content = path.read_text(encoding=encoding, errors=errors)
+    try:
+        if path.name.lower() == "meta.log":
+            sidecar_path = path.parent / "meta.quickstart-maintenance.log"
+            if sidecar_path.exists() and sidecar_path.is_file():
+                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
+                if sidecar_content:
+                    content = f"{content.rstrip()}\n{sidecar_content}\n"
+    except Exception:
+        pass
+    return content
 
 
 def _iter_logscan_text_lines(path, encoding="utf-8", errors="replace"):
@@ -9916,6 +9961,7 @@ def _build_incomplete_run_timing_summary(started_at=None, last_log_at=None, main
         "pause_count": int(summary.get("pause_count") or 0) if isinstance(summary.get("pause_count"), (int, float)) else 0,
         "pause_seconds": pause_seconds,
         "pause_label": _format_duration_brief(pause_seconds) if pause_seconds else "",
+        "pause_display": _format_duration_brief(pause_seconds) if pause_seconds else "Not observed",
         "observed_seconds": observed_seconds,
         "observed_label": _format_duration_brief(observed_seconds) if observed_seconds is not None else "",
         "active_seconds": active_seconds,
@@ -9993,36 +10039,35 @@ def _build_maintenance_event_rows(maintenance_summary=None):
     return rows
 
 
-def _build_incomplete_progress_snapshot(progress=None, last_log_at=None):
+def _build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_data=None, original_command=""):
     progress = progress if isinstance(progress, dict) else {}
     libraries = progress.get("libraries") if isinstance(progress.get("libraries"), list) else []
     if not libraries:
         return {}
-
-    phase_order = [
-        ("operations", "Operations"),
-        ("metadata", "Metadata"),
-        ("collections", "Collections"),
-        ("overlays", "Overlays"),
-    ]
+    phase_lookup = {
+        "operations": "Operations",
+        "metadata": "Metadata",
+        "collections": "Collections",
+        "overlays": "Overlays",
+        "playlists": "Playlists",
+    }
     current_phase = str(progress.get("phase_current") or "").strip().lower()
     current_library = str(progress.get("current_library") or "").strip()
     preparation_seconds = progress.get("preparation_seconds")
     if not isinstance(preparation_seconds, (int, float)):
         preparation_seconds = progress.get("preparation_elapsed_seconds")
     current_phase_elapsed_seconds = progress.get("current_phase_elapsed_seconds") if isinstance(progress.get("current_phase_elapsed_seconds"), (int, float)) else None
-
-    columns = []
-    for phase_key, phase_label in phase_order:
-        include = current_phase == phase_key
-        if not include:
-            for entry in libraries:
-                durations = entry.get("durations") if isinstance(entry, dict) else {}
-                if isinstance(durations, dict) and isinstance(durations.get(phase_key), (int, float)):
-                    include = True
-                    break
-        if include:
-            columns.append({"key": phase_key, "label": phase_label})
+    explicit_phase = _detect_explicit_phase_from_command(original_command)
+    run_mode = explicit_phase if explicit_phase in ("collections", "operations", "metadata", "overlays", "playlists") else "all"
+    allowed_phases = _get_progress_run_order(config_data=config_data)
+    if not allowed_phases:
+        allowed_phases = ["operations", "metadata", "collections", "overlays"]
+    playlists_configured = bool(config_data.get("playlists")) if isinstance(config_data, dict) else False
+    if run_mode in ("collections", "overlays", "operations", "metadata", "playlists"):
+        allowed_phases = [run_mode]
+    elif "playlists" not in allowed_phases:
+        allowed_phases = allowed_phases + ["playlists"]
+    columns = [{"key": key, "label": phase_lookup.get(key, key.title())} for key in allowed_phases]
 
     rows = []
     totals = {column["key"]: 0 for column in columns}
@@ -10045,6 +10090,20 @@ def _build_incomplete_progress_snapshot(progress=None, last_log_at=None):
             label = ""
             tone = ""
             seconds = durations.get(phase_key)
+            if phase_key == "playlists":
+                playlist_total = progress.get("playlist_total_seconds") if isinstance(progress.get("playlist_total_seconds"), (int, float)) else None
+                playlist_running = bool(progress.get("playlist_running"))
+                playlist_elapsed = progress.get("playlist_elapsed_seconds") if isinstance(progress.get("playlist_elapsed_seconds"), (int, float)) else None
+                if playlist_running:
+                    label = _format_duration_brief(playlist_elapsed)
+                    tone = "primary"
+                elif isinstance(playlist_total, (int, float)) and (playlist_total > 0 or playlists_configured):
+                    label = _format_duration_brief(playlist_total)
+                    tone = "success" if label else ""
+                    if label:
+                        totals[phase_key] = max(0, int(playlist_total))
+                phase_cells.append({"label": label, "tone": tone})
+                continue
             if current_library and current_phase and current_library == name and current_phase == phase_key and isinstance(current_phase_elapsed_seconds, (int, float)):
                 label = _format_duration_brief(current_phase_elapsed_seconds)
                 tone = "primary"
@@ -10440,7 +10499,12 @@ def _analyze_incomplete_log_for_resume(log_path, cache_entry=None, config_name=N
         suggested_command=primary,
         progress_libraries=progress_libraries,
     )
-    progress_snapshot = _build_incomplete_progress_snapshot(progress, last_log_at=last_log_at)
+    progress_snapshot = _build_incomplete_progress_snapshot(
+        progress,
+        last_log_at=last_log_at,
+        config_data=config_data,
+        original_command=original_command,
+    )
     maintenance_events = _build_maintenance_event_rows(summary.get("maintenance_summary"))
 
     return {

@@ -761,10 +761,10 @@
                         <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.timing_summary.observed_label }}</span>
                       </div>
                       {% endif %}
-                      {% if incomplete_resume_hint.timing_summary.had_pause and incomplete_resume_hint.timing_summary.pause_label %}
+                      {% if incomplete_resume_hint.timing_summary.pause_display %}
                       <div class="qs-incomplete-run-metric">
                         <span class="qs-incomplete-run-metric-label">Maintenance pause</span>
-                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.timing_summary.pause_label }}</span>
+                        <span class="qs-incomplete-run-metric-value">{{ incomplete_resume_hint.timing_summary.pause_display }}</span>
                       </div>
                       {% endif %}
                       {% if incomplete_resume_hint.timing_summary.had_pause and incomplete_resume_hint.timing_summary.active_label %}
@@ -808,7 +808,7 @@
                       <button type="button" id="copy-recovery-command"
                         class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2">
                         <i class="bi bi-files" id="copy-recovery-icon"></i>
-                        <span id="copy-recovery-text">Copy command</span>
+                        <span id="copy-recovery-text">Copy</span>
                       </button>
                     </div>
                     <code id="recovery-command-output" class="d-block w-100 text-wrap qs-recovery-command-output" style="white-space: pre-wrap; word-break: break-word;">{{ incomplete_resume_hint.suggested_command }}</code>
@@ -938,6 +938,7 @@
           <div id="run-progress-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
         </div>
         <div id="run-prep-row" class="mb-2 d-none"></div>
+        <div id="run-maintenance-row" class="mb-2 d-none"></div>
         <div class="table-responsive" data-qs-sticky-first="true">
                   <table class="table table-sm table-striped mb-0">
                     <thead>
