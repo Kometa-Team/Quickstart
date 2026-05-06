@@ -613,17 +613,17 @@ function qsBuildKometaActiveWorkEntry () {
   const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || !running)
 
   if (unavailableBlocksWork) {
-    const since = data.window_unavailable_since ? `Since ${qsFormatTimestamp(data.window_unavailable_since)}` : 'Maintenance window unavailable'
+    const since = data.window_unavailable_since ? `Since ${qsFormatTimestamp(data.window_unavailable_since)}` : 'Maintenance window data unavailable'
     return {
       key: 'kometa-window-unavailable',
-      title: 'Kometa start blocked',
+      title: 'Maintenance window data unavailable',
       chip: 'Waiting',
       state: 'warn',
       meta: windowLabel ? `${since} • Window ${windowLabel}` : since,
       href,
       titleAttr: windowLabel
-        ? `Kometa start is blocked because the configured Plex maintenance window ${windowLabel} is unavailable.`
-        : 'Kometa start is blocked because the configured Plex maintenance window is unavailable.'
+        ? `Quickstart cannot read the configured Plex maintenance window ${windowLabel} while work is active.`
+        : 'Quickstart cannot read the configured Plex maintenance window while work is active.'
     }
   }
 
@@ -963,7 +963,7 @@ function qsHandleMaintenanceStatus (data) {
       const label = unavailableBadge.querySelector('span')
       unavailableBadge.classList.remove('d-none')
       if (label) {
-        label.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> Plex maintenance window unavailable${sinceLabel}`
+        label.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> Plex maintenance window data unavailable${sinceLabel}`
       }
     } else {
       unavailableBadge.classList.add('d-none')

@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const configSwitchSelect = document.getElementById('configSwitchSelect')
   const configSelector = document.getElementById('configSelector')
   const activeConfigInput = document.getElementById('qs-active-config-input')
+  const startStepLinks = Array.from(document.querySelectorAll('.qs-start-step-link[href^="/step/"]'))
   const newConfigInput = document.getElementById('newConfigName')
   const saveConfigRow = document.getElementById('saveConfigRow')
   const saveConfigButton = document.getElementById('saveConfigButton')
@@ -118,6 +119,25 @@ document.addEventListener('DOMContentLoaded', function () {
   const importConfigName = document.getElementById('importConfigName')
   const importModeNew = document.getElementById('importModeNew')
   const importModeMerge = document.getElementById('importModeMerge')
+
+  startStepLinks.forEach((link) => {
+    if (link.dataset.qsStartNavBound === '1') return
+    link.dataset.qsStartNavBound = '1'
+    link.addEventListener('click', (event) => {
+      const href = String(link.getAttribute('href') || '').trim()
+      if (!href || !href.startsWith('/step/')) return
+      event.preventDefault()
+      const targetLabel = String(link.dataset.qsTargetLabel || link.textContent || '').trim()
+      if (typeof window.loading === 'function') {
+        window.loading('jump', targetLabel)
+      } else if (typeof window.showNavigationLoadingOverlay === 'function') {
+        window.showNavigationLoadingOverlay('jump', targetLabel)
+      }
+      window.setTimeout(() => {
+        window.location.assign(href)
+      }, 60)
+    })
+  })
   const importMergeBaseSection = document.getElementById('importMergeBaseSection')
   const importMergeBaseConfig = document.getElementById('importMergeBaseConfig')
   const importPlexCredentials = document.getElementById('importPlexCredentials')

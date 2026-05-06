@@ -120,9 +120,12 @@ LOGSCAN_ANALYSIS_CACHE = {"mtime": None, "size": None, "data": None}
 LOGSCAN_PROGRESS_CACHE = {"mtime": None, "size": None, "data": None}
 KOMETA_CPU_CACHE = {}
 SYSTEM_CPU_CACHE = {"total": None, "idle": None}
+PROCESS_IO_CACHE = {"kometa": {}, "imagemaid": {}}
 MAINTENANCE_STATE = {
     "paused": False,
     "paused_since": None,
+    "imagemaid_paused": False,
+    "imagemaid_paused_since": None,
     "active": False,
     "window": None,
     "queued_started_at": None,
@@ -1581,6 +1584,68 @@ def _calculate_system_cpu_percent():
     return max(0.0, min(100.0, percent))
 
 
+def _calculate_process_io_stats(proc, cache_name):
+    bucket = PROCESS_IO_CACHE.setdefault(cache_name, {})
+    total_read = 0
+    total_write = 0
+    saw_counters = False
+
+    def _accumulate_io(target_proc):
+        nonlocal total_read, total_write, saw_counters
+        try:
+            counters = target_proc.io_counters()
+        except Exception:
+            return
+        read_bytes = getattr(counters, "read_bytes", None)
+        write_bytes = getattr(counters, "write_bytes", None)
+        if read_bytes is None or write_bytes is None:
+            return
+        saw_counters = True
+        total_read += max(0, int(read_bytes))
+        total_write += max(0, int(write_bytes))
+
+    _accumulate_io(proc)
+    try:
+        for child in proc.children(recursive=True):
+            _accumulate_io(child)
+    except Exception:
+        pass
+
+    if not saw_counters:
+        return None
+
+    now = time.time()
+    entry = bucket.get(proc.pid)
+    bucket[proc.pid] = {"time": now, "read": total_read, "write": total_write}
+
+    read_rate_mb_s = None
+    write_rate_mb_s = None
+    if entry:
+        elapsed = now - entry.get("time", now)
+        if elapsed > 0:
+            delta_read = total_read - entry.get("read", total_read)
+            delta_write = total_write - entry.get("write", total_write)
+            if delta_read >= 0:
+                read_rate_mb_s = delta_read / (1024 * 1024) / elapsed
+            if delta_write >= 0:
+                write_rate_mb_s = delta_write / (1024 * 1024) / elapsed
+
+    return {
+        "disk_read_mb": total_read / (1024 * 1024),
+        "disk_write_mb": total_write / (1024 * 1024),
+        "disk_read_rate_mb_s": read_rate_mb_s,
+        "disk_write_rate_mb_s": write_rate_mb_s,
+    }
+
+
+def _clear_process_metric_cache(pid, cache_name=None):
+    if pid is None:
+        return
+    KOMETA_CPU_CACHE.pop(pid, None)
+    if cache_name:
+        PROCESS_IO_CACHE.setdefault(cache_name, {}).pop(pid, None)
+
+
 def _parse_maintenance_window_minutes(window_str):
     if not window_str or "Unavailable" in str(window_str):
         return None
@@ -1614,6 +1679,14 @@ def _get_maintenance_window_from_db():
         _validated, _user_entered, data = database.retrieve_section_data(name=config_name, section="plex_telemetry")
         telemetry = data.get("plex_telemetry", {}) if isinstance(data, dict) else {}
         window_str = telemetry.get("maintenance_window")
+        if not window_str:
+            legacy_telemetry = persistence.retrieve_settings("plex_telemetry")
+            if isinstance(legacy_telemetry, dict):
+                window_str = legacy_telemetry.get("plex_telemetry", {}).get("maintenance_window")
+        if not window_str:
+            legacy_plex = persistence.retrieve_settings("010-plex")
+            if isinstance(legacy_plex, dict):
+                window_str = legacy_plex.get("plex", {}).get("telemetry", {}).get("maintenance_window")
         minutes = _parse_maintenance_window_minutes(window_str)
         if not minutes:
             return None, None, None
@@ -1855,6 +1928,7 @@ def _launch_imagemaid_command(command, mode=None, config_name=None):
         command_parts.insert(1, str(imagemaid_py))
 
     helpers.ts_log(f"argv={command_parts!r}", level="DEBUG")
+    _update_imagemaid_run_context(command_parts, mode=mode, config_name=config_name)
     launch_log_path = Path(helpers.get_imagemaid_launch_log_file())
     launch_log_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1955,6 +2029,26 @@ def _get_run_context():
         return dict(RUN_CONTEXT)
 
 
+def _normalize_imagemaid_command_text(command):
+    if isinstance(command, (list, tuple)):
+        return " ".join(str(part) for part in command if str(part).strip())
+    return str(command or "").strip()
+
+
+def _update_imagemaid_run_context(command, mode=None, config_name=None):
+    with IMAGEMAID_RUN_CONTEXT_LOCK:
+        IMAGEMAID_RUN_CONTEXT["command"] = _normalize_imagemaid_command_text(command)
+        IMAGEMAID_RUN_CONTEXT["mode"] = (str(mode or "").strip().lower() or None)
+        IMAGEMAID_RUN_CONTEXT["config_name"] = (str(config_name or "").strip() or None)
+        IMAGEMAID_RUN_CONTEXT["started_at"] = datetime.now()
+        IMAGEMAID_RUN_CONTEXT["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+
+def _get_imagemaid_run_context():
+    with IMAGEMAID_RUN_CONTEXT_LOCK:
+        return dict(IMAGEMAID_RUN_CONTEXT)
+
+
 def _suspend_process_tree(proc):
     try:
         for child in proc.children(recursive=True):
@@ -1993,20 +2087,32 @@ def _maintenance_guard_loop(app_in):
     with app_in.app_context():
         while True:
             time.sleep(interval)
-            pid = helpers.get_kometa_pid()
             start_min, end_min, window_str = _get_maintenance_window_live()
             if start_min is None or end_min is None:
                 start_min, end_min, window_str = _get_maintenance_window_from_db()
             window_unavailable = start_min is None or end_min is None
+            pid = helpers.get_kometa_pid()
             kometa_running = pid and helpers.is_kometa_running()
+            imagemaid_pid = helpers.get_imagemaid_pid()
+            imagemaid_running = imagemaid_pid and helpers.is_imagemaid_running()
+            if not imagemaid_running:
+                imagemaid_proc = _find_running_imagemaid_process()
+                if imagemaid_proc:
+                    imagemaid_running = True
+                    imagemaid_pid = imagemaid_proc.pid
+                    try:
+                        with open(helpers.get_imagemaid_pid_file(), "w", encoding="utf-8") as handle:
+                            handle.write(str(imagemaid_pid))
+                    except Exception:
+                        pass
             has_pending = bool(_peek_pending_kometa_start())
-            if window_unavailable and (kometa_running or has_pending):
+            if window_unavailable and (kometa_running or imagemaid_running or has_pending):
                 with MAINTENANCE_STATE_LOCK:
                     if not MAINTENANCE_STATE.get("window_unavailable"):
                         MAINTENANCE_STATE["window_unavailable"] = True
                         MAINTENANCE_STATE["window_unavailable_since"] = datetime.now(timezone.utc).isoformat()
                         helpers.ts_log(
-                            "Plex maintenance window unavailable; keeping Kometa paused/queued until Plex is reachable.",
+                            "Plex maintenance window unavailable; keeping Quickstart work paused/queued until Plex is reachable.",
                             level="WARNING",
                         )
             else:
@@ -2039,65 +2145,134 @@ def _maintenance_guard_loop(app_in):
                                 MAINTENANCE_STATE["queued_started_at"] = datetime.now(timezone.utc).isoformat()
                         else:
                             helpers.ts_log(f"Failed to start Kometa after maintenance: {result}", level="ERROR")
+            elif start_min is not None and end_min is not None:
+                try:
+                    proc = psutil.Process(pid)
+                except psutil.NoSuchProcess:
+                    with MAINTENANCE_STATE_LOCK:
+                        MAINTENANCE_STATE["paused"] = False
+                        MAINTENANCE_STATE["paused_since"] = None
+                else:
+                    if active:
+                        with MAINTENANCE_STATE_LOCK:
+                            already_paused = MAINTENANCE_STATE["paused"]
+                        if not already_paused and _suspend_process_tree(proc):
+                            window_label = f" ({window_str})" if window_str else ""
+                            helpers.ts_log(f"Kometa paused due to Plex maintenance window{window_label}.", level="INFO")
+                            try:
+                                if not _write_quickstart_maintenance_marker(helpers.get_kometa_root_path(), "paused", window=window_str):
+                                    helpers.ts_log("Failed to append Quickstart paused maintenance marker to meta.log.", level="WARNING")
+                            except Exception:
+                                helpers.ts_log("Failed to append Quickstart paused maintenance marker to meta.log.", level="WARNING")
+                            with MAINTENANCE_STATE_LOCK:
+                                MAINTENANCE_STATE["paused"] = True
+                                MAINTENANCE_STATE["paused_since"] = datetime.now(timezone.utc).isoformat()
+                    else:
+                        with MAINTENANCE_STATE_LOCK:
+                            was_paused = MAINTENANCE_STATE["paused"]
+                            paused_since = MAINTENANCE_STATE["paused_since"]
+                        if was_paused and _resume_process_tree(proc):
+                            window_label = f" ({window_str})" if window_str else ""
+                            helpers.ts_log(f"Plex maintenance ended{window_label}. Kometa resumed.", level="INFO")
+                            paused_seconds = None
+                            if paused_since:
+                                try:
+                                    paused_at = datetime.fromisoformat(str(paused_since).replace("Z", "+00:00"))
+                                    if paused_at.tzinfo is None:
+                                        paused_at = paused_at.replace(tzinfo=timezone.utc)
+                                    paused_seconds = max(0, int((datetime.now(timezone.utc) - paused_at).total_seconds()))
+                                except Exception:
+                                    paused_seconds = None
+                            try:
+                                if not _write_quickstart_maintenance_marker(
+                                    helpers.get_kometa_root_path(),
+                                    "resumed",
+                                    window=window_str,
+                                    paused_seconds=paused_seconds,
+                                ):
+                                    helpers.ts_log("Failed to append Quickstart resumed maintenance marker to meta.log.", level="WARNING")
+                            except Exception:
+                                helpers.ts_log("Failed to append Quickstart resumed maintenance marker to meta.log.", level="WARNING")
+                            with MAINTENANCE_STATE_LOCK:
+                                MAINTENANCE_STATE["paused"] = False
+                                MAINTENANCE_STATE["paused_since"] = None
+
+            if not imagemaid_running:
+                with MAINTENANCE_STATE_LOCK:
+                    MAINTENANCE_STATE["imagemaid_paused"] = False
+                    MAINTENANCE_STATE["imagemaid_paused_since"] = None
                 continue
 
             if start_min is None or end_min is None:
                 continue
 
             try:
-                proc = psutil.Process(pid)
+                imagemaid_proc = psutil.Process(imagemaid_pid)
             except psutil.NoSuchProcess:
                 with MAINTENANCE_STATE_LOCK:
-                    MAINTENANCE_STATE["paused"] = False
-                    MAINTENANCE_STATE["paused_since"] = None
+                    MAINTENANCE_STATE["imagemaid_paused"] = False
+                    MAINTENANCE_STATE["imagemaid_paused_since"] = None
                 continue
+
+            imagemaid_ctx = _get_imagemaid_run_context()
+            imagemaid_mode = imagemaid_ctx.get("mode")
+            imagemaid_config_name = imagemaid_ctx.get("config_name")
+            imagemaid_log_path = _get_latest_imagemaid_log_path()
 
             if active:
                 with MAINTENANCE_STATE_LOCK:
-                    already_paused = MAINTENANCE_STATE["paused"]
-                if not already_paused:
-                    if _suspend_process_tree(proc):
-                        window_label = f" ({window_str})" if window_str else ""
-                        helpers.ts_log(f"Kometa paused due to Plex maintenance window{window_label}.", level="INFO")
-                        try:
-                            if not _write_quickstart_maintenance_marker(helpers.get_kometa_root_path(), "paused", window=window_str):
-                                helpers.ts_log("Failed to append Quickstart paused maintenance marker to meta.log.", level="WARNING")
-                        except Exception:
-                            helpers.ts_log("Failed to append Quickstart paused maintenance marker to meta.log.", level="WARNING")
-                        with MAINTENANCE_STATE_LOCK:
-                            MAINTENANCE_STATE["paused"] = True
-                            MAINTENANCE_STATE["paused_since"] = datetime.now(timezone.utc).isoformat()
+                    imagemaid_already_paused = MAINTENANCE_STATE["imagemaid_paused"]
+                if not imagemaid_already_paused and _suspend_process_tree(imagemaid_proc):
+                    window_label = f" ({window_str})" if window_str else ""
+                    helpers.ts_log(f"ImageMaid paused due to Plex maintenance window{window_label}.", level="INFO")
+                    try:
+                        if not _write_quickstart_imagemaid_maintenance_marker(
+                            helpers.get_imagemaid_root_path(),
+                            "paused",
+                            mode=imagemaid_mode,
+                            config_name=imagemaid_config_name,
+                            window=window_str,
+                            log_path=imagemaid_log_path,
+                        ):
+                            helpers.ts_log("Failed to append Quickstart paused ImageMaid maintenance marker to the live log.", level="WARNING")
+                    except Exception:
+                        helpers.ts_log("Failed to append Quickstart paused ImageMaid maintenance marker to the live log.", level="WARNING")
+                    with MAINTENANCE_STATE_LOCK:
+                        MAINTENANCE_STATE["imagemaid_paused"] = True
+                        MAINTENANCE_STATE["imagemaid_paused_since"] = datetime.now(timezone.utc).isoformat()
                 continue
 
             with MAINTENANCE_STATE_LOCK:
-                was_paused = MAINTENANCE_STATE["paused"]
-                paused_since = MAINTENANCE_STATE["paused_since"]
-            if was_paused:
-                if _resume_process_tree(proc):
-                    window_label = f" ({window_str})" if window_str else ""
-                    helpers.ts_log(f"Plex maintenance ended{window_label}. Kometa resumed.", level="INFO")
-                    paused_seconds = None
-                    if paused_since:
-                        try:
-                            paused_at = datetime.fromisoformat(str(paused_since).replace("Z", "+00:00"))
-                            if paused_at.tzinfo is None:
-                                paused_at = paused_at.replace(tzinfo=timezone.utc)
-                            paused_seconds = max(0, int((datetime.now(timezone.utc) - paused_at).total_seconds()))
-                        except Exception:
-                            paused_seconds = None
+                imagemaid_was_paused = MAINTENANCE_STATE["imagemaid_paused"]
+                imagemaid_paused_since = MAINTENANCE_STATE["imagemaid_paused_since"]
+            if imagemaid_was_paused and _resume_process_tree(imagemaid_proc):
+                window_label = f" ({window_str})" if window_str else ""
+                helpers.ts_log(f"Plex maintenance ended{window_label}. ImageMaid resumed.", level="INFO")
+                imagemaid_paused_seconds = None
+                if imagemaid_paused_since:
                     try:
-                        if not _write_quickstart_maintenance_marker(
-                            helpers.get_kometa_root_path(),
-                            "resumed",
-                            window=window_str,
-                            paused_seconds=paused_seconds,
-                        ):
-                            helpers.ts_log("Failed to append Quickstart resumed maintenance marker to meta.log.", level="WARNING")
+                        paused_at = datetime.fromisoformat(str(imagemaid_paused_since).replace("Z", "+00:00"))
+                        if paused_at.tzinfo is None:
+                            paused_at = paused_at.replace(tzinfo=timezone.utc)
+                        imagemaid_paused_seconds = max(0, int((datetime.now(timezone.utc) - paused_at).total_seconds()))
                     except Exception:
-                        helpers.ts_log("Failed to append Quickstart resumed maintenance marker to meta.log.", level="WARNING")
-                    with MAINTENANCE_STATE_LOCK:
-                        MAINTENANCE_STATE["paused"] = False
-                        MAINTENANCE_STATE["paused_since"] = None
+                        imagemaid_paused_seconds = None
+                try:
+                    if not _write_quickstart_imagemaid_maintenance_marker(
+                        helpers.get_imagemaid_root_path(),
+                        "resumed",
+                        mode=imagemaid_mode,
+                        config_name=imagemaid_config_name,
+                        window=window_str,
+                        log_path=imagemaid_log_path,
+                        paused_seconds=imagemaid_paused_seconds,
+                    ):
+                        helpers.ts_log("Failed to append Quickstart resumed ImageMaid maintenance marker to the live log.", level="WARNING")
+                except Exception:
+                    helpers.ts_log("Failed to append Quickstart resumed ImageMaid maintenance marker to the live log.", level="WARNING")
+                with MAINTENANCE_STATE_LOCK:
+                    MAINTENANCE_STATE["imagemaid_paused"] = False
+                    MAINTENANCE_STATE["imagemaid_paused_since"] = None
 
 
 def _write_quickstart_run_marker(kometa_root, config_name=None, start_mode="current"):
@@ -2160,6 +2335,14 @@ def _append_kometa_maintenance_sidecar_line(kometa_root, line):
         return False
 
 
+def _is_logscan_maintenance_sidecar(path):
+    try:
+        name = Path(path).name.lower()
+    except Exception:
+        return False
+    return name in {"meta.quickstart-maintenance.log", "imagemaid.quickstart-maintenance.log"}
+
+
 def _append_quickstart_imagemaid_log_line(imagemaid_root, line, log_path=None):
     if not line:
         return False
@@ -2169,6 +2352,33 @@ def _append_quickstart_imagemaid_log_line(imagemaid_root, line, log_path=None):
         log_dir.mkdir(parents=True, exist_ok=True)
         target = Path(log_path) if log_path else (log_dir / "imagemaid.log")
         with target.open("a", encoding="utf-8", errors="ignore") as handle:
+            handle.write(str(line).rstrip() + "\n")
+        return True
+    except Exception:
+        return False
+
+
+def _get_imagemaid_maintenance_sidecar_path(imagemaid_root):
+    return Path(imagemaid_root) / "config" / "logs" / "imagemaid.quickstart-maintenance.log"
+
+
+def _reset_imagemaid_maintenance_sidecar(imagemaid_root):
+    try:
+        sidecar_path = _get_imagemaid_maintenance_sidecar_path(imagemaid_root)
+        sidecar_path.parent.mkdir(parents=True, exist_ok=True)
+        sidecar_path.write_text("", encoding="utf-8")
+        return True
+    except Exception:
+        return False
+
+
+def _append_imagemaid_maintenance_sidecar_line(imagemaid_root, line):
+    if not line:
+        return False
+    try:
+        sidecar_path = _get_imagemaid_maintenance_sidecar_path(imagemaid_root)
+        sidecar_path.parent.mkdir(parents=True, exist_ok=True)
+        with sidecar_path.open("a", encoding="utf-8", errors="ignore") as handle:
             handle.write(str(line).rstrip() + "\n")
         return True
     except Exception:
@@ -2192,7 +2402,7 @@ def _write_quickstart_maintenance_marker(kometa_root, event, window=None, paused
         parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
     line = " ".join(parts)
     meta_ok = _append_quickstart_meta_log_line(kometa_root, line)
-    sidecar_ok = _append_kometa_maintenance_sidecar_line(kometa_root, line)
+    sidecar_ok = _append_kometa_maintenance_sidecar_line(kometa_root, line) if not meta_ok else False
     if not meta_ok and sidecar_ok:
         helpers.ts_log("Quickstart maintenance marker could not be appended to meta.log; preserved in sidecar instead.", level="WARNING")
     return bool(meta_ok or sidecar_ok)
@@ -2207,6 +2417,7 @@ def _write_quickstart_imagemaid_run_marker(imagemaid_root, mode=None, config_nam
         safe_config = (config_name or "default").strip() or "default"
         timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         marker = f"[Quickstart] Run marker: started={timestamp} " f"config={safe_config} quickstart={qs_version} branch={qs_branch} " f"tool=imagemaid mode={safe_mode}"
+        _reset_imagemaid_maintenance_sidecar(imagemaid_root)
         return _append_quickstart_imagemaid_log_line(imagemaid_root, marker, log_path=log_path)
     except Exception:
         return False
@@ -2247,9 +2458,9 @@ def _write_quickstart_imagemaid_stop_marker(imagemaid_root, mode=None, config_na
         return False
 
 
-def _write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=None, config_name=None, window=None, log_path=None):
+def _write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=None, config_name=None, window=None, log_path=None, paused_seconds=None):
     event_name = str(event or "").strip().lower()
-    if event_name not in {"blocked_start"}:
+    if event_name not in {"blocked_start", "paused", "resumed"}:
         return False
     try:
         version_info = app.config.get("VERSION_CHECK") or {}
@@ -2271,7 +2482,14 @@ def _write_quickstart_imagemaid_maintenance_marker(imagemaid_root, event, mode=N
         ]
         if window:
             parts.append(f"window={str(window).strip()}")
-        return _append_quickstart_imagemaid_log_line(imagemaid_root, " ".join(parts), log_path=log_path)
+        if event_name == "resumed" and isinstance(paused_seconds, (int, float)):
+            parts.append(f"paused_seconds={max(0, int(paused_seconds))}")
+        line = " ".join(parts)
+        meta_ok = _append_quickstart_imagemaid_log_line(imagemaid_root, line, log_path=log_path)
+        sidecar_ok = _append_imagemaid_maintenance_sidecar_line(imagemaid_root, line) if not meta_ok else False
+        if not meta_ok and sidecar_ok:
+            helpers.ts_log("ImageMaid maintenance marker could not be appended to the live log; preserved in sidecar instead.", level="WARNING")
+        return bool(meta_ok or sidecar_ok)
     except Exception:
         return False
 
@@ -2741,7 +2959,7 @@ logscan_reingest_state = {
 # Bump this integer when a release needs a one-time Analytics reset + log reingest
 # on startup. Quickstart persists the highest successful level to config/.env so
 # skipped releases still catch up automatically.
-REQUIRED_LOGSCAN_MIGRATION_LEVEL = 2
+REQUIRED_LOGSCAN_MIGRATION_LEVEL = 4
 LOGSCAN_STARTUP_MIGRATIONS_ENV = "QS_LOGSCAN_STARTUP_MIGRATIONS"
 LOGSCAN_MIGRATION_LEVEL_DONE_ENV = "QS_LOGSCAN_MIGRATION_LEVEL_DONE"
 LOGSCAN_STARTUP_MIGRATION_JOB_ID = "startup-logscan-migration"
@@ -2861,6 +3079,14 @@ RUN_CONTEXT = {
     "started_at": None,
     "updated_at": None,
     "stop_requested_at": None,
+}
+IMAGEMAID_RUN_CONTEXT_LOCK = threading.Lock()
+IMAGEMAID_RUN_CONTEXT = {
+    "command": None,
+    "mode": None,
+    "config_name": None,
+    "started_at": None,
+    "updated_at": None,
 }
 
 # Ensure json-schema files are up to date at startup
@@ -6773,7 +6999,33 @@ def validate_plex():
     valid, message = url_validation.validate_url(data.get("plex_url"), allow_local=True)
     if not valid:
         return jsonify({"valid": False, "error": f"Plex URL: {message}"}), 400
-    return validations.validate_plex_server(data)
+    plex_response = validations.validate_plex_server(data)
+    plex_data = plex_response.get_json() if isinstance(plex_response, Flask.response_class) else plex_response
+    if not isinstance(plex_data, dict) or not plex_data.get("validated"):
+        return plex_response
+
+    config_name = _resolve_request_config_name(data)
+    telemetry = {}
+    try:
+        telemetry = helpers.get_plex_metadata(plex_url=data.get("plex_url"), plex_token=data.get("plex_token")) or {}
+        if telemetry:
+            persistence.save_settings("plex_telemetry", telemetry)
+            if config_name:
+                try:
+                    database.save_section_data(
+                        name=config_name,
+                        section="plex_telemetry",
+                        validated=True,
+                        user_entered=False,
+                        data={"plex_telemetry": telemetry},
+                    )
+                except Exception as e:
+                    helpers.ts_log(f"Failed to persist Plex telemetry during validation for {config_name}: {e}", level="WARNING")
+    except Exception as e:
+        helpers.ts_log(f"Failed to fetch Plex telemetry during validation: {e}", level="WARNING")
+
+    merged = {**plex_data, **telemetry}
+    return jsonify(merged)
 
 
 @app.route("/path-validation-rules", methods=["GET"])
@@ -6837,6 +7089,16 @@ def refresh_plex_libraries():
                 }
             }
             persistence.save_settings("plex_telemetry", cached_telemetry)
+            try:
+                database.save_section_data(
+                    name=config_name,
+                    section="plex_telemetry",
+                    validated=True,
+                    user_entered=False,
+                    data={"plex_telemetry": cached_telemetry},
+                )
+            except Exception as e:
+                helpers.ts_log(f"Failed to persist cached Plex telemetry for {config_name}: {e}", level="WARNING")
             return jsonify(cached_refresh)
 
         # Validate Plex server and get updated libraries
@@ -6858,6 +7120,16 @@ def refresh_plex_libraries():
         # Get fresh telemetry using helpers and store it
         telemetry = helpers.get_plex_metadata(plex_url=plex_url, plex_token=plex_token)
         persistence.save_settings("plex_telemetry", telemetry)
+        try:
+            database.save_section_data(
+                name=config_name,
+                section="plex_telemetry",
+                validated=True,
+                user_entered=False,
+                data={"plex_telemetry": telemetry},
+            )
+        except Exception as e:
+            helpers.ts_log(f"Failed to persist Plex telemetry for {config_name}: {e}", level="WARNING")
 
         # Merge both plex_data and telemetry for response
         merged_response = {**plex_data, **telemetry}
@@ -7828,7 +8100,7 @@ def stop_kometa():
             os.remove(pid_file)
         except Exception:
             pass
-        KOMETA_CPU_CACHE.pop(pid, None)
+        _clear_process_metric_cache(pid, "kometa")
         try:
             _write_quickstart_stop_marker(helpers.get_kometa_root_path(), config_name=run_config_name, reason="user_stop")
         except Exception:
@@ -7913,6 +8185,7 @@ def kometa_status():
                 started_at = datetime.fromtimestamp(started_at_ts).isoformat()
                 elapsed_seconds = max(0, int(time.time() - started_at_ts))
                 cpu_percent = _calculate_process_cpu_percent(proc)
+                io_stats = _calculate_process_io_stats(proc, "kometa") or {}
                 mem_rss = proc.memory_info().rss
                 try:
                     for child in proc.children(recursive=True):
@@ -7945,6 +8218,10 @@ def kometa_status():
                     cpu_percent=round(cpu_percent, 1) if cpu_percent is not None else None,
                     memory_rss_mb=round(mem_rss_mb, 1),
                     memory_percent=round(mem_percent, 2) if mem_percent is not None else None,
+                    disk_read_mb=round(io_stats.get("disk_read_mb"), 1) if io_stats.get("disk_read_mb") is not None else None,
+                    disk_write_mb=round(io_stats.get("disk_write_mb"), 1) if io_stats.get("disk_write_mb") is not None else None,
+                    disk_read_rate_mb_s=round(io_stats.get("disk_read_rate_mb_s"), 2) if io_stats.get("disk_read_rate_mb_s") is not None else None,
+                    disk_write_rate_mb_s=round(io_stats.get("disk_write_rate_mb_s"), 2) if io_stats.get("disk_write_rate_mb_s") is not None else None,
                     system_cpu_percent=round(system_cpu_percent, 1) if system_cpu_percent is not None else None,
                     system_memory_percent=round(vm.percent, 1),
                     system_memory_used_mb=round(system_mem_used_mb, 1),
@@ -7976,7 +8253,7 @@ def kometa_status():
             _ingest_completed_live_logs("kometa")
         except Exception:
             pass
-        KOMETA_CPU_CACHE.pop(pid, None)
+        _clear_process_metric_cache(pid, "kometa")
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
             maintenance_paused = MAINTENANCE_STATE["paused"]
@@ -8001,7 +8278,7 @@ def kometa_status():
             active_command=ctx.get("command"),
         )
     except psutil.NoSuchProcess:
-        KOMETA_CPU_CACHE.pop(pid, None)
+        _clear_process_metric_cache(pid, "kometa")
         try:
             os.remove(helpers.get_kometa_pid_file())
         except Exception:
@@ -8660,6 +8937,12 @@ def _read_logscan_text(path, encoding="utf-8", errors="replace"):
                 sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
                 if sidecar_content:
                     content = f"{content.rstrip()}\n{sidecar_content}\n"
+        elif path.suffix.lower() == ".log":
+            sidecar_path = path.parent / "imagemaid.quickstart-maintenance.log"
+            if sidecar_path.exists() and sidecar_path.is_file():
+                sidecar_content = sidecar_path.read_text(encoding=encoding, errors=errors).strip()
+                if sidecar_content:
+                    content = f"{content.rstrip()}\n{sidecar_content}\n"
     except Exception:
         pass
     return content
@@ -8993,6 +9276,8 @@ def _analyze_imagemaid_log_content(content, log_path=None):
     )
     timestamp_pattern = re.compile(r"^\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),")
     total_runtime_pattern = re.compile(r"\|\s*Total Runtime\s*\|\s*(.*?)\s*\|?$", re.IGNORECASE)
+    summary_header_pattern = re.compile(r"\|\s*=+\s*(.*?)\s*=+\s*\|?$")
+    summary_runtime_row_pattern = re.compile(r"\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|?$")
 
     started_at = None
     config_name = ""
@@ -9005,8 +9290,12 @@ def _analyze_imagemaid_log_content(content, log_path=None):
     finished_at = None
     finished_seen = False
     run_time_seconds = None
+    cache_count = 0
+    debug_count = 0
+    info_count = 0
     warning_count = 0
     error_count = 0
+    critical_count = 0
     trace_count = 0
     quickstart_run_marker = False
     local_version = ""
@@ -9034,6 +9323,8 @@ def _analyze_imagemaid_log_content(content, log_path=None):
     no_verify_ssl_enabled = False
     overlays_only_enabled = False
     current_runtime_section = ""
+    summary_section = ""
+    summary_section_runtimes = {}
     operation_started = {
         "empty_trash": False,
         "clean_bundles": False,
@@ -9044,10 +9335,18 @@ def _analyze_imagemaid_log_content(content, log_path=None):
         timestamp_match = timestamp_pattern.search(line)
         if timestamp_match and not first_timestamp:
             first_timestamp = timestamp_match.group(1)
+        if "[CACHE]" in line:
+            cache_count += 1
+        if "[DEBUG]" in line:
+            debug_count += 1
+        if "[INFO]" in line:
+            info_count += 1
         if "[WARNING]" in line:
             warning_count += 1
         if "[ERROR]" in line:
             error_count += 1
+        if "[CRITICAL]" in line:
+            critical_count += 1
         if "Traceback" in line:
             trace_count += 1
         stripped_line = line.strip().strip("|").strip()
@@ -9081,6 +9380,53 @@ def _analyze_imagemaid_log_content(content, log_path=None):
             if timestamp_match:
                 finished_at = timestamp_match.group(1)
 
+        summary_header_match = summary_header_pattern.search(line)
+        if summary_header_match:
+            header_text = str(summary_header_match.group(1) or "").strip().lower()
+            if header_text in {
+                "database",
+                "reporting bloat images",
+                "remove phototranscoder images",
+                "remove imagemaid restore bloat images",
+                "empty trash plex operation",
+                "clean bundles plex operation",
+                "optimize db plex operation",
+                "imagemaid summary",
+            }:
+                summary_section = header_text
+
+        summary_runtime_match = summary_runtime_row_pattern.search(line)
+        if summary_runtime_match:
+            summary_label = str(summary_runtime_match.group(1) or "").strip().lower()
+            parsed_summary_runtime = _parse_imagemaid_runtime_seconds(summary_runtime_match.group(2))
+            if parsed_summary_runtime is not None:
+                if summary_section == "database":
+                    if summary_label == "downloaded":
+                        summary_section_runtimes["database_download"] = parsed_summary_runtime
+                    elif summary_label == "query":
+                        summary_section_runtimes["database_query"] = parsed_summary_runtime
+                elif summary_section == "reporting bloat images":
+                    if summary_label == "scan time":
+                        summary_section_runtimes["report_bloat_scan"] = parsed_summary_runtime
+                    elif summary_label == "report time":
+                        summary_section_runtimes["report_bloat_action"] = parsed_summary_runtime
+                elif summary_section == "remove phototranscoder images":
+                    if summary_label == "scan time":
+                        summary_section_runtimes["photo_transcoder_scan"] = parsed_summary_runtime
+                    elif summary_label == "remove time":
+                        summary_section_runtimes["photo_transcoder_remove"] = parsed_summary_runtime
+                elif summary_section == "remove imagemaid restore bloat images":
+                    if summary_label == "scan time":
+                        summary_section_runtimes["restore_dir_scan"] = parsed_summary_runtime
+                    elif summary_label == "remove time":
+                        summary_section_runtimes["restore_dir_action"] = parsed_summary_runtime
+                elif summary_section == "empty trash plex operation" and summary_label == "runtime":
+                    summary_section_runtimes["empty_trash_action"] = parsed_summary_runtime
+                elif summary_section == "clean bundles plex operation" and summary_label == "runtime":
+                    summary_section_runtimes["clean_bundles_action"] = parsed_summary_runtime
+                elif summary_section == "optimize db plex operation" and summary_label == "runtime":
+                    summary_section_runtimes["optimize_db_action"] = parsed_summary_runtime
+
         runtime_match = total_runtime_pattern.search(line)
         if runtime_match:
             parsed_runtime = _parse_imagemaid_runtime_seconds(runtime_match.group(1))
@@ -9102,10 +9448,13 @@ def _analyze_imagemaid_log_content(content, log_path=None):
 
         if "Downloading Database via the Plex API" in line:
             database_section_seen = True
+            current_runtime_section = "database_download"
         if "Downloaded New Database" in line:
             database_downloaded_new = True
         if "Database File Could not Downloaded" in line:
             database_download_failed = True
+        if "Database Opened Querying For In-Use Images" in line or "Querying For In-Use Images" in line:
+            current_runtime_section = "database_query"
 
         if "PhotoTranscoder set to True" in line:
             photo_transcoder_enabled = True
@@ -9140,10 +9489,20 @@ def _analyze_imagemaid_log_content(content, log_path=None):
             current_runtime_section = "restore_scan"
         elif "Removing ImageMaid Restore Bloat Images" in line or ("Removing Complete:" in line and "ImageMaid Restore Bloat Images" in line):
             current_runtime_section = "restore_action"
+        elif "Scanning Metadata Directory For Bloat Images" in line:
+            current_runtime_section = "report_bloat_scan"
+        elif "Reporting Bloat Images" in line or ("Reporting Complete:" in line and "Bloat Images" in line):
+            current_runtime_section = "report_bloat_action"
         elif "Scanning for PhotoTranscoder Images" in line or ("Scanning Complete:" in line and "PhotoTranscoder Images" in line):
             current_runtime_section = "photo_scan"
         elif "Removing PhotoTranscoder Images" in line or ("Remove Complete:" in line and "PhotoTranscoder Images" in line):
             current_runtime_section = "photo_remove"
+        elif "Empty Trash Plex Operation Started" in line:
+            current_runtime_section = "empty_trash_action"
+        elif "Clean Bundles Plex Operation Started" in line:
+            current_runtime_section = "clean_bundles_action"
+        elif "Optimize DB Plex Operation Started" in line:
+            current_runtime_section = "optimize_db_action"
 
         restore_found_match = re.search(
             r"Found\s+(\d+)\s+Bloat Images in the ImageMaid Directory to Remove",
@@ -9189,14 +9548,28 @@ def _analyze_imagemaid_log_content(content, log_path=None):
         if runtime_line_match:
             parsed_runtime = _parse_imagemaid_runtime_seconds(runtime_line_match.group(1))
             if parsed_runtime is not None:
-                if current_runtime_section == "restore_scan":
+                if current_runtime_section == "database_download":
+                    summary_section_runtimes.setdefault("database_download", parsed_runtime)
+                elif current_runtime_section == "database_query":
+                    summary_section_runtimes.setdefault("database_query", parsed_runtime)
+                elif current_runtime_section == "restore_scan":
                     restore_scan_runtime = parsed_runtime
                 elif current_runtime_section == "restore_action":
                     restore_action_runtime = parsed_runtime
+                elif current_runtime_section == "report_bloat_scan":
+                    summary_section_runtimes.setdefault("report_bloat_scan", parsed_runtime)
+                elif current_runtime_section == "report_bloat_action":
+                    summary_section_runtimes.setdefault("report_bloat_action", parsed_runtime)
                 elif current_runtime_section == "photo_scan":
                     photo_scan_runtime = parsed_runtime
                 elif current_runtime_section == "photo_remove":
                     photo_remove_runtime = parsed_runtime
+                elif current_runtime_section == "empty_trash_action":
+                    summary_section_runtimes.setdefault("empty_trash_action", parsed_runtime)
+                elif current_runtime_section == "clean_bundles_action":
+                    summary_section_runtimes.setdefault("clean_bundles_action", parsed_runtime)
+                elif current_runtime_section == "optimize_db_action":
+                    summary_section_runtimes.setdefault("optimize_db_action", parsed_runtime)
 
     if finished_seen and not finished_at:
         finished_at = _iso_from_mtime(stats.st_mtime if stats else None)
@@ -9257,6 +9630,14 @@ def _analyze_imagemaid_log_content(content, log_path=None):
     run_key_seed = f"imagemaid|{timestamp_seed}|{mode}|{path.name if path else 'imagemaid.log'}"
     created_at = finished_at or started_at or _iso_from_mtime(stats.st_mtime if stats else None)
     section_runtimes = {}
+    if summary_section_runtimes.get("database_download") is not None:
+        section_runtimes["database_download"] = summary_section_runtimes["database_download"]
+    if summary_section_runtimes.get("database_query") is not None:
+        section_runtimes["database_query"] = summary_section_runtimes["database_query"]
+    if summary_section_runtimes.get("report_bloat_scan") is not None:
+        section_runtimes["report_bloat_scan"] = summary_section_runtimes["report_bloat_scan"]
+    if summary_section_runtimes.get("report_bloat_action") is not None:
+        section_runtimes["report_bloat_action"] = summary_section_runtimes["report_bloat_action"]
     if restore_scan_runtime is not None:
         section_runtimes["restore_dir_scan"] = restore_scan_runtime
     if restore_action_runtime is not None:
@@ -9265,6 +9646,12 @@ def _analyze_imagemaid_log_content(content, log_path=None):
         section_runtimes["photo_transcoder_scan"] = photo_scan_runtime
     if photo_remove_runtime is not None:
         section_runtimes["photo_transcoder_remove"] = photo_remove_runtime
+    if summary_section_runtimes.get("empty_trash_action") is not None:
+        section_runtimes["empty_trash_action"] = summary_section_runtimes["empty_trash_action"]
+    if summary_section_runtimes.get("clean_bundles_action") is not None:
+        section_runtimes["clean_bundles_action"] = summary_section_runtimes["clean_bundles_action"]
+    if summary_section_runtimes.get("optimize_db_action") is not None:
+        section_runtimes["optimize_db_action"] = summary_section_runtimes["optimize_db_action"]
     total_found_files = restore_found_files + photo_found_files
     total_removed_files = restore_removed_files + photo_removed_files
     total_recovered_bytes = restore_recovered_bytes + photo_recovered_bytes
@@ -9315,11 +9702,12 @@ def _analyze_imagemaid_log_content(content, log_path=None):
         "section_runtimes": section_runtimes,
         "log_size": int(stats.st_size) if stats else None,
         "log_counts": {
-            "debug": 0,
-            "info": 0,
+            "cache": cache_count,
+            "debug": debug_count,
+            "info": info_count,
             "warning": warning_count,
             "error": error_count,
-            "critical": 0,
+            "critical": critical_count,
             "trace": trace_count,
         },
         "analysis_counts": analysis_counts,
@@ -9329,7 +9717,7 @@ def _analyze_imagemaid_log_content(content, log_path=None):
         "quiet_period_summary": {},
         "quickstart_run_marker": quickstart_run_marker,
         "config_line_count": None,
-        "cache_line_count": None,
+        "cache_line_count": cache_count,
         "created_at": created_at,
         "run_complete": run_complete,
         "completion_reason": completion_reason,
@@ -9397,6 +9785,8 @@ def _iter_logscan_candidate_files(log_dir=None, include_archive=True, include_co
             for pattern in patterns:
                 for path in base_dir.glob(pattern):
                     if not path.is_file():
+                        continue
+                    if _is_logscan_maintenance_sidecar(path):
                         continue
                     suffixes = [suffix.lower() for suffix in path.suffixes]
                     if suffixes and suffixes[-1] in (".zip", ".7z"):
@@ -9634,6 +10024,26 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
     errors = []
     cache_dirty = False
 
+    archive_dirs = []
+    if archive_dir:
+        archive_dirs.append(Path(archive_dir))
+    else:
+        archive_dirs.extend([_get_logscan_archive_dir("kometa"), _get_logscan_archive_dir("imagemaid"), _get_logscan_archive_root_dir()])
+
+    for current_archive_dir in archive_dirs:
+        if not current_archive_dir.exists():
+            continue
+        for sidecar_path in current_archive_dir.glob("*.quickstart-maintenance.log"):
+            try:
+                source_key = str(sidecar_path.resolve())
+                sidecar_path.unlink()
+                if source_key in cache_logs:
+                    cache_logs.pop(source_key, None)
+                    cache_dirty = True
+                renamed += 1
+            except Exception as exc:
+                errors.append(f"Failed to remove archived maintenance sidecar {sidecar_path}: {exc}")
+
     for path in sorted(_iter_logscan_candidate_files(include_archive=True, include_compressed=True), key=lambda item: item.name.lower()):
         if _classify_logscan_file_location(path) != "archive":
             continue
@@ -9642,13 +10052,25 @@ def _normalize_logscan_archive_filenames(archive_dir=None):
             current_tool = _detect_logscan_tool_from_path(path)
             target_archive_dir = Path(archive_dir) if archive_dir else _get_logscan_archive_dir(current_tool)
             target_archive_dir.mkdir(parents=True, exist_ok=True)
-            target = _build_logscan_archive_destination(path, target_archive_dir, stats=stats)
+            target = _build_logscan_archive_destination(
+                path,
+                target_archive_dir,
+                stats=stats,
+                preferred_suffix=".log.gz" if not _is_logscan_gzip_path(path) else None,
+            )
             if target.resolve() == path.resolve():
                 skipped += 1
                 continue
             source_key = str(path.resolve())
             target_key = str(target.resolve())
-            shutil.move(str(path), str(target))
+            if _is_logscan_gzip_path(path):
+                shutil.move(str(path), str(target))
+            else:
+                archived_path = _archive_log_file(path, target_archive_dir)
+                if not archived_path:
+                    raise RuntimeError("archive compression failed")
+                target = archived_path
+                target_key = str(target.resolve())
             if source_key in cache_logs:
                 cache_logs[target_key] = cache_logs.pop(source_key)
                 cache_dirty = True
@@ -11085,6 +11507,8 @@ def _archive_log_file(path, archive_dir, log_dir=None, allow_live_meta=False):
         path = Path(path)
         if not path.exists() or not path.is_file():
             return None
+        if _is_logscan_maintenance_sidecar(path):
+            return None
         if path.name.lower() == "meta.log" and not allow_live_meta:
             return None
         if log_dir and path.resolve().parent != Path(log_dir).resolve():
@@ -11226,6 +11650,8 @@ def _prune_logscan_archive(archive_dir):
     candidates = []
     for path in archive_dir.glob("*.log*"):
         if not path.is_file():
+            continue
+        if _is_logscan_maintenance_sidecar(path):
             continue
         suffixes = [suffix.lower() for suffix in path.suffixes]
         if suffixes and suffixes[-1] in (".zip", ".7z"):
@@ -13008,22 +13434,94 @@ def _imagemaid_settings_to_form_payload(payload):
         "overlays_only",
     ]
     form_payload = {}
+    config_name = helpers.normalize_config_name_for_storage(payload.get("config_name"))
+    if config_name:
+        form_payload["config_name"] = config_name
     for key in keys:
         if key in payload:
             form_payload[f"imagemaid_{key}"] = payload.get(key)
     return form_payload
 
 
-def _get_imagemaid_settings_section():
-    settings = persistence.retrieve_settings("915-imagemaid") or {}
+def _resolve_request_config_name(payload=None):
+    normalized = helpers.normalize_config_name_for_storage((payload or {}).get("config_name")) if isinstance(payload, dict) else ""
+    if normalized:
+        if has_request_context():
+            session["config_name"] = normalized
+        return normalized
+    resolved = session.get("config_name") or persistence.ensure_session_config_name()
+    if has_request_context() and resolved:
+        session["config_name"] = resolved
+    return resolved
+
+
+def _retrieve_settings_for_config(config_name, target):
+    source, source_name = persistence.extract_names(target)
+    stored_validated, stored_user_entered, stored_payload = database.retrieve_section_data(config_name, source_name)
+    payload = stored_payload if isinstance(stored_payload, dict) else {}
+    section = payload.get(source_name, {}) if isinstance(payload.get(source_name), dict) else {}
+    if not section:
+        section = persistence.get_dummy_data(source_name)
+    return {
+        "validated": helpers.booler(stored_validated),
+        "user_entered": helpers.booler(stored_user_entered),
+        "validated_at": payload.get("validated_at") if isinstance(payload, dict) else None,
+        source_name: section,
+    }
+
+
+def _get_stored_plex_credentials_for_config(config_name):
+    try:
+        stored_validated, stored_user_entered, stored_payload = database.retrieve_section_data(name=config_name, section="plex")
+        payload = stored_payload if isinstance(stored_payload, dict) else {}
+        plex_settings = payload.get("plex", {})
+        if not plex_settings:
+            plex_settings = persistence.get_dummy_data("plex")
+        plex_url = plex_settings.get("url")
+        plex_token = plex_settings.get("token")
+        if plex_url and plex_token:
+            return plex_url, plex_token
+    except Exception as exc:
+        if app.config["QS_DEBUG"]:
+            helpers.ts_log(f"Failed to retrieve Plex credentials for config {config_name}: {exc}", level="ERROR")
+    return None, None
+
+
+def _save_imagemaid_settings_for_config(config_name, form_payload):
+    clean_data = persistence.clean_form_data(form_payload)
+    data = helpers.build_config_dict("imagemaid", clean_data)
+    base_data = persistence.get_dummy_data("imagemaid")
+    stored_validated, stored_user_entered, stored_payload = database.retrieve_section_data(config_name, "imagemaid")
+    existing_payload = stored_payload if isinstance(stored_payload, dict) else {}
+    existing_section = existing_payload.get("imagemaid", {}) if isinstance(existing_payload.get("imagemaid"), dict) else {}
+    payload = dict(existing_payload)
+    payload["imagemaid"] = data.get("imagemaid", {}) if isinstance(data.get("imagemaid"), dict) else {}
+    if "validated_at" in data:
+        payload["validated_at"] = data.get("validated_at")
+    elif existing_payload.get("validated_at") is not None:
+        payload["validated_at"] = existing_payload.get("validated_at")
+    user_entered = data != base_data
+    database.save_section_data(
+        name=config_name,
+        section="imagemaid",
+        validated=helpers.booler(stored_validated),
+        user_entered=user_entered,
+        data=payload,
+    )
+    changed = payload.get("imagemaid", {}) != existing_section
+    return payload, changed
+
+
+def _get_imagemaid_settings_section(config_name=None):
+    resolved_config = config_name or persistence.ensure_session_config_name()
+    settings = _retrieve_settings_for_config(resolved_config, "915-imagemaid") or {}
     section = settings.get("imagemaid", {}) if isinstance(settings, dict) else {}
     if not isinstance(section, dict):
         section = {}
     return settings, section
 
 
-def _persist_imagemaid_validation(section_data, is_valid, reason=None, details=None):
-    config_name = persistence.ensure_session_config_name()
+def _persist_imagemaid_validation(config_name, section_data, is_valid, reason=None, details=None):
     stored_validated, user_entered, stored_payload = database.retrieve_section_data(config_name, "imagemaid")
     payload = stored_payload if isinstance(stored_payload, dict) else {}
     payload["imagemaid"] = section_data if isinstance(section_data, dict) else {}
@@ -13159,16 +13657,25 @@ def _build_imagemaid_command(section_data, plex_url, plex_token, imagemaid_root=
     return subprocess.list2cmdline(parts)
 
 
-def _validate_imagemaid_settings(section_data):
+def _validate_imagemaid_settings(section_data, config_name=None):
+    if config_name:
+        resolved_config = config_name
+    elif has_request_context():
+        resolved_config = session.get("config_name") or persistence.ensure_session_config_name()
+    else:
+        resolved_config = None
     mode = str(section_data.get("mode") or "report").strip().lower() or "report"
     valid_modes = {"report", "move", "restore", "clear", "remove", "nothing"}
     if mode not in valid_modes:
         return False, "invalid_mode", f"ImageMaid mode must be one of: {', '.join(sorted(valid_modes))}."
 
-    plex_settings = persistence.retrieve_settings("010-plex") or {}
+    plex_settings = _retrieve_settings_for_config(resolved_config, "010-plex") if resolved_config else (persistence.retrieve_settings("010-plex") or {})
     if not helpers.booler(plex_settings.get("validated", False)):
         return False, "missing_plex_validation", "Validate the Plex page before running ImageMaid."
-    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    if resolved_config:
+        plex_url, plex_token = _get_stored_plex_credentials_for_config(resolved_config)
+    else:
+        plex_url, plex_token = persistence.get_stored_plex_credentials()
     if not plex_url or not plex_token:
         return False, "missing_credentials", "Saved Plex URL/token are required."
     valid_path, reason, details = _validate_imagemaid_plex_path(
@@ -13196,13 +13703,36 @@ def _get_latest_imagemaid_log_path():
     log_dir = helpers.get_imagemaid_root_path() / "config" / "logs"
     if not log_dir.exists():
         return None
-    candidates = sorted(log_dir.glob("*.log"), key=lambda path: path.stat().st_mtime, reverse=True)
+    candidates = sorted(
+        [path for path in log_dir.glob("*.log") if path.name.lower() != "imagemaid.quickstart-maintenance.log"],
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
     return candidates[0] if candidates else None
 
 
 def _read_text_tail(path, max_lines=200):
-    with Path(path).open("r", encoding="utf-8", errors="replace") as handle:
-        return "".join(deque(handle, maxlen=max_lines))
+    content = _read_logscan_text(path, encoding="utf-8", errors="replace")
+    return "".join(deque(content.splitlines(keepends=True), maxlen=max_lines))
+
+
+def _read_text_tail_payload(path, max_lines=200):
+    path_obj = Path(path)
+    content = _read_logscan_text(path_obj, encoding="utf-8", errors="replace")
+    lines = content.splitlines()
+    tail_text = "\n".join(lines[-max_lines:]) if lines else ""
+    if tail_text and content.endswith("\n"):
+        tail_text += "\n"
+    try:
+        stats = path_obj.stat()
+        log_age_seconds = max(0, int(time.time() - stats.st_mtime))
+    except Exception:
+        log_age_seconds = None
+    return {
+        "text": tail_text,
+        "total_lines": len(lines),
+        "log_age_seconds": log_age_seconds,
+    }
 
 
 def _sanitize_imagemaid_log_tail(text):
@@ -13575,15 +14105,16 @@ def update_imagemaid_progress():
 @app.route("/validate-imagemaid", methods=["POST"])
 def validate_imagemaid():
     payload = request.get_json(silent=True) or {}
+    config_name = _resolve_request_config_name(payload)
     form_payload = _imagemaid_settings_to_form_payload(payload)
     if form_payload:
-        persistence.save_settings("915-imagemaid", form_payload)
+        _save_imagemaid_settings_for_config(config_name, form_payload)
 
-    settings, section_data = _get_imagemaid_settings_section()
-    is_valid, reason, details = _validate_imagemaid_settings(section_data)
-    _persist_imagemaid_validation(section_data, is_valid, reason=reason, details=details)
+    settings, section_data = _get_imagemaid_settings_section(config_name)
+    is_valid, reason, details = _validate_imagemaid_settings(section_data, config_name=config_name)
+    _persist_imagemaid_validation(config_name, section_data, is_valid, reason=reason, details=details)
 
-    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    plex_url, plex_token = _get_stored_plex_credentials_for_config(config_name)
     preview_command = _build_imagemaid_command(section_data, plex_url or "", plex_token or "", redact=True)
     return jsonify(success=is_valid, validated=is_valid, reason=reason, details=details, command_preview=preview_command), (200 if is_valid else 400)
 
@@ -13591,13 +14122,16 @@ def validate_imagemaid():
 @app.route("/autosave-imagemaid", methods=["POST"])
 def autosave_imagemaid():
     payload = request.get_json(silent=True) or {}
+    config_name = _resolve_request_config_name(payload)
     form_payload = _imagemaid_settings_to_form_payload(payload)
+    changed = False
     if form_payload:
-        persistence.save_settings("915-imagemaid", form_payload)
+        _saved_payload, changed = _save_imagemaid_settings_for_config(config_name, form_payload)
 
-    settings, section_data = _get_imagemaid_settings_section()
-    if helpers.booler(settings.get("validated", False)):
+    settings, section_data = _get_imagemaid_settings_section(config_name)
+    if changed and helpers.booler(settings.get("validated", False)):
         _persist_imagemaid_validation(
+            config_name,
             section_data,
             False,
             reason="config_changed",
@@ -13609,11 +14143,11 @@ def autosave_imagemaid():
 
 @app.route("/start-imagemaid", methods=["POST"])
 def start_imagemaid():
-    config_name = session.get("config_name") or persistence.ensure_session_config_name()
     payload = request.get_json(silent=True) or {}
+    config_name = _resolve_request_config_name(payload)
     form_payload = _imagemaid_settings_to_form_payload(payload)
     if form_payload:
-        persistence.save_settings("915-imagemaid", form_payload)
+        _save_imagemaid_settings_for_config(config_name, form_payload)
 
     if helpers.is_imagemaid_running():
         pid = helpers.get_imagemaid_pid()
@@ -13654,9 +14188,9 @@ def start_imagemaid():
             response["phase"] = job.get("phase")
         return jsonify(response), 409
 
-    settings, section_data = _get_imagemaid_settings_section()
-    is_valid, reason, details = _validate_imagemaid_settings(section_data)
-    _persist_imagemaid_validation(section_data, is_valid, reason=reason, details=details)
+    settings, section_data = _get_imagemaid_settings_section(config_name)
+    is_valid, reason, details = _validate_imagemaid_settings(section_data, config_name=config_name)
+    _persist_imagemaid_validation(config_name, section_data, is_valid, reason=reason, details=details)
     if not is_valid:
         return jsonify({"error": details or "ImageMaid settings are not valid.", "status": "invalid", "reason": reason}), 400
 
@@ -13687,7 +14221,7 @@ def start_imagemaid():
             409,
         )
 
-    plex_url, plex_token = persistence.get_stored_plex_credentials("010-plex")
+    plex_url, plex_token = _get_stored_plex_credentials_for_config(config_name)
     command = _build_imagemaid_command_parts(section_data, plex_url, plex_token, redact=False)
     ok, result = _launch_imagemaid_command(command, mode=section_data.get("mode"), config_name=config_name)
     if ok:
@@ -13778,6 +14312,12 @@ def stop_imagemaid():
 def imagemaid_status():
     pid = helpers.get_imagemaid_pid()
     pid_file = Path(helpers.get_imagemaid_pid_file())
+    imagemaid_ctx = _get_imagemaid_run_context()
+    with MAINTENANCE_STATE_LOCK:
+        maintenance_active = MAINTENANCE_STATE["active"]
+        maintenance_window = MAINTENANCE_STATE["window"]
+        maintenance_paused = MAINTENANCE_STATE["imagemaid_paused"]
+        maintenance_paused_since = MAINTENANCE_STATE["imagemaid_paused_since"]
 
     def pid_file_age_seconds():
         try:
@@ -13801,7 +14341,13 @@ def imagemaid_status():
             _ingest_completed_live_logs("imagemaid")
         except Exception:
             pass
-        return jsonify(status="not started")
+        return jsonify(
+            status="not started",
+            maintenance_active=maintenance_active,
+            maintenance_paused=maintenance_paused,
+            maintenance_window=maintenance_window,
+            maintenance_paused_since=maintenance_paused_since,
+        )
 
     try:
         proc = psutil.Process(pid)
@@ -13824,12 +14370,57 @@ def imagemaid_status():
                 cmdline = ""
             if "imagemaid.py" in cmdline:
                 started_at = datetime.fromtimestamp(started_at_ts).isoformat()
-                return jsonify(status="running", pid=pid, started_at=started_at, started_at_ts=started_at_ts, elapsed_seconds=elapsed_seconds)
+                cpu_percent = _calculate_process_cpu_percent(proc)
+                io_stats = _calculate_process_io_stats(proc, "imagemaid") or {}
+                mem_rss = proc.memory_info().rss
+                try:
+                    for child in proc.children(recursive=True):
+                        try:
+                            mem_rss += child.memory_info().rss
+                        except Exception:
+                            continue
+                except Exception:
+                    pass
+                mem_rss_mb = mem_rss / (1024 * 1024)
+                system_cpu_percent = _calculate_system_cpu_percent()
+                vm = psutil.virtual_memory()
+                system_mem_used_mb = (vm.total - vm.available) / (1024 * 1024)
+                system_mem_total_mb = vm.total / (1024 * 1024)
+                mem_percent = (mem_rss / vm.total) * 100.0 if vm.total else None
+                return jsonify(
+                    status="running",
+                    pid=pid,
+                    started_at=started_at,
+                    started_at_ts=started_at_ts,
+                    elapsed_seconds=elapsed_seconds,
+                    cpu_percent=round(cpu_percent, 1) if cpu_percent is not None else None,
+                    memory_rss_mb=round(mem_rss_mb, 1),
+                    memory_percent=round(mem_percent, 2) if mem_percent is not None else None,
+                    disk_read_mb=round(io_stats.get("disk_read_mb"), 1) if io_stats.get("disk_read_mb") is not None else None,
+                    disk_write_mb=round(io_stats.get("disk_write_mb"), 1) if io_stats.get("disk_write_mb") is not None else None,
+                    disk_read_rate_mb_s=round(io_stats.get("disk_read_rate_mb_s"), 2) if io_stats.get("disk_read_rate_mb_s") is not None else None,
+                    disk_write_rate_mb_s=round(io_stats.get("disk_write_rate_mb_s"), 2) if io_stats.get("disk_write_rate_mb_s") is not None else None,
+                    system_cpu_percent=round(system_cpu_percent, 1) if system_cpu_percent is not None else None,
+                    system_memory_percent=round(vm.percent, 1),
+                    system_memory_used_mb=round(system_mem_used_mb, 1),
+                    system_memory_total_mb=round(system_mem_total_mb, 1),
+                    maintenance_active=maintenance_active,
+                    maintenance_paused=maintenance_paused,
+                    maintenance_window=maintenance_window,
+                    maintenance_paused_since=maintenance_paused_since,
+                    active_command=imagemaid_ctx.get("command"),
+                    mode=imagemaid_ctx.get("mode"),
+                    config_name=imagemaid_ctx.get("config_name"),
+                )
             if within_grace:
                 payload = {"status": "starting", "pid": pid, "elapsed_seconds": elapsed_seconds}
                 if started_at_ts is not None:
                     payload["started_at"] = datetime.fromtimestamp(started_at_ts).isoformat()
                     payload["started_at_ts"] = started_at_ts
+                payload["maintenance_active"] = maintenance_active
+                payload["maintenance_paused"] = maintenance_paused
+                payload["maintenance_window"] = maintenance_window
+                payload["maintenance_paused_since"] = maintenance_paused_since
                 return jsonify(payload)
         try:
             rc = proc.wait(timeout=0.1)
@@ -13839,6 +14430,10 @@ def imagemaid_status():
                 if started_at_ts is not None:
                     payload["started_at"] = datetime.fromtimestamp(started_at_ts).isoformat()
                     payload["started_at_ts"] = started_at_ts
+                payload["maintenance_active"] = maintenance_active
+                payload["maintenance_paused"] = maintenance_paused
+                payload["maintenance_window"] = maintenance_window
+                payload["maintenance_paused_since"] = maintenance_paused_since
                 return jsonify(payload)
             rc = None
         finally:
@@ -13847,37 +14442,71 @@ def imagemaid_status():
                     os.remove(pid_file)
                 except Exception:
                     pass
+                _clear_process_metric_cache(pid, "imagemaid")
         if not within_grace:
             try:
                 _ingest_completed_live_logs("imagemaid")
             except Exception:
                 pass
-        return jsonify(status="done", return_code=rc if rc is not None else -1)
+        return jsonify(
+            status="done",
+            return_code=rc if rc is not None else -1,
+            maintenance_active=maintenance_active,
+            maintenance_paused=maintenance_paused,
+            maintenance_window=maintenance_window,
+            maintenance_paused_since=maintenance_paused_since,
+        )
     except psutil.NoSuchProcess:
         age = pid_file_age_seconds()
         if age is not None and age < IMAGEMAID_STARTUP_GRACE_SECONDS:
-            return jsonify(status="starting", pid=pid, elapsed_seconds=max(0, int(age)))
+            return jsonify(
+                status="starting",
+                pid=pid,
+                elapsed_seconds=max(0, int(age)),
+                maintenance_active=maintenance_active,
+                maintenance_paused=maintenance_paused,
+                maintenance_window=maintenance_window,
+                maintenance_paused_since=maintenance_paused_since,
+            )
         try:
             os.remove(pid_file)
         except Exception:
             pass
-        return jsonify(status="not started")
+        _clear_process_metric_cache(pid, "imagemaid")
+        return jsonify(
+            status="not started",
+            maintenance_active=maintenance_active,
+            maintenance_paused=maintenance_paused,
+            maintenance_window=maintenance_window,
+            maintenance_paused_since=maintenance_paused_since,
+        )
 
 
 @app.route("/tail-imagemaid-log", methods=["GET"])
 def tail_imagemaid_log():
     latest_log = _get_latest_imagemaid_log_path()
     path = latest_log if latest_log and Path(latest_log).exists() else None
+    try:
+        lines_param = str(request.args.get("lines", "2000")).strip().lower()
+        max_lines = None
+        if lines_param not in ("all", "full"):
+            max_lines = max(1, min(int(lines_param), 20000))
+    except Exception:
+        max_lines = 2000
 
     if not path or not Path(path).exists():
         return jsonify({"error": "No ImageMaid log found."}), 404
     try:
-        text = _sanitize_imagemaid_log_tail(_read_text_tail(path))
+        payload = _read_text_tail_payload(path, max_lines=max_lines)
+        text = _sanitize_imagemaid_log_tail(payload.get("text"))
         return jsonify(
             {
                 "success": True,
                 "path": str(path),
                 "text": text,
+                "total_lines": payload.get("total_lines"),
+                "log_age_seconds": payload.get("log_age_seconds"),
+                "requested_lines": "all" if max_lines is None else max_lines,
             }
         )
     except Exception as e:

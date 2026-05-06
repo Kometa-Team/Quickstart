@@ -777,12 +777,29 @@ def test_normalize_logscan_archive_filenames_renames_legacy_files_and_updates_ca
     result = qs_module._normalize_logscan_archive_filenames()
 
     assert result["renamed"] == 1
-    renamed_path = archive_dir / "meta-20251224-170000Z-7.log"
+    renamed_path = archive_dir / "meta-20251224-170000Z-7.log.gz"
     assert renamed_path.exists()
     assert not legacy_path.exists()
     saved_cache = saved["cache"]
     assert str(renamed_path.resolve()) in saved_cache["logs"]
     assert str(legacy_path.resolve()) not in saved_cache["logs"]
+
+
+def test_normalize_logscan_archive_filenames_removes_archived_maintenance_sidecar(isolated_config_dir, monkeypatch, qs_module):
+    archive_dir = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    sidecar_path = archive_dir / "meta.quickstart-maintenance.log"
+    sidecar_path.write_text("sidecar marker\n", encoding="utf-8")
+    cache = {"version": 1, "logs": {str(sidecar_path.resolve()): {"run_key": "run-sidecar", "run_complete": False}}}
+    saved = {}
+
+    monkeypatch.setattr(qs_module, "_load_logscan_ingest_cache", lambda: cache)
+    monkeypatch.setattr(qs_module, "_save_logscan_ingest_cache", lambda value: saved.setdefault("cache", value))
+
+    result = qs_module._normalize_logscan_archive_filenames()
+
+    assert result["renamed"] == 1
+    assert not sidecar_path.exists()
 
 
 def test_normalize_logscan_archive_filenames_collapses_repeated_kometa_archive_stem(isolated_config_dir, monkeypatch, qs_module):
@@ -1119,7 +1136,10 @@ def test_logscan_reingest_ingests_imagemaid_log(client, isolated_config_dir, mon
         "\n".join(
             [
                 "[Quickstart] Run marker: started=2026-04-28T20:13:55Z config=demo tool=imagemaid mode=report",
+                "[2026-04-28 20:13:56,001] [imagemaid.py:93]           [DEBUG]    | --photo-transcoder (PHOTO_TRANSCODER): True                                                         |",
                 "| Running in Report Mode with Empty Trash, Clean Bundles, Optimize DB, and PhotoTrancoder set to True |",
+                "[2026-04-28 20:16:58,010] [imagemaid.py:214]          [WARNING]  | Example warning before finish                                                                       |",
+                "[2026-04-28 20:16:59,010] [imagemaid.py:214]          [CRITICAL] | Example critical before finish                                                                      |",
                 "[2026-04-28 20:17:00,274] [imagemaid.py:453]          [INFO]     |======================================== ImageMaid Finished ========================================|",
                 "[2026-04-28 20:17:00,275] [imagemaid.py:453]          [INFO]     | Total Runtime      | 0:03:05                                                                       |",
                 "[2026-04-28 20:17:00,275] [imagemaid.py:453]          [INFO]     |====================================================================================================|",
@@ -1142,6 +1162,10 @@ def test_logscan_reingest_ingests_imagemaid_log(client, isolated_config_dir, mon
     imagemaid_runs = [run for run in runs if run.get("tool_name") == "imagemaid"]
     assert imagemaid_runs
     assert imagemaid_runs[0]["kometa_version"] == qs_module.helpers.get_imagemaid_local_version()
+    assert imagemaid_runs[0]["debug_count"] == 1
+    assert imagemaid_runs[0]["info_count"] == 3
+    assert imagemaid_runs[0]["warning_count"] == 1
+    assert imagemaid_runs[0]["critical_count"] == 1
 
 
 def test_logscan_reingest_archives_completed_imagemaid_live_log(client, isolated_config_dir, monkeypatch, qs_module):
@@ -1318,6 +1342,47 @@ def test_analyze_imagemaid_log_content_uses_first_runtime_timestamp_for_started_
     assert summary["finished_at"] == "2026-04-29 15:08:35"
     assert summary["run_time_seconds"] == 5
     assert summary["config_name"] == "unknown"
+
+
+def test_analyze_imagemaid_log_content_parses_summary_section_runtimes(qs_module):
+    result = qs_module._analyze_imagemaid_log_content(
+        "\n".join(
+            [
+                "[2026-05-06 07:45:19,459] [imagemaid.py:244]          [INFO]     | Downloading Database via the Plex API. First Plex will make a backup of your database.             |",
+                "[2026-05-06 07:50:48,649] [imagemaid.py:290]          [INFO]     | Runtime: 0:05:29                                                                                   |",
+                "[2026-05-06 07:50:48,779] [imagemaid.py:297]          [INFO]     | Database Opened Querying For In-Use Images                                                         |",
+                "[2026-05-06 07:50:49,327] [imagemaid.py:304]          [INFO]     | Runtime: 0:00:00                                                                                   |",
+                "[2026-05-06 07:50:49,330] [imagemaid.py:311]          [INFO]     | Scanning Metadata Directory For Bloat Images: p:\\Plex\\Metadata                                     |",
+                "[2026-05-06 07:56:08,253] [imagemaid.py:317]          [INFO]     | Runtime: 0:05:18                                                                                   |",
+                "[2026-05-06 07:56:08,253] [imagemaid.py:322]          [INFO]     | Reporting Bloat Images                                                                             |",
+                "[2026-05-06 07:56:08,404] [imagemaid.py:354]          [INFO]     | Runtime: 0:00:00                                                                                   |",
+                "[2026-05-06 07:56:08,407] [imagemaid.py:415]          [INFO]     | Scanning for PhotoTranscoder Images                                                                |",
+                "[2026-05-06 07:56:09,910] [imagemaid.py:418]          [INFO]     | Runtime: 0:00:01                                                                                   |",
+                "[2026-05-06 07:56:09,911] [imagemaid.py:421]          [INFO]     | Removing PhotoTranscoder Images                                                                    |",
+                "[2026-05-06 07:56:09,913] [imagemaid.py:435]          [INFO]     | Runtime: 0:00:00                                                                                   |",
+                "[2026-05-06 07:56:09,914] [imagemaid.py:473]          [INFO]     |============================================= Database =============================================|",
+                "[2026-05-06 07:56:09,916] [imagemaid.py:473]          [INFO]     | Downloaded         | 0:05:29                                                                       |",
+                "[2026-05-06 07:56:09,917] [imagemaid.py:473]          [INFO]     | Query              | 0:00:00                                                                       |",
+                "[2026-05-06 07:56:09,917] [imagemaid.py:473]          [INFO]     |====================================== Reporting Bloat Images ======================================|",
+                "[2026-05-06 07:56:09,918] [imagemaid.py:473]          [INFO]     | Scan Time          | 0:05:18                                                                       |",
+                "[2026-05-06 07:56:09,918] [imagemaid.py:473]          [INFO]     | Report Time        | 0:00:00                                                                       |",
+                "[2026-05-06 07:56:09,919] [imagemaid.py:473]          [INFO]     |================================== Remove PhotoTranscoder Images ===================================|",
+                "[2026-05-06 07:56:09,920] [imagemaid.py:473]          [INFO]     | Scan Time          | 0:00:01                                                                       |",
+                "[2026-05-06 07:56:09,920] [imagemaid.py:473]          [INFO]     | Remove Time        | 0:00:00                                                                       |",
+                "[2026-05-06 07:56:09,922] [imagemaid.py:473]          [INFO]     | Total Runtime      | 0:10:50                                                                       |",
+            ]
+        ),
+        log_path="imagemaid.log",
+    )
+
+    assert result is not None
+    section_runtimes = result["summary"]["section_runtimes"]
+    assert section_runtimes["database_download"] == 329
+    assert section_runtimes["database_query"] == 0
+    assert section_runtimes["report_bloat_scan"] == 318
+    assert section_runtimes["report_bloat_action"] == 0
+    assert section_runtimes["photo_transcoder_scan"] == 1
+    assert section_runtimes["photo_transcoder_remove"] == 0
 
 
 def test_analyze_incomplete_kometa_log_for_resume_uses_first_runtime_timestamp_for_started_at(

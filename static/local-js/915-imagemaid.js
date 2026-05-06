@@ -33,6 +33,22 @@ $(document).ready(function () {
   let imagemaidValidationInFlight = false
   let imagemaidStatusInFlight = false
   let imagemaidLogInFlight = false
+  let imagemaidLogPollingPaused = false
+  let imagemaidLogAutoScroll = true
+  let imagemaidTailSize = '2000'
+  let lastImageMaidStatusPayload = null
+  let lastImageMaidLogPayload = null
+  let lastImageMaidLogText = ''
+  let lastImageMaidLogPath = ''
+  const SPARKLINE_MAX_POINTS = 40
+  const SPARKLINE_WIDTH = 180
+  const SPARKLINE_HEIGHT = 48
+  const SPARKLINE_PADDING = 6
+  const imagemaidSparkState = {
+    cpu: { system: [], imagemaid: [] },
+    mem: { system: [], imagemaid: [] },
+    io: { read: [], write: [] }
+  }
 
   const moveModalEl = document.getElementById('imagemaid-move-confirm-modal')
   if (moveModalEl && typeof bootstrap !== 'undefined') {
@@ -73,8 +89,22 @@ $(document).ready(function () {
     runGateText: $('#imagemaid-run-gate-text'),
     runSurface: $('#imagemaid-run-surface'),
     runState: $('#imagemaid-run-state'),
+    runStatusRow: $('#imagemaid-run-status-row'),
+    runStatusTimer: $('#imagemaid-run-status-timer'),
+    runStatusMetrics: $('#imagemaid-run-status-metrics'),
+    runStatusLog: $('#imagemaid-run-status-log'),
+    runStatusSparklines: $('#imagemaid-run-status-sparklines'),
+    runMaintenanceRow: $('#imagemaid-run-maintenance-row'),
     runStatus: $('#imagemaid-run-status'),
     runLog: $('#imagemaid-run-log'),
+    logAutoscroll: $('#imagemaid-log-autoscroll'),
+    logTailSize: $('#imagemaid-log-tail-size'),
+    tailLabel: $('#imagemaid-tail-label'),
+    downloadLog: $('#imagemaid-download-log'),
+    pauseLogPolling: $('#imagemaid-pause-log-polling'),
+    logFilter: $('#imagemaid-log-filter'),
+    logLevelButtons: $('.imagemaid-log-level-btn'),
+    logStatValues: $('[data-imagemaid-log-stat]'),
     commandPreview: $('#imagemaid-command-preview'),
     updateBtn: $('#update-imagemaid-btn'),
     forceUpdateToggle: $('#force-update-imagemaid'),
@@ -95,17 +125,22 @@ $(document).ready(function () {
     noVerifySsl: $('#imagemaid-no-verify-ssl-row'),
     overlaysOnly: $('#imagemaid-overlays-only-row')
   }
+  const $runSparkCpuSystem = $('#imagemaid-run-spark-cpu-system')
+  const $runSparkCpuImageMaid = $('#imagemaid-run-spark-cpu-imagemaid')
+  const $runSparkMemSystem = $('#imagemaid-run-spark-mem-system')
+  const $runSparkMemImageMaid = $('#imagemaid-run-spark-mem-imagemaid')
 
   function syncMaintenanceBadge (data) {
     if (!els.maintenanceBadge.length) return
     maintenanceActive = Boolean(data && data.maintenance_active)
     maintenanceWindowLabel = data && data.maintenance_window ? ` (${data.maintenance_window})` : ''
-    const active = maintenanceActive
+    const paused = Boolean(data && data.maintenance_paused)
+    const active = maintenanceActive || paused
     const windowLabel = maintenanceWindowLabel
     if (active) {
       els.maintenanceBadge.removeClass('d-none')
       const textEl = els.maintenanceBadge.find('span').last()
-      if (textEl.length) textEl.text(`Blocked by Plex maintenance${windowLabel}`)
+      if (textEl.length) textEl.text(`${paused ? 'Paused for' : 'Blocked by'} Plex maintenance${windowLabel}`)
     } else {
       els.maintenanceBadge.addClass('d-none')
     }
@@ -291,7 +326,14 @@ $(document).ready(function () {
   }
 
   function collectPayload () {
+    const activeConfig = String(
+      window.pageInfo?.config_name ||
+      $('#qs-active-config-input').val() ||
+      $('.qs-main-page-meta-value').first().text() ||
+      ''
+    ).trim()
     return {
+      config_name: activeConfig,
       branch_override: String($('#imagemaid_branch_override').val() || '').trim(),
       plex_path: String($('#imagemaid_plex_path').val() || '').trim(),
       mode: String($('#imagemaid_mode').val() || 'report').trim(),
@@ -479,6 +521,268 @@ $(document).ready(function () {
     return !document.hidden
   }
 
+  function formatRunSeconds (seconds) {
+    if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) return ''
+    const total = Math.max(0, Math.floor(seconds))
+    const hours = Math.floor(total / 3600)
+    const minutes = Math.floor((total % 3600) / 60)
+    const secs = total % 60
+    if (hours > 0) return `${hours}h ${minutes}m ${secs}s`
+    if (minutes > 0) return `${minutes}m ${secs}s`
+    return `${secs}s`
+  }
+
+  function formatTimestampLocal (value) {
+    if (!value) return ''
+    if (typeof window.QS_formatTimestamp === 'function') return window.QS_formatTimestamp(value)
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return String(value)
+    return date.toLocaleString()
+  }
+
+  function clampPercent (value) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return null
+    return Math.max(0, Math.min(100, value))
+  }
+
+  function pushSparkValue (series, value) {
+    if (value == null) {
+      if (!series.length) return
+      series.push(series[series.length - 1])
+    } else {
+      series.push(value)
+    }
+    if (series.length > SPARKLINE_MAX_POINTS) series.shift()
+  }
+
+  function buildSparklinePoints (series) {
+    if (!series.length) return ''
+    const width = SPARKLINE_WIDTH - SPARKLINE_PADDING * 2
+    const height = SPARKLINE_HEIGHT - SPARKLINE_PADDING * 2
+    const step = series.length > 1 ? width / (series.length - 1) : 0
+    return series.map((value, idx) => {
+      const x = SPARKLINE_PADDING + (idx * step)
+      const y = SPARKLINE_PADDING + (height - (height * (value / 100)))
+      return `${x.toFixed(1)},${y.toFixed(1)}`
+    }).join(' ')
+  }
+
+  function buildSparklinePointsScaled (series, maxValue) {
+    if (!series.length) return ''
+    const safeMax = typeof maxValue === 'number' && Number.isFinite(maxValue) && maxValue > 0 ? maxValue : 1
+    const normalized = series.map(value => {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return 0
+      return Math.max(0, Math.min(100, (value / safeMax) * 100))
+    })
+    return buildSparklinePoints(normalized)
+  }
+
+  function renderRunSparklines () {
+    if (!els.runStatusSparklines.length) return
+    const hasData = imagemaidSparkState.cpu.system.length || imagemaidSparkState.cpu.imagemaid.length ||
+      imagemaidSparkState.mem.system.length || imagemaidSparkState.mem.imagemaid.length ||
+      imagemaidSparkState.io.read.length || imagemaidSparkState.io.write.length
+    els.runStatusSparklines.toggleClass('d-none', !hasData)
+    $runSparkCpuSystem.attr('points', hasData ? buildSparklinePoints(imagemaidSparkState.cpu.system) : '')
+    $runSparkCpuImageMaid.attr('points', hasData ? buildSparklinePoints(imagemaidSparkState.cpu.imagemaid) : '')
+    $runSparkMemSystem.attr('points', hasData ? buildSparklinePoints(imagemaidSparkState.mem.system) : '')
+    $runSparkMemImageMaid.attr('points', hasData ? buildSparklinePoints(imagemaidSparkState.mem.imagemaid) : '')
+    const $runSparkIoRead = $('#imagemaid-run-spark-io-read')
+    const $runSparkIoWrite = $('#imagemaid-run-spark-io-write')
+    const ioMax = Math.max(0, ...imagemaidSparkState.io.read, ...imagemaidSparkState.io.write)
+    $runSparkIoRead.attr('points', hasData ? buildSparklinePointsScaled(imagemaidSparkState.io.read, ioMax) : '')
+    $runSparkIoWrite.attr('points', hasData ? buildSparklinePointsScaled(imagemaidSparkState.io.write, ioMax) : '')
+  }
+
+  function resetRunSparklines () {
+    imagemaidSparkState.cpu.system = []
+    imagemaidSparkState.cpu.imagemaid = []
+    imagemaidSparkState.mem.system = []
+    imagemaidSparkState.mem.imagemaid = []
+    imagemaidSparkState.io.read = []
+    imagemaidSparkState.io.write = []
+    renderRunSparklines()
+  }
+
+  function updateRunSparklines (data) {
+    if (!data || String(data.status || '').trim().toLowerCase() !== 'running') {
+      resetRunSparklines()
+      return
+    }
+    pushSparkValue(imagemaidSparkState.cpu.system, clampPercent(data.system_cpu_percent))
+    pushSparkValue(imagemaidSparkState.cpu.imagemaid, clampPercent(data.cpu_percent))
+    pushSparkValue(imagemaidSparkState.mem.system, clampPercent(data.system_memory_percent))
+    pushSparkValue(imagemaidSparkState.mem.imagemaid, clampPercent(data.memory_percent))
+    const ioRead = (typeof data.disk_read_rate_mb_s === 'number' && Number.isFinite(data.disk_read_rate_mb_s))
+      ? Math.max(0, data.disk_read_rate_mb_s)
+      : null
+    const ioWrite = (typeof data.disk_write_rate_mb_s === 'number' && Number.isFinite(data.disk_write_rate_mb_s))
+      ? Math.max(0, data.disk_write_rate_mb_s)
+      : null
+    pushSparkValue(imagemaidSparkState.io.read, ioRead)
+    pushSparkValue(imagemaidSparkState.io.write, ioWrite)
+    renderRunSparklines()
+  }
+
+  function syncRunStatusVisibility () {
+    if (!els.runStatusRow.length) return
+    const hasText = Boolean(els.runStatusTimer.text() || els.runStatusMetrics.text() || els.runStatusLog.text())
+    els.runStatusRow.toggleClass('d-none', !hasText)
+  }
+
+  function updateRunStatusDetails (data) {
+    if (!els.runStatusRow.length) return
+    const status = String((data && data.status) || '').trim().toLowerCase()
+    if (status === 'running' || status === 'starting') {
+      const startedAt = formatTimestampLocal(data.started_at)
+      const elapsed = formatRunSeconds(data.elapsed_seconds)
+      const formatMem = (valueMb) => {
+        if (typeof valueMb !== 'number' || !Number.isFinite(valueMb)) return 'n/a'
+        if (valueMb >= 1024) return `${(valueMb / 1024).toFixed(1)} GB`
+        return `${valueMb.toFixed(1)} MB`
+      }
+      const cpuText = typeof data.cpu_percent === 'number' && Number.isFinite(data.cpu_percent) ? `${data.cpu_percent.toFixed(1)}%` : 'n/a'
+      const memRss = formatMem(data.memory_rss_mb)
+      const memPct = typeof data.memory_percent === 'number' && Number.isFinite(data.memory_percent) ? `${data.memory_percent.toFixed(1)}%` : 'n/a'
+      const sysCpu = typeof data.system_cpu_percent === 'number' && Number.isFinite(data.system_cpu_percent) ? `${data.system_cpu_percent.toFixed(1)}%` : 'n/a'
+      const sysUsed = formatMem(data.system_memory_used_mb)
+      const sysTotal = formatMem(data.system_memory_total_mb)
+      const sysPct = typeof data.system_memory_percent === 'number' && Number.isFinite(data.system_memory_percent) ? `${data.system_memory_percent.toFixed(1)}%` : 'n/a'
+      const formatDiskMb = (valueMb) => {
+        if (typeof valueMb !== 'number' || !Number.isFinite(valueMb)) return 'n/a'
+        if (valueMb >= 1024) return `${(valueMb / 1024).toFixed(1)} GB`
+        return `${valueMb.toFixed(1)} MB`
+      }
+      const formatDiskRate = (valueMbS) => {
+        if (typeof valueMbS !== 'number' || !Number.isFinite(valueMbS)) return 'n/a'
+        if (valueMbS >= 1024) return `${(valueMbS / 1024).toFixed(2)} GB/s`
+        return `${valueMbS.toFixed(2)} MB/s`
+      }
+      const hasDiskData = [data.disk_read_mb, data.disk_write_mb, data.disk_read_rate_mb_s, data.disk_write_rate_mb_s]
+        .some(value => typeof value === 'number' && Number.isFinite(value))
+      const diskText = hasDiskData
+        ? ` | Disk: R ${formatDiskRate(data.disk_read_rate_mb_s)} • W ${formatDiskRate(data.disk_write_rate_mb_s)} • ${formatDiskMb(data.disk_read_mb)} read • ${formatDiskMb(data.disk_write_mb)} written`
+        : ''
+      els.runStatusTimer.text(`${status === 'starting' ? 'Starting' : 'Running since'}: ${startedAt || 'n/a'}${elapsed ? ` • Elapsed: ${elapsed}` : ''}`)
+      els.runStatusMetrics.text(`ImageMaid: ${cpuText} CPU • ${memRss} (${memPct}) | System: ${sysCpu} CPU • ${sysUsed} / ${sysTotal} (${sysPct})${diskText}`)
+    } else if (status === 'done') {
+      els.runStatusTimer.text('ImageMaid run complete.')
+      els.runStatusMetrics.text('')
+    } else {
+      els.runStatusTimer.text('')
+      els.runStatusMetrics.text('')
+    }
+    updateRunSparklines(data)
+    syncRunStatusVisibility()
+  }
+
+  function updateMaintenanceRow (data) {
+    if (!els.runMaintenanceRow.length) return
+    const windowLabel = data && data.maintenance_window ? ` (${data.maintenance_window})` : ''
+    if (data && data.maintenance_paused) {
+      let pauseLabel = 'Paused'
+      const pausedSince = data.maintenance_paused_since ? new Date(data.maintenance_paused_since) : null
+      if (pausedSince && !Number.isNaN(pausedSince.getTime())) {
+        const elapsedSeconds = Math.max(0, Math.floor((Date.now() - pausedSince.getTime()) / 1000))
+        pauseLabel = formatRunSeconds(elapsedSeconds) || 'Paused'
+      }
+      els.runMaintenanceRow.html(`
+        <span class="me-2 fw-semibold">Maintenance</span>
+        <span class="badge text-bg-warning text-dark">Paused${windowLabel}</span>
+        <span class="badge text-bg-secondary">${pauseLabel}</span>
+      `).removeClass('d-none')
+      return
+    }
+    if (data && data.maintenance_active) {
+      els.runMaintenanceRow.html(`
+        <span class="me-2 fw-semibold">Maintenance</span>
+        <span class="badge text-bg-warning text-dark">Window Active${windowLabel}</span>
+      `).removeClass('d-none')
+      return
+    }
+    els.runMaintenanceRow.addClass('d-none').empty()
+  }
+
+  function computeLogStats (text, matcher) {
+    const stats = { filter: 0, cache: 0, debug: 0, info: 0, warn: 0, error: 0, crit: 0, trace: 0 }
+    const lines = String(text || '').split(/\r?\n/)
+    lines.forEach(line => {
+      if (!line) return
+      if (matcher && !matcher(line)) return
+      stats.filter += 1
+      const upper = line.toUpperCase()
+      if (upper.includes('[CACHE]') || /\bCACHE\b/.test(upper)) stats.cache += 1
+      if (upper.includes('[DEBUG]')) stats.debug += 1
+      if (upper.includes('[INFO]')) stats.info += 1
+      if (upper.includes('[WARNING]') || upper.includes('[WARN]')) stats.warn += 1
+      if (upper.includes('[ERROR]')) stats.error += 1
+      if (upper.includes('[CRITICAL]') || upper.includes('[CRIT]')) stats.crit += 1
+      if (upper.includes('[TRACE]')) stats.trace += 1
+    })
+    return stats
+  }
+
+  function updateLogStatBadges (stats) {
+    els.logStatValues.each(function () {
+      const key = String($(this).data('imagemaid-log-stat') || '').trim()
+      $(this).text(String((stats && stats[key]) || 0))
+    })
+  }
+
+  function syncLogLevelButtons () {
+    const activeFilter = String(els.logFilter.val() || '').trim()
+    els.logLevelButtons.each(function () {
+      const level = String($(this).data('level') || '').trim()
+      const isActive = Boolean(level) && level === activeFilter
+      $(this)
+        .toggleClass('btn-primary', isActive)
+        .toggleClass('btn-outline-secondary', !isActive)
+        .attr('aria-pressed', isActive ? 'true' : 'false')
+    })
+  }
+
+  function applyLogFilter () {
+    const payload = lastImageMaidLogPayload || {}
+    const rawText = String(payload.text || lastImageMaidLogText || '')
+    const filterText = String(els.logFilter.val() || '').trim()
+    let filteredText = rawText
+    let textMatcher = null
+    if (filterText) {
+      try {
+        const regex = new RegExp(filterText, 'i')
+        textMatcher = line => regex.test(line)
+      } catch (_) {
+        const lowered = filterText.toLowerCase()
+        textMatcher = line => String(line || '').toLowerCase().includes(lowered)
+      }
+    }
+    const matcher = textMatcher || null
+    if (matcher) {
+      filteredText = rawText.split(/\r?\n/).filter(line => matcher(line)).join('\n')
+    }
+    els.runLog.text(filteredText || (rawText ? 'No lines matched the current filter.' : 'ImageMaid log is empty.'))
+    updateLogStatBadges(computeLogStats(rawText, matcher))
+    syncLogLevelButtons()
+    if (imagemaidLogAutoScroll && els.runLog.length) {
+      els.runLog.scrollTop(els.runLog[0].scrollHeight)
+    }
+  }
+
+  function updateLogRecency (payload) {
+    if (!els.runStatusLog.length) return
+    if (!payload || typeof payload.log_age_seconds !== 'number') {
+      els.runStatusLog.text('')
+      syncRunStatusVisibility()
+      return
+    }
+    const ageText = formatRunSeconds(payload.log_age_seconds) || 'n/a'
+    const totalLines = typeof payload.total_lines === 'number' && Number.isFinite(payload.total_lines)
+      ? payload.total_lines.toLocaleString()
+      : '0'
+    els.runStatusLog.text(`${lastImageMaidLogPath ? `${lastImageMaidLogPath.split(/[\\\\/]/).pop()} updated ` : 'Log updated '}${ageText} ago • ${totalLines} lines`)
+    syncRunStatusVisibility()
+  }
+
   function setRunState (state, message) {
     if (state === 'running') {
       imagemaidRunning = true
@@ -516,6 +820,9 @@ $(document).ready(function () {
       els.stopBtn.prop('disabled', true)
     }
     if (message) els.runStatus.text(message)
+    if (!imagemaidRunning && !imagemaidStarting) {
+      updateMaintenanceRow(lastImageMaidStatusPayload)
+    }
     syncRunGate()
   }
 
@@ -729,20 +1036,32 @@ $(document).ready(function () {
 
   function loadLog (force = false) {
     if (imagemaidLogInFlight) return Promise.resolve(null)
-    if (!force && (!shouldPollImageMaidPage() || (!imagemaidRunning && !imagemaidStarting))) return Promise.resolve(null)
+    if (!force && (imagemaidLogPollingPaused || !shouldPollImageMaidPage() || (!imagemaidRunning && !imagemaidStarting))) return Promise.resolve(null)
     imagemaidLogInFlight = true
-    return fetch('/tail-imagemaid-log')
+    return fetch(`/tail-imagemaid-log?lines=${encodeURIComponent(imagemaidTailSize)}`)
       .then(async (res) => ({ ok: res.ok, body: await res.json() }))
       .then(({ ok, body }) => {
         if (!ok || !body.success) {
+          lastImageMaidLogPayload = null
+          lastImageMaidLogText = ''
+          lastImageMaidLogPath = ''
           els.runLog.text((body && body.error) || 'No ImageMaid log found yet.')
+          updateLogStatBadges({ filter: 0, cache: 0, debug: 0, info: 0, warn: 0, error: 0, crit: 0, trace: 0 })
+          updateLogRecency(null)
           return
         }
-        els.runLog.text(body.text || 'ImageMaid log is empty.')
-        els.runLog.scrollTop(els.runLog[0].scrollHeight)
+        lastImageMaidLogPayload = body
+        lastImageMaidLogText = String(body.text || '')
+        lastImageMaidLogPath = String(body.path || '')
+        const requested = String(body.requested_lines || imagemaidTailSize)
+        els.tailLabel.text(requested.toLowerCase() === 'all' ? 'all' : requested)
+        updateLogRecency(body)
+        applyLogFilter()
       })
       .catch(() => {
+        lastImageMaidLogPayload = null
         els.runLog.text('Failed to load the ImageMaid log.')
+        updateLogRecency(null)
       })
       .finally(() => {
         imagemaidLogInFlight = false
@@ -757,19 +1076,26 @@ $(document).ready(function () {
       .then(async (res) => ({ ok: res.ok, body: await res.json() }))
       .then(({ ok, body }) => {
         if (!ok) return
+        lastImageMaidStatusPayload = body
+        syncMaintenanceBadge(body)
+        updateRunStatusDetails(body)
+        updateMaintenanceRow(body)
+        if (body && body.active_command && (String(body.status || '').trim().toLowerCase() === 'running' || String(body.status || '').trim().toLowerCase() === 'starting')) {
+          els.commandPreview.val(body.active_command)
+        }
         if (typeof window.QS_handleImageMaidStatus === 'function') {
           window.QS_handleImageMaidStatus(body)
         }
         const status = String(body.status || '').trim().toLowerCase()
         if (status === 'running') {
-          const elapsed = typeof body.elapsed_seconds === 'number' ? `Elapsed ${body.elapsed_seconds}s.` : 'ImageMaid is currently running.'
+          const elapsed = typeof body.elapsed_seconds === 'number' ? `Elapsed ${formatRunSeconds(body.elapsed_seconds) || `${body.elapsed_seconds}s`}.` : 'ImageMaid is currently running.'
           setRunState('running', elapsed)
           loadLog(true)
           return
         }
         if (status === 'starting') {
           imagemaidStartupDeadline = Date.now() + 10000
-          const elapsed = typeof body.elapsed_seconds === 'number' ? `ImageMaid is still starting (${body.elapsed_seconds}s).` : 'ImageMaid is still starting.'
+          const elapsed = typeof body.elapsed_seconds === 'number' ? `ImageMaid is still starting (${formatRunSeconds(body.elapsed_seconds) || `${body.elapsed_seconds}s`}).` : 'ImageMaid is still starting.'
           setRunState('starting', elapsed)
           loadLog(true)
           return
@@ -781,10 +1107,13 @@ $(document).ready(function () {
         }
         if (status === 'done') {
           setRunState('idle', 'ImageMaid finished.')
+          updatePreviewFromPayload()
           loadLog(true)
           return
         }
         setRunState('idle', 'ImageMaid is not running.')
+        updatePreviewFromPayload()
+        updateRunStatusDetails(body)
       })
       .catch(() => {})
       .finally(() => {
@@ -930,6 +1259,43 @@ $(document).ready(function () {
 
   $('#imagemaid_mode, #imagemaid_plex_path, #imagemaid_timeout, #imagemaid_sleep, #imagemaid_branch_override').on('input change', onConfigChanged)
   $('#imagemaid_photo_transcoder, #imagemaid_empty_trash, #imagemaid_clean_bundles, #imagemaid_optimize_db, #imagemaid_local_db, #imagemaid_use_existing, #imagemaid_ignore_running, #imagemaid_trace, #imagemaid_log_requests, #imagemaid_no_verify_ssl, #imagemaid_overlays_only').on('change', onConfigChanged)
+  els.logAutoscroll.on('change', function () {
+    imagemaidLogAutoScroll = $(this).is(':checked')
+  })
+  els.logTailSize.on('change', function () {
+    const next = String($(this).val() || '2000').trim().toLowerCase()
+    imagemaidTailSize = next === 'all' ? 'all' : (['200', '2000', '20000'].includes(next) ? next : '2000')
+    els.tailLabel.text(imagemaidTailSize === 'all' ? 'all' : imagemaidTailSize)
+    loadLog(true)
+  })
+  els.logFilter.on('input', applyLogFilter)
+  els.logLevelButtons.on('click', function () {
+    const nextLevel = String($(this).data('level') || '').trim()
+    const currentFilter = String(els.logFilter.val() || '').trim()
+    els.logFilter.val(currentFilter === nextLevel ? '' : nextLevel)
+    applyLogFilter()
+  })
+  els.pauseLogPolling.on('click', function () {
+    imagemaidLogPollingPaused = !imagemaidLogPollingPaused
+    if (imagemaidLogPollingPaused) {
+      $(this).html('<i class="bi bi-play-circle me-1"></i> Resume')
+    } else {
+      $(this).html('<i class="bi bi-pause-circle me-1"></i> Pause')
+      loadLog(true)
+    }
+  })
+  els.downloadLog.on('click', function () {
+    const text = String((lastImageMaidLogPayload && lastImageMaidLogPayload.text) || lastImageMaidLogText || '')
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = lastImageMaidLogPath ? lastImageMaidLogPath.split(/[\\/]/).pop() : 'imagemaid.log'
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+    URL.revokeObjectURL(url)
+  })
 
   if (window.PathValidation && typeof PathValidation.attach === 'function') {
     PathValidation.attach(document)
@@ -940,6 +1306,9 @@ $(document).ready(function () {
   syncOptionalCapabilityRows()
   syncBranchSummary()
   syncUpdateButtonLabel()
+  els.tailLabel.text(imagemaidTailSize === 'all' ? 'all' : imagemaidTailSize)
+  imagemaidLogAutoScroll = els.logAutoscroll.is(':checked')
+  syncLogLevelButtons()
   setValidationState(imagemaidValidated ? 'ok' : 'idle', String(els.validationStatus.text() || '').trim())
   probeRoot()
   updateStatus(true)
@@ -951,4 +1320,5 @@ $(document).ready(function () {
     }
   })
   setInterval(() => updateStatus(), 7000)
+  setInterval(() => loadLog(), 5000)
 })

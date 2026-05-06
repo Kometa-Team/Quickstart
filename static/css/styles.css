@@ -2316,6 +2316,38 @@ div#loading {
     width: 1rem;
 }
 
+.logscan-select-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    min-height: 1.5rem;
+}
+
+.logscan-select-switch .form-check-input {
+    cursor: pointer;
+    margin: 0;
+}
+
+.logscan-select-switch .form-check-label {
+    color: var(--theme-text-muted);
+    cursor: pointer;
+    font-size: 0.82rem;
+    line-height: 1;
+    margin: 0;
+}
+
+.logscan-select-switch .form-check-input:checked + .form-check-label {
+    color: #74f0c6;
+}
+
+#logscan-table-select-complete.is-active,
+#logscan-table-select-incomplete.is-active {
+    background: rgba(0, 188, 140, 0.18);
+    border-color: rgba(0, 188, 140, 0.55);
+    color: #74f0c6;
+}
+
 .qs-workspace-main-panel .table-responsive.logscan-runs-card-table table tr.logscan-row-selected {
     border-color: rgba(0, 188, 140, 0.8);
     box-shadow: 0 0 0 1px rgba(0, 188, 140, 0.32);
@@ -2620,9 +2652,29 @@ div#loading {
     color: #f9c74f;
 }
 
+.logscan-count-chip--cache {
+    background: rgba(139, 92, 246, 0.14);
+    color: #c4b5fd;
+}
+
+.logscan-count-chip--debug {
+    background: rgba(107, 114, 128, 0.18);
+    color: #d1d5db;
+}
+
+.logscan-count-chip--info {
+    background: rgba(56, 189, 248, 0.14);
+    color: #7dd3fc;
+}
+
 .logscan-count-chip--error {
     background: rgba(249, 65, 68, 0.14);
     color: #ff6b6e;
+}
+
+.logscan-count-chip--critical {
+    background: rgba(244, 63, 94, 0.18);
+    color: #fda4af;
 }
 
 .logscan-count-chip--trace {
@@ -3611,6 +3663,10 @@ div#loading {
     flex-wrap: wrap;
 }
 
+.start-link-row-buttons {
+    margin-top: 0.6rem;
+}
+
 .start-link-row-buttons .btn {
     min-width: 0;
 }
@@ -3680,7 +3736,7 @@ div#loading {
 
 .start-link-row a:hover,
 .start-link-row a:focus {
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 .qs-imagemaid-intro-alert {

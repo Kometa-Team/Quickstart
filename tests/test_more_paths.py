@@ -21,6 +21,8 @@ def _reset_maintenance_state(qs_module):
             {
                 "paused": False,
                 "paused_since": None,
+                "imagemaid_paused": False,
+                "imagemaid_paused_since": None,
                 "active": False,
                 "window": None,
                 "queued_started_at": None,
@@ -98,3 +100,123 @@ def test_maintenance_guard_starts_queued_run(monkeypatch, qs_module):
     assert qs_module._peek_pending_kometa_start() is None
     with qs_module.MAINTENANCE_STATE_LOCK:
         assert qs_module.MAINTENANCE_STATE["queued_started_at"] is not None
+
+
+def test_maintenance_guard_pauses_running_imagemaid(monkeypatch, qs_module, tmp_path):
+    _reset_maintenance_state(qs_module)
+
+    imagemaid_log = tmp_path / "imagemaid.log"
+    imagemaid_log.write_text("ImageMaid running\n", encoding="utf-8")
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: 5555)
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: True)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: tmp_path)
+    monkeypatch.setattr(qs_module, "_find_running_imagemaid_process", lambda: None)
+    monkeypatch.setattr(qs_module, "_get_latest_imagemaid_log_path", lambda: imagemaid_log)
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (120, 300, "02:00-05:00"))
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_from_db", lambda: (120, 300, "02:00-05:00"))
+    monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: True)
+    monkeypatch.setattr(qs_module, "_get_imagemaid_run_context", lambda: {"mode": "report", "config_name": "demo"})
+
+    class _FakePsutilProc:
+        pid = 5555
+
+    monkeypatch.setattr(qs_module.psutil, "Process", lambda pid: _FakePsutilProc())
+
+    calls = {"suspend": 0, "marker": 0}
+
+    monkeypatch.setattr(qs_module, "_suspend_process_tree", lambda proc: calls.__setitem__("suspend", calls["suspend"] + 1) or True)
+
+    def fake_marker(root, event, **kwargs):
+        calls["marker"] += 1
+        assert event == "paused"
+        assert kwargs["mode"] == "report"
+        assert kwargs["config_name"] == "demo"
+        assert kwargs["window"] == "02:00-05:00"
+        return True
+
+    monkeypatch.setattr(qs_module, "_write_quickstart_imagemaid_maintenance_marker", fake_marker)
+
+    ticks = {"count": 0}
+
+    def fake_sleep(_):
+        ticks["count"] += 1
+        if ticks["count"] > 1:
+            raise StopIteration()
+
+    monkeypatch.setattr(qs_module.time, "sleep", fake_sleep)
+
+    try:
+        qs_module._maintenance_guard_loop(qs_module.app)
+    except StopIteration:
+        pass
+
+    assert calls["suspend"] == 1
+    assert calls["marker"] == 1
+    with qs_module.MAINTENANCE_STATE_LOCK:
+        assert qs_module.MAINTENANCE_STATE["imagemaid_paused"] is True
+        assert qs_module.MAINTENANCE_STATE["imagemaid_paused_since"] is not None
+
+
+def test_maintenance_guard_resumes_paused_imagemaid(monkeypatch, qs_module, tmp_path):
+    _reset_maintenance_state(qs_module)
+    paused_at = time.time() - 90
+    with qs_module.MAINTENANCE_STATE_LOCK:
+        qs_module.MAINTENANCE_STATE["imagemaid_paused"] = True
+        qs_module.MAINTENANCE_STATE["imagemaid_paused_since"] = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(paused_at))
+
+    imagemaid_log = tmp_path / "imagemaid.log"
+    imagemaid_log.write_text("ImageMaid paused\n", encoding="utf-8")
+
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: 5555)
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: True)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_root_path", lambda: tmp_path)
+    monkeypatch.setattr(qs_module, "_find_running_imagemaid_process", lambda: None)
+    monkeypatch.setattr(qs_module, "_get_latest_imagemaid_log_path", lambda: imagemaid_log)
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (120, 300, "02:00-05:00"))
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_from_db", lambda: (120, 300, "02:00-05:00"))
+    monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: False)
+    monkeypatch.setattr(qs_module, "_get_imagemaid_run_context", lambda: {"mode": "move", "config_name": "demo"})
+
+    class _FakePsutilProc:
+        pid = 5555
+
+    monkeypatch.setattr(qs_module.psutil, "Process", lambda pid: _FakePsutilProc())
+    monkeypatch.setattr(qs_module, "_resume_process_tree", lambda proc: True)
+
+    calls = {"marker": 0}
+
+    def fake_marker(root, event, **kwargs):
+        calls["marker"] += 1
+        assert event == "resumed"
+        assert kwargs["mode"] == "move"
+        assert kwargs["config_name"] == "demo"
+        assert kwargs["window"] == "02:00-05:00"
+        assert isinstance(kwargs["paused_seconds"], int)
+        assert kwargs["paused_seconds"] >= 60
+        return True
+
+    monkeypatch.setattr(qs_module, "_write_quickstart_imagemaid_maintenance_marker", fake_marker)
+
+    ticks = {"count": 0}
+
+    def fake_sleep(_):
+        ticks["count"] += 1
+        if ticks["count"] > 1:
+            raise StopIteration()
+
+    monkeypatch.setattr(qs_module.time, "sleep", fake_sleep)
+
+    try:
+        qs_module._maintenance_guard_loop(qs_module.app)
+    except StopIteration:
+        pass
+
+    assert calls["marker"] == 1
+    with qs_module.MAINTENANCE_STATE_LOCK:
+        assert qs_module.MAINTENANCE_STATE["imagemaid_paused"] is False
+        assert qs_module.MAINTENANCE_STATE["imagemaid_paused_since"] is None

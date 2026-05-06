@@ -167,6 +167,44 @@ def test_validate_plex_bad_token(client, monkeypatch, qs_module):
     assert "bad token" in payload["error"]
 
 
+def test_validate_plex_persists_telemetry_for_current_config(client, monkeypatch, qs_module):
+    calls = {"save_settings": 0, "save_section": 0}
+
+    def fake_validate(_data):
+        return qs_module.jsonify(
+            {
+                "validated": True,
+                "db_cache": 2048,
+                "user_list": ["User One"],
+                "music_libraries": [],
+                "movie_libraries": ["Movies"],
+                "show_libraries": ["Shows"],
+                "has_plex_pass": True,
+            }
+        )
+
+    telemetry = {
+        "server_name": "Test Plex",
+        "maintenance_window": "02:00 – 05:00",
+        "platform": "Windows",
+    }
+
+    monkeypatch.setattr(qs_module.validations, "validate_plex_server", fake_validate)
+    monkeypatch.setattr(qs_module.helpers, "get_plex_metadata", lambda **_kwargs: telemetry)
+    monkeypatch.setattr(qs_module.persistence, "save_settings", lambda *_args, **_kwargs: calls.__setitem__("save_settings", calls["save_settings"] + 1))
+    monkeypatch.setattr(qs_module.database, "save_section_data", lambda **_kwargs: calls.__setitem__("save_section", calls["save_section"] + 1))
+
+    with client.session_transaction() as sess:
+        sess["config_name"] = "pytest_validate_plex"
+
+    resp = client.post("/validate_plex", json={"plex_url": "http://localhost:32400", "plex_token": "token"})
+    assert resp.status_code == 200
+    payload = resp.get_json()
+    assert payload["validated"] is True
+    assert payload["maintenance_window"] == "02:00 – 05:00"
+    assert calls == {"save_settings": 1, "save_section": 1}
+
+
 def test_validate_plex_fetches_sections_once(app, monkeypatch, qs_module):
     qs_module.helpers.clear_plex_discovery_cache()
     calls = {"sections": 0}

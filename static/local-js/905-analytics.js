@@ -95,6 +95,7 @@ $(document).ready(function () {
   let allIncompleteRunsTotal = 0
   let latestArchiveStorage = null
   let tablePage = 1
+  let tableStatusFilter = 'all'
   const selectedRunKeys = new Set()
   const sortState = { key: 'finished_at', dir: 'desc' }
   let lastIngestState = null
@@ -581,6 +582,43 @@ $(document).ready(function () {
   function getCount (run, key) {
     const value = run && typeof run[key] === 'number' ? run[key] : 0
     return Number.isFinite(value) ? value : 0
+  }
+
+  function renderRunCountChips (run) {
+    if (getRunToolName(run) === 'imagemaid') {
+      const cache = getCount(run, 'cache_line_count')
+      const debug = getCount(run, 'debug_count')
+      const info = getCount(run, 'info_count')
+      const warnings = getCount(run, 'warning_count')
+      const errors = getCount(run, 'error_count')
+      const critical = getCount(run, 'critical_count')
+      const traces = getCount(run, 'trace_count')
+      const total = cache + debug + info + warnings + errors + critical + traces
+      return [
+        renderCountChip('C', 'Cache lines', cache, 'cache'),
+        renderCountChip('D', 'Debug lines', debug, 'debug'),
+        renderCountChip('I', 'Info lines', info, 'info'),
+        renderCountChip('W', 'Warnings', warnings, 'warning'),
+        renderCountChip('E', 'Errors', errors, 'error'),
+        renderCountChip('Cr', 'Critical lines', critical, 'critical'),
+        renderCountChip('T', 'Tracebacks', traces, 'trace'),
+        renderCountChip('Tot', 'Total counted lines', total, 'total')
+      ].join('')
+    }
+
+    const warnings = getCount(run, 'warning_count')
+    const errors = getCount(run, 'error_count')
+    const traces = getCount(run, 'trace_count')
+    const libraryTotals = getRunLibraryTotals(run)
+    return [
+      renderCountChip('W', 'Warnings', warnings, 'warning'),
+      renderCountChip('E', 'Errors', errors, 'error'),
+      renderCountChip('T', 'Tracebacks', traces, 'trace'),
+      renderCountChip('M', 'Movies', libraryTotals.movies, 'movie'),
+      renderCountChip('S', 'Shows', libraryTotals.shows, 'show'),
+      renderCountChip('Ep', 'Episodes', libraryTotals.episodes, 'episode'),
+      renderCountChip('Tot', 'Total items', libraryTotals.total, 'total')
+    ].join('')
   }
 
   function getIssueCount (run, key, fallbackKey) {
@@ -1651,10 +1689,23 @@ $(document).ready(function () {
     }
     if ($tableSelectComplete.length) {
       $tableSelectComplete.prop('disabled', visibleCompleteSelectable === 0)
+      $tableSelectComplete.toggleClass('is-active', tableStatusFilter === 'complete')
     }
     if ($tableSelectIncomplete.length) {
       $tableSelectIncomplete.prop('disabled', visibleIncompleteSelectable === 0)
+      $tableSelectIncomplete.toggleClass('is-active', tableStatusFilter === 'incomplete')
     }
+  }
+
+  function filterTableRunsByStatus (runs) {
+    if (!Array.isArray(runs) || !runs.length) return []
+    if (tableStatusFilter === 'complete') {
+      return runs.filter(run => !run.is_incomplete)
+    }
+    if (tableStatusFilter === 'incomplete') {
+      return runs.filter(run => Boolean(run.is_incomplete))
+    }
+    return runs
   }
 
   function updateTableSummary (total, pageSize, pageCount) {
@@ -1702,19 +1753,7 @@ $(document).ready(function () {
       const commandTitle = run.run_command
         ? `Original: ${run.run_command}`
         : (run.command_signature ? `Signature: ${run.command_signature}` : '')
-      const warnings = getCount(run, 'warning_count')
-      const errors = getCount(run, 'error_count')
-      const traces = getCount(run, 'trace_count')
-      const libraryTotals = getRunLibraryTotals(run)
-      const countChips = [
-        renderCountChip('W', 'Warnings', warnings, 'warning'),
-        renderCountChip('E', 'Errors', errors, 'error'),
-        renderCountChip('T', 'Tracebacks', traces, 'trace'),
-        renderCountChip('M', 'Movies', libraryTotals.movies, 'movie'),
-        renderCountChip('S', 'Shows', libraryTotals.shows, 'show'),
-        renderCountChip('Ep', 'Episodes', libraryTotals.episodes, 'episode'),
-        renderCountChip('Tot', 'Total items', libraryTotals.total, 'total')
-      ].join('')
+      const countChips = renderRunCountChips(run)
       const configLineCount = (typeof run.config_line_count === 'number' && Number.isFinite(run.config_line_count))
         ? run.config_line_count
         : 'n/a'
@@ -1799,11 +1838,14 @@ $(document).ready(function () {
         <tr class="${isSelected ? 'logscan-row-selected' : ''}">
           ${renderRunCardCell('Select', 'Select this archived log for bulk actions.', `
             <span class="logscan-select-wrap">
-              <input type="checkbox" class="form-check-input logscan-select-checkbox"
-                data-run-key="${escapeHtml(runKey)}"
-                ${isSelected ? 'checked' : ''}
-                ${isSelectable ? '' : 'disabled'}
-                aria-label="Select ${escapeHtml(runLabel)}">
+              <span class="form-check form-switch logscan-select-switch">
+                <input type="checkbox" class="form-check-input logscan-select-toggle-input"
+                  data-run-key="${escapeHtml(runKey)}"
+                  ${isSelected ? 'checked' : ''}
+                  ${isSelectable ? '' : 'disabled'}
+                  aria-label="Select ${escapeHtml(runLabel)}">
+                <label class="form-check-label">${isSelected ? 'Selected' : 'Select'}</label>
+              </span>
             </span>
           `, 'class="logscan-select-cell"')}
           ${renderRunCardCell('Status', 'Complete runs are included in charts. Incomplete logs are shown here for investigation and file management.', `<span class="${run.is_incomplete ? 'text-warning' : 'text-success'} fw-semibold">${escapeHtml(statusDisplay)}</span>${startModeBadge}`, 'class="text-nowrap"')}
@@ -2532,7 +2574,7 @@ $(document).ready(function () {
       state = getFilterState()
     }
     const filtered = filterRuns(allRuns, state)
-    const filteredTableRuns = filterRuns(allTableRuns, state)
+    const filteredTableRuns = filterTableRunsByStatus(filterRuns(allTableRuns, state))
     currentFilteredRuns = filtered
     updateRunCountDisplay(filtered)
     renderSummary(filtered)
@@ -3463,6 +3505,7 @@ $(document).ready(function () {
   $resetFilters.on('click', function () {
     $limit.val('500')
     tablePage = 1
+    tableStatusFilter = 'all'
     $configFilter.val('')
     $toolFilter.val('')
     $timeRange.val('all')
@@ -3536,7 +3579,7 @@ $(document).ready(function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
     showRunDetails(runKey)
   })
-  $tableBody.on('change', '.logscan-select-checkbox', function () {
+  $tableBody.on('change', '.logscan-select-toggle-input', function () {
     const runKey = $(this).data('runKey') || $(this).attr('data-run-key')
     if (!runKey) return
     if ($(this).is(':checked')) {
@@ -3563,12 +3606,14 @@ $(document).ready(function () {
     renderTable(currentTableRuns)
   })
   $tableSelectComplete.on('click', function () {
-    getSelectableRunsByCompletion(currentTableRuns, false).forEach(run => selectedRunKeys.add(run.run_key))
-    renderTable(currentTableRuns)
+    tableStatusFilter = tableStatusFilter === 'complete' ? 'all' : 'complete'
+    tablePage = 1
+    applyFiltersAndRender()
   })
   $tableSelectIncomplete.on('click', function () {
-    getSelectableRunsByCompletion(currentTableRuns, true).forEach(run => selectedRunKeys.add(run.run_key))
-    renderTable(currentTableRuns)
+    tableStatusFilter = tableStatusFilter === 'incomplete' ? 'all' : 'incomplete'
+    tablePage = 1
+    applyFiltersAndRender()
   })
   $tableClearSelection.on('click', function () {
     selectedRunKeys.clear()

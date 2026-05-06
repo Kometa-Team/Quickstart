@@ -91,6 +91,16 @@ def test_kometa_status_includes_active_command_and_start_mode(client, monkeypatc
     monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: 4321)
     monkeypatch.setattr(qs_module, "_calculate_process_cpu_percent", lambda proc: 1.25)
     monkeypatch.setattr(qs_module, "_calculate_system_cpu_percent", lambda: 4.5)
+    monkeypatch.setattr(
+        qs_module,
+        "_calculate_process_io_stats",
+        lambda proc, cache_name: {
+            "disk_read_mb": 256.5,
+            "disk_write_mb": 128.25,
+            "disk_read_rate_mb_s": 12.5,
+            "disk_write_rate_mb_s": 3.75,
+        },
+    )
 
     class _FakeMemInfo:
         rss = 64 * 1024 * 1024
@@ -134,6 +144,10 @@ def test_kometa_status_includes_active_command_and_start_mode(client, monkeypatc
     assert data["status"] == "running"
     assert data["start_mode"] == "recovery"
     assert data["active_command"] == 'python kometa.py --collections-only --resume "Emmys 1999"'
+    assert data["disk_read_mb"] == 256.5
+    assert data["disk_write_mb"] == 128.2
+    assert data["disk_read_rate_mb_s"] == 12.5
+    assert data["disk_write_rate_mb_s"] == 3.75
 
 
 def test_start_kometa_blocked_when_kometa_update_running(client, monkeypatch, qs_module):
@@ -204,6 +218,34 @@ def test_start_imagemaid_starts_when_valid(client, monkeypatch, qs_module):
     assert data["pid"] == 2468
     assert seen["config_name"]
     assert seen["mode"] == "report"
+
+
+def test_start_imagemaid_uses_explicit_config_name(client, monkeypatch, qs_module):
+    with client.session_transaction() as session_state:
+        session_state["config_name"] = "pytest_source_config"
+
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: False)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: None)
+    monkeypatch.setattr(qs_module, "_find_running_imagemaid_process", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_live", lambda: (60, 120, "01:00-02:00"))
+    monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: False)
+    monkeypatch.setattr(qs_module, "_validate_imagemaid_settings", lambda *_args, **_kwargs: (True, None, None))
+    monkeypatch.setattr(qs_module, "_persist_imagemaid_validation", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(qs_module.persistence, "get_stored_plex_credentials", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
+    monkeypatch.setattr(qs_module, "_build_imagemaid_command", lambda *_args, **_kwargs: "python imagemaid.py --mode report")
+    seen = {}
+
+    def fake_launch(command, mode=None, config_name=None):
+        seen["config_name"] = config_name
+        return True, 2468
+
+    monkeypatch.setattr(qs_module, "_launch_imagemaid_command", fake_launch)
+
+    resp = client.post("/start-imagemaid", json={"config_name": "pytest_target_config", "plex_path": "P:\\Plex", "mode": "report"})
+    assert resp.status_code == 200
+    assert seen["config_name"] == "pytest_target_config"
 
 
 def test_start_imagemaid_surfaces_immediate_exit(client, monkeypatch, qs_module):
@@ -292,6 +334,86 @@ def test_imagemaid_status_reports_starting_during_startup_grace(client, tmp_path
     data = resp.get_json()
     assert data["status"] == "starting"
     assert data["pid"] == 4321
+
+
+def test_imagemaid_status_reports_metrics_and_maintenance(client, tmp_path, monkeypatch, qs_module):
+    pid_file = tmp_path / "imagemaid.pid"
+    pid_file.write_text("4321", encoding="utf-8")
+
+    class _FakeMemInfo:
+        rss = 48 * 1024 * 1024
+
+    class _FakeVM:
+        total = 8 * 1024 * 1024 * 1024
+        available = 6 * 1024 * 1024 * 1024
+        percent = 25.0
+
+    class FakeProc:
+        def __init__(self, pid):
+            self.pid = pid
+
+        def create_time(self):
+            return qs_module.time.time() - 12
+
+        def is_running(self):
+            return True
+
+        def status(self):
+            return qs_module.psutil.STATUS_RUNNING
+
+        def cmdline(self):
+            return ["python", "imagemaid.py", "--mode", "report"]
+
+        def memory_info(self):
+            return _FakeMemInfo()
+
+        def children(self, recursive=True):
+            return []
+
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: 4321)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid_file", lambda: str(pid_file))
+    monkeypatch.setattr(qs_module, "_find_running_imagemaid_process", lambda: None)
+    monkeypatch.setattr(qs_module.psutil, "Process", FakeProc)
+    monkeypatch.setattr(qs_module.psutil, "virtual_memory", lambda: _FakeVM())
+    monkeypatch.setattr(qs_module, "_calculate_process_cpu_percent", lambda proc: 1.75)
+    monkeypatch.setattr(qs_module, "_calculate_system_cpu_percent", lambda: 5.5)
+    monkeypatch.setattr(
+        qs_module,
+        "_calculate_process_io_stats",
+        lambda proc, cache_name: {
+            "disk_read_mb": 512.0,
+            "disk_write_mb": 96.0,
+            "disk_read_rate_mb_s": 8.5,
+            "disk_write_rate_mb_s": 1.25,
+        },
+    )
+    monkeypatch.setattr(qs_module, "_get_imagemaid_run_context", lambda: {"command": "python imagemaid.py --mode report", "mode": "report", "config_name": "demo"})
+    with qs_module.MAINTENANCE_STATE_LOCK:
+        qs_module.MAINTENANCE_STATE["active"] = True
+        qs_module.MAINTENANCE_STATE["window"] = "02:00-05:00"
+        qs_module.MAINTENANCE_STATE["imagemaid_paused"] = True
+        qs_module.MAINTENANCE_STATE["imagemaid_paused_since"] = "2026-05-05T06:00:00+00:00"
+
+    resp = client.get("/imagemaid-status")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "running"
+    assert data["cpu_percent"] == 1.8
+    assert data["memory_rss_mb"] == 48.0
+    assert data["system_cpu_percent"] == 5.5
+    assert data["disk_read_mb"] == 512.0
+    assert data["disk_write_mb"] == 96.0
+    assert data["disk_read_rate_mb_s"] == 8.5
+    assert data["disk_write_rate_mb_s"] == 1.25
+    assert data["maintenance_active"] is True
+    assert data["maintenance_paused"] is True
+    assert data["maintenance_window"] == "02:00-05:00"
+    assert data["active_command"] == "python imagemaid.py --mode report"
+    with qs_module.MAINTENANCE_STATE_LOCK:
+        qs_module.MAINTENANCE_STATE["active"] = False
+        qs_module.MAINTENANCE_STATE["window"] = None
+        qs_module.MAINTENANCE_STATE["imagemaid_paused"] = False
+        qs_module.MAINTENANCE_STATE["imagemaid_paused_since"] = None
 
 
 def test_validate_imagemaid_restore_requires_restore_dir(tmp_path, monkeypatch, qs_module):
@@ -578,6 +700,152 @@ def test_autosave_imagemaid_persists_settings(client, isolated_config_dir):
     assert saved["imagemaid"]["photo_transcoder"] is True
 
 
+def test_autosave_imagemaid_targets_explicit_config_name(client, isolated_config_dir):
+    import modules.database as database
+
+    with client.session_transaction() as session_state:
+        session_state["config_name"] = "pytest_source_config"
+
+    resp = client.post(
+        "/autosave-imagemaid",
+        json={
+            "config_name": "pytest_target_config",
+            "plex_path": "P:\\Plex",
+            "mode": "move",
+            "branch_override": "develop",
+            "timeout": "45",
+            "sleep": "5",
+            "photo_transcoder": True,
+            "empty_trash": True,
+            "clean_bundles": True,
+            "optimize_db": True,
+            "local_db": True,
+            "use_existing": True,
+            "ignore_running": True,
+            "trace": True,
+            "log_requests": True,
+            "no_verify_ssl": True,
+            "overlays_only": True,
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["success"] is True
+
+    source_validated, source_user_entered, source_saved = database.retrieve_section_data("pytest_source_config", "imagemaid")
+    assert source_saved is None
+    assert source_validated is False
+    assert source_user_entered is False
+
+    _, target_user_entered, target_saved = database.retrieve_section_data("pytest_target_config", "imagemaid")
+    assert target_user_entered is True
+    assert target_saved["imagemaid"]["plex_path"] == "P:\\Plex"
+    assert target_saved["imagemaid"]["mode"] == "move"
+    assert target_saved["imagemaid"]["branch_override"] == "develop"
+    assert target_saved["imagemaid"]["timeout"] == 45
+    assert target_saved["imagemaid"]["sleep"] == 5
+    assert target_saved["imagemaid"]["photo_transcoder"] is True
+    assert target_saved["imagemaid"]["empty_trash"] is True
+    assert target_saved["imagemaid"]["clean_bundles"] is True
+    assert target_saved["imagemaid"]["optimize_db"] is True
+    assert target_saved["imagemaid"]["local_db"] is True
+    assert target_saved["imagemaid"]["use_existing"] is True
+    assert target_saved["imagemaid"]["ignore_running"] is True
+    assert target_saved["imagemaid"]["trace"] is True
+    assert target_saved["imagemaid"]["log_requests"] is True
+    assert target_saved["imagemaid"]["no_verify_ssl"] is True
+    assert target_saved["imagemaid"]["overlays_only"] is True
+
+
+def test_autosave_imagemaid_does_not_clear_validation_when_payload_is_unchanged(client, isolated_config_dir):
+    import modules.database as database
+
+    with client.session_transaction() as session_state:
+        session_state["config_name"] = "pytest_imagemaid_unchanged"
+
+    database.save_section_data(
+        name="pytest_imagemaid_unchanged",
+        section="imagemaid",
+        validated=True,
+        user_entered=True,
+        data={
+            "imagemaid": {
+                "plex_path": "P:\\Plex",
+                "mode": "report",
+                "timeout": 600,
+                "sleep": 60,
+                "photo_transcoder": True,
+            },
+            "validated_at": "2026-05-06T00:00:00+00:00",
+            "validation_status": "validated",
+            "validation_updated_at": "2026-05-06T00:00:00+00:00",
+        },
+    )
+
+    resp = client.post(
+        "/autosave-imagemaid",
+        json={
+            "config_name": "pytest_imagemaid_unchanged",
+            "plex_path": "P:\\Plex",
+            "mode": "report",
+            "timeout": "600",
+            "sleep": "60",
+            "photo_transcoder": True,
+        },
+    )
+    assert resp.status_code == 200
+
+    validated, user_entered, saved = database.retrieve_section_data("pytest_imagemaid_unchanged", "imagemaid")
+    assert validated is True
+    assert user_entered is True
+    assert saved["validation_status"] == "validated"
+    assert saved["validated_at"] == "2026-05-06T00:00:00+00:00"
+
+
+def test_validate_imagemaid_targets_explicit_config_name(client, isolated_config_dir, monkeypatch, qs_module):
+    import modules.database as database
+
+    with client.session_transaction() as session_state:
+        session_state["config_name"] = "pytest_source_config"
+
+    seen = {}
+
+    def fake_validate(section_data, config_name=None):
+        seen["config_name"] = config_name
+        return True, None, None
+
+    monkeypatch.setattr(qs_module, "_validate_imagemaid_settings", fake_validate)
+    monkeypatch.setattr(qs_module, "_persist_imagemaid_validation", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(qs_module, "_get_stored_plex_credentials_for_config", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
+    monkeypatch.setattr(qs_module, "_build_imagemaid_command", lambda *_args, **_kwargs: "python imagemaid.py --mode report")
+
+    resp = client.post(
+        "/validate-imagemaid",
+        json={
+            "config_name": "pytest_target_config",
+            "plex_path": "P:\\Plex",
+            "mode": "move",
+            "clean_bundles": True,
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["success"] is True
+    assert data["validated"] is True
+    assert seen["config_name"] == "pytest_target_config"
+
+    source_validated, source_user_entered, source_saved = database.retrieve_section_data("pytest_source_config", "imagemaid")
+    assert source_saved is None
+    assert source_validated is False
+    assert source_user_entered is False
+
+    _, target_user_entered, target_saved = database.retrieve_section_data("pytest_target_config", "imagemaid")
+    assert target_user_entered is True
+    assert target_saved["imagemaid"]["plex_path"] == "P:\\Plex"
+    assert target_saved["imagemaid"]["mode"] == "move"
+    assert target_saved["imagemaid"]["clean_bundles"] is True
+
+
 def test_tail_imagemaid_log_reads_runtime_log_only(client, isolated_config_dir, monkeypatch, qs_module):
     imagemaid_root = isolated_config_dir / "imagemaid"
     log_dir = imagemaid_root / "config" / "logs"
@@ -630,6 +898,27 @@ def test_tail_imagemaid_log_hides_executor_shutdown_noise(client, isolated_confi
     assert "Exception ignored in:" not in data["text"]
     assert "weakref_cb" not in data["text"]
     assert "AttributeError: 'NoneType' object has no attribute 'debug'" not in data["text"]
+
+
+def test_tail_imagemaid_log_appends_maintenance_sidecar(client, isolated_config_dir, qs_module):
+    imagemaid_root = isolated_config_dir / "imagemaid"
+    log_dir = imagemaid_root / "config" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    qs_module.app.config["IMAGEMAID_ROOT"] = str(imagemaid_root)
+
+    regular_log = log_dir / "imagemaid.log"
+    regular_log.write_text("runtime log line\n", encoding="utf-8")
+    sidecar_log = log_dir / "imagemaid.quickstart-maintenance.log"
+    sidecar_log.write_text("[Quickstart] Maintenance marker: event=paused tool=imagemaid\n", encoding="utf-8")
+
+    resp = client.get("/tail-imagemaid-log?lines=50")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["success"] is True
+    assert "runtime log line" in data["text"]
+    assert "event=paused" in data["text"]
+    assert data["requested_lines"] == 50
+    assert data["total_lines"] == 2
 
 
 def test_stop_imagemaid_writes_stop_marker(tmp_path, client, monkeypatch, qs_module):

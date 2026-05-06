@@ -2613,7 +2613,8 @@ $(document).ready(function () {
   const SPARKLINE_MAX_POINTS = 40
   const runSparkState = {
     cpu: { system: [], kometa: [] },
-    mem: { system: [], kometa: [] }
+    mem: { system: [], kometa: [] },
+    io: { read: [], write: [] }
   }
 
   function clampPercent (value) {
@@ -2644,22 +2645,42 @@ $(document).ready(function () {
     }).join(' ')
   }
 
+  function buildSparklinePointsScaled (series, maxValue) {
+    if (!series.length) return ''
+    const safeMax = typeof maxValue === 'number' && Number.isFinite(maxValue) && maxValue > 0 ? maxValue : 1
+    const normalized = series.map(value => {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return 0
+      return Math.max(0, Math.min(100, (value / safeMax) * 100))
+    })
+    return buildSparklinePoints(normalized)
+  }
+
   function renderRunSparklines () {
     if (!$runStatusSparklines.length) return
     const hasData = runSparkState.cpu.system.length || runSparkState.cpu.kometa.length ||
-      runSparkState.mem.system.length || runSparkState.mem.kometa.length
+      runSparkState.mem.system.length || runSparkState.mem.kometa.length ||
+      runSparkState.io.read.length || runSparkState.io.write.length
     $runStatusSparklines.toggleClass('d-none', !hasData)
     if (!hasData) {
       if ($runSparkCpuSystem.length) $runSparkCpuSystem.attr('points', '')
       if ($runSparkCpuKometa.length) $runSparkCpuKometa.attr('points', '')
       if ($runSparkMemSystem.length) $runSparkMemSystem.attr('points', '')
       if ($runSparkMemKometa.length) $runSparkMemKometa.attr('points', '')
+      const $runSparkIoRead = $('#run-spark-io-read')
+      const $runSparkIoWrite = $('#run-spark-io-write')
+      if ($runSparkIoRead.length) $runSparkIoRead.attr('points', '')
+      if ($runSparkIoWrite.length) $runSparkIoWrite.attr('points', '')
       return
     }
     if ($runSparkCpuSystem.length) $runSparkCpuSystem.attr('points', buildSparklinePoints(runSparkState.cpu.system))
     if ($runSparkCpuKometa.length) $runSparkCpuKometa.attr('points', buildSparklinePoints(runSparkState.cpu.kometa))
     if ($runSparkMemSystem.length) $runSparkMemSystem.attr('points', buildSparklinePoints(runSparkState.mem.system))
     if ($runSparkMemKometa.length) $runSparkMemKometa.attr('points', buildSparklinePoints(runSparkState.mem.kometa))
+    const $runSparkIoRead = $('#run-spark-io-read')
+    const $runSparkIoWrite = $('#run-spark-io-write')
+    const ioMax = Math.max(0, ...runSparkState.io.read, ...runSparkState.io.write)
+    if ($runSparkIoRead.length) $runSparkIoRead.attr('points', buildSparklinePointsScaled(runSparkState.io.read, ioMax))
+    if ($runSparkIoWrite.length) $runSparkIoWrite.attr('points', buildSparklinePointsScaled(runSparkState.io.write, ioMax))
   }
 
   function resetRunSparklines () {
@@ -2667,6 +2688,8 @@ $(document).ready(function () {
     runSparkState.cpu.kometa = []
     runSparkState.mem.system = []
     runSparkState.mem.kometa = []
+    runSparkState.io.read = []
+    runSparkState.io.write = []
     renderRunSparklines()
   }
 
@@ -2679,10 +2702,18 @@ $(document).ready(function () {
     const cpuKometa = clampPercent(data.cpu_percent)
     const memSystem = clampPercent(data.system_memory_percent)
     const memKometa = clampPercent(data.memory_percent)
+    const ioRead = (typeof data.disk_read_rate_mb_s === 'number' && Number.isFinite(data.disk_read_rate_mb_s))
+      ? Math.max(0, data.disk_read_rate_mb_s)
+      : null
+    const ioWrite = (typeof data.disk_write_rate_mb_s === 'number' && Number.isFinite(data.disk_write_rate_mb_s))
+      ? Math.max(0, data.disk_write_rate_mb_s)
+      : null
     pushSparkValue(runSparkState.cpu.system, cpuSystem)
     pushSparkValue(runSparkState.cpu.kometa, cpuKometa)
     pushSparkValue(runSparkState.mem.system, memSystem)
     pushSparkValue(runSparkState.mem.kometa, memKometa)
+    pushSparkValue(runSparkState.io.read, ioRead)
+    pushSparkValue(runSparkState.io.write, ioWrite)
     renderRunSparklines()
   }
 
@@ -2717,8 +2748,23 @@ $(document).ready(function () {
       const sysPct = (typeof data.system_memory_percent === 'number' && Number.isFinite(data.system_memory_percent))
         ? `${data.system_memory_percent.toFixed(1)}%`
         : 'n/a'
+      const formatDiskMb = (valueMb) => {
+        if (typeof valueMb !== 'number' || !Number.isFinite(valueMb)) return 'n/a'
+        if (valueMb >= 1024) return `${(valueMb / 1024).toFixed(1)} GB`
+        return `${valueMb.toFixed(1)} MB`
+      }
+      const formatDiskRate = (valueMbS) => {
+        if (typeof valueMbS !== 'number' || !Number.isFinite(valueMbS)) return 'n/a'
+        if (valueMbS >= 1024) return `${(valueMbS / 1024).toFixed(2)} GB/s`
+        return `${valueMbS.toFixed(2)} MB/s`
+      }
+      const hasDiskData = [data.disk_read_mb, data.disk_write_mb, data.disk_read_rate_mb_s, data.disk_write_rate_mb_s]
+        .some(value => typeof value === 'number' && Number.isFinite(value))
+      const diskText = hasDiskData
+        ? ` | Disk: R ${formatDiskRate(data.disk_read_rate_mb_s)} • W ${formatDiskRate(data.disk_write_rate_mb_s)} • ${formatDiskMb(data.disk_read_mb)} read • ${formatDiskMb(data.disk_write_mb)} written`
+        : ''
       $runStatusTimer.text(`Running since: ${startedAt} • Elapsed: ${elapsed || 'n/a'}`)
-      $runStatusMetrics.text(`Kometa: ${cpuText} CPU • ${memRss} (${memPct}) | System: ${sysCpu} CPU • ${sysUsed} / ${sysTotal} (${sysPct})`)
+      $runStatusMetrics.text(`Kometa: ${cpuText} CPU • ${memRss} (${memPct}) | System: ${sysCpu} CPU • ${sysUsed} / ${sysTotal} (${sysPct})${diskText}`)
     } else if (data && data.status === 'done') {
       $runStatusTimer.text('Kometa run complete.')
       $runStatusMetrics.text('')

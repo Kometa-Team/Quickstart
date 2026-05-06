@@ -308,8 +308,110 @@
             </button>
           </div>
 
-          <div class="small text-muted mb-2" id="imagemaid-run-status">ImageMaid is not running.</div>
-          <pre id="imagemaid-run-log" class="bg-black text-light small rounded p-3 mb-0" style="min-height: 220px; max-height: 360px; overflow:auto;">No ImageMaid log loaded.</pre>
+          <div class="d-flex flex-wrap align-items-center gap-3 mb-2 small text-muted" id="imagemaid-run-status-row">
+            <span id="imagemaid-run-status-timer"></span>
+            <span id="imagemaid-run-status-metrics"></span>
+            <span id="imagemaid-run-status-log"></span>
+            <div class="d-flex align-items-start gap-2 flex-wrap d-none" id="imagemaid-run-status-sparklines">
+              <div class="run-sparkline">
+                <div class="run-sparkline-header">
+                  <span class="run-sparkline-label">CPU</span>
+                  <span class="run-sparkline-axis">0-100%</span>
+                </div>
+                <svg id="imagemaid-run-spark-cpu" viewBox="0 0 180 48" width="180" height="48" aria-hidden="true">
+                  <polyline id="imagemaid-run-spark-cpu-system" class="run-sparkline-system" points=""></polyline>
+                  <polyline id="imagemaid-run-spark-cpu-imagemaid" class="run-sparkline-kometa" points=""></polyline>
+                </svg>
+                <div class="run-sparkline-axis-x">Time</div>
+                <div class="run-sparkline-legend">
+                  <span class="run-sparkline-legend-item">
+                    <span class="run-sparkline-swatch run-sparkline-swatch-system"></span>System
+                  </span>
+                  <span class="run-sparkline-legend-item">
+                    <span class="run-sparkline-swatch run-sparkline-swatch-kometa"></span>ImageMaid
+                  </span>
+                </div>
+              </div>
+              <div class="run-sparkline">
+                <div class="run-sparkline-header">
+                  <span class="run-sparkline-label">Memory</span>
+                  <span class="run-sparkline-axis">0-100%</span>
+                </div>
+                <svg id="imagemaid-run-spark-mem" viewBox="0 0 180 48" width="180" height="48" aria-hidden="true">
+                  <polyline id="imagemaid-run-spark-mem-system" class="run-sparkline-system" points=""></polyline>
+                  <polyline id="imagemaid-run-spark-mem-imagemaid" class="run-sparkline-kometa" points=""></polyline>
+                </svg>
+                <div class="run-sparkline-axis-x">Time</div>
+                <div class="run-sparkline-legend">
+                  <span class="run-sparkline-legend-item">
+                    <span class="run-sparkline-swatch run-sparkline-swatch-system"></span>System
+                  </span>
+                  <span class="run-sparkline-legend-item">
+                    <span class="run-sparkline-swatch run-sparkline-swatch-kometa"></span>ImageMaid
+                  </span>
+                </div>
+              </div>
+              <div class="run-sparkline">
+                <div class="run-sparkline-header">
+                  <span class="run-sparkline-label">Disk I/O</span>
+                  <span class="run-sparkline-axis">MB/s</span>
+                </div>
+                <svg id="imagemaid-run-spark-io" viewBox="0 0 180 48" width="180" height="48" aria-hidden="true">
+                  <polyline id="imagemaid-run-spark-io-read" class="run-sparkline-system" points=""></polyline>
+                  <polyline id="imagemaid-run-spark-io-write" class="run-sparkline-kometa" points=""></polyline>
+                </svg>
+                <div class="run-sparkline-axis-x">Time</div>
+                <div class="run-sparkline-legend">
+                  <span class="run-sparkline-legend-item">
+                    <span class="run-sparkline-swatch run-sparkline-swatch-system"></span>Read
+                  </span>
+                  <span class="run-sparkline-legend-item">
+                    <span class="run-sparkline-swatch run-sparkline-swatch-kometa"></span>Write
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="imagemaid-run-maintenance-row" class="mb-2 d-none"></div>
+          <div class="small text-muted mb-2 d-none" id="imagemaid-run-status">ImageMaid is not running.</div>
+
+          <div class="d-flex flex-wrap align-items-center gap-3 mb-2 small text-muted">
+            <span>Showing last <span id="imagemaid-tail-label">2000</span> lines from the log</span>
+            <div class="form-check form-switch m-0">
+              <input class="form-check-input" type="checkbox" id="imagemaid-log-autoscroll" checked>
+              <label class="form-check-label" for="imagemaid-log-autoscroll">Auto-scroll</label>
+            </div>
+              <div class="d-flex align-items-center gap-2">
+                <label class="mb-0" for="imagemaid-log-tail-size">Tail size</label>
+                <select id="imagemaid-log-tail-size" class="form-select form-select-sm" style="width: 110px;">
+                  <option value="200">200</option>
+                  <option value="2000" selected>2000</option>
+                  <option value="20000">20000</option>
+                  <option value="all">All</option>
+                </select>
+              </div>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="imagemaid-download-log">
+              <i class="bi bi-download me-1"></i> Download log
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="imagemaid-pause-log-polling">
+              <i class="bi bi-pause-circle me-1"></i> Pause
+            </button>
+          </div>
+          <div class="mb-2">
+            <label class="form-label mb-1" for="imagemaid-log-filter">Filter</label>
+            <input type="text" class="form-control" id="imagemaid-log-filter" placeholder="Regex or text">
+          </div>
+          <div class="d-flex flex-wrap gap-2 mb-2 small" id="imagemaid-log-stats">
+            <span class="btn btn-sm btn-dark disabled">FILTER <span data-imagemaid-log-stat="filter">0</span></span>
+            <button type="button" class="btn btn-sm btn-outline-secondary imagemaid-log-level-btn" data-level="CACHE">CACHE <span data-imagemaid-log-stat="cache">0</span></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary imagemaid-log-level-btn" data-level="[DEBUG]">DEBUG <span data-imagemaid-log-stat="debug">0</span></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary imagemaid-log-level-btn" data-level="[INFO]">INFO <span data-imagemaid-log-stat="info">0</span></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary imagemaid-log-level-btn" data-level="[WARNING]">WARN <span data-imagemaid-log-stat="warn">0</span></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary imagemaid-log-level-btn" data-level="[ERROR]">ERROR <span data-imagemaid-log-stat="error">0</span></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary imagemaid-log-level-btn" data-level="[CRITICAL]">CRIT <span data-imagemaid-log-stat="crit">0</span></button>
+            <button type="button" class="btn btn-sm btn-outline-secondary imagemaid-log-level-btn" data-level="[TRACE]">TRACE <span data-imagemaid-log-stat="trace">0</span></button>
+          </div>
+          <pre id="imagemaid-run-log" class="bg-black text-light small rounded p-3 mb-0" style="min-height: 220px; max-height: 360px; overflow:auto; white-space: pre;">No ImageMaid log loaded.</pre>
         </div>
       </div>
     </div>
