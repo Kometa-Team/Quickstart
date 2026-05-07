@@ -1770,7 +1770,7 @@ def _resolve_maintenance_window_from_db(config_name=None):
         return _get_maintenance_window_from_db()
 
 
-def _refresh_maintenance_window_availability():
+def _refresh_maintenance_window_availability(preserve_active_state=False):
     maintenance_config_name = _get_active_maintenance_lookup_config_name()
     start_min, end_min, window_str = _resolve_maintenance_window_live(config_name=maintenance_config_name)
     if start_min is None or end_min is None:
@@ -1783,8 +1783,14 @@ def _refresh_maintenance_window_availability():
     active = _is_within_maintenance_window(datetime.now(), start_min, end_min)
 
     with MAINTENANCE_STATE_LOCK:
-        MAINTENANCE_STATE["active"] = active
-        MAINTENANCE_STATE["window"] = window_str
+        if preserve_active_state and (
+            MAINTENANCE_STATE.get("paused") or MAINTENANCE_STATE.get("imagemaid_paused")
+        ):
+            if window_str:
+                MAINTENANCE_STATE["window"] = window_str
+        else:
+            MAINTENANCE_STATE["active"] = active
+            MAINTENANCE_STATE["window"] = window_str
         if window_unavailable and (kometa_running or imagemaid_running or has_pending):
             if not MAINTENANCE_STATE.get("window_unavailable"):
                 MAINTENANCE_STATE["window_unavailable_since"] = datetime.now(timezone.utc).isoformat()
@@ -1841,16 +1847,28 @@ def _find_running_kometa_processes():
     except Exception:
         kometa_root = None
     matches = []
-    for proc in psutil.process_iter(["pid", "cmdline", "create_time"]):
+    for proc in psutil.process_iter():
         try:
-            cmdline = proc.info.get("cmdline") or []
+            cmdline = []
+            if hasattr(proc, "info"):
+                cmdline = proc.info.get("cmdline") or []
+            if not cmdline:
+                cmdline = proc.cmdline() or []
             joined = " ".join(cmdline)
         except Exception:
             continue
         if "kometa.py" not in joined:
             continue
         has_root = bool(kometa_root and kometa_root in joined)
-        create_time = proc.info.get("create_time") or 0
+        try:
+            create_time = proc.info.get("create_time") if hasattr(proc, "info") else None
+        except Exception:
+            create_time = None
+        if create_time is None:
+            try:
+                create_time = proc.create_time()
+            except Exception:
+                create_time = 0
         matches.append((has_root, create_time, proc))
     matches.sort(key=lambda item: (1 if item[0] else 0, item[1]), reverse=True)
     return [entry[2] for entry in matches]
@@ -1868,16 +1886,28 @@ def _find_running_imagemaid_processes():
     except Exception:
         imagemaid_root = None
     matches = []
-    for proc in psutil.process_iter(["pid", "cmdline", "create_time"]):
+    for proc in psutil.process_iter():
         try:
-            cmdline = proc.info.get("cmdline") or []
+            cmdline = []
+            if hasattr(proc, "info"):
+                cmdline = proc.info.get("cmdline") or []
+            if not cmdline:
+                cmdline = proc.cmdline() or []
             joined = " ".join(cmdline)
         except Exception:
             continue
         if "imagemaid.py" not in joined:
             continue
         has_root = bool(imagemaid_root and imagemaid_root in joined)
-        create_time = proc.info.get("create_time") or 0
+        try:
+            create_time = proc.info.get("create_time") if hasattr(proc, "info") else None
+        except Exception:
+            create_time = None
+        if create_time is None:
+            try:
+                create_time = proc.create_time()
+            except Exception:
+                create_time = 0
         matches.append((has_root, create_time, proc))
     matches.sort(key=lambda item: (1 if item[0] else 0, item[1]), reverse=True)
     return [entry[2] for entry in matches]
@@ -8258,7 +8288,7 @@ def stop_kometa():
 @app.route("/kometa-status", methods=["GET"])
 def kometa_status():
     try:
-        _refresh_maintenance_window_availability()
+        _refresh_maintenance_window_availability(preserve_active_state=True)
     except Exception:
         pass
     pending = _peek_pending_kometa_start()
@@ -14504,7 +14534,7 @@ def stop_imagemaid():
 @app.route("/imagemaid-status", methods=["GET"])
 def imagemaid_status():
     try:
-        _refresh_maintenance_window_availability()
+        _refresh_maintenance_window_availability(preserve_active_state=True)
     except Exception:
         pass
     pid = helpers.get_imagemaid_pid()
