@@ -551,6 +551,20 @@ $(document).ready(function () {
     return getCount(run, 'warning_count') + getCount(run, 'error_count') + getCount(run, 'trace_count')
   }
 
+  function getDisplayedItemsTotal (run) {
+    if (getRunToolName(run) === 'imagemaid') {
+      const cache = getCount(run, 'cache_line_count')
+      const debug = getCount(run, 'debug_count')
+      const info = getCount(run, 'info_count')
+      const warnings = getCount(run, 'warning_count')
+      const errors = getCount(run, 'error_count')
+      const critical = getCount(run, 'critical_count')
+      const traces = getCount(run, 'trace_count')
+      return cache + debug + info + warnings + errors + critical + traces
+    }
+    return getRunLibraryTotals(run).total
+  }
+
   function renderInfoDot (helpText) {
     return `<span class="logscan-info-dot" tabindex="0" title="${escapeHtml(helpText)}" data-help="${escapeHtml(helpText)}" aria-label="${escapeHtml(helpText)}">i</span>`
   }
@@ -2306,7 +2320,10 @@ $(document).ready(function () {
       case 'counts':
         return getCountsTotal(run)
       case 'warning_count':
+      case 'debug_count':
+      case 'info_count':
       case 'error_count':
+      case 'critical_count':
       case 'trace_count':
         return getCount(run, key)
       case 'config_line_count':
@@ -2321,6 +2338,8 @@ $(document).ready(function () {
         return getRunLibraryTotals(run).episodes
       case 'library_total':
         return getRunLibraryTotals(run).total
+      case 'items_total':
+        return getDisplayedItemsTotal(run)
       case 'kometa_version':
         return run.kometa_version || ''
       case 'maintenance':
