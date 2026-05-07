@@ -1671,8 +1671,8 @@ def _is_within_maintenance_window(now_dt, start_min, end_min):
     return now_min >= start_min or now_min < end_min
 
 
-def _get_maintenance_window_from_db():
-    config_name = database.get_last_used_config_name()
+def _get_maintenance_window_from_db(config_name=None):
+    config_name = helpers.normalize_config_name_for_storage(config_name) or database.get_last_used_config_name()
     if not config_name:
         return None, None, None
     try:
@@ -1696,8 +1696,8 @@ def _get_maintenance_window_from_db():
         return None, None, None
 
 
-def _get_plex_credentials_from_db():
-    config_name = database.get_last_used_config_name()
+def _get_plex_credentials_from_db(config_name=None):
+    config_name = helpers.normalize_config_name_for_storage(config_name) or database.get_last_used_config_name()
     if not config_name:
         return None, None
     try:
@@ -1711,8 +1711,8 @@ def _get_plex_credentials_from_db():
         return None, None
 
 
-def _get_maintenance_window_live():
-    plex_url, plex_token = _get_plex_credentials_from_db()
+def _get_maintenance_window_live(config_name=None):
+    plex_url, plex_token = _get_plex_credentials_from_db(config_name=config_name)
     if not plex_url or not plex_token:
         return None, None, None
     start_hour, end_hour = helpers.get_plex_maintenance_hours(plex_url, plex_token)
@@ -1720,6 +1720,78 @@ def _get_maintenance_window_live():
         return None, None, None
     window_str = f"{start_hour:02d}:00 – {end_hour:02d}:00"
     return start_hour * 60, end_hour * 60, window_str
+
+
+def _get_active_maintenance_lookup_config_name():
+    def normalize_optional_config_name(value):
+        raw = str(value or "").strip()
+        if not raw:
+            return ""
+        return helpers.normalize_config_name_for_storage(raw)
+
+    kometa_running = bool(helpers.get_kometa_pid() and helpers.is_kometa_running())
+    imagemaid_running = bool(helpers.get_imagemaid_pid() and helpers.is_imagemaid_running())
+
+    try:
+        kometa_ctx = _get_run_context()
+    except Exception:
+        kometa_ctx = {}
+    kometa_config = normalize_optional_config_name((kometa_ctx or {}).get("config_name"))
+    if kometa_running and kometa_config:
+        return kometa_config
+
+    try:
+        imagemaid_ctx = _get_imagemaid_run_context()
+    except Exception:
+        imagemaid_ctx = {}
+    imagemaid_config = normalize_optional_config_name((imagemaid_ctx or {}).get("config_name"))
+    if imagemaid_running and imagemaid_config:
+        return imagemaid_config
+
+    pending = _peek_pending_kometa_start()
+    pending_config = normalize_optional_config_name((pending or {}).get("config_name"))
+    if pending_config:
+        return pending_config
+
+    return database.get_last_used_config_name()
+
+
+def _resolve_maintenance_window_live(config_name=None):
+    try:
+        return _get_maintenance_window_live(config_name=config_name)
+    except TypeError:
+        return _get_maintenance_window_live()
+
+
+def _resolve_maintenance_window_from_db(config_name=None):
+    try:
+        return _get_maintenance_window_from_db(config_name=config_name)
+    except TypeError:
+        return _get_maintenance_window_from_db()
+
+
+def _refresh_maintenance_window_availability():
+    maintenance_config_name = _get_active_maintenance_lookup_config_name()
+    start_min, end_min, window_str = _resolve_maintenance_window_live(config_name=maintenance_config_name)
+    if start_min is None or end_min is None:
+        start_min, end_min, window_str = _resolve_maintenance_window_from_db(config_name=maintenance_config_name)
+    window_unavailable = start_min is None or end_min is None
+
+    kometa_running = bool(helpers.get_kometa_pid() and helpers.is_kometa_running())
+    imagemaid_running = bool(helpers.get_imagemaid_pid() and helpers.is_imagemaid_running())
+    has_pending = bool(_peek_pending_kometa_start())
+    active = _is_within_maintenance_window(datetime.now(), start_min, end_min)
+
+    with MAINTENANCE_STATE_LOCK:
+        MAINTENANCE_STATE["active"] = active
+        MAINTENANCE_STATE["window"] = window_str
+        if window_unavailable and (kometa_running or imagemaid_running or has_pending):
+            if not MAINTENANCE_STATE.get("window_unavailable"):
+                MAINTENANCE_STATE["window_unavailable_since"] = datetime.now(timezone.utc).isoformat()
+            MAINTENANCE_STATE["window_unavailable"] = True
+        else:
+            MAINTENANCE_STATE["window_unavailable"] = False
+            MAINTENANCE_STATE["window_unavailable_since"] = None
 
 
 def _normalize_kometa_start_mode(raw_mode):
@@ -2029,6 +2101,20 @@ def _get_run_context():
         return dict(RUN_CONTEXT)
 
 
+def _clear_run_context():
+    with RUN_CONTEXT_LOCK:
+        RUN_CONTEXT["command"] = None
+        RUN_CONTEXT["selected_libraries"] = None
+        RUN_CONTEXT["run_option"] = None
+        RUN_CONTEXT["run_mode"] = "all"
+        RUN_CONTEXT["start_mode"] = "current"
+        RUN_CONTEXT["config_name"] = None
+        RUN_CONTEXT["config_path"] = None
+        RUN_CONTEXT["started_at"] = None
+        RUN_CONTEXT["updated_at"] = None
+        RUN_CONTEXT["stop_requested_at"] = None
+
+
 def _normalize_imagemaid_command_text(command):
     if isinstance(command, (list, tuple)):
         return " ".join(str(part) for part in command if str(part).strip())
@@ -2047,6 +2133,15 @@ def _update_imagemaid_run_context(command, mode=None, config_name=None):
 def _get_imagemaid_run_context():
     with IMAGEMAID_RUN_CONTEXT_LOCK:
         return dict(IMAGEMAID_RUN_CONTEXT)
+
+
+def _clear_imagemaid_run_context():
+    with IMAGEMAID_RUN_CONTEXT_LOCK:
+        IMAGEMAID_RUN_CONTEXT["command"] = None
+        IMAGEMAID_RUN_CONTEXT["mode"] = None
+        IMAGEMAID_RUN_CONTEXT["config_name"] = None
+        IMAGEMAID_RUN_CONTEXT["started_at"] = None
+        IMAGEMAID_RUN_CONTEXT["updated_at"] = None
 
 
 def _suspend_process_tree(proc):
@@ -2087,9 +2182,10 @@ def _maintenance_guard_loop(app_in):
     with app_in.app_context():
         while True:
             time.sleep(interval)
-            start_min, end_min, window_str = _get_maintenance_window_live()
+            maintenance_config_name = _get_active_maintenance_lookup_config_name()
+            start_min, end_min, window_str = _resolve_maintenance_window_live(config_name=maintenance_config_name)
             if start_min is None or end_min is None:
-                start_min, end_min, window_str = _get_maintenance_window_from_db()
+                start_min, end_min, window_str = _resolve_maintenance_window_from_db(config_name=maintenance_config_name)
             window_unavailable = start_min is None or end_min is None
             pid = helpers.get_kometa_pid()
             kometa_running = pid and helpers.is_kometa_running()
@@ -5686,7 +5782,35 @@ def step(name):
         if validation_errors:
             save_error = "Invalid values: " + " ".join(validation_errors)
         else:
-            persistence.save_settings(request.referrer, request.form)
+            save_source, save_source_name = persistence.extract_names(request.referrer or name)
+            if save_source_name == "imagemaid":
+                request_payload = request.form.to_dict(flat=True)
+                request_payload["config_name"] = (
+                    session.get("config_name")
+                    or request_payload.get("config_name")
+                    or request_payload.get("configSelector")
+                )
+                config_name = _resolve_request_config_name(request_payload)
+                existing_settings, _existing_section = _get_imagemaid_settings_section(config_name)
+                was_validated = helpers.booler(existing_settings.get("validated", False))
+                # Step navigation posts the page's native form field names (imagemaid_*),
+                # unlike the JSON autosave/validate routes, so save those directly.
+                form_payload = dict(request.form)
+                form_payload["config_name"] = config_name
+                changed = False
+                if form_payload:
+                    _saved_payload, changed = _save_imagemaid_settings_for_config(config_name, form_payload)
+                _settings_after, section_data = _get_imagemaid_settings_section(config_name)
+                if changed and was_validated:
+                    _persist_imagemaid_validation(
+                        config_name,
+                        section_data,
+                        False,
+                        reason="config_changed",
+                        details="Configuration changed. Validate ImageMaid again.",
+                    )
+            else:
+                persistence.save_settings(request.referrer, request.form)
             header_style = request.form.get("header_style", "single line")
 
     # --- Detect config change ---
@@ -8047,9 +8171,10 @@ def start_kometa():
 
     _update_run_context(command, start_mode=start_mode)
 
-    start_min, end_min, window_str = _get_maintenance_window_live()
+    maintenance_config_name = session.get("config_name")
+    start_min, end_min, window_str = _resolve_maintenance_window_live(config_name=maintenance_config_name)
     if start_min is None or end_min is None:
-        start_min, end_min, window_str = _get_maintenance_window_from_db()
+        start_min, end_min, window_str = _resolve_maintenance_window_from_db(config_name=maintenance_config_name)
     if _is_within_maintenance_window(datetime.now(), start_min, end_min):
         _set_pending_kometa_start(command, session.get("config_name"), start_mode=start_mode)
         return jsonify({"status": "queued", "maintenance_window": window_str, "start_mode": start_mode}), 202
@@ -8101,6 +8226,7 @@ def stop_kometa():
         except Exception:
             pass
         _clear_process_metric_cache(pid, "kometa")
+        _clear_run_context()
         try:
             _write_quickstart_stop_marker(helpers.get_kometa_root_path(), config_name=run_config_name, reason="user_stop")
         except Exception:
@@ -8119,6 +8245,7 @@ def stop_kometa():
             os.remove(pid_file)
         except Exception:
             pass
+        _clear_run_context()
         try:
             _write_quickstart_stop_marker(helpers.get_kometa_root_path(), config_name=session.get("config_name"), reason="process_missing")
         except Exception:
@@ -8130,6 +8257,10 @@ def stop_kometa():
 
 @app.route("/kometa-status", methods=["GET"])
 def kometa_status():
+    try:
+        _refresh_maintenance_window_availability()
+    except Exception:
+        pass
     pending = _peek_pending_kometa_start()
     pending_start = bool(pending)
     pending_requested_at = pending.get("requested_at") if pending else None
@@ -8151,6 +8282,7 @@ def kometa_status():
             _ingest_completed_live_logs("kometa")
         except Exception:
             pass
+        _clear_run_context()
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
             maintenance_paused = MAINTENANCE_STATE["paused"]
@@ -8254,6 +8386,7 @@ def kometa_status():
         except Exception:
             pass
         _clear_process_metric_cache(pid, "kometa")
+        _clear_run_context()
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
             maintenance_paused = MAINTENANCE_STATE["paused"]
@@ -8283,6 +8416,7 @@ def kometa_status():
             os.remove(helpers.get_kometa_pid_file())
         except Exception:
             pass
+        _clear_run_context()
         with MAINTENANCE_STATE_LOCK:
             maintenance_active = MAINTENANCE_STATE["active"]
             maintenance_paused = MAINTENANCE_STATE["paused"]
@@ -13490,17 +13624,20 @@ def _get_stored_plex_credentials_for_config(config_name):
 def _save_imagemaid_settings_for_config(config_name, form_payload):
     clean_data = persistence.clean_form_data(form_payload)
     data = helpers.build_config_dict("imagemaid", clean_data)
-    base_data = persistence.get_dummy_data("imagemaid")
     stored_validated, stored_user_entered, stored_payload = database.retrieve_section_data(config_name, "imagemaid")
     existing_payload = stored_payload if isinstance(stored_payload, dict) else {}
     existing_section = existing_payload.get("imagemaid", {}) if isinstance(existing_payload.get("imagemaid"), dict) else {}
+    canonical_existing_section = _canonicalize_imagemaid_section(existing_section)
+    canonical_new_section = _canonicalize_imagemaid_section(
+        data.get("imagemaid", {}) if isinstance(data.get("imagemaid"), dict) else {}
+    )
     payload = dict(existing_payload)
-    payload["imagemaid"] = data.get("imagemaid", {}) if isinstance(data.get("imagemaid"), dict) else {}
+    payload["imagemaid"] = canonical_new_section
     if "validated_at" in data:
         payload["validated_at"] = data.get("validated_at")
     elif existing_payload.get("validated_at") is not None:
         payload["validated_at"] = existing_payload.get("validated_at")
-    user_entered = data != base_data
+    user_entered = bool(canonical_new_section.get("plex_path"))
     database.save_section_data(
         name=config_name,
         section="imagemaid",
@@ -13508,8 +13645,59 @@ def _save_imagemaid_settings_for_config(config_name, form_payload):
         user_entered=user_entered,
         data=payload,
     )
-    changed = payload.get("imagemaid", {}) != existing_section
+    changed = canonical_new_section != canonical_existing_section
     return payload, changed
+
+
+def _canonicalize_imagemaid_section(section_data):
+    section = dict(section_data) if isinstance(section_data, dict) else {}
+    canonical = {
+        "branch_override": "",
+        "plex_path": "",
+        "mode": "report",
+        "timeout": 600,
+        "sleep": 60,
+        "photo_transcoder": False,
+        "empty_trash": False,
+        "clean_bundles": False,
+        "optimize_db": False,
+        "local_db": False,
+        "use_existing": False,
+        "ignore_running": False,
+        "trace": False,
+        "log_requests": False,
+        "no_verify_ssl": False,
+        "overlays_only": False,
+    }
+    canonical.update(section)
+
+    canonical["branch_override"] = helpers.normalize_imagemaid_branch_override(canonical.get("branch_override")) or ""
+    canonical["plex_path"] = str(canonical.get("plex_path") or "").strip()
+    canonical["mode"] = str(canonical.get("mode") or "report").strip().lower() or "report"
+
+    for numeric_key, default_value in (("timeout", 600), ("sleep", 60)):
+        raw_value = canonical.get(numeric_key)
+        try:
+            canonical[numeric_key] = int(raw_value)
+        except (TypeError, ValueError):
+            canonical[numeric_key] = default_value
+
+    for bool_key in (
+        "photo_transcoder",
+        "empty_trash",
+        "clean_bundles",
+        "optimize_db",
+        "local_db",
+        "use_existing",
+        "ignore_running",
+        "trace",
+        "log_requests",
+        "no_verify_ssl",
+        "overlays_only",
+    ):
+        canonical[bool_key] = helpers.booler(canonical.get(bool_key))
+
+    return canonical
 
 
 def _get_imagemaid_settings_section(config_name=None):
@@ -14137,8 +14325,11 @@ def autosave_imagemaid():
             reason="config_changed",
             details="Configuration changed. Validate ImageMaid again.",
         )
+        validated = False
+    else:
+        validated = helpers.booler(settings.get("validated", False))
 
-    return jsonify(success=True, validated=False)
+    return jsonify(success=True, changed=changed, validated=validated)
 
 
 @app.route("/start-imagemaid", methods=["POST"])
@@ -14194,9 +14385,9 @@ def start_imagemaid():
     if not is_valid:
         return jsonify({"error": details or "ImageMaid settings are not valid.", "status": "invalid", "reason": reason}), 400
 
-    start_min, end_min, window_str = _get_maintenance_window_live()
+    start_min, end_min, window_str = _resolve_maintenance_window_live(config_name=config_name)
     if start_min is None or end_min is None:
-        start_min, end_min, window_str = _get_maintenance_window_from_db()
+        start_min, end_min, window_str = _resolve_maintenance_window_from_db(config_name=config_name)
     if _is_within_maintenance_window(datetime.now(), start_min, end_min):
         try:
             _write_quickstart_imagemaid_maintenance_marker(
@@ -14269,6 +14460,7 @@ def stop_imagemaid():
             os.remove(pid_file)
         except Exception:
             pass
+        _clear_imagemaid_run_context()
         try:
             _write_quickstart_imagemaid_stop_marker(
                 helpers.get_imagemaid_root_path(),
@@ -14291,6 +14483,7 @@ def stop_imagemaid():
             os.remove(pid_file)
         except Exception:
             pass
+        _clear_imagemaid_run_context()
         try:
             _settings, section_data = _get_imagemaid_settings_section()
             imagemaid_mode = section_data.get("mode") if isinstance(section_data, dict) else None
@@ -14310,6 +14503,10 @@ def stop_imagemaid():
 
 @app.route("/imagemaid-status", methods=["GET"])
 def imagemaid_status():
+    try:
+        _refresh_maintenance_window_availability()
+    except Exception:
+        pass
     pid = helpers.get_imagemaid_pid()
     pid_file = Path(helpers.get_imagemaid_pid_file())
     imagemaid_ctx = _get_imagemaid_run_context()
@@ -14341,6 +14538,7 @@ def imagemaid_status():
             _ingest_completed_live_logs("imagemaid")
         except Exception:
             pass
+        _clear_imagemaid_run_context()
         return jsonify(
             status="not started",
             maintenance_active=maintenance_active,
@@ -14443,6 +14641,7 @@ def imagemaid_status():
                 except Exception:
                     pass
                 _clear_process_metric_cache(pid, "imagemaid")
+                _clear_imagemaid_run_context()
         if not within_grace:
             try:
                 _ingest_completed_live_logs("imagemaid")
@@ -14473,6 +14672,7 @@ def imagemaid_status():
         except Exception:
             pass
         _clear_process_metric_cache(pid, "imagemaid")
+        _clear_imagemaid_run_context()
         return jsonify(
             status="not started",
             maintenance_active=maintenance_active,

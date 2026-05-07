@@ -610,7 +610,7 @@ function qsBuildKometaActiveWorkEntry () {
   const href = '/step/900-kometa'
   const status = String(data.status || '').trim().toLowerCase()
   const running = status === 'running'
-  const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || !running)
+  const unavailableBlocksWork = Boolean(data.window_unavailable) && (Boolean(data.pending_start) || Boolean(data.maintenance_paused) || running)
 
   if (unavailableBlocksWork) {
     const since = data.window_unavailable_since ? `Since ${qsFormatTimestamp(data.window_unavailable_since)}` : 'Maintenance window data unavailable'

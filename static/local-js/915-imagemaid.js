@@ -40,6 +40,8 @@ $(document).ready(function () {
   let lastImageMaidLogPayload = null
   let lastImageMaidLogText = ''
   let lastImageMaidLogPath = ''
+  let imagemaidLastPayloadSignature = ''
+  let imagemaidDirty = false
   const SPARKLINE_MAX_POINTS = 40
   const SPARKLINE_WIDTH = 180
   const SPARKLINE_HEIGHT = 48
@@ -353,6 +355,28 @@ $(document).ready(function () {
     }
   }
 
+  function buildPayloadSignature (payload = collectPayload()) {
+    return JSON.stringify({
+      config_name: String(payload.config_name || '').trim(),
+      branch_override: String(payload.branch_override || '').trim(),
+      plex_path: String(payload.plex_path || '').trim(),
+      mode: String(payload.mode || 'report').trim().toLowerCase(),
+      timeout: String(payload.timeout || '').trim(),
+      sleep: String(payload.sleep || '').trim(),
+      photo_transcoder: Boolean(payload.photo_transcoder),
+      empty_trash: Boolean(payload.empty_trash),
+      clean_bundles: Boolean(payload.clean_bundles),
+      optimize_db: Boolean(payload.optimize_db),
+      local_db: Boolean(payload.local_db),
+      use_existing: Boolean(payload.use_existing),
+      ignore_running: Boolean(payload.ignore_running),
+      trace: Boolean(payload.trace),
+      log_requests: Boolean(payload.log_requests),
+      no_verify_ssl: imagemaidSupportsNoVerifySsl ? Boolean(payload.no_verify_ssl) : false,
+      overlays_only: imagemaidSupportsOverlaysOnly ? Boolean(payload.overlays_only) : false
+    })
+  }
+
   function escapeCommandValue (value) {
     return `"${String(value || '').replaceAll('"', '\\"')}"`
   }
@@ -439,7 +463,7 @@ $(document).ready(function () {
       return
     }
 
-    if (!imagemaidValidated) {
+    if (imagemaidDirty || !imagemaidValidated) {
       els.runGate.removeClass('d-none alert-secondary alert-danger').addClass('alert-warning')
       els.runGateTitle.text('Validate ImageMaid first')
       els.runGateText.text('Configuration changed or has not been validated yet. Validate ImageMaid to unlock the command preview and run controls.')
@@ -493,7 +517,7 @@ $(document).ready(function () {
     syncRunGate()
   }
 
-  function queueAutosave () {
+  function queueAutosave (payload = collectPayload(), signature = buildPayloadSignature(payload)) {
     if (autosaveTimer) clearTimeout(autosaveTimer)
     autosaveTimer = setTimeout(() => {
       if (imagemaidAutosaveInFlight) {
@@ -504,8 +528,40 @@ $(document).ready(function () {
       fetch('/autosave-imagemaid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(collectPayload())
+        body: JSON.stringify(payload)
       })
+        .then(async (res) => ({ ok: res.ok, body: await res.json().catch(() => ({})) }))
+        .then(({ ok, body }) => {
+          if (!ok || !body || body.success === false) return
+          imagemaidLastPayloadSignature = signature
+          imagemaidDirty = false
+          if (body.changed) {
+            imagemaidValidated = Boolean(body.validated)
+            restoreFolderModeConflict = false
+            imagemaidUpdateCheckCompleted = false
+            imagemaidUpdateCheckSkipped = false
+            imagemaidUpdateAvailable = false
+            setValidationState('idle', 'Configuration changed. Validate ImageMaid again.')
+            syncPrepareSummary({
+              imagemaid_installed: imagemaidInstalled,
+              venv_python_exists: imagemaidVenvReady,
+              imagemaid_running: imagemaidRunning,
+              local_branch: els.localBranchStatus.text(),
+              local_sha: els.localShaStatus.text(),
+              effective_branch: imagemaidEffectiveBranch,
+              branch_source_url: els.branchSourceUrl.text(),
+              zip_source_url: els.zipSourceUrl.text(),
+              imagemaid_root_display: els.installPath.text()
+            }, {
+              updateAvailable: false,
+              updateCheckCompleted: false,
+              updateCheckSkipped: false
+            })
+          } else if (body.validated) {
+            imagemaidValidated = true
+            setValidationState('ok', 'ImageMaid is ready to run.')
+          }
+        })
         .catch(() => {})
         .finally(() => {
           imagemaidAutosaveInFlight = false
@@ -1007,6 +1063,8 @@ $(document).ready(function () {
       .then(async (res) => ({ ok: res.ok, body: await res.json() }))
       .then(({ ok, body }) => {
         imagemaidValidated = Boolean(body && body.validated)
+        imagemaidDirty = false
+        imagemaidLastPayloadSignature = buildPayloadSignature()
         restoreFolderModeConflict = Boolean(body && body.reason === 'restore_dir_blocks_mode')
         if (body && body.command_preview) {
           els.commandPreview.val(body.command_preview)
@@ -1024,6 +1082,7 @@ $(document).ready(function () {
       })
       .catch(() => {
         imagemaidValidated = false
+        imagemaidDirty = false
         restoreFolderModeConflict = false
         updateModeHelp()
         setValidationState('error', 'ImageMaid validation failed.')
@@ -1187,33 +1246,30 @@ $(document).ready(function () {
   }
 
   function onConfigChanged () {
-    const currentMode = String(els.mode.val() || 'report').trim().toLowerCase()
+    const payload = collectPayload()
+    const nextSignature = buildPayloadSignature(payload)
+    const currentMode = String(payload.mode || 'report').trim().toLowerCase()
+    if (!imagemaidLastPayloadSignature) {
+      imagemaidLastPayloadSignature = nextSignature
+      lastImageMaidMode = currentMode
+      updatePreviewFromPayload()
+      updateModeHelp()
+      return
+    }
+    if (nextSignature === imagemaidLastPayloadSignature) {
+      imagemaidDirty = false
+      updatePreviewFromPayload()
+      updateModeHelp()
+      syncRunGate()
+      return
+    }
+    imagemaidDirty = true
     const switchedToBlockedMode = lastImageMaidMode !== currentMode && ['report', 'move', 'remove'].includes(currentMode)
     lastImageMaidMode = currentMode
-    restoreFolderModeConflict = false
-    imagemaidValidated = false
-    imagemaidUpdateCheckCompleted = false
-    imagemaidUpdateCheckSkipped = false
-    imagemaidUpdateAvailable = false
-    setValidationState('idle', 'Configuration changed. Validate ImageMaid again.')
-    syncPrepareSummary({
-      imagemaid_installed: imagemaidInstalled,
-      venv_python_exists: imagemaidVenvReady,
-      imagemaid_running: imagemaidRunning,
-      local_branch: els.localBranchStatus.text(),
-      local_sha: els.localShaStatus.text(),
-      effective_branch: imagemaidEffectiveBranch,
-      branch_source_url: els.branchSourceUrl.text(),
-      zip_source_url: els.zipSourceUrl.text(),
-      imagemaid_root_display: els.installPath.text()
-    }, {
-      updateAvailable: false,
-      updateCheckCompleted: false,
-      updateCheckSkipped: false
-    })
     updatePreviewFromPayload()
     updateModeHelp()
-    queueAutosave()
+    syncRunGate()
+    queueAutosave(payload, nextSignature)
     if (switchedToBlockedMode && String($('#imagemaid_plex_path').val() || '').trim()) {
       validateImageMaid()
     }
@@ -1306,6 +1362,7 @@ $(document).ready(function () {
   syncOptionalCapabilityRows()
   syncBranchSummary()
   syncUpdateButtonLabel()
+  imagemaidLastPayloadSignature = buildPayloadSignature()
   els.tailLabel.text(imagemaidTailSize === 'all' ? 'all' : imagemaidTailSize)
   imagemaidLogAutoScroll = els.logAutoscroll.is(':checked')
   syncLogLevelButtons()

@@ -160,6 +160,64 @@ def test_maintenance_guard_pauses_running_imagemaid(monkeypatch, qs_module, tmp_
         assert qs_module.MAINTENANCE_STATE["imagemaid_paused_since"] is not None
 
 
+def test_refresh_maintenance_window_availability_prefers_active_imagemaid_config(monkeypatch, qs_module):
+    _reset_maintenance_state(qs_module)
+
+    seen = {"config_name": None}
+
+    monkeypatch.setattr(qs_module, "_get_run_context", lambda: {})
+    monkeypatch.setattr(qs_module, "_get_imagemaid_run_context", lambda: {"config_name": "imagemaid_cfg"})
+    monkeypatch.setattr(qs_module, "_peek_pending_kometa_start", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: 5555)
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: True)
+
+    def fake_live(config_name=None):
+        seen["config_name"] = config_name
+        return 120, 300, "02:00 – 05:00"
+
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_live", fake_live)
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_from_db", lambda config_name=None: (None, None, None))
+    monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: False)
+
+    qs_module._refresh_maintenance_window_availability()
+
+    assert seen["config_name"] == "imagemaid_cfg"
+    with qs_module.MAINTENANCE_STATE_LOCK:
+        assert qs_module.MAINTENANCE_STATE["window"] == "02:00 – 05:00"
+        assert qs_module.MAINTENANCE_STATE["window_unavailable"] is False
+
+
+def test_refresh_maintenance_window_availability_ignores_stale_kometa_context(monkeypatch, qs_module):
+    _reset_maintenance_state(qs_module)
+
+    seen = {"config_name": None}
+
+    monkeypatch.setattr(qs_module, "_get_run_context", lambda: {"config_name": "stale_kometa_cfg"})
+    monkeypatch.setattr(qs_module, "_get_imagemaid_run_context", lambda: {"config_name": "imagemaid_cfg"})
+    monkeypatch.setattr(qs_module, "_peek_pending_kometa_start", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: 5555)
+    monkeypatch.setattr(qs_module.helpers, "is_imagemaid_running", lambda: True)
+
+    def fake_live(config_name=None):
+        seen["config_name"] = config_name
+        return 120, 300, "02:00 – 05:00"
+
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_live", fake_live)
+    monkeypatch.setattr(qs_module, "_get_maintenance_window_from_db", lambda config_name=None: (None, None, None))
+    monkeypatch.setattr(qs_module, "_is_within_maintenance_window", lambda *_: False)
+
+    qs_module._refresh_maintenance_window_availability()
+
+    assert seen["config_name"] == "imagemaid_cfg"
+    with qs_module.MAINTENANCE_STATE_LOCK:
+        assert qs_module.MAINTENANCE_STATE["window"] == "02:00 – 05:00"
+        assert qs_module.MAINTENANCE_STATE["window_unavailable"] is False
+
+
 def test_maintenance_guard_resumes_paused_imagemaid(monkeypatch, qs_module, tmp_path):
     _reset_maintenance_state(qs_module)
     paused_at = time.time() - 90

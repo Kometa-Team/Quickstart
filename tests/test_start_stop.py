@@ -150,6 +150,28 @@ def test_kometa_status_includes_active_command_and_start_mode(client, monkeypatc
     assert data["disk_write_rate_mb_s"] == 3.75
 
 
+def test_imagemaid_status_clears_stale_run_context_when_not_running(client, monkeypatch, qs_module):
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid", lambda: None)
+    monkeypatch.setattr(qs_module.helpers, "get_imagemaid_pid_file", lambda: "missing.pid")
+    monkeypatch.setattr(qs_module, "_find_running_imagemaid_process", lambda: None)
+    monkeypatch.setattr(qs_module, "_ingest_completed_live_logs", lambda tool: None)
+
+    with qs_module.IMAGEMAID_RUN_CONTEXT_LOCK:
+        qs_module.IMAGEMAID_RUN_CONTEXT["command"] = "python imagemaid.py --mode report"
+        qs_module.IMAGEMAID_RUN_CONTEXT["mode"] = "report"
+        qs_module.IMAGEMAID_RUN_CONTEXT["config_name"] = "imagemaid_cfg"
+
+    resp = client.get("/imagemaid-status")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["status"] == "not started"
+
+    with qs_module.IMAGEMAID_RUN_CONTEXT_LOCK:
+        assert qs_module.IMAGEMAID_RUN_CONTEXT["command"] is None
+        assert qs_module.IMAGEMAID_RUN_CONTEXT["mode"] is None
+        assert qs_module.IMAGEMAID_RUN_CONTEXT["config_name"] is None
+
+
 def test_start_kometa_blocked_when_kometa_update_running(client, monkeypatch, qs_module):
     monkeypatch.setattr(qs_module.helpers, "is_kometa_running", lambda: False)
     monkeypatch.setattr(qs_module.helpers, "get_kometa_pid", lambda: None)
@@ -731,6 +753,8 @@ def test_autosave_imagemaid_targets_explicit_config_name(client, isolated_config
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["success"] is True
+    assert data["changed"] is True
+    assert data["validated"] is False
 
     source_validated, source_user_entered, source_saved = database.retrieve_section_data("pytest_source_config", "imagemaid")
     assert source_saved is None
@@ -770,6 +794,7 @@ def test_autosave_imagemaid_does_not_clear_validation_when_payload_is_unchanged(
         user_entered=True,
         data={
             "imagemaid": {
+                "branch_override": "master",
                 "plex_path": "P:\\Plex",
                 "mode": "report",
                 "timeout": 600,
@@ -786,20 +811,46 @@ def test_autosave_imagemaid_does_not_clear_validation_when_payload_is_unchanged(
         "/autosave-imagemaid",
         json={
             "config_name": "pytest_imagemaid_unchanged",
+            "branch_override": "master",
             "plex_path": "P:\\Plex",
             "mode": "report",
             "timeout": "600",
             "sleep": "60",
             "photo_transcoder": True,
+            "empty_trash": False,
+            "clean_bundles": False,
+            "optimize_db": False,
+            "local_db": False,
+            "use_existing": False,
+            "ignore_running": False,
+            "trace": False,
+            "log_requests": False,
+            "no_verify_ssl": False,
+            "overlays_only": False,
         },
     )
     assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["success"] is True
+    assert data["changed"] is False
+    assert data["validated"] is True
 
     validated, user_entered, saved = database.retrieve_section_data("pytest_imagemaid_unchanged", "imagemaid")
     assert validated is True
     assert user_entered is True
     assert saved["validation_status"] == "validated"
     assert saved["validated_at"] == "2026-05-06T00:00:00+00:00"
+    assert saved["imagemaid"]["branch_override"] == "master"
+    assert saved["imagemaid"]["empty_trash"] is False
+    assert saved["imagemaid"]["clean_bundles"] is False
+    assert saved["imagemaid"]["optimize_db"] is False
+    assert saved["imagemaid"]["local_db"] is False
+    assert saved["imagemaid"]["use_existing"] is False
+    assert saved["imagemaid"]["ignore_running"] is False
+    assert saved["imagemaid"]["trace"] is False
+    assert saved["imagemaid"]["log_requests"] is False
+    assert saved["imagemaid"]["no_verify_ssl"] is False
+    assert saved["imagemaid"]["overlays_only"] is False
 
 
 def test_validate_imagemaid_targets_explicit_config_name(client, isolated_config_dir, monkeypatch, qs_module):
@@ -844,6 +895,114 @@ def test_validate_imagemaid_targets_explicit_config_name(client, isolated_config
     assert target_saved["imagemaid"]["plex_path"] == "P:\\Plex"
     assert target_saved["imagemaid"]["mode"] == "move"
     assert target_saved["imagemaid"]["clean_bundles"] is True
+
+
+def test_validate_imagemaid_survives_navigation_to_sponsor_and_back(client, isolated_config_dir, monkeypatch, qs_module):
+    import modules.database as database
+
+    config_name = "pytest_imagemaid_nav"
+    with client.session_transaction() as session_state:
+        session_state["config_name"] = config_name
+
+    monkeypatch.setattr(qs_module, "_validate_imagemaid_settings", lambda *_args, **_kwargs: (True, None, None))
+    monkeypatch.setattr(qs_module, "_get_stored_plex_credentials_for_config", lambda *_args, **_kwargs: ("http://plex:32400", "token"))
+    monkeypatch.setattr(qs_module, "_build_imagemaid_command", lambda *_args, **_kwargs: "python imagemaid.py --mode report")
+
+    resp = client.post(
+        "/validate-imagemaid",
+        json={
+            "config_name": config_name,
+            "plex_path": "P:\\Plex",
+            "mode": "report",
+            "timeout": "600",
+            "sleep": "60",
+            "photo_transcoder": True,
+        },
+    )
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert data["validated"] is True
+
+    validated, user_entered, saved = database.retrieve_section_data(config_name, "imagemaid")
+    assert validated is True
+    assert user_entered is True
+    assert saved["validation_status"] == "validated"
+
+    sponsor_resp = client.get("/step/910-sponsor")
+    assert sponsor_resp.status_code == 200
+
+    imagemaid_resp = client.get("/step/915-imagemaid")
+    assert imagemaid_resp.status_code == 200
+    body = imagemaid_resp.get_data(as_text=True)
+    assert 'data-validated="true"' in body
+
+    validated_after, user_entered_after, saved_after = database.retrieve_section_data(config_name, "imagemaid")
+    assert validated_after is True
+    assert user_entered_after is True
+    assert saved_after["validation_status"] == "validated"
+
+
+def test_step_navigation_from_imagemaid_to_sponsor_preserves_validation_when_unchanged(client, isolated_config_dir):
+    import modules.database as database
+
+    config_name = "pytest_imagemaid_jump"
+    with client.session_transaction() as session_state:
+        session_state["config_name"] = config_name
+
+    database.save_section_data(
+        name=config_name,
+        section="imagemaid",
+        validated=True,
+        user_entered=True,
+        data={
+            "imagemaid": {
+                "branch_override": "",
+                "plex_path": "P:\\Plex",
+                "mode": "report",
+                "timeout": 600,
+                "sleep": 60,
+                "photo_transcoder": True,
+                "empty_trash": False,
+                "clean_bundles": False,
+                "optimize_db": False,
+                "local_db": False,
+                "use_existing": False,
+                "ignore_running": False,
+                "trace": False,
+                "log_requests": False,
+                "no_verify_ssl": False,
+                "overlays_only": False,
+            },
+            "validated_at": "2026-05-06T00:00:00+00:00",
+            "validation_status": "validated",
+            "validation_updated_at": "2026-05-06T00:00:00+00:00",
+        },
+    )
+
+    resp = client.post(
+        "/step/910-sponsor",
+        base_url="http://localhost",
+        headers={"Referer": "http://localhost/step/915-imagemaid"},
+        data={
+            "configSelector": config_name,
+            "imagemaid_branch_override": "",
+            "imagemaid_plex_path": "P:\\Plex",
+            "imagemaid_mode": "report",
+            "imagemaid_timeout": "600",
+            "imagemaid_sleep": "60",
+            "imagemaid_photo_transcoder": "on",
+        },
+    )
+    assert resp.status_code == 200
+
+    validated, user_entered, saved = database.retrieve_section_data(config_name, "imagemaid")
+    assert validated is True
+    assert user_entered is True
+    assert saved["validation_status"] == "validated"
+    assert saved["imagemaid"]["plex_path"] == "P:\\Plex"
+    assert saved["imagemaid"]["mode"] == "report"
+    assert saved["imagemaid"]["photo_transcoder"] is True
+    assert saved["imagemaid"]["empty_trash"] is False
 
 
 def test_tail_imagemaid_log_reads_runtime_log_only(client, isolated_config_dir, monkeypatch, qs_module):
