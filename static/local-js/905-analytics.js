@@ -602,7 +602,7 @@ $(document).ready(function () {
         renderCountChip('E', 'Errors', errors, 'error'),
         renderCountChip('Cr', 'Critical lines', critical, 'critical'),
         renderCountChip('T', 'Tracebacks', traces, 'trace'),
-        renderCountChip('Tot', 'Total counted lines', total, 'total')
+        renderCountChip('Items', 'Total counted lines', total, 'total')
       ].join('')
     }
 
@@ -617,7 +617,7 @@ $(document).ready(function () {
       renderCountChip('M', 'Movies', libraryTotals.movies, 'movie'),
       renderCountChip('S', 'Shows', libraryTotals.shows, 'show'),
       renderCountChip('Ep', 'Episodes', libraryTotals.episodes, 'episode'),
-      renderCountChip('Tot', 'Total items', libraryTotals.total, 'total')
+      renderCountChip('Items', 'Library items total (movies + episodes, or show count when episode totals are unavailable)', libraryTotals.total, 'total')
     ].join('')
   }
 
@@ -1857,7 +1857,7 @@ $(document).ready(function () {
           ${renderRunCardCell('Config lines', 'Non-comment lines captured from the redacted config output.', escapeHtml(String(configLineCount)))}
           ${renderRunCardCell('Cache lines', 'Number of log lines that include "from Cache".', escapeHtml(String(cacheLineCount)))}
           ${renderRunCardCell('Command', 'Sanitized command line captured for the run.', `<span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span>`)}
-          ${renderRunCardCell('Counts', 'W warnings, E errors, T tracebacks, M movies, S shows, Ep episodes, Tot total library items.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
+          ${renderRunCardCell('Counts', 'W warnings, E errors, T tracebacks, M movies, S shows, Ep episodes, Items = movies + episodes, or show count when episode totals are unavailable.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
           ${renderRunCardCell('Version', 'Detected tool version for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
           ${renderRunCardCell('Maintenance', 'Quickstart maintenance pauses recorded in meta.log for this run.', renderMaintenanceSummaryCell(run))}
           ${renderRunCardCell('Quiet periods', 'Emphasizes the longest unexplained delay between timestamped run log lines, with maintenance-related gaps available in the details view.', renderQuietPeriodCell(run))}

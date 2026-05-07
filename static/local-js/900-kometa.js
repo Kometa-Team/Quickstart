@@ -1837,6 +1837,20 @@ $(document).ready(function () {
     kometaProgressInterval = setInterval(fetchRunProgress, 5000)
   }
 
+  function resumeKometaLiveView () {
+    if (document.hidden) return
+    checkKometaStatus()
+      .catch(() => null)
+      .finally(() => {
+        if (KOMETA_STATUS === 'running' || KOMETA_PENDING_START) {
+          kometaPollingStarted = false
+          startPollingIfNeeded()
+          fetchRunProgress(true)
+          fetchKometaLog()
+        }
+      })
+  }
+
   function stopProgressPolling () {
     if (kometaProgressInterval) {
       clearInterval(kometaProgressInterval)
@@ -2120,10 +2134,11 @@ $(document).ready(function () {
     }
   }
 
-  function fetchRunProgress () {
+  function fetchRunProgress (forceFull = false) {
     if (runProgressInFlight) return Promise.resolve(null)
     runProgressInFlight = true
-    return fetch('/logscan/progress')
+    const url = forceFull ? '/logscan/progress?size=all' : '/logscan/progress'
+    return fetch(url)
       .then(res => {
         if (!res.ok) return null
         return res.json()
@@ -2990,6 +3005,14 @@ $(document).ready(function () {
       .catch(() => showToast('error', 'Failed to download log.'))
   })
   updateClearFilterButton()
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) {
+      resumeKometaLiveView()
+    }
+  })
+  window.addEventListener('pageshow', function () {
+    resumeKometaLiveView()
+  })
   // Ensure we check Kometa status once on page load to catch unclean exits.
   // Keep the run area hidden until Kometa validation completes.
   hideRunCommandSectionUntilValidated()

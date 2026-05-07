@@ -8743,7 +8743,8 @@ def logscan_progress():
         from collections import deque
         from copy import deepcopy
 
-        size_param = request.args.get("size", "4000")
+        size_arg = request.args.get("size")
+        size_param = size_arg if size_arg is not None else "4000"
         max_lines = None
         if size_param.lower() not in ("all", "full"):
             try:
@@ -8841,6 +8842,14 @@ def logscan_progress():
         run_mode = ctx.get("run_mode") or "all"
         running = helpers.is_kometa_running()
         stopped_requested = bool(ctx.get("stop_requested_at"))
+        cached_data = LOGSCAN_PROGRESS_CACHE.get("data")
+        cache_matches_run = bool(cached_data and cached_data.get("run_started_at") == started_at)
+
+        # Seed progress from the full log when no explicit size was requested and
+        # the current run has no matching cached progress state yet. After the
+        # cache is warm, later polls can safely use the faster tail parse.
+        if size_arg is None and not cache_matches_run:
+            max_lines = None
 
         if log_stats and cached.get("mtime") == log_stats.st_mtime and cached.get("size") == log_stats.st_size:
             data = cached.get("data") or {}
@@ -8848,7 +8857,6 @@ def logscan_progress():
             data = normalize_progress_for_stopped(data, running, stopped_requested)
             return jsonify(data)
 
-        cached_data = LOGSCAN_PROGRESS_CACHE.get("data")
         if cached_data and cached_data.get("run_started_at") != started_at:
             LOGSCAN_PROGRESS_CACHE.update({"mtime": None, "size": None, "data": None})
         analyzer = logscan.LogscanAnalyzer()
