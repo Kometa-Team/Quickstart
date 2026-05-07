@@ -1783,9 +1783,7 @@ def _refresh_maintenance_window_availability(preserve_active_state=False):
     active = _is_within_maintenance_window(datetime.now(), start_min, end_min)
 
     with MAINTENANCE_STATE_LOCK:
-        if preserve_active_state and (
-            MAINTENANCE_STATE.get("paused") or MAINTENANCE_STATE.get("imagemaid_paused")
-        ):
+        if preserve_active_state and (MAINTENANCE_STATE.get("paused") or MAINTENANCE_STATE.get("imagemaid_paused")):
             if window_str:
                 MAINTENANCE_STATE["window"] = window_str
         else:
@@ -2154,8 +2152,8 @@ def _normalize_imagemaid_command_text(command):
 def _update_imagemaid_run_context(command, mode=None, config_name=None):
     with IMAGEMAID_RUN_CONTEXT_LOCK:
         IMAGEMAID_RUN_CONTEXT["command"] = _normalize_imagemaid_command_text(command)
-        IMAGEMAID_RUN_CONTEXT["mode"] = (str(mode or "").strip().lower() or None)
-        IMAGEMAID_RUN_CONTEXT["config_name"] = (str(config_name or "").strip() or None)
+        IMAGEMAID_RUN_CONTEXT["mode"] = str(mode or "").strip().lower() or None
+        IMAGEMAID_RUN_CONTEXT["config_name"] = str(config_name or "").strip() or None
         IMAGEMAID_RUN_CONTEXT["started_at"] = datetime.now()
         IMAGEMAID_RUN_CONTEXT["updated_at"] = datetime.now(timezone.utc).isoformat()
 
@@ -5815,11 +5813,7 @@ def step(name):
             save_source, save_source_name = persistence.extract_names(request.referrer or name)
             if save_source_name == "imagemaid":
                 request_payload = request.form.to_dict(flat=True)
-                request_payload["config_name"] = (
-                    session.get("config_name")
-                    or request_payload.get("config_name")
-                    or request_payload.get("configSelector")
-                )
+                request_payload["config_name"] = session.get("config_name") or request_payload.get("config_name") or request_payload.get("configSelector")
                 config_name = _resolve_request_config_name(request_payload)
                 existing_settings, _existing_section = _get_imagemaid_settings_section(config_name)
                 was_validated = helpers.booler(existing_settings.get("validated", False))
@@ -10576,11 +10570,7 @@ def _build_incomplete_scope_summary(original_command="", suggested_command="", p
     original_selected = _extract_selected_libraries(original_command)[1] or []
     recovery_selected = _extract_selected_libraries(suggested_command)[1] or []
     progress_names = _dedupe_preserve_order(entry.get("name") for entry in progress_libraries if isinstance(entry, dict))
-    completed = _dedupe_preserve_order(
-        entry.get("name")
-        for entry in progress_libraries
-        if isinstance(entry, dict) and str(entry.get("status") or "").strip() == "Done"
-    )
+    completed = _dedupe_preserve_order(entry.get("name") for entry in progress_libraries if isinstance(entry, dict) and str(entry.get("status") or "").strip() == "Done")
 
     original_scope = _dedupe_preserve_order(original_selected or progress_names)
     recovery_scope = _dedupe_preserve_order(recovery_selected or original_scope)
@@ -10726,8 +10716,7 @@ def _build_incomplete_progress_snapshot(progress=None, last_log_at=None, config_
         "last_log_at": last_log_at or "",
         "preparation_label": _format_duration_brief(preparation_seconds) if isinstance(preparation_seconds, (int, float)) else "",
         "footer_cells": [
-            _format_duration_brief(totals.get(column["key"])) if isinstance(totals.get(column["key"]), (int, float)) and totals.get(column["key"]) > 0 else ""
-            for column in columns
+            _format_duration_brief(totals.get(column["key"])) if isinstance(totals.get(column["key"]), (int, float)) and totals.get(column["key"]) > 0 else "" for column in columns
         ],
         "total_label": _format_duration_brief(total_seconds) if total_seconds > 0 else "",
     }
@@ -10938,7 +10927,9 @@ def _build_resume_explanation(
         lines.append(f"Detected in-progress library '{current_library}', so the suggestion scopes with --run-libraries.")
 
     if isinstance(progress_libraries, list):
-        completed_libraries = [str(entry.get("name")).strip() for entry in progress_libraries if str(entry.get("status") or "").strip() == "Done" and str(entry.get("name") or "").strip()]
+        completed_libraries = [
+            str(entry.get("name")).strip() for entry in progress_libraries if str(entry.get("status") or "").strip() == "Done" and str(entry.get("name") or "").strip()
+        ]
         if completed_libraries:
             lines.append(f"Completed libraries already seen in the log: {' | '.join(completed_libraries)}.")
 
@@ -13658,9 +13649,7 @@ def _save_imagemaid_settings_for_config(config_name, form_payload):
     existing_payload = stored_payload if isinstance(stored_payload, dict) else {}
     existing_section = existing_payload.get("imagemaid", {}) if isinstance(existing_payload.get("imagemaid"), dict) else {}
     canonical_existing_section = _canonicalize_imagemaid_section(existing_section)
-    canonical_new_section = _canonicalize_imagemaid_section(
-        data.get("imagemaid", {}) if isinstance(data.get("imagemaid"), dict) else {}
-    )
+    canonical_new_section = _canonicalize_imagemaid_section(data.get("imagemaid", {}) if isinstance(data.get("imagemaid"), dict) else {})
     payload = dict(existing_payload)
     payload["imagemaid"] = canonical_new_section
     if "validated_at" in data:

@@ -1385,9 +1385,7 @@ def test_analyze_imagemaid_log_content_parses_summary_section_runtimes(qs_module
     assert section_runtimes["photo_transcoder_remove"] == 0
 
 
-def test_analyze_incomplete_kometa_log_for_resume_uses_first_runtime_timestamp_for_started_at(
-    qs_module, isolated_config_dir, monkeypatch
-):
+def test_analyze_incomplete_kometa_log_for_resume_uses_first_runtime_timestamp_for_started_at(qs_module, isolated_config_dir, monkeypatch):
     log_path = isolated_config_dir / "kometa" / "config" / "logs" / "meta.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_path.write_text(
@@ -1431,9 +1429,7 @@ def test_analyze_incomplete_kometa_log_for_resume_uses_first_runtime_timestamp_f
     assert result["started_at"] == "2026-04-29 15:08:28"
 
 
-def test_build_incomplete_run_from_cache_entry_uses_first_runtime_timestamp_for_started_at(
-    qs_module, isolated_config_dir
-):
+def test_build_incomplete_run_from_cache_entry_uses_first_runtime_timestamp_for_started_at(qs_module, isolated_config_dir):
     log_path = isolated_config_dir / "cache" / "logscan" / "archive" / "kometa" / "meta-cached.log"
     log_path.parent.mkdir(parents=True, exist_ok=True)
     log_path.write_text(
