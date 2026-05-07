@@ -3083,7 +3083,7 @@ logscan_reingest_state = {
 # Bump this integer when a release needs a one-time Analytics reset + log reingest
 # on startup. Quickstart persists the highest successful level to config/.env so
 # skipped releases still catch up automatically.
-REQUIRED_LOGSCAN_MIGRATION_LEVEL = 4
+REQUIRED_LOGSCAN_MIGRATION_LEVEL = 5
 LOGSCAN_STARTUP_MIGRATIONS_ENV = "QS_LOGSCAN_STARTUP_MIGRATIONS"
 LOGSCAN_MIGRATION_LEVEL_DONE_ENV = "QS_LOGSCAN_MIGRATION_LEVEL_DONE"
 LOGSCAN_STARTUP_MIGRATION_JOB_ID = "startup-logscan-migration"
