@@ -212,34 +212,34 @@
         </div>
         <label class="small text-muted" for="logscan-table-sort-key">Sort by</label>
           <select id="logscan-table-sort-key" class="form-select form-select-sm w-auto">
-            <option value="status">Status</option>
-            <option value="started_at">Started</option>
-            <option value="finished_at" selected>Finished</option>
-            <option value="run_time_seconds">Runtime</option>
-            <option value="config_name">Config</option>
-            <option value="tool_name">Tool</option>
-            <option value="config_line_count">Config lines</option>
             <option value="cache_line_count">Cache lines</option>
-            <option value="debug_count">Debug lines</option>
-            <option value="info_count">Info lines</option>
             <option value="command_signature">Command</option>
-            <option value="counts">Issue count total</option>
-            <option value="warning_count">Warnings</option>
-            <option value="error_count">Errors</option>
+            <option value="config_name">Config</option>
+            <option value="config_line_count">Config lines</option>
             <option value="critical_count">Critical</option>
-            <option value="trace_count">Tracebacks</option>
-            <option value="library_movies">Movies</option>
-            <option value="library_shows">Shows</option>
+            <option value="debug_count">Debug lines</option>
             <option value="library_episodes">Episodes</option>
+            <option value="error_count">Errors</option>
+            <option value="finished_at" selected>Finished</option>
+            <option value="info_count">Info lines</option>
             <option value="items_total">Items chip total</option>
+            <option value="counts">Issue count total</option>
             <option value="library_total">Kometa library items</option>
-            <option value="kometa_version">Version</option>
-            <option value="maintenance">Maintenance</option>
-            <option value="quiet_periods">Quiet periods</option>
-            <option value="section_runtimes">Section runtimes</option>
             <option value="log_resolved_size">Log size</option>
-          <option value="recommendations_count">Report</option>
-        </select>
+            <option value="maintenance">Maintenance</option>
+            <option value="library_movies">Movies</option>
+            <option value="quiet_periods">Quiet periods</option>
+            <option value="recommendations_count">Report</option>
+            <option value="run_time_seconds">Runtime</option>
+            <option value="section_runtimes">Section runtimes</option>
+            <option value="library_shows">Shows</option>
+            <option value="started_at">Started</option>
+            <option value="status">Status</option>
+            <option value="tool_name">Tool</option>
+            <option value="trace_count">Tracebacks</option>
+            <option value="kometa_version">Version</option>
+            <option value="warning_count">Warnings</option>
+          </select>
         <select id="logscan-table-sort-dir" class="form-select form-select-sm w-auto" aria-label="Sort direction">
           <option value="desc" selected>Descending</option>
           <option value="asc">Ascending</option>
@@ -327,16 +327,6 @@
                 </button>
               </th>
               <th>
-                <button type="button" class="logscan-sort-button" data-sort="cache_line_count"
-                  title="Sort by cache lines" aria-label="Sort by cache lines">
-                  Cache lines
-                  <span class="logscan-sort-icons" aria-hidden="true">
-                    <span class="logscan-sort-up"></span>
-                    <span class="logscan-sort-down"></span>
-                  </span>
-                </button>
-              </th>
-              <th>
                 <button type="button" class="logscan-sort-button" data-sort="command_signature"
                   title="Sort by command" aria-label="Sort by command">
                   Command
@@ -346,10 +336,10 @@
                   </span>
                 </button>
               </th>
-              <th title="W = Warnings, E = Errors, T = Tracebacks; M = Movies, S = Shows, Ep = Episodes, Items = Movies + Episodes (or Shows when episode totals are unavailable)">
+              <th title="Kometa: C = Cache, D = Debug, I = Info, W = Warnings, E = Errors, Cr = Critical, T = Tracebacks, plus M = Movies, S = Shows, Ep = Episodes, and Items total. ImageMaid: C D I W E Cr T plus Items total.">
                 <button type="button" class="logscan-sort-button" data-sort="counts"
-                  title="Sort by total warnings/errors/tracebacks" aria-label="Sort by counts">
-                  Counts (W/E/T + M/S/EP/TOT)
+                  title="Sort by issue-count total" aria-label="Sort by counts">
+                  Counts (C/D/I/W/E/Cr/T + M/S/Ep/Items)
                   <span class="logscan-sort-icons" aria-hidden="true">
                     <span class="logscan-sort-up"></span>
                     <span class="logscan-sort-down"></span>

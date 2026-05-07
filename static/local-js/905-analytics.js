@@ -620,13 +620,21 @@ $(document).ready(function () {
       ].join('')
     }
 
+    const cache = getCount(run, 'cache_line_count')
+    const debug = getCount(run, 'debug_count')
+    const info = getCount(run, 'info_count')
     const warnings = getCount(run, 'warning_count')
     const errors = getCount(run, 'error_count')
+    const critical = getCount(run, 'critical_count')
     const traces = getCount(run, 'trace_count')
     const libraryTotals = getRunLibraryTotals(run)
     return [
+      renderCountChip('C', 'Cache lines', cache, 'cache'),
+      renderCountChip('D', 'Debug lines', debug, 'debug'),
+      renderCountChip('I', 'Info lines', info, 'info'),
       renderCountChip('W', 'Warnings', warnings, 'warning'),
       renderCountChip('E', 'Errors', errors, 'error'),
+      renderCountChip('Cr', 'Critical lines', critical, 'critical'),
       renderCountChip('T', 'Tracebacks', traces, 'trace'),
       renderCountChip('M', 'Movies', libraryTotals.movies, 'movie'),
       renderCountChip('S', 'Shows', libraryTotals.shows, 'show'),
@@ -1774,9 +1782,6 @@ $(document).ready(function () {
       const runtimeParts = getRunTimeParts(run)
       const sectionLines = buildSectionDetails(run.section_runtimes, runtimeParts.effective)
       const sectionSummary = sectionLines.length ? sectionLines[0] : 'n/a'
-      const cacheLineCount = (typeof run.cache_line_count === 'number' && Number.isFinite(run.cache_line_count))
-        ? run.cache_line_count
-        : 'n/a'
       const sectionDetails = sectionLines.length > 1 ? sectionLines.slice(1) : []
       const rowKey = (run.run_key && String(run.run_key).trim()) || `row-${absoluteIndex + 1}`
       sectionDetailsByRunKey.set(rowKey, {
@@ -1867,11 +1872,10 @@ $(document).ready(function () {
           ${renderRunCardCell('Finished', 'Timestamp of the run finishing. Incomplete logs are shown here for investigation only and are excluded from charts.', finishedDisplay, 'class="text-nowrap"')}
           ${renderRunCardCell('Runtime', getRuntimeHelpText(run), escapeHtml(formatSeconds(runtimeParts.effective)))}
           ${renderRunCardCell('Config', 'Config name detected for the run.', escapeHtml(run.config_name || 'default'))}
-          ${renderRunCardCell('Tool', 'Tool that produced this run.', escapeHtml(toolLabel))}
+          ${renderRunCardCell('App', 'App that produced this run.', escapeHtml(toolLabel))}
           ${renderRunCardCell('Config lines', 'Non-comment lines captured from the redacted config output.', escapeHtml(String(configLineCount)))}
-          ${renderRunCardCell('Cache lines', 'Number of log lines that include "from Cache".', escapeHtml(String(cacheLineCount)))}
           ${renderRunCardCell('Command', 'Sanitized command line captured for the run.', `<span class="logscan-command" title="${escapeHtml(commandTitle)}">${escapeHtml(command)}</span>`)}
-          ${renderRunCardCell('Counts', 'W warnings, E errors, T tracebacks, M movies, S shows, Ep episodes, Items = movies + episodes, or show count when episode totals are unavailable.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
+          ${renderRunCardCell('Counts', 'Kometa: C cache, D debug, I info, W warnings, E errors, Cr critical, T tracebacks, plus M movies, S shows, Ep episodes, and Items total. ImageMaid: C D I W E Cr T plus Items total.', `<span class="logscan-count-chip-row">${countChips}</span>`)}
           ${renderRunCardCell('Version', 'Detected tool version for the run, plus newest version when different.', escapeHtml(kometaDisplay))}
           ${renderRunCardCell('Maintenance', 'Quickstart maintenance pauses recorded in meta.log for this run.', renderMaintenanceSummaryCell(run))}
           ${renderRunCardCell('Quiet periods', 'Emphasizes the longest unexplained delay between timestamped run log lines, with maintenance-related gaps available in the details view.', renderQuietPeriodCell(run))}

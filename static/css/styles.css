@@ -2497,16 +2497,19 @@ div#loading {
     border-radius: 8px;
     padding: 0.7rem 0.85rem;
     background: var(--theme-bg-card);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td {
     display: grid;
-    grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr);
-    gap: 0.65rem;
-    align-items: start;
+    grid-template-columns: minmax(7.5rem, 10.5rem) minmax(0, 1fr);
+    gap: 0.45rem 0.75rem;
+    align-items: center;
     border: 0;
-    padding: 0.3rem 0;
+    border-radius: 0.5rem;
+    padding: 0.32rem 0.4rem;
     text-align: left !important;
+    transition: background-color 0.18s ease;
 }
 
 .qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td::before {
@@ -2515,12 +2518,23 @@ div#loading {
 
 .qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td > * {
     min-width: 0;
+    align-self: center;
     justify-self: start;
     text-align: left !important;
 }
 
 .qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td .align-items-center {
-    align-items: flex-start !important;
+    align-items: center !important;
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table tr:hover {
+    border-color: rgba(0, 188, 140, 0.32);
+    box-shadow: 0 0 0 1px rgba(0, 188, 140, 0.12);
+}
+
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td:hover,
+.qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td:focus-within {
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .logscan-card-label {
@@ -2532,6 +2546,7 @@ div#loading {
     letter-spacing: 0.02em;
     line-height: 1.2;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .logscan-card-value {
@@ -2606,6 +2621,18 @@ div#loading {
 
 .logscan-card-inline {
     justify-content: flex-start;
+}
+
+@media (max-width: 768px) {
+    .qs-workspace-main-panel .table-responsive.logscan-runs-card-table table td {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.2rem;
+        padding: 0.42rem 0.45rem;
+    }
+
+    .logscan-card-label {
+        white-space: normal;
+    }
 }
 
 .logscan-section-summary {
