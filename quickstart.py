@@ -11298,14 +11298,6 @@ def _build_incomplete_run_from_cache_entry(log_path, cache_entry=None, config_na
             if isinstance(cache_entry.get("resume_progress_snapshot"), dict)
             else {}
         )
-    if tool_name == "kometa" and not progress_snapshot:
-        reparsed = _analyze_incomplete_log_for_resume(path, cache_entry=cache_entry, config_name=summary.get("config_name") or config_name)
-        if isinstance(reparsed, dict):
-            progress_snapshot = (
-                reparsed.get("resume_progress_snapshot")
-                if isinstance(reparsed.get("resume_progress_snapshot"), dict)
-                else {}
-            )
     return {
         "run_key": run_key,
         "tool_name": tool_name,
